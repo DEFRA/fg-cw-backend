@@ -1,5 +1,97 @@
 # fg-cw-backend
 
+## Docker
+
+Launch CW and dependencies via Docker Compose:
+
+```
+docker compose up --watch
+```
+
+Check the container status in our system and see the container id's
+
+```
+docker ps -a
+```
+
+Run an interactive shell on a container
+
+```
+docker exec -it <container id> sh
+```
+
+## Local stack
+
+### Useful commands
+
+#### List the topics
+
+`awslocal sns list-topics`
+
+#### Get a topics attributes
+
+```
+awslocal sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:000000000000:grant-application
+```
+
+#### Get a queue attributes
+
+```
+awslocal sqs get-queue-attributes \
+  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application --attribute-names All
+```
+
+```
+awslocal sqs get-queue-attributes \
+  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/dead-letter-queue --attribute-names All
+```
+
+#### Send message to the grant-application topic
+
+```
+awslocal sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant-application" \
+  --message '{"hello": "world"}'
+```
+
+#### Check the message has arrived in the queue
+
+```
+awslocal sqs receive-message \
+--queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application"
+```
+
+#### Delete a message from the queue
+
+```
+awslocal sqs delete-message \
+--queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application --receipt-handle <receipt-handle>
+```
+
+#### Purge the queue
+
+```
+awslocal sqs purge-queue \
+--queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
+```
+
+#### Test the dead letter queue
+
+Send a message in and try to recieve the message twice like so
+
+```
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
+```
+
+#### Move the DLQ messages back into the recovery queue
+
+```
+awslocal sqs start-message-move-task \
+  --source-arn arn:aws:sqs:eu-west-2:000000000000:dead-letter-queue \
+  --destination-arn arn:aws:sqs:eu-west-2:000000000000:recovery-queue
+```
+
 Core delivery platform Node.js Backend Template.
 
 - [Requirements](#requirements)
@@ -226,7 +318,7 @@ docker compose up --build -d
 ### Dependabot
 
 We have added an example dependabot configuration file to the repository. You can enable it by renaming
-the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github/dependabot.yml`
+the [.github/example.dependabot.yml](.github/dependabot.yml) to `.github/dependabot.yml`
 
 ### SonarCloud
 

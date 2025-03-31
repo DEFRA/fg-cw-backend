@@ -8,38 +8,21 @@ updates:
 
     # Group packages into shared PR
     groups:
-      build:
-        patterns:
-          - 'autoprefixer'
-
       lint:
         patterns:
-          - 'prettier'
-          - 'stylelint'
-          - 'stylelint-*'
+          - "standard"
 
       logging:
         patterns:
-          - '*-pino'
-          - '*-pino-format'
-          - 'pino'
-          - 'pino-*'
+          - "*-pino"
+          - "*-pino-format"
+          - "pino"
+          - "pino-*"
 
       tools:
         patterns:
-          - 'babel-jest'
-          - 'husky'
-          - 'jest'
-          - 'nodemon'
-          - 'npm-run-all'
-
-      types:
-        patterns:
-          - '@types/*'
-
-    ignore:
-      - dependency-name: 'eslint-*'
-      - dependency-name: 'eslint'
+          - "husky"
+          - "c8"
 
     # Schedule run every Monday, local time
     schedule:
