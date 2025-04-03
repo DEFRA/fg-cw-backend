@@ -100,16 +100,18 @@
       },
       {
         "id": "2",
-        "actions": {
-          "id": "1",
-          "tasks": [
-            {
-              "id": "1",
-              "value": null
-            }
-          ],
-          "status": "CANNOT START YET"
-        }
+        "actions": [
+          {
+            "id": "1",
+            "tasks": [
+              {
+                "id": "1",
+                "value": null
+              }
+            ],
+            "status": "CANNOT START YET"
+          }
+        ]
       }
     ]
   }

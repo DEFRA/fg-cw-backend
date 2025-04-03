@@ -2,27 +2,27 @@ import {
   createMetricsLogger,
   Unit,
   StorageResolution
-} from 'aws-embedded-metrics'
-import { config } from '../../config.js'
-import { createLogger } from './logging/logger.js'
+} from "aws-embedded-metrics";
+import { config } from "../../config.js";
+import { createLogger } from "./logging/logger.js";
 
 const metricsCounter = async (metricName, value = 1) => {
-  if (!config.get('isMetricsEnabled')) {
-    return
+  if (!config.get("isMetricsEnabled")) {
+    return;
   }
 
   try {
-    const metricsLogger = createMetricsLogger()
+    const metricsLogger = createMetricsLogger();
     metricsLogger.putMetric(
       metricName,
       value,
       Unit.Count,
       StorageResolution.Standard
-    )
-    await metricsLogger.flush()
+    );
+    await metricsLogger.flush();
   } catch (error) {
-    createLogger().error(error, error.message)
+    createLogger().error(error, error.message);
   }
-}
+};
 
-export { metricsCounter }
+export { metricsCounter };

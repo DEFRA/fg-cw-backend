@@ -1,9 +1,9 @@
 services:
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:4
     ports:
-      - '4566:4566' # LocalStack Gateway
-      - '4510-4559:4510-4559' # external services port range
+      - '${AWS_PORT:-4566}:4566' # LocalStack Gateway
+#      - '4510-4559:4510-4559' # external services port range
     env_file:
       - 'compose/aws.env'
     environment:
@@ -12,7 +12,8 @@ services:
       SERVICES: sqs,sns
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
-      - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
+      - ${TMPDIR:-/tmp}/localstack:/var/lib/localstack
+      # - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
       test: ['CMD', 'curl', 'localhost:4566']
@@ -25,18 +26,17 @@ services:
   redis:
     image: redis:7.2.3-alpine3.18
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT:-6379}:6379'
     restart: always
     networks:
       - cdp-tenant
 
   mongodb:
     image: mongo:6.0.13
-    command: mongod --port ${MONGO_PORT:-27017}
     networks:
       - cdp-tenant
     ports:
-      - "${MONGO_PORT:-27017}:${MONGO_PORT:-27017}"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongodb-data:/data
     restart: always
@@ -71,7 +71,7 @@ services:
       context: .
       target: development
     ports:
-      - '3001:3001'
+      - '${CW_PORT:-3000}:3000'
     links:
       - 'localstack:localstack'
       - 'mongodb:mongodb'
@@ -83,7 +83,7 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3001
+      PORT: 3000
       NODE_ENV: development
       LOCALSTACK_ENDPOINT: http://localstack:4566
       MONGO_URI: mongodb://mongodb:27017/

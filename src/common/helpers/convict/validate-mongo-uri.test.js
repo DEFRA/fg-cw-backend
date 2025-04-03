@@ -1,15 +1,16 @@
-import { convictValidateMongoUri } from './validate-mongo-uri.js'
+import { describe, expect, test } from "vitest";
+import { convictValidateMongoUri } from "./validate-mongo-uri.js";
 
-describe('#convictValidateMongoUri', () => {
-  test('With correct mongo-uri, Should not throw', () => {
+describe("#convictValidateMongoUri", () => {
+  test("With correct mongo-uri, Should not throw", () => {
     expect(() =>
-      convictValidateMongoUri.validate('mongodb://127.0.0.1:27017')
-    ).not.toThrow()
-  })
+      convictValidateMongoUri.validate("mongodb://127.0.0.1:27017")
+    ).not.toThrow();
+  });
 
-  test('With invalid mongo-uri, Should throw', () => {
+  test("With invalid mongo-uri, Should throw", () => {
     expect(() =>
-      convictValidateMongoUri.validate('incorrect-mongo-uri')
-    ).toThrow()
-  })
-})
+      convictValidateMongoUri.validate("incorrect-mongo-uri")
+    ).toThrow();
+  });
+});

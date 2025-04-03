@@ -30,7 +30,7 @@ docker exec -it <container id> sh
 
 #### Get a topics attributes
 
-```
+```bash
 awslocal sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:000000000000:grant-application
 ```
 
@@ -158,6 +158,18 @@ To test the application run:
 npm run test
 ```
 
+or (with coverage)
+
+```bash
+npm run coverage
+```
+
+To run integration tests:
+
+```bash
+npm run test:integration
+```
+
 ### Production
 
 To mimic the application running in `production` mode locally run:
@@ -212,17 +224,17 @@ If you require a write lock for Mongo you can acquire it via `server.locker` or 
 
 ```javascript
 async function doStuff(server) {
-  const lock = await server.locker.lock('unique-resource-name')
+  const lock = await server.locker.lock("unique-resource-name");
 
   if (!lock) {
     // Lock unavailable
-    return
+    return;
   }
 
   try {
     // do stuff
   } finally {
-    await lock.free()
+    await lock.free();
   }
 }
 ```
@@ -234,11 +246,11 @@ Note test coverage reports do not like that syntax.
 
 ```javascript
 async function doStuff(server) {
-  await using lock = await server.locker.lock('unique-resource-name')
+  await using lock = await server.locker.lock("unique-resource-name");
 
   if (!lock) {
     // Lock unavailable
-    return
+    return;
   }
 
   // do stuff
@@ -260,7 +272,7 @@ proxy dispatcher:
 To add the dispatcher to your own client:
 
 ```javascript
-import { ProxyAgent } from 'undici'
+import { ProxyAgent } from "undici";
 
 return await fetch(url, {
   dispatcher: new ProxyAgent({
@@ -268,7 +280,7 @@ return await fetch(url, {
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10
   })
-})
+});
 ```
 
 ## Docker
