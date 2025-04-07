@@ -1,29 +1,41 @@
-import { describe, test, vi, expect } from "vitest";
-import { router } from "./router.js";
+import { describe, expect, it } from "vitest";
+import Hapi from "@hapi/hapi";
+import { router } from "./router.js"; // Adjust the path to router.js if needed
 import { health } from "../route/health.js";
+import { workflows } from "../route/workflows.js";
 import { cases } from "../route/cases.js";
 
-vi.mock("../route/health.js", () => ({
-  health: { method: "GET", path: "/health", handler: vi.fn() }
-}));
+describe("Router plugin tests", () => {
+  it("should register all routes correctly", async () => {
+    // Create a mock Hapi server
+    const server = Hapi.server();
+    await server.register(router.plugin);
 
-vi.mock("../route/cases.js", () => ({
-  cases: [
-    { method: "GET", path: "/cases", handler: vi.fn() },
-    { method: "POST", path: "/cases", handler: vi.fn() }
-  ]
-}));
+    // Verify that all routes are correctly registered
+    const registeredRoutes = server.table();
 
-describe("router plugin", () => {
-  test("should have the correct plugin name", () => {
-    expect(router.plugin.name).toBe("router");
+    // Create lists of route paths from imported modules
+    const expectedRoutes = [
+      ...[health].map((r) => r.path),
+      ...cases.map((r) => r.path),
+      ...workflows.map((r) => r.path)
+    ];
+
+    // Actual server's registered route paths
+    const actualRoutes = registeredRoutes.map((route) => route.path);
+
+    // Assert that all expected routes exist in registered routes
+    expect(new Set(actualRoutes)).toEqual(new Set(expectedRoutes));
   });
 
-  test("should register routes correctly", () => {
-    const server = {
-      route: vi.fn()
-    };
-    router.plugin.register(server, {});
-    expect(server.route).toHaveBeenCalledWith([health, ...cases]);
+  it("should register the router plugin itself", async () => {
+    const server = Hapi.server();
+
+    // Verify if the routes were registered by checking the server's table
+    await server.register(router.plugin);
+    const registeredRoutes = server.table();
+
+    // Assert that routes are registered (length > 0)
+    expect(registeredRoutes.length).toBeGreaterThan(0);
   });
 });

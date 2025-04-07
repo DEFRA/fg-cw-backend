@@ -76,6 +76,14 @@ const config = convict({
         : ["req", "res", "responseTime"]
     }
   },
+  api: {
+    pageSize: {
+      doc: "Default page size for pagination",
+      format: Number,
+      default: 20,
+      env: "DEFAULT_LIMIT"
+    }
+  },
   mongo: {
     uri: {
       doc: "URI for mongodb",

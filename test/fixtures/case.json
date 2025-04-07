@@ -1,7 +1,7 @@
 {
   "id": "100001",
-  "workflowId": "123",
-  "caseRef": "GRANT-1",
+  "workflowCode": "123",
+  "caseRef": "CASE-REF-1",
   "caseType": "Water management R3",
   "caseName": "Northampton Reservoir",
   "businessName": "Farming Group Ltd",

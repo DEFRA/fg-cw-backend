@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { caseService } from "../service/case.service.js";
+import { extractListQuery } from "../common/helpers/api/request.js";
 
 export const caseCreateController = async (request, h) => {
   return h
@@ -8,8 +9,13 @@ export const caseCreateController = async (request, h) => {
 };
 
 export const caseListController = async (request, h) => {
-  const results = await caseService.findCases(request.db);
-  return h.response(results);
+  const listQuery = extractListQuery(request);
+  const results = await caseService.findCases(listQuery, request.db);
+  try {
+    return h.response(results);
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export const caseDetailController = async (request, h) => {

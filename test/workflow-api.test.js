@@ -2,59 +2,59 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { env } from "node:process";
 import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
-import { caseData1, caseData2 } from "./fixtures/case.js";
-import { collection as caseCollection } from "../src/repository/case.repository.js";
+import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
+import { collection as workflowCollection } from "../src/repository/workflow.repository.js";
 
-describe.sequential("Case API", () => {
-  let cases;
+describe.sequential("Workflow API", () => {
+  let workflows;
   let client;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
-    cases = client.db().collection(caseCollection);
+    workflows = client.db().collection(workflowCollection);
   });
 
   afterAll(async () => {
     await client.close();
   });
 
-  describe.sequential("POST /cases", () => {
+  describe.sequential("POST /workflows", () => {
     beforeEach(async () => {
-      await cases.deleteMany({});
+      await workflows.deleteMany({});
     });
 
-    it("adds a case", async () => {
-      const response = await Wreck.post(`${env.API_URL}/cases`, {
+    it("adds a workflow", async () => {
+      const response = await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
-        payload: caseData1
+        payload: workflowData1
       });
 
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
-        ...caseData1,
+        ...workflowData1,
         _id: expect.any(String)
       });
 
-      const documents = await cases.find({}).toArray();
+      const documents = await workflows.find({}).toArray();
 
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
-        ...caseData1,
+        ...workflowData1,
         _id: expect.any(Object)
       });
     });
   });
 
-  describe.sequential("GET /cases", () => {
+  describe.sequential("GET /workflows", () => {
     beforeEach(async () => {
-      await cases.deleteMany({});
+      await workflows.deleteMany({});
     });
 
-    it("finds cases", async () => {
-      await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
+    it("finds workflows", async () => {
+      await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(`${env.API_URL}/cases`, {
+      const response = await Wreck.get(`${env.API_URL}/workflows`, {
         json: true
       });
 
@@ -66,31 +66,31 @@ describe.sequential("Case API", () => {
       expect(response.payload.status).toEqual("success");
       expect(response.payload.data.length).toBe(2);
       expect(response.payload.data[0]).toEqual({
-        ...caseData1,
+        ...workflowData1,
         _id: expect.any(String)
       });
       expect(response.payload.data[1]).toEqual({
-        ...caseData2,
+        ...workflowData2,
         _id: expect.any(String)
       });
     });
   });
 
-  describe.sequential("GET /cases/{caseId}", () => {
+  describe.sequential("GET /workflows/{code}", () => {
     beforeEach(async () => {
-      await cases.deleteMany({});
+      await workflows.deleteMany({});
     });
 
-    it("finds a case by code", async () => {
-      await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
+    it("finds a workflow by code", async () => {
+      await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(`${env.API_URL}/cases/100002`, {
+      const response = await Wreck.get(`${env.API_URL}/workflows/9002`, {
         json: true
       });
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
-        ...caseData2,
+        ...workflowData2,
         _id: expect.any(String)
       });
     });

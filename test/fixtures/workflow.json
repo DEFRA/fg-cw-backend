@@ -1,6 +1,7 @@
 {
-  "id": "123",
-  "caseRef": "GRANT-1",
+  "workflowCode": "123",
+  "description": "Workflow description",
+  "caseRef": "CASE-REF-1",
   "caseName": "Water management R3",
   "caseGroup": "Northampton Reservoir",
   "actionGroups": [
@@ -40,28 +41,30 @@
     {
       "id": "2",
       "title": "Make Application Decision",
-      "action": {
-        "id": "1",
-        "dependsOnActionCompletion": ["1", "2"],
-        "label": "Approve or reject application",
-        "tasks": [
-          {
-            "id": "1",
-            "type": "select",
-            "options": [
-              {
-                "label": "Approve",
-                "value": "APPROVE"
-              },
-              {
-                "label": "Reject",
-                "value": "REJECT"
-              }
-            ],
-            "prompt": "Approve or Reject?"
-          }
-        ]
-      }
+      "actions": [
+        {
+          "id": "1",
+          "dependsOnActionCompletion": ["1", "2"],
+          "label": "Approve or reject application",
+          "tasks": [
+            {
+              "id": "1",
+              "type": "select",
+              "options": [
+                {
+                  "label": "Approve",
+                  "value": "APPROVE"
+                },
+                {
+                  "label": "Reject",
+                  "value": "REJECT"
+                }
+              ],
+              "prompt": "Approve or Reject?"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

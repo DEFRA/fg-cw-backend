@@ -2,28 +2,30 @@ import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { config } from "../config.js";
 
-export const collection = "cases";
+export const collection = "workflows";
 
-export const caseRepository = {
-  createCase: async (caseData, db) => {
+export const workflowRepository = {
+  createWorkflow: async (workflowData, db) => {
     let result;
     try {
-      result = await db.collection(collection).insertOne(caseData);
+      result = await db.collection(collection).insertOne(workflowData);
     } catch (error) {
       if (error instanceof MongoServerError && error.code === 11000) {
-        throw Boom.conflict(`Case with id: ${caseData.id} already exists`);
+        throw Boom.conflict(
+          `Workflow with code: ${workflowData.code} already exists`
+        );
       }
       throw Boom.internal(error);
     }
     if (!result || !result.acknowledged) {
-      throw Boom.internal("Error creating case");
+      throw Boom.internal("Error creating workflow");
     }
     return await db.collection(collection).findOne({
       _id: result.insertedId
     });
   },
 
-  findCases: async (listQuery, db) => {
+  findWorkflows: async (listQuery, db) => {
     const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
       listQuery;
     const skip = (page - 1) * pageSize;
@@ -46,9 +48,9 @@ export const caseRepository = {
     };
   },
 
-  getCase: async (caseId, db) => {
+  getWorkflow: async (workflowCode, db) => {
     return await db.collection(collection).findOne({
-      id: caseId
+      workflowCode
     });
   }
 };

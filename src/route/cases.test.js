@@ -1,6 +1,5 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { cases } from "./cases.js";
-import Joi from "joi";
 import {
   caseCreateController,
   caseDetailController,
@@ -49,7 +48,8 @@ describe("cases routes", () => {
     expect(options.tags).toContain("api");
     expect(options.response).toEqual({
       status: {
-        200: Joi.array().items(caseSchema.Case).label("Cases")
+        200: commonSchema.ListResponse,
+        400: commonSchema.ValidationError
       }
     });
   });
