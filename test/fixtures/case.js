@@ -1,7 +1,7 @@
 export const caseData1 = {
   id: "100001",
-  workflowId: "123",
-  caseRef: "GRANT-1",
+  workflowCode: "123",
+  caseRef: "CASE-REF-1",
   caseType: "Water management R3",
   caseName: "Northampton Reservoir",
   businessName: "Farming Group Ltd",
@@ -60,8 +60,8 @@ export const caseData1 = {
 
 export const caseData2 = {
   id: "100002",
-  workflowId: "123",
-  caseRef: "GRANT-1",
+  workflowCode: "123",
+  caseRef: "CASE-REF-2",
   caseType: "Water management R3",
   caseName: "Northampton Reservoir",
   businessName: "Farming Group Ltd",

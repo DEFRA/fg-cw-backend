@@ -4,8 +4,8 @@ export const caseService = {
   createCase: async (caseData, db) => {
     return caseRepository.createCase(caseData, db);
   },
-  findCases: async (db) => {
-    return caseRepository.findCases(db);
+  findCases: async (listQuery, db) => {
+    return caseRepository.findCases(listQuery, db);
   },
   getCase: async (caseId, db) => {
     return caseRepository.getCase(caseId, db);

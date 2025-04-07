@@ -18,7 +18,7 @@ const ActionGroup = Joi.object({
 
 const CaseData = Joi.object({
   id: Joi.string(),
-  workflowId: Joi.string(),
+  workflowCode: Joi.string(),
   caseRef: Joi.string(),
   caseType: Joi.string(),
   caseName: Joi.string(),
