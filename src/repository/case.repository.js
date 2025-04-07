@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
+import { config } from "../config.js";
 
 export const collection = "cases";
 
@@ -21,9 +22,30 @@ export const caseRepository = {
       _id: result.insertedId
     });
   },
-  findCases: async (db) => {
-    return await db.collection(collection).find().toArray();
+
+  findCases: async (listQuery, db) => {
+    const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
+      listQuery;
+    const skip = (page - 1) * pageSize;
+    const count = await db.collection(collection).estimatedDocumentCount();
+    const pageCount = Math.ceil(count / pageSize);
+    return {
+      status: "success",
+      metadata: {
+        ...listQuery,
+        count,
+        pageCount
+      },
+
+      data: await db
+        .collection(collection)
+        .find()
+        .skip(skip)
+        .limit(pageSize)
+        .toArray()
+    };
   },
+
   getCase: async (caseId, db) => {
     return await db.collection(collection).findOne({
       id: caseId

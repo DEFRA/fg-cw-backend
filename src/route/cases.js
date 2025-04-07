@@ -32,9 +32,16 @@ const cases = [
     options: {
       description: "Get all cases",
       tags: ["api"],
+      validate: {
+        query: Joi.object({
+          page: Joi.number().integer().optional(),
+          pageSize: Joi.number().integer().optional()
+        })
+      },
       response: {
         status: {
-          200: Joi.array().items(caseSchema.Case).label("Cases")
+          200: commonSchema.ListResponse,
+          400: commonSchema.ValidationError
         }
       }
     },
