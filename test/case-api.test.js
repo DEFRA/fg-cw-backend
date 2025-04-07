@@ -1,48 +1,22 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { DockerComposeEnvironment, Wait } from "testcontainers";
+import { env } from "node:process";
 import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
 import { caseData1, caseData2 } from "./fixtures/case.js";
 import { collection as caseCollection } from "../src/repository/case.repository.js";
 
 describe.sequential("Case API", () => {
-  const CW_PORT = 3801;
-  const MONGO_PORT = 28017;
-  const AWS_PORT = 4866;
-  const REDIS_PORT = 6879;
-  const MONGO_URI = `mongodb://localhost:${MONGO_PORT}/fg-cw-backend`;
-  const API_URL = `http://localhost:${CW_PORT}`;
-
-  let environment;
   let cases;
   let client;
 
   beforeAll(async () => {
-    environment = await new DockerComposeEnvironment(".", "compose.yml")
-      .withEnvironment({
-        CW_PORT,
-        MONGO_PORT,
-        AWS_PORT,
-        REDIS_PORT
-      })
-      .withWaitStrategy("redis", Wait.forListeningPorts())
-      .withWaitStrategy("mongodb", Wait.forListeningPorts())
-      .withWaitStrategy("localstack", Wait.forHealthCheck())
-      .withWaitStrategy("fg-cw-backend", Wait.forListeningPorts())
-      .withNoRecreate()
-      .up();
-
-    // Connect to MongoDB
-    client = new MongoClient(MONGO_URI);
+    client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection(caseCollection);
   });
 
   afterAll(async () => {
     await client.close();
-    if (environment) {
-      await environment.down();
-    }
   });
 
   describe.sequential("POST /cases", () => {
@@ -51,7 +25,7 @@ describe.sequential("Case API", () => {
     });
 
     it("adds a case", async () => {
-      const response = await Wreck.post(`${API_URL}/cases`, {
+      const response = await Wreck.post(`${env.API_URL}/cases`, {
         json: true,
         payload: caseData1
       });
@@ -80,17 +54,22 @@ describe.sequential("Case API", () => {
     it("finds cases", async () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
-      const response = await Wreck.get(`${API_URL}/cases`, {
+      const response = await Wreck.get(`${env.API_URL}/cases`, {
         json: true
       });
 
       expect(response.res.statusCode).toBe(200);
-      expect(response.payload.length).toBe(2);
-      expect(response.payload[0]).toEqual({
+      expect(response.payload.metadata.page).toEqual(1);
+      expect(response.payload.metadata.pageSize).toEqual(100);
+      expect(response.payload.metadata.count).toEqual(2);
+      expect(response.payload.metadata.pageCount).toEqual(1);
+      expect(response.payload.status).toEqual("success");
+      expect(response.payload.data.length).toBe(2);
+      expect(response.payload.data[0]).toEqual({
         ...caseData1,
         _id: expect.any(String)
       });
-      expect(response.payload[1]).toEqual({
+      expect(response.payload.data[1]).toEqual({
         ...caseData2,
         _id: expect.any(String)
       });
@@ -105,7 +84,7 @@ describe.sequential("Case API", () => {
     it("finds a case by code", async () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
-      const response = await Wreck.get(`${API_URL}/cases/100002`, {
+      const response = await Wreck.get(`${env.API_URL}/cases/100002`, {
         json: true
       });
 

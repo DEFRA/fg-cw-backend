@@ -3,6 +3,7 @@ import { LockManager } from "mongo-locks";
 
 import { config } from "../../config.js";
 import { collection as caseCollection } from "../../repository/case.repository.js";
+import { collection as workflowCollection } from "../../repository/workflow.repository.js";
 
 const mongoConfig = config.get("mongo");
 
@@ -49,4 +50,7 @@ export const mongoDb = {
 
 async function createIndexes(db) {
   await db.collection(caseCollection).createIndex({ id: 1 }, { unique: true });
+  await db
+    .collection(workflowCollection)
+    .createIndex({ workflowCode: 1 }, { unique: true });
 }

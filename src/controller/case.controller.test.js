@@ -1,26 +1,3 @@
-// describe("Case controllers", () => {
-//   let server;
-//
-//   beforeAll(async () => {
-//     server = hapi.server();
-//     await server.register([router]);
-//     await server.initialize();
-//   });
-//
-//   describe("caseCreateController", () => {
-//     it("should create a case and return the correct response", async () => {
-//       caseService.createCase.mockResolvedValueOnce(caseData1);
-//       const { statusCode, result } = await server.inject({
-//         method: "POST",
-//         url: "/cases",
-//         payload: caseData1
-//       });
-//       expect(statusCode).toBe(200);
-//       expect(result).equals(caseData1)
-//       expect(caseService.createCase).toBeCalled();
-//     });
-//   });
-// });
 import { describe, it, expect, vi } from "vitest";
 import {
   caseCreateController,
@@ -80,7 +57,10 @@ describe("case.controller.js", () => {
 
       const result = await caseListController(mockRequest, mockResponseToolkit);
 
-      expect(caseService.findCases).toHaveBeenCalledWith(mockRequest.db);
+      expect(caseService.findCases).toHaveBeenCalledWith(
+        { page: 1, pageSize: 100 },
+        mockRequest.db
+      );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCases);
       expect(result).toEqual(mockCases);
     });

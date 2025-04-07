@@ -1,7 +1,7 @@
 [
   {
     "id": "100002",
-    "workflowId": "123",
+    "workflowCode": "123",
     "caseRef": "CASE-REF-1",
     "caseType": "Water management R3",
     "caseName": "Northampton Reservoir",
@@ -58,7 +58,7 @@
   },
   {
     "id": "100002",
-    "workflowId": "123",
+    "workflowCode": "123",
     "caseRef": "CASE-REF-2",
     "caseType": "Water management R3",
     "caseName": "Northampton Reservoir",

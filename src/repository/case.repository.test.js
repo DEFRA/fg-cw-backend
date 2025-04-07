@@ -1,20 +1,27 @@
-import { describe, test, vi, expect, beforeEach } from "vitest";
+import { describe, test, vi, expect, beforeAll } from "vitest";
 import Boom from "@hapi/boom";
 import { caseRepository, collection } from "./case.repository.js";
 import { MongoServerError } from "mongodb";
 import { caseData1, caseData2 } from "../../test/fixtures/case.js";
+import caseListResponse from "../../test/fixtures/case-list-response.json";
 
 describe("caseRepository", () => {
   let db;
 
-  beforeEach(() => {
+  beforeAll(() => {
     db = {
       collection: vi.fn().mockReturnThis(),
       insertOne: vi.fn(),
       findOne: vi.fn(),
       find: vi.fn().mockReturnThis(),
-      toArray: vi.fn()
+      toArray: vi.fn(),
+      estimatedDocumentCount: vi.fn(),
+      skip: vi.fn(),
+      limit: vi.fn()
     };
+    db.find.mockReturnThis();
+    db.skip.mockReturnThis();
+    db.limit.mockReturnThis();
   });
 
   describe("createCase", () => {
@@ -74,16 +81,21 @@ describe("caseRepository", () => {
 
   describe("findCases", () => {
     test("should return a list of cases", async () => {
+      const listQuery = { page: 1, pageSize: 10 };
       const cases = [caseData1, caseData2];
 
       db.toArray.mockResolvedValue(cases);
+      db.estimatedDocumentCount.mockResolvedValue(2);
 
-      const result = await caseRepository.findCases(db);
+      const result = await caseRepository.findCases(listQuery, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(db.find).toHaveBeenCalled();
+      expect(db.estimatedDocumentCount).toHaveBeenCalled();
+      expect(db.skip).toHaveBeenCalledWith(100 * (listQuery.page - 1));
+      expect(db.limit).toHaveBeenCalled();
       expect(db.toArray).toHaveBeenCalled();
-      expect(result).toEqual(cases);
+      expect(result).toEqual(caseListResponse);
     });
   });
 
