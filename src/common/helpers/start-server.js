@@ -1,5 +1,6 @@
 import { createServer } from "../../server.js";
 import { createLogger } from "./logging/logger.js";
+import { up } from "migrate-mongo";
 
 async function startServer(host, port) {
   let server;
@@ -10,6 +11,13 @@ async function startServer(host, port) {
 
     server.logger.info("Server started successfully");
     server.logger.info(`Access your backend on http://${host}:${port}`);
+
+    server.logger.info("Running DB Migrations");
+
+    // Database migrations
+    await up(server.db, server.mongoClient);
+
+    server.logger.info("Finished running DB Migrations");
   } catch (error) {
     const logger = createLogger();
     logger.info("Server failed to start :(");

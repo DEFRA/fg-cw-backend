@@ -120,7 +120,7 @@ describe("Workflow Repository", () => {
       const result = await workflowRepository.getWorkflow(workflowCode, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ workflowCode: workflowCode });
+      expect(db.findOne).toHaveBeenCalledWith({ workflowCode });
       expect(result).toEqual(expectedWorkflow);
     });
 
@@ -132,7 +132,7 @@ describe("Workflow Repository", () => {
       const result = await workflowRepository.getWorkflow(workflowCode, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ workflowCode: workflowCode });
+      expect(db.findOne).toHaveBeenCalledWith({ workflowCode });
       expect(result).toBeNull();
     });
   });
