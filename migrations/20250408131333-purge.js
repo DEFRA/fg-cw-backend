@@ -3,7 +3,7 @@
  * @returns {Promise<void>}
  */
 export const up = async (db) => {
-  const collectionNames = (await db.collections()).map((e) => e.name);
+  const collectionNames = (await db.collections()).map((e) => e.collectionName);
   if (collectionNames.includes("cases")) {
     await db.dropCollection("cases");
   }
