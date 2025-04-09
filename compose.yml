@@ -2,10 +2,10 @@ services:
   localstack:
     image: localstack/localstack:4
     ports:
-      - '${AWS_PORT:-4566}:4566' # LocalStack Gateway
-#      - '4510-4559:4510-4559' # external services port range
+      - "${AWS_PORT:-4566}:4566" # LocalStack Gateway
+    #      - '4510-4559:4510-4559' # external services port range
     env_file:
-      - 'compose/aws.env'
+      - "compose/aws.env"
     environment:
       DEBUG: ${DEBUG:-1}
       LS_LOG: WARN # Localstack DEBUG Level
@@ -16,7 +16,7 @@ services:
       # - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
+      test: ["CMD", "curl", "localhost:4566"]
       interval: 5s
       start_period: 5s
       retries: 3
@@ -26,7 +26,7 @@ services:
   redis:
     image: redis:7.2.3-alpine3.18
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - "${REDIS_PORT:-6379}:6379"
     restart: always
     networks:
       - cdp-tenant
@@ -71,17 +71,17 @@ services:
       context: .
       target: development
     ports:
-      - '${CW_PORT:-3000}:3000'
+      - "${CW_PORT:-3000}:3000"
     links:
-      - 'localstack:localstack'
-      - 'mongodb:mongodb'
+      - "localstack:localstack"
+      - "mongodb:mongodb"
     depends_on:
       localstack:
         condition: service_healthy
       mongodb:
         condition: service_started
     env_file:
-      - 'compose/aws.env'
+      - "compose/aws.env"
     environment:
       PORT: 3000
       NODE_ENV: development
@@ -90,6 +90,8 @@ services:
     networks:
       - cdp-tenant
     volumes:
+      - ./migrate-mongo-config.js:/home/node/mongo-config.js
+      - ./migrations:/home/node/migrations
       - ./src:/home/node/src
       - ./package.json:/home/node/package.json
 

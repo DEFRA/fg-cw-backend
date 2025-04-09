@@ -4,8 +4,8 @@
  */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
-    workflowCode: "123",
-    description: "Workflow description",
+    workflowCode: "001",
+    description: "Example workflow description",
     caseRef: "CASE-REF-1",
     caseName: "Water management R3",
     caseGroup: "Northampton Reservoir",
@@ -80,5 +80,5 @@ export const up = async (db) => {
  * @returns {Promise<void>}
  */
 export const down = async (db) => {
-  await db.collection("workflows").deleteOne({ workflowCode: "123" });
+  await db.collection("workflows").deleteOne({ workflowCode: "001" });
 };
