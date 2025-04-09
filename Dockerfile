@@ -13,6 +13,8 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node package*.json ./
 RUN npm install
+COPY --chown=node:node ./migrate-mongo-config.js ./
+COPY --chown=node:node ./migrations ./migrations
 COPY --chown=node:node ./src ./src
 
 CMD [ "npm", "run", "docker:dev" ]
@@ -28,6 +30,8 @@ RUN apk add --no-cache curl
 USER node
 
 COPY --from=development /home/node/package*.json ./
+COPY --from=development /home/node/migrate-mongo-config.js ./
+COPY --from=development /home/node/migrations ./migrations/
 COPY --from=development /home/node/src ./src/
 
 RUN npm ci --omit=dev

@@ -3,14 +3,31 @@
  * @returns {Promise<void>}
  */
 export const up = async (db) => {
-  await db.dropCollection("cases");
-  await db.dropCollection("workflows");
+  const collectionNames = (await db.collections()).map((e) => e.name);
+  if (collectionNames.includes("cases")) {
+    await db.dropCollection("cases");
+  }
+  if (collectionNames.includes("workflows")) {
+    await db.dropCollection("workflows");
+  }
   await db.createCollection("cases");
   await db.createCollection("workflows");
+  await db.collection("cases").dropIndexes();
+  await db.collection("workflows").dropIndexes();
   await db.createIndex(
     "cases",
     {
-      caseId: 1
+      id: 1
+    },
+    {
+      unique: true
+    }
+  );
+  await db.createIndex(
+    "cases",
+    {
+      id: 1,
+      workflowCode: 1
     },
     {
       unique: true
@@ -19,17 +36,7 @@ export const up = async (db) => {
   await db.createIndex(
     "workflows",
     {
-      workflowId: 1
-    },
-    {
-      unique: true
-    }
-  );
-  await db.createIndex(
-    "cases",
-    {
-      caseId: 1,
-      workflowId: 1
+      workflowCode: 1
     },
     {
       unique: true
