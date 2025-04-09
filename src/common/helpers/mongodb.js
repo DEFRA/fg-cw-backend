@@ -1,9 +1,6 @@
 import { MongoClient } from "mongodb";
 import { LockManager } from "mongo-locks";
-
 import { config } from "../../config.js";
-import { collection as caseCollection } from "../../repository/case.repository.js";
-import { collection as workflowCollection } from "../../repository/workflow.repository.js";
 
 const mongoConfig = config.get("mongo");
 
@@ -24,10 +21,7 @@ export const mongoDb = {
       const db = client.db(databaseName);
       const locker = new LockManager(db.collection("mongo-locks"));
 
-      await createIndexes(db);
-
       server.logger.info(`MongoDb connected to ${databaseName}`);
-
       server.decorate("server", "mongoClient", client);
       server.decorate("server", "db", db);
       server.decorate("server", "locker", locker);
@@ -47,10 +41,3 @@ export const mongoDb = {
     readPreference: "secondary"
   }
 };
-
-async function createIndexes(db) {
-  await db.collection(caseCollection).createIndex({ id: 1 }, { unique: true });
-  await db
-    .collection(workflowCollection)
-    .createIndex({ workflowCode: 1 }, { unique: true });
-}
