@@ -31,26 +31,26 @@ docker exec -it <container id> sh
 #### Get a topics attributes
 
 ```bash
-awslocal sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:000000000000:grant-application
+awslocal sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:000000000000:grant_application_created
 ```
 
 #### Get a queue attributes
 
 ```
 awslocal sqs get-queue-attributes \
-  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application --attribute-names All
+  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case --attribute-names All
 ```
 
 ```
 awslocal sqs get-queue-attributes \
-  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/dead-letter-queue --attribute-names All
+  --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case-deadletter --attribute-names All
 ```
 
-#### Send message to the grant-application topic
+#### Send message to the grant_application_created topic
 
 ```
 awslocal sns publish \
-  --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant-application" \
+  --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant_application_created" \
   --message '{"hello": "world"}'
 ```
 
@@ -58,38 +58,45 @@ awslocal sns publish \
 
 ```
 awslocal sqs receive-message \
---queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application"
+--queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case"
+```
+
+```
+awslocal sqs receive-message \
+--queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case-deadletter"
 ```
 
 #### Delete a message from the queue
 
 ```
 awslocal sqs delete-message \
---queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application --receipt-handle <receipt-handle>
+--queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case --receipt-handle <receipt-handle>
 ```
 
 #### Purge the queue
 
 ```
 awslocal sqs purge-queue \
---queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
+--queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
 ```
 
 #### Test the dead letter queue
 
-Send a message in and try to recieve the message twice like so
+Send a message in and try to receive the message four times like so
 
 ```
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/grant-application
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
 ```
 
 #### Move the DLQ messages back into the recovery queue
 
 ```
 awslocal sqs start-message-move-task \
-  --source-arn arn:aws:sqs:eu-west-2:000000000000:dead-letter-queue \
-  --destination-arn arn:aws:sqs:eu-west-2:000000000000:recovery-queue
+  --source-arn arn:aws:sqs:eu-west-2:000000000000:create_new_case-deadletter \
+  --destination-arn arn:aws:sqs:eu-west-2:000000000000:create_new_case-recovery
 ```
 
 Core delivery platform Node.js Backend Template.
