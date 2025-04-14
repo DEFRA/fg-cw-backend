@@ -1,5 +1,72 @@
 # fg-cw-backend
 
+## AWS
+
+#### Get a topics attributes (fg-gas-backend DEV)
+
+Note that the SQS url http://sqs.eu-west-2.127.0.0.1:4566 will also work in the terminal
+
+```bash
+aws sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:332499610595:grant_application_created
+```
+
+#### Get a queue attributes
+
+```
+aws sqs get-queue-attributes \
+  --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case --attribute-names All
+```
+
+```
+aws sqs get-queue-attributes \
+  --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter --attribute-names All
+```
+
+#### Send message to the grant_application_created topic
+
+```
+aws sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:332499610595:grant_application_created" \
+  --message '{"hello": "world"}'
+```
+
+#### Check the message has arrived in the queue
+
+```
+aws sqs receive-message \
+--queue-url "https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case"
+```
+
+```
+aws sqs receive-message \
+--queue-url "https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter"
+```
+
+#### Delete a message from the queue
+
+```
+aws sqs delete-message \
+--queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case --receipt-handle <receipt-handle>
+```
+
+#### Purge the queue
+
+```
+aws sqs purge-queue \
+--queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
+```
+
+#### Test the dead letter queue
+
+Send a message in and try to receive the message four times like so
+
+```
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+```
+
 ## Docker
 
 Launch CW and dependencies via Docker Compose:

@@ -1,11 +1,11 @@
 import Joi from "joi";
 import { commonSchema } from "../schema/common.schema.js";
-import { caseSchema as workflowSchema } from "../schema/workflow.schema.js";
 import {
   workflowCreateController,
   workflowDetailController,
   workflowListController
 } from "../controller/workflow.controller.js";
+import { workflowSchema } from "../schema/workflow.schema.js";
 
 const workflows = [
   {
