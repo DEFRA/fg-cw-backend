@@ -84,7 +84,7 @@ describe.sequential("Workflow API", () => {
     it("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(`${env.API_URL}/workflows/9002`, {
+      const response = await Wreck.get(`${env.API_URL}/workflows/GRANT-REF-2`, {
         json: true
       });
 

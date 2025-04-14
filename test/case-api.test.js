@@ -41,6 +41,8 @@ describe.sequential("Case API", () => {
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
         ...caseData1,
+        dateReceived: new Date(caseData1.dateReceived),
+        targetDate: new Date(caseData1.targetDate),
         _id: expect.any(Object)
       });
     });
