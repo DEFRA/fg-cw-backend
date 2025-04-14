@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { caseSchema } from "./case.schema.js";
-import { caseSchema as workflowSchema } from "./workflow.schema.js";
+import { workflowSchema } from "./workflow.schema.js";
 
 const ListResponse = Joi.object({
   metadata: Joi.object({
