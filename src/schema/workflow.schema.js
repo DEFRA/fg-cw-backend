@@ -1,9 +1,13 @@
 import Joi from "joi";
 
-const taskSchema = Joi.object({
+const Task = Joi.object({
   id: Joi.string().required(),
-  type: Joi.string().valid("radio", "select").required(),
+  type: Joi.string().valid("radio", "select").optional(),
+  inputType: Joi.string().optional(),
   prompt: Joi.string().required(),
+  value: Joi.alternatives()
+    .try(Joi.string().optional(), Joi.boolean().optional(), Joi.allow(null))
+    .optional(),
   options: Joi.array()
     .items(
       Joi.object({
@@ -11,40 +15,37 @@ const taskSchema = Joi.object({
         value: Joi.string().required()
       })
     )
-    .when("type", {
-      is: "select",
-      then: Joi.required(),
-      otherwise: Joi.forbidden()
-    })
-});
+    .optional()
+}).label("Task");
 
-const actionSchema = Joi.object({
-  id: Joi.string().required(),
-  dependsOnActionCompletion: Joi.array().items(Joi.string()).min(1).optional(),
-  label: Joi.string().required(),
-  tasks: Joi.array().items(taskSchema).min(1).required()
-});
-
-const actionGroupSchema = Joi.object({
+const TaskGroup = Joi.object({
   id: Joi.string().required(),
   title: Joi.string().required(),
-  actions: Joi.array().items(actionSchema).min(1)
-});
+  dependsOnActionCompletion: Joi.array().items(Joi.string()).optional(),
+  tasks: Joi.array().items(Task).required(),
+  status: Joi.string()
+    .valid("NOT STARTED", "IN PROGRESS", "COMPLETED", "CANNOT START YET")
+    .optional()
+}).label("TaskGroup");
+
+export const TaskSection = Joi.object({
+  id: Joi.string().required(),
+  title: Joi.string().required(),
+  taskGroups: Joi.array().items(TaskGroup).required()
+}).label("TaskSection");
 
 const WorkflowData = Joi.object({
   workflowCode: Joi.string().required(),
   description: Joi.string().required(),
-  caseRef: Joi.string().required(),
-  caseName: Joi.string().required(),
-  caseGroup: Joi.string().required(),
-  actionGroups: Joi.array().items(actionGroupSchema).min(1).required()
-}).label("WorkflowData");
+  taskSections: Joi.array().items(TaskSection).required(),
+  payloadSchema: Joi.object().optional()
+});
 
 const Workflow = WorkflowData.keys({
   _id: Joi.object().required()
 }).label("Workflow");
 
-export const caseSchema = {
+export const workflowSchema = {
   WorkflowData,
   Workflow
 };

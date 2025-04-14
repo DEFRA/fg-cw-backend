@@ -1,34 +1,37 @@
 import Joi from "joi";
+import { TaskSection } from "./workflow.schema.js";
 
-const Task = Joi.object({
+const DataItem = Joi.object({
   id: Joi.string(),
-  value: Joi.allow(null)
-}).label("Task");
+  label: Joi.string(),
+  data: Joi.alternatives().try(Joi.string(), Joi.boolean(), Joi.allow(null))
+}).label("DataItem");
 
-const Action = Joi.object({
-  id: Joi.string(),
-  tasks: Joi.array().items(Task),
-  status: Joi.string()
-}).label("Action");
-
-const ActionGroup = Joi.object({
-  id: Joi.string(),
-  actions: Joi.array().items(Action)
-}).label("ActionGroup");
+const CasePayload = Joi.object({
+  grantApplication: Joi.object({
+    grantCode: Joi.string(),
+    clientRef: Joi.string(),
+    caseName: Joi.string(),
+    businessName: Joi.string(),
+    createdAt: Joi.string(),
+    submittedAt: Joi.string(),
+    data: Joi.array().items(DataItem)
+  })
+}).label("CasePayload");
 
 const CaseData = Joi.object({
-  id: Joi.string(),
-  workflowCode: Joi.string(),
-  caseRef: Joi.string(),
-  caseType: Joi.string(),
-  caseName: Joi.string(),
-  businessName: Joi.string(),
-  status: Joi.string(),
-  dateReceived: Joi.string(),
-  targetDate: Joi.string(),
-  priority: Joi.string(),
-  assignedUser: Joi.string(),
-  actionGroups: Joi.array().items(ActionGroup)
+  id: Joi.string().required(),
+  workflowCode: Joi.string().required(),
+  caseRef: Joi.string().required(),
+  caseName: Joi.string().required(),
+  businessName: Joi.string().required(),
+  status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),
+  dateReceived: Joi.date().iso().required(),
+  targetDate: Joi.date().iso().required(),
+  priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
+  assignedUser: Joi.string().required(),
+  taskSections: Joi.array().items(TaskSection).required(),
+  payload: CasePayload.required()
 }).label("CaseData");
 
 const Case = CaseData.keys({
