@@ -4,39 +4,36 @@
  */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
-    workflowCode: "001",
-    description: "Example workflow description",
-    caseRef: "CASE-REF-1",
-    caseName: "Water management R3",
-    caseGroup: "Northampton Reservoir",
-    actionGroups: [
+    workflowCode: "GRANT-REF-1",
+    description: "Workflow description",
+    taskSections: [
       {
         id: "1",
         title: "Check application",
-        actions: [
+        taskGroups: [
           {
             id: "1",
-            label: "Check application and documents",
+            title: "Check application and documents",
             tasks: [
               {
                 id: "1",
-                type: "radio",
+                inputType: "radio",
                 prompt: "Is the first part OK?"
               },
               {
                 id: "2",
-                type: "radio",
+                inputType: "radio",
                 prompt: "Is the second part OK?"
               }
             ]
           },
           {
             id: "2",
-            label: "Check for dual funding",
+            title: "Check for dual funding",
             tasks: [
               {
                 id: "1",
-                type: "radio",
+                inputType: "radio",
                 prompt: "Is the dual funding available?"
               }
             ]
@@ -46,15 +43,15 @@ export const up = async (db) => {
       {
         id: "2",
         title: "Make Application Decision",
-        actions: [
+        taskGroups: [
           {
             id: "1",
             dependsOnActionCompletion: ["1", "2"],
-            label: "Approve or reject application",
+            title: "Approve or reject application",
             tasks: [
               {
                 id: "1",
-                type: "select",
+                inputType: "select",
                 options: [
                   {
                     label: "Approve",
@@ -71,7 +68,68 @@ export const up = async (db) => {
           }
         ]
       }
-    ]
+    ],
+    payloadSchema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "https://fg-cw.com/grant-application.schema.json",
+      type: "object",
+      properties: {
+        grantCode: {
+          type: "string",
+          description: "The grant type identifier"
+        },
+        clientRef: {
+          type: "string",
+          description: "The client reference for the application."
+        },
+        createdAt: {
+          type: "string",
+          format: "date-time",
+          description: "The date and time when the application was created."
+        },
+        submittedAt: {
+          type: "string",
+          format: "date-time",
+          description: "The date and time when the application was submitted."
+        },
+        data: {
+          type: "array",
+          description: "An array containing application data fields.",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                description: "The unique identifier for the data field."
+              },
+              label: {
+                type: "string",
+                description:
+                  "The label describing the purpose of the data field."
+              },
+              value: {
+                oneOf: [
+                  {
+                    type: "string",
+                    description:
+                      "The string value of the data field if applicable."
+                  },
+                  {
+                    type: "boolean",
+                    description:
+                      "A boolean value if the data field uses true/false."
+                  }
+                ]
+              }
+            },
+            required: ["id", "label", "value"],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ["grantCode", "clientRef", "createdAt", "submittedAt", "data"],
+      additionalProperties: false
+    }
   });
 };
 
