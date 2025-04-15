@@ -1,0 +1,53 @@
+{
+  "id": "100001",
+  "code": "GRANT-REF-1",
+  "clientRef": "APPLICATION-REF-1",
+  "caseName": "Northampton Reservoir",
+  "businessName": "Farming Group Ltd",
+  "createdAt": "2025-03-27T10:34:52.000Z",
+  "submittedAt": "2025-03-27T11:30:52.000Z",
+  "data": [
+    {
+      "id": "1",
+      "label": "SBI",
+      "valueType": "string",
+      "valueString": "SBI001"
+    },
+    {
+      "id": "2",
+      "label": "Firm Reference Number",
+      "valueType": "string",
+      "valueString": "FIRM0001"
+    },
+    {
+      "id": "3",
+      "label": "Customer Reference Number",
+      "valueType": "string",
+      "valueString": "CUST0001"
+    },
+    {
+      "id": "4",
+      "label": "DEFRA ID",
+      "valueType": "string",
+      "valueString": "DEFRA0001"
+    },
+    {
+      "id": "5",
+      "label": "DEFRA Scheme Name",
+      "valueType": "string",
+      "valueString": "Defra Scheme One"
+    },
+    {
+      "id": "6",
+      "label": "Scheme Year",
+      "valueType": "string",
+      "valueString": "2003"
+    },
+    {
+      "id": "7",
+      "label": "Land Data Up To Date",
+      "valueType": "boolean",
+      "valueBoolean": true
+    }
+  ]
+}

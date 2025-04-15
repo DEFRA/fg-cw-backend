@@ -26,7 +26,7 @@ const TaskGroup = Joi.object({
   dependsOnActionCompletion: Joi.array().items(Joi.string()).optional(),
   tasks: Joi.array().items(Task).required(),
   status: Joi.string()
-    .valid("NOT STARTED", "IN PROGRESS", "COMPLETED", "CANNOT START YET")
+    .valid("NOT STARTED", "IN PROGRESS", "COMPLETED", "NOT STARTED")
     .optional()
 }).label("TaskGroup");
 

@@ -4,6 +4,7 @@ import { router } from "./router.js"; // Adjust the path to router.js if needed
 import { health } from "../route/health.js";
 import { workflows } from "../route/workflows.js";
 import { cases } from "../route/cases.js";
+import { caseEvents } from "../route/case-events.js";
 
 describe("Router plugin tests", () => {
   it("should register all routes correctly", async () => {
@@ -18,7 +19,8 @@ describe("Router plugin tests", () => {
     const expectedRoutes = [
       ...[health].map((r) => r.path),
       ...cases.map((r) => r.path),
-      ...workflows.map((r) => r.path)
+      ...workflows.map((r) => r.path),
+      ...caseEvents.map((r) => r.path)
     ];
 
     // Actual server's registered route paths
