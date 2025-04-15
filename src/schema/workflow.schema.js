@@ -5,9 +5,11 @@ const Task = Joi.object({
   type: Joi.string().valid("radio", "select").optional(),
   inputType: Joi.string().optional(),
   prompt: Joi.string().required(),
-  value: Joi.alternatives()
-    .try(Joi.string().optional(), Joi.boolean().optional(), Joi.allow(null))
-    .optional(),
+  value: Joi.alternatives(
+    Joi.string().optional(),
+    Joi.boolean().optional(),
+    Joi.allow(null)
+  ).optional(),
   options: Joi.array()
     .items(
       Joi.object({
