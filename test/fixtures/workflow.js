@@ -69,9 +69,9 @@ export const workflowData1 = {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",
     properties: {
-      grantCode: {
+      code: {
         type: "string",
-        description: "The grant type identifier"
+        description: "The case code identifier"
       },
       clientRef: {
         type: "string",
@@ -121,7 +121,7 @@ export const workflowData1 = {
         }
       }
     },
-    required: ["grantCode", "clientRef", "createdAt", "submittedAt", "data"],
+    required: ["code", "clientRef", "createdAt", "submittedAt", "data"],
     additionalProperties: false
   }
 };
@@ -197,9 +197,9 @@ export const workflowData2 = {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",
     properties: {
-      grantCode: {
+      code: {
         type: "string",
-        description: "The grant type identifier"
+        description: "The case code identifier"
       },
       clientRef: {
         type: "string",
@@ -249,7 +249,7 @@ export const workflowData2 = {
         }
       }
     },
-    required: ["grantCode", "clientRef", "createdAt", "submittedAt", "data"],
+    required: ["code", "clientRef", "createdAt", "submittedAt", "data"],
     additionalProperties: false
   }
 };
