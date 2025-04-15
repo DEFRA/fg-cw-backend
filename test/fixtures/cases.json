@@ -82,7 +82,7 @@
     ],
     "payload": {
       "grantApplication": {
-        "grantCode": "GRANT-REF-1",
+        "code": "GRANT-REF-1",
         "clientRef": "APPLICATION-REF-1",
         "caseName": "Northampton Reservoir",
         "businessName": "Farming Group Ltd",
@@ -92,37 +92,37 @@
           {
             "id": "1",
             "label": "SBI",
-            "data": "SBI001"
+            "value": "SBI001"
           },
           {
             "id": "2",
             "label": "Firm Reference Number",
-            "data": "FIRM0001"
+            "value": "FIRM0001"
           },
           {
             "id": "3",
             "label": "Customer Reference Number",
-            "data": "CUST0001"
+            "value": "CUST0001"
           },
           {
             "id": "4",
             "label": "DEFRA ID",
-            "data": "DEFRA0001"
+            "value": "DEFRA0001"
           },
           {
             "id": "5",
             "label": "DEFRA Scheme Name",
-            "data": "Defra Scheme One"
+            "value": "Defra Scheme One"
           },
           {
             "id": "6",
             "label": "Scheme Year",
-            "data": "2003"
+            "value": "2003"
           },
           {
             "id": "7",
             "label": "Land Data Up To Date",
-            "data": true
+            "value": true
           }
         ]
       }
@@ -211,7 +211,7 @@
     ],
     "payload": {
       "grantApplication": {
-        "grantCode": "GRANT-REF-1",
+        "code": "GRANT-REF-1",
         "clientRef": "APPLICATION-REF-1",
         "caseName": "Northampton Reservoir",
         "businessName": "Farming Group Ltd",
@@ -221,37 +221,37 @@
           {
             "id": "1",
             "label": "SBI",
-            "data": "SBI001"
+            "value": "SBI001"
           },
           {
             "id": "2",
             "label": "Firm Reference Number",
-            "data": "FIRM0001"
+            "value": "FIRM0001"
           },
           {
             "id": "3",
             "label": "Customer Reference Number",
-            "data": "CUST0001"
+            "value": "CUST0001"
           },
           {
             "id": "4",
             "label": "DEFRA ID",
-            "data": "DEFRA0001"
+            "value": "DEFRA0001"
           },
           {
             "id": "5",
             "label": "DEFRA Scheme Name",
-            "data": "Defra Scheme One"
+            "value": "Defra Scheme One"
           },
           {
             "id": "6",
             "label": "Scheme Year",
-            "data": "2003"
+            "value": "2003"
           },
           {
             "id": "7",
             "label": "Land Data Up To Date",
-            "data": true
+            "value": true
           }
         ]
       }

@@ -4,12 +4,16 @@ import { TaskSection } from "./workflow.schema.js";
 const DataItem = Joi.object({
   id: Joi.string(),
   label: Joi.string(),
-  data: Joi.alternatives().try(Joi.string(), Joi.boolean(), Joi.allow(null))
+  value: Joi.alternatives(
+    Joi.string().optional(),
+    Joi.boolean().optional(),
+    Joi.allow(null)
+  ).optional()
 }).label("DataItem");
 
 const CasePayload = Joi.object({
   grantApplication: Joi.object({
-    grantCode: Joi.string(),
+    code: Joi.string(),
     clientRef: Joi.string(),
     caseName: Joi.string(),
     businessName: Joi.string(),
