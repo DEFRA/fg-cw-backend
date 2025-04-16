@@ -2,7 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { env } from "node:process";
 import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
-import { caseData1, caseData2 } from "./fixtures/case.js";
+import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
+import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { collection as caseCollection } from "../src/repository/case.repository.js";
 
 describe.sequential("Case API", () => {
@@ -17,6 +18,40 @@ describe.sequential("Case API", () => {
 
   afterAll(async () => {
     await client.close();
+  });
+
+  describe.sequential("POST /case-events", () => {
+    beforeEach(async () => {
+      await cases.deleteMany({});
+    });
+
+    it("adds a case", async () => {
+      const response = await Wreck.post(`${env.API_URL}/case-events`, {
+        json: true,
+        payload: createCaseEvent3
+      });
+
+      expect(response.res.statusCode).toBe(201);
+      expect(response.payload).toEqual({
+        ...caseData3,
+        _id: expect.any(Object),
+        dateReceived: expect.any(String)
+      });
+
+      const documents = await cases.find({}).toArray();
+
+      expect(documents.length).toBe(1);
+      expect(documents[0]).toEqual({
+        ...caseData3,
+        dateReceived: expect.any(Date),
+        _id: expect.any(Object),
+        payload: {
+          ...caseData3.payload,
+          createdAt: new Date(caseData3.payload.createdAt),
+          submittedAt: new Date(caseData3.payload.submittedAt)
+        }
+      });
+    });
   });
 
   describe.sequential("POST /cases", () => {
@@ -43,7 +78,12 @@ describe.sequential("Case API", () => {
         ...caseData1,
         dateReceived: new Date(caseData1.dateReceived),
         targetDate: new Date(caseData1.targetDate),
-        _id: expect.any(Object)
+        _id: expect.any(Object),
+        payload: {
+          ...caseData1.payload,
+          createdAt: new Date(caseData1.payload.createdAt),
+          submittedAt: new Date(caseData1.payload.submittedAt)
+        }
       });
     });
   });
