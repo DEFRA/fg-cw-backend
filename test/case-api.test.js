@@ -34,7 +34,7 @@ describe.sequential("Case API", () => {
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
         ...caseData3,
-        _id: expect.any(Object),
+        _id: expect.any(String),
         dateReceived: expect.any(String)
       });
 
