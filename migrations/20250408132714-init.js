@@ -70,64 +70,78 @@ export const up = async (db) => {
       }
     ],
     payloadSchema: {
-      $schema: "https://json-schema.org/draft/2020-12/schema",
       $id: "https://fg-cw.com/grant-application.schema.json",
       type: "object",
       properties: {
+        id: {
+          type: "string"
+        },
         code: {
-          type: "string",
-          description: "The case code identifier"
+          type: "string"
         },
         clientRef: {
-          type: "string",
-          description: "The client reference for the application."
+          type: "string"
+        },
+        caseName: {
+          type: "string"
+        },
+        businessName: {
+          type: "string"
         },
         createdAt: {
-          type: "string",
-          format: "date-time",
-          description: "The date and time when the application was created."
+          type: "object"
         },
         submittedAt: {
-          type: "string",
-          format: "date-time",
-          description: "The date and time when the application was submitted."
+          type: "object"
         },
         data: {
           type: "array",
-          description: "An array containing application data fields.",
           items: {
             type: "object",
             properties: {
               id: {
                 type: "string",
-                description: "The unique identifier for the data field."
+                pattern: "^[0-9]+$"
               },
               label: {
-                type: "string",
-                description:
-                  "The label describing the purpose of the data field."
+                type: "string"
               },
-              value: {
-                oneOf: [
-                  {
-                    type: "string",
-                    description:
-                      "The string value of the data field if applicable."
-                  },
-                  {
-                    type: "boolean",
-                    description:
-                      "A boolean value if the data field uses true/false."
-                  }
-                ]
+              valueType: {
+                type: "string",
+                enum: ["string", "boolean", "date", "number"]
+              },
+              valueString: {
+                type: "string"
+              },
+              valueBoolean: {
+                type: "boolean"
+              },
+              valueDateTime: {
+                type: "string",
+                format: "date-time"
+              },
+              valueDate: {
+                type: "string",
+                format: "date"
+              },
+              valueNumber: {
+                type: "number"
               }
             },
-            required: ["id", "label", "value"],
-            additionalProperties: false
+            required: ["id", "label", "valueType"]
           }
         }
       },
-      required: ["code", "clientRef", "createdAt", "submittedAt", "data"],
+      required: [
+        "id",
+        "code",
+        "clientRef",
+        "caseName",
+        "businessName",
+        "createdAt",
+        "submittedAt",
+        "data"
+      ],
       additionalProperties: false
     }
   });
