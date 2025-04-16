@@ -23,6 +23,7 @@ function validateCaseEvent(caseEvent, workflow) {
 
 function createCase(workflow, caseEvent) {
   const newCase = structuredClone(workflow);
+  delete newCase["_id"];
   delete newCase.description;
   delete newCase.payloadSchema;
   newCase.payload = structuredClone(caseEvent);
