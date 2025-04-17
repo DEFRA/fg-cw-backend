@@ -11,7 +11,7 @@ export const caseRepository = {
       result = await db.collection(collection).insertOne(caseData);
     } catch (error) {
       if (error instanceof MongoServerError && error.code === 11000) {
-        throw Boom.conflict(`Case with id: ${caseData.id} already exists`);
+        throw Boom.conflict(`Case with id: ${caseData.caseRef} already exists`);
       }
       throw Boom.internal(error);
     }

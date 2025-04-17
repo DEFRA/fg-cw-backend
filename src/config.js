@@ -98,6 +98,52 @@ const config = convict({
       env: "MONGO_DATABASE"
     }
   },
+  sqs: {
+    region: {
+      doc: "AWS region for SQS",
+      format: String,
+      default: "eu-west-2",
+      env: "AWS_REGION"
+    },
+    endpoint: {
+      doc: "Custom endpoint for SQS (used for LocalStack)",
+      format: String,
+      nullable: true,
+      default: null,
+      env: "SQS_ENDPOINT"
+    },
+    createCaseQueueUrl: {
+      doc: "URL of the SQS queue for case creation events",
+      format: String,
+      default:
+        "https://sqs.eu-west-2.amazonaws.com/000000000000/create_new_case",
+      env: "CREATE_NEW_CASE_SQS_URL"
+    },
+    maxMessages: {
+      doc: "Maximum number of messages to receive in one batch",
+      format: "int",
+      default: 10,
+      env: "SQS_MAX_MESSAGES"
+    },
+    waitTimeSeconds: {
+      doc: "Wait time in seconds for long polling",
+      format: "int",
+      default: 20,
+      env: "SQS_WAIT_TIME_SECONDS"
+    },
+    autoDelete: {
+      doc: "Whether to automatically delete messages after processing",
+      format: Boolean,
+      default: true,
+      env: "SQS_AUTO_DELETE"
+    },
+    maxRetries: {
+      doc: "Maximum number of retries before sending to DLQ",
+      format: "int",
+      default: 3,
+      env: "SQS_MAX_RETRIES"
+    }
+  },
   httpProxy: {
     doc: "HTTP Proxy URL",
     format: String,
