@@ -38,7 +38,6 @@ const receiveMessages = async (
       MessageAttributeNames: messageAttributeNames
     });
 
-    logger.info(`Polling SQS queue: ${queueUrl}`);
     const response = await client.send(command);
     const messages = response.Messages || [];
 
@@ -48,19 +47,6 @@ const receiveMessages = async (
       if (messageHandler && typeof messageHandler === "function") {
         for (const message of messages) {
           try {
-            // Get retry count from message attributes
-            const retryCount = message.Attributes?.ApproximateReceiveCount
-              ? parseInt(message.Attributes.ApproximateReceiveCount, 10) - 1
-              : 0;
-
-            logger.info(
-              `Processing message (attempt ${retryCount + 1}/${maxRetries + 1})`,
-              {
-                messageId: message.MessageId,
-                retryCount
-              }
-            );
-
             await messageHandler(message);
 
             if (autoDelete) {
@@ -74,12 +60,6 @@ const receiveMessages = async (
             const retryCount = message.Attributes?.ApproximateReceiveCount
               ? parseInt(message.Attributes.ApproximateReceiveCount, 10) - 1
               : 0;
-
-            logger.error(`Error processing message: ${error.message}`, {
-              error,
-              messageId: message.MessageId,
-              retryCount
-            });
 
             // If we haven't exceeded the max retries, we'll make the message visible again
             // Otherwise, do nothing and let SQS move it to the DLQ based on the redrive policy see aws.env
@@ -215,21 +195,7 @@ const processMessage = async (messageEvent, db) => {
 
   try {
     // Get retry count from message attributes
-    const {
-      Attributes: attributes,
-      Body: body,
-      MessageId: messageId
-    } = messageEvent;
-    const { ApproximateReceiveCount: approximateReceiveCount } = attributes;
-
-    const retryCount = approximateReceiveCount
-      ? parseInt(approximateReceiveCount, 10) - 1
-      : 0;
-
-    logger.info(`Message retry count: ${retryCount}`, {
-      messageId,
-      retryCount
-    });
+    const { Body: body, MessageId: messageId } = messageEvent;
 
     let caseEvent;
 
@@ -244,13 +210,7 @@ const processMessage = async (messageEvent, db) => {
       throw parseError;
     }
 
-    console.log("Case creation message received:", {
-      messageId,
-      caseEvent
-    });
-
     const { Message: caseInfo } = caseEvent;
-
     const newCase = await caseService.handleCreateCaseEvent(
       JSON.parse(caseInfo),
       db
