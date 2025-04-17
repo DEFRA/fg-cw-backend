@@ -18,6 +18,8 @@ export const setup = async ({ globalConfig }) => {
     .withWaitStrategy("fg-cw-backend", Wait.forListeningPorts())
     .withNoRecreate()
     .up();
+  // Give the mongodb migration scripts enough time to run
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 };
 
 export const teardown = async () => {

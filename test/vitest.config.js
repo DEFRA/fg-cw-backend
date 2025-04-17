@@ -17,6 +17,7 @@ export default defineConfig({
       MONGO_URI: `mongodb://localhost:${MONGO_PORT}/fg-cw-backend`
     },
     hookTimeout: 120000,
-    include: ["**/test/**/*.test.js"]
+    include: ["**/test/**/*.test.js"],
+    maxThreads: 1
   }
 });
