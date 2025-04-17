@@ -1,5 +1,5 @@
 import Boom from "@hapi/boom";
-import { MongoServerError } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { config } from "../config.js";
 
 export const collection = "cases";
@@ -48,7 +48,7 @@ export const caseRepository = {
 
   getCase: async (caseId, db) => {
     return await db.collection(collection).findOne({
-      id: caseId
+      _id: new ObjectId(caseId)
     });
   }
 };

@@ -1,14 +1,14 @@
-import { describe, test, vi, expect, beforeAll } from "vitest";
+import { describe, test, vi, expect, beforeEach, afterEach } from "vitest";
 import Boom from "@hapi/boom";
 import { caseRepository, collection } from "./case.repository.js";
-import { MongoServerError } from "mongodb";
+import { MongoServerError, ObjectId } from "mongodb";
 import { caseData1, caseData2 } from "../../test/fixtures/case.js";
 import caseListResponse from "../../test/fixtures/case-list-response.json";
 
 describe("caseRepository", () => {
   let db;
 
-  beforeAll(() => {
+  beforeEach(() => {
     db = {
       collection: vi.fn().mockReturnThis(),
       insertOne: vi.fn(),
@@ -22,6 +22,10 @@ describe("caseRepository", () => {
     db.find.mockReturnThis();
     db.skip.mockReturnThis();
     db.limit.mockReturnThis();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks(); // Reset state and implementation of all mocks after each test
   });
 
   describe("createCase", () => {
@@ -101,25 +105,25 @@ describe("caseRepository", () => {
 
   describe("getCase", () => {
     test("should return a specific case by id", async () => {
-      const caseId = "10002";
+      const caseId = "6800c9feb76f8f854ebf901a";
       db.findOne.mockResolvedValue(caseData2);
 
       const result = await caseRepository.getCase(caseId, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ id: caseId });
+      expect(db.findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
       expect(result).toEqual(caseData2);
     });
 
     test("should return null if case is not found", async () => {
-      const caseId = "99999";
+      const caseId = "6800c9feb76f8f854ebf901a";
 
       db.findOne.mockResolvedValue(null);
 
       const result = await caseRepository.getCase(caseId, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ id: caseId });
+      expect(db.findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
       expect(result).toBeNull();
     });
   });
