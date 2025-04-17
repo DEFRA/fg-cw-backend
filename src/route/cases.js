@@ -55,7 +55,7 @@ const cases = [
       tags: ["api"],
       validate: {
         params: Joi.object({
-          caseId: Joi.string()
+          caseId: Joi.string().hex().length(24)
         })
       },
       response: {

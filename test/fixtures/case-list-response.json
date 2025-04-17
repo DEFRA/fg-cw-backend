@@ -8,11 +8,8 @@
   },
   "data": [
     {
-      "id": "100001",
       "workflowCode": "GRANT-REF-1",
       "caseRef": "APPLICATION-REF-1",
-      "caseName": "Northampton Reservoir",
-      "businessName": "Farming Group Ltd",
       "status": "NEW",
       "dateReceived": "2025-03-27T11:34:52.000Z",
       "targetDate": "2025-04-27T11:34:52.000Z",
@@ -89,65 +86,37 @@
         }
       ],
       "payload": {
-        "id": "100001",
-        "code": "GRANT-REF-1",
         "clientRef": "APPLICATION-REF-1",
-        "caseName": "Northampton Reservoir",
-        "businessName": "Farming Group Ltd",
+        "code": "GRANT-REF-1",
         "createdAt": "2025-03-27T10:34:52.000Z",
-        "submittedAt": "2025-03-27T11:30:52.000Z",
-        "data": [
-          {
-            "id": "1",
-            "label": "SBI",
-            "valueType": "string",
-            "valueString": "SBI001"
-          },
-          {
-            "id": "2",
-            "label": "Firm Reference Number",
-            "valueType": "string",
-            "valueString": "FIRM0001"
-          },
-          {
-            "id": "3",
-            "label": "Customer Reference Number",
-            "valueType": "string",
-            "valueString": "CUST0001"
-          },
-          {
-            "id": "4",
-            "label": "DEFRA ID",
-            "valueType": "string",
-            "valueString": "DEFRA0001"
-          },
-          {
-            "id": "5",
-            "label": "DEFRA Scheme Name",
-            "valueType": "string",
-            "valueString": "Defra Scheme One"
-          },
-          {
-            "id": "6",
-            "label": "Scheme Year",
-            "valueType": "string",
-            "valueString": "2003"
-          },
-          {
-            "id": "7",
-            "label": "Land Data Up To Date",
-            "valueType": "boolean",
-            "valueBoolean": true
-          }
-        ]
+        "submittedAt": "2025-03-28T11:30:52.000Z",
+        "identifiers": {
+          "sbi": "SBI001",
+          "frn": "FIRM0001",
+          "crn": "CUST0001",
+          "defraId": "DEFRA0001"
+        },
+        "answers": {
+          "scheme": "SFI",
+          "year": 2025,
+          "hasCheckedLandIsUpToDate": true,
+          "actionApplications": [
+            {
+              "parcelId": "9238",
+              "sheetId": "SX0679",
+              "code": "CSAM1",
+              "appliedFor": {
+                "unit": "ha",
+                "quantity": 20.23
+              }
+            }
+          ]
+        }
       }
     },
     {
-      "id": "100002",
       "workflowCode": "GRANT-REF-1",
       "caseRef": "APPLICATION-REF-2",
-      "caseName": "Northampton Reservoir",
-      "businessName": "Farming Group Ltd",
       "status": "NEW",
       "dateReceived": "2025-03-27T11:34:52Z",
       "targetDate": "2025-04-27T11:34:52Z",
@@ -224,57 +193,32 @@
         }
       ],
       "payload": {
-        "id": "100002",
-        "code": "GRANT-REF-1",
         "clientRef": "APPLICATION-REF-2",
-        "caseName": "Northampton Reservoir",
-        "businessName": "Farming Group Ltd",
+        "code": "GRANT-REF-1",
         "createdAt": "2025-03-27T10:34:52.000Z",
-        "submittedAt": "2025-03-27T11:30:52.000Z",
-        "data": [
-          {
-            "id": "1",
-            "label": "SBI",
-            "valueType": "string",
-            "valueString": "SBI001"
-          },
-          {
-            "id": "2",
-            "label": "Firm Reference Number",
-            "valueType": "string",
-            "valueString": "FIRM0001"
-          },
-          {
-            "id": "3",
-            "label": "Customer Reference Number",
-            "valueType": "string",
-            "valueString": "CUST0001"
-          },
-          {
-            "id": "4",
-            "label": "DEFRA ID",
-            "valueType": "string",
-            "valueString": "DEFRA0001"
-          },
-          {
-            "id": "5",
-            "label": "DEFRA Scheme Name",
-            "valueType": "string",
-            "valueString": "Defra Scheme One"
-          },
-          {
-            "id": "6",
-            "label": "Scheme Year",
-            "valueType": "string",
-            "valueString": "2003"
-          },
-          {
-            "id": "7",
-            "label": "Land Data Up To Date",
-            "valueType": "boolean",
-            "valueBoolean": true
-          }
-        ]
+        "submittedAt": "2025-03-28T11:30:52.000Z",
+        "identifiers": {
+          "sbi": "SBI001",
+          "frn": "FIRM0001",
+          "crn": "CUST0001",
+          "defraId": "DEFRA0001"
+        },
+        "answers": {
+          "scheme": "SFI",
+          "year": 2025,
+          "hasCheckedLandIsUpToDate": true,
+          "actionApplications": [
+            {
+              "parcelId": "9238",
+              "sheetId": "SX0679",
+              "code": "CSAM1",
+              "appliedFor": {
+                "unit": "ha",
+                "quantity": 20.23
+              }
+            }
+          ]
+        }
       }
     }
   ]
