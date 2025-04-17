@@ -38,11 +38,8 @@ function createCase(workflow, caseEvent) {
     });
   });
   newCase.caseRef = caseEvent.clientRef;
-  newCase.id = caseEvent.id;
-  newCase.caseName = caseEvent.caseName;
-  newCase.businessName = caseEvent.businessName;
   newCase.status = "NEW";
-  newCase.dateReceived = new Date();
+  newCase.dateReceived = new Date().toISOString();
   newCase.targetDate = null;
   newCase.priority = "LOW";
   newCase.assignedUser = null;

@@ -64,7 +64,7 @@ describe("caseService", () => {
       expect(caseRepository.createCase).toHaveBeenCalledWith(
         {
           ...caseData3,
-          dateReceived: expect.any(Date),
+          dateReceived: expect.any(String),
           payload: {
             ...caseData3.payload,
             createdAt: expect.any(Date),
@@ -83,15 +83,15 @@ describe("caseService", () => {
         createdAt: new Date(createCaseEvent3.createdAt),
         submittedAt: new Date(createCaseEvent3.submittedAt)
       };
-      delete event.caseName;
-      delete event.businessName;
+      delete event.identifiers.sbi;
+      delete event.answers.scheme;
 
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
 
       await expect(
         caseService.handleCreateCaseEvent(event, mockDb)
       ).rejects.toThrow(
-        `Case event with code "GRANT-REF-1" has invalid answers: data must have required property 'caseName', data must have required property 'businessName'`
+        `Case event with code "GRANT-REF-1" has invalid answers: data/identifiers must have required property 'sbi', data/answers must have required property 'scheme'`
       );
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(

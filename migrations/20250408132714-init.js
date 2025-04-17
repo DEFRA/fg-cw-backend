@@ -73,19 +73,10 @@ export const up = async (db) => {
       $id: "https://fg-cw.com/grant-application.schema.json",
       type: "object",
       properties: {
-        id: {
-          type: "string"
-        },
-        code: {
-          type: "string"
-        },
         clientRef: {
           type: "string"
         },
-        caseName: {
-          type: "string"
-        },
-        businessName: {
+        code: {
           type: "string"
         },
         createdAt: {
@@ -94,55 +85,87 @@ export const up = async (db) => {
         submittedAt: {
           type: "object"
         },
-        data: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                pattern: "^[0-9]+$"
-              },
-              label: {
-                type: "string"
-              },
-              valueType: {
-                type: "string",
-                enum: ["string", "boolean", "date", "number"]
-              },
-              valueString: {
-                type: "string"
-              },
-              valueBoolean: {
-                type: "boolean"
-              },
-              valueDateTime: {
-                type: "string",
-                format: "date-time"
-              },
-              valueDate: {
-                type: "string",
-                format: "date"
-              },
-              valueNumber: {
-                type: "number"
-              }
+        identifiers: {
+          type: "object",
+          properties: {
+            sbi: {
+              type: "string"
             },
-            required: ["id", "label", "valueType"]
-          }
+            frn: {
+              type: "string"
+            },
+            crn: {
+              type: "string"
+            },
+            defraId: {
+              type: "string"
+            }
+          },
+          required: ["sbi", "frn", "crn", "defraId"]
+        },
+        answers: {
+          type: "object",
+          properties: {
+            scheme: {
+              type: "string"
+            },
+            year: {
+              type: "integer",
+              minimum: 2000,
+              maximum: 2100
+            },
+            hasCheckedLandIsUpToDate: {
+              type: "boolean"
+            },
+            actionApplications: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  parcelId: {
+                    type: "string"
+                  },
+                  sheetId: {
+                    type: "string"
+                  },
+                  code: {
+                    type: "string"
+                  },
+                  appliedFor: {
+                    type: "object",
+                    properties: {
+                      unit: {
+                        type: "string",
+                        enum: ["ha", "acres", "sqm", "sqft"]
+                      },
+                      quantity: {
+                        type: "number",
+                        minimum: 0
+                      }
+                    },
+                    required: ["unit", "quantity"]
+                  }
+                },
+                required: ["parcelId", "sheetId", "code", "appliedFor"]
+              }
+            }
+          },
+          required: [
+            "scheme",
+            "year",
+            "hasCheckedLandIsUpToDate",
+            "actionApplications"
+          ]
         }
       },
       required: [
-        "id",
-        "code",
         "clientRef",
-        "caseName",
-        "businessName",
+        "code",
         "createdAt",
         "submittedAt",
-        "data"
-      ],
-      additionalProperties: false
+        "identifiers",
+        "answers"
+      ]
     }
   });
 };

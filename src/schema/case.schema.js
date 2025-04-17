@@ -1,28 +1,40 @@
 import Joi from "joi";
 import { TaskSection } from "./workflow.schema.js";
 
-const DataItem = Joi.object({
-  id: Joi.string(),
-  label: Joi.string(),
-  valueString: Joi.string().optional(),
-  valueBoolean: Joi.boolean().optional(),
-  valueDate: Joi.date().iso().optional(),
-  valueNumber: Joi.number().optional(),
-  valueType: Joi.string()
-    .valid("string", "boolean", "date", "number")
-    .optional()
-}).label("DataItem");
+const GrantCaseEventIdentifiers = Joi.object({
+  sbi: Joi.string().required(),
+  frn: Joi.string().required(),
+  crn: Joi.string().required(),
+  defraId: Joi.string().required()
+}).label("GrantCaseEventIdentifiers");
+
+const GrantCaseEventAnswers = Joi.object({
+  scheme: Joi.string().valid("SFI").required(),
+  year: Joi.number().integer().min(2000).max(2100).required(),
+  hasCheckedLandIsUpToDate: Joi.boolean().required(),
+  actionApplications: Joi.array()
+    .items(
+      Joi.object({
+        parcelId: Joi.string().required(),
+        sheetId: Joi.string().required(),
+        code: Joi.string().required(),
+        appliedFor: Joi.object({
+          unit: Joi.string().valid("ha", "acres").required(),
+          quantity: Joi.number().positive().required()
+        }).required()
+      })
+    )
+    .required()
+}).label("GrantCaseEventAnswers");
 
 const GrantCaseEvent = Joi.object({
-  id: Joi.string().required(),
-  code: Joi.string(),
-  clientRef: Joi.string(),
-  caseName: Joi.string(),
-  businessName: Joi.string(),
+  clientRef: Joi.string().required(),
+  code: Joi.string().required(),
   createdAt: Joi.date().iso().required(),
   submittedAt: Joi.date().iso().required(),
-  data: Joi.array().items(DataItem)
-}).label("GrantCaseEvent");
+  identifiers: GrantCaseEventIdentifiers.required(),
+  answers: GrantCaseEventAnswers.required()
+});
 
 const CasePayload = Joi.alternatives()
   .try(GrantCaseEvent.optional())
@@ -30,11 +42,8 @@ const CasePayload = Joi.alternatives()
   .label("CasePayload");
 
 const CaseData = Joi.object({
-  id: Joi.string().required(),
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
-  caseName: Joi.string().required(),
-  businessName: Joi.string().required(),
   status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),
   dateReceived: Joi.date().iso().required(),
   targetDate: Joi.date().iso().allow(null).optional(),

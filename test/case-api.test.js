@@ -43,7 +43,7 @@ describe.sequential("Case API", () => {
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
         ...caseData3,
-        dateReceived: expect.any(Date),
+        dateReceived: expect.any(String),
         _id: expect.any(Object),
         payload: {
           ...caseData3.payload,
@@ -124,11 +124,17 @@ describe.sequential("Case API", () => {
     });
 
     it("finds a case by code", async () => {
-      await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
+      const { insertedIds } = await cases.insertMany([
+        { ...caseData1 },
+        { ...caseData2 }
+      ]);
 
-      const response = await Wreck.get(`${env.API_URL}/cases/100002`, {
-        json: true
-      });
+      const response = await Wreck.get(
+        `${env.API_URL}/cases/${insertedIds[1]}`,
+        {
+          json: true
+        }
+      );
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
