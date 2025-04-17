@@ -158,6 +158,17 @@ awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-we
 awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
 ```
 
+#### SQS Retry Mechanism
+
+The application implements an automatic retry mechanism for failed SQS message processing:
+
+1. When a message fails to process, it will be retried based on the `maxRetries` configuration (default: 3)
+2. Each retry attempt uses exponential backoff (30s, 60s, 120s, etc.)
+3. After all retry attempts are exhausted, the message is moved to the Dead Letter Queue (DLQ)
+4. The retry count is tracked using SQS's built-in `ApproximateReceiveCount` attribute
+
+To configure the maximum number of retries, set the `SQS_MAX_RETRIES` environment variable or update the default in `src/config.js`.
+
 #### Move the DLQ messages back into the recovery queue
 
 ```
