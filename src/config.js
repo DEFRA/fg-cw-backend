@@ -98,6 +98,27 @@ const config = convict({
       env: "MONGO_DATABASE"
     }
   },
+  aws: {
+    awsRegion: {
+      doc: "AWS Region",
+      format: String,
+      default: "eu-west-2",
+      env: "AWS_REGION"
+    },
+    sqsEndpoint: {
+      doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
+      format: String,
+      default: "http://localhost:4566",
+      env: "SQS_ENDPOINT"
+    },
+    createNewCaseSqsUrl: {
+      doc: "URL of the SQS queue for case creation events",
+      format: String,
+      default:
+        "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case",
+      env: "CREATE_NEW_CASE_SQS_URL"
+    }
+  },
   httpProxy: {
     doc: "HTTP Proxy URL",
     format: String,

@@ -121,6 +121,38 @@ awslocal sns publish \
   --message '{"hello": "world"}'
 ```
 
+```
+awslocal sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant_application_created" \
+  --message '{"clientRef": "APPLICATION-REF-7",
+  "code": "GRANT-REF-1",
+  "createdAt": "2025-03-27T10:34:52.000Z",
+  "submittedAt": "2025-03-28T11:30:52.000Z",
+  "identifiers": {
+    "sbi": "SBI001",
+    "frn": "FIRM0001",
+    "crn": "CUST0001",
+    "defraId": "DEFRA0001"
+  },
+  "answers": {
+    "scheme": "SFI",
+    "year": 2025,
+    "hasCheckedLandIsUpToDate": true,
+    "actionApplications": [
+      {
+        "parcelId": "9238",
+        "sheetId": "SX0679",
+        "code": "CSAM1",
+        "appliedFor": {
+          "unit": "ha",
+          "quantity": 20.23
+        }
+      }
+    ]
+  }
+}'
+```
+
 #### Check the message has arrived in the queue
 
 ```

@@ -11,6 +11,7 @@ import { setupProxy } from "./common/helpers/proxy/setup-proxy.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
+import { createCaseEventConsumer } from "./plugin/create-case-event-consumer.js";
 
 async function createServer(host, port) {
   setupProxy();
@@ -66,7 +67,8 @@ async function createServer(host, port) {
       options: swaggerOptions
     },
     mongoDb,
-    router
+    router,
+    createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server)
   ]);
 
   return server;
