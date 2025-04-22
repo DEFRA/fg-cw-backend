@@ -12,7 +12,7 @@ const sqsConsumerPlugin = {
     server.app.sqsConsumer = consumer;
 
     // Start consuming when the server starts
-    server.ext("onPreStart", async () => {
+    server.ext("onPostStart", async () => {
       await consumer.start();
     });
 

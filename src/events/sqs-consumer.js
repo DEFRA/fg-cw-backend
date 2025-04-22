@@ -26,18 +26,12 @@ export default class SqsConsumer {
   async start() {
     this.isRunning = true;
     await this.poll();
-    this.server.log(
-      ["info", "sqs"],
-      `Started polling SQS queue: ${this.queueUrl}`
-    );
+    this.server.logger.info(`Started polling SQS queue: ${this.queueUrl}`);
   }
 
   async stop() {
     this.isRunning = false;
-    this.server.log(
-      ["info", "sqs"],
-      `Stopped polling SQS queue: ${this.queueUrl}`
-    );
+    this.server.logger.info(`Stopped polling SQS queue: ${this.queueUrl}`);
   }
 
   async poll() {
@@ -73,7 +67,7 @@ export default class SqsConsumer {
           );
         }
       } catch (err) {
-        this.server.logger({
+        this.server.logger.error({
           error: err.message,
           message: "Error polling SQS queue"
         });
