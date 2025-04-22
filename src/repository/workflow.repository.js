@@ -49,9 +49,8 @@ export const workflowRepository = {
   },
 
   getWorkflow: async (workflowCode, db) => {
-    const workflow = await db.collection(collection).findOne({
+    return await db.collection(collection).findOne({
       workflowCode
     });
-    return workflow;
   }
 };
