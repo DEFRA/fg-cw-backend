@@ -51,7 +51,9 @@ describe("caseRepository", () => {
       db.insertOne.mockRejectedValue(error);
 
       await expect(caseRepository.createCase(caseData1, db)).rejects.toThrow(
-        Boom.conflict(`Case with id: ${caseData1.id} already exists`)
+        Boom.conflict(
+          `Case with workflow code: '${caseData1.workflowCode}' and case ref: '${caseData1.caseRef}' already exists`
+        )
       );
 
       expect(db.collection).toHaveBeenCalledWith(collection);
