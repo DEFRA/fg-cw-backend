@@ -98,50 +98,43 @@ const config = convict({
       env: "MONGO_DATABASE"
     }
   },
-  sqs: {
-    region: {
-      doc: "AWS region for SQS",
+  aws: {
+    awsRegion: {
+      doc: "AWS Region",
       format: String,
       default: "eu-west-2",
       env: "AWS_REGION"
     },
-    endpoint: {
-      doc: "Custom endpoint for SQS (used for LocalStack)",
+    sqsEndpoint: {
+      doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
       format: String,
-      nullable: true,
-      default: null,
+      default: "http://localstack:4566",
       env: "SQS_ENDPOINT"
     },
-    createCaseQueueUrl: {
+    sqsWaitTimeInSeconds: {
+      doc: "SQS Wait Time in Seconds",
+      format: Number,
+      default: 20,
+      env: "SQS_WAIT_TIME_IN_SECONDS"
+    },
+    sqsMaxNumberOfMessages: {
+      doc: "SQS Max Number of Messages",
+      format: Number,
+      default: 10,
+      env: "SQS_MAX_NUMBER_OF_MESSAGES"
+    },
+    snsEndpoint: {
+      doc: "SNS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
+      format: String,
+      default: "http://localstack:4566",
+      env: "SNS_ENDPOINT"
+    },
+    createNewCaseSqsUrl: {
       doc: "URL of the SQS queue for case creation events",
       format: String,
       default:
-        "https://sqs.eu-west-2.amazonaws.com/000000000000/create_new_case",
+        "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case",
       env: "CREATE_NEW_CASE_SQS_URL"
-    },
-    maxMessages: {
-      doc: "Maximum number of messages to receive in one batch",
-      format: "int",
-      default: 10,
-      env: "SQS_MAX_MESSAGES"
-    },
-    waitTimeSeconds: {
-      doc: "Wait time in seconds for long polling",
-      format: "int",
-      default: 20,
-      env: "SQS_WAIT_TIME_SECONDS"
-    },
-    autoDelete: {
-      doc: "Whether to automatically delete messages after processing",
-      format: Boolean,
-      default: true,
-      env: "SQS_AUTO_DELETE"
-    },
-    maxRetries: {
-      doc: "Maximum number of retries before sending to DLQ",
-      format: "int",
-      default: 3,
-      env: "SQS_MAX_RETRIES"
     }
   },
   httpProxy: {
