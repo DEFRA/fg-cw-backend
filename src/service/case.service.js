@@ -13,7 +13,6 @@ function validateCaseEvent(caseEvent, workflow) {
   });
   addFormats(ajv);
   const caseEventCopy = structuredClone(caseEvent);
-
   const valid = ajv.validate(workflow.payloadSchema, caseEventCopy);
   if (!valid) {
     throw Boom.badRequest(
@@ -44,17 +43,14 @@ function createCase(workflow, caseEvent) {
   newCase.targetDate = null;
   newCase.priority = "LOW";
   newCase.assignedUser = null;
-
   return newCase;
 }
 
 export const caseService = {
   handleCreateCaseEvent: async (caseEvent, db) => {
-    const workflowCode = caseEvent.code;
-    const workflow = await workflowRepository.getWorkflow(workflowCode, db);
-
+    const workflow = await workflowRepository.getWorkflow(caseEvent.code, db);
     if (!workflow) {
-      throw Boom.badRequest(`Workflow ${workflowCode} not found`);
+      throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
     }
     if (workflow.payloadSchema) {
       validateCaseEvent(caseEvent, workflow);

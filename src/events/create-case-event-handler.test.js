@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCaseEventHandler } from "./create-case-event-handler.js";
 import { caseService } from "../service/case.service.js";
-
+import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
+import { caseData3 } from "../../test/fixtures/case.js";
 // Mock the caseService
 vi.mock("../../src/service/case.service.js", () => ({
   caseService: {
@@ -12,7 +13,6 @@ vi.mock("../../src/service/case.service.js", () => ({
 describe("createCaseEventHandler", () => {
   let mockServer;
   let mockMessage;
-  let mockCreateNewCaseEvent;
   let handler;
 
   beforeEach(() => {
@@ -26,34 +26,33 @@ describe("createCaseEventHandler", () => {
     };
 
     // Create mock SQS message
-    mockCreateNewCaseEvent = {
-      clientRef: "TEST-REF-123",
-      code: "GRANT-TEST-1",
-      createdAt: "2023-04-15T10:34:52.000Z",
-      submittedAt: "2023-04-16T11:30:52.000Z",
-      identifiers: {
-        sbi: "SBI123",
-        frn: "FIRM123",
-        crn: "CUST123"
-      },
-      answers: {
-        scheme: "TEST-SCHEME",
-        year: 2023
-      }
-    };
+    // mockCreateNewCaseEvent = {
+    //   clientRef: "TEST-REF-123",
+    //   code: "GRANT-TEST-1",
+    //   createdAt: "2023-04-15T10:34:52.000Z",
+    //   submittedAt: "2023-04-16T11:30:52.000Z",
+    //   identifiers: {
+    //     sbi: "SBI123",
+    //     frn: "FIRM123",
+    //     crn: "CUST123"
+    //   },
+    //   answers: {
+    //     scheme: "TEST-SCHEME",
+    //     year: 2023
+    //   }
+    // };
+
+    const insertedId = "insertedId123";
+    const mockCreatedCase = { _id: insertedId, ...caseData3 };
 
     mockMessage = {
       Body: JSON.stringify({
-        Message: JSON.stringify(mockCreateNewCaseEvent)
+        Message: JSON.stringify(createCaseEvent3)
       })
     };
 
     handler = createCaseEventHandler(mockServer);
-
-    caseService.handleCreateCaseEvent.mockResolvedValue({
-      workflowCode: "GRANT-TEST-1",
-      caseRef: "TEST-REF-123"
-    });
+    caseService.handleCreateCaseEvent.mockResolvedValue(mockCreatedCase);
   });
 
   it("should log received SQS message", async () => {
@@ -71,7 +70,7 @@ describe("createCaseEventHandler", () => {
     // Check dates are converted to Date objects
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
       {
-        ...mockCreateNewCaseEvent,
+        ...createCaseEvent3,
         createdAt: expect.any(Date),
         submittedAt: expect.any(Date)
       },
@@ -83,8 +82,7 @@ describe("createCaseEventHandler", () => {
     await handler(mockMessage);
 
     expect(mockServer.logger.info).toHaveBeenCalledWith({
-      message:
-        "New case created for workflow: GRANT-TEST-1 with caseRef: TEST-REF-123",
+      message: "Received SQS message",
       body: mockMessage.Body
     });
   });
