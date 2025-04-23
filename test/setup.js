@@ -10,6 +10,9 @@ export const setup = async ({ globalConfig }) => {
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
       AWS_PORT: env.AWS_PORT,
+      SQS_ENDPOINT: env.SQS_ENDPOINT,
+      SNS_ENDPOINT: env.SNS_ENDPOINT,
+      CREATE_NEW_CASE_SQS_URL: env.CREATE_NEW_CASE_SQS_URL,
       REDIS_PORT: env.REDIS_PORT
     })
     .withWaitStrategy("redis", Wait.forListeningPorts())

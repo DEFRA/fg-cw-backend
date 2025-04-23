@@ -91,6 +91,9 @@ docker exec -it <container id> sh
 
 ### Useful commands
 
+Docker compose uses localstack to replicate the aws environment.
+Here are some useful commands for interacting with the localstack aws.
+
 #### List the topics
 
 `awslocal sns list-topics`

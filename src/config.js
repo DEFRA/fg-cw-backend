@@ -108,8 +108,14 @@ const config = convict({
     sqsEndpoint: {
       doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
       format: String,
-      default: "http://localhost:4566",
+      default: "http://localstack:4566",
       env: "SQS_ENDPOINT"
+    },
+    snsEndpoint: {
+      doc: "SNS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
+      format: String,
+      default: "http://localstack:4566",
+      env: "SNS_ENDPOINT"
     },
     createNewCaseSqsUrl: {
       doc: "URL of the SQS queue for case creation events",

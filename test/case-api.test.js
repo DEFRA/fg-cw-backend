@@ -25,7 +25,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it("adds a case", async () => {
+    it.sequential("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
         payload: createCaseEvent3
@@ -59,7 +59,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it("adds a case", async () => {
+    it.sequential("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/cases`, {
         json: true,
         payload: caseData1
@@ -93,7 +93,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it("finds cases", async () => {
+    it.sequential("finds cases", async () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/cases`, {
@@ -123,7 +123,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it("finds a case by code", async () => {
+    it.sequential("finds a case by code", async () => {
       const { insertedIds } = await cases.insertMany([
         { ...caseData1 },
         { ...caseData2 }
