@@ -40,7 +40,7 @@ export default class SqsConsumer {
         const receiveParams = {
           QueueUrl: this.queueUrl,
           MaxNumberOfMessages: config.get("aws.sqsMaxNumberOfMessages"),
-          WaitTimeSeconds: config.get("aws.sqsWaitTimeInSeconds"), // Long polling - wait up to 20 seconds for messages
+          WaitTimeSeconds: config.get("aws.sqsWaitTimeInSeconds"),
           AttributeNames: ["All"],
           MessageAttributeNames: ["All"]
         };

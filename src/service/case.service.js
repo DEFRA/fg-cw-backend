@@ -13,8 +13,7 @@ function validateCaseEvent(caseEvent, workflow) {
   });
   addFormats(ajv);
   const caseEventCopy = structuredClone(caseEvent);
-  caseEventCopy.createdAt = new Date(caseEvent.createdAt);
-  caseEventCopy.submittedAt = new Date(caseEvent.submittedAt);
+
   const valid = ajv.validate(workflow.payloadSchema, caseEventCopy);
   if (!valid) {
     throw Boom.badRequest(

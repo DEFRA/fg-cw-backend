@@ -55,7 +55,6 @@ async function createServer(host, port) {
   // pulse          - provides shutdown handlers
   // mongoDb        - sets up mongo connection pool and attaches to `server` and `request` objects
   // router         - routes used in the app
-  // sqs            - consumes SQS messages and processes them
 
   await server.register([
     requestLogger,

@@ -23,11 +23,3 @@ aws --endpoint-url=http://localhost:4566 sqs set-queue-attributes \
 # Subscribe queue to topic
 aws --endpoint-url=http://localhost:4566 sns subscribe --topic-arn arn:aws:sns:eu-west-2:000000000000:grant_application_created \
 --protocol sqs --notification-endpoint arn:aws:sqs:eu-west-2:000000000000:create_new_case
-
-# Check queues
-# aws sqs receive-message \
-#    --queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case"
-# aws sqs receive-message \
-#    --queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case-deadletter"
-# aws sqs receive-message \
-#    --queue-url "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case-recovery"
