@@ -30,6 +30,38 @@ aws sns publish \
   --message '{"hello": "world"}'
 ```
 
+```
+aws sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:332499610595:grant_application_created" \
+  --message '{"clientRef": "APPLICATION-REF-2", \
+  "code": "GRANT-REF-1", \
+  "createdAt": "2025-03-27T10:34:52.000Z", \
+  "submittedAt": "2025-03-28T11:30:52.000Z", \
+  "identifiers": { \
+    "sbi": "SBI001", \
+    "frn": "FIRM0001", \
+    "crn": "CUST0001", \
+    "defraId": "DEFRA0001" \
+  }, \
+  "answers": { \
+    "scheme": "SFI", \
+    "year": 2025, \
+    "hasCheckedLandIsUpToDate": true, \
+    "actionApplications": [ \
+      { \
+        "parcelId": "9238", \
+        "sheetId": "SX0679", \
+        "code": "CSAM1", \
+        "appliedFor": { \
+          "unit": "ha", \
+          "quantity": 20.23 \
+        } \
+      } \
+    ] \
+  } \
+}'
+```
+
 #### Check the message has arrived in the queue
 
 ```
@@ -61,10 +93,10 @@ aws sqs purge-queue \
 Send a message in and try to receive the message four times like so
 
 ```
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
+aws sqs receive-message --visibility-timeout 0 --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
+aws sqs receive-message --visibility-timeout 0 --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
+aws sqs receive-message --visibility-timeout 0 --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
+aws sqs receive-message --visibility-timeout 0 --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
 ```
 
 ## Docker
