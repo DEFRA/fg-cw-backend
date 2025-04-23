@@ -102,13 +102,15 @@ const config = convict({
     awsAccessKeyId: {
       doc: "AWS Access Key ID",
       format: String,
-      default: "test",
+      nullable: true,
+      default: null,
       env: "AWS_ACCESS_KEY_ID"
     },
     awsSecretAccessKey: {
       doc: "AWS Secret Access Key",
       format: String,
-      default: "test",
+      nullable: true,
+      default: null,
       env: "AWS_SECRET_ACCESS_KEY"
     },
     awsRegion: {
