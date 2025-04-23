@@ -17,8 +17,8 @@ export default class SqsConsumer {
       endpoint: config.get("aws.sqsEndpoint") || "http://localhost:4566",
       region: config.get("aws.awsRegion") || "eu-west-2",
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "test",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "test"
+        accessKeyId: config.get("aws.awsAccessKeyId") || "test",
+        secretAccessKey: config.get("aws.awsSecretAccessKey") || "test"
       }
     });
   }

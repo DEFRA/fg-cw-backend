@@ -9,6 +9,8 @@ export const setup = async ({ globalConfig }) => {
     .withEnvironment({
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
+      AWS_ACCESS_KEY_ID: env.AWS_ACCESS_KEY_ID,
+      AWS_SECRET_ACCESS_KEY: env.AWS_SECRET_ACCESS_KEY,
       AWS_PORT: env.AWS_PORT,
       SQS_ENDPOINT: env.SQS_ENDPOINT,
       SNS_ENDPOINT: env.SNS_ENDPOINT,
