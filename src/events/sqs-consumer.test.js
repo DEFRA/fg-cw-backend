@@ -78,8 +78,8 @@ describe("SqsConsumer", () => {
         endpoint: "http://localhost:4566",
         region: "eu-west-2",
         credentials: {
-          accessKeyId: expect.any(String),
-          secretAccessKey: expect.any(String)
+          accessKeyId: undefined,
+          secretAccessKey: undefined
         }
       });
     });
