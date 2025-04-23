@@ -91,6 +91,9 @@ docker exec -it <container id> sh
 
 ### Useful commands
 
+Docker compose uses localstack to replicate the aws environment.
+Here are some useful commands for interacting with the localstack aws.
+
 #### List the topics
 
 `awslocal sns list-topics`
@@ -118,7 +121,33 @@ awslocal sqs get-queue-attributes \
 ```
 awslocal sns publish \
   --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant_application_created" \
-  --message '{"hello": "world"}'
+  --message '{"clientRef": "APPLICATION-REF-7",
+  "code": "GRANT-REF-1",
+  "createdAt": "2025-03-27T10:34:52.000Z",
+  "submittedAt": "2025-03-28T11:30:52.000Z",
+  "identifiers": {
+    "sbi": "SBI001",
+    "frn": "FIRM0001",
+    "crn": "CUST0001",
+    "defraId": "DEFRA0001"
+  },
+  "answers": {
+    "scheme": "SFI",
+    "year": 2025,
+    "hasCheckedLandIsUpToDate": true,
+    "actionApplications": [
+      {
+        "parcelId": "9238",
+        "sheetId": "SX0679",
+        "code": "CSAM1",
+        "appliedFor": {
+          "unit": "ha",
+          "quantity": 20.23
+        }
+      }
+    ]
+  }
+}'
 ```
 
 #### Check the message has arrived in the queue
@@ -157,6 +186,17 @@ awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-we
 awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
 awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
 ```
+
+#### SQS Retry Mechanism
+
+The application implements an automatic retry mechanism for failed SQS message processing:
+
+1. When a message fails to process, it will be retried based on the `maxRetries` configuration (default: 3)
+2. Each retry attempt uses exponential backoff (30s, 60s, 120s, etc.)
+3. After all retry attempts are exhausted, the message is moved to the Dead Letter Queue (DLQ)
+4. The retry count is tracked using SQS's built-in `ApproximateReceiveCount` attribute
+
+To configure the maximum number of retries, set the `SQS_MAX_RETRIES` environment variable or update the default in `src/config.js`.
 
 #### Move the DLQ messages back into the recovery queue
 
