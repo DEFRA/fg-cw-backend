@@ -31,7 +31,7 @@ export const setup = async ({ globalConfig }) => {
     .withNoRecreate()
     .up();
   // Small delay to allow containers to finish starting up
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 };
 
 export const teardown = async () => {
