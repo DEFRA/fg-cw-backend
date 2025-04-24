@@ -76,11 +76,7 @@ describe("SqsConsumer", () => {
       expect(consumer.isRunning).toBe(false);
       expect(SQSClient).toHaveBeenCalledWith({
         endpoint: "http://localhost:4566",
-        region: "eu-west-2",
-        credentials: {
-          accessKeyId: undefined,
-          secretAccessKey: undefined
-        }
+        region: "eu-west-2"
       });
     });
   });
