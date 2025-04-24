@@ -62,7 +62,7 @@ export default class SqsConsumer {
               } catch (err) {
                 this.server.logger.error({
                   error: err.message,
-                  message: "Failed to process SQS message",
+                  message: `Failed to process SQS message ID: ${message.MessageId} - ${err.message}`,
                   messageId: message.MessageId
                 });
               }
