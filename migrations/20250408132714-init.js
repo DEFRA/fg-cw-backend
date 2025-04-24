@@ -4,7 +4,7 @@
  */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
-    workflowCode: "GRANT-REF-1",
+    workflowCode: "frps-private-beta",
     description: "Workflow description",
     taskSections: [
       {

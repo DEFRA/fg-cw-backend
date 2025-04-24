@@ -1,5 +1,5 @@
 export const workflowData1 = {
-  workflowCode: "GRANT-REF-1",
+  workflowCode: "frps-private-beta",
   description: "Workflow description",
   taskSections: [
     {
