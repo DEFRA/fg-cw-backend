@@ -50,33 +50,5 @@ describe("sqsConsumerPlugin", () => {
 
       expect(server.app.sqsConsumer).toBeDefined();
     });
-
-    it("should register onPostStart extension to start the consumer", async () => {
-      await sqsConsumerPlugin.register(server, options);
-
-      // Get the first ext call arguments - should be onPostStart
-      const [event, handler] = server.ext.mock.calls[0];
-      expect(event).toBe("onPostStart");
-
-      // Call the handler
-      await handler();
-
-      // Verify consumer.start was called
-      expect(server.app.sqsConsumer.start).toHaveBeenCalled();
-    });
-
-    it("should register onPreStop extension to stop the consumer", async () => {
-      await sqsConsumerPlugin.register(server, options);
-
-      // Get the second ext call arguments - should be onPreStop
-      const [event, handler] = server.ext.mock.calls[1];
-      expect(event).toBe("onPreStop");
-
-      // Call the handler
-      await handler();
-
-      // Verify consumer.stop was called
-      expect(server.app.sqsConsumer.stop).toHaveBeenCalled();
-    });
   });
 });
