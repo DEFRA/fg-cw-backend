@@ -18,8 +18,9 @@ aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name create_ne
 # Configure dead letter queue
 aws --endpoint-url=http://localhost:4566 sqs set-queue-attributes \
 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case \
---attributes '{ "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:eu-west-2:000000000000:create_new_case-deadletter\",\"maxReceiveCount\":\"3\", \"visibilityTimeout\":\"30\"}" }'
+--attributes '{ "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:eu-west-2:000000000000:create_new_case-deadletter\", \"maxReceiveCount\":\"3\", \"visibilityTimeout\":\"30\"}" }'
 
 # Subscribe queue to topic
 aws --endpoint-url=http://localhost:4566 sns subscribe --topic-arn arn:aws:sns:eu-west-2:000000000000:grant_application_created \
---protocol sqs --notification-endpoint arn:aws:sqs:eu-west-2:000000000000:create_new_case
+--protocol sqs --notification-endpoint arn:aws:sqs:eu-west-2:000000000000:create_new_case \
+--attributes '{ "RawMessageDelivery": "true"}'
