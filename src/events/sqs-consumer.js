@@ -13,14 +13,17 @@ export default class SqsConsumer {
     this.isRunning = false;
 
     // Configure SQS client
-    this.sqsClient = new SQSClient({
+    const awsConfig = {
       endpoint: config.get("aws.sqsEndpoint") || "http://localhost:4566",
-      region: config.get("aws.awsRegion") || "eu-west-2",
-      credentials: {
-        accessKeyId: config.get("aws.awsAccessKeyId"),
-        secretAccessKey: config.get("aws.awsSecretAccessKey")
-      }
-    });
+      region: config.get("aws.awsRegion") || "eu-west-2"
+    };
+    if (config.get("aws.isLocalstackEnabled")) {
+      awsConfig.credentials = {
+        accessKeyId: "test",
+        secretAccessKey: "test"
+      };
+    }
+    this.sqsClient = new SQSClient(awsConfig);
   }
 
   async start() {

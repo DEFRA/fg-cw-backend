@@ -8,8 +8,7 @@ const SQS_ENDPOINT = "http://localhost.localstack.cloud:4866";
 const SNS_ENDPOINT = "http://localhost.localstack.cloud:4866";
 const CREATE_NEW_CASE_SQS_URL =
   "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case";
-const AWS_ACCESS_KEY_ID = "test";
-const AWS_SECRET_ACCESS_KEY = "test";
+const LOCALSTACK_ENABLED = true;
 
 export default defineConfig({
   test: {
@@ -17,8 +16,7 @@ export default defineConfig({
     env: {
       CW_PORT,
       MONGO_PORT,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
+      LOCALSTACK_ENABLED,
       AWS_PORT,
       SQS_ENDPOINT,
       SNS_ENDPOINT,

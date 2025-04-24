@@ -99,19 +99,11 @@ const config = convict({
     }
   },
   aws: {
-    awsAccessKeyId: {
-      doc: "AWS Access Key ID",
-      format: String,
-      nullable: true,
-      default: null,
-      env: "AWS_ACCESS_KEY_ID"
-    },
-    awsSecretAccessKey: {
-      doc: "AWS Secret Access Key",
-      format: String,
-      nullable: true,
-      default: null,
-      env: "AWS_SECRET_ACCESS_KEY"
+    isLocalstackEnabled: {
+      doc: "Is localstack enabled",
+      format: Boolean,
+      default: false,
+      env: "LOCALSTACK_ENABLED"
     },
     awsRegion: {
       doc: "AWS Region",
