@@ -91,7 +91,7 @@ services:
     networks:
       - cdp-tenant
     volumes:
-      - ./migrate-mongo-config.js:/home/node/mongo-config.js
+      - ./migrate-mongo-config.js:/home/node/migrate-mongo-config.js
       - ./migrations:/home/node/migrations
       - ./src:/home/node/src
       - ./package.json:/home/node/package.json
