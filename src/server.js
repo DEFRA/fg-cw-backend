@@ -72,6 +72,14 @@ async function createServer(host, port) {
     createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server)
   ]);
 
+  server.events.on("start", async () => {
+    await server.app.sqsConsumer.start();
+  });
+
+  server.events.on("stop", async () => {
+    await server.app.sqsConsumer.stop();
+  });
+
   return server;
 }
 
