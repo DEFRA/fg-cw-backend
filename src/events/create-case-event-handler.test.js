@@ -25,30 +25,11 @@ describe("createCaseEventHandler", () => {
       db: {}
     };
 
-    // Create mock SQS message
-    // mockCreateNewCaseEvent = {
-    //   clientRef: "TEST-REF-123",
-    //   code: "GRANT-TEST-1",
-    //   createdAt: "2023-04-15T10:34:52.000Z",
-    //   submittedAt: "2023-04-16T11:30:52.000Z",
-    //   identifiers: {
-    //     sbi: "SBI123",
-    //     frn: "FIRM123",
-    //     crn: "CUST123"
-    //   },
-    //   answers: {
-    //     scheme: "TEST-SCHEME",
-    //     year: 2023
-    //   }
-    // };
-
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData3 };
 
     mockMessage = {
-      Body: JSON.stringify({
-        Message: JSON.stringify(createCaseEvent3)
-      })
+      Body: JSON.stringify(createCaseEvent3)
     };
 
     handler = createCaseEventHandler(mockServer);
