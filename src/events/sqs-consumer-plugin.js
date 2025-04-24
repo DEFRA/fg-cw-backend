@@ -10,6 +10,14 @@ const sqsConsumerPlugin = {
 
     // Register the consumer in server app
     server.app.sqsConsumer = consumer;
+
+    server.events.on("start", async () => {
+      await consumer.start();
+    });
+
+    server.events.on("stop", async () => {
+      await consumer.stop();
+    });
   }
 };
 
