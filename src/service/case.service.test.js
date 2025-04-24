@@ -91,7 +91,7 @@ describe("caseService", () => {
       await expect(
         caseService.handleCreateCaseEvent(event, mockDb)
       ).rejects.toThrow(
-        `Case event with code "GRANT-REF-1" has invalid answers: data/identifiers must have required property 'sbi', data/answers must have required property 'scheme'`
+        `Case event with code "frps-private-beta" has invalid answers: data/identifiers must have required property 'sbi', data/answers must have required property 'scheme'`
       );
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(

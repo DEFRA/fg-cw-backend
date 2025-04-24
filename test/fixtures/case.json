@@ -1,5 +1,5 @@
 {
-  "workflowCode": "GRANT-REF-1",
+  "workflowCode": "frps-private-beta",
   "caseRef": "APPLICATION-REF-1",
   "status": "NEW",
   "dateReceived": "2025-03-27T11:34:52Z",
@@ -78,7 +78,7 @@
   ],
   "payload": {
     "clientRef": "APPLICATION-REF-1",
-    "code": "GRANT-REF-1",
+    "code": "frps-private-beta",
     "createdAt": "2025-03-27T10:34:52.000Z",
     "submittedAt": "2025-03-28T11:30:52.000Z",
     "identifiers": {
