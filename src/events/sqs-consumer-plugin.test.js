@@ -19,24 +19,27 @@ describe("sqsConsumerPlugin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    // Mock Hapi server instance
     server = {
       app: {},
-      ext: vi.fn()
+      events: {
+        on: vi.fn()
+      }
     };
 
-    // Create mock options
+    // Mock plugin options
     options = {
       queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
       handleMessage: vi.fn()
     };
   });
 
-  it("should have the correct name", () => {
+  it("should contain the correct plugin name", () => {
     expect(sqsConsumerPlugin.name).toBe("sqs-consumer");
   });
 
-  describe("register", () => {
-    it("should create a new SQS consumer with server and options", async () => {
+  describe("register function", () => {
+    it("should create an SQS consumer with the provided server and options", async () => {
       await sqsConsumerPlugin.register(server, options);
 
       expect(SqsConsumer).toHaveBeenCalledWith(server, {
@@ -45,38 +48,77 @@ describe("sqsConsumerPlugin", () => {
       });
     });
 
-    it("should register the consumer in server.app", async () => {
+    it("should attach event listeners for start and stop events", async () => {
+      const consumerMock = {
+        start: vi.fn(),
+        stop: vi.fn()
+      };
+      SqsConsumer.mockImplementation(() => consumerMock);
+
       await sqsConsumerPlugin.register(server, options);
 
-      expect(server.app.sqsConsumer).toBeDefined();
+      expect(server.events.on).toHaveBeenCalledWith(
+        "start",
+        expect.any(Function)
+      );
+      expect(server.events.on).toHaveBeenCalledWith(
+        "stop",
+        expect.any(Function)
+      );
+
+      // Simulate the event listeners
+      const [startEvent, startHandler] = server.events.on.mock.calls[0];
+      const [stopEvent, stopHandler] = server.events.on.mock.calls[1];
+
+      expect(startEvent).toBe("start");
+      expect(stopEvent).toBe("stop");
+
+      await startHandler();
+      expect(consumerMock.start).toHaveBeenCalledTimes(1);
+
+      await stopHandler();
+      expect(consumerMock.stop).toHaveBeenCalledTimes(1);
     });
 
-    it("should register onPostStart extension to start the consumer", async () => {
+    it("should ensure the consumer starts and stops without errors during events", async () => {
+      const consumerMock = {
+        start: vi.fn().mockResolvedValue(),
+        stop: vi.fn().mockResolvedValue()
+      };
+      SqsConsumer.mockImplementation(() => consumerMock);
+
       await sqsConsumerPlugin.register(server, options);
 
-      // Get the first ext call arguments - should be onPostStart
-      const [event, handler] = server.ext.mock.calls[0];
-      expect(event).toBe("onPostStart");
+      // Simulate start and stop
+      const startHandler = server.events.on.mock.calls[0][1];
+      const stopHandler = server.events.on.mock.calls[1][1];
 
-      // Call the handler
-      await handler();
+      await expect(startHandler()).resolves.toBeUndefined();
+      await expect(stopHandler()).resolves.toBeUndefined();
 
-      // Verify consumer.start was called
-      expect(server.app.sqsConsumer.start).toHaveBeenCalled();
+      expect(consumerMock.start).toHaveBeenCalledOnce();
+      expect(consumerMock.stop).toHaveBeenCalledOnce();
     });
 
-    it("should register onPreStop extension to stop the consumer", async () => {
+    it("should log or handle errors if start or stop fails", async () => {
+      const errorMessage = "Consumer failed";
+      const consumerMock = {
+        start: vi.fn().mockRejectedValue(new Error(errorMessage)),
+        stop: vi.fn().mockRejectedValue(new Error(errorMessage))
+      };
+      SqsConsumer.mockImplementation(() => consumerMock);
+
       await sqsConsumerPlugin.register(server, options);
 
-      // Get the second ext call arguments - should be onPreStop
-      const [event, handler] = server.ext.mock.calls[1];
-      expect(event).toBe("onPreStop");
+      // Simulate start and stop
+      const startHandler = server.events.on.mock.calls[0][1];
+      const stopHandler = server.events.on.mock.calls[1][1];
 
-      // Call the handler
-      await handler();
+      await expect(startHandler()).rejects.toThrow(errorMessage);
+      await expect(stopHandler()).rejects.toThrow(errorMessage);
 
-      // Verify consumer.stop was called
-      expect(server.app.sqsConsumer.stop).toHaveBeenCalled();
+      expect(consumerMock.start).toHaveBeenCalledOnce();
+      expect(consumerMock.stop).toHaveBeenCalledOnce();
     });
   });
 });

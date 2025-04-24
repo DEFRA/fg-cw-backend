@@ -75,7 +75,7 @@ export default class SqsConsumer {
           message: "Error polling SQS queue"
         });
         // Add a small delay before retrying on error
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 30000));
       }
     }
   }

@@ -11,13 +11,11 @@ const sqsConsumerPlugin = {
     // Register the consumer in server app
     server.app.sqsConsumer = consumer;
 
-    // Start consuming when the server starts
-    server.ext("onPostStart", async () => {
+    server.events.on("start", async () => {
       await consumer.start();
     });
 
-    // Stop consuming when the server stops
-    server.ext("onPreStop", async () => {
+    server.events.on("stop", async () => {
       await consumer.stop();
     });
   }
