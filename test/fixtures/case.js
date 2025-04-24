@@ -1,5 +1,5 @@
 export const caseData1 = {
-  workflowCode: "GRANT-REF-1",
+  workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-1",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
@@ -78,7 +78,7 @@ export const caseData1 = {
   ],
   payload: {
     clientRef: "APPLICATION-REF-1",
-    code: "GRANT-REF-1",
+    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -107,7 +107,7 @@ export const caseData1 = {
 };
 
 export const caseData2 = {
-  workflowCode: "GRANT-REF-1",
+  workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-2",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52Z",
@@ -186,7 +186,7 @@ export const caseData2 = {
   ],
   payload: {
     clientRef: "APPLICATION-REF-2",
-    code: "GRANT-REF-1",
+    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -215,7 +215,7 @@ export const caseData2 = {
 };
 
 export const caseData3 = {
-  workflowCode: "GRANT-REF-1",
+  workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
@@ -294,7 +294,7 @@ export const caseData3 = {
   ],
   payload: {
     clientRef: "APPLICATION-REF-3",
-    code: "GRANT-REF-1",
+    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {

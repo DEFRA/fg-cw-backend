@@ -7,8 +7,10 @@ const createCaseEventHandler = (server) => async (message) => {
   });
 
   // Process the message
-  const messageBody = JSON.parse(message.Body);
-  const createNewCaseEvent = JSON.parse(messageBody.Message);
+  let createNewCaseEvent = JSON.parse(message.Body);
+  if (createNewCaseEvent.Message) {
+    createNewCaseEvent = JSON.parse(createNewCaseEvent.Message);
+  }
   createNewCaseEvent.createdAt = new Date(createNewCaseEvent.createdAt);
   createNewCaseEvent.submittedAt = new Date(createNewCaseEvent.submittedAt);
   const newCase = await caseService.handleCreateCaseEvent(

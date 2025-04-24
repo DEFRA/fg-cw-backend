@@ -27,33 +27,7 @@ aws sqs get-queue-attributes \
 ```
 aws sns publish \
   --topic-arn "arn:aws:sns:eu-west-2:332499610595:grant_application_created" \
-  --message '{"clientRef": "APPLICATION-REF-3",
-  "code": "GRANT-REF-1",
-  "createdAt": "2025-03-27T10:34:52.000Z",
-  "submittedAt": "2025-03-28T11:30:52.000Z",
-  "identifiers": {
-    "sbi": "SBI001",
-    "frn": "FIRM0001",
-    "crn": "CUST0001",
-    "defraId": "DEFRA0001"
-  },
-  "answers": {
-    "scheme": "SFI",
-    "year": 2025,
-    "hasCheckedLandIsUpToDate": true,
-    "actionApplications": [
-      {
-        "parcelId": "9238",
-        "sheetId": "SX0679",
-        "code": "CSAM1",
-        "appliedFor": {
-          "unit": "ha",
-          "quantity": 20.23
-        }
-      }
-    ]
-  }
-}'
+  --message '{"clientRef": "APPLICATION-REF-1", "code": "frps-private-beta", "createdAt": "2025-03-27T10:34:52.000Z", "submittedAt": "2025-03-28T11:30:52.000Z", "identifiers": { "sbi": "SBI001", "frn": "FIRM0001", "crn": "CUST0001", "defraId": "DEFRA0001" }, "answers": { "scheme": "SFI", "year": 2025, "hasCheckedLandIsUpToDate": true, "actionApplications": [ { "parcelId": "9238", "sheetId": "SX0679", "code": "CSAM1", "appliedFor": {"unit": "ha","quantity": 20.23 }}]}}'
 ```
 
 #### Check the message has arrived in the queue
@@ -80,6 +54,11 @@ aws sqs delete-message \
 ```
 aws sqs purge-queue \
 --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
+```
+
+```
+aws sqs purge-queue \
+--queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter
 ```
 
 #### Test the dead letter queue
@@ -147,8 +126,8 @@ awslocal sqs get-queue-attributes \
 ```
 awslocal sns publish \
   --topic-arn "arn:aws:sns:eu-west-2:000000000000:grant_application_created" \
-  --message '{"clientRef": "APPLICATION-REF-1",
-  "code": "GRANT-REF-1",
+  --message '{"clientRef": "APPLICATION-REF-2",
+  "code": "frps-private-beta",
   "createdAt": "2025-03-27T10:34:52.000Z",
   "submittedAt": "2025-03-28T11:30:52.000Z",
   "identifiers": {
