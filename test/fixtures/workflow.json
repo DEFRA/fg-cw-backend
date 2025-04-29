@@ -1,99 +1,24 @@
 {
-  "workflowCode": "frps-private-beta",
-  "description": "Workflow description",
-  "taskSections": [
-    {
-      "id": "1",
-      "title": "Check application",
-      "taskGroups": [
-        {
-          "id": "1",
-          "title": "Check application and documents",
-          "tasks": [
-            {
-              "id": "1",
-              "inputType": "radio",
-              "prompt": "Is the first part OK?"
-            },
-            {
-              "id": "2",
-              "inputType": "radio",
-              "prompt": "Is the second part OK?"
-            }
-          ]
-        },
-        {
-          "id": "2",
-          "title": "Check for dual funding",
-          "tasks": [
-            {
-              "id": "1",
-              "inputType": "radio",
-              "prompt": "Is the dual funding available?"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "2",
-      "title": "Make Application Decision",
-      "taskGroups": [
-        {
-          "id": "1",
-          "dependsOnActionCompletion": ["1", "2"],
-          "title": "Approve or reject application",
-          "tasks": [
-            {
-              "id": "1",
-              "inputType": "select",
-              "options": [
-                {
-                  "label": "Approve",
-                  "value": "APPROVE"
-                },
-                {
-                  "label": "Reject",
-                  "value": "REJECT"
-                }
-              ],
-              "prompt": "Approve or Reject?"
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "payloadSchema": {
-    "$id": "https://fg-cw.com/grant-application.schema.json",
-    "type": "object",
-    "properties": {
-      "clientRef": {
-        "type": "string"
-      },
-      "code": {
-        "type": "string"
-      },
-      "createdAt": {
-        "type": "object"
-      },
-      "submittedAt": {
-        "type": "object"
-      },
+  "code": "frps-private-beta",
+  "payloadDefinition": {
       "identifiers": {
         "type": "object",
         "properties": {
           "sbi": {
-            "type": "string"
+            "type": "string",
+            "label": "SBI"
           },
           "frn": {
-            "type": "string"
+            "type": "string",
+            "label": "FRN"
           },
           "crn": {
-            "type": "string"
+            "type": "string",
+            "label": "CRN"
           },
           "defraId": {
-            "type": "string"
+            "type": "string",
+            "label": "Defra ID"
           }
         },
         "required": ["sbi", "frn", "crn", "defraId"]
@@ -102,29 +27,36 @@
         "type": "object",
         "properties": {
           "scheme": {
-            "type": "string"
+            "type": "string",
+            "label": "Scheme type"
           },
           "year": {
-            "type": "integer",
+            "type": "number",
             "minimum": 2000,
-            "maximum": 2100
+            "maximum": 2100,
+            "label": "Year"
           },
           "hasCheckedLandIsUpToDate": {
-            "type": "boolean"
+            "type": "boolean",
+            "label": "Has checked land is up to date?"
           },
           "actionApplications": {
             "type": "array",
+            "label": "Action applications",
             "items": {
               "type": "object",
               "properties": {
                 "parcelId": {
-                  "type": "string"
+                  "type": "string",
+                  "label": "Parcel ID"
                 },
                 "sheetId": {
-                  "type": "string"
+                  "type": "string",
+                  "label": "Sheet ID"
                 },
                 "code": {
-                  "type": "string"
+                  "type": "string",
+                  "label": "Code"
                 },
                 "appliedFor": {
                   "type": "object",
@@ -144,22 +76,7 @@
               "required": ["parcelId", "sheetId", "code", "appliedFor"]
             }
           }
-        },
-        "required": [
-          "scheme",
-          "year",
-          "hasCheckedLandIsUpToDate",
-          "actionApplications"
-        ]
+        }
       }
-    },
-    "required": [
-      "clientRef",
-      "code",
-      "createdAt",
-      "submittedAt",
-      "identifiers",
-      "answers"
-    ]
-  }
+    }
 }

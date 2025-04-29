@@ -19,7 +19,7 @@ vi.mock("../service/workflow.service.js", () => ({
 describe("workflow.controller.js", () => {
   const mockRequest = {
     payload: workflowData1,
-    params: { workflowCode: "9001" },
+    params: { code: "9001" },
     db: {}
   };
 
@@ -81,7 +81,7 @@ describe("workflow.controller.js", () => {
       );
 
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.workflowCode,
+        mockRequest.params.code,
         mockRequest.db
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflow);
@@ -96,7 +96,7 @@ describe("workflow.controller.js", () => {
         mockResponseToolkit
       );
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.workflowCode,
+        mockRequest.params.code,
         mockRequest.db
       );
       expect(result).toEqual(

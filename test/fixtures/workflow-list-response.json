@@ -8,7 +8,7 @@
   },
   "data": [
     {
-      "workflowCode": "frps-private-beta",
+      "code": "frps-private-beta",
       "description": "Workflow description",
       "taskSections": [
         {
@@ -173,7 +173,7 @@
       }
     },
     {
-      "workflowCode": "GRANT-REF-2",
+      "code": "GRANT-REF-2",
       "description": "Workflow description",
       "taskSections": [
         {

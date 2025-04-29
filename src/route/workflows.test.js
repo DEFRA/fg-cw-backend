@@ -81,7 +81,7 @@ describe("Workflows route configuration tests", () => {
     // Validate params schema
     expect(Joi.isSchema(options.validate.params)).toBe(true);
     const paramsValidation = options.validate.params.validate({
-      workflowCode: "12345"
+      code: "12345"
     });
     expect(paramsValidation.error).toBeUndefined();
 

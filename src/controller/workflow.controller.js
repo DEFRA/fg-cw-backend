@@ -10,18 +10,20 @@ export const workflowCreateController = async (request, h) => {
 
 export const workflowListController = async (request, h) => {
   const listQuery = extractListQuery(request);
+  console.log("list query",listQuery);
   const results = await workflowService.findWorkflows(listQuery, request.db);
+  console.log(results);
   return h.response(results);
 };
 
 export const workflowDetailController = async (request, h) => {
   const result = await workflowService.getWorkflow(
-    request.params.workflowCode,
+    request.params.code,
     request.db
   );
   if (!result) {
     return Boom.notFound(
-      "Workflow with id: " + request.params.workflowCode + " not found"
+      "Workflow with id: " + request.params.code + " not found"
     );
   }
   return h.response(result);

@@ -37,10 +37,11 @@ export const TaskSection = Joi.object({
 }).label("TaskSection");
 
 const WorkflowData = Joi.object({
-  workflowCode: Joi.string().required(),
-  description: Joi.string().required(),
-  taskSections: Joi.array().items(TaskSection).required(),
-  payloadSchema: Joi.object().optional()
+  code: Joi.string().required(),
+  payloadDefinition: Joi.object().pattern(
+    Joi.string(),
+    Joi.object().min(1)
+  ).min(1).required()
 });
 
 const Workflow = WorkflowData.keys({

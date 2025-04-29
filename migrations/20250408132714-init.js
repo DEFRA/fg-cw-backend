@@ -4,72 +4,8 @@
  */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
-    workflowCode: "frps-private-beta",
-    description: "Workflow description",
-    taskSections: [
-      {
-        id: "1",
-        title: "Check application",
-        taskGroups: [
-          {
-            id: "1",
-            title: "Check application and documents",
-            tasks: [
-              {
-                id: "1",
-                inputType: "radio",
-                prompt: "Is the first part OK?"
-              },
-              {
-                id: "2",
-                inputType: "radio",
-                prompt: "Is the second part OK?"
-              }
-            ]
-          },
-          {
-            id: "2",
-            title: "Check for dual funding",
-            tasks: [
-              {
-                id: "1",
-                inputType: "radio",
-                prompt: "Is the dual funding available?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "2",
-        title: "Make Application Decision",
-        taskGroups: [
-          {
-            id: "1",
-            dependsOnActionCompletion: ["1", "2"],
-            title: "Approve or reject application",
-            tasks: [
-              {
-                id: "1",
-                inputType: "select",
-                options: [
-                  {
-                    label: "Approve",
-                    value: "APPROVE"
-                  },
-                  {
-                    label: "Reject",
-                    value: "REJECT"
-                  }
-                ],
-                prompt: "Approve or Reject?"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    payloadSchema: {
+    code: "frps-private-beta",
+    payloadDefinition: {
       $id: "https://fg-cw.com/grant-application.schema.json",
       type: "object",
       properties: {
@@ -175,5 +111,5 @@ export const up = async (db) => {
  * @returns {Promise<void>}
  */
 export const down = async (db) => {
-  await db.collection("workflows").deleteOne({ workflowCode: "001" });
+  await db.collection("workflows").deleteOne({ code: "001" });
 };
