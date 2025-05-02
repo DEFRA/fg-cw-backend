@@ -101,7 +101,7 @@ describe("workflow.controller.js", () => {
       );
       expect(result).toEqual(
         Boom.notFound(
-          "Workflow with id: " + mockRequest.params.workflowCode + " not found"
+          "Workflow with id: " + mockRequest.params.code + " not found"
         )
       );
     });
