@@ -46,10 +46,13 @@ describe("caseService", () => {
     it("should validate and create a case successfully when workflow and payload are valid", async () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData3 };
+      const createdAt = new Date(createCaseEvent3.createdAt);
+      const submittedAt = new Date(createCaseEvent3.submittedAt);
+
       const event = {
         ...createCaseEvent3,
-        createdAt: new Date(createCaseEvent3.createdAt),
-        submittedAt: new Date(createCaseEvent3.submittedAt)
+        createdAt,
+        submittedAt
       };
 
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
@@ -67,9 +70,10 @@ describe("caseService", () => {
           dateReceived: expect.any(String),
           payload: {
             ...caseData3.payload,
-            createdAt: expect.any(Date),
-            submittedAt: expect.any(Date)
-          }
+            createdAt,
+            submittedAt
+          },
+          payloadDefinition: workflowData1.payloadDefinition
         },
         mockDb
       );

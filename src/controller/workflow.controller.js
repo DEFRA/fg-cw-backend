@@ -3,6 +3,13 @@ import { extractListQuery } from "../common/helpers/api/request.js";
 import { workflowService } from "../service/workflow.service.js";
 
 export const workflowCreateController = async (request, h) => {
+  const { code } = request.payload;
+  const result = await workflowService.getWorkflow(code, request.db);
+
+  if (result) {
+    return Boom.badRequest("Workflow with id '" + code + "' already exists");
+  }
+
   return h
     .response(await workflowService.createWorkflow(request.payload, request.db))
     .code(201);
@@ -10,9 +17,7 @@ export const workflowCreateController = async (request, h) => {
 
 export const workflowListController = async (request, h) => {
   const listQuery = extractListQuery(request);
-  console.log("list query",listQuery);
   const results = await workflowService.findWorkflows(listQuery, request.db);
-  console.log(results);
   return h.response(results);
 };
 

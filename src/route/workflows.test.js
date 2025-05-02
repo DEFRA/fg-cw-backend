@@ -64,18 +64,18 @@ describe("Workflows route configuration tests", () => {
   });
 
   it("should define the GET /workflows/{workflowCode} route with correct configuration", () => {
-    const getDetailRoute = workflows.find(
-      (route) =>
-        route.method === "GET" && route.path === "/workflows/{workflowCode}"
-    );
+    const getDetailRoute = workflows.find((route) => {
+      console.log("ROUTE", route);
+      return route.method === "GET" && route.path === "/workflows/{code}";
+    });
 
     expect(getDetailRoute).toBeDefined();
     expect(getDetailRoute.method).toBe("GET");
-    expect(getDetailRoute.path).toBe("/workflows/{workflowCode}");
+    expect(getDetailRoute.path).toBe("/workflows/{code}");
 
     // Test options configuration
     const { options } = getDetailRoute;
-    expect(options.description).toBe("Find a workflow by workflowCode");
+    expect(options.description).toBe("Find a workflow by code");
     expect(options.tags).toEqual(["api"]);
 
     // Validate params schema

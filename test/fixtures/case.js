@@ -215,83 +215,13 @@ export const caseData2 = {
 };
 
 export const caseData3 = {
-  workflowCode: "frps-private-beta",
+  code: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   targetDate: null,
   priority: "LOW",
   assignedUser: null,
-  taskSections: [
-    {
-      id: "1",
-      title: "Check application",
-      taskGroups: [
-        {
-          id: "1",
-          title: "Check application and documents",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the first part OK?",
-              value: null
-            },
-            {
-              id: "2",
-              inputType: "radio",
-              prompt: "Is the second part OK?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        },
-        {
-          id: "2",
-          title: "Check for dual funding",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the dual funding available?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Make Application Decision",
-      taskGroups: [
-        {
-          id: "1",
-          dependsOnActionCompletion: ["1", "2"],
-          title: "Approve or reject application",
-          tasks: [
-            {
-              id: "1",
-              inputType: "select",
-              options: [
-                {
-                  label: "Approve",
-                  value: "APPROVE"
-                },
-                {
-                  label: "Reject",
-                  value: "REJECT"
-                }
-              ],
-              prompt: "Approve or Reject?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    }
-  ],
   payload: {
     clientRef: "APPLICATION-REF-3",
     code: "frps-private-beta",

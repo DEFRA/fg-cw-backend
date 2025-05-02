@@ -13,7 +13,7 @@ function validateCaseEvent(caseEvent, workflow) {
   });
   addFormats(ajv);
   const caseEventCopy = structuredClone(caseEvent);
-  const valid = ajv.validate(workflow.payloadSchema, caseEventCopy);
+  const valid = ajv.validate(workflow.payloadDefinition, caseEventCopy);
   if (!valid) {
     throw Boom.badRequest(
       `Case event with code "${caseEvent.code}" has invalid answers: ${ajv.errorsText()}`
@@ -25,18 +25,7 @@ function createCase(workflow, caseEvent) {
   const newCase = structuredClone(workflow);
   delete newCase["_id"];
   delete newCase.description;
-  delete newCase.payloadSchema;
   newCase.payload = structuredClone(caseEvent);
-  newCase.taskSections = newCase.taskSections ?? [];
-  newCase.taskSections.forEach((taskSection) => {
-    taskSection.taskGroups = taskSection.taskGroups ?? [];
-    taskSection.taskGroups.forEach((taskGroup) => {
-      taskGroup.status = "NOT STARTED";
-      taskGroup.tasks.forEach((task) => {
-        task.value = null;
-      });
-    });
-  });
   newCase.caseRef = caseEvent.clientRef;
   newCase.status = "NEW";
   newCase.dateReceived = new Date().toISOString();
@@ -52,7 +41,7 @@ export const caseService = {
     if (!workflow) {
       throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
     }
-    if (workflow.payloadSchema) {
+    if (workflow.payloadDefinition) {
       validateCaseEvent(caseEvent, workflow);
     }
     const newCase = createCase(workflow, caseEvent);

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { TaskSection } from "./workflow.schema.js";
+// import { TaskSection } from "./workflow.schema.js";
 
 const GrantCaseEventIdentifiers = Joi.object({
   sbi: Joi.string().required(),
@@ -49,7 +49,7 @@ const CaseData = Joi.object({
   targetDate: Joi.date().iso().allow(null).optional(),
   priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
   assignedUser: Joi.string().allow(null).optional(),
-  taskSections: Joi.array().items(TaskSection).required(),
+  // taskSections: Joi.array().items(TaskSection).required(),
   payload: CasePayload.required()
 }).label("CaseData");
 

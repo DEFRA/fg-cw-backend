@@ -29,10 +29,33 @@ describe("workflow.controller.js", () => {
   };
 
   describe("workflowCreateController", () => {
+    it("should error if workflow code already exists", async () => {
+      const existingCode = "existing-payload-code";
+      const mockCreateRequest = {
+        payload: { ...workflowData1, code: existingCode }
+      };
+      const mockGetServiceResponse = { code: existingCode };
+      workflowService.getWorkflow.mockResolvedValue(mockGetServiceResponse);
+
+      const result = await workflowCreateController(
+        mockCreateRequest,
+        mockResponseToolkit
+      );
+
+      expect(result).toEqual(
+        Boom.badRequest(
+          "Workflow with id '" + existingCode + "' already exists"
+        )
+      );
+    });
+
     it("should create a workflow and return 201 status", async () => {
       const insertedId = "insertedId123";
       const mockCreatedWorkflow = { _id: insertedId, ...workflowData1 };
       const mockResponse = { code: vi.fn() };
+
+      workflowService.getWorkflow.mockResolvedValue(undefined);
+
       workflowService.createWorkflow.mockResolvedValue(mockCreatedWorkflow);
       const h = { response: vi.fn(() => mockResponse) }; // Mock the response toolkit
 
