@@ -32,8 +32,7 @@ export const workflowData1 = {
           defraId: {
             type: "string"
           }
-        },
-        required: ["sbi", "frn", "crn", "defraId"]
+        }
       },
       answers: {
         type: "object",
@@ -74,30 +73,14 @@ export const workflowData1 = {
                       type: "number",
                       minimum: 0
                     }
-                  },
-                  required: ["unit", "quantity"]
+                  }
                 }
-              },
-              required: ["parcelId", "sheetId", "code", "appliedFor"]
+              }
             }
           }
-        },
-        required: [
-          "scheme",
-          "year",
-          "hasCheckedLandIsUpToDate",
-          "actionApplications"
-        ]
+        }
       }
-    },
-    required: [
-      "clientRef",
-      "code",
-      "createdAt",
-      "submittedAt",
-      "identifiers",
-      "answers"
-    ]
+    }
   }
 };
 
@@ -135,8 +118,7 @@ export const workflowData2 = {
           defraId: {
             type: "string"
           }
-        },
-        required: ["sbi", "frn", "crn", "defraId"]
+        }
       },
       answers: {
         type: "object",
@@ -177,29 +159,13 @@ export const workflowData2 = {
                       type: "number",
                       minimum: 0
                     }
-                  },
-                  required: ["unit", "quantity"]
+                  }
                 }
-              },
-              required: ["parcelId", "sheetId", "code", "appliedFor"]
+              }
             }
           }
-        },
-        required: [
-          "scheme",
-          "year",
-          "hasCheckedLandIsUpToDate",
-          "actionApplications"
-        ]
+        }
       }
-    },
-    required: [
-      "clientRef",
-      "code",
-      "createdAt",
-      "submittedAt",
-      "identifiers",
-      "answers"
-    ]
+    }
   }
 };

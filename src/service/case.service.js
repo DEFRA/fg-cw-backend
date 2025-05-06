@@ -1,25 +1,6 @@
 import { caseRepository } from "../repository/case.repository.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
 import Boom from "@hapi/boom";
-
-function validateCaseEvent(caseEvent, workflow) {
-  const ajv = new Ajv({
-    strict: true,
-    allErrors: true,
-    removeAdditional: "all",
-    useDefaults: true
-  });
-  addFormats(ajv);
-  const caseEventCopy = structuredClone(caseEvent);
-  const valid = ajv.validate(workflow.payloadDefinition, caseEventCopy);
-  if (!valid) {
-    throw Boom.badRequest(
-      `Case event with code "${caseEvent.code}" has invalid answers: ${ajv.errorsText()}`
-    );
-  }
-}
 
 function createCase(workflow, caseEvent) {
   const newCase = structuredClone(workflow);
@@ -40,9 +21,6 @@ export const caseService = {
     const workflow = await workflowRepository.getWorkflow(caseEvent.code, db);
     if (!workflow) {
       throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
-    }
-    if (workflow.payloadDefinition) {
-      validateCaseEvent(caseEvent, workflow);
     }
     const newCase = createCase(workflow, caseEvent);
     return caseRepository.createCase(newCase, db);

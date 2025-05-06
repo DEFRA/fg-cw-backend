@@ -43,7 +43,7 @@ describe("caseService", () => {
       );
     });
 
-    it("should validate and create a case successfully when workflow and payload are valid", async () => {
+    it("should create a case successfully", async () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData3 };
       const createdAt = new Date(createCaseEvent3.createdAt);
@@ -78,31 +78,6 @@ describe("caseService", () => {
         mockDb
       );
       expect(result).toEqual(mockCreatedCase);
-    });
-
-    it("should throw a validation error if the payload does not match the workflow schema", async () => {
-      const mockDb = {};
-      const event = {
-        ...createCaseEvent3,
-        createdAt: new Date(createCaseEvent3.createdAt),
-        submittedAt: new Date(createCaseEvent3.submittedAt)
-      };
-      delete event.identifiers.sbi;
-      delete event.answers.scheme;
-
-      workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
-
-      await expect(
-        caseService.handleCreateCaseEvent(event, mockDb)
-      ).rejects.toThrow(
-        `Case event with code "frps-private-beta" has invalid answers: data/identifiers must have required property 'sbi', data/answers must have required property 'scheme'`
-      );
-
-      expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent3.code,
-        mockDb
-      );
-      expect(caseRepository.createCase).not.toHaveBeenCalled();
     });
   });
 

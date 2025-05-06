@@ -36,8 +36,7 @@ export const up = async (db) => {
             defraId: {
               type: "string"
             }
-          },
-          required: ["sbi", "frn", "crn", "defraId"]
+          }
         },
         answers: {
           type: "object",
@@ -78,30 +77,14 @@ export const up = async (db) => {
                         type: "number",
                         minimum: 0
                       }
-                    },
-                    required: ["unit", "quantity"]
+                    }
                   }
-                },
-                required: ["parcelId", "sheetId", "code", "appliedFor"]
+                }
               }
             }
-          },
-          required: [
-            "scheme",
-            "year",
-            "hasCheckedLandIsUpToDate",
-            "actionApplications"
-          ]
+          }
         }
-      },
-      required: [
-        "clientRef",
-        "code",
-        "createdAt",
-        "submittedAt",
-        "identifiers",
-        "answers"
-      ]
+      }
     }
   });
 };

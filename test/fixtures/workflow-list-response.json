@@ -41,8 +41,7 @@
               "defraId": {
                 "type": "string"
               }
-            },
-            "required": ["sbi", "frn", "crn", "defraId"]
+            }
           },
           "answers": {
             "type": "object",
@@ -83,30 +82,14 @@
                           "type": "number",
                           "minimum": 0
                         }
-                      },
-                      "required": ["unit", "quantity"]
+                      }
                     }
-                  },
-                  "required": ["parcelId", "sheetId", "code", "appliedFor"]
+                  }
                 }
               }
-            },
-            "required": [
-              "scheme",
-              "year",
-              "hasCheckedLandIsUpToDate",
-              "actionApplications"
-            ]
+            }
           }
-        },
-        "required": [
-          "clientRef",
-          "code",
-          "createdAt",
-          "submittedAt",
-          "identifiers",
-          "answers"
-        ]
+        }
       }
     },
     {
@@ -143,8 +126,7 @@
               "defraId": {
                 "type": "string"
               }
-            },
-            "required": ["sbi", "frn", "crn", "defraId"]
+            }
           },
           "answers": {
             "type": "object",
@@ -185,30 +167,14 @@
                           "type": "number",
                           "minimum": 0
                         }
-                      },
-                      "required": ["unit", "quantity"]
+                      }
                     }
-                  },
-                  "required": ["parcelId", "sheetId", "code", "appliedFor"]
+                  }
                 }
               }
-            },
-            "required": [
-              "scheme",
-              "year",
-              "hasCheckedLandIsUpToDate",
-              "actionApplications"
-            ]
+            }
           }
-        },
-        "required": [
-          "clientRef",
-          "code",
-          "createdAt",
-          "submittedAt",
-          "identifiers",
-          "answers"
-        ]
+        }
       }
     }
   ]
