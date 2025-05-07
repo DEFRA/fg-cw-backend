@@ -103,7 +103,6 @@ describe("Workflows route configuration tests", () => {
 
   it("should define the GET /workflows/{workflowCode} route with correct configuration", () => {
     const getDetailRoute = workflows.find((route) => {
-      console.log("ROUTE", route);
       return route.method === "GET" && route.path === "/workflows/{code}";
     });
 

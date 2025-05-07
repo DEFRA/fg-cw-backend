@@ -8,10 +8,8 @@ export const workflowRepository = {
   createWorkflow: async (workflowData, db) => {
     let result;
     try {
-      console.log("workflowData",workflowData);
       result = await db.collection(collection).insertOne(workflowData);
     } catch (error) {
-      console.log("error",error);
       if (error instanceof MongoServerError && error.code === 11000) {
         throw Boom.conflict(
           `Workflow with code: ${workflowData.code} already exists`
