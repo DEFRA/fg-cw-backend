@@ -8,6 +8,12 @@ import {
 import { workflowService } from "../service/workflow.service.js";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
 
+vi.mock("../service/snsPublisher.js", () => ({
+  snsPublisherService: {
+    publishApplicationApproved: vi.fn().mockResolvedValue(undefined)
+  }
+}));
+
 vi.mock("../service/workflow.service.js", () => ({
   workflowService: {
     createWorkflow: vi.fn(),
