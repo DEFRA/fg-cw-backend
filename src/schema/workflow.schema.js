@@ -4,7 +4,10 @@ const WorkflowData = Joi.object({
   code: Joi.string()
     .pattern(/^[a-zA-Z0-9-]+$/)
     .required(),
-  payloadDefinition: Joi.object().min(1).required()
+  payloadDefinition: Joi.object()
+    .pattern(Joi.string(), Joi.any())
+    .min(1)
+    .required()
 });
 
 const Workflow = WorkflowData.keys({
