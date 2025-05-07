@@ -135,6 +135,12 @@ const config = convict({
       default: "http://localstack:4566",
       env: "SNS_ENDPOINT"
     },
+    grantApplicationApprovedTopicArn: {
+      doc: "ARN of the SNS topic for grant application approval",
+      format: String,
+      default: "",
+      env: "SNS_GRANT_APPLICATION_APPROVED_TOPIC_ARN"
+    },
     createNewCaseSqsUrl: {
       doc: "URL of the SQS queue for case creation events",
       format: String,

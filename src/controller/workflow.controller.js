@@ -1,11 +1,21 @@
 import Boom from "@hapi/boom";
 import { extractListQuery } from "../common/helpers/api/request.js";
 import { workflowService } from "../service/workflow.service.js";
+import { snsPublisherService } from "../service/snsPublisher.js";
 
 export const workflowCreateController = async (request, h) => {
-  return h
-    .response(await workflowService.createWorkflow(request.payload, request.db))
-    .code(201);
+  const workflow = await workflowService.createWorkflow(
+    request.payload,
+    request.db
+  );
+
+  //Publishing SNS message after creation
+  await snsPublisherService.publishApplicationApproved({
+    workflowCode: workflow.workflowCode,
+    description: workflow.description
+  });
+
+  return h.response(workflow).code(201);
 };
 
 export const workflowListController = async (request, h) => {
