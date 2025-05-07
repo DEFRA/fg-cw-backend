@@ -5,8 +5,10 @@ import Boom from "@hapi/boom";
 function createCase(workflow, caseEvent) {
   const newCase = structuredClone(workflow);
   delete newCase["_id"];
-  delete newCase.description;
   newCase.payload = structuredClone(caseEvent);
+  newCase.workflowCode = workflow.code;
+  delete newCase.code;
+  delete newCase.payloadDefinition;
   newCase.caseRef = caseEvent.clientRef;
   newCase.status = "NEW";
   newCase.dateReceived = new Date().toISOString();

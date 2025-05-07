@@ -72,8 +72,7 @@ describe("caseService", () => {
             ...caseData3.payload,
             createdAt,
             submittedAt
-          },
-          payloadDefinition: workflowData1.payloadDefinition
+          }
         },
         mockDb
       );

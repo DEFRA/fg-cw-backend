@@ -1,6 +1,5 @@
 export const workflowData1 = {
   code: "frps-private-beta",
-  description: "Workflow description for private beta",
   payloadDefinition: {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",
@@ -86,7 +85,6 @@ export const workflowData1 = {
 
 export const workflowData2 = {
   code: "GRANT-REF-2",
-  description: "Workflow description for grant ref 2",
   payloadDefinition: {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",

@@ -6,76 +6,6 @@ export const caseData1 = {
   targetDate: "2025-04-27T11:34:52.000Z",
   priority: "MEDIUM",
   assignedUser: "Mark Ford",
-  taskSections: [
-    {
-      id: "1",
-      title: "Check application",
-      taskGroups: [
-        {
-          id: "1",
-          title: "Check application and documents",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the first part OK?",
-              value: "YES"
-            },
-            {
-              id: "2",
-              inputType: "radio",
-              prompt: "Is the second part OK?",
-              value: "YES"
-            }
-          ],
-          status: "COMPLETED"
-        },
-        {
-          id: "2",
-          title: "Check for dual funding",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the dual funding available?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Make Application Decision",
-      taskGroups: [
-        {
-          id: "1",
-          dependsOnActionCompletion: ["1", "2"],
-          title: "Approve or reject application",
-          tasks: [
-            {
-              id: "1",
-              inputType: "select",
-              options: [
-                {
-                  label: "Approve",
-                  value: "APPROVE"
-                },
-                {
-                  label: "Reject",
-                  value: "REJECT"
-                }
-              ],
-              prompt: "Approve or Reject?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    }
-  ],
   payload: {
     clientRef: "APPLICATION-REF-1",
     code: "frps-private-beta",
@@ -114,76 +44,6 @@ export const caseData2 = {
   targetDate: "2025-04-27T11:34:52Z",
   priority: "MEDIUM",
   assignedUser: "Mark Ford",
-  taskSections: [
-    {
-      id: "1",
-      title: "Check application",
-      taskGroups: [
-        {
-          id: "1",
-          title: "Check application and documents",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the first part OK?",
-              value: "YES"
-            },
-            {
-              id: "2",
-              inputType: "radio",
-              prompt: "Is the second part OK?",
-              value: "YES"
-            }
-          ],
-          status: "COMPLETED"
-        },
-        {
-          id: "2",
-          title: "Check for dual funding",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the dual funding available?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Make Application Decision",
-      taskGroups: [
-        {
-          id: "1",
-          dependsOnActionCompletion: ["1", "2"],
-          title: "Approve or reject application",
-          tasks: [
-            {
-              id: "1",
-              inputType: "select",
-              options: [
-                {
-                  label: "Approve",
-                  value: "APPROVE"
-                },
-                {
-                  label: "Reject",
-                  value: "REJECT"
-                }
-              ],
-              prompt: "Approve or Reject?",
-              value: null
-            }
-          ],
-          status: "NOT STARTED"
-        }
-      ]
-    }
-  ],
   payload: {
     clientRef: "APPLICATION-REF-2",
     code: "frps-private-beta",
@@ -215,7 +75,7 @@ export const caseData2 = {
 };
 
 export const caseData3 = {
-  code: "frps-private-beta",
+  workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
