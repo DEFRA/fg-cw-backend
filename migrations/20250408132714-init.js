@@ -5,7 +5,7 @@
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
     code: "frps-private-beta",
-    payloadSchema: {
+    payloadDefinition: {
       $id: "https://fg-cw.com/grant-application.schema.json",
       type: "object",
       properties: {
