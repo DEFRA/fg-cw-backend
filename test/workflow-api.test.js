@@ -45,6 +45,21 @@ describe.sequential("Workflow API", () => {
         _id: expect.any(Object)
       });
     });
+
+    it.sequential("throws if workflow code already exists", async () => {
+      const payload = { ...workflowData1 };
+      await Wreck.post(`${env.API_URL}/workflows`, {
+        json: true,
+        payload
+      });
+
+      await expect(
+        Wreck.post(`${env.API_URL}/workflows`, {
+          json: true,
+          payload
+        })
+      ).rejects.toThrow("Response Error: 409 Conflict");
+    });
   });
 
   describe.sequential("GET /workflows", () => {
