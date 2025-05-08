@@ -111,6 +111,12 @@ const config = convict({
       default: "eu-west-2",
       env: "AWS_REGION"
     },
+    grantApplicationApprovedTopicArn: {
+      doc: "ARN of the SNS topic for grant application approval",
+      format: String,
+      default: "",
+      env: "SNS_GRANT_APPLICATION_APPROVED_TOPIC_ARN"
+    },
     sqsEndpoint: {
       doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
       format: String,
