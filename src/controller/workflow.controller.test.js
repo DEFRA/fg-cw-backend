@@ -19,7 +19,7 @@ vi.mock("../service/workflow.service.js", () => ({
 describe("workflow.controller.js", () => {
   const mockRequest = {
     payload: workflowData1,
-    params: { workflowCode: "9001" },
+    params: { code: "9001" },
     db: {}
   };
 
@@ -33,6 +33,9 @@ describe("workflow.controller.js", () => {
       const insertedId = "insertedId123";
       const mockCreatedWorkflow = { _id: insertedId, ...workflowData1 };
       const mockResponse = { code: vi.fn() };
+
+      workflowService.getWorkflow.mockResolvedValue(undefined);
+
       workflowService.createWorkflow.mockResolvedValue(mockCreatedWorkflow);
       const h = { response: vi.fn(() => mockResponse) }; // Mock the response toolkit
 
@@ -81,7 +84,7 @@ describe("workflow.controller.js", () => {
       );
 
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.workflowCode,
+        mockRequest.params.code,
         mockRequest.db
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflow);
@@ -96,12 +99,12 @@ describe("workflow.controller.js", () => {
         mockResponseToolkit
       );
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.workflowCode,
+        mockRequest.params.code,
         mockRequest.db
       );
       expect(result).toEqual(
         Boom.notFound(
-          "Workflow with id: " + mockRequest.params.workflowCode + " not found"
+          "Workflow with id: " + mockRequest.params.code + " not found"
         )
       );
     });

@@ -11,7 +11,8 @@ const ListResponse = Joi.object({
   }),
   data: Joi.array()
     .items(
-      Joi.alternatives().try(caseSchema.Case, workflowSchema.Workflow) // Allow Type A or Type B in the array
+      caseSchema.Case,
+      workflowSchema.Workflow // Allow Type A or Type B in the array
     )
     .required(),
   status: Joi.string().valid("success", "failure").required(),

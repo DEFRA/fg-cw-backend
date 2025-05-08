@@ -27,7 +27,7 @@ export const up = async (db) => {
   await db.createIndex(
     "workflows",
     {
-      workflowCode: 1
+      code: 1
     },
     {
       unique: true
