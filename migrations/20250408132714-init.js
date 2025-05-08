@@ -4,168 +4,82 @@
  */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
-    workflowCode: "frps-private-beta",
-    description: "Workflow description",
-    taskSections: [
-      {
-        id: "1",
-        title: "Check application",
-        taskGroups: [
-          {
-            id: "1",
-            title: "Check application and documents",
-            tasks: [
-              {
-                id: "1",
-                inputType: "radio",
-                prompt: "Is the first part OK?"
-              },
-              {
-                id: "2",
-                inputType: "radio",
-                prompt: "Is the second part OK?"
-              }
-            ]
+    code: "frps-private-beta",
+    payloadDefinition: {
+      identifiers: {
+        type: "object",
+        properties: {
+          sbi: {
+            type: "string",
+            label: "SBI"
           },
-          {
-            id: "2",
-            title: "Check for dual funding",
-            tasks: [
-              {
-                id: "1",
-                inputType: "radio",
-                prompt: "Is the dual funding available?"
-              }
-            ]
+          frn: {
+            type: "string",
+            label: "FRN"
+          },
+          crn: {
+            type: "string",
+            label: "CRN"
+          },
+          defraId: {
+            type: "string",
+            label: "Defra ID"
           }
-        ]
-      },
-      {
-        id: "2",
-        title: "Make Application Decision",
-        taskGroups: [
-          {
-            id: "1",
-            dependsOnActionCompletion: ["1", "2"],
-            title: "Approve or reject application",
-            tasks: [
-              {
-                id: "1",
-                inputType: "select",
-                options: [
-                  {
-                    label: "Approve",
-                    value: "APPROVE"
-                  },
-                  {
-                    label: "Reject",
-                    value: "REJECT"
-                  }
-                ],
-                prompt: "Approve or Reject?"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    payloadSchema: {
-      $id: "https://fg-cw.com/grant-application.schema.json",
-      type: "object",
-      properties: {
-        clientRef: {
-          type: "string"
-        },
-        code: {
-          type: "string"
-        },
-        createdAt: {
-          type: "object"
-        },
-        submittedAt: {
-          type: "object"
-        },
-        identifiers: {
-          type: "object",
-          properties: {
-            sbi: {
-              type: "string"
-            },
-            frn: {
-              type: "string"
-            },
-            crn: {
-              type: "string"
-            },
-            defraId: {
-              type: "string"
-            }
-          },
-          required: ["sbi", "frn", "crn", "defraId"]
-        },
-        answers: {
-          type: "object",
-          properties: {
-            scheme: {
-              type: "string"
-            },
-            year: {
-              type: "integer",
-              minimum: 2000,
-              maximum: 2100
-            },
-            hasCheckedLandIsUpToDate: {
-              type: "boolean"
-            },
-            actionApplications: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  parcelId: {
-                    type: "string"
-                  },
-                  sheetId: {
-                    type: "string"
-                  },
-                  code: {
-                    type: "string"
-                  },
-                  appliedFor: {
-                    type: "object",
-                    properties: {
-                      unit: {
-                        type: "string",
-                        enum: ["ha", "acres", "sqm", "sqft"]
-                      },
-                      quantity: {
-                        type: "number",
-                        minimum: 0
-                      }
-                    },
-                    required: ["unit", "quantity"]
-                  }
-                },
-                required: ["parcelId", "sheetId", "code", "appliedFor"]
-              }
-            }
-          },
-          required: [
-            "scheme",
-            "year",
-            "hasCheckedLandIsUpToDate",
-            "actionApplications"
-          ]
         }
       },
-      required: [
-        "clientRef",
-        "code",
-        "createdAt",
-        "submittedAt",
-        "identifiers",
-        "answers"
-      ]
+      answers: {
+        type: "object",
+        properties: {
+          scheme: {
+            type: "string",
+            label: "Scheme type"
+          },
+          year: {
+            type: "number",
+            minimum: 2000,
+            maximum: 2100,
+            label: "Year"
+          },
+          hasCheckedLandIsUpToDate: {
+            type: "boolean",
+            label: "Has checked land is up to date?"
+          },
+          actionApplications: {
+            type: "array",
+            label: "Action applications",
+            items: {
+              type: "object",
+              properties: {
+                parcelId: {
+                  type: "string",
+                  label: "Parcel ID"
+                },
+                sheetId: {
+                  type: "string",
+                  label: "Sheet ID"
+                },
+                code: {
+                  type: "string",
+                  label: "Code"
+                },
+                appliedFor: {
+                  type: "object",
+                  properties: {
+                    unit: {
+                      type: "string",
+                      enum: ["ha", "acres", "sqm", "sqft"]
+                    },
+                    quantity: {
+                      type: "number",
+                      minimum: 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   });
 };
@@ -175,5 +89,5 @@ export const up = async (db) => {
  * @returns {Promise<void>}
  */
 export const down = async (db) => {
-  await db.collection("workflows").deleteOne({ workflowCode: "001" });
+  await db.collection("workflows").deleteOne({ code: "001" });
 };

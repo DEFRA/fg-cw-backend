@@ -49,13 +49,13 @@ const workflows = [
   },
   {
     method: "GET",
-    path: "/workflows/{workflowCode}",
+    path: "/workflows/{code}",
     options: {
-      description: "Find a workflow by workflowCode",
+      description: "Find a workflow by code",
       tags: ["api"],
       validate: {
         params: Joi.object({
-          workflowCode: Joi.string()
+          code: Joi.string()
         })
       },
       response: {

@@ -1,70 +1,6 @@
 export const workflowData1 = {
-  workflowCode: "frps-private-beta",
-  description: "Workflow description",
-  taskSections: [
-    {
-      id: "1",
-      title: "Check application",
-      taskGroups: [
-        {
-          id: "1",
-          title: "Check application and documents",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the first part OK?"
-            },
-            {
-              id: "2",
-              inputType: "radio",
-              prompt: "Is the second part OK?"
-            }
-          ]
-        },
-        {
-          id: "2",
-          title: "Check for dual funding",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the dual funding available?"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Make Application Decision",
-      taskGroups: [
-        {
-          id: "1",
-          dependsOnActionCompletion: ["1", "2"],
-          title: "Approve or reject application",
-          tasks: [
-            {
-              id: "1",
-              inputType: "select",
-              options: [
-                {
-                  label: "Approve",
-                  value: "APPROVE"
-                },
-                {
-                  label: "Reject",
-                  value: "REJECT"
-                }
-              ],
-              prompt: "Approve or Reject?"
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  payloadSchema: {
+  code: "frps-private-beta",
+  payloadDefinition: {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",
     properties: {
@@ -95,8 +31,7 @@ export const workflowData1 = {
           defraId: {
             type: "string"
           }
-        },
-        required: ["sbi", "frn", "crn", "defraId"]
+        }
       },
       answers: {
         type: "object",
@@ -137,100 +72,20 @@ export const workflowData1 = {
                       type: "number",
                       minimum: 0
                     }
-                  },
-                  required: ["unit", "quantity"]
+                  }
                 }
-              },
-              required: ["parcelId", "sheetId", "code", "appliedFor"]
+              }
             }
           }
-        },
-        required: [
-          "scheme",
-          "year",
-          "hasCheckedLandIsUpToDate",
-          "actionApplications"
-        ]
+        }
       }
-    },
-    required: [
-      "clientRef",
-      "code",
-      "createdAt",
-      "submittedAt",
-      "identifiers",
-      "answers"
-    ]
+    }
   }
 };
 
 export const workflowData2 = {
-  workflowCode: "GRANT-REF-2",
-  description: "Workflow description",
-  taskSections: [
-    {
-      id: "1",
-      title: "Check application",
-      taskGroups: [
-        {
-          id: "1",
-          title: "Check application and documents",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the first part OK?"
-            },
-            {
-              id: "2",
-              inputType: "radio",
-              prompt: "Is the second part OK?"
-            }
-          ]
-        },
-        {
-          id: "2",
-          title: "Check for dual funding",
-          tasks: [
-            {
-              id: "1",
-              inputType: "radio",
-              prompt: "Is the dual funding available?"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: "2",
-      title: "Make Application Decision",
-      taskGroups: [
-        {
-          id: "1",
-          dependsOnActionCompletion: ["1", "2"],
-          title: "Approve or reject application",
-          tasks: [
-            {
-              id: "1",
-              inputType: "select",
-              options: [
-                {
-                  label: "Approve",
-                  value: "APPROVE"
-                },
-                {
-                  label: "Reject",
-                  value: "REJECT"
-                }
-              ],
-              prompt: "Approve or Reject?"
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  payloadSchema: {
+  code: "GRANT-REF-2",
+  payloadDefinition: {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",
     properties: {
@@ -261,8 +116,7 @@ export const workflowData2 = {
           defraId: {
             type: "string"
           }
-        },
-        required: ["sbi", "frn", "crn", "defraId"]
+        }
       },
       answers: {
         type: "object",
@@ -303,29 +157,13 @@ export const workflowData2 = {
                       type: "number",
                       minimum: 0
                     }
-                  },
-                  required: ["unit", "quantity"]
+                  }
                 }
-              },
-              required: ["parcelId", "sheetId", "code", "appliedFor"]
+              }
             }
           }
-        },
-        required: [
-          "scheme",
-          "year",
-          "hasCheckedLandIsUpToDate",
-          "actionApplications"
-        ]
+        }
       }
-    },
-    required: [
-      "clientRef",
-      "code",
-      "createdAt",
-      "submittedAt",
-      "identifiers",
-      "answers"
-    ]
+    }
   }
 };

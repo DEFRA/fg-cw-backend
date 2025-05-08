@@ -25,14 +25,15 @@ describe.sequential("Workflow API", () => {
     });
 
     it.sequential("adds a workflow", async () => {
+      const payload = { ...workflowData1 };
       const response = await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
-        payload: workflowData1
+        payload
       });
 
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
-        ...workflowData1,
+        ...payload,
         _id: expect.any(String)
       });
 
@@ -40,9 +41,24 @@ describe.sequential("Workflow API", () => {
 
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
-        ...workflowData1,
+        ...payload,
         _id: expect.any(Object)
       });
+    });
+
+    it.sequential("throws if workflow code already exists", async () => {
+      const payload = { ...workflowData1 };
+      await Wreck.post(`${env.API_URL}/workflows`, {
+        json: true,
+        payload
+      });
+
+      await expect(
+        Wreck.post(`${env.API_URL}/workflows`, {
+          json: true,
+          payload
+        })
+      ).rejects.toThrow("Response Error: 409 Conflict");
     });
   });
 
