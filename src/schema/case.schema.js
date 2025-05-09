@@ -8,6 +8,7 @@ const GrantCaseEventIdentifiers = Joi.object({
 }).label("GrantCaseEventIdentifiers");
 
 const GrantCaseEventAnswers = Joi.object({
+  agreementName: Joi.string().required(),
   scheme: Joi.string().valid("SFI").required(),
   year: Joi.number().integer().min(2000).max(2100).required(),
   hasCheckedLandIsUpToDate: Joi.boolean().required(),
