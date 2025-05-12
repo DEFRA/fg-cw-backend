@@ -35,5 +35,18 @@ export const caseService = {
   },
   getCase: async (caseId, db) => {
     return caseRepository.getCase(caseId, db);
+  },
+  areMandatoryTasksComplete: async (caseId, db) => {
+    const tasks = await db.task.findMany({
+      where: { caseId, isMandatory: true }
+    });
+    return tasks.every((task) => task.status === "COMPLETED");
+  },
+
+  updateCaseStage: async (caseId, nextStage, db) => {
+    return await db.case.update({
+      where: { id: caseId },
+      data: { currentStage: nextStage }
+    });
   }
 };
