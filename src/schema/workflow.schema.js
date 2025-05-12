@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { Stage } from "./task.schema.js";
 
 const WorkflowData = Joi.object({
   code: Joi.string()
@@ -7,7 +8,8 @@ const WorkflowData = Joi.object({
   payloadDefinition: Joi.object()
     .pattern(Joi.string(), Joi.any())
     .min(1)
-    .required()
+    .required(),
+  stages: Joi.array().items(Stage).min(2).required()
 });
 
 const Workflow = WorkflowData.keys({

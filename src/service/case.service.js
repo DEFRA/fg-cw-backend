@@ -2,21 +2,16 @@ import { caseRepository } from "../repository/case.repository.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
 
-function createCase(workflow, caseEvent) {
-  const newCase = structuredClone(workflow);
-  delete newCase["_id"];
-  newCase.payload = structuredClone(caseEvent);
-  newCase.workflowCode = workflow.code;
-  delete newCase.code;
-  delete newCase.payloadDefinition;
-  newCase.caseRef = caseEvent.clientRef;
-  newCase.status = "NEW";
-  newCase.dateReceived = new Date().toISOString();
-  newCase.targetDate = null;
-  newCase.priority = "LOW";
-  newCase.assignedUser = null;
-  return newCase;
-}
+const createCase = (workflow, caseEvent) => ({
+  caseRef: caseEvent.clientRef,
+  workflowCode: workflow.code,
+  status: "NEW",
+  dateReceived: new Date().toISOString(),
+  targetDate: null,
+  priority: "LOW",
+  assignedUser: null,
+  payload: structuredClone(caseEvent)
+});
 
 export const caseService = {
   handleCreateCaseEvent: async (caseEvent, db) => {

@@ -9,40 +9,29 @@ import {
 import { workflowData1 } from "../../test/fixtures/workflow.js";
 
 describe("Workflows route configuration tests", () => {
-  it("should throw on /POST if workflow code is not valid", async () => {
+  it("should throw on /POST if workflow code is not valid", () => {
     const postRoute = workflows.find(
       (route) => route.method === "POST" && route.path === "/workflows"
     );
-    // Test options configuration
-    const { options } = postRoute;
 
-    // Validate payload schema
-    expect(Joi.isSchema(options.validate.payload)).toBe(true);
+    const { payload } = postRoute.options.validate;
 
-    const { payloadDefinition } = workflowData1;
-    const mockErrorCreateRequest = {
-      payloadDefinition,
-      code: "je_-0909llo+" // invalid code
-    };
+    expect(Joi.isSchema(payload)).toBe(true);
 
-    const mockValidCreateRequest = {
-      payloadDefinition,
-      code: "je-0909-llo" // valid code
-    };
+    const result1 = payload.validate({
+      ...workflowData1,
+      code: "je-0909-llo"
+    });
 
-    const result = await options.validate.payload.validateAsync(
-      mockValidCreateRequest
-    );
-    expect(result).toEqual(mockValidCreateRequest);
+    expect(result1.error).toBeUndefined();
 
-    const expectedError =
-      '"code" with value "je_-0909llo+" fails to match the required pattern: /^[a-zA-Z0-9-]+$/';
-    await expect(
-      options.validate.payload.validateAsync(mockErrorCreateRequest)
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        message: expectedError
-      })
+    const result2 = payload.validate({
+      ...workflowData1,
+      code: "je_-0909llo+"
+    });
+
+    expect(result2.error.message).toEqual(
+      '"code" with value "je_-0909llo+" fails to match the required pattern: /^[a-zA-Z0-9-]+$/'
     );
   });
 
