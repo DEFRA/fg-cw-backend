@@ -69,7 +69,7 @@ const cases = [
     handler: caseDetailController
   },
   {
-    method: "GET",
+    method: "POST",
     path: "/cases/{caseId}/stage",
     options: {
       description: "Update the current stage for a case with id caseId",
