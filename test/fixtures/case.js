@@ -18,6 +18,7 @@ export const caseData1 = {
       defraId: "DEFRA0001"
     },
     answers: {
+      agreementName: "Test application name",
       scheme: "SFI",
       year: 2025,
       hasCheckedLandIsUpToDate: true,
@@ -56,6 +57,7 @@ export const caseData2 = {
       defraId: "DEFRA0001"
     },
     answers: {
+      agreementName: "Test application name",
       scheme: "SFI",
       year: 2025,
       hasCheckedLandIsUpToDate: true,
@@ -94,6 +96,7 @@ export const caseData3 = {
       defraId: "DEFRA0001"
     },
     answers: {
+      agreementName: "Test application name",
       scheme: "SFI",
       year: 2025,
       hasCheckedLandIsUpToDate: true,
