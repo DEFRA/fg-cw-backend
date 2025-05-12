@@ -11,7 +11,8 @@ import { commonSchema } from "../schema/common.schema.js";
 vi.mock("../controller/case.controller.js", () => ({
   caseCreateController: vi.fn(),
   caseDetailController: vi.fn(),
-  caseListController: vi.fn()
+  caseListController: vi.fn(),
+  caseStageController: vi.fn()
 }));
 
 describe("cases routes", () => {
