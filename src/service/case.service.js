@@ -10,7 +10,18 @@ const createCase = (workflow, caseEvent) => ({
   targetDate: null,
   priority: "LOW",
   assignedUser: null,
-  payload: structuredClone(caseEvent)
+  payload: structuredClone(caseEvent),
+  currentStage: workflow.stages[0].id,
+  stages: workflow.stages.map((stage) => ({
+    id: stage.id,
+    taskGroups: stage.taskGroups.map((taskGroup) => ({
+      id: taskGroup.id,
+      tasks: taskGroup.tasks.map((task) => ({
+        id: task.id,
+        isComplete: false
+      }))
+    }))
+  }))
 });
 
 export const caseService = {

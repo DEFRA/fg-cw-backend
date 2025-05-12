@@ -83,14 +83,15 @@ export const workflowData1 = {
   },
   stages: [
     {
-      id: "applicationReceipt",
+      id: "application-receipt",
       title: "Application Receipt",
       taskGroups: [
         {
+          id: "application-receipt-tasks",
           title: "Application Receipt tasks",
           tasks: [
             {
-              id: "simpleReview",
+              id: "simple-review",
               title: "Simple Review",
               type: "boolean"
             }
