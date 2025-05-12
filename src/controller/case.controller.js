@@ -27,3 +27,6 @@ export const caseDetailController = async (request, h) => {
   }
   return h.response(result);
 };
+export const caseStageController = async (request, h) => {
+  console.log("update case stage");
+};
