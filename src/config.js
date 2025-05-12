@@ -141,6 +141,12 @@ const config = convict({
       default:
         "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case",
       env: "CREATE_NEW_CASE_SQS_URL"
+    },
+    caseStageUpdatedTopicArn: {
+      doc: "ARN of the SNS topic to publish case stage updates",
+      format: String,
+      default: "arn:aws:sns:eu-west-2:000000000000:case-stage-updated",
+      env: "CASE_STAGE_UPDATED_TOPIC_ARN"
     }
   },
   httpProxy: {

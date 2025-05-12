@@ -1,5 +1,17 @@
+import { publish } from "../common/sns.js";
+import { config } from "../config.js";
+
 export async function publishEvent(topic, payload) {
-  console.log(`[publishEvent] Topic: ${topic}`);
+  const topicArn = config.aws.caseStageUpdatedTopicArn;
+
+  if (!topicArn) {
+    throw new Error(
+      "SNS topic ARN is not defined in configuration (caseStageUpdatedTopicArn)"
+    );
+  }
+
+  console.log(`[publishEvent] Topic: ${topicArn}`);
   console.log(`[publishEvent] Payload:`, JSON.stringify(payload, null, 2));
-  // We can replace this with actual event publishing logic
+
+  return publish(topicArn, payload);
 }
