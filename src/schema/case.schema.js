@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { UrlSafeId } from "./url-safe-id.schema.js";
 
 const GrantCaseEventIdentifiers = Joi.object({
   sbi: Joi.string().required(),
@@ -41,6 +42,26 @@ const CasePayload = Joi.alternatives()
   .required()
   .label("CasePayload");
 
+const CaseStage = Joi.object({
+  id: UrlSafeId.required(),
+  taskGroups: Joi.array()
+    .items(
+      Joi.object({
+        id: UrlSafeId.required(),
+        tasks: Joi.array()
+          .items(
+            Joi.object({
+              id: UrlSafeId.required(),
+              isComplete: Joi.boolean().required()
+            })
+          )
+          .min(1)
+          .required()
+      })
+    )
+    .required()
+}).label("CaseStage");
+
 const CaseData = Joi.object({
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
@@ -49,7 +70,9 @@ const CaseData = Joi.object({
   targetDate: Joi.date().iso().allow(null).optional(),
   priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
   assignedUser: Joi.string().allow(null).optional(),
-  payload: CasePayload.required()
+  payload: CasePayload.required(),
+  currentStage: UrlSafeId.required(),
+  stages: Joi.array().items(CaseStage).required()
 }).label("CaseData");
 
 const Case = CaseData.keys({

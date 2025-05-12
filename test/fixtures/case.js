@@ -34,7 +34,28 @@ export const caseData1 = {
         }
       ]
     }
-  }
+  },
+  currentStage: "application-receipt",
+  stages: [
+    {
+      id: "application-receipt",
+      taskGroups: [
+        {
+          id: "application-receipt-tasks",
+          tasks: [
+            {
+              id: "simple-review",
+              isComplete: false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "contract",
+      taskGroups: []
+    }
+  ]
 };
 
 export const caseData2 = {
@@ -73,7 +94,28 @@ export const caseData2 = {
         }
       ]
     }
-  }
+  },
+  currentStage: "application-receipt",
+  stages: [
+    {
+      id: "application-receipt",
+      taskGroups: [
+        {
+          id: "application-receipt-tasks",
+          tasks: [
+            {
+              id: "simple-review",
+              isComplete: false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "contract",
+      taskGroups: []
+    }
+  ]
 };
 
 export const caseData3 = {
@@ -112,5 +154,26 @@ export const caseData3 = {
         }
       ]
     }
-  }
+  },
+  currentStage: "application-receipt",
+  stages: [
+    {
+      id: "application-receipt",
+      taskGroups: [
+        {
+          id: "application-receipt-tasks",
+          tasks: [
+            {
+              id: "simple-review",
+              isComplete: false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "contract",
+      taskGroups: []
+    }
+  ]
 };

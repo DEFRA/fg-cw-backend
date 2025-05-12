@@ -1,20 +1,20 @@
 import Joi from "joi";
-
-const Id = Joi.string().pattern(/^[a-zA-Z0-9-]+$/);
+import { UrlSafeId } from "./url-safe-id.schema.js";
 
 const Task = Joi.object({
-  id: Id.required(),
+  id: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required()
 }).label("Task");
 
 const TaskGroup = Joi.object({
+  id: UrlSafeId.required(),
   title: Joi.string().required(),
   tasks: Joi.array().items(Task).min(1).required()
 }).label("TaskGroup");
 
 const Action = Joi.object({
-  id: Id.required(),
+  id: UrlSafeId.required(),
   label: Joi.string().required()
 }).label("Action");
 

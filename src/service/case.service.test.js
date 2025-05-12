@@ -72,7 +72,28 @@ describe("caseService", () => {
             ...caseData3.payload,
             createdAt,
             submittedAt
-          }
+          },
+          currentStage: workflowData1.stages[0].id,
+          stages: [
+            {
+              id: "application-receipt",
+              taskGroups: [
+                {
+                  id: "application-receipt-tasks",
+                  tasks: [
+                    {
+                      id: "simple-review",
+                      isComplete: false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              id: "contract",
+              taskGroups: []
+            }
+          ]
         },
         mockDb
       );
