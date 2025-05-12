@@ -1,37 +1,26 @@
 import Joi from "joi";
 
+const Id = Joi.string().pattern(/^[a-zA-Z0-9-]+$/);
+
 const Task = Joi.object({
-  id: Joi.string().required(),
-  type: Joi.string().valid("radio", "select").optional(),
-  inputType: Joi.string().optional(),
-  prompt: Joi.string().required(),
-  value: Joi.alternatives(
-    Joi.string().optional(),
-    Joi.boolean().optional(),
-    Joi.allow(null)
-  ).optional(),
-  options: Joi.array()
-    .items(
-      Joi.object({
-        label: Joi.string().required(),
-        value: Joi.string().required()
-      })
-    )
-    .optional()
+  id: Id.required(),
+  title: Joi.string().required(),
+  type: Joi.string().valid("boolean").required()
 }).label("Task");
 
 const TaskGroup = Joi.object({
-  id: Joi.string().required(),
   title: Joi.string().required(),
-  dependsOnActionCompletion: Joi.array().items(Joi.string()).optional(),
-  tasks: Joi.array().items(Task).required(),
-  status: Joi.string()
-    .valid("NOT STARTED", "IN PROGRESS", "COMPLETED", "NOT STARTED")
-    .optional()
+  tasks: Joi.array().items(Task).min(1).required()
 }).label("TaskGroup");
 
-export const TaskSection = Joi.object({
+const Action = Joi.object({
+  id: Id.required(),
+  label: Joi.string().required()
+}).label("Action");
+
+export const Stage = Joi.object({
   id: Joi.string().required(),
   title: Joi.string().required(),
-  taskGroups: Joi.array().items(TaskGroup).required()
-}).label("TaskSection");
+  taskGroups: Joi.array().items(TaskGroup).required(),
+  actions: Joi.array().items(Action).required()
+}).label("Stage");
