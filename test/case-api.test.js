@@ -66,7 +66,28 @@ describe.sequential("Case API", () => {
       expect(response.payload).toEqual({
         ...caseData3,
         _id: expect.any(String),
-        dateReceived: expect.any(String)
+        dateReceived: expect.any(String),
+        currentStage: "application-receipt",
+        stages: [
+          {
+            id: "application-receipt",
+            taskGroups: [
+              {
+                id: "application-receipt-tasks",
+                tasks: [
+                  {
+                    id: "simple-review",
+                    isComplete: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "contract",
+            taskGroups: []
+          }
+        ]
       });
 
       const documents = await cases.find({}).toArray();
@@ -80,7 +101,28 @@ describe.sequential("Case API", () => {
           ...caseData3.payload,
           createdAt: new Date(caseData3.payload.createdAt),
           submittedAt: new Date(caseData3.payload.submittedAt)
-        }
+        },
+        currentStage: "application-receipt",
+        stages: [
+          {
+            id: "application-receipt",
+            taskGroups: [
+              {
+                id: "application-receipt-tasks",
+                tasks: [
+                  {
+                    id: "simple-review",
+                    isComplete: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "contract",
+            taskGroups: []
+          }
+        ]
       });
     });
   });
@@ -208,7 +250,7 @@ describe.sequential("Case API", () => {
         createCaseEvent3
       );
       const documents = await waitForCollectionChange(cases);
-      expect(documents.length).toBe(1);
+      expect(documents).toHaveLength(1);
       expect(documents[0]).toEqual({
         ...caseData3,
         dateReceived: expect.any(String),

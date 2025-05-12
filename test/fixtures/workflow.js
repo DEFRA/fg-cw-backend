@@ -80,7 +80,38 @@ export const workflowData1 = {
         }
       }
     }
-  }
+  },
+  stages: [
+    {
+      id: "application-receipt",
+      title: "Application Receipt",
+      taskGroups: [
+        {
+          id: "application-receipt-tasks",
+          title: "Application Receipt tasks",
+          tasks: [
+            {
+              id: "simple-review",
+              title: "Simple Review",
+              type: "boolean"
+            }
+          ]
+        }
+      ],
+      actions: [
+        {
+          id: "approve",
+          label: "Approve"
+        }
+      ]
+    },
+    {
+      id: "contract",
+      title: "Stage for contract management",
+      taskGroups: [],
+      actions: []
+    }
+  ]
 };
 
 export const workflowData2 = {
@@ -165,5 +196,19 @@ export const workflowData2 = {
         }
       }
     }
-  }
+  },
+  stages: [
+    {
+      id: "review",
+      title: "Review",
+      taskGroups: [],
+      actions: []
+    },
+    {
+      id: "decision",
+      title: "Decision",
+      taskGroups: [],
+      actions: []
+    }
+  ]
 };
