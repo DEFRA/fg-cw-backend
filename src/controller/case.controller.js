@@ -27,6 +27,9 @@ export const caseDetailController = async (request, h) => {
   }
   return h.response(result);
 };
+
 export const caseStageController = async (request, h) => {
+  const result = await caseService.getCase(request.params.caseId, request.db);
   console.log("update case stage");
+  return h.response(result);
 };

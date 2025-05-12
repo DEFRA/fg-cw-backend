@@ -2,7 +2,8 @@ import Joi from "joi";
 import {
   caseCreateController,
   caseDetailController,
-  caseListController
+  caseListController,
+  caseStageController
 } from "../controller/case.controller.js";
 import { caseSchema } from "../schema/case.schema.js";
 import { commonSchema } from "../schema/common.schema.js";
@@ -66,6 +67,27 @@ const cases = [
       }
     },
     handler: caseDetailController
+  },
+  {
+    method: "GET",
+    path: "/cases/{caseId}/stage",
+    options: {
+      description: "Update the current stage for a case with id caseId",
+      tags: ["api"],
+      validate: {
+        params: Joi.object({
+          caseId: Joi.string().hex().length(24)
+        }),
+        payload: caseSchema.NextStage
+      },
+      response: {
+        status: {
+          200: caseSchema.Case,
+          400: commonSchema.ValidationError
+        }
+      }
+    },
+    handler: caseStageController
   }
 ];
 

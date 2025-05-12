@@ -56,8 +56,13 @@ const Case = CaseData.keys({
   _id: Joi.object().required()
 }).label("Case");
 
+const NextStage = Joi.object({
+  nextStage: Joi.string().required()
+}).label("NextStage");
+
 export const caseSchema = {
   CaseData,
   Case,
-  GrantCaseEvent
+  GrantCaseEvent,
+  NextStage
 };
