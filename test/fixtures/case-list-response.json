@@ -27,6 +27,7 @@
           "defraId": "DEFRA0001"
         },
         "answers": {
+          "agreementName": "Test application name",
           "scheme": "SFI",
           "year": 2025,
           "hasCheckedLandIsUpToDate": true,
@@ -65,6 +66,7 @@
         },
         "answers": {
           "scheme": "SFI",
+          "agreementName": "Test application name",
           "year": 2025,
           "hasCheckedLandIsUpToDate": true,
           "actionApplications": [
