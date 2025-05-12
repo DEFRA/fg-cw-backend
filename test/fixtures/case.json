@@ -34,5 +34,26 @@
         }
       ]
     }
-  }
+  },
+  "currentStage": "application-receipt",
+  "stages": [
+    {
+      "id": "application-receipt",
+      "taskGroups": [
+        {
+          "id": "application-receipt-tasks",
+          "tasks": [
+            {
+              "id": "simple-review",
+              "isComplete": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contract",
+      "taskGroups": []
+    }
+  ]
 }
