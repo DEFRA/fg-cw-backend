@@ -3,9 +3,11 @@ import { extractListQuery } from "../common/helpers/api/request.js";
 import { workflowService } from "../service/workflow.service.js";
 
 export const workflowCreateController = async (request, h) => {
-  return h
-    .response(await workflowService.createWorkflow(request.payload, request.db))
-    .code(201);
+  const workflow = await workflowService.createWorkflow(
+    request.payload,
+    request.db
+  );
+  return h.response(workflow).code(201);
 };
 
 export const workflowListController = async (request, h) => {

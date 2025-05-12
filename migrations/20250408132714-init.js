@@ -80,7 +80,37 @@ export const up = async (db) => {
           }
         }
       }
-    }
+    },
+    stages: [
+      {
+        id: "applicationReceipt",
+        title: "Application Receipt",
+        taskGroups: [
+          {
+            title: "Application Receipt tasks",
+            tasks: [
+              {
+                id: "simpleReview",
+                title: "Simple Review",
+                type: "boolean"
+              }
+            ]
+          }
+        ],
+        actions: [
+          {
+            id: "approve",
+            label: "Approve"
+          }
+        ]
+      },
+      {
+        id: "contract",
+        title: "Stage for contract management",
+        taskGroups: [],
+        actions: []
+      }
+    ]
   });
 };
 
