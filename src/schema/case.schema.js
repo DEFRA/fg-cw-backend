@@ -59,7 +59,8 @@ const CaseStage = Joi.object({
           .required()
       })
     )
-    .required()
+    .required(),
+  actions: Joi.any()
 }).label("CaseStage");
 
 const CaseData = Joi.object({

@@ -49,6 +49,12 @@
             }
           ]
         }
+      ],
+      "actions": [
+        {
+          "id": "approve",
+          "label": "Approve"
+        }
       ]
     },
     {
