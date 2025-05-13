@@ -40,16 +40,6 @@ export const caseStageController = async (request, h) => {
 
   const previousStage = caseRecord.currentStage;
 
-  const allMandatoryTasksComplete = await caseService.areMandatoryTasksComplete(
-    caseId,
-    request.db
-  );
-  if (!allMandatoryTasksComplete) {
-    return Boom.badRequest(
-      "Not all mandatory tasks in the current stage are complete."
-    );
-  }
-
   const updatedCase = await caseService.updateCaseStage(
     caseId,
     nextStage,
