@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
 import { caseService } from "../service/case.service.js";
 import { extractListQuery } from "../common/helpers/api/request.js";
+import { publish } from "../common/sns.js";
+import { config } from "../config.js";
 
 export const caseCreateController = async (request, h) => {
   return h
@@ -26,4 +28,30 @@ export const caseDetailController = async (request, h) => {
     );
   }
   return h.response(result);
+};
+
+export const caseStageController = async (request, h) => {
+  const { nextStage } = request.payload;
+  const { caseId } = request.params;
+
+  const caseRecord = await caseService.getCase(caseId, request.db);
+  if (!caseRecord) {
+    return Boom.notFound(`Case with id: ${caseId} not found`);
+  }
+
+  const previousStage = caseRecord.currentStage;
+
+  const updatedCase = await caseService.updateCaseStage(
+    caseId,
+    nextStage,
+    request.db
+  );
+
+  await publish(config.aws.caseStageUpdatedTopicArn, {
+    caseRef: caseRecord.caseRef,
+    previousStage,
+    currentStage: nextStage
+  });
+
+  return h.response(updatedCase).code(200);
 };

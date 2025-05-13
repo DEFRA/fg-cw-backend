@@ -41,5 +41,11 @@ export const caseService = {
   },
   getCase: async (caseId, db) => {
     return caseRepository.getCase(caseId, db);
+  },
+  updateCaseStage: async (caseId, nextStage, db) => {
+    return await db.case.update({
+      where: { id: caseId },
+      data: { currentStage: nextStage }
+    });
   }
 };
