@@ -1,7 +1,8 @@
 import Boom from "@hapi/boom";
 import { caseService } from "../service/case.service.js";
 import { extractListQuery } from "../common/helpers/api/request.js";
-import { publishEvent } from "../utils/eventPublisher.js";
+import { publish } from "../common/sns.js";
+import { config } from "../config.js";
 
 export const caseCreateController = async (request, h) => {
   return h
@@ -46,7 +47,7 @@ export const caseStageController = async (request, h) => {
     request.db
   );
 
-  await publishEvent("case_stage_updated", {
+  await publish(config.aws.caseStageUpdatedTopicArn, {
     caseRef: caseRecord.applicationId,
     previousStage,
     newCurrentStage: nextStage
