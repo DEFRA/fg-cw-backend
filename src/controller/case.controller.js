@@ -57,8 +57,7 @@ export const caseStageController = async (request, h) => {
   );
 
   await publishEvent("case_stage_updated", {
-    caseId,
-    applicationId: caseRecord.applicationId,
+    caseRef: caseRecord.applicationId,
     previousStage,
     newCurrentStage: nextStage
   });
