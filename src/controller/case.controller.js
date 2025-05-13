@@ -48,9 +48,9 @@ export const caseStageController = async (request, h) => {
   );
 
   await publish(config.aws.caseStageUpdatedTopicArn, {
-    caseRef: caseRecord.applicationId,
+    caseRef: caseRecord.caseRef,
     previousStage,
-    CurrentStage: nextStage
+    currentStage: nextStage
   });
 
   return h.response(updatedCase).code(200);
