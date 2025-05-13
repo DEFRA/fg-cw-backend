@@ -145,7 +145,7 @@ const config = convict({
     caseStageUpdatedTopicArn: {
       doc: "ARN of the SNS topic to publish case stage updates",
       format: String,
-      default: "arn:aws:sns:eu-west-2:000000000000:case-stage-updated",
+      default: "arn:aws:sns:eu-west-2:000000000000:case_stage_updated",
       env: "CASE_STAGE_UPDATED_TOPIC_ARN"
     }
   },
