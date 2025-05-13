@@ -1,6 +1,7 @@
 import { caseRepository } from "../repository/case.repository.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
+import { ObjectId } from "mongodb";
 
 const createCase = (workflow, caseEvent) => ({
   caseRef: caseEvent.clientRef,
@@ -43,9 +44,11 @@ export const caseService = {
     return caseRepository.getCase(caseId, db);
   },
   updateCaseStage: async (caseId, nextStage, db) => {
-    return await db.case.update({
-      where: { id: caseId },
-      data: { currentStage: nextStage }
-    });
+    return await db.collection("cases").updateOne(
+      {
+        _id: new ObjectId(caseId)
+      },
+      { $set: { currentStage: nextStage } }
+    );
   }
 };

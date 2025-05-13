@@ -9,6 +9,8 @@ export AWS_SECRET_ACCESS_KEY=test
 
 # SNS topic
 aws --endpoint-url=http://localhost:4566 sns create-topic --name grant_application_created
+# SNS topic - case stage updated
+aws --endpoint-url=http://localhost:4566 sns create-topic --name case_stage_updated
 
 # SQS queues
 aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name create_new_case
