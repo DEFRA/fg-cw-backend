@@ -31,7 +31,6 @@ export const caseDetailController = async (request, h) => {
 };
 
 export const caseStageController = async (request, h) => {
-  const { nextStage } = request.payload;
   const { caseId } = request.params;
 
   const caseRecord = await caseService.getCase(caseId, request.db);
@@ -40,18 +39,15 @@ export const caseStageController = async (request, h) => {
   }
 
   const previousStage = caseRecord.currentStage;
+  const nextStage = "contract";
 
-  const updatedCase = await caseService.updateCaseStage(
-    caseId,
-    nextStage,
-    request.db
-  );
+  await caseService.updateCaseStage(caseId, nextStage, request.db);
 
-  await publish(config.aws.caseStageUpdatedTopicArn, {
+  await publish(config.get("aws.caseStageUpdatedTopicArn"), {
     caseRef: caseRecord.caseRef,
     previousStage,
     currentStage: nextStage
   });
 
-  return h.response(updatedCase).code(200);
+  return h.response().code(204);
 };

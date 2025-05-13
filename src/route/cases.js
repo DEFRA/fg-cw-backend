@@ -77,12 +77,10 @@ const cases = [
       validate: {
         params: Joi.object({
           caseId: Joi.string().hex().length(24)
-        }),
-        payload: caseSchema.NextStage
+        })
       },
       response: {
         status: {
-          200: caseSchema.Case,
           400: commonSchema.ValidationError
         }
       }
