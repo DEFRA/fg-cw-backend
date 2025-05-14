@@ -1,59 +1,35 @@
 import { caseRepository } from "../repository/case.repository.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
 import Boom from "@hapi/boom";
+import { ObjectId } from "mongodb";
 
-function validateCaseEvent(caseEvent, workflow) {
-  const ajv = new Ajv({
-    strict: true,
-    allErrors: true,
-    removeAdditional: "all",
-    useDefaults: true
-  });
-  addFormats(ajv);
-  const caseEventCopy = structuredClone(caseEvent);
-  const valid = ajv.validate(workflow.payloadSchema, caseEventCopy);
-  if (!valid) {
-    throw Boom.badRequest(
-      `Case event with code "${caseEvent.code}" has invalid answers: ${ajv.errorsText()}`
-    );
-  }
-}
-
-function createCase(workflow, caseEvent) {
-  const newCase = structuredClone(workflow);
-  delete newCase["_id"];
-  delete newCase.description;
-  delete newCase.payloadSchema;
-  newCase.payload = structuredClone(caseEvent);
-  newCase.taskSections = newCase.taskSections ?? [];
-  newCase.taskSections.forEach((taskSection) => {
-    taskSection.taskGroups = taskSection.taskGroups ?? [];
-    taskSection.taskGroups.forEach((taskGroup) => {
-      taskGroup.status = "NOT STARTED";
-      taskGroup.tasks.forEach((task) => {
-        task.value = null;
-      });
-    });
-  });
-  newCase.caseRef = caseEvent.clientRef;
-  newCase.status = "NEW";
-  newCase.dateReceived = new Date().toISOString();
-  newCase.targetDate = null;
-  newCase.priority = "LOW";
-  newCase.assignedUser = null;
-  return newCase;
-}
+const createCase = (workflow, caseEvent) => ({
+  caseRef: caseEvent.clientRef,
+  workflowCode: workflow.code,
+  status: "NEW",
+  dateReceived: new Date().toISOString(),
+  targetDate: null,
+  priority: "LOW",
+  assignedUser: null,
+  payload: structuredClone(caseEvent),
+  currentStage: workflow.stages[0].id,
+  stages: workflow.stages.map((stage) => ({
+    id: stage.id,
+    taskGroups: stage.taskGroups.map((taskGroup) => ({
+      id: taskGroup.id,
+      tasks: taskGroup.tasks.map((task) => ({
+        id: task.id,
+        isComplete: false
+      }))
+    }))
+  }))
+});
 
 export const caseService = {
   handleCreateCaseEvent: async (caseEvent, db) => {
     const workflow = await workflowRepository.getWorkflow(caseEvent.code, db);
     if (!workflow) {
       throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
-    }
-    if (workflow.payloadSchema) {
-      validateCaseEvent(caseEvent, workflow);
     }
     const newCase = createCase(workflow, caseEvent);
     return caseRepository.createCase(newCase, db);
@@ -66,5 +42,13 @@ export const caseService = {
   },
   getCase: async (caseId, db) => {
     return caseRepository.getCase(caseId, db);
+  },
+  updateCaseStage: async (caseId, nextStage, db) => {
+    return await db.collection("cases").updateOne(
+      {
+        _id: new ObjectId(caseId)
+      },
+      { $set: { currentStage: nextStage } }
+    );
   }
 };

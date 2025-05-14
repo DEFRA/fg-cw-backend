@@ -6,8 +6,35 @@ import {
   workflowDetailController,
   workflowListController
 } from "../controller/workflow.controller.js";
+import { workflowData1 } from "../../test/fixtures/workflow.js";
 
 describe("Workflows route configuration tests", () => {
+  it("should throw on /POST if workflow code is not valid", () => {
+    const postRoute = workflows.find(
+      (route) => route.method === "POST" && route.path === "/workflows"
+    );
+
+    const { payload } = postRoute.options.validate;
+
+    expect(Joi.isSchema(payload)).toBe(true);
+
+    const result1 = payload.validate({
+      ...workflowData1,
+      code: "je-0909-llo"
+    });
+
+    expect(result1.error).toBeUndefined();
+
+    const result2 = payload.validate({
+      ...workflowData1,
+      code: "je_-0909llo+"
+    });
+
+    expect(result2.error.message).toEqual(
+      '"code" with value "je_-0909llo+" fails to match the required pattern: /^[a-zA-Z0-9-]+$/'
+    );
+  });
+
   it("should define the POST /workflows route with correct configuration", () => {
     const postRoute = workflows.find(
       (route) => route.method === "POST" && route.path === "/workflows"
@@ -64,24 +91,23 @@ describe("Workflows route configuration tests", () => {
   });
 
   it("should define the GET /workflows/{workflowCode} route with correct configuration", () => {
-    const getDetailRoute = workflows.find(
-      (route) =>
-        route.method === "GET" && route.path === "/workflows/{workflowCode}"
-    );
+    const getDetailRoute = workflows.find((route) => {
+      return route.method === "GET" && route.path === "/workflows/{code}";
+    });
 
     expect(getDetailRoute).toBeDefined();
     expect(getDetailRoute.method).toBe("GET");
-    expect(getDetailRoute.path).toBe("/workflows/{workflowCode}");
+    expect(getDetailRoute.path).toBe("/workflows/{code}");
 
     // Test options configuration
     const { options } = getDetailRoute;
-    expect(options.description).toBe("Find a workflow by workflowCode");
+    expect(options.description).toBe("Find a workflow by code");
     expect(options.tags).toEqual(["api"]);
 
     // Validate params schema
     expect(Joi.isSchema(options.validate.params)).toBe(true);
     const paramsValidation = options.validate.params.validate({
-      workflowCode: "12345"
+      code: "12345"
     });
     expect(paramsValidation.error).toBeUndefined();
 

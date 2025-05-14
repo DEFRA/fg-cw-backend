@@ -98,6 +98,57 @@ const config = convict({
       env: "MONGO_DATABASE"
     }
   },
+  aws: {
+    isLocalstackEnabled: {
+      doc: "Is localstack enabled",
+      format: Boolean,
+      default: false,
+      env: "LOCALSTACK_ENABLED"
+    },
+    awsRegion: {
+      doc: "AWS Region",
+      format: String,
+      default: "eu-west-2",
+      env: "AWS_REGION"
+    },
+    sqsEndpoint: {
+      doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
+      format: String,
+      default: "http://localstack:4566",
+      env: "SQS_ENDPOINT"
+    },
+    sqsWaitTimeInSeconds: {
+      doc: "SQS Wait Time in Seconds",
+      format: Number,
+      default: 20,
+      env: "SQS_WAIT_TIME_IN_SECONDS"
+    },
+    sqsMaxNumberOfMessages: {
+      doc: "SQS Max Number of Messages",
+      format: Number,
+      default: 10,
+      env: "SQS_MAX_NUMBER_OF_MESSAGES"
+    },
+    snsEndpoint: {
+      doc: "SNS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
+      format: String,
+      default: "http://localstack:4566",
+      env: "SNS_ENDPOINT"
+    },
+    createNewCaseSqsUrl: {
+      doc: "URL of the SQS queue for case creation events",
+      format: String,
+      default:
+        "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case",
+      env: "CREATE_NEW_CASE_SQS_URL"
+    },
+    caseStageUpdatedTopicArn: {
+      doc: "ARN of the SNS topic to publish case stage updates",
+      format: String,
+      default: "arn:aws:sns:eu-west-2:000000000000:case_stage_updated",
+      env: "CASE_STAGE_UPDATED_TOPIC_ARN"
+    }
+  },
   httpProxy: {
     doc: "HTTP Proxy URL",
     format: String,

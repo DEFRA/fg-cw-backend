@@ -3,9 +3,11 @@ import { extractListQuery } from "../common/helpers/api/request.js";
 import { workflowService } from "../service/workflow.service.js";
 
 export const workflowCreateController = async (request, h) => {
-  return h
-    .response(await workflowService.createWorkflow(request.payload, request.db))
-    .code(201);
+  const workflow = await workflowService.createWorkflow(
+    request.payload,
+    request.db
+  );
+  return h.response(workflow).code(201);
 };
 
 export const workflowListController = async (request, h) => {
@@ -16,12 +18,12 @@ export const workflowListController = async (request, h) => {
 
 export const workflowDetailController = async (request, h) => {
   const result = await workflowService.getWorkflow(
-    request.params.workflowCode,
+    request.params.code,
     request.db
   );
   if (!result) {
     return Boom.notFound(
-      "Workflow with id: " + request.params.workflowCode + " not found"
+      "Workflow with id: " + request.params.code + " not found"
     );
   }
   return h.response(result);

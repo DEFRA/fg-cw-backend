@@ -24,15 +24,16 @@ describe.sequential("Workflow API", () => {
       await workflows.deleteMany({});
     });
 
-    it("adds a workflow", async () => {
+    it.sequential("adds a workflow", async () => {
+      const payload = { ...workflowData1 };
       const response = await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
-        payload: workflowData1
+        payload
       });
 
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
-        ...workflowData1,
+        ...payload,
         _id: expect.any(String)
       });
 
@@ -40,9 +41,24 @@ describe.sequential("Workflow API", () => {
 
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
-        ...workflowData1,
+        ...payload,
         _id: expect.any(Object)
       });
+    });
+
+    it.sequential("throws if workflow code already exists", async () => {
+      const payload = { ...workflowData1 };
+      await Wreck.post(`${env.API_URL}/workflows`, {
+        json: true,
+        payload
+      });
+
+      await expect(
+        Wreck.post(`${env.API_URL}/workflows`, {
+          json: true,
+          payload
+        })
+      ).rejects.toThrow("Response Error: 409 Conflict");
     });
   });
 
@@ -51,7 +67,7 @@ describe.sequential("Workflow API", () => {
       await workflows.deleteMany({});
     });
 
-    it("finds workflows", async () => {
+    it.sequential("finds workflows", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows`, {
@@ -81,7 +97,7 @@ describe.sequential("Workflow API", () => {
       await workflows.deleteMany({});
     });
 
-    it("finds a workflow by code", async () => {
+    it.sequential("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows/GRANT-REF-2`, {

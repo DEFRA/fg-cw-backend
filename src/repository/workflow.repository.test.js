@@ -116,11 +116,11 @@ describe("Workflow Repository", () => {
       db.collection.mockReturnThis();
       db.findOne.mockResolvedValue(expectedWorkflow);
 
-      const workflowCode = "123";
-      const result = await workflowRepository.getWorkflow(workflowCode, db);
+      const code = "123";
+      const result = await workflowRepository.getWorkflow(code, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ workflowCode });
+      expect(db.findOne).toHaveBeenCalledWith({ code });
       expect(result).toEqual(expectedWorkflow);
     });
 
@@ -128,11 +128,11 @@ describe("Workflow Repository", () => {
       db.collection.mockReturnThis();
       db.findOne.mockResolvedValue(null);
 
-      const workflowCode = "DOESNT_EXIST";
-      const result = await workflowRepository.getWorkflow(workflowCode, db);
+      const code = "DOESNT_EXIST";
+      const result = await workflowRepository.getWorkflow(code, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ workflowCode });
+      expect(db.findOne).toHaveBeenCalledWith({ code });
       expect(result).toBeNull();
     });
   });

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { TaskSection } from "./workflow.schema.js";
+import { UrlSafeId } from "./url-safe-id.schema.js";
 
 const GrantCaseEventIdentifiers = Joi.object({
   sbi: Joi.string().required(),
@@ -9,6 +9,7 @@ const GrantCaseEventIdentifiers = Joi.object({
 }).label("GrantCaseEventIdentifiers");
 
 const GrantCaseEventAnswers = Joi.object({
+  agreementName: Joi.string().required(),
   scheme: Joi.string().valid("SFI").required(),
   year: Joi.number().integer().min(2000).max(2100).required(),
   hasCheckedLandIsUpToDate: Joi.boolean().required(),
@@ -41,6 +42,26 @@ const CasePayload = Joi.alternatives()
   .required()
   .label("CasePayload");
 
+const CaseStage = Joi.object({
+  id: UrlSafeId.required(),
+  taskGroups: Joi.array()
+    .items(
+      Joi.object({
+        id: UrlSafeId.required(),
+        tasks: Joi.array()
+          .items(
+            Joi.object({
+              id: UrlSafeId.required(),
+              isComplete: Joi.boolean().required()
+            })
+          )
+          .min(1)
+          .required()
+      })
+    )
+    .required()
+}).label("CaseStage");
+
 const CaseData = Joi.object({
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
@@ -49,16 +70,22 @@ const CaseData = Joi.object({
   targetDate: Joi.date().iso().allow(null).optional(),
   priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
   assignedUser: Joi.string().allow(null).optional(),
-  taskSections: Joi.array().items(TaskSection).required(),
-  payload: CasePayload.required()
+  payload: CasePayload.required(),
+  currentStage: UrlSafeId.required(),
+  stages: Joi.array().items(CaseStage).required()
 }).label("CaseData");
 
 const Case = CaseData.keys({
   _id: Joi.object().required()
 }).label("Case");
 
+const NextStage = Joi.object({
+  nextStage: Joi.string().required()
+}).label("NextStage");
+
 export const caseSchema = {
   CaseData,
   Case,
-  GrantCaseEvent
+  GrantCaseEvent,
+  NextStage
 };
