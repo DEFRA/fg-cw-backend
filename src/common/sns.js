@@ -7,13 +7,13 @@ const endpoint = config.get("aws.snsEndpoint") || "http://localhost:4566";
 
 export const snsClient = new SNSClient({ region, endpoint });
 
-export const publish = async (topicArn, message) => {
+export const publish = async (topicArn, message, traceId) => {
   const event = {
     id: randomUUID(),
     source: config.get("serviceName"),
     specVersion: "1.0",
     type: `cloud.defra.${config.get("cdpEnvironment")}.${config.get("serviceName")}.case.stage.updated`,
-    data: message
+    data: { ...message, traceId }
   };
 
   return snsClient.send(
