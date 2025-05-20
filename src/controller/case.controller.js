@@ -3,7 +3,6 @@ import { caseService } from "../service/case.service.js";
 import { extractListQuery } from "../common/helpers/api/request.js";
 import { publish } from "../common/sns.js";
 import { config } from "../config.js";
-import { getTraceId } from "@defra/hapi-tracing";
 
 export const caseCreateController = async (request, h) => {
   return h
@@ -33,7 +32,6 @@ export const caseDetailController = async (request, h) => {
 
 export const caseStageController = async (request, h) => {
   const { caseId } = request.params;
-  const traceId = getTraceId();
 
   const caseRecord = await caseService.getCase(caseId, request.db);
   if (!caseRecord) {
@@ -45,15 +43,11 @@ export const caseStageController = async (request, h) => {
 
   await caseService.updateCaseStage(caseId, nextStage, request.db);
 
-  await publish(
-    config.get("aws.caseStageUpdatedTopicArn"),
-    {
-      caseRef: caseRecord.caseRef,
-      previousStage,
-      currentStage: nextStage
-    },
-    traceId
-  );
+  await publish(config.get("aws.caseStageUpdatedTopicArn"), {
+    caseRef: caseRecord.caseRef,
+    previousStage,
+    currentStage: nextStage
+  });
 
   return h.response().code(204);
 };
