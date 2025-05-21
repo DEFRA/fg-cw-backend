@@ -2,7 +2,6 @@ import Hapi from "@hapi/hapi";
 import { config } from "./config.js";
 import { router } from "./plugin/router.js";
 import { requestLogger } from "./common/helpers/logging/request-logger.js";
-import { mongoDb } from "./common/helpers/mongodb.js";
 import { failAction } from "./common/helpers/fail-action.js";
 import { secureContext } from "./common/helpers/secure-context/index.js";
 import { pulse } from "./common/helpers/pulse.js";
@@ -12,6 +11,7 @@ import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
 import { createCaseEventConsumer } from "./plugin/create-case-event-consumer.js";
+import { mongoClient } from "./common/helpers/db.js";
 
 async function createServer(host, port) {
   setupProxy();
@@ -48,6 +48,14 @@ async function createServer(host, port) {
     }
   };
 
+  server.events.on("start", async () => {
+    await mongoClient.connect();
+  });
+
+  server.events.on("stop", async () => {
+    await mongoClient.close(true);
+  });
+
   // Hapi Plugins:
   // requestLogger  - automatically logs incoming requests
   // requestTracing - trace header logging and propagation
@@ -67,7 +75,6 @@ async function createServer(host, port) {
       plugin: HapiSwagger,
       options: swaggerOptions
     },
-    mongoDb,
     router,
     createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server)
   ]);

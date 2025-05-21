@@ -1,11 +1,12 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { config } from "../config.js";
+import { db } from "../common/helpers/db.js";
 
 export const collection = "cases";
 
 export const caseRepository = {
-  createCase: async (caseData, db) => {
+  createCase: async (caseData) => {
     let result;
     try {
       result = await db.collection(collection).insertOne(caseData);
@@ -25,7 +26,7 @@ export const caseRepository = {
     });
   },
 
-  findCases: async (listQuery, db) => {
+  findCases: async (listQuery) => {
     const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
       listQuery;
     const skip = (page - 1) * pageSize;

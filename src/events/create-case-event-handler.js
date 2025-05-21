@@ -10,10 +10,7 @@ const createCaseEventHandler = (server) => async (message) => {
   const createNewCaseEvent = JSON.parse(message.Body);
   createNewCaseEvent.createdAt = new Date(createNewCaseEvent.createdAt);
   createNewCaseEvent.submittedAt = new Date(createNewCaseEvent.submittedAt);
-  const newCase = await caseService.handleCreateCaseEvent(
-    createNewCaseEvent,
-    server.db
-  );
+  const newCase = await caseService.handleCreateCaseEvent(createNewCaseEvent);
 
   server.logger.info({
     message: `New case created for workflow: ${newCase.workflowCode} with caseRef: ${newCase.caseRef}`,

@@ -1,6 +1,7 @@
 import { createServer } from "../../server.js";
 import { createLogger } from "./logging/logger.js";
 import { up } from "migrate-mongo";
+import { db, mongoClient } from "./db.js";
 
 async function startServer(host, port) {
   let server;
@@ -15,7 +16,7 @@ async function startServer(host, port) {
     server.logger.info("Running DB Migrations");
 
     // Database migrations
-    await up(server.db, server.mongoClient);
+    await up(db, mongoClient);
 
     server.logger.info("Finished running DB Migrations");
   } catch (error) {
