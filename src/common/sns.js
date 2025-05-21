@@ -14,7 +14,7 @@ export const publish = async (topicArn, message) => {
     source: config.get("serviceName"),
     specVersion: "1.0",
     type: `cloud.defra.${config.get("cdpEnvironment")}.${config.get("serviceName")}.case.stage.updated`,
-    data: { ...message, traceId: getTraceId() }
+    data: { ...message, traceParent: getTraceId() }
   };
 
   return snsClient.send(
