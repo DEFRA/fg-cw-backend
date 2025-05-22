@@ -18,7 +18,7 @@
     "lint": "eslint --cache --cache-strategy content \"**/*.{cjs,js}\"",
     "lint:fix": "npm run lint -- --fix",
     "postversion": "git add package.json package-lock.json && git commit -m $npm_package_version",
-    "test": "vitest --coverage",
+    "test": "vitest",
     "test:integration": "vitest --config ./test/vitest.config.js",
     "coverage": "vitest run --coverage",
     "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch ./src",
