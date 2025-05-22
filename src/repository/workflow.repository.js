@@ -1,11 +1,12 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { config } from "../config.js";
+import { db } from "../common/helpers/db.js";
 
 export const collection = "workflows";
 
 export const workflowRepository = {
-  createWorkflow: async (workflowData, db) => {
+  createWorkflow: async (workflowData) => {
     let result;
     try {
       result = await db.collection(collection).insertOne(workflowData);
@@ -25,7 +26,7 @@ export const workflowRepository = {
     });
   },
 
-  findWorkflows: async (listQuery, db) => {
+  findWorkflows: async (listQuery) => {
     const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
       listQuery;
     const skip = (page - 1) * pageSize;
