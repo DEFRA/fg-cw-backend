@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { randomUUID } from "crypto";
-import { getTraceId } from "@defra/hapi-tracing";
 import { caseService } from "../service/case.service.js";
 import { extractListQuery } from "../common/helpers/api/request.js";
 import { publish } from "../common/sns.js";
@@ -54,8 +53,7 @@ export const caseStageController = async (request, h) => {
       caseRef: caseRecord.caseRef,
       previousStage,
       currentStage: nextStage
-    },
-    traceparent: getTraceId()
+    }
   };
 
   await publish(config.get("aws.caseStageUpdatedTopicArn"), event);
