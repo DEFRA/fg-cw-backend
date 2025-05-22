@@ -18,12 +18,12 @@ export const caseRepository = {
       }
       throw Boom.internal(error);
     }
+
     if (!result || !result.acknowledged) {
       throw Boom.internal("Error creating case");
     }
-    return await db.collection(collection).findOne({
-      _id: result.insertedId
-    });
+
+    return caseData;
   },
 
   findCases: async (listQuery) => {
@@ -49,7 +49,7 @@ export const caseRepository = {
     };
   },
 
-  getCase: async (caseId, db) => {
+  getCase: async (caseId) => {
     return await db.collection(collection).findOne({
       _id: new ObjectId(caseId)
     });

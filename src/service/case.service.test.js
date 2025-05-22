@@ -23,8 +23,6 @@ vi.mock("../repository/workflow.repository.js", () => ({
 }));
 
 describe("caseService", () => {
-  const mockDb = {}; // A mock database object
-
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -33,13 +31,12 @@ describe("caseService", () => {
     it("should throw a bad request error if the workflow is not found", async () => {
       workflowRepository.getWorkflow.mockResolvedValue(null);
       await expect(() =>
-        caseService.handleCreateCaseEvent(createCaseEvent1, mockDb)
+        caseService.handleCreateCaseEvent(createCaseEvent1)
       ).rejects.toThrow(
         Boom.badRequest(`Workflow ${createCaseEvent1.code} not found`)
       );
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent1.code,
-        mockDb
+        createCaseEvent1.code
       );
     });
 
@@ -58,45 +55,41 @@ describe("caseService", () => {
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
       caseRepository.createCase.mockResolvedValue(mockCreatedCase);
 
-      const result = await caseService.handleCreateCaseEvent(event, mockDb);
+      const result = await caseService.handleCreateCaseEvent(event);
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent3.code,
-        mockDb
+        createCaseEvent3.code
       );
-      expect(caseRepository.createCase).toHaveBeenCalledWith(
-        {
-          ...caseData3,
-          dateReceived: expect.any(String),
-          payload: {
-            ...caseData3.payload,
-            createdAt,
-            submittedAt
-          },
-          currentStage: workflowData1.stages[0].id,
-          stages: [
-            {
-              id: "application-receipt",
-              taskGroups: [
-                {
-                  id: "application-receipt-tasks",
-                  tasks: [
-                    {
-                      id: "simple-review",
-                      isComplete: false
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              id: "contract",
-              taskGroups: []
-            }
-          ]
+      expect(caseRepository.createCase).toHaveBeenCalledWith({
+        ...caseData3,
+        dateReceived: expect.any(String),
+        payload: {
+          ...caseData3.payload,
+          createdAt,
+          submittedAt
         },
-        mockDb
-      );
+        currentStage: workflowData1.stages[0].id,
+        stages: [
+          {
+            id: "application-receipt",
+            taskGroups: [
+              {
+                id: "application-receipt-tasks",
+                tasks: [
+                  {
+                    id: "simple-review",
+                    isComplete: false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "contract",
+            taskGroups: []
+          }
+        ]
+      });
       expect(result).toEqual(mockCreatedCase);
     });
   });
@@ -108,9 +101,9 @@ describe("caseService", () => {
 
       caseRepository.createCase.mockResolvedValue(mockResult);
 
-      const result = await caseService.createCase(caseData1, mockDb);
+      const result = await caseService.createCase(caseData1);
 
-      expect(caseRepository.createCase).toHaveBeenCalledWith(caseData1, mockDb);
+      expect(caseRepository.createCase).toHaveBeenCalledWith(caseData1);
       expect(result).toEqual(mockResult);
     });
   });
@@ -122,9 +115,9 @@ describe("caseService", () => {
 
       caseRepository.findCases.mockResolvedValue(mockCases);
 
-      const result = await caseService.findCases(listQuery, mockDb);
+      const result = await caseService.findCases(listQuery);
 
-      expect(caseRepository.findCases).toHaveBeenCalledWith(listQuery, mockDb);
+      expect(caseRepository.findCases).toHaveBeenCalledWith(listQuery);
       expect(result).toEqual(mockCases);
     });
   });
@@ -137,9 +130,9 @@ describe("caseService", () => {
 
       caseRepository.getCase.mockResolvedValue(mockResult);
 
-      const result = await caseService.getCase(mockCaseId, mockDb);
+      const result = await caseService.getCase(mockCaseId);
 
-      expect(caseRepository.getCase).toHaveBeenCalledWith(mockCaseId, mockDb);
+      expect(caseRepository.getCase).toHaveBeenCalledWith(mockCaseId);
       expect(result).toEqual(mockResult);
     });
   });

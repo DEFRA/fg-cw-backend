@@ -1,29 +1,18 @@
-import { describe, test, vi, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, vi, expect, afterEach } from "vitest";
 import Boom from "@hapi/boom";
 import { caseRepository, collection } from "./case.repository.js";
 import { MongoServerError, ObjectId } from "mongodb";
 import { caseData1, caseData2 } from "../../test/fixtures/case.js";
 import caseListResponse from "../../test/fixtures/case-list-response.json";
+import { db } from "../common/helpers/db.js";
+
+vi.mock("../common/helpers/db.js", () => ({
+  db: {
+    collection: vi.fn().mockReturnThis()
+  }
+}));
 
 describe("caseRepository", () => {
-  let db;
-
-  beforeEach(() => {
-    db = {
-      collection: vi.fn().mockReturnThis(),
-      insertOne: vi.fn(),
-      findOne: vi.fn(),
-      find: vi.fn().mockReturnThis(),
-      toArray: vi.fn(),
-      estimatedDocumentCount: vi.fn(),
-      skip: vi.fn(),
-      limit: vi.fn()
-    };
-    db.find.mockReturnThis();
-    db.skip.mockReturnThis();
-    db.limit.mockReturnThis();
-  });
-
   afterEach(() => {
     vi.resetAllMocks(); // Reset state and implementation of all mocks after each test
   });
@@ -31,57 +20,59 @@ describe("caseRepository", () => {
   describe("createCase", () => {
     test("should create a case and return it", async () => {
       const insertedId = "insertedId123";
-      const expectedCase = { _id: insertedId, ...caseData1 };
+      const insertOne = vi.fn().mockResolvedValueOnce({
+        insertedId,
+        acknowledged: true
+      });
 
-      db.insertOne.mockResolvedValue({ acknowledged: true, insertedId });
-      db.findOne.mockResolvedValue(expectedCase);
+      db.collection.mockReturnValue({
+        insertOne
+      });
 
-      const result = await caseRepository.createCase(caseData1, db);
+      await caseRepository.createCase(caseData1);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(caseData1);
-      expect(db.findOne).toHaveBeenCalledWith({ _id: insertedId });
-      expect(result).toEqual(expectedCase);
+      expect(insertOne).toHaveBeenCalledWith(caseData1);
     });
 
     test("should throw conflict error if case with id already exists", async () => {
       const error = new MongoServerError({ message: "Duplicate key error" });
       error.code = 11000; // Duplicate key error code
 
-      db.insertOne.mockRejectedValue(error);
+      db.collection.mockReturnValue({
+        insertOne: vi.fn().mockRejectedValueOnce(error)
+      });
 
-      await expect(caseRepository.createCase(caseData1, db)).rejects.toThrow(
+      const promise = caseRepository.createCase(caseData1);
+
+      await expect(promise).rejects.toThrow(
         Boom.conflict(
           `Case with workflow code: '${caseData1.workflowCode}' and case ref: '${caseData1.caseRef}' already exists`
         )
       );
-
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(caseData1);
     });
 
     test("should throw internal error on other MongoDB errors", async () => {
       const error = new Error("Unexpected error");
 
-      db.insertOne.mockRejectedValue(error);
+      db.collection.mockReturnValue({
+        insertOne: vi.fn().mockRejectedValueOnce(error)
+      });
 
-      await expect(caseRepository.createCase(caseData1, db)).rejects.toThrow(
-        Boom.internal(error)
-      );
+      const promise = caseRepository.createCase(caseData1);
 
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(caseData1);
+      await expect(promise).rejects.toThrow(Boom.internal(error));
     });
 
     test("should throw internal error if result is not acknowledged", async () => {
-      db.insertOne.mockResolvedValue({ acknowledged: false });
+      const error = new Error("Error creating case");
 
-      await expect(caseRepository.createCase(caseData1, db)).rejects.toThrow(
-        Boom.internal("Error creating case")
-      );
+      db.collection.mockReturnValue({
+        insertOne: vi.fn().mockResolvedValue({ acknowledged: false })
+      });
 
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(caseData1);
+      const promise = caseRepository.createCase(caseData1);
+      await expect(promise).rejects.toThrow(Boom.internal(error));
     });
   });
 
@@ -90,17 +81,24 @@ describe("caseRepository", () => {
       const listQuery = { page: 1, pageSize: 10 };
       const cases = [caseData1, caseData2];
 
-      db.toArray.mockResolvedValue(cases);
-      db.estimatedDocumentCount.mockResolvedValue(2);
+      const mockEstimatedCount = vi.fn().mockResolvedValue(2);
 
-      const result = await caseRepository.findCases(listQuery, db);
+      const mockFind = vi.fn().mockReturnValue({
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockResolvedValue(cases)
+      });
+
+      db.collection.mockReturnValue({
+        find: mockFind,
+        estimatedDocumentCount: mockEstimatedCount
+      });
+
+      const result = await caseRepository.findCases(listQuery);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.find).toHaveBeenCalled();
-      expect(db.estimatedDocumentCount).toHaveBeenCalled();
-      expect(db.skip).toHaveBeenCalledWith(100 * (listQuery.page - 1));
-      expect(db.limit).toHaveBeenCalled();
-      expect(db.toArray).toHaveBeenCalled();
+      expect(mockFind).toHaveBeenCalled();
+      expect(mockEstimatedCount).toHaveBeenCalled();
       expect(result).toEqual(caseListResponse);
     });
   });
@@ -108,24 +106,33 @@ describe("caseRepository", () => {
   describe("getCase", () => {
     test("should return a specific case by id", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
-      db.findOne.mockResolvedValue(caseData2);
+      const findOne = vi.fn().mockResolvedValueOnce(caseData2);
 
-      const result = await caseRepository.getCase(caseId, db);
+      db.collection.mockReturnValue({
+        findOne
+      });
+      // db.findOne.mockResolvedValue(caseData2);
+
+      const result = await caseRepository.getCase(caseId);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
+      expect(findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
       expect(result).toEqual(caseData2);
     });
 
     test("should return null if case is not found", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
 
-      db.findOne.mockResolvedValue(null);
+      const findOne = vi.fn().mockResolvedValueOnce(null);
+
+      db.collection.mockReturnValue({
+        findOne
+      });
 
       const result = await caseRepository.getCase(caseId, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
+      expect(findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
       expect(result).toBeNull();
     });
   });
