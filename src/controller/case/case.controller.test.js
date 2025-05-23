@@ -4,11 +4,11 @@ import {
   caseListController,
   caseDetailController
 } from "./case.controller.js";
-import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import { caseService } from "../service/case.service.js";
+import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
+import { caseService } from "../../service/case.service.js";
 import Boom from "@hapi/boom";
 
-vi.mock("../service/case.service.js", () => ({
+vi.mock("../../service/case.service.js", () => ({
   caseService: {
     createCase: vi.fn(),
     findCases: vi.fn(),
@@ -16,11 +16,16 @@ vi.mock("../service/case.service.js", () => ({
   }
 }));
 
+vi.mock("../../common/helpers/db.js", () => ({
+  db: {
+    collection: vi.fn().mockReturnThis()
+  }
+}));
+
 describe("case.controller.js", () => {
   const mockRequest = {
     payload: caseData1,
-    params: { caseId: "10001" },
-    db: {} // Mock database
+    params: { caseId: "10001" }
   };
 
   const mockResponseToolkit = {
@@ -33,15 +38,14 @@ describe("case.controller.js", () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData1 };
       const mockResponse = { code: vi.fn() };
-      caseService.createCase.mockResolvedValue(mockCreatedCase);
+
+      vi.spyOn(caseService, "createCase").mockResolvedValue(mockCreatedCase);
+
       const h = { response: vi.fn(() => mockResponse) }; // Mock the response toolkit
 
       await caseCreateController(mockRequest, h);
 
-      expect(caseService.createCase).toHaveBeenCalledWith(
-        mockRequest.payload,
-        mockRequest.db
-      );
+      expect(caseService.createCase).toHaveBeenCalledWith(mockRequest.payload);
       expect(h.response).toHaveBeenCalledWith(mockCreatedCase);
       expect(mockResponse.code).toHaveBeenCalledWith(201);
     });
@@ -53,14 +57,15 @@ describe("case.controller.js", () => {
         { _id: "insertedId001", ...caseData1 },
         { _id: "insertedId002", ...caseData2 }
       ];
-      caseService.findCases.mockResolvedValue(mockCases);
+
+      vi.spyOn(caseService, "findCases").mockResolvedValue(mockCases);
 
       const result = await caseListController(mockRequest, mockResponseToolkit);
 
-      expect(caseService.findCases).toHaveBeenCalledWith(
-        { page: 1, pageSize: 100 },
-        mockRequest.db
-      );
+      expect(caseService.findCases).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 100
+      });
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCases);
       expect(result).toEqual(mockCases);
     });
@@ -70,7 +75,8 @@ describe("case.controller.js", () => {
     it("should return case details for a valid case ID", async () => {
       const insertedId = "insertedId123";
       const mockCase = { _id: insertedId, ...caseData1 };
-      caseService.getCase.mockResolvedValue(mockCase);
+
+      vi.spyOn(caseService, "getCase").mockResolvedValue(mockCase);
 
       const result = await caseDetailController(
         mockRequest,
@@ -78,15 +84,14 @@ describe("case.controller.js", () => {
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId,
-        mockRequest.db
+        mockRequest.params.caseId
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCase);
       expect(result).toEqual(mockCase);
     });
 
     it("should return a Boom.notFound error if case is not found", async () => {
-      caseService.getCase.mockResolvedValue(null);
+      vi.spyOn(caseService, "getCase").mockResolvedValue(null);
 
       const result = await caseDetailController(
         mockRequest,
@@ -94,8 +99,7 @@ describe("case.controller.js", () => {
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId,
-        mockRequest.db
+        mockRequest.params.caseId
       );
       expect(result).toEqual(
         Boom.notFound(

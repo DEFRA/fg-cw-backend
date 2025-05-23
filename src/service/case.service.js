@@ -2,6 +2,7 @@ import { caseRepository } from "../repository/case.repository.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
+import { db } from "../common/helpers/db.js";
 
 const createCase = (workflow, caseEvent) => ({
   caseRef: caseEvent.clientRef,
@@ -26,24 +27,24 @@ const createCase = (workflow, caseEvent) => ({
 });
 
 export const caseService = {
-  handleCreateCaseEvent: async (caseEvent, db) => {
-    const workflow = await workflowRepository.getWorkflow(caseEvent.code, db);
+  handleCreateCaseEvent: async (caseEvent) => {
+    const workflow = await workflowRepository.getWorkflow(caseEvent.code);
     if (!workflow) {
       throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
     }
     const newCase = createCase(workflow, caseEvent);
-    return caseRepository.createCase(newCase, db);
+    return caseRepository.createCase(newCase);
   },
   createCase: async (caseData, db) => {
-    return caseRepository.createCase(caseData, db);
+    return caseRepository.createCase(caseData);
   },
-  findCases: async (listQuery, db) => {
-    return caseRepository.findCases(listQuery, db);
+  findCases: async (listQuery) => {
+    return caseRepository.findCases(listQuery);
   },
-  getCase: async (caseId, db) => {
-    return caseRepository.getCase(caseId, db);
+  getCase: async (caseId) => {
+    return caseRepository.getCase(caseId);
   },
-  updateCaseStage: async (caseId, nextStage, db) => {
+  updateCaseStage: async (caseId, nextStage) => {
     return await db.collection("cases").updateOne(
       {
         _id: new ObjectId(caseId)
