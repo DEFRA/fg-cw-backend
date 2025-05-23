@@ -5,9 +5,9 @@ import { eventController } from "../controller/event.controller.js";
 const caseEvents = [
   {
     method: "POST",
-    path: "/case-events",
+    path: "/handlers-events",
     options: {
-      description: "Receive a create case event",
+      description: "Receive a create handlers event",
       tags: ["api"],
       validate: {
         payload: caseSchema.GrantCaseEvent

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCaseEventHandler } from "./create-case-event-handler.js";
-import { caseService } from "../service/case.service.js";
-import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
-import { caseData3 } from "../../test/fixtures/case.js";
+import { caseService } from "../../service/case.service.js";
+import createCaseEvent3 from "../../../test/fixtures/create-case-event-3.json";
+import { caseData3 } from "../../../test/fixtures/case.js";
 // Mock the caseService
-vi.mock("../../src/service/case.service.js", () => ({
+vi.mock("../../src/service/handlers.service.js", () => ({
   caseService: {
     handleCreateCaseEvent: vi.fn()
   }
@@ -59,7 +59,7 @@ describe("createCaseEventHandler", () => {
     );
   });
 
-  it("should log when a new case is created", async () => {
+  it("should log when a new handlers is created", async () => {
     await handler(mockMessage);
 
     expect(mockServer.logger.info).toHaveBeenCalledWith({
@@ -68,7 +68,7 @@ describe("createCaseEventHandler", () => {
     });
   });
 
-  it("should handle errors thrown by case service", async () => {
+  it("should handle errors thrown by handlers service", async () => {
     const error = new Error("Test error");
     caseService.handleCreateCaseEvent.mockRejectedValue(error);
 

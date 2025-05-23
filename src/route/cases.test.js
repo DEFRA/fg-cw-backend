@@ -4,11 +4,11 @@ import {
   caseCreateController,
   caseDetailController,
   caseListController
-} from "../controller/case.controller.js";
+} from "../controller/handlers.controller.js";
 import { caseSchema } from "../schema/case.schema.js";
 import { commonSchema } from "../schema/common.schema.js";
 
-vi.mock("../controller/case.controller.js", () => ({
+vi.mock("../controller/handlers.controller.js", () => ({
   caseCreateController: vi.fn(),
   caseDetailController: vi.fn(),
   caseListController: vi.fn(),
@@ -24,7 +24,10 @@ describe("cases routes", () => {
     const { options, handler } = route;
 
     expect(handler).toBe(caseCreateController);
-    expect(options).toHaveProperty("description", "Temporary: Create a case");
+    expect(options).toHaveProperty(
+      "description",
+      "Temporary: Create a handlers"
+    );
     expect(options).toHaveProperty("tags");
     expect(options.tags).toContain("api");
     expect(options.validate.payload).toBeDefined(); // Expect payload schema
@@ -65,7 +68,7 @@ describe("cases routes", () => {
     const { options, handler } = route;
 
     expect(handler).toBe(caseDetailController);
-    expect(options).toHaveProperty("description", "Find a case by caseId");
+    expect(options).toHaveProperty("description", "Find a handlers by caseId");
     expect(options).toHaveProperty("tags");
     expect(options.tags).toContain("api");
     expect(options.validate.params.describe()).toMatchObject({

@@ -4,7 +4,7 @@ import {
   caseDetailController,
   caseListController,
   caseStageController
-} from "../controller/case.controller.js";
+} from "../controller/handlers.controller.js";
 import { caseSchema } from "../schema/case.schema.js";
 import { commonSchema } from "../schema/common.schema.js";
 
@@ -13,7 +13,7 @@ const cases = [
     method: "POST",
     path: "/cases",
     options: {
-      description: "Temporary: Create a case",
+      description: "Temporary: Create a handlers",
       tags: ["api"],
       validate: {
         payload: caseSchema.CaseData
@@ -52,7 +52,7 @@ const cases = [
     method: "GET",
     path: "/cases/{caseId}",
     options: {
-      description: "Find a case by caseId",
+      description: "Find a handlers by caseId",
       tags: ["api"],
       validate: {
         params: Joi.object({
@@ -72,7 +72,7 @@ const cases = [
     method: "POST",
     path: "/cases/{caseId}/stage",
     options: {
-      description: "Update the current stage for a case with id caseId",
+      description: "Update the current stage for a handlers with id caseId",
       tags: ["api"],
       validate: {
         params: Joi.object({

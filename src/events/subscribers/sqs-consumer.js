@@ -3,7 +3,7 @@ import {
   ReceiveMessageCommand,
   DeleteMessageCommand
 } from "@aws-sdk/client-sqs";
-import { config } from "../config.js";
+import { config } from "../../config.js";
 
 export default class SqsConsumer {
   constructor(server, options) {

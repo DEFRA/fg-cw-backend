@@ -4,7 +4,7 @@ import { caseService } from "../../service/case.service.js";
 import createCaseEvent1 from "../../../test/fixtures/create-case-event-1.json";
 import { caseData1 } from "../../../test/fixtures/case.js";
 
-vi.mock("../service/case.service.js", () => ({
+vi.mock("../service/handlers.service.js", () => ({
   caseService: {
     handleCreateCaseEvent: vi.fn()
   }

@@ -12,7 +12,7 @@ describe("Case Events Route Definitions", () => {
 
     // Verify method and path
     expect(eventRoute).toHaveProperty("method", "POST");
-    expect(eventRoute).toHaveProperty("path", "/case-events");
+    expect(eventRoute).toHaveProperty("path", "/handlers-events");
 
     // Verify options
     expect(eventRoute).toHaveProperty("options");
@@ -20,7 +20,7 @@ describe("Case Events Route Definitions", () => {
 
     expect(options).toHaveProperty(
       "description",
-      "Receive a create case event"
+      "Receive a create handlers event"
     );
     expect(options).toHaveProperty("tags");
     expect(options.tags).toContain("api");

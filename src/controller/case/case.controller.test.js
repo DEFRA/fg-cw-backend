@@ -8,7 +8,7 @@ import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 import { caseService } from "../../service/case.service.js";
 import Boom from "@hapi/boom";
 
-vi.mock("../../service/case.service.js", () => ({
+vi.mock("../../service/handlers.service.js", () => ({
   caseService: {
     createCase: vi.fn(),
     findCases: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock("../../common/helpers/db.js", () => ({
   }
 }));
 
-describe("case.controller.js", () => {
+describe("handlers.controller.js", () => {
   const mockRequest = {
     payload: caseData1,
     params: { caseId: "10001" }
@@ -34,7 +34,7 @@ describe("case.controller.js", () => {
   };
 
   describe("caseCreateController", () => {
-    it("should create a case and return the response", async () => {
+    it("should create a handlers and return the response", async () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData1 };
       const mockResponse = { code: vi.fn() };
@@ -72,7 +72,7 @@ describe("case.controller.js", () => {
   });
 
   describe("caseDetailController", () => {
-    it("should return case details for a valid case ID", async () => {
+    it("should return handlers details for a valid handlers ID", async () => {
       const insertedId = "insertedId123";
       const mockCase = { _id: insertedId, ...caseData1 };
 
@@ -90,7 +90,7 @@ describe("case.controller.js", () => {
       expect(result).toEqual(mockCase);
     });
 
-    it("should return a Boom.notFound error if case is not found", async () => {
+    it("should return a Boom.notFound error if handlers is not found", async () => {
       vi.spyOn(caseService, "getCase").mockResolvedValue(null);
 
       const result = await caseDetailController(

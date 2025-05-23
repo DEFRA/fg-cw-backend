@@ -1,4 +1,4 @@
-import { caseService } from "../service/case.service.js";
+import { caseService } from "../../service/case.service.js";
 
 const createCaseEventHandler = (server) => async (message) => {
   server.logger.info({

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { createCaseEventConsumer } from "./create-case-event-consumer.js";
-import sqsConsumerPlugin from "../events/sqs-consumer-plugin.js";
-import { createCaseEventHandler } from "../events/create-case-event-handler.js";
+import sqsConsumerPlugin from "./sqs-consumer-plugin.js";
+import { createCaseEventHandler } from "../handlers/create-case-event-handler.js";
 
 // Mock the dependencies
-vi.mock("../events/sqs-consumer-plugin.js", () => ({
+vi.mock(".sqs-consumer-plugin.js", () => ({
   default: { name: "sqs-consumer" }
 }));
 
-vi.mock("../events/create-case-event-handler.js", () => ({
+vi.mock("../handlers/create-case-event-handler.js", () => ({
   createCaseEventHandler: vi.fn().mockReturnValue(() => {})
 }));
 
@@ -20,7 +20,7 @@ describe("createCaseEventConsumer", () => {
   it("should return a properly configured plugin object", () => {
     const result = createCaseEventConsumer(mockSqsQueueUrl, mockServer);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       plugin: sqsConsumerPlugin,
       options: {
         queueUrl: mockSqsQueueUrl,

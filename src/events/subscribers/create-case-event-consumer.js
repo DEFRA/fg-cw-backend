@@ -1,5 +1,5 @@
-import sqsConsumerPlugin from "../events/sqs-consumer-plugin.js";
-import { createCaseEventHandler } from "../events/create-case-event-handler.js";
+import sqsConsumerPlugin from "./sqs-consumer-plugin.js";
+import { createCaseEventHandler } from "../handlers/create-case-event-handler.js";
 
 const createCaseEventConsumer = (sqsQueueUrl, server) => ({
   plugin: sqsConsumerPlugin,

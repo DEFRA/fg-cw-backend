@@ -10,7 +10,7 @@ import { setupProxy } from "./common/helpers/proxy/setup-proxy.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
-import { createCaseEventConsumer } from "./plugin/create-case-event-consumer.js";
+import { createCaseEventConsumer } from "./events/subscribers/create-case-event-consumer.js";
 import { mongoClient } from "./common/helpers/db.js";
 
 async function createServer(host, port) {

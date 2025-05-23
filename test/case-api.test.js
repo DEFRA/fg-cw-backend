@@ -47,7 +47,7 @@ describe.sequential("Case API", () => {
     await client.close();
   });
 
-  describe.sequential("POST /case-events", () => {
+  describe.sequential("POST /handlers-events", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -56,7 +56,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("adds a case", async () => {
+    it.sequential("adds a handlers", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
         payload: createCaseEvent3
@@ -136,7 +136,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("adds a case", async () => {
+    it.sequential("adds a handlers", async () => {
       const response = await Wreck.post(`${env.API_URL}/cases`, {
         json: true,
         payload: caseData1
@@ -204,7 +204,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("finds a case by code", async () => {
+    it.sequential("finds a handlers by code", async () => {
       const { insertedIds } = await cases.insertMany([
         { ...caseData1 },
         { ...caseData2 }
@@ -225,7 +225,7 @@ describe.sequential("Case API", () => {
     });
   });
 
-  describe.sequential("SNS case-event", () => {
+  describe.sequential("SNS handlers-event", () => {
     beforeEach(async () => {
       try {
         await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
@@ -244,7 +244,7 @@ describe.sequential("Case API", () => {
       }
     });
 
-    it.sequential("send case event to topic", async () => {
+    it.sequential("send handlers event to topic", async () => {
       await sendSnsMessage(
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
         createCaseEvent3

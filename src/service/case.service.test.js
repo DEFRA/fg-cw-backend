@@ -8,7 +8,7 @@ import { workflowData1 } from "../../test/fixtures/workflow.js";
 import { workflowRepository } from "../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
 
-vi.mock("../repository/case.repository.js", () => ({
+vi.mock("../repository/handlers.repository.js", () => ({
   caseRepository: {
     createCase: vi.fn(),
     findCases: vi.fn(),
@@ -40,7 +40,7 @@ describe("caseService", () => {
       );
     });
 
-    it("should create a case successfully", async () => {
+    it("should create a handlers successfully", async () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData3 };
       const createdAt = new Date(createCaseEvent3.createdAt);

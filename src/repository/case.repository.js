@@ -20,7 +20,7 @@ export const caseRepository = {
     }
 
     if (!result || !result.acknowledged) {
-      throw Boom.internal("Error creating case");
+      throw Boom.internal("Error creating handlers");
     }
 
     return caseData;

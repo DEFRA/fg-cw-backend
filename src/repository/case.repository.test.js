@@ -18,7 +18,7 @@ describe("caseRepository", () => {
   });
 
   describe("createCase", () => {
-    test("should create a case and return it", async () => {
+    test("should create a handlers and return it", async () => {
       const insertedId = "insertedId123";
       const insertOne = vi.fn().mockResolvedValueOnce({
         insertedId,
@@ -35,7 +35,7 @@ describe("caseRepository", () => {
       expect(insertOne).toHaveBeenCalledWith(caseData1);
     });
 
-    test("should throw conflict error if case with id already exists", async () => {
+    test("should throw conflict error if handlers with id already exists", async () => {
       const error = new MongoServerError({ message: "Duplicate key error" });
       error.code = 11000; // Duplicate key error code
 
@@ -65,7 +65,7 @@ describe("caseRepository", () => {
     });
 
     test("should throw internal error if result is not acknowledged", async () => {
-      const error = new Error("Error creating case");
+      const error = new Error("Error creating handlers");
 
       db.collection.mockReturnValue({
         insertOne: vi.fn().mockResolvedValue({ acknowledged: false })
@@ -104,7 +104,7 @@ describe("caseRepository", () => {
   });
 
   describe("getCase", () => {
-    test("should return a specific case by id", async () => {
+    test("should return a specific handlers by id", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
       const findOne = vi.fn().mockResolvedValueOnce(caseData2);
 
@@ -120,7 +120,7 @@ describe("caseRepository", () => {
       expect(result).toEqual(caseData2);
     });
 
-    test("should return null if case is not found", async () => {
+    test("should return null if handlers is not found", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
 
       const findOne = vi.fn().mockResolvedValueOnce(null);
