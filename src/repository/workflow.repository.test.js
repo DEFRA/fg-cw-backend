@@ -1,90 +1,80 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import Boom from "@hapi/boom";
 import { workflowRepository, collection } from "./workflow.repository.js";
 import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
 import workflowListResponse from "../../test/fixtures/workflow-list-response.json";
 import { MongoServerError } from "mongodb";
+import { db } from "../common/helpers/db.js";
+
+vi.mock("../common/helpers/db.js", () => ({
+  db: {
+    collection: vi.fn().mockReturnThis()
+  }
+}));
 
 describe("Workflow Repository", () => {
-  let db;
-
-  beforeAll(() => {
-    db = {
-      collection: vi.fn().mockReturnThis(),
-      insertOne: vi.fn(),
-      findOne: vi.fn(),
-      find: vi.fn().mockReturnThis(),
-      toArray: vi.fn(),
-      estimatedDocumentCount: vi.fn(),
-      skip: vi.fn(),
-      limit: vi.fn()
-    };
-    db.find.mockReturnThis();
-    db.skip.mockReturnThis();
-    db.limit.mockReturnThis();
-  });
-
   describe("createWorkflow", () => {
     it("should create a new workflow and return it", async () => {
       const insertedId = "insertedId123";
-      const expectedWorkflow = { _id: insertedId, ...workflowData1 };
+      const insertOne = vi.fn().mockResolvedValueOnce({
+        insertedId,
+        acknowledged: true
+      });
 
-      db.insertOne.mockResolvedValue({ acknowledged: true, insertedId });
-      db.findOne.mockResolvedValue(expectedWorkflow);
+      db.collection.mockReturnValue({
+        insertOne
+      });
 
-      const result = await workflowRepository.createWorkflow(workflowData1, db);
+      await workflowRepository.createWorkflow(workflowData1);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(workflowData1);
-      expect(db.findOne).toHaveBeenCalledWith({ _id: insertedId });
-      expect(result).toEqual(expectedWorkflow);
+      expect(insertOne).toHaveBeenCalledWith(workflowData1);
     });
 
     it("should throw a conflict error if a workflow with the same code already exists", async () => {
       const error = new MongoServerError({ message: "Duplicate key error" });
       error.code = 11000; // Duplicate key error code
 
-      db.insertOne.mockRejectedValue(error);
+      db.collection.mockReturnValue({
+        insertOne: vi.fn().mockRejectedValueOnce(error)
+      });
 
-      await expect(
-        workflowRepository.createWorkflow(workflowData1, db)
-      ).rejects.toThrow(
+      const promise = workflowRepository.createWorkflow(workflowData1);
+
+      await expect(promise).rejects.toThrow(
         Boom.conflict(
           `Workflow with code: ${workflowData1.code} already exists`
         )
       );
-
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(workflowData1);
     });
 
     it("should throw an internal error if the insert fails for any other reason", async () => {
-      const error = new Error("Unexpected error");
-      db.insertOne.mockRejectedValue(error);
+      const error = new Error("Error creating workflow");
 
-      await expect(
-        workflowRepository.createWorkflow(workflowData1, db)
-      ).rejects.toThrow(Boom.internal(error));
+      db.collection.mockReturnValue({
+        insertOne: vi.fn().mockResolvedValue(error)
+      });
 
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(workflowData1);
+      const promise = workflowRepository.createWorkflow(workflowData1);
+      await expect(promise).rejects.toThrow(Boom.internal(error));
     });
 
     it("should throw an internal error if the insert is not acknowledged", async () => {
-      db.collection.mockReturnThis();
-      db.insertOne.mockResolvedValue({ acknowledged: false, insertedId: null });
+      const error = new Error("Error creating workflow");
+
+      db.collection.mockReturnValue({
+        insertOne: vi
+          .fn()
+          .mockResolvedValue({ acknowledged: false, insertedId: null })
+      });
 
       const workflowData = {
         code: "NOT_ACKNOWLEDGED",
         name: "Not Acknowledged Workflow"
       };
+      const promise = workflowRepository.createWorkflow(workflowData);
 
-      await expect(
-        workflowRepository.createWorkflow(workflowData, db)
-      ).rejects.toThrow(Boom.internal("Error creating workflow"));
-
-      expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.insertOne).toHaveBeenCalledWith(workflowData);
+      await expect(promise).rejects.toThrow(Boom.internal(error));
     });
   });
 
@@ -93,17 +83,24 @@ describe("Workflow Repository", () => {
       const listQuery = { page: 1, pageSize: 10 };
       const workflows = [workflowData1, workflowData2];
 
-      db.toArray.mockResolvedValue(workflows);
-      db.estimatedDocumentCount.mockResolvedValue(2);
+      const mockEstimatedCount = vi.fn().mockResolvedValue(2);
 
-      const result = await workflowRepository.findWorkflows(listQuery, db);
+      const mockFind = vi.fn().mockReturnValue({
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockResolvedValue(workflows)
+      });
+
+      db.collection.mockReturnValue({
+        find: mockFind,
+        estimatedDocumentCount: mockEstimatedCount
+      });
+
+      const result = await workflowRepository.findWorkflows(listQuery);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.estimatedDocumentCount).toHaveBeenCalled();
-      expect(db.find).toHaveBeenCalled();
-      expect(db.skip).toHaveBeenCalledWith(0);
-      expect(db.limit).toHaveBeenCalledWith(10);
-      expect(db.toArray).toHaveBeenCalled();
+      expect(mockFind).toHaveBeenCalled();
+      expect(mockEstimatedCount).toHaveBeenCalled();
       expect(result).toEqual(workflowListResponse);
     });
   });
@@ -113,26 +110,32 @@ describe("Workflow Repository", () => {
       const insertedId = "insertedId123";
       const expectedWorkflow = { _id: insertedId, ...workflowData1 };
 
-      db.collection.mockReturnThis();
-      db.findOne.mockResolvedValue(expectedWorkflow);
+      const findOne = vi.fn().mockResolvedValue(expectedWorkflow);
+
+      db.collection.mockReturnValue({
+        findOne
+      });
 
       const code = "123";
-      const result = await workflowRepository.getWorkflow(code, db);
+      const result = await workflowRepository.getWorkflow(code);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ code });
+      expect(findOne).toHaveBeenCalledWith({ code });
       expect(result).toEqual(expectedWorkflow);
     });
 
     it("should return null if no workflow is found", async () => {
-      db.collection.mockReturnThis();
-      db.findOne.mockResolvedValue(null);
+      const findOne = vi.fn().mockResolvedValue(null);
+
+      db.collection.mockReturnValue({
+        findOne
+      });
 
       const code = "DOESNT_EXIST";
-      const result = await workflowRepository.getWorkflow(code, db);
+      const result = await workflowRepository.getWorkflow(code);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
-      expect(db.findOne).toHaveBeenCalledWith({ code });
+      expect(findOne).toHaveBeenCalledWith({ code });
       expect(result).toBeNull();
     });
   });

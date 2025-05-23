@@ -21,9 +21,8 @@ export const workflowRepository = {
     if (!result || !result.acknowledged) {
       throw Boom.internal("Error creating workflow");
     }
-    return await db.collection(collection).findOne({
-      _id: result.insertedId
-    });
+
+    return workflowData;
   },
 
   findWorkflows: async (listQuery) => {
@@ -49,7 +48,7 @@ export const workflowRepository = {
     };
   },
 
-  getWorkflow: async (code, db) => {
+  getWorkflow: async (code) => {
     return await db.collection(collection).findOne({
       code
     });
