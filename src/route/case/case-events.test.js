@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { caseEvents } from "./case-events.js";
 import { eventController } from "../controller/event.controller.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { commonSchema } from "../schema/common.schema.js";
+import { caseSchema } from "../../schema/case.schema.js";
+import { commonSchema } from "../../schema/common.schema.js";
 
 describe("Case Events Route Definitions", () => {
   it("should define the correct POST /events route", () => {

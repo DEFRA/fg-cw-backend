@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { caseService } from "./case.service.js";
-import { caseRepository } from "../repository/case.repository.js";
-import { caseData1, caseData2, caseData3 } from "../../test/fixtures/case.js";
-import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
-import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { caseUseCase } from "./case.use-case.js";
+import { caseRepository } from "../../repository/case.repository.js";
+import {
+  caseData1,
+  caseData2,
+  caseData3
+} from "../../../test/fixtures/case.js";
+import createCaseEvent1 from "../../../test/fixtures/create-case-event-1.json";
+import createCaseEvent3 from "../../../test/fixtures/create-case-event-3.json";
+import { workflowData1 } from "../../../test/fixtures/workflow.js";
+import { workflowRepository } from "../../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
 
 vi.mock("../repository/handlers.repository.js", () => ({
@@ -31,7 +35,7 @@ describe("caseService", () => {
     it("should throw a bad request error if the workflow is not found", async () => {
       workflowRepository.getWorkflow.mockResolvedValue(null);
       await expect(() =>
-        caseService.handleCreateCaseEvent(createCaseEvent1)
+        caseUseCase.handleCreateCaseEvent(createCaseEvent1)
       ).rejects.toThrow(
         Boom.badRequest(`Workflow ${createCaseEvent1.code} not found`)
       );
@@ -55,7 +59,7 @@ describe("caseService", () => {
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
       caseRepository.createCase.mockResolvedValue(mockCreatedCase);
 
-      const result = await caseService.handleCreateCaseEvent(event);
+      const result = await caseUseCase.handleCreateCaseEvent(event);
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
         createCaseEvent3.code
@@ -101,7 +105,7 @@ describe("caseService", () => {
 
       caseRepository.createCase.mockResolvedValue(mockResult);
 
-      const result = await caseService.createCase(caseData1);
+      const result = await caseUseCase.createCase(caseData1);
 
       expect(caseRepository.createCase).toHaveBeenCalledWith(caseData1);
       expect(result).toEqual(mockResult);
@@ -115,7 +119,7 @@ describe("caseService", () => {
 
       caseRepository.findCases.mockResolvedValue(mockCases);
 
-      const result = await caseService.findCases(listQuery);
+      const result = await caseUseCase.findCases(listQuery);
 
       expect(caseRepository.findCases).toHaveBeenCalledWith(listQuery);
       expect(result).toEqual(mockCases);
@@ -130,7 +134,7 @@ describe("caseService", () => {
 
       caseRepository.getCase.mockResolvedValue(mockResult);
 
-      const result = await caseService.getCase(mockCaseId);
+      const result = await caseUseCase.getCase(mockCaseId);
 
       expect(caseRepository.getCase).toHaveBeenCalledWith(mockCaseId);
       expect(result).toEqual(mockResult);

@@ -5,10 +5,10 @@ import {
   workflowDetailController,
   workflowListController
 } from "./workflow.controller.js";
-import { workflowService } from "../service/workflow.service.js";
+import { workflowService } from "../service/workflow.use-case.js";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
 
-vi.mock("../service/workflow.service.js", () => ({
+vi.mock("../service/workflow.use-case.js", () => ({
   workflowService: {
     createWorkflow: vi.fn(),
     findWorkflows: vi.fn(),

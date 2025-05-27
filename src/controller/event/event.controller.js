@@ -1,7 +1,7 @@
-import { caseService } from "../../service/case.service.js";
+import { caseUseCase } from "../../use-case/case/case.use-case.js";
 
 export const eventController = async (request, h) => {
   return h
-    .response(await caseService.handleCreateCaseEvent(request.payload))
+    .response(await caseUseCase.handleCreateCaseEvent(request.payload))
     .code(201);
 };

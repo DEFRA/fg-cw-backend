@@ -1,6 +1,6 @@
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { workflowRepository } from "../../repository/workflow.repository.js";
 
-export const workflowService = {
+export const workflowUseCase = {
   createWorkflow: async (workflowData, db) => {
     return workflowRepository.createWorkflow(workflowData, db);
   },

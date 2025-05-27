@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCaseEventHandler } from "./create-case-event-handler.js";
-import { caseService } from "../../service/case.service.js";
+import { caseUseCase } from "../../use-case/case/case.use-case.js";
 import createCaseEvent3 from "../../../test/fixtures/create-case-event-3.json";
 import { caseData3 } from "../../../test/fixtures/case.js";
-// Mock the caseService
+// Mock the caseUseCase
 vi.mock("../../src/service/handlers.service.js", () => ({
   caseService: {
     handleCreateCaseEvent: vi.fn()
@@ -33,7 +33,7 @@ describe("createCaseEventHandler", () => {
     };
 
     handler = createCaseEventHandler(mockServer);
-    caseService.handleCreateCaseEvent.mockResolvedValue(mockCreatedCase);
+    caseUseCase.handleCreateCaseEvent.mockResolvedValue(mockCreatedCase);
   });
 
   it("should log received SQS message", async () => {
@@ -49,7 +49,7 @@ describe("createCaseEventHandler", () => {
     await handler(mockMessage);
 
     // Check dates are converted to Date objects
-    expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
+    expect(caseUseCase.handleCreateCaseEvent).toHaveBeenCalledWith(
       {
         ...createCaseEvent3,
         createdAt: expect.any(Date),
@@ -70,7 +70,7 @@ describe("createCaseEventHandler", () => {
 
   it("should handle errors thrown by handlers service", async () => {
     const error = new Error("Test error");
-    caseService.handleCreateCaseEvent.mockRejectedValue(error);
+    caseUseCase.handleCreateCaseEvent.mockRejectedValue(error);
 
     await expect(handler(mockMessage)).rejects.toThrow("Test error");
   });

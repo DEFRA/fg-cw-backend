@@ -1,4 +1,4 @@
-import { caseService } from "../../service/case.service.js";
+import { caseUseCase } from "../../use-case/case/case.use-case.js";
 
 const createCaseEventHandler = (server) => async (message) => {
   server.logger.info({
@@ -10,7 +10,7 @@ const createCaseEventHandler = (server) => async (message) => {
   const createNewCaseEvent = JSON.parse(message.Body);
   createNewCaseEvent.createdAt = new Date(createNewCaseEvent.createdAt);
   createNewCaseEvent.submittedAt = new Date(createNewCaseEvent.submittedAt);
-  const newCase = await caseService.handleCreateCaseEvent(createNewCaseEvent);
+  const newCase = await caseUseCase.handleCreateCaseEvent(createNewCaseEvent);
 
   server.logger.info({
     message: `New case created for workflow: ${newCase.workflowCode} with caseRef: ${newCase.caseRef}`,

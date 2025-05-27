@@ -1,12 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import {
-  caseCreateController,
-  caseListController,
-  caseDetailController
-} from "./case.controller.js";
+import { caseListController, caseDetailController } from "./case.controller.js";
 import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
-import { caseService } from "../../service/case.service.js";
+import { caseUseCase } from "../../use-case/case/case.use-case.js";
 import Boom from "@hapi/boom";
+import { caseCreateController } from "./create-case.controller.js";
 
 vi.mock("../../service/handlers.service.js", () => ({
   caseService: {
@@ -39,13 +36,13 @@ describe("handlers.controller.js", () => {
       const mockCreatedCase = { _id: insertedId, ...caseData1 };
       const mockResponse = { code: vi.fn() };
 
-      vi.spyOn(caseService, "createCase").mockResolvedValue(mockCreatedCase);
+      vi.spyOn(caseUseCase, "createCase").mockResolvedValue(mockCreatedCase);
 
       const h = { response: vi.fn(() => mockResponse) }; // Mock the response toolkit
 
       await caseCreateController(mockRequest, h);
 
-      expect(caseService.createCase).toHaveBeenCalledWith(mockRequest.payload);
+      expect(caseUseCase.createCase).toHaveBeenCalledWith(mockRequest.payload);
       expect(h.response).toHaveBeenCalledWith(mockCreatedCase);
       expect(mockResponse.code).toHaveBeenCalledWith(201);
     });
@@ -58,11 +55,11 @@ describe("handlers.controller.js", () => {
         { _id: "insertedId002", ...caseData2 }
       ];
 
-      vi.spyOn(caseService, "findCases").mockResolvedValue(mockCases);
+      vi.spyOn(caseUseCase, "findCases").mockResolvedValue(mockCases);
 
       const result = await caseListController(mockRequest, mockResponseToolkit);
 
-      expect(caseService.findCases).toHaveBeenCalledWith({
+      expect(caseUseCase.findCases).toHaveBeenCalledWith({
         page: 1,
         pageSize: 100
       });
@@ -76,14 +73,14 @@ describe("handlers.controller.js", () => {
       const insertedId = "insertedId123";
       const mockCase = { _id: insertedId, ...caseData1 };
 
-      vi.spyOn(caseService, "getCase").mockResolvedValue(mockCase);
+      vi.spyOn(caseUseCase, "getCase").mockResolvedValue(mockCase);
 
       const result = await caseDetailController(
         mockRequest,
         mockResponseToolkit
       );
 
-      expect(caseService.getCase).toHaveBeenCalledWith(
+      expect(caseUseCase.getCase).toHaveBeenCalledWith(
         mockRequest.params.caseId
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCase);
@@ -91,14 +88,14 @@ describe("handlers.controller.js", () => {
     });
 
     it("should return a Boom.notFound error if handlers is not found", async () => {
-      vi.spyOn(caseService, "getCase").mockResolvedValue(null);
+      vi.spyOn(caseUseCase, "getCase").mockResolvedValue(null);
 
       const result = await caseDetailController(
         mockRequest,
         mockResponseToolkit
       );
 
-      expect(caseService.getCase).toHaveBeenCalledWith(
+      expect(caseUseCase.getCase).toHaveBeenCalledWith(
         mockRequest.params.caseId
       );
       expect(result).toEqual(

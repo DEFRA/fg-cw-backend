@@ -5,8 +5,8 @@ import {
   caseDetailController,
   caseListController
 } from "../controller/handlers.controller.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { commonSchema } from "../schema/common.schema.js";
+import { caseSchema } from "../../schema/case.schema.js";
+import { commonSchema } from "../../schema/common.schema.js";
 
 vi.mock("../controller/handlers.controller.js", () => ({
   caseCreateController: vi.fn(),

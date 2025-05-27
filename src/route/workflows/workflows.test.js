@@ -5,8 +5,8 @@ import {
   workflowCreateController,
   workflowDetailController,
   workflowListController
-} from "../controller/workflow.controller.js";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
+} from "../../controller/workflow/workflow.controller.js";
+import { workflowData1 } from "../../../test/fixtures/workflow.js";
 
 describe("Workflows route configuration tests", () => {
   it("should throw on /POST if workflow code is not valid", () => {

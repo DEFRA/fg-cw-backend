@@ -1,32 +1,13 @@
 import Joi from "joi";
+import { caseSchema } from "../../schema/case.schema.js";
+import { commonSchema } from "../../schema/common.schema.js";
 import {
-  caseCreateController,
   caseDetailController,
   caseListController,
   caseStageController
-} from "../controller/handlers.controller.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { commonSchema } from "../schema/common.schema.js";
+} from "../../controller/case/case.controller.js";
 
 const cases = [
-  {
-    method: "POST",
-    path: "/cases",
-    options: {
-      description: "Temporary: Create a handlers",
-      tags: ["api"],
-      validate: {
-        payload: caseSchema.CaseData
-      },
-      response: {
-        status: {
-          201: caseSchema.Case,
-          400: commonSchema.ValidationError
-        }
-      }
-    },
-    handler: caseCreateController
-  },
   {
     method: "GET",
     path: "/cases",

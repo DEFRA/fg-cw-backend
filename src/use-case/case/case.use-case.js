@@ -1,8 +1,8 @@
-import { caseRepository } from "../repository/case.repository.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { caseRepository } from "../../repository/case.repository.js";
+import { workflowRepository } from "../../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { db } from "../common/helpers/db.js";
+import { db } from "../../common/helpers/db.js";
 
 const createCase = (workflow, caseEvent) => ({
   caseRef: caseEvent.clientRef,
@@ -26,7 +26,7 @@ const createCase = (workflow, caseEvent) => ({
   }))
 });
 
-export const caseService = {
+export const caseUseCase = {
   handleCreateCaseEvent: async (caseEvent) => {
     const workflow = await workflowRepository.getWorkflow(caseEvent.code);
     if (!workflow) {
@@ -34,9 +34,6 @@ export const caseService = {
     }
     const newCase = createCase(workflow, caseEvent);
     return caseRepository.createCase(newCase);
-  },
-  createCase: async (caseData, db) => {
-    return caseRepository.createCase(caseData);
   },
   findCases: async (listQuery) => {
     return caseRepository.findCases(listQuery);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { eventController } from "./event.controller.js";
-import { caseService } from "../../service/case.service.js";
+import { caseUseCase } from "../../use-case/case/case.use-case.js";
 import createCaseEvent1 from "../../../test/fixtures/create-case-event-1.json";
 import { caseData1 } from "../../../test/fixtures/case.js";
 
@@ -15,7 +15,7 @@ describe("eventController", () => {
     vi.resetAllMocks();
   });
 
-  it("should call caseService.handleCreateCaseEvent with correct payload and db", async () => {
+  it("should call caseUseCase.handleCreateCaseEvent with correct payload and db", async () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
     const mockRequest = { payload: createCaseEvent1 };
@@ -26,7 +26,7 @@ describe("eventController", () => {
     };
 
     // Mock the service to return resolved data
-    vi.spyOn(caseService, "handleCreateCaseEvent").mockResolvedValue(
+    vi.spyOn(caseUseCase, "handleCreateCaseEvent").mockResolvedValue(
       mockCreatedCase
     );
 
@@ -34,13 +34,13 @@ describe("eventController", () => {
     await eventController(mockRequest, mockResponse);
 
     // Assert
-    expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
-    expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
+    expect(caseUseCase.handleCreateCaseEvent).toHaveBeenCalledOnce();
+    expect(caseUseCase.handleCreateCaseEvent).toHaveBeenCalledWith(
       createCaseEvent1
     );
   });
 
-  it("should return a 201 status code with the response from caseService", async () => {
+  it("should return a 201 status code with the response from caseUseCase", async () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
     const mockRequest = {
@@ -53,7 +53,7 @@ describe("eventController", () => {
     };
 
     // Mock the service to return resolved data
-    vi.spyOn(caseService, "handleCreateCaseEvent").mockResolvedValue(
+    vi.spyOn(caseUseCase, "handleCreateCaseEvent").mockResolvedValue(
       mockCreatedCase
     );
 
@@ -65,7 +65,7 @@ describe("eventController", () => {
     expect(mockResponse.code).toHaveBeenCalledWith(201);
   });
 
-  it("should handle errors from caseService gracefully", async () => {
+  it("should handle errors from caseUseCase gracefully", async () => {
     // Arrange mock data
     const mockRequest = {
       payload: createCaseEvent1,
@@ -76,8 +76,8 @@ describe("eventController", () => {
       code: vi.fn()
     };
 
-    // Mock caseService to throw an error
-    vi.spyOn(caseService, "handleCreateCaseEvent").mockRejectedValue(
+    // Mock caseUseCase to throw an error
+    vi.spyOn(caseUseCase, "handleCreateCaseEvent").mockRejectedValue(
       new Error("Service error")
     );
 
@@ -85,8 +85,8 @@ describe("eventController", () => {
     await expect(eventController(mockRequest, mockResponse)).rejects.toThrow(
       "Service error"
     );
-    expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
-    expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
+    expect(caseUseCase.handleCreateCaseEvent).toHaveBeenCalledOnce();
+    expect(caseUseCase.handleCreateCaseEvent).toHaveBeenCalledWith(
       mockRequest.payload
     );
   });

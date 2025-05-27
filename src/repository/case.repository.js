@@ -6,7 +6,7 @@ import { db } from "../common/helpers/db.js";
 export const collection = "cases";
 
 export const caseRepository = {
-  createCase: async (caseData) => {
+  insert: async (caseData) => {
     let result;
     try {
       result = await db.collection(collection).insertOne(caseData);

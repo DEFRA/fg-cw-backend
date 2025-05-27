@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { workflowService } from "./workflow.service.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
-import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
+import { workflowUseCase } from "./workflow.use-case.js";
+import { workflowRepository } from "../../repository/workflow.repository.js";
+import {
+  workflowData1,
+  workflowData2
+} from "../../../test/fixtures/workflow.js";
 
 vi.mock("../repository/workflow.repository.js", () => ({
   workflowRepository: {
@@ -21,7 +24,7 @@ describe("Workflow Service", () => {
 
       workflowRepository.createWorkflow.mockResolvedValue(mockResult);
 
-      const result = await workflowService.createWorkflow(
+      const result = await workflowUseCase.createWorkflow(
         workflowData1,
         mockDb
       );
@@ -41,7 +44,7 @@ describe("Workflow Service", () => {
 
       workflowRepository.findWorkflows.mockResolvedValue(mockResult);
 
-      const result = await workflowService.findWorkflows(mockListQuery, mockDb);
+      const result = await workflowUseCase.findWorkflows(mockListQuery, mockDb);
 
       expect(workflowRepository.findWorkflows).toHaveBeenCalledWith(
         mockListQuery,
@@ -60,7 +63,7 @@ describe("Workflow Service", () => {
       // Mock implementation of workflowRepository.getCase
       workflowRepository.getWorkflow.mockResolvedValue(mockResult);
 
-      const result = await workflowService.getWorkflow(
+      const result = await workflowUseCase.getWorkflow(
         mockWorkflowCode,
         mockDb
       );

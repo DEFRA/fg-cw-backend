@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import Hapi from "@hapi/hapi";
 import { router } from "./router.js"; // Adjust the path to router.js if needed
-import { health } from "../route/health.js";
-import { workflows } from "../route/workflows.js";
-import { cases } from "../route/cases.js";
-import { caseEvents } from "../route/case-events.js";
+import { health } from "../route/health/health.js";
+import { workflows } from "../route/workflows/workflows.js";
+import { cases } from "../route/case/cases.js";
+import { caseEvents } from "../route/case/case-events.js";
 
 describe("Router plugin tests", () => {
   it("should register all routes correctly", async () => {
