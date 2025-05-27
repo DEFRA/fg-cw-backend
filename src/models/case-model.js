@@ -1,4 +1,4 @@
-export class Case {
+export class CaseClass {
 
   constructor(props, options = {}) {
     this.caseRef = props.caseRef;
@@ -7,16 +7,12 @@ export class Case {
     this.stages = props.stages;
     this.status = options.status || null;
     this.dateReceived = options.dateReceived || null;
-    this.targetDate = options.targetDate || null;
-    this.assignedUser = options.assignedUser || null;
   }
 
   static newCase(data) {
-    return new Case(data, {
-      // status: "NEW",
-      // dateReceived: new Date().toISOString(),
-      // targetDate: null,
-      // assignedUser: null
+    return new CaseClass(data, {
+       status: "NEW",
+       dateReceived: new Date().toISOString()
     });
   }
 }

@@ -65,6 +65,8 @@ const CaseStage = Joi.object({
 const CaseData = Joi.object({
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
+  status: Joi.string().optional(),
+  dateReceived: Joi.date().iso().optional(),
   payload: CasePayload.required(),
   stages: Joi.array().items(CaseStage).required()
 }).label("CaseData");
