@@ -1,5 +1,4 @@
-export class CaseClass {
-
+export class CaseModel {
   constructor(props, options = {}) {
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -10,9 +9,9 @@ export class CaseClass {
   }
 
   static newCase(data) {
-    return new CaseClass(data, {
-       status: "NEW",
-       dateReceived: new Date().toISOString()
+    return new CaseModel(data, {
+      status: "NEW",
+      dateReceived: new Date().toISOString()
     });
   }
 }
@@ -44,9 +43,8 @@ class Answers {
     this.year = props.year;
     this.hasCheckedLandIsUpToDate = props.hasCheckedLandIsUpToDate;
     this.actionApplications = Array.isArray(props.actionApplications)
-      ? props.actionApplications.map(item => new ActionApplications(item))
+      ? props.actionApplications.map((item) => new ActionApplications(item))
       : [];
-
   }
 }
 

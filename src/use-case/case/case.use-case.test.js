@@ -11,8 +11,10 @@ import createCaseEvent3 from "../../../test/fixtures/create-case-event-3.json";
 import { workflowData1 } from "../../../test/fixtures/workflow.js";
 import { workflowRepository } from "../../repository/workflow.repository.js";
 import Boom from "@hapi/boom";
+import { db } from "../../common/helpers/db.js";
 
-vi.mock("../repository/handlers.repository.js", () => ({
+// Fix the mock import paths to match the actual import paths used in the test
+vi.mock("../../repository/case.repository.js", () => ({
   caseRepository: {
     createCase: vi.fn(),
     findCases: vi.fn(),
@@ -20,7 +22,7 @@ vi.mock("../repository/handlers.repository.js", () => ({
   }
 }));
 
-vi.mock("../repository/workflow.repository.js", () => ({
+vi.mock("../../repository/workflow.repository.js", () => ({
   workflowRepository: {
     getWorkflow: vi.fn()
   }
@@ -56,15 +58,26 @@ describe("caseService", () => {
         submittedAt
       };
 
+      const insertOne = vi.fn().mockResolvedValueOnce({
+        insertedId,
+        acknowledged: true
+      });
+
+      db.collection.mockReturnValue({
+        insertOne
+      });
+
+      await caseRepository.insert(caseData1);
+
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
-      caseRepository.createCase.mockResolvedValue(mockCreatedCase);
+      caseRepository.insert.mockResolvedValue(mockCreatedCase);
 
       const result = await caseUseCase.handleCreateCaseEvent(event);
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
         createCaseEvent3.code
       );
-      expect(caseRepository.createCase).toHaveBeenCalledWith({
+      expect(caseRepository.insert).toHaveBeenCalledWith({
         ...caseData3,
         dateReceived: expect.any(String),
         payload: {
@@ -95,20 +108,6 @@ describe("caseService", () => {
         ]
       });
       expect(result).toEqual(mockCreatedCase);
-    });
-  });
-
-  describe("createCase", () => {
-    it("should call createCase on caseRepository with correct arguments", async () => {
-      const insertedId = "insertedId123";
-      const mockResult = { _id: insertedId, ...caseData1 };
-
-      caseRepository.createCase.mockResolvedValue(mockResult);
-
-      const result = await caseUseCase.createCase(caseData1);
-
-      expect(caseRepository.createCase).toHaveBeenCalledWith(caseData1);
-      expect(result).toEqual(mockResult);
     });
   });
 

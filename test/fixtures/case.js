@@ -1,11 +1,6 @@
 export const caseData1 = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-1",
-  status: "NEW",
-  dateReceived: "2025-03-27T11:34:52.000Z",
-  targetDate: "2025-04-27T11:34:52.000Z",
-  priority: "MEDIUM",
-  assignedUser: "Mark Ford",
   payload: {
     clientRef: "APPLICATION-REF-1",
     code: "frps-private-beta",
@@ -35,7 +30,6 @@ export const caseData1 = {
       ]
     }
   },
-  currentStage: "application-receipt",
   stages: [
     {
       id: "application-receipt",
@@ -61,11 +55,6 @@ export const caseData1 = {
 export const caseData2 = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-2",
-  status: "NEW",
-  dateReceived: "2025-03-27T11:34:52Z",
-  targetDate: "2025-04-27T11:34:52Z",
-  priority: "MEDIUM",
-  assignedUser: "Mark Ford",
   payload: {
     clientRef: "APPLICATION-REF-2",
     code: "frps-private-beta",
@@ -95,7 +84,6 @@ export const caseData2 = {
       ]
     }
   },
-  currentStage: "application-receipt",
   stages: [
     {
       id: "application-receipt",
@@ -121,11 +109,6 @@ export const caseData2 = {
 export const caseData3 = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
-  status: "NEW",
-  dateReceived: "2025-03-27T11:34:52.000Z",
-  targetDate: null,
-  priority: "LOW",
-  assignedUser: null,
   payload: {
     clientRef: "APPLICATION-REF-3",
     code: "frps-private-beta",

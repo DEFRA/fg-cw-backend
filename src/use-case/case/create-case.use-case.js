@@ -1,7 +1,7 @@
 import { caseRepository } from "../../repository/case.repository.js";
-import { CaseClass } from "../../models/case-model.js";
+import { CaseModel } from "../../models/case-model.js";
 
 export const createCaseUseCase = async (createCaseCommand) => {
-  const caseData = CaseClass.newCase(createCaseCommand);
+  const caseData = CaseModel.newCase(createCaseCommand);
   await caseRepository.insert(caseData);
 };

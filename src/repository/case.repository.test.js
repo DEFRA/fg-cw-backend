@@ -17,7 +17,7 @@ describe("caseRepository", () => {
     vi.resetAllMocks(); // Reset state and implementation of all mocks after each test
   });
 
-  describe("createCase", () => {
+  describe("insert", () => {
     test("should create a handlers and return it", async () => {
       const insertedId = "insertedId123";
       const insertOne = vi.fn().mockResolvedValueOnce({
@@ -29,7 +29,7 @@ describe("caseRepository", () => {
         insertOne
       });
 
-      await caseRepository.createCase(caseData1);
+      await caseRepository.insert(caseData1);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(insertOne).toHaveBeenCalledWith(caseData1);
@@ -43,7 +43,7 @@ describe("caseRepository", () => {
         insertOne: vi.fn().mockRejectedValueOnce(error)
       });
 
-      const promise = caseRepository.createCase(caseData1);
+      const promise = caseRepository.insert(caseData1);
 
       await expect(promise).rejects.toThrow(
         Boom.conflict(
@@ -59,7 +59,7 @@ describe("caseRepository", () => {
         insertOne: vi.fn().mockRejectedValueOnce(error)
       });
 
-      const promise = caseRepository.createCase(caseData1);
+      const promise = caseRepository.insert(caseData1);
 
       await expect(promise).rejects.toThrow(Boom.internal(error));
     });
@@ -71,7 +71,7 @@ describe("caseRepository", () => {
         insertOne: vi.fn().mockResolvedValue({ acknowledged: false })
       });
 
-      const promise = caseRepository.createCase(caseData1);
+      const promise = caseRepository.insert(caseData1);
       await expect(promise).rejects.toThrow(Boom.internal(error));
     });
   });
@@ -96,6 +96,7 @@ describe("caseRepository", () => {
 
       const result = await caseRepository.findCases(listQuery);
 
+      console.log("result: ", result);
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(mockFind).toHaveBeenCalled();
       expect(mockEstimatedCount).toHaveBeenCalled();
