@@ -1,3 +1,4 @@
+import Joi from "joi";
 import { caseSchema } from "../../schema/case.schema.js";
 import { commonSchema } from "../../schema/common.schema.js";
 import { caseCreateController } from "../../controller/case/create-case.controller.js";
@@ -13,7 +14,7 @@ export const createCaseRoute = {
     },
     response: {
       status: {
-        201: caseSchema.Case,
+        201: Joi.object({}),
         400: commonSchema.ValidationError
       }
     }
