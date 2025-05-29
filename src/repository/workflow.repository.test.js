@@ -13,7 +13,7 @@ vi.mock("../common/helpers/db.js", () => ({
 }));
 
 describe("Workflow Repository", () => {
-  describe("createWorkflow", () => {
+  describe("insert", () => {
     it("should create a new workflow and return it", async () => {
       const insertedId = "insertedId123";
       const insertOne = vi.fn().mockResolvedValueOnce({
@@ -25,7 +25,7 @@ describe("Workflow Repository", () => {
         insertOne
       });
 
-      await workflowRepository.createWorkflow(workflowData1);
+      await workflowRepository.insert(workflowData1);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(insertOne).toHaveBeenCalledWith(workflowData1);
@@ -39,7 +39,7 @@ describe("Workflow Repository", () => {
         insertOne: vi.fn().mockRejectedValueOnce(error)
       });
 
-      const promise = workflowRepository.createWorkflow(workflowData1);
+      const promise = workflowRepository.insert(workflowData1);
 
       await expect(promise).rejects.toThrow(
         Boom.conflict(
@@ -55,7 +55,7 @@ describe("Workflow Repository", () => {
         insertOne: vi.fn().mockResolvedValue(error)
       });
 
-      const promise = workflowRepository.createWorkflow(workflowData1);
+      const promise = workflowRepository.insert(workflowData1);
       await expect(promise).rejects.toThrow(Boom.internal(error));
     });
 
@@ -72,7 +72,7 @@ describe("Workflow Repository", () => {
         code: "NOT_ACKNOWLEDGED",
         name: "Not Acknowledged Workflow"
       };
-      const promise = workflowRepository.createWorkflow(workflowData);
+      const promise = workflowRepository.insert(workflowData);
 
       await expect(promise).rejects.toThrow(Boom.internal(error));
     });
