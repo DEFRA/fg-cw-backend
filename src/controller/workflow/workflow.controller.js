@@ -1,10 +1,11 @@
 import Boom from "@hapi/boom";
 import { extractListQuery } from "../../common/helpers/api/request.js";
+import { createWorkflowUseCase } from "../../use-case/workflow/create-workflow.use-case.js";
 import { workflowUseCase } from "../../use-case/workflow/workflow.use-case.js";
 
 export const workflowCreateController = async (request, h) => {
-  const workflow = await workflowUseCase.createWorkflow(request.payload);
-  return h.response(workflow).code(201);
+  await createWorkflowUseCase(request.payload);
+  return h.response().code(201);
 };
 
 export const workflowListController = async (request, h) => {

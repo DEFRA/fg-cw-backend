@@ -6,7 +6,7 @@ import { db } from "../common/helpers/db.js";
 export const collection = "workflows";
 
 export const workflowRepository = {
-  createWorkflow: async (workflowData) => {
+  insert: async (workflowData) => {
     let result;
     try {
       result = await db.collection(collection).insertOne(workflowData);
@@ -21,8 +21,6 @@ export const workflowRepository = {
     if (!result || !result.acknowledged) {
       throw Boom.internal("Error creating workflow");
     }
-
-    return workflowData;
   },
 
   findWorkflows: async (listQuery) => {
