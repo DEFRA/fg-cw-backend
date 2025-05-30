@@ -46,9 +46,7 @@ export const workflowRepository = {
     };
   },
 
-  getWorkflow: async (code) => {
-    return await db.collection(collection).findOne({
-      code
-    });
+  findOne: async (code) => {
+    return await db.collection(collection).findOne({ code });
   }
 };

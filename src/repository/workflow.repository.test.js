@@ -117,7 +117,7 @@ describe("Workflow Repository", () => {
       });
 
       const code = "123";
-      const result = await workflowRepository.getWorkflow(code);
+      const result = await workflowRepository.findOne(code);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(findOne).toHaveBeenCalledWith({ code });
@@ -132,7 +132,7 @@ describe("Workflow Repository", () => {
       });
 
       const code = "DOESNT_EXIST";
-      const result = await workflowRepository.getWorkflow(code);
+      const result = await workflowRepository.findOne(code);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(findOne).toHaveBeenCalledWith({ code });

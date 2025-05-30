@@ -1,11 +1,16 @@
 export class WorkflowModel {
-  constructor(props) {
-    this.code = props.code;
-    this.payloadDefinition = props.payloadDefinition;
-    this.stages = props.stages;
+  constructor({ _id, code, payloadDefinition, stages }) {
+    this._id = _id ?? null;
+    this.code = code;
+    this.payloadDefinition = payloadDefinition;
+    this.stages = stages;
   }
 
   static newWorkflow(data) {
+    return new WorkflowModel(data);
+  }
+
+  static existingWorkflow(data) {
     return new WorkflowModel(data);
   }
 }
