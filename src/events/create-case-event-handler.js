@@ -1,24 +1,12 @@
 import { caseService } from "../service/case.service.js";
 
-const createCaseEventHandler = (server) => async (message) => {
-  server.logger.info({
-    message: "Received SQS message",
-    body: message.Body
-  });
-
-  // Process the message
-  const createNewCaseEvent = JSON.parse(message.Body);
-  createNewCaseEvent.createdAt = new Date(createNewCaseEvent.createdAt);
-  createNewCaseEvent.submittedAt = new Date(createNewCaseEvent.submittedAt);
+export const createCaseEventHandler = (server) => async (event) => {
   const newCase = await caseService.handleCreateCaseEvent(
-    createNewCaseEvent,
+    event.data,
     server.db
   );
 
-  server.logger.info({
-    message: `New case created for workflow: ${newCase.workflowCode} with caseRef: ${newCase.caseRef}`,
-    body: message.Body
-  });
+  server.logger.info(
+    `New case created for workflow: ${newCase.workflowCode} with caseRef: ${newCase.caseRef}`
+  );
 };
-
-export { createCaseEventHandler };

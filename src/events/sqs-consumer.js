@@ -54,9 +54,12 @@ export default class SqsConsumer {
         if (response.Messages && response.Messages.length > 0) {
           await Promise.all(
             response.Messages.map(async (message) => {
+              this.server.logger.info(
+                `Processing message from SQS queue: ${message.MessageId}`
+              );
               try {
-                // Process the message
-                await this.handleMessage(message);
+                const body = JSON.parse(message.Body);
+                await this.handleMessage(body);
                 // Delete the message after successful processing
                 await this.deleteMessage(message);
               } catch (err) {
@@ -72,6 +75,7 @@ export default class SqsConsumer {
       } catch (err) {
         this.server.logger.error({
           error: err.message,
+          queueUrl: this.queueUrl,
           message: "Error polling SQS queue"
         });
         // Add a small delay before retrying on error
