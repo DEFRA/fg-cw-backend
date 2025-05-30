@@ -59,7 +59,7 @@ describe.sequential("Case API", () => {
     it.sequential("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
-        payload: createCaseEvent3
+        payload: createCaseEvent3.data
       });
 
       expect(response.res.statusCode).toBe(201);
@@ -257,8 +257,8 @@ describe.sequential("Case API", () => {
         _id: expect.any(Object),
         payload: {
           ...caseData3.payload,
-          createdAt: new Date(caseData3.payload.createdAt),
-          submittedAt: new Date(caseData3.payload.submittedAt)
+          createdAt: caseData3.payload.createdAt,
+          submittedAt: caseData3.payload.submittedAt
         }
       });
     });

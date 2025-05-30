@@ -46,33 +46,24 @@ describe("caseService", () => {
     it("should create a case successfully", async () => {
       const insertedId = "insertedId123";
       const mockCreatedCase = { _id: insertedId, ...caseData3 };
-      const createdAt = new Date(createCaseEvent3.createdAt);
-      const submittedAt = new Date(createCaseEvent3.submittedAt);
-
-      const event = {
-        ...createCaseEvent3,
-        createdAt,
-        submittedAt
-      };
 
       workflowRepository.getWorkflow.mockResolvedValue(workflowData1);
       caseRepository.createCase.mockResolvedValue(mockCreatedCase);
 
-      const result = await caseService.handleCreateCaseEvent(event, mockDb);
+      const result = await caseService.handleCreateCaseEvent(
+        createCaseEvent3.data,
+        mockDb
+      );
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent3.code,
+        createCaseEvent3.data.code,
         mockDb
       );
       expect(caseRepository.createCase).toHaveBeenCalledWith(
         {
           ...caseData3,
           dateReceived: expect.any(String),
-          payload: {
-            ...caseData3.payload,
-            createdAt,
-            submittedAt
-          },
+          payload: caseData3.payload,
           currentStage: workflowData1.stages[0].id,
           stages: [
             {
