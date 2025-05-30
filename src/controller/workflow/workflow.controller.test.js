@@ -1,16 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-// import Boom from "@hapi/boom";
+
 import {
-  workflowCreateController
-  // workflowDetailController,
-  // workflowListController
+  workflowCreateController,
+  workflowDetailController,
+  workflowListController
 } from "./workflow.controller.js";
-// import { workflowService } from "../service/workflow.use-case.js";
 import { workflowData1 } from "../../../test/fixtures/workflow.js";
 import { createWorkflowUseCase } from "../../use-case/workflow/create-workflow.use-case.js";
+import { listWorkflowsUseCase } from "../../use-case/workflow/list-workflows.use-case.js";
+import { findWorkflowUseCase } from "../../use-case/workflow/find-workflow.use-case.js";
 
 vi.mock("../../use-case/workflow/create-workflow.use-case.js", () => ({
   createWorkflowUseCase: vi.fn()
+}));
+
+vi.mock("../../use-case/workflow/find-workflow.use-case.js", () => ({
+  findWorkflowUseCase: vi.fn()
+}));
+
+vi.mock("../../use-case/workflow/list-workflows.use-case.js", () => ({
+  listWorkflowsUseCase: vi.fn()
 }));
 
 vi.mock("../service/workflow.use-case.js", () => ({
@@ -28,10 +37,10 @@ describe("workflow.controller.js", () => {
     db: {}
   };
 
-  // const mockResponseToolkit = {
-  //   response: vi.fn((payload) => payload),
-  //   code: vi.fn()
-  // };
+  const mockResponseToolkit = {
+    response: vi.fn((payload) => payload),
+    code: vi.fn()
+  };
 
   describe("workflowCreateController", () => {
     it("should create a workflow and return 201 status", async () => {
@@ -48,63 +57,48 @@ describe("workflow.controller.js", () => {
     });
   });
 
-  // describe("workflowListController", () => {
-  //   it("should fetch a list of workflows and return them", async () => {
-  //     const mockWorkflows = [
-  //       { _id: "insertedId001", ...workflowData1 },
-  //       { _id: "insertedId002", ...workflowData1 }
-  //     ];
-  //     workflowService.findWorkflows.mockResolvedValue(mockWorkflows);
+  describe("workflowListController", () => {
+    it("should fetch a list of workflows and return them", async () => {
+      const mockWorkflows = [
+        { _id: "insertedId001", ...workflowData1 },
+        { _id: "insertedId002", ...workflowData1 }
+      ];
+      listWorkflowsUseCase.mockResolvedValue(mockWorkflows);
 
-  //     const result = await workflowListController(
-  //       mockRequest,
-  //       mockResponseToolkit
-  //     );
+      const result = await workflowListController(
+        mockRequest,
+        mockResponseToolkit
+      );
 
-  //     expect(workflowService.findWorkflows).toHaveBeenCalledWith(
-  //       { page: 1, pageSize: 100 },
-  //       mockRequest.db
-  //     );
-  //     expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflows);
-  //     expect(result).toEqual(mockWorkflows);
-  //   });
-  // });
+      expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflows);
+      expect(result).toEqual(mockWorkflows);
+    });
+  });
 
-  // describe("workflowDetailController", () => {
-  //   it("should return workflow details if workflow exists", async () => {
-  //     const insertedId = "insertedId123";
-  //     const mockWorkflow = { _id: insertedId, ...workflowData1 };
-  //     workflowService.getWorkflow.mockResolvedValue(mockWorkflow);
+  describe("workflowDetailController", () => {
+    it("should return workflow details if workflow exists", async () => {
+      const insertedId = "insertedId123";
+      const mockWorkflow = { _id: insertedId, ...workflowData1 };
+      findWorkflowUseCase.mockResolvedValue(mockWorkflow);
 
-  //     const result = await workflowDetailController(
-  //       mockRequest,
-  //       mockResponseToolkit
-  //     );
+      const result = await workflowDetailController(
+        mockRequest,
+        mockResponseToolkit
+      );
 
-  //     expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-  //       mockRequest.params.code,
-  //       mockRequest.db
-  //     );
-  //     expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflow);
-  //     expect(result).toEqual(mockWorkflow);
-  //   });
+      expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflow);
+      expect(result).toEqual(mockWorkflow);
+      expect(result._id).toBe(insertedId);
+    });
 
-  //   it("should return a Boom error if workflow is not found", async () => {
-  //     workflowService.getWorkflow.mockResolvedValue(null);
+    it("should return a Boom error if workflow is not found", async () => {
+      findWorkflowUseCase.mockRejectedValue(
+        "Workflow with code 9001 not found"
+      );
 
-  //     const result = await workflowDetailController(
-  //       mockRequest,
-  //       mockResponseToolkit
-  //     );
-  //     expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-  //       mockRequest.params.code,
-  //       mockRequest.db
-  //     );
-  //     expect(result).toEqual(
-  //       Boom.notFound(
-  //         "Workflow with id: " + mockRequest.params.code + " not found"
-  //       )
-  //     );
-  //   });
-  // });
+      await expect(
+        workflowDetailController(mockRequest, mockResponseToolkit)
+      ).rejects.toThrow("Workflow with code 9001 not found");
+    });
+  });
 });
