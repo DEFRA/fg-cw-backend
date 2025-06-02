@@ -1,16 +1,16 @@
 export class Payload {
-  constructor(props) {
-    this.clientRef = props.clientRef;
-    this.code = props.code;
-    this.createdAt = props.createdAt;
-    this.submittedAt = props.submittedAt;
-    this.identifiers = new Identifier(props.identifiers);
-    this.answers = new Answers(props.answers);
+  constructor(props = {}) {
+    this.clientRef = props?.clientRef;
+    this.code = props?.code;
+    this.createdAt = props?.createdAt;
+    this.submittedAt = props?.submittedAt;
+    this.identifiers = new Identifier(props?.identifiers);
+    this.answers = new Answers(props?.answers);
   }
 }
 
 class Identifier {
-  constructor(props) {
+  constructor(props = {}) {
     this.sbi = props.sbi;
     this.crn = props.crn;
     this.defraId = props.defraId;
@@ -19,7 +19,7 @@ class Identifier {
 }
 
 class Answers {
-  constructor(props) {
+  constructor(props = {}) {
     this.agreementName = props.agreementName;
     this.scheme = props.scheme;
     this.year = props.year;
@@ -31,7 +31,7 @@ class Answers {
 }
 
 class ActionApplications {
-  constructor(props) {
+  constructor(props = {}) {
     this.parcelId = props.parcelId;
     this.sheetId = props.sheetId;
     this.code = props.code;

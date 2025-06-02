@@ -6,6 +6,14 @@ import { db } from "../common/helpers/db.js";
 export const collection = "cases";
 
 export const caseRepository = {
+  updateCaseStage: async (caseId, nextStage) => {
+    return await db.collection(collection).updateOne(
+      {
+        _id: new ObjectId(caseId)
+      },
+      { $set: { currentStage: nextStage } }
+    );
+  },
   insert: async (caseData) => {
     let result;
     try {
@@ -49,7 +57,7 @@ export const caseRepository = {
     };
   },
 
-  getCase: async (caseId) => {
+  findOne: async (caseId) => {
     return await db.collection(collection).findOne({
       _id: new ObjectId(caseId)
     });

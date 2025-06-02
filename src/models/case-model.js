@@ -2,13 +2,13 @@ import { Payload } from "./case-payload-model.js";
 
 export class CaseModel {
   constructor({ _id, caseRef, workflowCode, payload, stages }, options = {}) {
-    this._id = _id || null;
+    this._id = _id || undefined;
     this.caseRef = caseRef;
     this.workflowCode = workflowCode;
     this.payload = new Payload(payload);
     this.stages = stages;
-    this.status = options.status || null;
-    this.dateReceived = options.dateReceived || null;
+    this.status = options.status || undefined;
+    this.dateReceived = options.dateReceived || undefined;
   }
 
   static newCase(data) {
@@ -18,7 +18,7 @@ export class CaseModel {
     });
   }
 
-  static exitsingCase(data) {
+  static existingCase(data) {
     return new CaseModel(data);
   }
 }
