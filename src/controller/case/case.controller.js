@@ -11,7 +11,10 @@ export const caseListController = async (request, h) => {
 };
 
 export const caseDetailController = async (request, h) => {
-  return h.response(await findCaseUseCase(request.params.caseId));
+  const {
+    params: { caseId }
+  } = request;
+  return h.response(await findCaseUseCase(caseId));
 };
 
 export const caseStageController = async (request, h) => {

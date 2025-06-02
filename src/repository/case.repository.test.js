@@ -1,4 +1,4 @@
-import { describe, test, vi, expect, afterEach } from "vitest";
+import { describe, vi, expect, afterEach, it } from "vitest";
 import Boom from "@hapi/boom";
 import { caseRepository, collection } from "./case.repository.js";
 import { MongoServerError, ObjectId } from "mongodb";
@@ -18,7 +18,7 @@ describe("caseRepository", () => {
   });
 
   describe("insert", () => {
-    test("should create a handlers and return it", async () => {
+    it("should create a handlers and return it", async () => {
       const insertedId = "insertedId123";
       const insertOne = vi.fn().mockResolvedValueOnce({
         insertedId,
@@ -35,7 +35,7 @@ describe("caseRepository", () => {
       expect(insertOne).toHaveBeenCalledWith(caseData1);
     });
 
-    test("should throw conflict error if handlers with id already exists", async () => {
+    it("should throw conflict error if handlers with id already exists", async () => {
       const error = new MongoServerError({ message: "Duplicate key error" });
       error.code = 11000; // Duplicate key error code
 
@@ -52,7 +52,7 @@ describe("caseRepository", () => {
       );
     });
 
-    test("should throw internal error on other MongoDB errors", async () => {
+    it("should throw internal error on other MongoDB errors", async () => {
       const error = new Error("Unexpected error");
 
       db.collection.mockReturnValue({
@@ -64,7 +64,7 @@ describe("caseRepository", () => {
       await expect(promise).rejects.toThrow(Boom.internal(error));
     });
 
-    test("should throw internal error if result is not acknowledged", async () => {
+    it("should throw internal error if result is not acknowledged", async () => {
       const error = new Error("Error creating handlers");
 
       db.collection.mockReturnValue({
@@ -77,7 +77,7 @@ describe("caseRepository", () => {
   });
 
   describe("findCases", () => {
-    test("should return a list of cases", async () => {
+    it("should return a list of cases", async () => {
       const listQuery = { page: 1, pageSize: 10 };
       const cases = [caseData1, caseData2];
 
@@ -104,8 +104,8 @@ describe("caseRepository", () => {
     });
   });
 
-  describe("getCase", () => {
-    test("should return a specific handlers by id", async () => {
+  describe("findOne", () => {
+    it("should return a specific handlers by id", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
       const findOne = vi.fn().mockResolvedValueOnce(caseData2);
 
@@ -114,14 +114,14 @@ describe("caseRepository", () => {
       });
       // db.findOne.mockResolvedValue(caseData2);
 
-      const result = await caseRepository.getCase(caseId);
+      const result = await caseRepository.findOne(caseId);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });
       expect(result).toEqual(caseData2);
     });
 
-    test("should return null if handlers is not found", async () => {
+    it("should return null if handlers is not found", async () => {
       const caseId = "6800c9feb76f8f854ebf901a";
 
       const findOne = vi.fn().mockResolvedValueOnce(null);
@@ -130,7 +130,7 @@ describe("caseRepository", () => {
         findOne
       });
 
-      const result = await caseRepository.getCase(caseId, db);
+      const result = await caseRepository.findOne(caseId, db);
 
       expect(db.collection).toHaveBeenCalledWith(collection);
       expect(findOne).toHaveBeenCalledWith({ _id: new ObjectId(caseId) });

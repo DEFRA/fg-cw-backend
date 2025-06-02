@@ -8,5 +8,5 @@ export const findCaseUseCase = async (caseId) => {
     return CaseModel.existingCase(caseRecord);
   }
 
-  throw Boom.notFound("Case with id " + caseId + " not found");
+  throw Boom.notFound(`Case with id ${caseId} not found`);
 };

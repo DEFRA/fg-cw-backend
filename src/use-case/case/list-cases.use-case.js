@@ -1,5 +1,5 @@
-import { caseRepository } from "../../repository/case.repository";
-import { CaseModel } from "../../model/case.model";
+import { caseRepository } from "../../repository/case.repository.js";
+import { CaseModel } from "../../models/case-model.js";
 
 export const listCasesUseCase = async (listQuery) => {
   const cases = await caseRepository.findCases(listQuery);
