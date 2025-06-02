@@ -1,9 +1,12 @@
+import { Payload } from "./case-payload-model.js";
+
 export class CaseModel {
-  constructor(props, options = {}) {
-    this.caseRef = props.caseRef;
-    this.workflowCode = props.workflowCode;
-    this.payload = new Payload(props.payload);
-    this.stages = props.stages;
+  constructor({ _id, caseRef, workflowCode, payload, stages }, options = {}) {
+    this._id = _id || null;
+    this.caseRef = caseRef;
+    this.workflowCode = workflowCode;
+    this.payload = new Payload(payload);
+    this.stages = stages;
     this.status = options.status || null;
     this.dateReceived = options.dateReceived || null;
   }
@@ -14,45 +17,8 @@ export class CaseModel {
       dateReceived: new Date().toISOString()
     });
   }
-}
 
-class Payload {
-  constructor(props) {
-    this.clientRef = props.clientRef;
-    this.code = props.code;
-    this.createdAt = props.createdAt;
-    this.submittedAt = props.submittedAt;
-    this.identifiers = new Identifier(props.identifiers);
-    this.answers = new Answers(props.answers);
-  }
-}
-
-class Identifier {
-  constructor(props) {
-    this.sbi = props.sbi;
-    this.crn = props.crn;
-    this.defraId = props.defraId;
-    this.frn = props.frn;
-  }
-}
-
-class Answers {
-  constructor(props) {
-    this.agreementName = props.agreementName;
-    this.scheme = props.scheme;
-    this.year = props.year;
-    this.hasCheckedLandIsUpToDate = props.hasCheckedLandIsUpToDate;
-    this.actionApplications = Array.isArray(props.actionApplications)
-      ? props.actionApplications.map((item) => new ActionApplications(item))
-      : [];
-  }
-}
-
-class ActionApplications {
-  constructor(props) {
-    this.parcelId = props.parcelId;
-    this.sheetId = props.sheetId;
-    this.code = props.code;
-    this.appliedFor = props.appliedFor;
+  static exitsingCase(data) {
+    return new CaseModel(data);
   }
 }
