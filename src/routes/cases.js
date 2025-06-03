@@ -4,9 +4,9 @@ import {
   caseDetailController,
   caseListController,
   caseStageController
-} from "../controller/case.controller.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { commonSchema } from "../schema/common.schema.js";
+} from "../controllers/case.controller.js";
+import { caseSchema } from "../schemas/case.schema.js";
+import { commonSchema } from "../schemas/common.schema.js";
 
 const cases = [
   {

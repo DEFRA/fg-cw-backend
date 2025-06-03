@@ -3,10 +3,7 @@ import { createCaseEventConsumer } from "./create-case-event-consumer.js";
 import sqsConsumerPlugin from "../events/sqs-consumer-plugin.js";
 import { createCaseEventHandler } from "../events/create-case-event-handler.js";
 
-vi.mock("../events/sqs-consumer-plugin.js", () => ({
-  default: { name: "sqs-consumer" }
-}));
-
+vi.mock("../events/sqs-consumer-plugins.js");
 vi.mock("../events/create-case-event-handler.js");
 
 describe("createCaseEventConsumer", () => {

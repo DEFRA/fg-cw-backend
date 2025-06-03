@@ -1,5 +1,5 @@
-import { caseRepository } from "../repository/case.repository.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { caseRepository } from "../repositories/case.repository.js";
+import { workflowRepository } from "../repositories/workflow.repository.js";
 import Boom from "@hapi/boom";
 
 const createCase = (workflow, caseEvent) => ({

@@ -1,4 +1,4 @@
-import { caseService } from "../service/case.service.js";
+import { caseService } from "../services/case.service.js";
 
 export const eventController = async (request, h) => {
   return h

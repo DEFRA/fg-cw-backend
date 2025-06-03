@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { workflowService } from "./workflow.service.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { workflowRepository } from "../repositories/workflow.repository.js";
 import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
 
-vi.mock("../repository/workflow.repository.js");
+vi.mock("../repositories/workflow.repository.js");
 
 describe("Workflow Service", () => {
   describe("createWorkflow", () => {
