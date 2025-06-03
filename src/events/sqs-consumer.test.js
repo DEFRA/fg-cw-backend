@@ -1,32 +1,23 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import SqsConsumer from "./sqs-consumer.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SqsConsumer } from "./sqs-consumer.js";
 import {
   SQSClient,
   ReceiveMessageCommand,
   DeleteMessageCommand
 } from "@aws-sdk/client-sqs";
 
-// Mock AWS SDK
-vi.mock("@aws-sdk/client-sqs", () => ({
-  SQSClient: vi.fn().mockImplementation(() => ({
-    send: vi.fn()
-  })),
-  ReceiveMessageCommand: vi.fn(),
-  DeleteMessageCommand: vi.fn()
-}));
-
-// Mock the config
-vi.mock("../config.js", () => ({
+vi.mock("@aws-sdk/client-sqs");
+vi.mock("../common/config.js", () => ({
   config: {
-    get: vi.fn((key) => {
-      const configValues = {
-        "aws.sqsEndpoint": "http://localhost:4566",
-        "aws.awsRegion": "eu-west-2",
-        "aws.sqsMaxNumberOfMessages": 10,
-        "aws.sqsWaitTimeInSeconds": 20
-      };
-      return configValues[key];
-    })
+    get: vi.fn(
+      (key) =>
+        ({
+          "aws.sqsEndpoint": "http://localhost:4566",
+          "aws.awsRegion": "eu-west-2",
+          "aws.sqsMaxNumberOfMessages": 10,
+          "aws.sqsWaitTimeInSeconds": 20
+        })[key]
+    )
   }
 }));
 
@@ -34,14 +25,8 @@ describe("SqsConsumer", () => {
   let consumer;
   let mockServer;
   let mockHandleMessage;
-  let mockSqsClient;
 
-  const originalPoll = SqsConsumer.prototype.poll;
-
-  beforeEach(() => {
-    SqsConsumer.prototype.poll = vi.fn().mockResolvedValue();
-
-    // Create mock server with logger
+  beforeEach(async () => {
     mockServer = {
       logger: {
         info: vi.fn(),
@@ -51,19 +36,10 @@ describe("SqsConsumer", () => {
 
     mockHandleMessage = vi.fn().mockResolvedValue();
 
-    // Create SQS consumer instance
     consumer = new SqsConsumer(mockServer, {
       queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
       handleMessage: mockHandleMessage
     });
-
-    // Store reference to mocked SQS client
-    mockSqsClient = consumer.sqsClient;
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-    SqsConsumer.prototype.poll = originalPoll;
   });
 
   describe("constructor", () => {
@@ -83,6 +59,8 @@ describe("SqsConsumer", () => {
 
   describe("start", () => {
     it("should set isRunning to true and start polling", async () => {
+      consumer.poll = vi.fn().mockResolvedValue();
+
       await consumer.start();
 
       expect(consumer.isRunning).toBe(true);
@@ -107,9 +85,7 @@ describe("SqsConsumer", () => {
   });
 
   describe("message processing", () => {
-    // Test the receiveMessage and deleteMessage functionality directly
     it("should process and delete messages correctly", async () => {
-      // Mock a successful message response
       const mockMessages = [
         {
           MessageId: "msg-1",
@@ -118,14 +94,14 @@ describe("SqsConsumer", () => {
         }
       ];
 
-      mockSqsClient.send.mockImplementation((command) => {
+      consumer.sqsClient.send.mockImplementation(async (command) => {
         if (command instanceof ReceiveMessageCommand) {
-          return Promise.resolve({ Messages: mockMessages });
+          return { Messages: mockMessages };
         }
         if (command instanceof DeleteMessageCommand) {
-          return Promise.resolve({});
+          return {};
         }
-        return Promise.resolve({});
+        return {};
       });
 
       const processOneMessage = async () => {
@@ -148,10 +124,8 @@ describe("SqsConsumer", () => {
         }
       };
 
-      // Process one batch of messages
       await processOneMessage();
 
-      // Check the message was processed
       expect(ReceiveMessageCommand).toHaveBeenCalledWith({
         QueueUrl: consumer.queueUrl,
         MaxNumberOfMessages: 10,
@@ -160,10 +134,8 @@ describe("SqsConsumer", () => {
         MessageAttributeNames: ["All"]
       });
 
-      // Check the handler was called with the message
       expect(mockHandleMessage).toHaveBeenCalledWith(mockMessages[0]);
 
-      // Check the delete command was called with the right parameters
       expect(DeleteMessageCommand).toHaveBeenCalledWith({
         QueueUrl: consumer.queueUrl,
         ReceiptHandle: "receipt-1"
@@ -171,7 +143,6 @@ describe("SqsConsumer", () => {
     });
 
     it("should handle errors when processing messages", async () => {
-      // Mock a successful message response
       const mockMessages = [
         {
           MessageId: "msg-1",
@@ -180,16 +151,14 @@ describe("SqsConsumer", () => {
         }
       ];
 
-      mockSqsClient.send.mockImplementation((command) => {
+      consumer.sqsClient.send.mockImplementation(async (command) => {
         if (command instanceof ReceiveMessageCommand) {
-          return Promise.resolve({ Messages: mockMessages });
+          return { Messages: mockMessages };
         }
-        return Promise.resolve({});
+        return {};
       });
 
-      // Make the message handler throw an error
-      const error = new Error("Test error");
-      mockHandleMessage.mockRejectedValueOnce(error);
+      mockHandleMessage.mockRejectedValueOnce(new Error("Test error"));
 
       const processOneMessage = async () => {
         const receiveParams = {
@@ -221,7 +190,6 @@ describe("SqsConsumer", () => {
 
       await processOneMessage();
 
-      // Check the error was logged
       expect(mockServer.logger.error).toHaveBeenCalledWith({
         error: "Test error",
         message: "Failed to process SQS message",
@@ -243,7 +211,7 @@ describe("SqsConsumer", () => {
         QueueUrl: consumer.queueUrl,
         ReceiptHandle: "receipt-1"
       });
-      expect(mockSqsClient.send).toHaveBeenCalled();
+      expect(consumer.sqsClient.send).toHaveBeenCalled();
     });
   });
 });

@@ -8,19 +8,12 @@ import { caseData1, caseData2 } from "../../test/fixtures/case.js";
 import { caseService } from "../service/case.service.js";
 import Boom from "@hapi/boom";
 
-vi.mock("../service/case.service.js", () => ({
-  caseService: {
-    createCase: vi.fn(),
-    findCases: vi.fn(),
-    getCase: vi.fn()
-  }
-}));
+vi.mock("../service/case.service.js");
 
 describe("case.controller.js", () => {
   const mockRequest = {
     payload: caseData1,
-    params: { caseId: "10001" },
-    db: {} // Mock database
+    params: { caseId: "10001" }
   };
 
   const mockResponseToolkit = {
@@ -38,10 +31,7 @@ describe("case.controller.js", () => {
 
       await caseCreateController(mockRequest, h);
 
-      expect(caseService.createCase).toHaveBeenCalledWith(
-        mockRequest.payload,
-        mockRequest.db
-      );
+      expect(caseService.createCase).toHaveBeenCalledWith(mockRequest.payload);
       expect(h.response).toHaveBeenCalledWith(mockCreatedCase);
       expect(mockResponse.code).toHaveBeenCalledWith(201);
     });
@@ -57,10 +47,10 @@ describe("case.controller.js", () => {
 
       const result = await caseListController(mockRequest, mockResponseToolkit);
 
-      expect(caseService.findCases).toHaveBeenCalledWith(
-        { page: 1, pageSize: 100 },
-        mockRequest.db
-      );
+      expect(caseService.findCases).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 100
+      });
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCases);
       expect(result).toEqual(mockCases);
     });
@@ -78,8 +68,7 @@ describe("case.controller.js", () => {
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId,
-        mockRequest.db
+        mockRequest.params.caseId
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCase);
       expect(result).toEqual(mockCase);
@@ -94,8 +83,7 @@ describe("case.controller.js", () => {
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId,
-        mockRequest.db
+        mockRequest.params.caseId
       );
       expect(result).toEqual(
         Boom.notFound(

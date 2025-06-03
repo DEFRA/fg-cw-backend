@@ -1,5 +1,5 @@
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
-import { config } from "../../src/config.js";
+import { config } from "../../src/common/config.js";
 import { PurgeQueueCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 const sendSnsMessage = async (topicArn, message) => {

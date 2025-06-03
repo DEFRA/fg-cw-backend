@@ -1,13 +1,13 @@
 import { workflowRepository } from "../repository/workflow.repository.js";
 
 export const workflowService = {
-  createWorkflow: async (workflowData, db) => {
-    return workflowRepository.createWorkflow(workflowData, db);
+  createWorkflow: async (workflowData) => {
+    return workflowRepository.createWorkflow(workflowData);
   },
-  findWorkflows: async (listQuery, db) => {
-    return workflowRepository.findWorkflows(listQuery, db);
+  findWorkflows: async (listQuery) => {
+    return workflowRepository.findWorkflows(listQuery);
   },
-  getWorkflow: async (code, db) => {
-    return workflowRepository.getWorkflow(code, db);
+  getWorkflow: async (code) => {
+    return workflowRepository.getWorkflow(code);
   }
 };
