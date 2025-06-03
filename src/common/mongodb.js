@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import { LockManager } from "mongo-locks";
-import { config } from "../../config.js";
+import { config } from "../config.js";
 
 const mongoConfig = config.get("mongo");
 

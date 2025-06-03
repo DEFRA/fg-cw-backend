@@ -9,9 +9,9 @@ import {
   vi
 } from "vitest";
 import hapi from "@hapi/hapi";
-import { config } from "../../../config.js";
+import { config } from "../../config.js";
 import { secureContext } from "./secure-context.js";
-import { requestLogger } from "../logging/request-logger.js";
+import { logger } from "../logger.js";
 
 const mockAddCACert = vi.hoisted(() => vi.fn());
 const mockTlsCreateSecureContext = vi.hoisted(() =>
@@ -20,6 +20,7 @@ const mockTlsCreateSecureContext = vi.hoisted(() =>
 vi.mock("node:tls", () => ({
   default: { createSecureContext: mockTlsCreateSecureContext }
 }));
+
 vi.mock("hapi-pino", () => ({
   default: {
     register: (server) => {
@@ -35,11 +36,13 @@ vi.mock("hapi-pino", () => ({
 describe("secureContext plugin", () => {
   let server;
 
+  vi.spyOn(logger, "info").mockImplementation(() => {});
+
   describe("When secure context is disabled", () => {
     beforeEach(async () => {
       config.set("isSecureContextEnabled", false);
       server = hapi.server();
-      await server.register([requestLogger, secureContext]);
+      await server.register([secureContext]);
     });
 
     afterEach(async () => {
@@ -48,7 +51,7 @@ describe("secureContext plugin", () => {
     });
 
     test("secureContext decorator should not be available", () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         "Custom secure context is disabled"
       );
     });
@@ -69,7 +72,7 @@ describe("secureContext plugin", () => {
     beforeEach(async () => {
       config.set("isSecureContextEnabled", true);
       server = hapi.server();
-      await server.register([requestLogger, secureContext]);
+      await server.register([secureContext]);
     });
 
     afterEach(async () => {
@@ -100,7 +103,7 @@ describe("secureContext plugin", () => {
     beforeEach(async () => {
       config.set("isSecureContextEnabled", true);
       server = hapi.server();
-      await server.register([requestLogger, secureContext]);
+      await server.register([secureContext]);
     });
 
     afterEach(async () => {
@@ -109,7 +112,7 @@ describe("secureContext plugin", () => {
     });
 
     test("Should log about not finding any TRUSTSTORE_ certs", () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         "Could not find any TRUSTSTORE_ certificates"
       );
     });

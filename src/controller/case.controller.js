@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { randomUUID } from "crypto";
 import { caseService } from "../service/case.service.js";
-import { extractListQuery } from "../common/helpers/api/request.js";
+import { extractListQuery } from "../common/extract-list-query.js";
 import { publish } from "../common/sns.js";
 import { config } from "../config.js";
 

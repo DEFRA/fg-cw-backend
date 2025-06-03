@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { Db, MongoClient } from "mongodb";
 import { LockManager } from "mongo-locks";
 
-import { createServer } from "../../server.js";
+import { createServer } from "../server.js";
 
 describe.skip("#mongoDb", () => {
   let server;

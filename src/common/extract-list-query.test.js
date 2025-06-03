@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { extractListQuery } from "./request.js";
-import { config } from "../../../config.js";
+import { config } from "../config.js";
 
 // Mock the config module
 vi.mock("../../../config.js", () => ({

@@ -1,12 +1,12 @@
 import Hapi from "@hapi/hapi";
 import { config } from "./config.js";
 import { router } from "./plugin/router.js";
-import { requestLogger } from "./common/helpers/logging/request-logger.js";
-import { mongoDb } from "./common/helpers/mongodb.js";
-import { failAction } from "./common/helpers/fail-action.js";
-import { secureContext } from "./common/helpers/secure-context/index.js";
-import { pulse } from "./common/helpers/pulse.js";
-import { requestTracing } from "./common/helpers/request-tracing.js";
+import hapiPino from "hapi-pino";
+import hapiPulse from "hapi-pulse";
+import { mongoDb } from "./common/mongodb.js";
+import { logger } from "./common/logger.js";
+import { secureContext } from "./common/secure-context/index.js";
+import { requestTracing } from "./common/request-tracing.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
@@ -21,7 +21,10 @@ async function createServer(host, port) {
         options: {
           abortEarly: false
         },
-        failAction
+        failAction: (_request, _h, error) => {
+          logger.warn(error, error?.message);
+          throw error;
+        }
       },
       security: {
         hsts: {
@@ -47,18 +50,30 @@ async function createServer(host, port) {
   };
 
   // Hapi Plugins:
-  // requestLogger  - automatically logs incoming requests
+  // hapi pino      - automatically logs incoming requests
   // requestTracing - trace header logging and propagation
   // secureContext  - loads CA certificates from environment config
-  // pulse          - provides shutdown handlers
+  // hapi pulse     - provides shutdown handlers
   // mongoDb        - sets up mongo connection pool and attaches to `server` and `request` objects
   // router         - routes used in the app
 
   await server.register([
-    requestLogger,
+    {
+      plugin: hapiPino,
+      options: {
+        ignorePaths: ["/health"],
+        instance: logger
+      }
+    },
     requestTracing,
     secureContext,
-    pulse,
+    {
+      plugin: hapiPulse,
+      options: {
+        logger,
+        timeout: 10_000
+      }
+    },
     Inert,
     Vision,
     {

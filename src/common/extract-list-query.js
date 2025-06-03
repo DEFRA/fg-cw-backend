@@ -1,4 +1,4 @@
-import { config } from "../../../config.js";
+import { config } from "../config.js";
 
 export const extractListQuery = (request) => ({
   page: request.query?.page ? parseInt(request.query.page) || 1 : 1,
