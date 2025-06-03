@@ -1,6 +1,6 @@
 import { createServer } from "../server.js";
 import { logger } from "./logger.js";
-import { db, mongoClient } from "../mongo-client.js";
+import { db, mongoClient } from "./mongo-client.js";
 import { up } from "migrate-mongo";
 
 async function startServer(host, port) {

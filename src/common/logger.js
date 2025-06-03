@@ -1,13 +1,10 @@
 import { getTraceId } from "@defra/hapi-tracing";
 import { ecsFormat } from "@elastic/ecs-pino-format";
 import { pino } from "pino";
-import { config } from "../config.js";
+import { config } from "./config.js";
 import { getTraceParent } from "./trace-parent.js";
 
 const level = config.get("log.level");
-
-console.log({ level });
-
 const format = {
   ecs: {
     ...ecsFormat({
