@@ -3,6 +3,7 @@ import { createCaseEventHandler } from "./create-case-event-handler.js";
 import { caseService } from "../service/case.service.js";
 import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
 import { caseData3 } from "../../test/fixtures/case.js";
+import { logger } from "../common/logger.js";
 
 vi.mock("../../src/service/case.service.js");
 
@@ -11,10 +12,8 @@ describe("createCaseEventHandler", () => {
   let handler;
 
   beforeEach(() => {
+    vi.spyOn(logger, "info").mockImplementation(() => {});
     mockServer = {
-      logger: {
-        info: vi.fn()
-      },
       db: {}
     };
 
@@ -28,7 +27,7 @@ describe("createCaseEventHandler", () => {
   it("should log received SQS message", async () => {
     await handler(createCaseEvent3);
 
-    expect(mockServer.logger.info).toHaveBeenCalledWith(
+    expect(logger.info).toHaveBeenCalledWith(
       "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3"
     );
   });
@@ -44,7 +43,7 @@ describe("createCaseEventHandler", () => {
   it("should log when a new case is created", async () => {
     await handler(createCaseEvent3);
 
-    expect(mockServer.logger.info).toHaveBeenCalledWith(
+    expect(logger.info).toHaveBeenCalledWith(
       "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3"
     );
   });

@@ -5,6 +5,14 @@ import {
   ReceiveMessageCommand,
   DeleteMessageCommand
 } from "@aws-sdk/client-sqs";
+import { logger } from "../common/logger.js";
+
+vi.mock("../common/logger.js", () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn()
+  }
+}));
 
 vi.mock("@aws-sdk/client-sqs");
 vi.mock("../common/config.js", () => ({
@@ -65,7 +73,7 @@ describe("SqsConsumer", () => {
 
       expect(consumer.isRunning).toBe(true);
       expect(consumer.poll).toHaveBeenCalled();
-      expect(mockServer.logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining("Started polling SQS queue")
       );
     });
@@ -78,7 +86,7 @@ describe("SqsConsumer", () => {
       await consumer.stop();
 
       expect(consumer.isRunning).toBe(false);
-      expect(mockServer.logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining("Stopped polling SQS queue")
       );
     });
@@ -178,7 +186,7 @@ describe("SqsConsumer", () => {
               await consumer.handleMessage(message);
               await consumer.deleteMessage(message);
             } catch (err) {
-              consumer.server.logger.error({
+              logger.error({
                 error: err.message,
                 message: "Failed to process SQS message",
                 messageId: message.MessageId
@@ -190,7 +198,7 @@ describe("SqsConsumer", () => {
 
       await processOneMessage();
 
-      expect(mockServer.logger.error).toHaveBeenCalledWith({
+      expect(logger.error).toHaveBeenCalledWith({
         error: "Test error",
         message: "Failed to process SQS message",
         messageId: "msg-1"
