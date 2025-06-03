@@ -4,6 +4,7 @@ import {
   DeleteMessageCommand
 } from "@aws-sdk/client-sqs";
 import { config } from "../common/config.js";
+import { logger } from "../common/logger.js";
 
 export class SqsConsumer {
   constructor(server, options) {
@@ -30,12 +31,12 @@ export class SqsConsumer {
   async start() {
     this.isRunning = true;
     await this.poll();
-    this.server.logger.info(`Started polling SQS queue: ${this.queueUrl}`);
+    logger.info(`Started polling SQS queue: ${this.queueUrl}`);
   }
 
   async stop() {
     this.isRunning = false;
-    this.server.logger.info(`Stopped polling SQS queue: ${this.queueUrl}`);
+    logger.info(`Stopped polling SQS queue: ${this.queueUrl}`);
   }
 
   async poll() {
@@ -55,7 +56,7 @@ export class SqsConsumer {
         if (response.Messages && response.Messages.length > 0) {
           await Promise.all(
             response.Messages.map(async (message) => {
-              this.server.logger.info(
+              logger.info(
                 `Processing message from SQS queue: ${message.MessageId}`
               );
               try {
@@ -64,7 +65,7 @@ export class SqsConsumer {
                 // Delete the message after successful processing
                 await this.deleteMessage(message);
               } catch (err) {
-                this.server.logger.error({
+                logger.error({
                   error: err.message,
                   message: `Failed to process SQS message ID: ${message.MessageId} - ${err.message}`,
                   messageId: message.MessageId
@@ -74,7 +75,7 @@ export class SqsConsumer {
           );
         }
       } catch (err) {
-        this.server.logger.error({
+        logger.error({
           error: err.message,
           queueUrl: this.queueUrl,
           message: "Error polling SQS queue"
