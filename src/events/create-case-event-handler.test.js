@@ -11,8 +11,6 @@ describe("createCaseEventHandler", () => {
   let handler;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockServer = {
       logger: {
         info: vi.fn()
@@ -39,8 +37,7 @@ describe("createCaseEventHandler", () => {
     await handler(createCaseEvent3);
 
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      createCaseEvent3.data,
-      mockServer.db
+      createCaseEvent3.data
     );
   });
 

@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import sqsConsumerPlugin from "./sqs-consumer-plugin.js";
-import SqsConsumer from "./sqs-consumer.js";
+import { SqsConsumer } from "./sqs-consumer.js";
 
-// Mock SqsConsumer class
-vi.mock("./sqs-consumer.js", () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      start: vi.fn().mockResolvedValue(),
-      stop: vi.fn().mockResolvedValue()
-    }))
-  };
-});
+vi.mock("./sqs-consumer.js");
 
 describe("sqsConsumerPlugin", () => {
   let server;
   let options;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Mock Hapi server instance
     server = {
       app: {},
       events: {
@@ -27,7 +16,6 @@ describe("sqsConsumerPlugin", () => {
       }
     };
 
-    // Mock plugin options
     options = {
       queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
       handleMessage: vi.fn()

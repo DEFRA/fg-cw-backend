@@ -1,4 +1,4 @@
-import SqsConsumer from "./sqs-consumer.js";
+import { SqsConsumer } from "./sqs-consumer.js";
 
 const sqsConsumerPlugin = {
   name: "sqs-consumer",

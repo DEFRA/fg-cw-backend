@@ -1,9 +1,18 @@
 import convict from "convict";
 import convictFormatWithValidator from "convict-format-with-validator";
+import Joi from "joi";
 
-import { convictValidateMongoUri } from "./common/helpers/convict/validate-mongo-uri.js";
+convict.addFormat({
+  name: "mongo-uri",
+  validate: function validateMongoUri(value) {
+    const mongodbSchema = Joi.string().uri({
+      scheme: ["mongodb"]
+    });
 
-convict.addFormat(convictValidateMongoUri);
+    Joi.assert(value, mongodbSchema);
+  }
+});
+
 convict.addFormats(convictFormatWithValidator);
 
 const isProduction = process.env.NODE_ENV === "production";

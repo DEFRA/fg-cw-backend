@@ -1,5 +1,5 @@
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
-import { config } from "../config.js";
+import { config } from "./config.js";
 import { getTraceId } from "@defra/hapi-tracing";
 
 const region = config.get("aws.awsRegion") || "eu-west-2";

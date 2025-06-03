@@ -2,7 +2,7 @@ import process from "node:process";
 
 import { createLogger } from "./common/helpers/logging/logger.js";
 import { startServer } from "./common/helpers/start-server.js";
-import { config } from "./config.js";
+import { config } from "./common/config.js";
 
 await startServer(config.get("host"), config.get("port"));
 

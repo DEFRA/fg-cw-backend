@@ -1,10 +1,9 @@
 import Hapi from "@hapi/hapi";
-import { config } from "./config.js";
+import { config } from "./common/config.js";
 import { router } from "./plugin/router.js";
 import { requestLogger } from "./common/helpers/logging/request-logger.js";
-import { mongoDb } from "./common/helpers/mongodb.js";
+import { mongoClient } from "./common/mongo-client.js";
 import { failAction } from "./common/helpers/fail-action.js";
-import { secureContext } from "./common/helpers/secure-context/index.js";
 import { pulse } from "./common/helpers/pulse.js";
 import { requestTracing } from "./common/helpers/request-tracing.js";
 import HapiSwagger from "hapi-swagger";
@@ -46,18 +45,23 @@ async function createServer(host, port) {
     }
   };
 
+  server.events.on("start", async () => {
+    await mongoClient.connect();
+  });
+
+  server.events.on("stop", async () => {
+    await mongoClient.close(true);
+  });
+
   // Hapi Plugins:
   // requestLogger  - automatically logs incoming requests
   // requestTracing - trace header logging and propagation
-  // secureContext  - loads CA certificates from environment config
   // pulse          - provides shutdown handlers
-  // mongoDb        - sets up mongo connection pool and attaches to `server` and `request` objects
   // router         - routes used in the app
 
   await server.register([
     requestLogger,
     requestTracing,
-    secureContext,
     pulse,
     Inert,
     Vision,
@@ -65,7 +69,6 @@ async function createServer(host, port) {
       plugin: HapiSwagger,
       options: swaggerOptions
     },
-    mongoDb,
     router,
     createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server)
   ]);
