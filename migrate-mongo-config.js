@@ -1,4 +1,4 @@
-import { config as baseConfig } from "./src/config.js";
+import { config as baseConfig } from "./src/common/config.js";
 
 const mongoConfig = baseConfig.get("mongo");
 

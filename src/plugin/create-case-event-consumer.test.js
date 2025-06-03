@@ -3,14 +3,11 @@ import { createCaseEventConsumer } from "./create-case-event-consumer.js";
 import sqsConsumerPlugin from "../events/sqs-consumer-plugin.js";
 import { createCaseEventHandler } from "../events/create-case-event-handler.js";
 
-// Mock the dependencies
 vi.mock("../events/sqs-consumer-plugin.js", () => ({
   default: { name: "sqs-consumer" }
 }));
 
-vi.mock("../events/create-case-event-handler.js", () => ({
-  createCaseEventHandler: vi.fn().mockReturnValue(() => {})
-}));
+vi.mock("../events/create-case-event-handler.js");
 
 describe("createCaseEventConsumer", () => {
   const mockSqsQueueUrl =
@@ -18,13 +15,17 @@ describe("createCaseEventConsumer", () => {
   const mockServer = { logger: { info: vi.fn() } };
 
   it("should return a properly configured plugin object", () => {
+    const handleMessage = vi.fn();
+
+    createCaseEventHandler.mockReturnValueOnce(handleMessage);
+
     const result = createCaseEventConsumer(mockSqsQueueUrl, mockServer);
 
     expect(result).toEqual({
       plugin: sqsConsumerPlugin,
       options: {
         queueUrl: mockSqsQueueUrl,
-        handleMessage: expect.any(Function)
+        handleMessage
       }
     });
   });

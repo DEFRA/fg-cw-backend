@@ -1,27 +1,17 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { eventController } from "./event.controller.js";
 import { caseService } from "../service/case.service.js";
 import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
 import { caseData1 } from "../../test/fixtures/case.js";
 
-vi.mock("../service/case.service.js", () => ({
-  caseService: {
-    handleCreateCaseEvent: vi.fn()
-  }
-}));
+vi.mock("../service/case.service.js");
 
 describe("eventController", () => {
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it("should call caseService.handleCreateCaseEvent with correct payload and db", async () => {
+  it("should call caseService.handleCreateCaseEvent with correct payload", async () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
-    const mockDb = {};
     const mockRequest = {
-      payload: createCaseEvent1,
-      db: mockDb
+      payload: createCaseEvent1
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
@@ -37,8 +27,7 @@ describe("eventController", () => {
     // Assert
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      createCaseEvent1,
-      mockDb
+      createCaseEvent1
     );
   });
 
@@ -46,8 +35,7 @@ describe("eventController", () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
     const mockRequest = {
-      payload: createCaseEvent1,
-      db: {}
+      payload: createCaseEvent1
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
@@ -68,8 +56,7 @@ describe("eventController", () => {
   it("should handle errors from caseService gracefully", async () => {
     // Arrange mock data
     const mockRequest = {
-      payload: createCaseEvent1,
-      db: {}
+      payload: createCaseEvent1
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
@@ -87,8 +74,7 @@ describe("eventController", () => {
     );
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      mockRequest.payload,
-      mockRequest.db
+      mockRequest.payload
     );
   });
 });

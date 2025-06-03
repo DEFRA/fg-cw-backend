@@ -40,4 +40,4 @@ ARG PORT
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-CMD [ "node", "src" ]
+CMD [ "scripts/run.sh" ]
