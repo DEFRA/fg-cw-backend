@@ -24,7 +24,7 @@ export const logger = pino({
   ignorePaths: ["/health"],
   redact: {
     paths:
-      config.env === "production"
+      config.get("log.format")
         ? ["req.headers.authorization", "req.headers.cookie", "res.headers"]
         : ["req", "res", "responseTime"],
     remove: true
