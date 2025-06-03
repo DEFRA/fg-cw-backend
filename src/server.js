@@ -1,11 +1,10 @@
 import Hapi from "@hapi/hapi";
-import { config } from "./config.js";
+import { config } from "./common/config.js";
 import { router } from "./plugin/router.js";
 import hapiPino from "hapi-pino";
 import hapiPulse from "hapi-pulse";
-import { mongoDb } from "./common/mongodb.js";
+import { mongoClient } from "./common/mongo-client.js";
 import { logger } from "./common/logger.js";
-import { secureContext } from "./common/secure-context/index.js";
 import { requestTracing } from "./common/request-tracing.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
@@ -49,6 +48,14 @@ async function createServer(host, port) {
     }
   };
 
+  server.events.on("start", async () => {
+    await mongoClient.connect();
+  });
+
+  server.events.on("stop", async () => {
+    await mongoClient.close(true);
+  });
+
   // Hapi Plugins:
   // hapi pino      - automatically logs incoming requests
   // requestTracing - trace header logging and propagation
@@ -66,7 +73,6 @@ async function createServer(host, port) {
       }
     },
     requestTracing,
-    secureContext,
     {
       plugin: hapiPulse,
       options: {
@@ -80,7 +86,6 @@ async function createServer(host, port) {
       plugin: HapiSwagger,
       options: swaggerOptions
     },
-    mongoDb,
     router,
     createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server)
   ]);

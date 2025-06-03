@@ -8,19 +8,12 @@ import {
 import { workflowService } from "../service/workflow.service.js";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
 
-vi.mock("../service/workflow.service.js", () => ({
-  workflowService: {
-    createWorkflow: vi.fn(),
-    findWorkflows: vi.fn(),
-    getWorkflow: vi.fn()
-  }
-}));
+vi.mock("../service/workflow.service.js");
 
 describe("workflow.controller.js", () => {
   const mockRequest = {
     payload: workflowData1,
-    params: { code: "9001" },
-    db: {}
+    params: { code: "9001" }
   };
 
   const mockResponseToolkit = {
@@ -42,8 +35,7 @@ describe("workflow.controller.js", () => {
       await workflowCreateController(mockRequest, h);
 
       expect(workflowService.createWorkflow).toHaveBeenCalledWith(
-        mockRequest.payload,
-        mockRequest.db
+        mockRequest.payload
       );
       expect(h.response).toHaveBeenCalledWith(mockCreatedWorkflow);
       expect(mockResponse.code).toHaveBeenCalledWith(201);
@@ -63,10 +55,10 @@ describe("workflow.controller.js", () => {
         mockResponseToolkit
       );
 
-      expect(workflowService.findWorkflows).toHaveBeenCalledWith(
-        { page: 1, pageSize: 100 },
-        mockRequest.db
-      );
+      expect(workflowService.findWorkflows).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 100
+      });
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflows);
       expect(result).toEqual(mockWorkflows);
     });
@@ -84,8 +76,7 @@ describe("workflow.controller.js", () => {
       );
 
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.code,
-        mockRequest.db
+        mockRequest.params.code
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockWorkflow);
       expect(result).toEqual(mockWorkflow);
@@ -99,8 +90,7 @@ describe("workflow.controller.js", () => {
         mockResponseToolkit
       );
       expect(workflowService.getWorkflow).toHaveBeenCalledWith(
-        mockRequest.params.code,
-        mockRequest.db
+        mockRequest.params.code
       );
       expect(result).toEqual(
         Boom.notFound(

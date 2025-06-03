@@ -1,5 +1,17 @@
 import convict from "convict";
 import convictFormatWithValidator from "convict-format-with-validator";
+import Joi from "joi";
+
+convict.addFormat({
+  name: "mongo-uri",
+  validate: function validateMongoUri(value) {
+    const mongodbSchema = Joi.string().uri({
+      scheme: ["mongodb"]
+    });
+
+    Joi.assert(value, mongodbSchema);
+  }
+});
 
 convict.addFormats(convictFormatWithValidator);
 

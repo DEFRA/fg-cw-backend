@@ -1,31 +1,35 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
-import { config } from "../config.js";
+import { db } from "../common/mongo-client.js";
+import { config } from "../common/config.js";
 
 export const collection = "cases";
 
 export const caseRepository = {
-  createCase: async (caseData, db) => {
+  createCase: async (caseData) => {
     let result;
+
     try {
       result = await db.collection(collection).insertOne(caseData);
     } catch (error) {
       if (error instanceof MongoServerError && error.code === 11000) {
         throw Boom.conflict(
-          `Case with workflow code: '${caseData.workflowCode}' and case ref: '${caseData.caseRef}' already exists`
+          `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" already exists`
         );
       }
-      throw Boom.internal(error);
+      throw error;
     }
-    if (!result || !result.acknowledged) {
-      throw Boom.internal("Error creating case");
+
+    if (!result.acknowledged) {
+      throw Boom.internal(
+        `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" could not be created, the operation was not acknowledged`
+      );
     }
-    return await db.collection(collection).findOne({
-      _id: result.insertedId
-    });
+
+    return caseData;
   },
 
-  findCases: async (listQuery, db) => {
+  findCases: async (listQuery) => {
     const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
       listQuery;
     const skip = (page - 1) * pageSize;
@@ -48,9 +52,18 @@ export const caseRepository = {
     };
   },
 
-  getCase: async (caseId, db) => {
+  getCase: async (caseId) => {
     return await db.collection(collection).findOne({
       _id: new ObjectId(caseId)
     });
+  },
+
+  updateStage: async (caseId, nextStage) => {
+    return await db.collection(collection).updateOne(
+      {
+        _id: new ObjectId(caseId)
+      },
+      { $set: { currentStage: nextStage } }
+    );
   }
 };
