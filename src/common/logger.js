@@ -20,13 +20,10 @@ const format = {
 }[config.get("log.format")];
 
 export const logger = pino({
-  enabled: config.get("log.isEnabled")
+  enabled: config.get("log.isEnabled"),
   ignorePaths: ["/health"],
   redact: {
-    paths:
-      config.get("log.format")
-        ? ["req.headers.authorization", "req.headers.cookie", "res.headers"]
-        : ["req", "res", "responseTime"],
+    paths: config.get("log.redact"),
     remove: true
   },
   level,
