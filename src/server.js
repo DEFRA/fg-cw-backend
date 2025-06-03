@@ -7,14 +7,12 @@ import { failAction } from "./common/helpers/fail-action.js";
 import { secureContext } from "./common/helpers/secure-context/index.js";
 import { pulse } from "./common/helpers/pulse.js";
 import { requestTracing } from "./common/helpers/request-tracing.js";
-import { setupProxy } from "./common/helpers/proxy/setup-proxy.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
 import { createCaseEventConsumer } from "./plugin/create-case-event-consumer.js";
 
 async function createServer(host, port) {
-  setupProxy();
   const server = Hapi.server({
     host,
     port,
