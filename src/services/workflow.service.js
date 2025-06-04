@@ -9,5 +9,5 @@ export const workflowService = {
   },
   getWorkflow: async (code) => {
     return workflowRepository.getWorkflow(code);
-  }
+  },
 };

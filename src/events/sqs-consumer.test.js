@@ -1,17 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SqsConsumer } from "./sqs-consumer.js";
 import {
-  SQSClient,
+  DeleteMessageCommand,
   ReceiveMessageCommand,
-  DeleteMessageCommand
+  SQSClient,
 } from "@aws-sdk/client-sqs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../common/logger.js";
+import { SqsConsumer } from "./sqs-consumer.js";
 
 vi.mock("../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("@aws-sdk/client-sqs");
@@ -23,10 +23,10 @@ vi.mock("../common/config.js", () => ({
           "aws.sqsEndpoint": "http://localhost:4566",
           "aws.awsRegion": "eu-west-2",
           "aws.sqsMaxNumberOfMessages": 10,
-          "aws.sqsWaitTimeInSeconds": 20
-        })[key]
-    )
-  }
+          "aws.sqsWaitTimeInSeconds": 20,
+        })[key],
+    ),
+  },
 }));
 
 describe("SqsConsumer", () => {
@@ -38,15 +38,15 @@ describe("SqsConsumer", () => {
     mockServer = {
       logger: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
 
     mockHandleMessage = vi.fn().mockResolvedValue();
 
     consumer = new SqsConsumer(mockServer, {
       queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
-      handleMessage: mockHandleMessage
+      handleMessage: mockHandleMessage,
     });
   });
 
@@ -54,13 +54,13 @@ describe("SqsConsumer", () => {
     it("should initialize with correct properties", () => {
       expect(consumer.server).toBe(mockServer);
       expect(consumer.queueUrl).toBe(
-        "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue"
+        "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
       );
       expect(consumer.handleMessage).toBe(mockHandleMessage);
       expect(consumer.isRunning).toBe(false);
       expect(SQSClient).toHaveBeenCalledWith({
         endpoint: "http://localhost:4566",
-        region: "eu-west-2"
+        region: "eu-west-2",
       });
     });
   });
@@ -74,7 +74,7 @@ describe("SqsConsumer", () => {
       expect(consumer.isRunning).toBe(true);
       expect(consumer.poll).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining("Started polling SQS queue")
+        expect.stringContaining("Started polling SQS queue"),
       );
     });
   });
@@ -87,7 +87,7 @@ describe("SqsConsumer", () => {
 
       expect(consumer.isRunning).toBe(false);
       expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining("Stopped polling SQS queue")
+        expect.stringContaining("Stopped polling SQS queue"),
       );
     });
   });
@@ -98,8 +98,8 @@ describe("SqsConsumer", () => {
         {
           MessageId: "msg-1",
           Body: "Test message 1",
-          ReceiptHandle: "receipt-1"
-        }
+          ReceiptHandle: "receipt-1",
+        },
       ];
 
       consumer.sqsClient.send.mockImplementation(async (command) => {
@@ -118,7 +118,7 @@ describe("SqsConsumer", () => {
           MaxNumberOfMessages: 10,
           WaitTimeSeconds: 20,
           AttributeNames: ["All"],
-          MessageAttributeNames: ["All"]
+          MessageAttributeNames: ["All"],
         };
 
         const command = new ReceiveMessageCommand(receiveParams);
@@ -139,14 +139,14 @@ describe("SqsConsumer", () => {
         MaxNumberOfMessages: 10,
         WaitTimeSeconds: 20,
         AttributeNames: ["All"],
-        MessageAttributeNames: ["All"]
+        MessageAttributeNames: ["All"],
       });
 
       expect(mockHandleMessage).toHaveBeenCalledWith(mockMessages[0]);
 
       expect(DeleteMessageCommand).toHaveBeenCalledWith({
         QueueUrl: consumer.queueUrl,
-        ReceiptHandle: "receipt-1"
+        ReceiptHandle: "receipt-1",
       });
     });
 
@@ -155,8 +155,8 @@ describe("SqsConsumer", () => {
         {
           MessageId: "msg-1",
           Body: "Test message 1",
-          ReceiptHandle: "receipt-1"
-        }
+          ReceiptHandle: "receipt-1",
+        },
       ];
 
       consumer.sqsClient.send.mockImplementation(async (command) => {
@@ -174,13 +174,13 @@ describe("SqsConsumer", () => {
           MaxNumberOfMessages: 10,
           WaitTimeSeconds: 20,
           AttributeNames: ["All"],
-          MessageAttributeNames: ["All"]
+          MessageAttributeNames: ["All"],
         };
 
         const command = new ReceiveMessageCommand(receiveParams);
         const response = await consumer.sqsClient.send(command);
 
-        if (response.Messages && response.Messages.length > 0) {
+        if (response.Messages.length) {
           for (const message of response.Messages) {
             try {
               await consumer.handleMessage(message);
@@ -189,7 +189,7 @@ describe("SqsConsumer", () => {
               logger.error({
                 error: err.message,
                 message: "Failed to process SQS message",
-                messageId: message.MessageId
+                messageId: message.MessageId,
               });
             }
           }
@@ -201,7 +201,7 @@ describe("SqsConsumer", () => {
       expect(logger.error).toHaveBeenCalledWith({
         error: "Test error",
         message: "Failed to process SQS message",
-        messageId: "msg-1"
+        messageId: "msg-1",
       });
     });
   });
@@ -210,14 +210,14 @@ describe("SqsConsumer", () => {
     it("should delete a message with the correct parameters", async () => {
       const mockMessage = {
         MessageId: "msg-1",
-        ReceiptHandle: "receipt-1"
+        ReceiptHandle: "receipt-1",
       };
 
       await consumer.deleteMessage(mockMessage);
 
       expect(DeleteMessageCommand).toHaveBeenCalledWith({
         QueueUrl: consumer.queueUrl,
-        ReceiptHandle: "receipt-1"
+        ReceiptHandle: "receipt-1",
       });
       expect(consumer.sqsClient.send).toHaveBeenCalled();
     });

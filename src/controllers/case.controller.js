@@ -1,10 +1,10 @@
 import Boom from "@hapi/boom";
 import { randomUUID } from "crypto";
-import { caseService } from "../services/case.service.js";
+import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
+import { config } from "../common/config.js";
 import { extractListQuery } from "../common/extract-list-query.js";
 import { publish } from "../common/sns.js";
-import { config } from "../common/config.js";
-import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
+import { caseService } from "../services/case.service.js";
 
 export const caseCreateController = async (request, h) => {
   return h.response(await caseService.createCase(request.payload)).code(201);
@@ -20,7 +20,7 @@ export const caseDetailController = async (request, h) => {
   const result = await caseService.getCase(request.params.caseId);
   if (!result) {
     return Boom.notFound(
-      "Case with id: " + request.params.caseId + " not found"
+      "Case with id: " + request.params.caseId + " not found",
     );
   }
   return h.response(result);
@@ -47,8 +47,8 @@ export const caseStageController = async (request, h) => {
     data: {
       caseRef: caseRecord.caseRef,
       previousStage,
-      currentStage: nextStage
-    }
+      currentStage: nextStage,
+    },
   };
 
   await publish(config.get("aws.caseStageUpdatedTopicArn"), event);

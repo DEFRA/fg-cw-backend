@@ -11,10 +11,10 @@ export const findCaseResponseSchema = Joi.object({
   priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
   payload: CasePayload.required(),
   currentStage: UrlSafeId.required(),
-  stages: Joi.array().items(CaseStage).required()
+  stages: Joi.array().items(CaseStage).required(),
 })
   .options({
     presence: "required",
-    stripUnknown: true
+    stripUnknown: true,
   })
   .label("FindCaseResponse");

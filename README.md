@@ -397,8 +397,8 @@ return await fetch(url, {
   dispatcher: new ProxyAgent({
     uri: proxyUrl,
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
-  })
+    keepAliveMaxTimeout: 10,
+  }),
 });
 ```
 
@@ -437,7 +437,6 @@ docker run -e PORT=3001 -p 3001:3001 fg-cw-backend
 A local environment with:
 
 - Localstack for AWS services (S3, SQS)
-- Redis
 - MongoDB
 - This service.
 - A commented out frontend example.

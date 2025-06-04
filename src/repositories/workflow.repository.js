@@ -1,7 +1,6 @@
 import Boom from "@hapi/boom";
-import { MongoServerError } from "mongodb";
-import { db } from "../common/mongo-client.js";
 import { config } from "../common/config.js";
+import { db } from "../common/mongo-client.js";
 
 export const collection = "workflows";
 
@@ -12,9 +11,9 @@ export const workflowRepository = {
     try {
       result = await db.collection(collection).insertOne(workflow);
     } catch (error) {
-      if (error instanceof MongoServerError && error.code === 11000) {
+      if (error.code === 11000) {
         throw Boom.conflict(
-          `Workflow with code "${workflow.code}" already exists`
+          `Workflow with code "${workflow.code}" already exists`,
         );
       }
       throw error;
@@ -22,7 +21,7 @@ export const workflowRepository = {
 
     if (!result.acknowledged) {
       throw Boom.internal(
-        `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`
+        `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
       );
     }
 
@@ -40,7 +39,7 @@ export const workflowRepository = {
       metadata: {
         ...listQuery,
         count,
-        pageCount
+        pageCount,
       },
 
       data: await db
@@ -48,13 +47,13 @@ export const workflowRepository = {
         .find()
         .skip(skip)
         .limit(pageSize)
-        .toArray()
+        .toArray(),
     };
   },
 
   getWorkflow: async (code) => {
     return await db.collection(collection).findOne({
-      code
+      code,
     });
-  }
+  },
 };

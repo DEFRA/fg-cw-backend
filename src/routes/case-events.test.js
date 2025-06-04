@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { caseEvents } from "./case-events.js";
+import { describe, expect, it } from "vitest";
 import { eventController } from "../controllers/event.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
 import { commonSchema } from "../schemas/common.schema.js";
+import { caseEvents } from "./case-events.js";
 
 describe("Case Events Route Definitions", () => {
   it("should define the correct POST /events route", () => {
@@ -20,7 +20,7 @@ describe("Case Events Route Definitions", () => {
 
     expect(options).toHaveProperty(
       "description",
-      "Receive a create case event"
+      "Receive a create case event",
     );
     expect(options).toHaveProperty("tags");
     expect(options.tags).toContain("api");
@@ -29,7 +29,7 @@ describe("Case Events Route Definitions", () => {
     expect(options).toHaveProperty("validate");
     expect(options.validate).toHaveProperty(
       "payload",
-      caseSchema.GrantCaseEvent
+      caseSchema.GrantCaseEvent,
     );
 
     // Verify response status schema
@@ -38,7 +38,7 @@ describe("Case Events Route Definitions", () => {
     expect(options.response.status).toHaveProperty("201", caseSchema.Case);
     expect(options.response.status).toHaveProperty(
       "400",
-      commonSchema.ValidationError
+      commonSchema.ValidationError,
     );
 
     // Verify handler

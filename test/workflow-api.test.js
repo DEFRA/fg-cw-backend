@@ -1,9 +1,9 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { env } from "node:process";
-import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
-import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
+import { MongoClient } from "mongodb";
+import { env } from "node:process";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { collection as workflowCollection } from "../src/repositories/workflow.repository.js";
+import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
 
 describe.sequential("Workflow API", () => {
   let workflows;
@@ -28,13 +28,13 @@ describe.sequential("Workflow API", () => {
       const payload = { ...workflowData1 };
       const response = await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
-        payload
+        payload,
       });
 
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
         ...payload,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
 
       const documents = await workflows.find({}).toArray();
@@ -42,7 +42,7 @@ describe.sequential("Workflow API", () => {
       expect(documents.length).toBe(1);
       expect(documents[0]).toEqual({
         ...payload,
-        _id: expect.any(Object)
+        _id: expect.any(Object),
       });
     });
 
@@ -50,14 +50,14 @@ describe.sequential("Workflow API", () => {
       const payload = { ...workflowData1 };
       await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
-        payload
+        payload,
       });
 
       await expect(
         Wreck.post(`${env.API_URL}/workflows`, {
           json: true,
-          payload
-        })
+          payload,
+        }),
       ).rejects.toThrow("Response Error: 409 Conflict");
     });
   });
@@ -71,7 +71,7 @@ describe.sequential("Workflow API", () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows`, {
-        json: true
+        json: true,
       });
 
       expect(response.res.statusCode).toBe(200);
@@ -83,11 +83,11 @@ describe.sequential("Workflow API", () => {
       expect(response.payload.data.length).toBe(2);
       expect(response.payload.data[0]).toEqual({
         ...workflowData1,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
       expect(response.payload.data[1]).toEqual({
         ...workflowData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
@@ -101,13 +101,13 @@ describe.sequential("Workflow API", () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows/GRANT-REF-2`, {
-        json: true
+        json: true,
       });
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
         ...workflowData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
