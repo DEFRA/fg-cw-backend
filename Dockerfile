@@ -2,39 +2,24 @@ ARG PARENT_VERSION=latest-22
 ARG PORT=3001
 ARG PORT_DEBUG=9229
 
-FROM defradigital/node-development:${PARENT_VERSION} AS development
-ARG PARENT_VERSION
-LABEL uk.gov.defra.ffc.parent-image=defradigital/node-development:${PARENT_VERSION}
-
-ARG PORT
-ARG PORT_DEBUG
-ENV PORT=${PORT}
-EXPOSE ${PORT} ${PORT_DEBUG}
-
-COPY --chown=node:node package*.json ./
-RUN npm install
-COPY --chown=node:node ./migrate-mongo-config.js ./
-COPY --chown=node:node ./migrations ./migrations
-COPY --chown=node:node ./src ./src
-
-CMD [ "npm", "run", "docker:dev" ]
-
-FROM defradigital/node:${PARENT_VERSION} AS production
+FROM defradigital/node:${PARENT_VERSION}
 ARG PARENT_VERSION
 LABEL uk.gov.defra.ffc.parent-image=defradigital/node:${PARENT_VERSION}
 
-# Add curl to template.
-# CDP PLATFORM HEALTHCHECK REQUIREMENT
+# Curl is a CDP healthcheck requirement
 USER root
 RUN apk add --no-cache curl
 USER node
 
-COPY --from=development /home/node/package*.json ./
-COPY --from=development /home/node/migrate-mongo-config.js ./
-COPY --from=development /home/node/migrations ./migrations/
-COPY --from=development /home/node/src ./src/
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node scripts/run.sh scripts/run.sh
+COPY --chown=node:node migrate-mongo-config.js ./
+COPY --chown=node:node migrations ./migrations
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev \
+  chmod +x scripts/run.sh
+
+COPY --chown=node:node src src
 
 ARG PORT
 ENV PORT=${PORT}

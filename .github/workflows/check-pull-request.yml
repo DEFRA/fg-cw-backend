@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test code and Create Test Coverage Reports
+      - name: Use Node version
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -32,12 +32,12 @@ jobs:
         run: npm run lint
 
       - name: Run unit tests
-        run: npm run test -- --coverage
+        run: npm run test:unit -- --coverage
 
       - name: Run integration tests
         run: npm run test:integration
 
-      - name: Test Docker Image Build
+      - name: Build docker image
         run: |
           set +e
           docker build --no-cache --tag fg-cw-backend .
