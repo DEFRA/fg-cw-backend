@@ -1,8 +1,8 @@
 import Joi from "joi";
-import { caseSchema } from "./case.schema.js";
 import { workflowSchema } from "./workflow.schema.js";
+import { findCaseResponseSchema } from "./responses/find-cases-response.schema.js";
 
-const ListResponse = Joi.object({
+export const ListResponse = Joi.object({
   metadata: Joi.object({
     count: Joi.number().required(),
     page: Joi.number().required(),
@@ -11,15 +11,20 @@ const ListResponse = Joi.object({
   }),
   data: Joi.array()
     .items(
-      caseSchema.Case,
+      findCaseResponseSchema,
       workflowSchema.Workflow // Allow Type A or Type B in the array
     )
     .required(),
   status: Joi.string().valid("success", "failure").required(),
   message: Joi.string().optional()
-}).label("ListResponse");
+})
+  .label("ListResponse")
+  .options({
+    presence: "required",
+    stripUnknown: true
+  });
 
-const ValidationError = Joi.object({
+export const ValidationError = Joi.object({
   statusCode: Joi.number().example(400),
   error: Joi.string().example("Bad Request"),
   message: Joi.string().example("Case id is required"),

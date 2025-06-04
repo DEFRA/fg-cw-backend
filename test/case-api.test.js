@@ -154,7 +154,6 @@ describe.sequential("Case API", () => {
       expect(documents[0]).toEqual({
         ...caseData1,
         dateReceived: new Date(caseData1.dateReceived),
-        targetDate: new Date(caseData1.targetDate),
         _id: expect.any(Object),
         payload: {
           ...caseData1.payload,

@@ -4,6 +4,7 @@ import { caseService } from "../services/case.service.js";
 import { extractListQuery } from "../common/extract-list-query.js";
 import { publish } from "../common/sns.js";
 import { config } from "../common/config.js";
+import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
 
 export const caseCreateController = async (request, h) => {
   return h.response(await caseService.createCase(request.payload)).code(201);
@@ -11,12 +12,8 @@ export const caseCreateController = async (request, h) => {
 
 export const caseListController = async (request, h) => {
   const listQuery = extractListQuery(request);
-  const results = await caseService.findCases(listQuery);
-  try {
-    return h.response(results);
-  } catch (e) {
-    console.log(e);
-  }
+  const results = await findCasesUseCase(listQuery);
+  return h.response(results);
 };
 
 export const caseDetailController = async (request, h) => {

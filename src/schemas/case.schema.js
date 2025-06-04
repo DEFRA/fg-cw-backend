@@ -37,12 +37,12 @@ const GrantCaseEvent = Joi.object({
   answers: GrantCaseEventAnswers.required()
 });
 
-const CasePayload = Joi.alternatives()
+export const CasePayload = Joi.alternatives()
   .try(GrantCaseEvent.optional())
   .required()
   .label("CasePayload");
 
-const CaseStage = Joi.object({
+export const CaseStage = Joi.object({
   id: UrlSafeId.required(),
   taskGroups: Joi.array()
     .items(

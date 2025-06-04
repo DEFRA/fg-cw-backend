@@ -36,9 +36,6 @@ export const caseService = {
   createCase: async (caseData) => {
     return caseRepository.createCase(caseData);
   },
-  findCases: async (listQuery) => {
-    return caseRepository.findCases(listQuery);
-  },
   getCase: async (caseId) => {
     return caseRepository.getCase(caseId);
   },

@@ -2,8 +2,35 @@ import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { db } from "../common/mongo-client.js";
 import { config } from "../common/config.js";
+import { Case } from "../models/case.js";
 
 export const collection = "cases";
+
+const toCase = (doc) => new Case(doc);
+
+export const findAll = async (listQuery) => {
+  const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } = listQuery;
+  const skip = (page - 1) * pageSize;
+  const count = await db.collection(collection).estimatedDocumentCount();
+  const pageCount = Math.ceil(count / pageSize);
+  const data = await db
+    .collection(collection)
+    .find()
+    .skip(skip)
+    .limit(pageSize)
+    .map(toCase)
+    .toArray();
+
+  return {
+    status: "success",
+    metadata: {
+      ...listQuery,
+      count,
+      pageCount
+    },
+    data
+  };
+};
 
 export const caseRepository = {
   createCase: async (caseData) => {
@@ -35,6 +62,13 @@ export const caseRepository = {
     const skip = (page - 1) * pageSize;
     const count = await db.collection(collection).estimatedDocumentCount();
     const pageCount = Math.ceil(count / pageSize);
+    const data = await db
+      .collection(collection)
+      .find()
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
     return {
       status: "success",
       metadata: {
@@ -42,13 +76,7 @@ export const caseRepository = {
         count,
         pageCount
       },
-
-      data: await db
-        .collection(collection)
-        .find()
-        .skip(skip)
-        .limit(pageSize)
-        .toArray()
+      data
     };
   },
 

@@ -7,7 +7,9 @@ import {
 import { caseData1, caseData2 } from "../../test/fixtures/case.js";
 import { caseService } from "../services/case.service.js";
 import Boom from "@hapi/boom";
+import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
 
+vi.mock("../cases/use-cases/list-cases.use-case.js");
 vi.mock("../services/case.service.js");
 
 describe("case.controller.js", () => {
@@ -43,11 +45,11 @@ describe("case.controller.js", () => {
         { _id: "insertedId001", ...caseData1 },
         { _id: "insertedId002", ...caseData2 }
       ];
-      caseService.findCases.mockResolvedValue(mockCases);
+      findCasesUseCase.mockResolvedValue(mockCases);
 
       const result = await caseListController(mockRequest, mockResponseToolkit);
 
-      expect(caseService.findCases).toHaveBeenCalledWith({
+      expect(findCasesUseCase).toHaveBeenCalledWith({
         page: 1,
         pageSize: 100
       });
