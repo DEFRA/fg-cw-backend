@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { findCasesUseCase } from "./list-cases.use-case";
+import { findCasesUseCase } from "./list-cases.use-case.js";
 import { db } from "../../common/mongo-client.js";
 import { Case } from "../../models/Case.js";
-import { caseData1, caseData2 } from "../../../test/fixtures/case";
+import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 
 describe("List Cases Use Case", () => {
   it("should find cases and return data as an array", async () => {

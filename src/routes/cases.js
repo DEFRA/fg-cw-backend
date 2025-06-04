@@ -6,7 +6,7 @@ import {
   caseStageController
 } from "../controllers/case.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
-import { commonSchema } from "../schemas/common.schema.js";
+import { ListResponse, ValidationError } from "../schemas/common.schema.js";
 
 const cases = [
   {
@@ -21,7 +21,7 @@ const cases = [
       response: {
         status: {
           201: caseSchema.Case,
-          400: commonSchema.ValidationError
+          400: ValidationError
         }
       }
     },
@@ -41,8 +41,8 @@ const cases = [
       },
       response: {
         status: {
-          200: commonSchema.ListResponse,
-          400: commonSchema.ValidationError
+          200: ListResponse,
+          400: ValidationError
         }
       }
     },
@@ -62,7 +62,7 @@ const cases = [
       response: {
         status: {
           200: caseSchema.Case,
-          400: commonSchema.ValidationError
+          400: ValidationError
         }
       }
     },
@@ -81,7 +81,7 @@ const cases = [
       },
       response: {
         status: {
-          400: commonSchema.ValidationError
+          400: ValidationError
         }
       }
     },
