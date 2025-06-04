@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { db } from "../common/mongo-client.js";
 import { config } from "../common/config.js";
-import { Case } from "../models/Case.js";
+import { Case } from "../models/case.js";
 
 export const collection = "cases";
 

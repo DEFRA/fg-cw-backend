@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { findCasesUseCase } from "./list-cases.use-case.js";
 import { db } from "../../common/mongo-client.js";
-import { Case } from "../../models/Case.js";
+import { Case } from "../../models/case.js";
 import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 
 describe("List Cases Use Case", () => {
