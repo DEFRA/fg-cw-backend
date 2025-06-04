@@ -5,7 +5,7 @@ import {
   workflowCreateController,
   workflowDetailController,
   workflowListController
-} from "../controller/workflow.controller.js";
+} from "../controllers/workflow.controller.js";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
 
 describe("Workflows route configuration tests", () => {

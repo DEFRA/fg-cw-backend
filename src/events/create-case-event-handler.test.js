@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createCaseEventHandler } from "./create-case-event-handler.js";
-import { caseService } from "../service/case.service.js";
+import { caseService } from "../services/case.service.js";
 import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
 import { caseData3 } from "../../test/fixtures/case.js";
 import { logger } from "../common/logger.js";
 
-vi.mock("../../src/service/case.service.js");
+vi.mock("../../src/services/case.service.js");
 
 describe("createCaseEventHandler", () => {
   let mockServer;

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import Boom from "@hapi/boom";
 import { caseService } from "./case.service.js";
-import { caseRepository } from "../repository/case.repository.js";
+import { caseRepository } from "../repositories/case.repository.js";
 import { caseData1, caseData2, caseData3 } from "../../test/fixtures/case.js";
 import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
 import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
-import { workflowRepository } from "../repository/workflow.repository.js";
+import { workflowRepository } from "../repositories/workflow.repository.js";
 
-vi.mock("../repository/case.repository.js");
-vi.mock("../repository/workflow.repository.js");
+vi.mock("../repositories/case.repository.js");
+vi.mock("../repositories/workflow.repository.js");
 
 describe("caseService", () => {
   describe("handleCreateCaseEvent", () => {

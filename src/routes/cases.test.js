@@ -4,16 +4,11 @@ import {
   caseCreateController,
   caseDetailController,
   caseListController
-} from "../controller/case.controller.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { commonSchema } from "../schema/common.schema.js";
+} from "../controllers/case.controller.js";
+import { caseSchema } from "../schemas/case.schema.js";
+import { commonSchema } from "../schemas/common.schema.js";
 
-vi.mock("../controller/case.controller.js", () => ({
-  caseCreateController: vi.fn(),
-  caseDetailController: vi.fn(),
-  caseListController: vi.fn(),
-  caseStageController: vi.fn()
-}));
+vi.mock("../controllers/case.controller.js");
 
 describe("cases routes", () => {
   test("should define the POST /cases route", () => {

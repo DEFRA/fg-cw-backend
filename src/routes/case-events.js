@@ -1,6 +1,6 @@
-import { commonSchema } from "../schema/common.schema.js";
-import { caseSchema } from "../schema/case.schema.js";
-import { eventController } from "../controller/event.controller.js";
+import { commonSchema } from "../schemas/common.schema.js";
+import { caseSchema } from "../schemas/case.schema.js";
+import { eventController } from "../controllers/event.controller.js";
 
 const caseEvents = [
   {

@@ -5,10 +5,10 @@ import {
   caseDetailController
 } from "./case.controller.js";
 import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import { caseService } from "../service/case.service.js";
+import { caseService } from "../services/case.service.js";
 import Boom from "@hapi/boom";
 
-vi.mock("../service/case.service.js");
+vi.mock("../services/case.service.js");
 
 describe("case.controller.js", () => {
   const mockRequest = {

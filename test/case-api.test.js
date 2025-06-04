@@ -12,7 +12,7 @@ import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { collection as caseCollection } from "../src/repository/case.repository.js";
+import { collection as caseCollection } from "../src/repositories/case.repository.js";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { config } from "../src/common/config.js";
 
