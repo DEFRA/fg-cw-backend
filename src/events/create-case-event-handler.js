@@ -1,7 +1,7 @@
-import { caseService } from "../service/case.service.js";
 import { logger } from "../common/logger.js";
+import { caseService } from "../services/case.service.js";
 
-export const createCaseEventHandler = (server) => async (event) => {
+export const createCaseEventHandler = () => async (event) => {
   const newCase = await caseService.handleCreateCaseEvent(event.data);
 
   logger.info(

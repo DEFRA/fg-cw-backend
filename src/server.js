@@ -1,6 +1,6 @@
 import Hapi from "@hapi/hapi";
 import { config } from "./common/config.js";
-import { router } from "./plugin/router.js";
+import { router } from "./plugins/router.js";
 import hapiPino from "hapi-pino";
 import hapiPulse from "hapi-pulse";
 import { mongoClient } from "./common/mongo-client.js";
@@ -9,7 +9,7 @@ import { requestTracing } from "./common/request-tracing.js";
 import HapiSwagger from "hapi-swagger";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
-import { createCaseEventConsumer } from "./plugin/create-case-event-consumer.js";
+import { createCaseEventConsumer } from "./plugins/create-case-event-consumer.js";
 
 async function createServer(host, port) {
   const server = Hapi.server({

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { eventController } from "./event.controller.js";
-import { caseService } from "../service/case.service.js";
+import { caseService } from "../services/case.service.js";
 import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
 import { caseData1 } from "../../test/fixtures/case.js";
 
-vi.mock("../service/case.service.js");
+vi.mock("../services/case.service.js");
 
 describe("eventController", () => {
   it("should call caseService.handleCreateCaseEvent with correct payload", async () => {
@@ -18,7 +18,7 @@ describe("eventController", () => {
       code: vi.fn()
     };
 
-    // Mock the service to avoid actual execution
+    // Mock the services to avoid actual execution
     caseService.handleCreateCaseEvent.mockResolvedValue(mockCreatedCase);
 
     // Act
@@ -42,7 +42,7 @@ describe("eventController", () => {
       code: vi.fn()
     };
 
-    // Mock the service to return resolved data
+    // Mock the services to return resolved data
     caseService.handleCreateCaseEvent.mockResolvedValue(mockCreatedCase);
 
     // Act

@@ -3,7 +3,7 @@ import { env } from "node:process";
 import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
-import { collection as workflowCollection } from "../src/repository/workflow.repository.js";
+import { collection as workflowCollection } from "../src/repositories/workflow.repository.js";
 
 describe.sequential("Workflow API", () => {
   let workflows;
