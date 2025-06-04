@@ -1,8 +1,8 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import * as sns from "./sns";
 
 describe("sns", () => {
-  test("publishes an event", async () => {
+  it("publishes an event", async () => {
     const snsSendSpy = vi
       .spyOn(sns.snsClient, "send")
       .mockImplementation(() => {});

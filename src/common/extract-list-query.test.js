@@ -2,12 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { extractListQuery } from "./extract-list-query.js";
 import { config } from "./config.js";
 
-// Mock the config module
-vi.mock("./config.js", () => ({
-  config: {
-    get: vi.fn()
-  }
-}));
+vi.mock("./config.js");
 
 describe("extractListQuery", () => {
   beforeEach(() => {
