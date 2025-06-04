@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { cases } from "./cases.js";
 import {
   caseCreateController,
@@ -11,7 +11,7 @@ import { commonSchema } from "../schemas/common.schema.js";
 vi.mock("../controllers/case.controller.js");
 
 describe("cases routes", () => {
-  test("should define the POST /cases route", () => {
+  it("should define the POST /cases route", () => {
     const route = cases.find((r) => r.method === "POST" && r.path === "/cases");
 
     expect(route).toBeDefined();
@@ -31,7 +31,7 @@ describe("cases routes", () => {
     });
   });
 
-  test("should define the GET /cases route", () => {
+  it("should define the GET /cases route", () => {
     const route = cases.find((r) => r.method === "GET" && r.path === "/cases");
 
     expect(route).toBeDefined();
@@ -50,7 +50,7 @@ describe("cases routes", () => {
     });
   });
 
-  test("should define the GET /cases/{caseId} route", () => {
+  it("should define the GET /cases/{caseId} route", () => {
     const route = cases.find(
       (r) => r.method === "GET" && r.path === "/cases/{caseId}"
     );

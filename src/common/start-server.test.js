@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import hapi from "@hapi/hapi";
 import { createServer } from "../server.js";
 import { startServer } from "./start-server.js";
@@ -35,7 +35,7 @@ describe.skip("#startServer", () => {
       await server.stop({ timeout: 0 });
     });
 
-    test("Should start up server as expected", async () => {
+    it("Should start up server as expected", async () => {
       await startServer("localhost", 3098);
       expect(createServer).toHaveBeenCalled();
       expect(hapiServerSpy).toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe.skip("#startServer", () => {
       createServer.mockRejectedValue(new Error("Server failed to start"));
     });
 
-    test("Should log failed startup message", async () => {
+    it("Should log failed startup message", async () => {
       await startServer();
 
       expect(logger.info).toHaveBeenCalledWith("Server failed to start :(");

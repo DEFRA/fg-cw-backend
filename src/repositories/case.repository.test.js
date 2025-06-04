@@ -1,4 +1,4 @@
-import { describe, test, vi, expect } from "vitest";
+import { describe, it, vi, expect } from "vitest";
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { db } from "../common/mongo-client.js";
@@ -13,7 +13,7 @@ vi.mock("../common/mongo-client.js", () => ({
 }));
 
 describe("createCase", () => {
-  test("creates a case and returns it", async () => {
+  it("creates a case and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: true
     });
@@ -29,7 +29,7 @@ describe("createCase", () => {
     expect(result).toEqual(caseData1);
   });
 
-  test("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
+  it("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
     const error = new MongoServerError("E11000 duplicate key error collection");
     error.code = 11000;
 
@@ -44,7 +44,7 @@ describe("createCase", () => {
     );
   });
 
-  test("throws when an error occurs", async () => {
+  it("throws when an error occurs", async () => {
     const error = new Error("Unexpected error");
 
     const insertOne = vi.fn().mockRejectedValue(error);
@@ -56,7 +56,7 @@ describe("createCase", () => {
     await expect(caseRepository.createCase(caseData1)).rejects.toThrow(error);
   });
 
-  test("throws when write is unacknowledged", async () => {
+  it("throws when write is unacknowledged", async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: false
     });
@@ -74,7 +74,7 @@ describe("createCase", () => {
 });
 
 describe("findAll", () => {
-  test("returns a list of cases", async () => {
+  it("returns a list of cases", async () => {
     const listQuery = { page: 1, pageSize: 10 };
     const cases = [caseData1, caseData2];
 
@@ -107,7 +107,7 @@ describe("findAll", () => {
 });
 
 describe("findCases", () => {
-  test("returns a list of cases", async () => {
+  it("returns a list of cases", async () => {
     const listQuery = { page: 1, pageSize: 10 };
     const cases = [caseData1, caseData2];
 
@@ -137,7 +137,7 @@ describe("findCases", () => {
 });
 
 describe("getCase", () => {
-  test("returns a case by id", async () => {
+  it("returns a case by id", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
 
     const foundCase = {
@@ -162,7 +162,7 @@ describe("getCase", () => {
     expect(result).toEqual(foundCase);
   });
 
-  test("returns null when no case is found", async () => {
+  it("returns null when no case is found", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
 
     db.collection.mockReturnValue({
