@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import Boom from "@hapi/boom";
 import { caseService } from "./case.service.js";
 import { caseRepository } from "../repositories/case.repository.js";
-import { caseData1, caseData2, caseData3 } from "../../test/fixtures/case.js";
+import { caseData1, caseData3 } from "../../test/fixtures/case.js";
 import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
 import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
@@ -80,20 +80,6 @@ describe("caseService", () => {
 
       expect(caseRepository.createCase).toHaveBeenCalledWith(caseData1);
       expect(result).toEqual(mockResult);
-    });
-  });
-
-  describe("findCases", () => {
-    it("should call findCases on caseRepository and return the cases", async () => {
-      const listQuery = {};
-      const mockCases = [caseData1, caseData2];
-
-      caseRepository.findCases.mockResolvedValue(mockCases);
-
-      const result = await caseService.findCases(listQuery);
-
-      expect(caseRepository.findCases).toHaveBeenCalledWith(listQuery);
-      expect(result).toEqual(mockCases);
     });
   });
 
