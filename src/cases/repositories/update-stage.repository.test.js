@@ -15,7 +15,7 @@ describe("updateStage", () => {
     await updateStage(caseId, "NEW-STAGE");
     expect(db.collection).toBeCalledWith(collection);
     expect(updateOne).toBeCalledWith(
-      { _id: new ObjectId(caseId) },
+      { _id: ObjectId.createFromHexString(caseId) },
       { $set: { currentStage: "NEW-STAGE" } },
     );
   });

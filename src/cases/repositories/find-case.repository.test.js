@@ -13,7 +13,7 @@ vi.mock("../../common/mongo-client.js", () => ({
 describe("getCase", () => {
   it("returns a case by id", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
-    const _id = new ObjectId(caseId);
+    const _id = ObjectId.createFromHexString(caseId);
 
     const foundCase = {
       _id,
