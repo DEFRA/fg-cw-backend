@@ -9,8 +9,8 @@ import { findCase } from "../repositories/find-case.repository.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
 import { caseService } from "./case.service.js";
 
-vi.mock("../cases/repositories/create-case.repository.js");
-vi.mock("../cases/repositories/find-case.repository.js");
+vi.mock("../repositories/create-case.repository.js");
+vi.mock("../repositories/find-case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
 
 describe("caseService", () => {
