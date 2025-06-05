@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import Wreck from "@hapi/wreck";
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
@@ -16,23 +15,7 @@ import { config } from "../src/common/config.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
-
-const waitForCollectionChange = async (
-  collection,
-  maxRetries = 3,
-  interval = 1000,
-) => {
-  let retryCount = 0;
-  let numDocs = 0;
-  let documents = [];
-  while (retryCount < maxRetries && numDocs === 0) {
-    documents = await collection.find({}).toArray();
-    numDocs = documents.length;
-    retryCount++;
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
-  return documents;
-};
+import { waitForDocuments } from "./helpers/wait-for-documents.js";
 
 describe("Case API", () => {
   let cases;
@@ -188,7 +171,7 @@ describe("Case API", () => {
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
         createCaseEvent3,
       );
-      const documents = await waitForCollectionChange(cases);
+      const documents = await waitForDocuments(cases);
       expect(documents).toHaveLength(1);
       expect(documents[0]).toEqual({
         ...caseData3,

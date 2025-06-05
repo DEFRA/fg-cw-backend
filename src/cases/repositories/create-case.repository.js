@@ -5,18 +5,17 @@ import { collection } from "./constants.js";
 import { toCase } from "./to-case.js";
 
 export const createCase = async (caseData) => {
-  let result;
-
-  try {
-    result = await db.collection(collection).insertOne(toCase(caseData));
-  } catch (error) {
-    if (error instanceof MongoServerError && error.code === 11000) {
-      throw Boom.conflict(
-        `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" already exists`,
-      );
-    }
-    throw error;
-  }
+  const result = await db
+    .collection(collection)
+    .insertOne(toCase(caseData))
+    .catch((error) => {
+      if (error instanceof MongoServerError && error.code === 11000) {
+        throw Boom.conflict(
+          `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" already exists`,
+        );
+      }
+      throw error;
+    });
 
   if (!result.acknowledged) {
     throw Boom.internal(
