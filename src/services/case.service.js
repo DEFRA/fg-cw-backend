@@ -1,6 +1,6 @@
+import Boom from "@hapi/boom";
 import { caseRepository } from "../repositories/case.repository.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
-import Boom from "@hapi/boom";
 
 const createCase = (workflow, caseEvent) => ({
   caseRef: caseEvent.clientRef,
@@ -18,10 +18,10 @@ const createCase = (workflow, caseEvent) => ({
       id: taskGroup.id,
       tasks: taskGroup.tasks.map((task) => ({
         id: task.id,
-        isComplete: false
-      }))
-    }))
-  }))
+        isComplete: false,
+      })),
+    })),
+  })),
 });
 
 export const caseService = {
@@ -41,5 +41,5 @@ export const caseService = {
   },
   updateCaseStage: async (caseId, nextStage) => {
     return await caseRepository.updateStage(caseId, nextStage);
-  }
+  },
 };

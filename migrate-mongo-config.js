@@ -8,10 +8,10 @@ const config = {
     databaseName: mongoConfig.databaseName,
     options: {
       useNewUrlParser: true, // removes a deprecation warning when connecting
-      useUnifiedTopology: true // removes a deprecating warning when connecting
+      useUnifiedTopology: true, // removes a deprecating warning when connecting
       //   connectTimeoutMS: 3600000, // increase connection timeout to 1 hour
       //   socketTimeoutMS: 3600000, // increase socket timeout to 1 hour
-    }
+    },
   },
 
   // The migrations dir, can be an relative or absolute path. Only edit this when really necessary.
@@ -34,7 +34,7 @@ const config = {
   useFileHash: false,
 
   // Don't change this, unless you know what you're doing
-  moduleSystem: "esm"
+  moduleSystem: "esm",
 };
 
 export default config;

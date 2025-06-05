@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
-import { MongoServerError, ObjectId } from "mongodb";
-import { db } from "../common/mongo-client.js";
+import { ObjectId } from "mongodb";
 import { config } from "../common/config.js";
+import { db } from "../common/mongo-client.js";
 import { Case } from "../models/case.js";
 
 export const collection = "cases";
@@ -26,9 +26,9 @@ export const findAll = async (listQuery) => {
     metadata: {
       ...listQuery,
       count,
-      pageCount
+      pageCount,
     },
-    data
+    data,
   };
 };
 
@@ -39,9 +39,9 @@ export const caseRepository = {
     try {
       result = await db.collection(collection).insertOne(caseData);
     } catch (error) {
-      if (error instanceof MongoServerError && error.code === 11000) {
+      if (error.code === 11000) {
         throw Boom.conflict(
-          `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" already exists`
+          `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" already exists`,
         );
       }
       throw error;
@@ -49,7 +49,7 @@ export const caseRepository = {
 
     if (!result.acknowledged) {
       throw Boom.internal(
-        `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" could not be created, the operation was not acknowledged`
+        `Case with caseRef "${caseData.caseRef}" and workflowCode "${caseData.workflowCode}" could not be created, the operation was not acknowledged`,
       );
     }
 
@@ -74,24 +74,24 @@ export const caseRepository = {
       metadata: {
         ...listQuery,
         count,
-        pageCount
+        pageCount,
       },
-      data
+      data,
     };
   },
 
   getCase: async (caseId) => {
     return await db.collection(collection).findOne({
-      _id: new ObjectId(caseId)
+      _id: new ObjectId(caseId),
     });
   },
 
   updateStage: async (caseId, nextStage) => {
     return await db.collection(collection).updateOne(
       {
-        _id: new ObjectId(caseId)
+        _id: new ObjectId(caseId),
       },
-      { $set: { currentStage: nextStage } }
+      { $set: { currentStage: nextStage } },
     );
-  }
+  },
 };

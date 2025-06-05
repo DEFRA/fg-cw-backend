@@ -1,7 +1,3 @@
-/**
- * @param db {import('mongodb').Db}
- * @returns {Promise<void>}
- */
 export const up = async (db) => {
   const collectionNames = (await db.collections()).map((e) => e.collectionName);
   if (collectionNames.includes("cases")) {
@@ -18,19 +14,19 @@ export const up = async (db) => {
     "cases",
     {
       workflowCode: 1,
-      caseRef: 1
+      caseRef: 1,
     },
     {
-      unique: true
-    }
+      unique: true,
+    },
   );
   await db.createIndex(
     "workflows",
     {
-      code: 1
+      code: 1,
     },
     {
-      unique: true
-    }
+      unique: true,
+    },
   );
 };

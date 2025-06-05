@@ -1,25 +1,25 @@
-import { describe, it, expect, vi } from "vitest";
 import Boom from "@hapi/boom";
-import { workflowRepository } from "./workflow.repository.js";
-import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
-import workflowListResponse from "../../test/fixtures/workflow-list-response.json";
 import { MongoServerError } from "mongodb";
+import { describe, expect, it, vi } from "vitest";
+import workflowListResponse from "../../test/fixtures/workflow-list-response.json";
+import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
 import { db } from "../common/mongo-client.js";
+import { workflowRepository } from "./workflow.repository.js";
 
 vi.mock("../common/mongo-client.js", () => ({
   db: {
-    collection: vi.fn()
-  }
+    collection: vi.fn(),
+  },
 }));
 
 describe("createWorkflow", () => {
   it("creates a workflow and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
-      acknowledged: true
+      acknowledged: true,
     });
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     const result = await workflowRepository.createWorkflow(workflowData1);
@@ -36,13 +36,15 @@ describe("createWorkflow", () => {
     error.code = 11000;
 
     db.collection.mockReturnValue({
-      insertOne: vi.fn().mockRejectedValue(error)
+      insertOne: vi.fn().mockRejectedValue(error),
     });
 
     await expect(
-      workflowRepository.createWorkflow(workflowData1)
+      workflowRepository.createWorkflow(workflowData1),
     ).rejects.toThrow(
-      Boom.conflict(`Workflow with code "${workflowData1.code}" already exists`)
+      Boom.conflict(
+        `Workflow with code "${workflowData1.code}" already exists`,
+      ),
     );
   });
 
@@ -50,27 +52,27 @@ describe("createWorkflow", () => {
     const error = new Error("Unexpected error");
 
     db.collection.mockReturnValue({
-      insertOne: vi.fn().mockRejectedValue(error)
+      insertOne: vi.fn().mockRejectedValue(error),
     });
 
     await expect(
-      workflowRepository.createWorkflow(workflowData1)
+      workflowRepository.createWorkflow(workflowData1),
     ).rejects.toThrow(error);
   });
 
   it("throws when write is unacknowledged", async () => {
     db.collection.mockReturnValue({
       insertOne: vi.fn().mockResolvedValue({
-        acknowledged: false
-      })
+        acknowledged: false,
+      }),
     });
 
     await expect(
-      workflowRepository.createWorkflow(workflowData1)
+      workflowRepository.createWorkflow(workflowData1),
     ).rejects.toThrow(
       Boom.internal(
-        `Workflow with code "${workflowData1.code}" could not be created, the operation was not acknowledged`
-      )
+        `Workflow with code "${workflowData1.code}" could not be created, the operation was not acknowledged`,
+      ),
     );
   });
 });
@@ -81,18 +83,18 @@ describe("findWorkflows", () => {
     const workflows = [workflowData1, workflowData2];
 
     const limit = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue(workflows)
+      toArray: vi.fn().mockResolvedValue(workflows),
     });
 
     const skip = vi.fn().mockReturnValue({
-      limit
+      limit,
     });
 
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
-        skip
+        skip,
       }),
-      estimatedDocumentCount: vi.fn().mockResolvedValue(workflows.length)
+      estimatedDocumentCount: vi.fn().mockResolvedValue(workflows.length),
     });
 
     const result = await workflowRepository.findWorkflows(listQuery);
@@ -112,7 +114,7 @@ describe("getWorkflow", () => {
     const findOne = vi.fn().mockResolvedValue(expectedWorkflow);
 
     db.collection = vi.fn().mockReturnValue({
-      findOne
+      findOne,
     });
 
     const code = "123";
@@ -125,7 +127,7 @@ describe("getWorkflow", () => {
 
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(null)
+      findOne: vi.fn().mockResolvedValue(null),
     });
 
     const code = "DOESNT_EXIST";

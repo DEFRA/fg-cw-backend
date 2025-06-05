@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { workflowService } from "./workflow.service.js";
-import { workflowRepository } from "../repositories/workflow.repository.js";
+import { describe, expect, it, vi } from "vitest";
 import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
+import { workflowRepository } from "../repositories/workflow.repository.js";
+import { workflowService } from "./workflow.service.js";
 
 vi.mock("../repositories/workflow.repository.js");
 
@@ -16,7 +16,7 @@ describe("Workflow Service", () => {
       const result = await workflowService.createWorkflow(workflowData1);
 
       expect(workflowRepository.createWorkflow).toHaveBeenCalledWith(
-        workflowData1
+        workflowData1,
       );
       expect(result).toEqual(mockResult);
     });
@@ -32,7 +32,7 @@ describe("Workflow Service", () => {
       const result = await workflowService.findWorkflows(mockListQuery);
 
       expect(workflowRepository.findWorkflows).toHaveBeenCalledWith(
-        mockListQuery
+        mockListQuery,
       );
       expect(result).toEqual(mockResult);
     });
@@ -49,7 +49,7 @@ describe("Workflow Service", () => {
       const result = await workflowService.getWorkflow(mockWorkflowCode);
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        mockWorkflowCode
+        mockWorkflowCode,
       );
       expect(result).toEqual(mockResult);
     });

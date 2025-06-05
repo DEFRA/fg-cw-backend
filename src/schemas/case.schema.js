@@ -5,7 +5,7 @@ const GrantCaseEventIdentifiers = Joi.object({
   sbi: Joi.string().required(),
   frn: Joi.string().required(),
   crn: Joi.string().required(),
-  defraId: Joi.string().required()
+  defraId: Joi.string().required(),
 }).label("GrantCaseEventIdentifiers");
 
 const GrantCaseEventAnswers = Joi.object({
@@ -21,11 +21,11 @@ const GrantCaseEventAnswers = Joi.object({
         code: Joi.string().required(),
         appliedFor: Joi.object({
           unit: Joi.string().valid("ha", "acres").required(),
-          quantity: Joi.number().positive().required()
-        }).required()
-      })
+          quantity: Joi.number().positive().required(),
+        }).required(),
+      }),
     )
-    .required()
+    .required(),
 }).label("GrantCaseEventAnswers");
 
 const GrantCaseEvent = Joi.object({
@@ -34,7 +34,7 @@ const GrantCaseEvent = Joi.object({
   createdAt: Joi.date().iso().required(),
   submittedAt: Joi.date().iso().required(),
   identifiers: GrantCaseEventIdentifiers.required(),
-  answers: GrantCaseEventAnswers.required()
+  answers: GrantCaseEventAnswers.required(),
 });
 
 export const CasePayload = Joi.alternatives()
@@ -52,14 +52,14 @@ export const CaseStage = Joi.object({
           .items(
             Joi.object({
               id: UrlSafeId.required(),
-              isComplete: Joi.boolean().required()
-            })
+              isComplete: Joi.boolean().required(),
+            }),
           )
           .min(1)
-          .required()
-      })
+          .required(),
+      }),
     )
-    .required()
+    .required(),
 }).label("CaseStage");
 
 const CaseData = Joi.object({
@@ -72,20 +72,20 @@ const CaseData = Joi.object({
   assignedUser: Joi.string().allow(null).optional(),
   payload: CasePayload.required(),
   currentStage: UrlSafeId.required(),
-  stages: Joi.array().items(CaseStage).required()
+  stages: Joi.array().items(CaseStage).required(),
 }).label("CaseData");
 
 const Case = CaseData.keys({
-  _id: Joi.object().required()
+  _id: Joi.object().required(),
 }).label("Case");
 
 const NextStage = Joi.object({
-  nextStage: Joi.string().required()
+  nextStage: Joi.string().required(),
 }).label("NextStage");
 
 export const caseSchema = {
   CaseData,
   Case,
   GrantCaseEvent,
-  NextStage
+  NextStage,
 };

@@ -1,11 +1,11 @@
 import { SqsConsumer } from "./sqs-consumer.js";
 
-const sqsConsumerPlugin = {
+export const sqsConsumerPlugin = {
   name: "sqs-consumer",
   register: async function (server, options) {
     const consumer = new SqsConsumer(server, {
       queueUrl: options.queueUrl,
-      handleMessage: options.handleMessage
+      handleMessage: options.handleMessage,
     });
 
     // Register the consumer in server app
@@ -18,7 +18,5 @@ const sqsConsumerPlugin = {
     server.events.on("stop", async () => {
       await consumer.stop();
     });
-  }
+  },
 };
-
-export default sqsConsumerPlugin;

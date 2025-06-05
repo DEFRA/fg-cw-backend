@@ -1,7 +1,3 @@
-/**
- * @param db {import('mongodb').Db}
- * @returns {Promise<void>}
- */
 export const up = async (db) => {
   await db.collection("workflows").insertOne({
     code: "frps-private-beta",
@@ -11,38 +7,38 @@ export const up = async (db) => {
         properties: {
           sbi: {
             type: "string",
-            label: "SBI"
+            label: "SBI",
           },
           frn: {
             type: "string",
-            label: "FRN"
+            label: "FRN",
           },
           crn: {
             type: "string",
-            label: "CRN"
+            label: "CRN",
           },
           defraId: {
             type: "string",
-            label: "Defra ID"
-          }
-        }
+            label: "Defra ID",
+          },
+        },
       },
       answers: {
         type: "object",
         properties: {
           scheme: {
             type: "string",
-            label: "Scheme type"
+            label: "Scheme type",
           },
           year: {
             type: "number",
             minimum: 2000,
             maximum: 2100,
-            label: "Year"
+            label: "Year",
           },
           hasCheckedLandIsUpToDate: {
             type: "boolean",
-            label: "Has checked land is up to date?"
+            label: "Has checked land is up to date?",
           },
           actionApplications: {
             type: "array",
@@ -52,34 +48,34 @@ export const up = async (db) => {
               properties: {
                 parcelId: {
                   type: "string",
-                  label: "Parcel ID"
+                  label: "Parcel ID",
                 },
                 sheetId: {
                   type: "string",
-                  label: "Sheet ID"
+                  label: "Sheet ID",
                 },
                 code: {
                   type: "string",
-                  label: "Code"
+                  label: "Code",
                 },
                 appliedFor: {
                   type: "object",
                   properties: {
                     unit: {
                       type: "string",
-                      enum: ["ha", "acres", "sqm", "sqft"]
+                      enum: ["ha", "acres", "sqm", "sqft"],
                     },
                     quantity: {
                       type: "number",
-                      minimum: 0
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      minimum: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     stages: [
       {
@@ -93,25 +89,25 @@ export const up = async (db) => {
               {
                 id: "simple-review",
                 title: "Simple Review",
-                type: "boolean"
-              }
-            ]
-          }
+                type: "boolean",
+              },
+            ],
+          },
         ],
         actions: [
           {
             id: "approve",
-            label: "Approve"
-          }
-        ]
+            label: "Approve",
+          },
+        ],
       },
       {
         id: "contract",
         title: "Stage for contract management",
         taskGroups: [],
-        actions: []
-      }
-    ]
+        actions: [],
+      },
+    ],
   });
 };
 

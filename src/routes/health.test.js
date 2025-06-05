@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { health } from "./health";
+import { describe, expect, it } from "vitest";
+import { health } from "./health.js";
 
 describe("Health Route", () => {
   it("should define the correct route method", () => {
@@ -17,7 +17,7 @@ describe("Health Route", () => {
 
   it("handler should return success message", () => {
     const mockResponseToolkit = {
-      response: (payload) => payload // Mock the response method
+      response: (payload) => payload, // Mock the response method
     };
 
     const result = health.handler({}, mockResponseToolkit);

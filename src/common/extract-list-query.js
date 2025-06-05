@@ -1,8 +1,11 @@
 import { config } from "./config.js";
 
+const getPage = (page) => (page ? parseInt(page) || 1 : 1);
+
+const getPageSize = (pageSize) =>
+  pageSize ? parseInt(pageSize) || config.get("api").pageSize : 100;
+
 export const extractListQuery = (request) => ({
-  page: request.query?.page ? parseInt(request.query.page) || 1 : 1,
-  pageSize: request.query?.pageSize
-    ? parseInt(request.query?.pageSize) || config.get("api").pageSize || 10
-    : 100
+  page: getPage(request.query?.page),
+  pageSize: getPageSize(request.query?.pageSize),
 });

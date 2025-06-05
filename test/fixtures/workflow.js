@@ -5,47 +5,47 @@ export const workflowData1 = {
     type: "object",
     properties: {
       clientRef: {
-        type: "string"
+        type: "string",
       },
       code: {
-        type: "string"
+        type: "string",
       },
       createdAt: {
-        type: "object"
+        type: "object",
       },
       submittedAt: {
-        type: "object"
+        type: "object",
       },
       identifiers: {
         type: "object",
         properties: {
           sbi: {
-            type: "string"
+            type: "string",
           },
           frn: {
-            type: "string"
+            type: "string",
           },
           crn: {
-            type: "string"
+            type: "string",
           },
           defraId: {
-            type: "string"
-          }
-        }
+            type: "string",
+          },
+        },
       },
       answers: {
         type: "object",
         properties: {
           scheme: {
-            type: "string"
+            type: "string",
           },
           year: {
             type: "integer",
             minimum: 2000,
-            maximum: 2100
+            maximum: 2100,
           },
           hasCheckedLandIsUpToDate: {
-            type: "boolean"
+            type: "boolean",
           },
           actionApplications: {
             type: "array",
@@ -53,33 +53,33 @@ export const workflowData1 = {
               type: "object",
               properties: {
                 parcelId: {
-                  type: "string"
+                  type: "string",
                 },
                 sheetId: {
-                  type: "string"
+                  type: "string",
                 },
                 code: {
-                  type: "string"
+                  type: "string",
                 },
                 appliedFor: {
                   type: "object",
                   properties: {
                     unit: {
                       type: "string",
-                      enum: ["ha", "acres", "sqm", "sqft"]
+                      enum: ["ha", "acres", "sqm", "sqft"],
                     },
                     quantity: {
                       type: "number",
-                      minimum: 0
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                      minimum: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   stages: [
     {
@@ -93,25 +93,25 @@ export const workflowData1 = {
             {
               id: "simple-review",
               title: "Simple Review",
-              type: "boolean"
-            }
-          ]
-        }
+              type: "boolean",
+            },
+          ],
+        },
       ],
       actions: [
         {
           id: "approve",
-          label: "Approve"
-        }
-      ]
+          label: "Approve",
+        },
+      ],
     },
     {
       id: "contract",
       title: "Stage for contract management",
       taskGroups: [],
-      actions: []
-    }
-  ]
+      actions: [],
+    },
+  ],
 };
 
 export const workflowData2 = {
@@ -121,47 +121,47 @@ export const workflowData2 = {
     type: "object",
     properties: {
       clientRef: {
-        type: "string"
+        type: "string",
       },
       code: {
-        type: "string"
+        type: "string",
       },
       createdAt: {
-        type: "object"
+        type: "object",
       },
       submittedAt: {
-        type: "object"
+        type: "object",
       },
       identifiers: {
         type: "object",
         properties: {
           sbi: {
-            type: "string"
+            type: "string",
           },
           frn: {
-            type: "string"
+            type: "string",
           },
           crn: {
-            type: "string"
+            type: "string",
           },
           defraId: {
-            type: "string"
-          }
-        }
+            type: "string",
+          },
+        },
       },
       answers: {
         type: "object",
         properties: {
           scheme: {
-            type: "string"
+            type: "string",
           },
           year: {
             type: "integer",
             minimum: 2000,
-            maximum: 2100
+            maximum: 2100,
           },
           hasCheckedLandIsUpToDate: {
-            type: "boolean"
+            type: "boolean",
           },
           actionApplications: {
             type: "array",
@@ -169,46 +169,46 @@ export const workflowData2 = {
               type: "object",
               properties: {
                 parcelId: {
-                  type: "string"
+                  type: "string",
                 },
                 sheetId: {
-                  type: "string"
+                  type: "string",
                 },
                 code: {
-                  type: "string"
+                  type: "string",
                 },
                 appliedFor: {
                   type: "object",
                   properties: {
                     unit: {
                       type: "string",
-                      enum: ["ha", "acres", "sqm", "sqft"]
+                      enum: ["ha", "acres", "sqm", "sqft"],
                     },
                     quantity: {
                       type: "number",
-                      minimum: 0
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                      minimum: 0,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   stages: [
     {
       id: "review",
       title: "Review",
       taskGroups: [],
-      actions: []
+      actions: [],
     },
     {
       id: "decision",
       title: "Decision",
       taskGroups: [],
-      actions: []
-    }
-  ]
+      actions: [],
+    },
+  ],
 };

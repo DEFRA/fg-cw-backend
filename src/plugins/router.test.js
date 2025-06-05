@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import Hapi from "@hapi/hapi";
-import { router } from "./router.js"; // Adjust the path to router.js if needed
+import { describe, expect, it } from "vitest";
+import { caseEvents } from "../routes/case-events.js";
+import { cases } from "../routes/cases.js";
 import { health } from "../routes/health.js";
 import { workflows } from "../routes/workflows.js";
-import { cases } from "../routes/cases.js";
-import { caseEvents } from "../routes/case-events.js";
+import { router } from "./router.js"; // Adjust the path to router.js if needed
 
 describe("Router plugin tests", () => {
   it("should register all routes correctly", async () => {
@@ -20,7 +20,7 @@ describe("Router plugin tests", () => {
       ...[health].map((r) => r.path),
       ...cases.map((r) => r.path),
       ...workflows.map((r) => r.path),
-      ...caseEvents.map((r) => r.path)
+      ...caseEvents.map((r) => r.path),
     ];
 
     // Actual server's registered route paths

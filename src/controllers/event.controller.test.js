@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import { eventController } from "./event.controller.js";
-import { caseService } from "../services/case.service.js";
-import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
+import { describe, expect, it, vi } from "vitest";
 import { caseData1 } from "../../test/fixtures/case.js";
+import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
+import { caseService } from "../services/case.service.js";
+import { eventController } from "./event.controller.js";
 
 vi.mock("../services/case.service.js");
 
@@ -11,11 +11,11 @@ describe("eventController", () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
     const mockRequest = {
-      payload: createCaseEvent1
+      payload: createCaseEvent1,
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
-      code: vi.fn()
+      code: vi.fn(),
     };
 
     // Mock the services to avoid actual execution
@@ -27,7 +27,7 @@ describe("eventController", () => {
     // Assert
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      createCaseEvent1
+      createCaseEvent1,
     );
   });
 
@@ -35,11 +35,11 @@ describe("eventController", () => {
     const insertedId = "insertedId123";
     const mockCreatedCase = { _id: insertedId, ...caseData1 };
     const mockRequest = {
-      payload: createCaseEvent1
+      payload: createCaseEvent1,
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
-      code: vi.fn()
+      code: vi.fn(),
     };
 
     // Mock the services to return resolved data
@@ -56,25 +56,25 @@ describe("eventController", () => {
   it("should handle errors from caseService gracefully", async () => {
     // Arrange mock data
     const mockRequest = {
-      payload: createCaseEvent1
+      payload: createCaseEvent1,
     };
     const mockResponse = {
       response: vi.fn().mockReturnThis(),
-      code: vi.fn()
+      code: vi.fn(),
     };
 
     // Mock caseService to throw an error
     caseService.handleCreateCaseEvent.mockRejectedValue(
-      new Error("Service error")
+      new Error("Service error"),
     );
 
     // Act & Assert
     await expect(eventController(mockRequest, mockResponse)).rejects.toThrow(
-      "Service error"
+      "Service error",
     );
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledOnce();
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      mockRequest.payload
+      mockRequest.payload,
     );
   });
 });

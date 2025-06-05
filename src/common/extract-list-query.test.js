@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { extractListQuery } from "./extract-list-query.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "./config.js";
+import { extractListQuery } from "./extract-list-query.js";
 
 vi.mock("./config.js");
 
@@ -11,12 +11,12 @@ describe("extractListQuery", () => {
 
   it("should return default values when no query parameters are provided", () => {
     const mockApiConfig = {
-      pageSize: 10
+      pageSize: 10,
     };
     config.get.mockReturnValue(mockApiConfig);
 
     const request = {
-      query: {}
+      query: {},
     };
 
     const result = extractListQuery(request);
@@ -24,7 +24,7 @@ describe("extractListQuery", () => {
     // Default values - if no page size request param then assume paging not required - default limit 100
     expect(result).toEqual({
       page: 1,
-      pageSize: 100
+      pageSize: 100,
     });
   });
 
@@ -32,15 +32,15 @@ describe("extractListQuery", () => {
     const request = {
       query: {
         page: "2",
-        pageSize: "20"
-      }
+        pageSize: "20",
+      },
     };
 
     const result = extractListQuery(request);
 
     expect(result).toEqual({
       page: 2,
-      pageSize: 20
+      pageSize: 20,
     });
 
     // Ensure no config fallback was needed
@@ -51,8 +51,8 @@ describe("extractListQuery", () => {
     const request = {
       query: {
         page: "invalid",
-        pageSize: "25"
-      }
+        pageSize: "25",
+      },
     };
 
     const result = extractListQuery(request);
@@ -63,15 +63,15 @@ describe("extractListQuery", () => {
 
   it("should use default pageSize from config when query.pageSize is invalid", () => {
     const mockApiConfig = {
-      pageSize: 15
+      pageSize: 15,
     };
     config.get.mockReturnValue(mockApiConfig);
 
     const request = {
       query: {
         page: "3",
-        pageSize: "invalid"
-      }
+        pageSize: "invalid",
+      },
     };
 
     const result = extractListQuery(request);
@@ -86,8 +86,8 @@ describe("extractListQuery", () => {
 
     const request = {
       query: {
-        page: "1"
-      }
+        page: "1",
+      },
     };
 
     const result = extractListQuery(request);
@@ -99,12 +99,12 @@ describe("extractListQuery", () => {
 
   it("should handle unexpected query structure gracefully", () => {
     const mockApiConfig = {
-      pageSize: 10
+      pageSize: 10,
     };
     config.get.mockReturnValue(mockApiConfig);
 
     const request = {
-      query: null // Simulated unexpected structure
+      query: null, // Simulated unexpected structure
     };
 
     const mockConfigPageSize = 10;

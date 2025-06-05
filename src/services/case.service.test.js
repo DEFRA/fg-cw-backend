@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
 import Boom from "@hapi/boom";
-import { caseService } from "./case.service.js";
-import { caseRepository } from "../repositories/case.repository.js";
+import { describe, expect, it, vi } from "vitest";
 import { caseData1, caseData3 } from "../../test/fixtures/case.js";
 import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
 import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
 import { workflowData1 } from "../../test/fixtures/workflow.js";
+import { caseRepository } from "../repositories/case.repository.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
+import { caseService } from "./case.service.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
@@ -16,12 +16,12 @@ describe("caseService", () => {
     it("should throw a bad request error if the workflow is not found", async () => {
       workflowRepository.getWorkflow.mockResolvedValue(null);
       await expect(() =>
-        caseService.handleCreateCaseEvent(createCaseEvent1)
+        caseService.handleCreateCaseEvent(createCaseEvent1),
       ).rejects.toThrow(
-        Boom.badRequest(`Workflow ${createCaseEvent1.code} not found`)
+        Boom.badRequest(`Workflow ${createCaseEvent1.code} not found`),
       );
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent1.code
+        createCaseEvent1.code,
       );
     });
 
@@ -33,11 +33,11 @@ describe("caseService", () => {
       caseRepository.createCase.mockResolvedValue(mockCreatedCase);
 
       const result = await caseService.handleCreateCaseEvent(
-        createCaseEvent3.data
+        createCaseEvent3.data,
       );
 
       expect(workflowRepository.getWorkflow).toHaveBeenCalledWith(
-        createCaseEvent3.data.code
+        createCaseEvent3.data.code,
       );
       expect(caseRepository.createCase).toHaveBeenCalledWith({
         ...caseData3,
@@ -53,17 +53,17 @@ describe("caseService", () => {
                 tasks: [
                   {
                     id: "simple-review",
-                    isComplete: false
-                  }
-                ]
-              }
-            ]
+                    isComplete: false,
+                  },
+                ],
+              },
+            ],
           },
           {
             id: "contract",
-            taskGroups: []
-          }
-        ]
+            taskGroups: [],
+          },
+        ],
       });
       expect(result).toEqual(mockCreatedCase);
     });

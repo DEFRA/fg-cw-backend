@@ -3,12 +3,12 @@ import {
   caseCreateController,
   caseDetailController,
   caseListController,
-  caseStageController
+  caseStageController,
 } from "../controllers/case.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
 import { ListResponse, ValidationError } from "../schemas/common.schema.js";
 
-const cases = [
+export const cases = [
   {
     method: "POST",
     path: "/cases",
@@ -16,16 +16,16 @@ const cases = [
       description: "Temporary: Create a case",
       tags: ["api"],
       validate: {
-        payload: caseSchema.CaseData
+        payload: caseSchema.CaseData,
       },
       response: {
         status: {
           201: caseSchema.Case,
-          400: ValidationError
-        }
-      }
+          400: ValidationError,
+        },
+      },
     },
-    handler: caseCreateController
+    handler: caseCreateController,
   },
   {
     method: "GET",
@@ -36,17 +36,17 @@ const cases = [
       validate: {
         query: Joi.object({
           page: Joi.number().integer().optional(),
-          pageSize: Joi.number().integer().optional()
-        })
+          pageSize: Joi.number().integer().optional(),
+        }),
       },
       response: {
         status: {
           200: ListResponse,
-          400: ValidationError
-        }
-      }
+          400: ValidationError,
+        },
+      },
     },
-    handler: caseListController
+    handler: caseListController,
   },
   {
     method: "GET",
@@ -56,17 +56,17 @@ const cases = [
       tags: ["api"],
       validate: {
         params: Joi.object({
-          caseId: Joi.string().hex().length(24)
-        })
+          caseId: Joi.string().hex().length(24),
+        }),
       },
       response: {
         status: {
           200: caseSchema.Case,
-          400: ValidationError
-        }
-      }
+          400: ValidationError,
+        },
+      },
     },
-    handler: caseDetailController
+    handler: caseDetailController,
   },
   {
     method: "POST",
@@ -76,17 +76,15 @@ const cases = [
       tags: ["api"],
       validate: {
         params: Joi.object({
-          caseId: Joi.string().hex().length(24)
-        })
+          caseId: Joi.string().hex().length(24),
+        }),
       },
       response: {
         status: {
-          400: ValidationError
-        }
-      }
+          400: ValidationError,
+        },
+      },
     },
-    handler: caseStageController
-  }
+    handler: caseStageController,
+  },
 ];
-
-export { cases };

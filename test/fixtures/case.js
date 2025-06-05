@@ -15,7 +15,7 @@ export const caseData1 = {
       sbi: "SBI001",
       frn: "FIRM0001",
       crn: "CUST0001",
-      defraId: "DEFRA0001"
+      defraId: "DEFRA0001",
     },
     answers: {
       agreementName: "Test application name",
@@ -29,11 +29,11 @@ export const caseData1 = {
           code: "CSAM1",
           appliedFor: {
             unit: "ha",
-            quantity: 20.23
-          }
-        }
-      ]
-    }
+            quantity: 20.23,
+          },
+        },
+      ],
+    },
   },
   currentStage: "application-receipt",
   stages: [
@@ -45,17 +45,17 @@ export const caseData1 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false
-            }
-          ]
-        }
-      ]
+              isComplete: false,
+            },
+          ],
+        },
+      ],
     },
     {
       id: "contract",
-      taskGroups: []
-    }
-  ]
+      taskGroups: [],
+    },
+  ],
 };
 
 export const caseData2 = {
@@ -73,7 +73,7 @@ export const caseData2 = {
       sbi: "SBI001",
       frn: "FIRM0001",
       crn: "CUST0001",
-      defraId: "DEFRA0001"
+      defraId: "DEFRA0001",
     },
     answers: {
       agreementName: "Test application name",
@@ -87,11 +87,11 @@ export const caseData2 = {
           code: "CSAM1",
           appliedFor: {
             unit: "ha",
-            quantity: 20.23
-          }
-        }
-      ]
-    }
+            quantity: 20.23,
+          },
+        },
+      ],
+    },
   },
   currentStage: "application-receipt",
   stages: [
@@ -103,17 +103,17 @@ export const caseData2 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false
-            }
-          ]
-        }
-      ]
+              isComplete: false,
+            },
+          ],
+        },
+      ],
     },
     {
       id: "contract",
-      taskGroups: []
-    }
-  ]
+      taskGroups: [],
+    },
+  ],
 };
 
 export const caseData3 = {
@@ -133,7 +133,7 @@ export const caseData3 = {
       sbi: "SBI001",
       frn: "FIRM0001",
       crn: "CUST0001",
-      defraId: "DEFRA0001"
+      defraId: "DEFRA0001",
     },
     answers: {
       agreementName: "Test application name",
@@ -147,11 +147,11 @@ export const caseData3 = {
           code: "CSAM1",
           appliedFor: {
             unit: "ha",
-            quantity: 20.23
-          }
-        }
-      ]
-    }
+            quantity: 20.23,
+          },
+        },
+      ],
+    },
   },
   currentStage: "application-receipt",
   stages: [
@@ -163,15 +163,15 @@ export const caseData3 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false
-            }
-          ]
-        }
-      ]
+              isComplete: false,
+            },
+          ],
+        },
+      ],
     },
     {
       id: "contract",
-      taskGroups: []
-    }
-  ]
+      taskGroups: [],
+    },
+  ],
 };

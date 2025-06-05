@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import * as sns from "./sns";
+import { describe, expect, it, vi } from "vitest";
+import * as sns from "./sns.js";
 
 describe("sns", () => {
   it("publishes an event", async () => {
@@ -8,7 +8,7 @@ describe("sns", () => {
       .mockImplementation(() => {});
     const topicArn = "some-topic-id";
     const event = {
-      body: { key: "value " }
+      body: { key: "value " },
     };
 
     await sns.publish(topicArn, event);

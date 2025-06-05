@@ -1,9 +1,9 @@
+import { up } from "migrate-mongo";
 import { createServer } from "../server.js";
 import { logger } from "./logger.js";
 import { db, mongoClient } from "./mongo-client.js";
-import { up } from "migrate-mongo";
 
-async function startServer(host, port) {
+export const startServer = async (host, port) => {
   let server;
 
   try {
@@ -25,6 +25,4 @@ async function startServer(host, port) {
   }
 
   return server;
-}
-
-export { startServer };
+};

@@ -1,13 +1,13 @@
 import Joi from "joi";
-import { commonSchema } from "../schemas/common.schema.js";
 import {
   workflowCreateController,
   workflowDetailController,
-  workflowListController
+  workflowListController,
 } from "../controllers/workflow.controller.js";
+import { commonSchema } from "../schemas/common.schema.js";
 import { workflowSchema } from "../schemas/workflow.schema.js";
 
-const workflows = [
+export const workflows = [
   {
     method: "POST",
     path: "/workflows",
@@ -15,16 +15,16 @@ const workflows = [
       description: "Create a workflow",
       tags: ["api"],
       validate: {
-        payload: workflowSchema.WorkflowData
+        payload: workflowSchema.WorkflowData,
       },
       response: {
         status: {
           201: workflowSchema.Workflow,
-          400: commonSchema.ValidationError
-        }
-      }
+          400: commonSchema.ValidationError,
+        },
+      },
     },
-    handler: workflowCreateController
+    handler: workflowCreateController,
   },
   {
     method: "GET",
@@ -35,17 +35,17 @@ const workflows = [
       validate: {
         query: Joi.object({
           page: Joi.number().integer(),
-          pageSize: Joi.number().integer()
-        })
+          pageSize: Joi.number().integer(),
+        }),
       },
       response: {
         status: {
           200: commonSchema.ListResponse,
-          400: commonSchema.ValidationError
-        }
-      }
+          400: commonSchema.ValidationError,
+        },
+      },
     },
-    handler: workflowListController
+    handler: workflowListController,
   },
   {
     method: "GET",
@@ -55,18 +55,16 @@ const workflows = [
       tags: ["api"],
       validate: {
         params: Joi.object({
-          code: Joi.string()
-        })
+          code: Joi.string(),
+        }),
       },
       response: {
         status: {
           200: workflowSchema.Workflow,
-          400: commonSchema.ValidationError
-        }
-      }
+          400: commonSchema.ValidationError,
+        },
+      },
     },
-    handler: workflowDetailController
-  }
+    handler: workflowDetailController,
+  },
 ];
-
-export { workflows };

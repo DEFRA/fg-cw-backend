@@ -1,8 +1,9 @@
 import {
-  SQSClient,
+  DeleteMessageCommand,
   ReceiveMessageCommand,
-  DeleteMessageCommand
+  SQSClient,
 } from "@aws-sdk/client-sqs";
+import { setTimeout } from "node:timers/promises";
 import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
 
@@ -15,13 +16,13 @@ export class SqsConsumer {
 
     const awsConfig = {
       endpoint: config.get("aws.sqsEndpoint") || "http://localhost:4566",
-      region: config.get("aws.awsRegion") || "eu-west-2"
+      region: config.get("aws.awsRegion") || "eu-west-2",
     };
 
     if (config.get("aws.isLocalstackEnabled")) {
       awsConfig.credentials = {
         accessKeyId: "test",
-        secretAccessKey: "test"
+        secretAccessKey: "test",
       };
     }
 
@@ -47,17 +48,17 @@ export class SqsConsumer {
           MaxNumberOfMessages: config.get("aws.sqsMaxNumberOfMessages"),
           WaitTimeSeconds: config.get("aws.sqsWaitTimeInSeconds"),
           AttributeNames: ["All"],
-          MessageAttributeNames: ["All"]
+          MessageAttributeNames: ["All"],
         };
 
         const command = new ReceiveMessageCommand(receiveParams);
         const response = await this.sqsClient.send(command);
 
-        if (response.Messages && response.Messages.length > 0) {
+        if (response.Messages.length) {
           await Promise.all(
             response.Messages.map(async (message) => {
               logger.info(
-                `Processing message from SQS queue: ${message.MessageId}`
+                `Processing message from SQS queue: ${message.MessageId}`,
               );
               try {
                 const body = JSON.parse(message.Body);
@@ -68,20 +69,19 @@ export class SqsConsumer {
                 logger.error({
                   error: err.message,
                   message: `Failed to process SQS message ID: ${message.MessageId} - ${err.message}`,
-                  messageId: message.MessageId
+                  messageId: message.MessageId,
                 });
               }
-            })
+            }),
           );
         }
       } catch (err) {
         logger.error({
           error: err.message,
           queueUrl: this.queueUrl,
-          message: "Error polling SQS queue"
+          message: "Error polling SQS queue",
         });
-        // Add a small delay before retrying on error
-        await new Promise((resolve) => setTimeout(resolve, 30000));
+        await setTimeout(30_000);
       }
     }
   }
@@ -89,7 +89,7 @@ export class SqsConsumer {
   async deleteMessage(message) {
     const deleteParams = {
       QueueUrl: this.queueUrl,
-      ReceiptHandle: message.ReceiptHandle
+      ReceiptHandle: message.ReceiptHandle,
     };
 
     const command = new DeleteMessageCommand(deleteParams);

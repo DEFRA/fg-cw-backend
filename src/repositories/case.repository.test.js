@@ -1,25 +1,25 @@
-import { describe, it, vi, expect } from "vitest";
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
+import { describe, expect, it, vi } from "vitest";
+import caseListResponse from "../../test/fixtures/case-list-response.json";
+import { caseData1, caseData2 } from "../../test/fixtures/case.js";
 import { db } from "../common/mongo-client.js";
 import { caseRepository, findAll } from "./case.repository.js";
-import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import caseListResponse from "../../test/fixtures/case-list-response.json";
 
 vi.mock("../common/mongo-client.js", () => ({
   db: {
-    collection: vi.fn()
-  }
+    collection: vi.fn(),
+  },
 }));
 
 describe("createCase", () => {
   it("creates a case and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
-      acknowledged: true
+      acknowledged: true,
     });
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     const result = await caseRepository.createCase(caseData1);
@@ -34,13 +34,13 @@ describe("createCase", () => {
     error.code = 11000;
 
     db.collection.mockReturnValue({
-      insertOne: vi.fn().mockRejectedValue(error)
+      insertOne: vi.fn().mockRejectedValue(error),
     });
 
     await expect(caseRepository.createCase(caseData1)).rejects.toThrow(
       Boom.conflict(
-        `Case with caseRef "${caseData1.caseRef}" and workflowCode "${caseData1.workflowCode}" already exists`
-      )
+        `Case with caseRef "${caseData1.caseRef}" and workflowCode "${caseData1.workflowCode}" already exists`,
+      ),
     );
   });
 
@@ -50,7 +50,7 @@ describe("createCase", () => {
     const insertOne = vi.fn().mockRejectedValue(error);
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     await expect(caseRepository.createCase(caseData1)).rejects.toThrow(error);
@@ -58,17 +58,17 @@ describe("createCase", () => {
 
   it("throws when write is unacknowledged", async () => {
     const insertOne = vi.fn().mockResolvedValue({
-      acknowledged: false
+      acknowledged: false,
     });
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     await expect(caseRepository.createCase(caseData1)).rejects.toThrow(
       Boom.internal(
-        'Case with caseRef "APPLICATION-REF-1" and workflowCode "frps-private-beta" could not be created, the operation was not acknowledged'
-      )
+        'Case with caseRef "APPLICATION-REF-1" and workflowCode "frps-private-beta" could not be created, the operation was not acknowledged',
+      ),
     );
   });
 });
@@ -79,7 +79,7 @@ describe("findAll", () => {
     const cases = [caseData1, caseData2];
 
     const mockCursor = {
-      estimatedDocumentCount: vi.fn().mockResolvedValue(2)
+      estimatedDocumentCount: vi.fn().mockResolvedValue(2),
     };
 
     const mockToArray = vi.fn().mockReturnValue(cases);
@@ -112,18 +112,18 @@ describe("findCases", () => {
     const cases = [caseData1, caseData2];
 
     const limit = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue(cases)
+      toArray: vi.fn().mockResolvedValue(cases),
     });
 
     const skip = vi.fn().mockReturnValue({
-      limit
+      limit,
     });
 
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
-        skip
+        skip,
       }),
-      estimatedDocumentCount: vi.fn().mockResolvedValue(cases.length)
+      estimatedDocumentCount: vi.fn().mockResolvedValue(cases.length),
     });
 
     const result = await caseRepository.findCases(listQuery);
@@ -142,13 +142,13 @@ describe("getCase", () => {
 
     const foundCase = {
       _id: new ObjectId(caseId),
-      ...caseData2
+      ...caseData2,
     };
 
     const findOne = vi.fn().mockReturnValue(foundCase);
 
     db.collection.mockReturnValue({
-      findOne
+      findOne,
     });
 
     const result = await caseRepository.getCase(caseId);
@@ -156,7 +156,7 @@ describe("getCase", () => {
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(findOne).toHaveBeenCalledWith({
-      _id: new ObjectId(caseId)
+      _id: new ObjectId(caseId),
     });
 
     expect(result).toEqual(foundCase);
@@ -166,7 +166,7 @@ describe("getCase", () => {
     const caseId = "6800c9feb76f8f854ebf901a";
 
     db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(null)
+      findOne: vi.fn().mockResolvedValue(null),
     });
 
     const result = await caseRepository.getCase(caseId);

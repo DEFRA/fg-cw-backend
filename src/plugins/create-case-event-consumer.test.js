@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { createCaseEventConsumer } from "./create-case-event-consumer.js";
-import sqsConsumerPlugin from "../events/sqs-consumer-plugin.js";
+import { describe, expect, it, vi } from "vitest";
 import { createCaseEventHandler } from "../events/create-case-event-handler.js";
+import { sqsConsumerPlugin } from "../events/sqs-consumer-plugin.js";
+import { createCaseEventConsumer } from "./create-case-event-consumer.js";
 
 vi.mock("../events/sqs-consumer-plugins.js");
 vi.mock("../events/create-case-event-handler.js");
@@ -22,8 +22,8 @@ describe("createCaseEventConsumer", () => {
       plugin: sqsConsumerPlugin,
       options: {
         queueUrl: mockSqsQueueUrl,
-        handleMessage
-      }
+        handleMessage,
+      },
     });
   });
 

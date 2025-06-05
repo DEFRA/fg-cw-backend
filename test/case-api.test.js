@@ -1,39 +1,23 @@
+import Wreck from "@hapi/wreck";
+import { MongoClient } from "mongodb";
+import { env } from "node:process";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
   describe,
   expect,
-  it
+  it,
 } from "vitest";
-import { env } from "node:process";
-import { MongoClient } from "mongodb";
-import Wreck from "@hapi/wreck";
+import { config } from "../src/common/config.js";
+import { collection as caseCollection } from "../src/repositories/case.repository.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { collection as caseCollection } from "../src/repositories/case.repository.js";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
-import { config } from "../src/common/config.js";
+import { waitForDocuments } from "./helpers/wait-for-documents.js";
 
-async function waitForCollectionChange(
-  collection,
-  maxRetries = 3,
-  interval = 1000
-) {
-  let retryCount = 0;
-  let numDocs = 0;
-  let documents = [];
-  while (retryCount < maxRetries && numDocs === 0) {
-    documents = await collection.find({}).toArray();
-    numDocs = documents.length;
-    retryCount++;
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
-  return documents;
-}
-
-describe.sequential("Case API", () => {
+describe("Case API", () => {
   let cases;
   let client;
 
@@ -47,7 +31,7 @@ describe.sequential("Case API", () => {
     await client.close();
   });
 
-  describe.sequential("POST /case-events", () => {
+  describe("POST /case-events", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -56,10 +40,10 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("adds a case", async () => {
+    it("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
-        payload: createCaseEvent3.data
+        payload: createCaseEvent3.data,
       });
 
       expect(response.res.statusCode).toBe(201);
@@ -77,17 +61,17 @@ describe.sequential("Case API", () => {
                 tasks: [
                   {
                     id: "simple-review",
-                    isComplete: false
-                  }
-                ]
-              }
-            ]
+                    isComplete: false,
+                  },
+                ],
+              },
+            ],
           },
           {
             id: "contract",
-            taskGroups: []
-          }
-        ]
+            taskGroups: [],
+          },
+        ],
       });
 
       const documents = await cases.find({}).toArray();
@@ -100,7 +84,7 @@ describe.sequential("Case API", () => {
         payload: {
           ...caseData3.payload,
           createdAt: new Date(caseData3.payload.createdAt),
-          submittedAt: new Date(caseData3.payload.submittedAt)
+          submittedAt: new Date(caseData3.payload.submittedAt),
         },
         currentStage: "application-receipt",
         stages: [
@@ -112,22 +96,22 @@ describe.sequential("Case API", () => {
                 tasks: [
                   {
                     id: "simple-review",
-                    isComplete: false
-                  }
-                ]
-              }
-            ]
+                    isComplete: false,
+                  },
+                ],
+              },
+            ],
           },
           {
             id: "contract",
-            taskGroups: []
-          }
-        ]
+            taskGroups: [],
+          },
+        ],
       });
     });
   });
 
-  describe.sequential("POST /cases", () => {
+  describe("POST /cases", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -136,16 +120,16 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("adds a case", async () => {
+    it("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/cases`, {
         json: true,
-        payload: caseData1
+        payload: caseData1,
       });
 
       expect(response.res.statusCode).toBe(201);
       expect(response.payload).toEqual({
         ...caseData1,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
 
       const documents = await cases.find({}).toArray();
@@ -158,13 +142,13 @@ describe.sequential("Case API", () => {
         payload: {
           ...caseData1.payload,
           createdAt: new Date(caseData1.payload.createdAt),
-          submittedAt: new Date(caseData1.payload.submittedAt)
-        }
+          submittedAt: new Date(caseData1.payload.submittedAt),
+        },
       });
     });
   });
 
-  describe.sequential("GET /cases", () => {
+  describe("GET /cases", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -173,11 +157,11 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("finds cases", async () => {
+    it("finds cases", async () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/cases`, {
-        json: true
+        json: true,
       });
 
       expect(response.res.statusCode).toBe(200);
@@ -189,66 +173,58 @@ describe.sequential("Case API", () => {
       expect(response.payload.data.length).toBe(2);
       expect(response.payload.data[0]).toEqual({
         ...caseData1,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
       expect(response.payload.data[1]).toEqual({
         ...caseData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
 
-  describe.sequential("GET /cases/{caseId}", () => {
+  describe("GET /cases/{caseId}", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("finds a case by code", async () => {
+    it("finds a case by code", async () => {
       const { insertedIds } = await cases.insertMany([
         { ...caseData1 },
-        { ...caseData2 }
+        { ...caseData2 },
       ]);
 
       const response = await Wreck.get(
         `${env.API_URL}/cases/${insertedIds[1]}`,
         {
-          json: true
-        }
+          json: true,
+        },
       );
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
         ...caseData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
 
-  describe.sequential("SNS case-event", () => {
+  describe("SNS case-event", () => {
     beforeEach(async () => {
-      try {
-        await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
-        await cases.deleteMany({});
-      } catch (e) {
-        console.log(e);
-      }
+      await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
+      await cases.deleteMany({});
     });
 
     afterEach(async () => {
-      try {
-        await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
-        await cases.deleteMany({});
-      } catch (e) {
-        console.log(e);
-      }
+      await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
+      await cases.deleteMany({});
     });
 
-    it.sequential("send case event to topic", async () => {
+    it("send case event to topic", async () => {
       await sendSnsMessage(
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
-        createCaseEvent3
+        createCaseEvent3,
       );
-      const documents = await waitForCollectionChange(cases);
+      const documents = await waitForDocuments(cases);
       expect(documents).toHaveLength(1);
       expect(documents[0]).toEqual({
         ...caseData3,
@@ -257,8 +233,8 @@ describe.sequential("Case API", () => {
         payload: {
           ...caseData3.payload,
           createdAt: caseData3.payload.createdAt,
-          submittedAt: caseData3.payload.submittedAt
-        }
+          submittedAt: caseData3.payload.submittedAt,
+        },
       });
     });
   });

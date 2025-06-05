@@ -1,8 +1,8 @@
-import { commonSchema } from "../schemas/common.schema.js";
-import { caseSchema } from "../schemas/case.schema.js";
 import { eventController } from "../controllers/event.controller.js";
+import { caseSchema } from "../schemas/case.schema.js";
+import { commonSchema } from "../schemas/common.schema.js";
 
-const caseEvents = [
+export const caseEvents = [
   {
     method: "POST",
     path: "/case-events",
@@ -10,17 +10,15 @@ const caseEvents = [
       description: "Receive a create case event",
       tags: ["api"],
       validate: {
-        payload: caseSchema.GrantCaseEvent
+        payload: caseSchema.GrantCaseEvent,
       },
       response: {
         status: {
           201: caseSchema.Case,
-          400: commonSchema.ValidationError
-        }
-      }
+          400: commonSchema.ValidationError,
+        },
+      },
     },
-    handler: eventController
-  }
+    handler: eventController,
+  },
 ];
-
-export { caseEvents };

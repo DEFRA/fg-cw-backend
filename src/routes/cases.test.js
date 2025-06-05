@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { cases } from "./cases.js";
 import {
   caseCreateController,
   caseDetailController,
-  caseListController
+  caseListController,
 } from "../controllers/case.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
 import { commonSchema } from "../schemas/common.schema.js";
+import { cases } from "./cases.js";
 
 vi.mock("../controllers/case.controller.js");
 
@@ -26,8 +26,8 @@ describe("cases routes", () => {
     expect(options.response).toEqual({
       status: {
         201: caseSchema.Case,
-        400: commonSchema.ValidationError
-      }
+        400: commonSchema.ValidationError,
+      },
     });
   });
 
@@ -45,14 +45,14 @@ describe("cases routes", () => {
     expect(options.response).toEqual({
       status: {
         200: commonSchema.ListResponse,
-        400: commonSchema.ValidationError
-      }
+        400: commonSchema.ValidationError,
+      },
     });
   });
 
   it("should define the GET /cases/{caseId} route", () => {
     const route = cases.find(
-      (r) => r.method === "GET" && r.path === "/cases/{caseId}"
+      (r) => r.method === "GET" && r.path === "/cases/{caseId}",
     );
 
     expect(route).toBeDefined();
@@ -67,15 +67,15 @@ describe("cases routes", () => {
       type: "object",
       keys: {
         caseId: {
-          type: "string"
-        }
-      }
+          type: "string",
+        },
+      },
     });
     expect(options.response).toEqual({
       status: {
         200: caseSchema.Case,
-        400: commonSchema.ValidationError
-      }
+        400: commonSchema.ValidationError,
+      },
     });
   });
 });

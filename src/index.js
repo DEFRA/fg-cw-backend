@@ -1,8 +1,8 @@
 import process from "node:process";
 
-import { startServer } from "./common/start-server.js";
-import { logger } from "./common/logger.js";
 import { config } from "./common/config.js";
+import { logger } from "./common/logger.js";
+import { startServer } from "./common/start-server.js";
 
 await startServer(config.get("host"), config.get("port"));
 

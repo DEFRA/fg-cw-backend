@@ -17,7 +17,7 @@ export const workflowDetailController = async (request, h) => {
   const result = await workflowService.getWorkflow(request.params.code);
   if (!result) {
     return Boom.notFound(
-      "Workflow with id: " + request.params.code + " not found"
+      "Workflow with id: " + request.params.code + " not found",
     );
   }
   return h.response(result);
