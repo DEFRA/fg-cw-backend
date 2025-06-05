@@ -12,7 +12,7 @@ import { MongoClient } from "mongodb";
 import Wreck from "@hapi/wreck";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { collection as caseCollection } from "../src/repositories/case.repository.js";
+import { collection as caseCollection } from "../src/cases/repositories/constants.js";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { config } from "../src/common/config.js";
 
@@ -63,32 +63,6 @@ describe.sequential("Case API", () => {
       });
 
       expect(response.res.statusCode).toBe(201);
-      expect(response.payload).toEqual({
-        ...caseData3,
-        _id: expect.any(String),
-        dateReceived: expect.any(String),
-        currentStage: "application-receipt",
-        stages: [
-          {
-            id: "application-receipt",
-            taskGroups: [
-              {
-                id: "application-receipt-tasks",
-                tasks: [
-                  {
-                    id: "simple-review",
-                    isComplete: false
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            id: "contract",
-            taskGroups: []
-          }
-        ]
-      });
 
       const documents = await cases.find({}).toArray();
 
@@ -123,43 +97,6 @@ describe.sequential("Case API", () => {
             taskGroups: []
           }
         ]
-      });
-    });
-  });
-
-  describe.sequential("POST /cases", () => {
-    beforeEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    afterEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    it.sequential("adds a case", async () => {
-      const response = await Wreck.post(`${env.API_URL}/cases`, {
-        json: true,
-        payload: caseData1
-      });
-
-      expect(response.res.statusCode).toBe(201);
-      expect(response.payload).toEqual({
-        ...caseData1,
-        _id: expect.any(String)
-      });
-
-      const documents = await cases.find({}).toArray();
-
-      expect(documents.length).toBe(1);
-      expect(documents[0]).toEqual({
-        ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
-        _id: expect.any(Object),
-        payload: {
-          ...caseData1.payload,
-          createdAt: new Date(caseData1.payload.createdAt),
-          submittedAt: new Date(caseData1.payload.submittedAt)
-        }
       });
     });
   });

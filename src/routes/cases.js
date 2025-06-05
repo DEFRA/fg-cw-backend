@@ -1,6 +1,5 @@
 import Joi from "joi";
 import {
-  caseCreateController,
   caseDetailController,
   caseListController,
   caseStageController
@@ -9,24 +8,6 @@ import { caseSchema } from "../schemas/case.schema.js";
 import { ListResponse, ValidationError } from "../schemas/common.schema.js";
 
 const cases = [
-  {
-    method: "POST",
-    path: "/cases",
-    options: {
-      description: "Temporary: Create a case",
-      tags: ["api"],
-      validate: {
-        payload: caseSchema.CaseData
-      },
-      response: {
-        status: {
-          201: caseSchema.Case,
-          400: ValidationError
-        }
-      }
-    },
-    handler: caseCreateController
-  },
   {
     method: "GET",
     path: "/cases",

@@ -35,7 +35,6 @@ describe("Case Events Route Definitions", () => {
     // Verify response status schema
     expect(options).toHaveProperty("response");
     expect(options.response).toHaveProperty("status");
-    expect(options.response.status).toHaveProperty("201", caseSchema.Case);
     expect(options.response.status).toHaveProperty(
       "400",
       commonSchema.ValidationError
@@ -58,7 +57,6 @@ describe("Case Events Route Definitions", () => {
     const { response } = eventRoute.options;
 
     // Verify 201 and 400 response schemas
-    expect(response.status).toHaveProperty("201", caseSchema.Case);
     expect(response.status).toHaveProperty("400", commonSchema.ValidationError);
   });
 });

@@ -1,15 +1,15 @@
-import { caseRepository } from "../repositories/case.repository.js";
+import { createCase } from "../cases/repositories/create-case.repository.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
 import Boom from "@hapi/boom";
+import { findCase } from "../cases/repositories/find-case.repository.js";
+import { updateStage } from "../cases/repositories/update-stage.repository.js";
 
-const createCase = (workflow, caseEvent) => ({
+const mergeCaseWithWorkflow = (workflow, caseEvent) => ({
   caseRef: caseEvent.clientRef,
   workflowCode: workflow.code,
   status: "NEW",
   dateReceived: new Date().toISOString(),
-  targetDate: null,
   priority: "LOW",
-  assignedUser: null,
   payload: structuredClone(caseEvent),
   currentStage: workflow.stages[0].id,
   stages: workflow.stages.map((stage) => ({
@@ -30,16 +30,16 @@ export const caseService = {
     if (!workflow) {
       throw Boom.badRequest(`Workflow ${caseEvent.code} not found`);
     }
-    const newCase = createCase(workflow, caseEvent);
-    return caseRepository.createCase(newCase);
+    const newCase = mergeCaseWithWorkflow(workflow, caseEvent);
+    return createCase(newCase);
   },
   createCase: async (caseData) => {
-    return caseRepository.createCase(caseData);
+    return createCase(caseData);
   },
   getCase: async (caseId) => {
-    return caseRepository.getCase(caseId);
+    return findCase(caseId);
   },
   updateCaseStage: async (caseId, nextStage) => {
-    return await caseRepository.updateStage(caseId, nextStage);
+    return await updateStage(caseId, nextStage);
   }
 };

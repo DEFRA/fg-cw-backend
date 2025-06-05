@@ -14,7 +14,6 @@ const caseEvents = [
       },
       response: {
         status: {
-          201: caseSchema.Case,
           400: commonSchema.ValidationError
         }
       }

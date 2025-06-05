@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { cases } from "./cases.js";
 import {
-  caseCreateController,
   caseDetailController,
   caseListController
 } from "../controllers/case.controller.js";
@@ -11,26 +10,6 @@ import { commonSchema } from "../schemas/common.schema.js";
 vi.mock("../controllers/case.controller.js");
 
 describe("cases routes", () => {
-  it("should define the POST /cases route", () => {
-    const route = cases.find((r) => r.method === "POST" && r.path === "/cases");
-
-    expect(route).toBeDefined();
-
-    const { options, handler } = route;
-
-    expect(handler).toBe(caseCreateController);
-    expect(options).toHaveProperty("description", "Temporary: Create a case");
-    expect(options).toHaveProperty("tags");
-    expect(options.tags).toContain("api");
-    expect(options.validate.payload).toBeDefined(); // Expect payload schema
-    expect(options.response).toEqual({
-      status: {
-        201: caseSchema.Case,
-        400: commonSchema.ValidationError
-      }
-    });
-  });
-
   it("should define the GET /cases route", () => {
     const route = cases.find((r) => r.method === "GET" && r.path === "/cases");
 
