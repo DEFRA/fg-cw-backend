@@ -1,7 +1,7 @@
-import { db } from "../../common/mongo-client.js";
 import { config } from "../../common/config.js";
-import { toCase } from "./to-case.js";
+import { db } from "../../common/mongo-client.js";
 import { collection } from "./constants.js";
+import { toCase } from "./to-case.js";
 
 export const findAll = async (listQuery) => {
   const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } = listQuery;
@@ -21,8 +21,8 @@ export const findAll = async (listQuery) => {
     metadata: {
       ...listQuery,
       count,
-      pageCount
+      pageCount,
     },
-    data
+    data,
   };
 };

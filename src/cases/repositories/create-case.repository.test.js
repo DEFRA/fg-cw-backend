@@ -1,24 +1,24 @@
-import { vi, describe, it, expect } from "vitest";
-import { createCase } from "./create-case.repository.js";
-import { db } from "../../common/mongo-client.js";
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
+import { describe, expect, it, vi } from "vitest";
 import { caseData1 } from "../../../test/fixtures/case.js";
+import { db } from "../../common/mongo-client.js";
+import { createCase } from "./create-case.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
-    collection: vi.fn()
-  }
+    collection: vi.fn(),
+  },
 }));
 
 describe("createCase", () => {
   it("creates a case and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
-      acknowledged: true
+      acknowledged: true,
     });
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     const result = await createCase(caseData1);
@@ -33,13 +33,13 @@ describe("createCase", () => {
     error.code = 11000;
 
     db.collection.mockReturnValue({
-      insertOne: vi.fn().mockRejectedValue(error)
+      insertOne: vi.fn().mockRejectedValue(error),
     });
 
     await expect(createCase(caseData1)).rejects.toThrow(
       Boom.conflict(
-        `Case with caseRef "${caseData1.caseRef}" and workflowCode "${caseData1.workflowCode}" already exists`
-      )
+        `Case with caseRef "${caseData1.caseRef}" and workflowCode "${caseData1.workflowCode}" already exists`,
+      ),
     );
   });
 
@@ -49,7 +49,7 @@ describe("createCase", () => {
     const insertOne = vi.fn().mockRejectedValue(error);
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     await expect(createCase(caseData1)).rejects.toThrow(error);
@@ -57,17 +57,17 @@ describe("createCase", () => {
 
   it("throws when write is unacknowledged", async () => {
     const insertOne = vi.fn().mockResolvedValue({
-      acknowledged: false
+      acknowledged: false,
     });
 
     db.collection.mockReturnValue({
-      insertOne
+      insertOne,
     });
 
     await expect(createCase(caseData1)).rejects.toThrow(
       Boom.internal(
-        'Case with caseRef "APPLICATION-REF-1" and workflowCode "frps-private-beta" could not be created, the operation was not acknowledged'
-      )
+        'Case with caseRef "APPLICATION-REF-1" and workflowCode "frps-private-beta" could not be created, the operation was not acknowledged',
+      ),
     );
   });
 });

@@ -1,13 +1,13 @@
-import { vi, describe, it, expect } from "vitest";
-import { findAll } from "./find-all.repository.js";
-import { db } from "../../common/mongo-client.js";
-import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
+import { describe, expect, it, vi } from "vitest";
 import caseListResponse from "../../../test/fixtures/case-list-response.json";
+import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
+import { db } from "../../common/mongo-client.js";
+import { findAll } from "./find-all.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
-    collection: vi.fn()
-  }
+    collection: vi.fn(),
+  },
 }));
 
 describe("findAll", () => {
@@ -16,7 +16,7 @@ describe("findAll", () => {
     const cases = [caseData1, caseData2];
 
     const mockCursor = {
-      estimatedDocumentCount: vi.fn().mockResolvedValue(2)
+      estimatedDocumentCount: vi.fn().mockResolvedValue(2),
     };
 
     const mockToArray = vi.fn().mockReturnValue(cases);

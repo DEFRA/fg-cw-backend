@@ -9,14 +9,14 @@ const format = {
   ecs: {
     ...ecsFormat({
       serviceVersion: config.get("serviceVersion"),
-      serviceName: config.get("serviceName")
-    })
+      serviceName: config.get("serviceName"),
+    }),
   },
   "pino-pretty": {
     transport: {
-      target: "pino-pretty"
-    }
-  }
+      target: "pino-pretty",
+    },
+  },
 }[config.get("log.format")];
 
 export const logger = pino({
@@ -24,7 +24,7 @@ export const logger = pino({
   ignorePaths: ["/health"],
   redact: {
     paths: config.get("log.redact"),
-    remove: true
+    remove: true,
   },
   level,
   ...format,
@@ -36,10 +36,10 @@ export const logger = pino({
 
     if (id) {
       mixinValues.trace = {
-        id
+        id,
       };
     }
 
     return mixinValues;
-  }
+  },
 });

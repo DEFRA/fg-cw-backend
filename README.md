@@ -77,7 +77,7 @@ awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-we
 Launch CW and dependencies via Docker Compose:
 
 ```
-docker compose up --watch
+docker compose up --watch --build
 ```
 
 Check the container status in our system and see the container id's
@@ -266,7 +266,7 @@ npm install
 To run the application in `development` mode run:
 
 ```bash
-npm run dev
+docker compose up --watch --build
 ```
 
 ### Testing
@@ -397,8 +397,8 @@ return await fetch(url, {
   dispatcher: new ProxyAgent({
     uri: proxyUrl,
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
-  })
+    keepAliveMaxTimeout: 10,
+  }),
 });
 ```
 
@@ -437,7 +437,6 @@ docker run -e PORT=3001 -p 3001:3001 fg-cw-backend
 A local environment with:
 
 - Localstack for AWS services (S3, SQS)
-- Redis
 - MongoDB
 - This service.
 - A commented out frontend example.

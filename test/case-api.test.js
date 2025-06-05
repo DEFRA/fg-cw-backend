@@ -1,26 +1,27 @@
+/* eslint-disable complexity */
+import Wreck from "@hapi/wreck";
+import { MongoClient } from "mongodb";
+import { env } from "node:process";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
   describe,
   expect,
-  it
+  it,
 } from "vitest";
-import { env } from "node:process";
-import { MongoClient } from "mongodb";
-import Wreck from "@hapi/wreck";
+import { collection as caseCollection } from "../src/cases/repositories/constants.js";
+import { config } from "../src/common/config.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { collection as caseCollection } from "../src/cases/repositories/constants.js";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
-import { config } from "../src/common/config.js";
 
-async function waitForCollectionChange(
+const waitForCollectionChange = async (
   collection,
   maxRetries = 3,
-  interval = 1000
-) {
+  interval = 1000,
+) => {
   let retryCount = 0;
   let numDocs = 0;
   let documents = [];
@@ -31,7 +32,7 @@ async function waitForCollectionChange(
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
   return documents;
-}
+};
 
 describe.sequential("Case API", () => {
   let cases;
@@ -59,7 +60,7 @@ describe.sequential("Case API", () => {
     it.sequential("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
-        payload: createCaseEvent3.data
+        payload: createCaseEvent3.data,
       });
 
       expect(response.res.statusCode).toBe(201);
@@ -74,7 +75,7 @@ describe.sequential("Case API", () => {
         payload: {
           ...caseData3.payload,
           createdAt: new Date(caseData3.payload.createdAt),
-          submittedAt: new Date(caseData3.payload.submittedAt)
+          submittedAt: new Date(caseData3.payload.submittedAt),
         },
         currentStage: "application-receipt",
         stages: [
@@ -86,17 +87,17 @@ describe.sequential("Case API", () => {
                 tasks: [
                   {
                     id: "simple-review",
-                    isComplete: false
-                  }
-                ]
-              }
-            ]
+                    isComplete: false,
+                  },
+                ],
+              },
+            ],
           },
           {
             id: "contract",
-            taskGroups: []
-          }
-        ]
+            taskGroups: [],
+          },
+        ],
       });
     });
   });
@@ -114,7 +115,7 @@ describe.sequential("Case API", () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/cases`, {
-        json: true
+        json: true,
       });
 
       expect(response.res.statusCode).toBe(200);
@@ -126,11 +127,11 @@ describe.sequential("Case API", () => {
       expect(response.payload.data.length).toBe(2);
       expect(response.payload.data[0]).toEqual({
         ...caseData1,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
       expect(response.payload.data[1]).toEqual({
         ...caseData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
@@ -143,20 +144,20 @@ describe.sequential("Case API", () => {
     it.sequential("finds a case by code", async () => {
       const { insertedIds } = await cases.insertMany([
         { ...caseData1 },
-        { ...caseData2 }
+        { ...caseData2 },
       ]);
 
       const response = await Wreck.get(
         `${env.API_URL}/cases/${insertedIds[1]}`,
         {
-          json: true
-        }
+          json: true,
+        },
       );
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
         ...caseData2,
-        _id: expect.any(String)
+        _id: expect.any(String),
       });
     });
   });
@@ -167,6 +168,7 @@ describe.sequential("Case API", () => {
         await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
         await cases.deleteMany({});
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.log(e);
       }
     });
@@ -176,6 +178,7 @@ describe.sequential("Case API", () => {
         await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
         await cases.deleteMany({});
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.log(e);
       }
     });
@@ -183,7 +186,7 @@ describe.sequential("Case API", () => {
     it.sequential("send case event to topic", async () => {
       await sendSnsMessage(
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
-        createCaseEvent3
+        createCaseEvent3,
       );
       const documents = await waitForCollectionChange(cases);
       expect(documents).toHaveLength(1);
@@ -194,8 +197,8 @@ describe.sequential("Case API", () => {
         payload: {
           ...caseData3.payload,
           createdAt: caseData3.payload.createdAt,
-          submittedAt: caseData3.payload.submittedAt
-        }
+          submittedAt: caseData3.payload.submittedAt,
+        },
       });
     });
   });

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import { Case } from "../models/case.js";
 import { toCase } from "./to-case.js";
-import { Case } from "../../models/case.js";
 
 describe("toCase", () => {
   it("should return a Case model", () => {
@@ -13,7 +13,7 @@ describe("toCase", () => {
       priority: "priority",
       payload: {},
       currentStage: "currentStage",
-      stages: {}
+      stages: {},
     };
     const result = toCase(doc);
     expect(result).toBeInstanceOf(Case);

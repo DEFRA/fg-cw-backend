@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { ObjectId } from "mongodb";
+import { describe, expect, it, vi } from "vitest";
 import { caseData2 } from "../../../test/fixtures/case.js";
 import { db } from "../../common/mongo-client.js";
-import { findCase } from "./find-case.repository";
-import { ObjectId } from "mongodb";
+import { findCase } from "./find-case.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
-    collection: vi.fn()
-  }
+    collection: vi.fn(),
+  },
 }));
 
 describe("getCase", () => {
@@ -17,12 +17,12 @@ describe("getCase", () => {
 
     const foundCase = {
       _id,
-      ...caseData2
+      ...caseData2,
     };
 
     const mockFind = vi.fn().mockReturnValue(foundCase);
     const mockCursor = {
-      findOne: mockFind
+      findOne: mockFind,
     };
 
     db.collection.mockReturnValue(mockCursor);
@@ -32,7 +32,7 @@ describe("getCase", () => {
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(mockFind).toHaveBeenCalledWith({
-      _id
+      _id,
     });
 
     expect(result).toEqual(foundCase);
@@ -42,7 +42,7 @@ describe("getCase", () => {
     const caseId = "6800c9feb76f8f854ebf901a";
 
     db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(null)
+      findOne: vi.fn().mockResolvedValue(null),
     });
 
     const result = await findCase(caseId);

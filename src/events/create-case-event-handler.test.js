@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createCaseEventHandler } from "./create-case-event-handler.js";
-import { caseService } from "../services/case.service.js";
-import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { caseData3 } from "../../test/fixtures/case.js";
+import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
+import { caseService } from "../cases/services/case.service.js";
 import { logger } from "../common/logger.js";
+import { createCaseEventHandler } from "./create-case-event-handler.js";
 
-vi.mock("../../src/services/case.service.js");
+vi.mock("../cases/services/case.service.js");
 
 describe("createCaseEventHandler", () => {
   let mockServer;
@@ -14,7 +14,7 @@ describe("createCaseEventHandler", () => {
   beforeEach(() => {
     vi.spyOn(logger, "info").mockImplementation(() => {});
     mockServer = {
-      db: {}
+      db: {},
     };
 
     const insertedId = "insertedId123";
@@ -28,7 +28,7 @@ describe("createCaseEventHandler", () => {
     await handler(createCaseEvent3);
 
     expect(logger.info).toHaveBeenCalledWith(
-      "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3"
+      "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3",
     );
   });
 
@@ -36,7 +36,7 @@ describe("createCaseEventHandler", () => {
     await handler(createCaseEvent3);
 
     expect(caseService.handleCreateCaseEvent).toHaveBeenCalledWith(
-      createCaseEvent3.data
+      createCaseEvent3.data,
     );
   });
 
@@ -44,7 +44,7 @@ describe("createCaseEventHandler", () => {
     await handler(createCaseEvent3);
 
     expect(logger.info).toHaveBeenCalledWith(
-      "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3"
+      "New case created for workflow: frps-private-beta with caseRef: APPLICATION-REF-3",
     );
   });
 

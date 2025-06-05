@@ -1,0 +1,57 @@
+import Boom from "@hapi/boom";
+import { randomUUID } from "crypto";
+import { config } from "../../common/config.js";
+import { extractListQuery } from "../../common/extract-list-query.js";
+import { publish } from "../../common/sns.js";
+import { caseService } from "../services/case.service.js";
+import { findCasesUseCase } from "../use-cases/list-cases.use-case.js";
+
+export const caseCreateController = async (request, h) => {
+  return h.response(await caseService.createCase(request.payload)).code(201);
+};
+
+export const caseListController = async (request, h) => {
+  const listQuery = extractListQuery(request);
+  const results = await findCasesUseCase(listQuery);
+  return h.response(results);
+};
+
+export const caseDetailController = async (request, h) => {
+  const result = await caseService.getCase(request.params.caseId);
+  if (!result) {
+    return Boom.notFound(
+      "Case with id: " + request.params.caseId + " not found",
+    );
+  }
+  return h.response(result);
+};
+
+export const caseStageController = async (request, h) => {
+  const { caseId } = request.params;
+
+  const caseRecord = await caseService.getCase(caseId);
+  if (!caseRecord) {
+    return Boom.notFound(`Case with id: ${caseId} not found`);
+  }
+
+  const previousStage = caseRecord.currentStage;
+  const nextStage = "contract";
+
+  await caseService.updateCaseStage(caseId, nextStage);
+
+  const event = {
+    id: randomUUID(),
+    source: config.get("serviceName"),
+    specVersion: "1.0",
+    type: `cloud.defra.${config.get("cdpEnvironment")}.${config.get("serviceName")}.case.stage.updated`,
+    data: {
+      caseRef: caseRecord.caseRef,
+      previousStage,
+      currentStage: nextStage,
+    },
+  };
+
+  await publish(config.get("aws.caseStageUpdatedTopicArn"), event);
+
+  return h.response().code(204);
+};

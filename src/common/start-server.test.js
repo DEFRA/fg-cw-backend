@@ -1,19 +1,19 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import hapi from "@hapi/hapi";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createServer } from "../server.js";
-import { startServer } from "./start-server.js";
 import { logger } from "./logger.js";
+import { startServer } from "./start-server.js";
 
 vi.mock("hapi-pino", () => ({
   default: {
     register: (server) => {
       server.decorate("server", "logger", {
         info: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       });
     },
-    name: "mock-hapi-pino"
-  }
+    name: "mock-hapi-pino",
+  },
 }));
 
 vi.mock("../../server.js", { spy: true });
@@ -41,20 +41,20 @@ describe.skip("#startServer", () => {
       expect(hapiServerSpy).toHaveBeenCalled();
       expect(logger.info).toHaveBeenNthCalledWith(
         1,
-        "Custom secure context is disabled"
+        "Custom secure context is disabled",
       );
       expect(logger.info).toHaveBeenNthCalledWith(2, "Setting up MongoDb");
       expect(logger.info).toHaveBeenNthCalledWith(
         3,
-        "MongoDb connected to fg-cw-backend"
+        "MongoDb connected to fg-cw-backend",
       );
       expect(logger.info).toHaveBeenNthCalledWith(
         4,
-        "Server started successfully"
+        "Server started successfully",
       );
       expect(logger.info).toHaveBeenNthCalledWith(
         5,
-        "Access your backend on http://localhost:3098"
+        "Access your backend on http://localhost:3098",
       );
     });
   });
@@ -69,7 +69,7 @@ describe.skip("#startServer", () => {
 
       expect(logger.info).toHaveBeenCalledWith("Server failed to start :(");
       expect(logger.error).toHaveBeenCalledWith(
-        Error("Server failed to start")
+        Error("Server failed to start"),
       );
     });
   });
