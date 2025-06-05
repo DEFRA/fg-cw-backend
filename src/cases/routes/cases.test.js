@@ -6,13 +6,15 @@ import {
 } from "../controllers/case.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
 import { commonSchema } from "../schemas/common.schema.js";
-import { cases } from "./cases.js";
+import { casesRoutes } from "./cases.js";
 
 vi.mock("../controllers/case.controller.js");
 
 describe("cases routes", () => {
   it("should define the POST /cases route", () => {
-    const route = cases.find((r) => r.method === "POST" && r.path === "/cases");
+    const route = casesRoutes.find(
+      (r) => r.method === "POST" && r.path === "/cases",
+    );
 
     expect(route).toBeDefined();
 
@@ -32,7 +34,9 @@ describe("cases routes", () => {
   });
 
   it("should define the GET /cases route", () => {
-    const route = cases.find((r) => r.method === "GET" && r.path === "/cases");
+    const route = casesRoutes.find(
+      (r) => r.method === "GET" && r.path === "/cases",
+    );
 
     expect(route).toBeDefined();
 
@@ -51,7 +55,7 @@ describe("cases routes", () => {
   });
 
   it("should define the GET /cases/{caseId} route", () => {
-    const route = cases.find(
+    const route = casesRoutes.find(
       (r) => r.method === "GET" && r.path === "/cases/{caseId}",
     );
 

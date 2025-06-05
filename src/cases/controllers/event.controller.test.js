@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { caseData1 } from "../../test/fixtures/case.js";
-import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
+import { caseData1 } from "../../../test/fixtures/case.js";
+import createCaseEvent1 from "../../../test/fixtures/create-case-event-1.json";
 import { caseService } from "../services/case.service.js";
 import { eventController } from "./event.controller.js";
 

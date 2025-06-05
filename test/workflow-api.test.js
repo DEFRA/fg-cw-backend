@@ -2,7 +2,6 @@ import Wreck from "@hapi/wreck";
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { collection as workflowCollection } from "../src/repositories/workflow.repository.js";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
 
 describe.sequential("Workflow API", () => {
@@ -12,7 +11,7 @@ describe.sequential("Workflow API", () => {
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
-    workflows = client.db().collection(workflowCollection);
+    workflows = client.db().collection("workflows");
   });
 
   afterAll(async () => {

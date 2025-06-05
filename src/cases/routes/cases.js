@@ -8,7 +8,7 @@ import {
 import { caseSchema } from "../schemas/case.schema.js";
 import { ListResponse, ValidationError } from "../schemas/common.schema.js";
 
-export const cases = [
+export const casesRoutes = [
   {
     method: "POST",
     path: "/cases",

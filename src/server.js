@@ -4,12 +4,13 @@ import Vision from "@hapi/vision";
 import hapiPino from "hapi-pino";
 import hapiPulse from "hapi-pulse";
 import HapiSwagger from "hapi-swagger";
+import { cases } from "./cases/index.js";
 import { config } from "./common/config.js";
 import { logger } from "./common/logger.js";
 import { mongoClient } from "./common/mongo-client.js";
 import { requestTracing } from "./common/request-tracing.js";
+import { health } from "./health/index.js";
 import { createCaseEventConsumer } from "./plugins/create-case-event-consumer.js";
-import { router } from "./plugins/router.js";
 
 export const createServer = async (host, port) => {
   const server = Hapi.server({
@@ -59,10 +60,7 @@ export const createServer = async (host, port) => {
   // Hapi Plugins:
   // hapi pino      - automatically logs incoming requests
   // requestTracing - trace header logging and propagation
-  // secureContext  - loads CA certificates from environment config
   // hapi pulse     - provides shutdown handlers
-  // mongoDb        - sets up mongo connection pool and attaches to `server` and `request` objects
-  // router         - routes used in the app
 
   await server.register([
     {
@@ -86,9 +84,10 @@ export const createServer = async (host, port) => {
       plugin: HapiSwagger,
       options: swaggerOptions,
     },
-    router,
     createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server),
   ]);
+
+  await server.register([health, cases]);
 
   return server;
 };

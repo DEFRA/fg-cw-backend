@@ -1,8 +1,8 @@
 import Boom from "@hapi/boom";
-import { config } from "../common/config.js";
-import { db } from "../common/mongo-client.js";
+import { config } from "../../common/config.js";
+import { db } from "../../common/mongo-client.js";
 
-export const collection = "workflows";
+const collection = "workflows";
 
 export const workflowRepository = {
   createWorkflow: async (workflow) => {

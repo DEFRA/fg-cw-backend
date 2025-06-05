@@ -1,10 +1,10 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { config } from "../common/config.js";
-import { db } from "../common/mongo-client.js";
+import { config } from "../../common/config.js";
+import { db } from "../../common/mongo-client.js";
 import { Case } from "../models/case.js";
 
-export const collection = "cases";
+const collection = "cases";
 
 const toCase = (doc) => new Case(doc);
 
