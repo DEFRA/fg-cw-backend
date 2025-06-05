@@ -9,14 +9,14 @@ const WorkflowData = Joi.object({
     .pattern(Joi.string(), Joi.any())
     .min(1)
     .required(),
-  stages: Joi.array().items(Stage).min(2).required()
+  stages: Joi.array().items(Stage).min(2).required(),
 });
 
 const Workflow = WorkflowData.keys({
-  _id: Joi.object().required()
+  _id: Joi.object().required(),
 }).label("Workflow");
 
 export const workflowSchema = {
   WorkflowData,
-  Workflow
+  Workflow,
 };

@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import Boom from "@hapi/boom";
+import { describe, expect, it, vi } from "vitest";
+import { caseData1, caseData2 } from "../../test/fixtures/case.js";
+import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
+import { caseService } from "../services/case.service.js";
 import {
   caseCreateController,
+  caseDetailController,
   caseListController,
-  caseDetailController
 } from "./case.controller.js";
-import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import { caseService } from "../services/case.service.js";
-import Boom from "@hapi/boom";
-import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
 
 vi.mock("../cases/use-cases/list-cases.use-case.js");
 vi.mock("../services/case.service.js");
@@ -15,12 +15,12 @@ vi.mock("../services/case.service.js");
 describe("case.controller.js", () => {
   const mockRequest = {
     payload: caseData1,
-    params: { caseId: "10001" }
+    params: { caseId: "10001" },
   };
 
   const mockResponseToolkit = {
     response: vi.fn((payload) => payload),
-    code: vi.fn()
+    code: vi.fn(),
   };
 
   describe("caseCreateController", () => {
@@ -43,7 +43,7 @@ describe("case.controller.js", () => {
     it("should return a list of cases", async () => {
       const mockCases = [
         { _id: "insertedId001", ...caseData1 },
-        { _id: "insertedId002", ...caseData2 }
+        { _id: "insertedId002", ...caseData2 },
       ];
       findCasesUseCase.mockResolvedValue(mockCases);
 
@@ -51,7 +51,7 @@ describe("case.controller.js", () => {
 
       expect(findCasesUseCase).toHaveBeenCalledWith({
         page: 1,
-        pageSize: 100
+        pageSize: 100,
       });
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCases);
       expect(result).toEqual(mockCases);
@@ -66,11 +66,11 @@ describe("case.controller.js", () => {
 
       const result = await caseDetailController(
         mockRequest,
-        mockResponseToolkit
+        mockResponseToolkit,
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId
+        mockRequest.params.caseId,
       );
       expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockCase);
       expect(result).toEqual(mockCase);
@@ -81,16 +81,16 @@ describe("case.controller.js", () => {
 
       const result = await caseDetailController(
         mockRequest,
-        mockResponseToolkit
+        mockResponseToolkit,
       );
 
       expect(caseService.getCase).toHaveBeenCalledWith(
-        mockRequest.params.caseId
+        mockRequest.params.caseId,
       );
       expect(result).toEqual(
         Boom.notFound(
-          "Case with id: " + mockRequest.params.caseId + " not found"
-        )
+          "Case with id: " + mockRequest.params.caseId + " not found",
+        ),
       );
     });
   });

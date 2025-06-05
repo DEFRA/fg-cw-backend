@@ -1,17 +1,17 @@
-import { describe, it, expect } from "vitest";
 import Joi from "joi";
-import { workflows } from "./workflows.js";
+import { describe, expect, it } from "vitest";
+import { workflowData1 } from "../../test/fixtures/workflow.js";
 import {
   workflowCreateController,
   workflowDetailController,
-  workflowListController
+  workflowListController,
 } from "../controllers/workflow.controller.js";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
+import { workflows } from "./workflows.js";
 
 describe("Workflows route configuration tests", () => {
   it("should throw on /POST if workflow code is not valid", () => {
     const postRoute = workflows.find(
-      (route) => route.method === "POST" && route.path === "/workflows"
+      (route) => route.method === "POST" && route.path === "/workflows",
     );
 
     const { payload } = postRoute.options.validate;
@@ -20,24 +20,24 @@ describe("Workflows route configuration tests", () => {
 
     const result1 = payload.validate({
       ...workflowData1,
-      code: "je-0909-llo"
+      code: "je-0909-llo",
     });
 
     expect(result1.error).toBeUndefined();
 
     const result2 = payload.validate({
       ...workflowData1,
-      code: "je_-0909llo+"
+      code: "je_-0909llo+",
     });
 
     expect(result2.error.message).toEqual(
-      '"code" with value "je_-0909llo+" fails to match the required pattern: /^[a-zA-Z0-9-]+$/'
+      '"code" with value "je_-0909llo+" fails to match the required pattern: /^[a-zA-Z0-9-]+$/',
     );
   });
 
   it("should define the POST /workflows route with correct configuration", () => {
     const postRoute = workflows.find(
-      (route) => route.method === "POST" && route.path === "/workflows"
+      (route) => route.method === "POST" && route.path === "/workflows",
     );
 
     expect(postRoute).toBeDefined();
@@ -62,7 +62,7 @@ describe("Workflows route configuration tests", () => {
 
   it("should define the GET /workflows route with correct configuration", () => {
     const getListRoute = workflows.find(
-      (route) => route.method === "GET" && route.path === "/workflows"
+      (route) => route.method === "GET" && route.path === "/workflows",
     );
 
     expect(getListRoute).toBeDefined();
@@ -78,7 +78,7 @@ describe("Workflows route configuration tests", () => {
     expect(Joi.isSchema(options.validate.query)).toBe(true);
     const queryValidation = options.validate.query.validate({
       page: 1,
-      pageSize: 10
+      pageSize: 10,
     });
     expect(queryValidation.error).toBeUndefined();
 
@@ -107,7 +107,7 @@ describe("Workflows route configuration tests", () => {
     // Validate params schema
     expect(Joi.isSchema(options.validate.params)).toBe(true);
     const paramsValidation = options.validate.params.validate({
-      code: "12345"
+      code: "12345",
     });
     expect(paramsValidation.error).toBeUndefined();
 
@@ -121,7 +121,7 @@ describe("Workflows route configuration tests", () => {
 
   it("should not define unexpected routes", () => {
     const unexpectedRoute = workflows.find(
-      (route) => !["POST", "GET"].includes(route.method)
+      (route) => !["POST", "GET"].includes(route.method),
     );
     expect(unexpectedRoute).toBeUndefined();
   });

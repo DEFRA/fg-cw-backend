@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import sqsConsumerPlugin from "./sqs-consumer-plugin.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { sqsConsumerPlugin } from "./sqs-consumer-plugin.js";
 import { SqsConsumer } from "./sqs-consumer.js";
 
 vi.mock("./sqs-consumer.js");
@@ -12,13 +12,13 @@ describe("sqsConsumerPlugin", () => {
     server = {
       app: {},
       events: {
-        on: vi.fn()
-      }
+        on: vi.fn(),
+      },
     };
 
     options = {
       queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
-      handleMessage: vi.fn()
+      handleMessage: vi.fn(),
     };
   });
 
@@ -32,14 +32,14 @@ describe("sqsConsumerPlugin", () => {
 
       expect(SqsConsumer).toHaveBeenCalledWith(server, {
         queueUrl: options.queueUrl,
-        handleMessage: options.handleMessage
+        handleMessage: options.handleMessage,
       });
     });
 
     it("should attach event listeners for start and stop events", async () => {
       const consumerMock = {
         start: vi.fn(),
-        stop: vi.fn()
+        stop: vi.fn(),
       };
       SqsConsumer.mockImplementation(() => consumerMock);
 
@@ -47,11 +47,11 @@ describe("sqsConsumerPlugin", () => {
 
       expect(server.events.on).toHaveBeenCalledWith(
         "start",
-        expect.any(Function)
+        expect.any(Function),
       );
       expect(server.events.on).toHaveBeenCalledWith(
         "stop",
-        expect.any(Function)
+        expect.any(Function),
       );
 
       // Simulate the event listeners
@@ -71,7 +71,7 @@ describe("sqsConsumerPlugin", () => {
     it("should ensure the consumer starts and stops without errors during events", async () => {
       const consumerMock = {
         start: vi.fn().mockResolvedValue(),
-        stop: vi.fn().mockResolvedValue()
+        stop: vi.fn().mockResolvedValue(),
       };
       SqsConsumer.mockImplementation(() => consumerMock);
 
@@ -92,7 +92,7 @@ describe("sqsConsumerPlugin", () => {
       const errorMessage = "Consumer failed";
       const consumerMock = {
         start: vi.fn().mockRejectedValue(new Error(errorMessage)),
-        stop: vi.fn().mockRejectedValue(new Error(errorMessage))
+        stop: vi.fn().mockRejectedValue(new Error(errorMessage)),
       };
       SqsConsumer.mockImplementation(() => consumerMock);
 
