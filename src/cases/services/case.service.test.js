@@ -1,9 +1,9 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
-import { caseData1, caseData3 } from "../../test/fixtures/case.js";
-import createCaseEvent1 from "../../test/fixtures/create-case-event-1.json";
-import createCaseEvent3 from "../../test/fixtures/create-case-event-3.json";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
+import { caseData1, caseData3 } from "../../../test/fixtures/case.js";
+import createCaseEvent1 from "../../../test/fixtures/create-case-event-1.json";
+import createCaseEvent3 from "../../../test/fixtures/create-case-event-3.json";
+import { workflowData1 } from "../../../test/fixtures/workflow.js";
 import { caseRepository } from "../repositories/case.repository.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
 import { caseService } from "./case.service.js";

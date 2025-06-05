@@ -1,15 +1,15 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
-import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import { findCasesUseCase } from "../cases/use-cases/list-cases.use-case.js";
+import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 import { caseService } from "../services/case.service.js";
+import { findCasesUseCase } from "../use-cases/list-cases.use-case.js";
 import {
   caseCreateController,
   caseDetailController,
   caseListController,
 } from "./case.controller.js";
 
-vi.mock("../cases/use-cases/list-cases.use-case.js");
+vi.mock("../use-cases/list-cases.use-case.js");
 vi.mock("../services/case.service.js");
 
 describe("case.controller.js", () => {

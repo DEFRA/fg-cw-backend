@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { describe, expect, it } from "vitest";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
+import { workflowData1 } from "../../../test/fixtures/workflow.js";
 import {
   workflowCreateController,
   workflowDetailController,

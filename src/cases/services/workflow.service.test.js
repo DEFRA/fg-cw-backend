@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
+import {
+  workflowData1,
+  workflowData2,
+} from "../../../test/fixtures/workflow.js";
 import { workflowRepository } from "../repositories/workflow.repository.js";
 import { workflowService } from "./workflow.service.js";
 
