@@ -5,7 +5,7 @@ import { collection } from "./constants.js";
 export const updateStage = async (caseId, nextStage) => {
   return await db.collection(collection).updateOne(
     {
-      _id: new ObjectId(caseId),
+      _id: ObjectId(caseId),
     },
     { $set: { currentStage: nextStage } },
   );
