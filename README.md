@@ -77,7 +77,7 @@ awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-we
 Launch CW and dependencies via Docker Compose:
 
 ```
-docker compose up --watch
+docker compose up --watch --build
 ```
 
 Check the container status in our system and see the container id's
@@ -266,7 +266,7 @@ npm install
 To run the application in `development` mode run:
 
 ```bash
-npm run dev
+docker compose up --watch --build
 ```
 
 ### Testing
