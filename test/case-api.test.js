@@ -34,7 +34,7 @@ const waitForCollectionChange = async (
   return documents;
 };
 
-describe.sequential("Case API", () => {
+describe("Case API", () => {
   let cases;
   let client;
 
@@ -48,7 +48,7 @@ describe.sequential("Case API", () => {
     await client.close();
   });
 
-  describe.sequential("POST /case-events", () => {
+  describe("POST /case-events", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -57,7 +57,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("adds a case", async () => {
+    it("adds a case", async () => {
       const response = await Wreck.post(`${env.API_URL}/case-events`, {
         json: true,
         payload: createCaseEvent3.data,
@@ -102,7 +102,7 @@ describe.sequential("Case API", () => {
     });
   });
 
-  describe.sequential("GET /cases", () => {
+  describe("GET /cases", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
@@ -111,7 +111,7 @@ describe.sequential("Case API", () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("finds cases", async () => {
+    it("finds cases", async () => {
       await cases.insertMany([{ ...caseData1 }, { ...caseData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/cases`, {
@@ -136,12 +136,12 @@ describe.sequential("Case API", () => {
     });
   });
 
-  describe.sequential("GET /cases/{caseId}", () => {
+  describe("GET /cases/{caseId}", () => {
     beforeEach(async () => {
       await cases.deleteMany({});
     });
 
-    it.sequential("finds a case by code", async () => {
+    it("finds a case by code", async () => {
       const { insertedIds } = await cases.insertMany([
         { ...caseData1 },
         { ...caseData2 },
@@ -162,7 +162,7 @@ describe.sequential("Case API", () => {
     });
   });
 
-  describe.sequential("SNS case-event", () => {
+  describe("SNS case-event", () => {
     beforeEach(async () => {
       try {
         await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
@@ -183,7 +183,7 @@ describe.sequential("Case API", () => {
       }
     });
 
-    it.sequential("send case event to topic", async () => {
+    it("send case event to topic", async () => {
       await sendSnsMessage(
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
         createCaseEvent3,
