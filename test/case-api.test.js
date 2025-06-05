@@ -31,60 +31,6 @@ describe("Case API", () => {
     await client.close();
   });
 
-  describe("POST /case-events", () => {
-    beforeEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    afterEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    it("adds a case", async () => {
-      const response = await Wreck.post(`${env.API_URL}/case-events`, {
-        json: true,
-        payload: createCaseEvent3.data,
-      });
-
-      expect(response.res.statusCode).toBe(201);
-
-      const documents = await cases.find({}).toArray();
-
-      expect(documents.length).toBe(1);
-      expect(documents[0]).toEqual({
-        ...caseData3,
-        dateReceived: expect.any(String),
-        _id: expect.any(Object),
-        payload: {
-          ...caseData3.payload,
-          createdAt: new Date(caseData3.payload.createdAt),
-          submittedAt: new Date(caseData3.payload.submittedAt),
-        },
-        currentStage: "application-receipt",
-        stages: [
-          {
-            id: "application-receipt",
-            taskGroups: [
-              {
-                id: "application-receipt-tasks",
-                tasks: [
-                  {
-                    id: "simple-review",
-                    isComplete: false,
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: "contract",
-            taskGroups: [],
-          },
-        ],
-      });
-    });
-  });
-
   describe("GET /cases", () => {
     beforeEach(async () => {
       await cases.deleteMany({});

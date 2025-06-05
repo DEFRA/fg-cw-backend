@@ -1,7 +1,6 @@
 import Hapi from "@hapi/hapi";
 import { describe, expect, it } from "vitest";
 import { cases } from "./index.js";
-import { caseEvents } from "./routes/case-events.js";
 import { casesRoutes } from "./routes/cases.js";
 import { workflows } from "./routes/workflows.js";
 
@@ -18,7 +17,6 @@ describe("Router plugin tests", () => {
     const expectedRoutes = [
       ...casesRoutes.map((r) => r.path),
       ...workflows.map((r) => r.path),
-      ...caseEvents.map((r) => r.path),
     ];
 
     // Actual server's registered route paths
