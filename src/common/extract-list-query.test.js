@@ -1,14 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { config } from "./config.js";
 import { extractListQuery } from "./extract-list-query.js";
 
 vi.mock("./config.js");
 
 describe("extractListQuery", () => {
-  beforeEach(() => {
-    config.get.mockReset(); // Reset mocked config for each test
-  });
-
   it("should return default values when no query parameters are provided", () => {
     const mockApiConfig = {
       pageSize: 10,
