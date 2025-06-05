@@ -1,5 +1,5 @@
+import { caseService } from "../cases/services/case.service.js";
 import { logger } from "../common/logger.js";
-import { caseService } from "../services/case.service.js";
 
 export const createCaseEventHandler = () => async (event) => {
   const newCase = await caseService.handleCreateCaseEvent(event.data);

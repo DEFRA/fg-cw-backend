@@ -11,7 +11,6 @@ import {
   it,
 } from "vitest";
 import { config } from "../src/common/config.js";
-import { collection as caseCollection } from "../src/repositories/case.repository.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
@@ -24,7 +23,7 @@ describe("Case API", () => {
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
-    cases = client.db().collection(caseCollection);
+    cases = client.db().collection("cases");
   });
 
   afterAll(async () => {

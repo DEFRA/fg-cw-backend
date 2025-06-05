@@ -1,12 +1,15 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
-import workflowListResponse from "../../test/fixtures/workflow-list-response.json";
-import { workflowData1, workflowData2 } from "../../test/fixtures/workflow.js";
-import { db } from "../common/mongo-client.js";
+import workflowListResponse from "../../../test/fixtures/workflow-list-response.json";
+import {
+  workflowData1,
+  workflowData2,
+} from "../../../test/fixtures/workflow.js";
+import { db } from "../../common/mongo-client.js";
 import { workflowRepository } from "./workflow.repository.js";
 
-vi.mock("../common/mongo-client.js", () => ({
+vi.mock("../../common/mongo-client.js", () => ({
   db: {
     collection: vi.fn(),
   },

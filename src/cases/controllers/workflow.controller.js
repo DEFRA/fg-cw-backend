@@ -1,5 +1,5 @@
 import Boom from "@hapi/boom";
-import { extractListQuery } from "../common/extract-list-query.js";
+import { extractListQuery } from "../../common/extract-list-query.js";
 import { workflowService } from "../services/workflow.service.js";
 
 export const workflowCreateController = async (request, h) => {

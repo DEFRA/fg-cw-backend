@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
-import { workflowData1 } from "../../test/fixtures/workflow.js";
+import { workflowData1 } from "../../../test/fixtures/workflow.js";
 import { workflowService } from "../services/workflow.service.js";
 import {
   workflowCreateController,

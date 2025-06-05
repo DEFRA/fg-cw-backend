@@ -1,12 +1,12 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
-import caseListResponse from "../../test/fixtures/case-list-response.json";
-import { caseData1, caseData2 } from "../../test/fixtures/case.js";
-import { db } from "../common/mongo-client.js";
+import caseListResponse from "../../../test/fixtures/case-list-response.json";
+import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
+import { db } from "../../common/mongo-client.js";
 import { caseRepository, findAll } from "./case.repository.js";
 
-vi.mock("../common/mongo-client.js", () => ({
+vi.mock("../../common/mongo-client.js", () => ({
   db: {
     collection: vi.fn(),
   },
