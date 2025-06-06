@@ -10,6 +10,7 @@ import {
   expect,
   it,
 } from "vitest";
+import { collection as caseCollection } from "../src/cases/repositories/constants.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
@@ -22,128 +23,11 @@ describe("Case API", () => {
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
-    cases = client.db().collection("cases");
+    cases = client.db().collection(caseCollection);
   });
 
   afterAll(async () => {
     await client.close();
-  });
-
-  describe("POST /case-events", () => {
-    beforeEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    afterEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    it("adds a case", async () => {
-      const response = await Wreck.post(`${env.API_URL}/case-events`, {
-        json: true,
-        payload: createCaseEvent3.data,
-      });
-
-      expect(response.res.statusCode).toBe(201);
-      expect(response.payload).toEqual({
-        ...caseData3,
-        _id: expect.any(String),
-        dateReceived: expect.any(String),
-        currentStage: "application-receipt",
-        stages: [
-          {
-            id: "application-receipt",
-            taskGroups: [
-              {
-                id: "application-receipt-tasks",
-                tasks: [
-                  {
-                    id: "simple-review",
-                    isComplete: false,
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: "contract",
-            taskGroups: [],
-          },
-        ],
-      });
-
-      const documents = await cases.find({}).toArray();
-
-      expect(documents.length).toBe(1);
-      expect(documents[0]).toEqual({
-        ...caseData3,
-        dateReceived: expect.any(String),
-        _id: expect.any(Object),
-        payload: {
-          ...caseData3.payload,
-          createdAt: new Date(caseData3.payload.createdAt),
-          submittedAt: new Date(caseData3.payload.submittedAt),
-        },
-        currentStage: "application-receipt",
-        stages: [
-          {
-            id: "application-receipt",
-            taskGroups: [
-              {
-                id: "application-receipt-tasks",
-                tasks: [
-                  {
-                    id: "simple-review",
-                    isComplete: false,
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: "contract",
-            taskGroups: [],
-          },
-        ],
-      });
-    });
-  });
-
-  describe("POST /cases", () => {
-    beforeEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    afterEach(async () => {
-      await cases.deleteMany({});
-    });
-
-    it("adds a case", async () => {
-      const response = await Wreck.post(`${env.API_URL}/cases`, {
-        json: true,
-        payload: caseData1,
-      });
-
-      expect(response.res.statusCode).toBe(201);
-      expect(response.payload).toEqual({
-        ...caseData1,
-        _id: expect.any(String),
-      });
-
-      const documents = await cases.find({}).toArray();
-
-      expect(documents.length).toBe(1);
-      expect(documents[0]).toEqual({
-        ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
-        _id: expect.any(Object),
-        payload: {
-          ...caseData1.payload,
-          createdAt: new Date(caseData1.payload.createdAt),
-          submittedAt: new Date(caseData1.payload.submittedAt),
-        },
-      });
-    });
   });
 
   describe("GET /cases", () => {

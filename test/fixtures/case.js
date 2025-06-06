@@ -3,9 +3,7 @@ export const caseData1 = {
   caseRef: "APPLICATION-REF-1",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
-  // targetDate: "2025-04-27T11:34:52.000Z",
   priority: "MEDIUM",
-  // assignedUser: "Mark Ford",
   payload: {
     clientRef: "APPLICATION-REF-1",
     code: "frps-private-beta",
@@ -121,9 +119,7 @@ export const caseData3 = {
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
-  targetDate: null,
   priority: "LOW",
-  assignedUser: null,
   payload: {
     clientRef: "APPLICATION-REF-3",
     code: "frps-private-beta",

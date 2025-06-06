@@ -4,7 +4,6 @@ import { db, mongoClient } from "../common/mongo-client.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
-import { caseEvents } from "./routes/case-events.js";
 import { casesRoutes } from "./routes/cases.js";
 import { workflows } from "./routes/workflows.js";
 
@@ -23,6 +22,6 @@ export const cases = {
       await createNewCaseSubscriber.stop();
     });
 
-    server.route([...casesRoutes, ...workflows, ...caseEvents]);
+    server.route([...casesRoutes, ...workflows]);
   },
 };

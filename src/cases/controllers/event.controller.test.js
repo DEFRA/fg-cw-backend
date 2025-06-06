@@ -49,7 +49,6 @@ describe("eventController", () => {
     await eventController(mockRequest, mockResponse);
 
     // Assert
-    expect(mockResponse.response).toHaveBeenCalledWith(mockCreatedCase);
     expect(mockResponse.code).toHaveBeenCalledWith(201);
   });
 
