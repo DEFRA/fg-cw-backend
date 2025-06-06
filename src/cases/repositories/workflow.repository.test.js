@@ -7,7 +7,9 @@ import {
   workflowData2,
 } from "../../../test/fixtures/workflow.js";
 import { db } from "../../common/mongo-client.js";
-import { workflowRepository } from "./workflow.repository.js";
+import { WorkflowDocument } from "../models/workflow-document.js";
+import { Workflow } from "../models/workflow.js";
+import { findAll, findByCode, save } from "./workflow.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
@@ -15,7 +17,7 @@ vi.mock("../../common/mongo-client.js", () => ({
   },
 }));
 
-describe("createWorkflow", () => {
+describe("save", () => {
   it("creates a workflow and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -25,11 +27,23 @@ describe("createWorkflow", () => {
       insertOne,
     });
 
-    const result = await workflowRepository.createWorkflow(workflowData1);
+    const result = await save(
+      new Workflow({
+        code: workflowData1.code,
+        payloadDefinition: workflowData1.payloadDefinition,
+        stages: workflowData1.stages,
+      }),
+    );
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
 
-    expect(insertOne).toHaveBeenCalledWith(workflowData1);
+    expect(insertOne).toHaveBeenCalledWith(
+      new WorkflowDocument({
+        code: workflowData1.code,
+        payloadDefinition: workflowData1.payloadDefinition,
+        stages: workflowData1.stages,
+      }),
+    );
 
     expect(result).toEqual(workflowData1);
   });
@@ -42,9 +56,7 @@ describe("createWorkflow", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(
+    await expect(save(workflowData1)).rejects.toThrow(
       Boom.conflict(
         `Workflow with code "${workflowData1.code}" already exists`,
       ),
@@ -58,9 +70,7 @@ describe("createWorkflow", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(error);
+    await expect(save(workflowData1)).rejects.toThrow(error);
   });
 
   it("throws when write is unacknowledged", async () => {
@@ -70,9 +80,7 @@ describe("createWorkflow", () => {
       }),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(
+    await expect(save(workflowData1)).rejects.toThrow(
       Boom.internal(
         `Workflow with code "${workflowData1.code}" could not be created, the operation was not acknowledged`,
       ),
@@ -80,7 +88,7 @@ describe("createWorkflow", () => {
   });
 });
 
-describe("findWorkflows", () => {
+describe("findAll", () => {
   it("returns a list of workflows", async () => {
     const listQuery = { page: 1, pageSize: 10 };
     const workflows = [workflowData1, workflowData2];
@@ -100,7 +108,7 @@ describe("findWorkflows", () => {
       estimatedDocumentCount: vi.fn().mockResolvedValue(workflows.length),
     });
 
-    const result = await workflowRepository.findWorkflows(listQuery);
+    const result = await findAll(listQuery);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(skip).toHaveBeenCalledWith(0);
@@ -109,7 +117,7 @@ describe("findWorkflows", () => {
   });
 });
 
-describe("getWorkflow", () => {
+describe("findByCode", () => {
   it("returns workflows by code", async () => {
     const insertedId = "insertedId123";
     const expectedWorkflow = { _id: insertedId, ...workflowData1 };
@@ -121,7 +129,7 @@ describe("getWorkflow", () => {
     });
 
     const code = "123";
-    const result = await workflowRepository.getWorkflow(code);
+    const result = await findByCode(code);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(findOne).toHaveBeenCalledWith({ code });
@@ -134,7 +142,7 @@ describe("getWorkflow", () => {
     });
 
     const code = "DOESNT_EXIST";
-    const result = await workflowRepository.getWorkflow(code);
+    const result = await findByCode(code);
 
     expect(result).toEqual(null);
   });

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { findCaseResponseSchema } from "./responses/find-cases-response.schema.js";
+import { findCaseResponseSchema } from "./responses/find-case-response.schema.js";
 import { workflowSchema } from "./workflow.schema.js";
 
 export const ListResponse = Joi.object({

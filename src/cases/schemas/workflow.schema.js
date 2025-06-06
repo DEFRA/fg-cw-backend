@@ -13,7 +13,7 @@ const WorkflowData = Joi.object({
 });
 
 const Workflow = WorkflowData.keys({
-  _id: Joi.object().required(),
+  _id: Joi.string().hex().length(24).required(),
 }).label("Workflow");
 
 export const workflowSchema = {

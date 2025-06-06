@@ -31,8 +31,8 @@ const GrantCaseEventAnswers = Joi.object({
 const GrantCaseEvent = Joi.object({
   clientRef: Joi.string().required(),
   code: Joi.string().required(),
-  createdAt: Joi.date().iso().required(),
-  submittedAt: Joi.date().iso().required(),
+  createdAt: Joi.string().isoDate().required(),
+  submittedAt: Joi.string().isoDate().required(),
   identifiers: GrantCaseEventIdentifiers.required(),
   answers: GrantCaseEventAnswers.required(),
 });
@@ -66,8 +66,7 @@ const CaseData = Joi.object({
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
   status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),
-  dateReceived: Joi.date().iso().required(),
-  targetDate: Joi.date().iso().allow(null).optional(),
+  dateReceived: Joi.string().isoDate().required(),
   priority: Joi.string().valid("LOW", "MEDIUM", "HIGH").required(),
   assignedUser: Joi.string().allow(null).optional(),
   payload: CasePayload.required(),
@@ -76,7 +75,7 @@ const CaseData = Joi.object({
 }).label("CaseData");
 
 const Case = CaseData.keys({
-  _id: Joi.object().required(),
+  _id: Joi.string().hex().length(24).required(),
 }).label("Case");
 
 const NextStage = Joi.object({

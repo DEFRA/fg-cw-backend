@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 import { db } from "../../common/mongo-client.js";
 import { Case } from "../models/case.js";
-import { findCasesUseCase } from "./list-cases.use-case.js";
+import { findCasesUseCase } from "./find-cases.use-case.js";
 
-describe("List Cases Use Case", () => {
-  it("should find cases and return data as an array", async () => {
+describe("findCasesUseCase", () => {
+  it("finds cases", async () => {
     const mockCaseList = [new Case(caseData1, caseData2)];
 
     const listQuery = {};

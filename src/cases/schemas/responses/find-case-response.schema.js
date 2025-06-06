@@ -3,7 +3,7 @@ import { CasePayload, CaseStage } from "../case.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
 
 export const findCaseResponseSchema = Joi.object({
-  _id: Joi.object().required(),
+  _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
   status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),

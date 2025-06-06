@@ -4,13 +4,16 @@ import { db, mongoClient } from "../common/mongo-client.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
-import { caseEvents } from "./routes/case-events.js";
-import { casesRoutes } from "./routes/cases.js";
-import { workflows } from "./routes/workflows.js";
+import { changeCaseStageRoute } from "./routes/change-case-stage.route.js";
+import { createWorkflowRoute } from "./routes/create-workflow.route.js";
+import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
+import { findCasesRoute } from "./routes/find-cases.route.js";
+import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
+import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 
 export const cases = {
   name: "cases",
-  async register(server, _options) {
+  async register(server) {
     logger.info("Running DB Migrations");
     await up(db, mongoClient);
     logger.info("Finished running DB Migrations");
@@ -23,6 +26,13 @@ export const cases = {
       await createNewCaseSubscriber.stop();
     });
 
-    server.route([...casesRoutes, ...workflows, ...caseEvents]);
+    server.route([
+      findCasesRoute,
+      findCaseByIdRoute,
+      changeCaseStageRoute,
+      createWorkflowRoute,
+      findWorkflowsRoute,
+      findWorkflowByCodeRoute,
+    ]);
   },
 };
