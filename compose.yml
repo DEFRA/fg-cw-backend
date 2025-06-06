@@ -44,13 +44,12 @@ services:
       - cdp-tenant
     develop:
       watch:
-        - path: ./src
+        - path: src/
           target: /home/node/src
           action: sync+restart
     volumes:
       - ./migrate-mongo-config.js:/home/node/migrate-mongo-config.js
       - ./migrations:/home/node/migrations
-      - ./src:/home/node/src
       - ./package.json:/home/node/package.json
 
 volumes:

@@ -306,6 +306,14 @@ To view them in your command line run:
 npm run
 ```
 
+#### Publish SQS messages
+
+Create a new case:
+
+```bash
+npm run publish:case:new
+```
+
 ### Update dependencies
 
 To update dependencies use [npm-check-updates](https://github.com/raineorshine/npm-check-updates):
