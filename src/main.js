@@ -1,13 +1,11 @@
 import process from "node:process";
-
-import { config } from "./common/config.js";
 import { logger } from "./common/logger.js";
-import { startServer } from "./common/start-server.js";
-
-await startServer(config.get("host"), config.get("port"));
+import { createServer } from "./server.js";
 
 process.on("unhandledRejection", (error) => {
-  logger.info("Unhandled rejection");
-  logger.error(error);
+  logger.error(error, "Unhandled rejection");
   process.exitCode = 1;
 });
+
+const server = await createServer();
+await server.start();

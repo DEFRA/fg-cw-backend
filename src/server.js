@@ -1,4 +1,5 @@
-import Hapi from "@hapi/hapi";
+import { tracing } from "@defra/hapi-tracing";
+import hapi from "@hapi/hapi";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
 import hapiPino from "hapi-pino";
@@ -8,14 +9,12 @@ import { cases } from "./cases/index.js";
 import { config } from "./common/config.js";
 import { logger } from "./common/logger.js";
 import { mongoClient } from "./common/mongo-client.js";
-import { requestTracing } from "./common/request-tracing.js";
 import { health } from "./health/index.js";
-import { createCaseEventConsumer } from "./plugins/create-case-event-consumer.js";
 
-export const createServer = async (host, port) => {
-  const server = Hapi.server({
-    host,
-    port,
+export const createServer = async () => {
+  const server = hapi.server({
+    host: config.get("host"),
+    port: config.get("port"),
     routes: {
       validate: {
         options: {
@@ -42,13 +41,6 @@ export const createServer = async (host, port) => {
     },
   });
 
-  const swaggerOptions = {
-    info: {
-      title: "Case Working Application Service API Documentation",
-      version: config.get("serviceVersion"),
-    },
-  };
-
   server.events.on("start", async () => {
     await mongoClient.connect();
   });
@@ -56,11 +48,6 @@ export const createServer = async (host, port) => {
   server.events.on("stop", async () => {
     await mongoClient.close(true);
   });
-
-  // Hapi Plugins:
-  // hapi pino      - automatically logs incoming requests
-  // requestTracing - trace header logging and propagation
-  // hapi pulse     - provides shutdown handlers
 
   await server.register([
     {
@@ -70,7 +57,12 @@ export const createServer = async (host, port) => {
         instance: logger,
       },
     },
-    requestTracing,
+    {
+      plugin: tracing.plugin,
+      options: {
+        tracingHeader: config.get("tracing.header"),
+      },
+    },
     {
       plugin: hapiPulse,
       options: {
@@ -82,9 +74,13 @@ export const createServer = async (host, port) => {
     Vision,
     {
       plugin: HapiSwagger,
-      options: swaggerOptions,
+      options: {
+        info: {
+          title: "Case Working Service",
+          version: config.get("serviceVersion"),
+        },
+      },
     },
-    createCaseEventConsumer(config.get("aws.createNewCaseSqsUrl"), server),
   ]);
 
   await server.register([health, cases]);
