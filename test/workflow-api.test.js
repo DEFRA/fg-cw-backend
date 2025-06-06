@@ -4,7 +4,7 @@ import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
 
-describe.sequential("Workflow API", () => {
+describe("Workflow API", () => {
   let workflows;
   let client;
 
@@ -18,12 +18,12 @@ describe.sequential("Workflow API", () => {
     await client.close();
   });
 
-  describe.sequential("POST /workflows", () => {
+  describe("POST /workflows", () => {
     beforeEach(async () => {
       await workflows.deleteMany({});
     });
 
-    it.sequential("adds a workflow", async () => {
+    it("adds a workflow", async () => {
       const payload = { ...workflowData1 };
       const response = await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
@@ -45,7 +45,7 @@ describe.sequential("Workflow API", () => {
       });
     });
 
-    it.sequential("throws if workflow code already exists", async () => {
+    it("throws if workflow code already exists", async () => {
       const payload = { ...workflowData1 };
       await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
@@ -61,12 +61,12 @@ describe.sequential("Workflow API", () => {
     });
   });
 
-  describe.sequential("GET /workflows", () => {
+  describe("GET /workflows", () => {
     beforeEach(async () => {
       await workflows.deleteMany({});
     });
 
-    it.sequential("finds workflows", async () => {
+    it("finds workflows", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows`, {
@@ -91,12 +91,12 @@ describe.sequential("Workflow API", () => {
     });
   });
 
-  describe.sequential("GET /workflows/{code}", () => {
+  describe("GET /workflows/{code}", () => {
     beforeEach(async () => {
       await workflows.deleteMany({});
     });
 
-    it.sequential("finds a workflow by code", async () => {
+    it("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
       const response = await Wreck.get(`${env.API_URL}/workflows/GRANT-REF-2`, {

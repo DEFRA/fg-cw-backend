@@ -11,7 +11,6 @@ import {
   it,
 } from "vitest";
 import { collection as caseCollection } from "../src/cases/repositories/constants.js";
-import { config } from "../src/common/config.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
@@ -93,23 +92,13 @@ describe("Case API", () => {
 
   describe("SNS case-event", () => {
     beforeEach(async () => {
-      try {
-        await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
-        await cases.deleteMany({});
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
-      }
+      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await cases.deleteMany({});
     });
 
     afterEach(async () => {
-      try {
-        await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
-        await cases.deleteMany({});
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
-      }
+      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await cases.deleteMany({});
     });
 
     it("send case event to topic", async () => {
@@ -117,6 +106,7 @@ describe("Case API", () => {
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
         createCaseEvent3,
       );
+
       const documents = await waitForDocuments(cases);
       expect(documents).toHaveLength(1);
       expect(documents[0]).toEqual({

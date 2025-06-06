@@ -1,8 +1,6 @@
 import Boom from "@hapi/boom";
-import { randomUUID } from "crypto";
-import { config } from "../../common/config.js";
 import { extractListQuery } from "../../common/extract-list-query.js";
-import { publish } from "../../common/sns.js";
+import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { caseService } from "../services/case.service.js";
 import { findCasesUseCase } from "../use-cases/list-cases.use-case.js";
 
@@ -39,19 +37,7 @@ export const caseStageController = async (request, h) => {
 
   await caseService.updateCaseStage(caseId, nextStage);
 
-  const event = {
-    id: randomUUID(),
-    source: config.get("serviceName"),
-    specVersion: "1.0",
-    type: `cloud.defra.${config.get("cdpEnvironment")}.${config.get("serviceName")}.case.stage.updated`,
-    data: {
-      caseRef: caseRecord.caseRef,
-      previousStage,
-      currentStage: nextStage,
-    },
-  };
-
-  await publish(config.get("aws.caseStageUpdatedTopicArn"), event);
+  await publishCaseStageUpdated(caseRecord.caseRef, previousStage, nextStage);
 
   return h.response().code(204);
 };
