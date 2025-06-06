@@ -108,41 +108,18 @@ export const config = convict({
     },
   },
   aws: {
-    isLocalstackEnabled: {
-      doc: "Is localstack enabled",
-      format: Boolean,
-      default: false,
-      env: "LOCALSTACK_ENABLED",
+    endpointUrl: {
+      doc: "AWS Endpoint URL used for LocalStack",
+      format: String,
+      nullable: true,
+      default: null,
+      env: "AWS_ENDPOINT_URL",
     },
-    awsRegion: {
+    region: {
       doc: "AWS Region",
       format: String,
       default: "eu-west-2",
       env: "AWS_REGION",
-    },
-    sqsEndpoint: {
-      doc: "SQS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
-      format: String,
-      default: "http://localstack:4566",
-      env: "SQS_ENDPOINT",
-    },
-    sqsWaitTimeInSeconds: {
-      doc: "SQS Wait Time in Seconds",
-      format: Number,
-      default: 20,
-      env: "SQS_WAIT_TIME_IN_SECONDS",
-    },
-    sqsMaxNumberOfMessages: {
-      doc: "SQS Max Number of Messages",
-      format: Number,
-      default: 10,
-      env: "SQS_MAX_NUMBER_OF_MESSAGES",
-    },
-    snsEndpoint: {
-      doc: "SNS Endpoint, if not using AWS default endpoint. E.g. http://localhost:4566",
-      format: String,
-      default: "http://localstack:4566",
-      env: "SNS_ENDPOINT",
     },
     createNewCaseSqsUrl: {
       doc: "URL of the SQS queue for case creation events",
@@ -157,25 +134,6 @@ export const config = convict({
       default: "arn:aws:sns:eu-west-2:000000000000:case_stage_updated",
       env: "CASE_STAGE_UPDATED_TOPIC_ARN",
     },
-  },
-  httpProxy: {
-    doc: "HTTP Proxy URL",
-    format: String,
-    nullable: true,
-    default: null,
-    env: "HTTP_PROXY",
-  },
-  isSecureContextEnabled: {
-    doc: "Enable Secure Context",
-    format: Boolean,
-    default: isProduction,
-    env: "ENABLE_SECURE_CONTEXT",
-  },
-  isMetricsEnabled: {
-    doc: "Enable metrics reporting",
-    format: Boolean,
-    default: isProduction,
-    env: "ENABLE_METRICS",
   },
   tracing: {
     header: {

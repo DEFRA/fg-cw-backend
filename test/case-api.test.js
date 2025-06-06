@@ -10,7 +10,6 @@ import {
   expect,
   it,
 } from "vitest";
-import { config } from "../src/common/config.js";
 import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
@@ -209,12 +208,12 @@ describe("Case API", () => {
 
   describe("SNS case-event", () => {
     beforeEach(async () => {
-      await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
+      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
     afterEach(async () => {
-      await purgeSqsQueue(config.get("aws.createNewCaseSqsUrl"));
+      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
@@ -223,6 +222,7 @@ describe("Case API", () => {
         "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
         createCaseEvent3,
       );
+
       const documents = await waitForDocuments(cases);
       expect(documents).toHaveLength(1);
       expect(documents[0]).toEqual({

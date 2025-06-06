@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
 
 let environment;
@@ -5,17 +6,18 @@ let environment;
 export const setup = async ({ globalConfig }) => {
   const { env } = globalConfig;
 
-  environment = await new DockerComposeEnvironment(".", "compose.yml")
+  const composeFilePath = path.resolve(import.meta.dirname, "..");
+
+  environment = await new DockerComposeEnvironment(
+    composeFilePath,
+    "compose.yml",
+  )
     .withEnvironment({
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
-      LOCALSTACK_ENABLED: env.LOCALSTACK_ENABLED,
-      AWS_PORT: env.AWS_PORT,
-      SQS_ENDPOINT: env.SQS_ENDPOINT,
-      SNS_ENDPOINT: env.SNS_ENDPOINT,
-      CREATE_NEW_CASE_SQS_URL: env.CREATE_NEW_CASE_SQS_URL,
+      LOCALSTACK_PORT: env.LOCALSTACK_PORT,
     })
-    .withWaitStrategy("fg-cw-backend", Wait.forListeningPorts())
+    .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()
     .up();
 };

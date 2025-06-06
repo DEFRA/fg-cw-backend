@@ -2,7 +2,7 @@ services:
   localstack:
     image: localstack/localstack:4.3.0
     ports:
-      - "${AWS_PORT:-4566}:4566"
+      - "${LOCALSTACK_PORT:-4566}:4566"
     env_file:
       - "compose/aws.env"
     environment:
@@ -39,13 +39,7 @@ services:
       mongodb:
         condition: service_started
     env_file:
-      - "compose/aws.env"
-    environment:
-      PORT: 3001
-      NODE_ENV: development
-      LOCALSTACK_ENABLED: true,
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-      MONGO_URI: mongodb://mongodb:27017/
+      - ".env"
     networks:
       - cdp-tenant
     develop:

@@ -1,41 +1,73 @@
-import Hapi from "@hapi/hapi";
-import { describe, expect, it } from "vitest";
+import hapi from "@hapi/hapi";
+import { up } from "migrate-mongo";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
-import { caseEvents } from "./routes/case-events.js";
-import { casesRoutes } from "./routes/cases.js";
-import { workflows } from "./routes/workflows.js";
+import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
-describe("Router plugin tests", () => {
-  it("should register all routes correctly", async () => {
-    // Create a mock Hapi server
-    const server = Hapi.server();
-    await server.register(cases);
+vi.mock("migrate-mongo", () => ({
+  up: vi.fn(),
+}));
 
-    // Verify that all routes are correctly registered
-    const registeredRoutes = server.table();
+vi.mock("../common/mongo-client.js", () => ({
+  db: {
+    createIndex: vi.fn(),
+  },
+  mongoClient: {},
+}));
 
-    // Create lists of route paths from imported modules
-    const expectedRoutes = [
-      ...casesRoutes.map((r) => r.path),
-      ...workflows.map((r) => r.path),
-      ...caseEvents.map((r) => r.path),
-    ];
+vi.mock("./subscribers/create-new-case.subscriber.js");
 
-    // Actual server's registered route paths
-    const actualRoutes = registeredRoutes.map((route) => route.path);
+describe("cases", () => {
+  let server;
 
-    // Assert that all expected routes exist in registered routes
-    expect(new Set(actualRoutes)).toEqual(new Set(expectedRoutes));
+  beforeEach(() => {
+    server = hapi.server();
   });
 
-  it("should register the router plugin itself", async () => {
-    const server = Hapi.server();
-
-    // Verify if the routes were registered by checking the server's table
+  it("runs migrations on startup", async () => {
     await server.register(cases);
-    const registeredRoutes = server.table();
+    await server.initialize();
 
-    // Assert that routes are registered (length > 0)
-    expect(registeredRoutes.length).toBeGreaterThan(0);
+    expect(up).toHaveBeenCalledWith(db, mongoClient);
+  });
+
+  it("starts subscribers on startup", async () => {
+    await server.register(cases);
+    await server.initialize();
+
+    server.events.emit("start");
+
+    expect(createNewCaseSubscriber.start).toHaveBeenCalled();
+  });
+
+  it("stops subscribers on shutdown", async () => {
+    await server.register(cases);
+    await server.initialize();
+
+    server.events.emit("stop");
+
+    expect(createNewCaseSubscriber.stop).toHaveBeenCalled();
+  });
+
+  it("registers routes", async () => {
+    await server.register(cases);
+    await server.initialize();
+
+    const routes = server.table().map((r) => ({
+      path: r.path,
+      method: r.method,
+    }));
+
+    expect(routes).toEqual([
+      { method: "post", path: "/case-events" },
+      { method: "post", path: "/cases" },
+      { method: "post", path: "/workflows" },
+      { method: "post", path: "/cases/{caseId}/stage" },
+      { method: "get", path: "/cases" },
+      { method: "get", path: "/workflows" },
+      { method: "get", path: "/cases/{caseId}" },
+      { method: "get", path: "/workflows/{code}" },
+    ]);
   });
 });
