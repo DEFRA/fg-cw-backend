@@ -5,6 +5,7 @@ const Task = Joi.object({
   id: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
+  description: Joi.string().optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({
