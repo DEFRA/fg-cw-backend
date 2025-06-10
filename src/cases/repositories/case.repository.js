@@ -32,6 +32,17 @@ export const findAll = async (listQuery) => {
   };
 };
 
+export const updateCaseStages = async (caseId, stages) => {
+  return db.collection(collection).updateOne(
+    {
+      _id: ObjectId.createFromHexString(caseId),
+    },
+    {
+      $set: { stages },
+    },
+  );
+};
+
 export const caseRepository = {
   createCase: async (caseData) => {
     let result;

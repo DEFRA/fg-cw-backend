@@ -4,6 +4,7 @@ import {
   caseDetailController,
   caseListController,
   caseStageController,
+  caseTaskCompleteController,
 } from "../controllers/case.controller.js";
 import { caseSchema } from "../schemas/case.schema.js";
 import { ListResponse, ValidationError } from "../schemas/common.schema.js";
@@ -67,6 +68,31 @@ export const casesRoutes = [
       },
     },
     handler: caseDetailController,
+  },
+  {
+    method: "POST",
+    path: "/cases/{caseId}/task",
+    options: {
+      description: "Complete a task",
+      tags: ["api"],
+      validate: {
+        params: Joi.object({
+          caseId: Joi.string().hex().length(24),
+        }),
+        payload: Joi.object({
+          caseId: Joi.string(),
+          isComplete: Joi.boolean(),
+          taskId: Joi.string(),
+          groupId: Joi.string(),
+        }),
+      },
+      response: {
+        status: {
+          400: ValidationError,
+        },
+      },
+    },
+    handler: caseTaskCompleteController,
   },
   {
     method: "POST",
