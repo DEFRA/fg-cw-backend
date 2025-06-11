@@ -60,14 +60,12 @@ describe("cases", () => {
     }));
 
     expect(routes).toEqual([
-      { method: "post", path: "/case-events" },
-      { method: "post", path: "/cases" },
-      { method: "post", path: "/workflows" },
-      { method: "post", path: "/cases/{caseId}/stage" },
       { method: "get", path: "/cases" },
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/{caseId}" },
       { method: "get", path: "/workflows/{code}" },
+      { method: "post", path: "/workflows" },
+      { method: "post", path: "/cases/{caseId}/stage" },
     ]);
   });
 });

@@ -1,28 +1,4 @@
 import Joi from "joi";
-import { findCaseResponseSchema } from "./responses/find-cases-response.schema.js";
-import { workflowSchema } from "./workflow.schema.js";
-
-export const ListResponse = Joi.object({
-  metadata: Joi.object({
-    count: Joi.number().required(),
-    page: Joi.number().required(),
-    pageSize: Joi.number().required(),
-    pageCount: Joi.number().required(),
-  }),
-  data: Joi.array()
-    .items(
-      findCaseResponseSchema,
-      workflowSchema.Workflow, // Allow Type A or Type B in the array
-    )
-    .required(),
-  status: Joi.string().valid("success", "failure").required(),
-  message: Joi.string().optional(),
-})
-  .label("ListResponse")
-  .options({
-    presence: "required",
-    stripUnknown: true,
-  });
 
 export const ValidationError = Joi.object({
   statusCode: Joi.number().example(400),
@@ -33,8 +9,3 @@ export const ValidationError = Joi.object({
     source: Joi.string().example("payload"),
   }),
 }).label("ValidationError");
-
-export const commonSchema = {
-  ListResponse,
-  ValidationError,
-};

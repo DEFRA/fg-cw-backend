@@ -1,10 +1,10 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
-import caseListResponse from "../../../test/fixtures/case-list-response.json";
-import { caseData1, caseData2 } from "../../../test/fixtures/case.js";
 import { db } from "../../common/mongo-client.js";
-import { caseRepository, findAll } from "./case.repository.js";
+import { CaseDocument } from "../models/case-document.js";
+import { Case } from "../models/case.js";
+import { findAll, findById, save, updateStage } from "./case.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
@@ -12,7 +12,7 @@ vi.mock("../../common/mongo-client.js", () => ({
   },
 }));
 
-describe("createCase", () => {
+describe("save", () => {
   it("creates a case and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -22,11 +22,17 @@ describe("createCase", () => {
       insertOne,
     });
 
-    const result = await caseRepository.createCase(caseData1);
+    const caseMock = Case.createMock();
+
+    await save(caseMock);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
-    expect(insertOne).toHaveBeenCalledWith(caseData1);
-    expect(result).toEqual(caseData1);
+
+    expect(insertOne).toHaveBeenCalledWith(
+      CaseDocument.createMock({
+        _id: caseMock._id,
+      }),
+    );
   });
 
   it("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
@@ -37,9 +43,11 @@ describe("createCase", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    await expect(caseRepository.createCase(caseData1)).rejects.toThrow(
+    const caseMock = Case.createMock();
+
+    await expect(save(caseMock)).rejects.toThrow(
       Boom.conflict(
-        `Case with caseRef "${caseData1.caseRef}" and workflowCode "${caseData1.workflowCode}" already exists`,
+        `Case with caseRef "${caseMock.caseRef}" and workflowCode "${caseMock.workflowCode}" already exists`,
       ),
     );
   });
@@ -53,7 +61,9 @@ describe("createCase", () => {
       insertOne,
     });
 
-    await expect(caseRepository.createCase(caseData1)).rejects.toThrow(error);
+    const caseMock = Case.createMock();
+
+    await expect(save(caseMock)).rejects.toThrow(error);
   });
 
   it("throws when write is unacknowledged", async () => {
@@ -65,9 +75,11 @@ describe("createCase", () => {
       insertOne,
     });
 
-    await expect(caseRepository.createCase(caseData1)).rejects.toThrow(
+    const caseMock = Case.createMock();
+
+    await expect(save(caseMock)).rejects.toThrow(
       Boom.internal(
-        'Case with caseRef "APPLICATION-REF-1" and workflowCode "frps-private-beta" could not be created, the operation was not acknowledged',
+        'Case with caseRef "case-ref" and workflowCode "workflow-code" could not be created, the operation was not acknowledged',
       ),
     );
   });
@@ -75,91 +87,53 @@ describe("createCase", () => {
 
 describe("findAll", () => {
   it("returns a list of cases", async () => {
-    const listQuery = { page: 1, pageSize: 10 };
-    const cases = [caseData1, caseData2];
-
-    const mockCursor = {
-      estimatedDocumentCount: vi.fn().mockResolvedValue(2),
-    };
-
-    const mockToArray = vi.fn().mockReturnValue(cases);
-    const mockMap = vi.fn().mockReturnValue(mockCursor);
-    const mockLimit = vi.fn().mockReturnThis(mockCursor);
-    const mockSkip = vi.fn().mockReturnValue(mockCursor);
-    const mockFind = vi.fn().mockReturnValue(mockCursor);
-
-    mockCursor.find = mockFind;
-    mockCursor.skip = mockSkip;
-    mockCursor.limit = mockLimit;
-    mockCursor.map = mockMap;
-    mockCursor.toArray = mockToArray;
-
-    db.collection.mockReturnValue(mockCursor);
-
-    const result = await findAll(listQuery);
-
-    expect(db.collection).toHaveBeenCalledWith("cases");
-
-    expect(mockSkip).toHaveBeenCalledWith(100 * (listQuery.page - 1));
-    expect(mockLimit).toHaveBeenCalledWith(10);
-    expect(result).toEqual(caseListResponse);
-  });
-});
-
-describe("findCases", () => {
-  it("returns a list of cases", async () => {
-    const listQuery = { page: 1, pageSize: 10 };
-    const cases = [caseData1, caseData2];
-
-    const limit = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue(cases),
-    });
-
-    const skip = vi.fn().mockReturnValue({
-      limit,
-    });
+    const cases = [CaseDocument.createMock(), CaseDocument.createMock()];
 
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
-        skip,
+        toArray: vi.fn().mockResolvedValue(cases),
       }),
-      estimatedDocumentCount: vi.fn().mockResolvedValue(cases.length),
     });
 
-    const result = await caseRepository.findCases(listQuery);
+    const result = await findAll();
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(skip).toHaveBeenCalledWith(100 * (listQuery.page - 1));
-    expect(limit).toHaveBeenCalledWith(10);
-    expect(result).toEqual(caseListResponse);
+    expect(result).toEqual([
+      Case.createMock({
+        _id: cases[0]._id.toString(),
+      }),
+      Case.createMock({
+        _id: cases[1]._id.toString(),
+      }),
+    ]);
   });
 });
 
-describe("getCase", () => {
+describe("findById", () => {
   it("returns a case by id", async () => {
-    const caseId = "6800c9feb76f8f854ebf901a";
+    const doc = CaseDocument.createMock();
+    const caseId = doc._id.toString();
 
-    const foundCase = {
-      _id: new ObjectId(caseId),
-      ...caseData2,
-    };
-
-    const findOne = vi.fn().mockReturnValue(foundCase);
+    const findOne = vi.fn().mockReturnValue(doc);
 
     db.collection.mockReturnValue({
       findOne,
     });
 
-    const result = await caseRepository.getCase(caseId);
+    const result = await findById(caseId);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(findOne).toHaveBeenCalledWith({
-      _id: new ObjectId(caseId),
+      _id: doc._id,
     });
 
-    expect(result).toEqual(foundCase);
+    expect(result).toEqual(
+      Case.createMock({
+        _id: caseId,
+      }),
+    );
   });
 
   it("returns null when no case is found", async () => {
@@ -169,8 +143,47 @@ describe("getCase", () => {
       findOne: vi.fn().mockResolvedValue(null),
     });
 
-    const result = await caseRepository.getCase(caseId);
+    const result = await findById(caseId);
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("updateStage", () => {
+  it("updates the stage of a case", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      modifiedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      updateOne,
+    });
+
+    await updateStage(caseId, "application-receipt");
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: ObjectId.createFromHexString(caseId) },
+      { $set: { currentStage: "application-receipt" } },
+    );
+  });
+
+  it("throws Boom.notFound when case is not found", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue({
+        acknowledged: true,
+        modifiedCount: 0,
+      }),
+    });
+
+    await expect(updateStage(caseId, "application-receipt")).rejects.toThrow(
+      Boom.notFound(`Case with id "${caseId}" not found`),
+    );
   });
 });

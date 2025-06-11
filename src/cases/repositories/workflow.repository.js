@@ -1,59 +1,51 @@
 import Boom from "@hapi/boom";
-import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
+import { WorkflowDocument } from "../models/workflow-document.js";
+import { Workflow } from "../models/workflow.js";
 
 const collection = "workflows";
 
-export const workflowRepository = {
-  createWorkflow: async (workflow) => {
-    let result;
+const toWorkflow = (doc) =>
+  new Workflow({
+    _id: doc._id.toHexString(),
+    code: doc.code,
+    payloadDefinition: doc.payloadDefinition,
+    stages: doc.stages,
+  });
 
-    try {
-      result = await db.collection(collection).insertOne(workflow);
-    } catch (error) {
-      if (error.code === 11000) {
-        throw Boom.conflict(
-          `Workflow with code "${workflow.code}" already exists`,
-        );
-      }
-      throw error;
-    }
+export const save = async (workflow) => {
+  const workflowDocument = new WorkflowDocument(workflow);
 
-    if (!result.acknowledged) {
-      throw Boom.internal(
-        `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
+  let result;
+
+  try {
+    result = await db.collection(collection).insertOne(workflowDocument);
+  } catch (error) {
+    if (error.code === 11000) {
+      throw Boom.conflict(
+        `Workflow with code "${workflow.code}" already exists`,
       );
     }
+    throw error;
+  }
 
-    return workflow;
-  },
+  if (!result.acknowledged) {
+    throw Boom.internal(
+      `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
+    );
+  }
+};
 
-  findWorkflows: async (listQuery) => {
-    const { page = 1, pageSize = config.get("api.pageSize") ?? 1000 } =
-      listQuery;
-    const skip = (page - 1) * pageSize;
-    const count = await db.collection(collection).estimatedDocumentCount();
-    const pageCount = Math.ceil(count / pageSize);
-    return {
-      status: "success",
-      metadata: {
-        ...listQuery,
-        count,
-        pageCount,
-      },
+export const findAll = async () => {
+  const workflowDocuments = await db.collection(collection).find().toArray();
 
-      data: await db
-        .collection(collection)
-        .find()
-        .skip(skip)
-        .limit(pageSize)
-        .toArray(),
-    };
-  },
+  return workflowDocuments.map(toWorkflow);
+};
 
-  getWorkflow: async (code) => {
-    return await db.collection(collection).findOne({
-      code,
-    });
-  },
+export const findByCode = async (code) => {
+  const workflowDocument = await db.collection(collection).findOne({
+    code,
+  });
+
+  return workflowDocument && toWorkflow(workflowDocument);
 };

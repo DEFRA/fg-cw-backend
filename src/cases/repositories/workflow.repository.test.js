@@ -1,13 +1,10 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
-import workflowListResponse from "../../../test/fixtures/workflow-list-response.json";
-import {
-  workflowData1,
-  workflowData2,
-} from "../../../test/fixtures/workflow.js";
 import { db } from "../../common/mongo-client.js";
-import { workflowRepository } from "./workflow.repository.js";
+import { WorkflowDocument } from "../models/workflow-document.js";
+import { Workflow } from "../models/workflow.js";
+import { findAll, findByCode, save } from "./workflow.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
@@ -15,7 +12,7 @@ vi.mock("../../common/mongo-client.js", () => ({
   },
 }));
 
-describe("createWorkflow", () => {
+describe("save", () => {
   it("creates a workflow and returns it", async () => {
     const insertOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -25,13 +22,17 @@ describe("createWorkflow", () => {
       insertOne,
     });
 
-    const result = await workflowRepository.createWorkflow(workflowData1);
+    const workflow = Workflow.createMock();
+
+    await save(workflow);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
 
-    expect(insertOne).toHaveBeenCalledWith(workflowData1);
-
-    expect(result).toEqual(workflowData1);
+    expect(insertOne).toHaveBeenCalledWith(
+      WorkflowDocument.createMock({
+        _id: workflow._id,
+      }),
+    );
   });
 
   it("throws Boom.conflict when a workflow with the same code exists", async () => {
@@ -42,12 +43,10 @@ describe("createWorkflow", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(
-      Boom.conflict(
-        `Workflow with code "${workflowData1.code}" already exists`,
-      ),
+    const workflow = Workflow.createMock();
+
+    await expect(save(workflow)).rejects.toThrow(
+      Boom.conflict(`Workflow with code "${workflow.code}" already exists`),
     );
   });
 
@@ -58,9 +57,9 @@ describe("createWorkflow", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(error);
+    const workflow = Workflow.createMock();
+
+    await expect(save(workflow)).rejects.toThrow(error);
   });
 
   it("throws when write is unacknowledged", async () => {
@@ -70,62 +69,64 @@ describe("createWorkflow", () => {
       }),
     });
 
-    await expect(
-      workflowRepository.createWorkflow(workflowData1),
-    ).rejects.toThrow(
+    const workflow = Workflow.createMock();
+
+    await expect(save(workflow)).rejects.toThrow(
       Boom.internal(
-        `Workflow with code "${workflowData1.code}" could not be created, the operation was not acknowledged`,
+        `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
       ),
     );
   });
 });
 
-describe("findWorkflows", () => {
+describe("findAll", () => {
   it("returns a list of workflows", async () => {
-    const listQuery = { page: 1, pageSize: 10 };
-    const workflows = [workflowData1, workflowData2];
-
-    const limit = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue(workflows),
-    });
-
-    const skip = vi.fn().mockReturnValue({
-      limit,
-    });
+    const workflows = [
+      WorkflowDocument.createMock(),
+      WorkflowDocument.createMock(),
+    ];
 
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
-        skip,
+        toArray: vi.fn().mockResolvedValue(workflows),
       }),
-      estimatedDocumentCount: vi.fn().mockResolvedValue(workflows.length),
     });
 
-    const result = await workflowRepository.findWorkflows(listQuery);
+    const result = await findAll();
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
-    expect(skip).toHaveBeenCalledWith(0);
-    expect(limit).toHaveBeenCalledWith(10);
-    expect(result).toEqual(workflowListResponse);
+
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+      }),
+      Workflow.createMock({
+        _id: workflows[1]._id.toString(),
+      }),
+    ]);
   });
 });
 
-describe("getWorkflow", () => {
+describe("findByCode", () => {
   it("returns workflows by code", async () => {
-    const insertedId = "insertedId123";
-    const expectedWorkflow = { _id: insertedId, ...workflowData1 };
+    const workflowDocument = WorkflowDocument.createMock();
 
-    const findOne = vi.fn().mockResolvedValue(expectedWorkflow);
+    const findOne = vi.fn().mockResolvedValue(workflowDocument);
 
     db.collection = vi.fn().mockReturnValue({
       findOne,
     });
 
     const code = "123";
-    const result = await workflowRepository.getWorkflow(code);
+    const result = await findByCode(code);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(findOne).toHaveBeenCalledWith({ code });
-    expect(result).toEqual(expectedWorkflow);
+    expect(result).toEqual(
+      Workflow.createMock({
+        _id: workflowDocument._id.toString(),
+      }),
+    );
   });
 
   it("returns null when no workflow is found", async () => {
@@ -133,8 +134,7 @@ describe("getWorkflow", () => {
       findOne: vi.fn().mockResolvedValue(null),
     });
 
-    const code = "DOESNT_EXIST";
-    const result = await workflowRepository.getWorkflow(code);
+    const result = await findByCode("DOESNT_EXIST");
 
     expect(result).toEqual(null);
   });

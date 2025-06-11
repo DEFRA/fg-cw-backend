@@ -115,7 +115,7 @@ export const workflowData1 = {
 };
 
 export const workflowData2 = {
-  code: "GRANT-REF-2",
+  code: "grant-ref-2",
   payloadDefinition: {
     $id: "https://fg-cw.com/grant-application.schema.json",
     type: "object",

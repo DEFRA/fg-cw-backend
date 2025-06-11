@@ -9,6 +9,9 @@ const LOCALSTACK_PORT = 4567;
 export default defineConfig({
   test: {
     globalSetup: "./test/setup.js",
+    sequence: {
+      concurrent: false,
+    },
     env: {
       CW_PORT,
       MONGO_PORT,

@@ -4,7 +4,7 @@ import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
 
-describe("Workflow API", () => {
+describe("Workflows", () => {
   let workflows;
   let client;
 
@@ -15,7 +15,7 @@ describe("Workflow API", () => {
   });
 
   afterAll(async () => {
-    await client.close();
+    await client.close(true);
   });
 
   describe("POST /workflows", () => {
@@ -30,11 +30,7 @@ describe("Workflow API", () => {
         payload,
       });
 
-      expect(response.res.statusCode).toBe(201);
-      expect(response.payload).toEqual({
-        ...payload,
-        _id: expect.any(String),
-      });
+      expect(response.res.statusCode).toEqual(204);
 
       const documents = await workflows.find({}).toArray();
 
@@ -45,7 +41,7 @@ describe("Workflow API", () => {
       });
     });
 
-    it("throws if workflow code already exists", async () => {
+    it("throws when workflow code exists", async () => {
       const payload = { ...workflowData1 };
       await Wreck.post(`${env.API_URL}/workflows`, {
         json: true,
@@ -74,20 +70,16 @@ describe("Workflow API", () => {
       });
 
       expect(response.res.statusCode).toBe(200);
-      expect(response.payload.metadata.page).toEqual(1);
-      expect(response.payload.metadata.pageSize).toEqual(100);
-      expect(response.payload.metadata.count).toEqual(2);
-      expect(response.payload.metadata.pageCount).toEqual(1);
-      expect(response.payload.status).toEqual("success");
-      expect(response.payload.data.length).toBe(2);
-      expect(response.payload.data[0]).toEqual({
-        ...workflowData1,
-        _id: expect.any(String),
-      });
-      expect(response.payload.data[1]).toEqual({
-        ...workflowData2,
-        _id: expect.any(String),
-      });
+      expect(response.payload).toEqual([
+        {
+          ...workflowData1,
+          _id: expect.any(String),
+        },
+        {
+          ...workflowData2,
+          _id: expect.any(String),
+        },
+      ]);
     });
   });
 
@@ -99,13 +91,17 @@ describe("Workflow API", () => {
     it("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(`${env.API_URL}/workflows/GRANT-REF-2`, {
-        json: true,
-      });
+      const response = await Wreck.get(
+        `${env.API_URL}/workflows/frps-private-beta`,
+        {
+          json: true,
+        },
+      );
 
       expect(response.res.statusCode).toBe(200);
+
       expect(response.payload).toEqual({
-        ...workflowData2,
+        ...workflowData1,
         _id: expect.any(String),
       });
     });
