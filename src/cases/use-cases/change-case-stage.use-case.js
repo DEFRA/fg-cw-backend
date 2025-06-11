@@ -9,5 +9,9 @@ export const changeCaseStageUseCase = async (caseId) => {
 
   await updateStage(caseId, nextStage);
 
-  await publishCaseStageUpdated(kase.caseRef, kase.currentStage, nextStage);
+  await publishCaseStageUpdated({
+    caseRef: kase.caseRef,
+    previousStage: kase.currentStage,
+    currentStage: nextStage,
+  });
 };
