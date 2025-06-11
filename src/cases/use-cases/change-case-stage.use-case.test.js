@@ -12,16 +12,13 @@ vi.mock("../publishers/case-event.publisher.js");
 
 describe("changeCaseStageUseCase", () => {
   it("uses findCaseByIdUseCase to get the case", async () => {
-    const kase = new Case({
-      _id: "test-case-id",
-      caseRef: "TEST-001",
-    });
+    const kase = Case.createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
-    await changeCaseStageUseCase("test-case-id");
+    await changeCaseStageUseCase(kase._id);
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith("test-case-id");
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(kase._id);
   });
 
   it("throws when case not found", async () => {
@@ -35,33 +32,26 @@ describe("changeCaseStageUseCase", () => {
   });
 
   it("moves the case to the next stage", async () => {
-    const kase = new Case({
-      _id: "test-case-id",
-      caseRef: "TEST-001",
-    });
+    const kase = Case.createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
-    await changeCaseStageUseCase("test-case-id");
+    await changeCaseStageUseCase(kase._id);
 
-    expect(updateStage).toHaveBeenCalledWith("test-case-id", "contract");
+    expect(updateStage).toHaveBeenCalledWith(kase._id, "contract");
   });
 
   it("publishes CaseStageUpdated event", async () => {
-    const kase = new Case({
-      _id: "test-case-id",
-      caseRef: "TEST-001",
-      currentStage: "existing-stage",
-    });
+    const kase = Case.createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
-    await changeCaseStageUseCase("test-case-id");
+    await changeCaseStageUseCase(kase._id);
 
-    expect(publishCaseStageUpdated).toHaveBeenCalledWith(
-      kase.caseRef,
-      "existing-stage",
-      "contract",
-    );
+    expect(publishCaseStageUpdated).toHaveBeenCalledWith({
+      caseRef: kase.caseRef,
+      previousStage: kase.currentStage,
+      currentStage: "contract",
+    });
   });
 });
