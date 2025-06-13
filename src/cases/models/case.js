@@ -19,14 +19,14 @@ export class Case {
       status: "NEW",
       dateReceived: new Date().toISOString(),
       currentStage: workflow.stages[0].id,
-      payload: structuredClone(caseEvent),
+      payload: caseEvent,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({
             id: task.id,
-            isComplete: false,
+            status: "pending",
           })),
         })),
       })),
@@ -50,7 +50,7 @@ export class Case {
               tasks: [
                 {
                   id: "task-1",
-                  isComplete: false,
+                  status: "pending",
                 },
               ],
             },

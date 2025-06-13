@@ -42,7 +42,7 @@ export const caseData1 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false,
+              status: "pending",
             },
           ],
         },
@@ -99,7 +99,7 @@ export const caseData2 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false,
+              status: "pending",
             },
           ],
         },
@@ -156,7 +156,7 @@ export const caseData3 = {
           tasks: [
             {
               id: "simple-review",
-              isComplete: false,
+              status: "pending",
             },
           ],
         },

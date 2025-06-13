@@ -68,3 +68,37 @@ export const updateStage = async (caseId, nextStage) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };
+
+export const updateTaskStatus = async ({
+  caseId,
+  stageId,
+  taskGroupId,
+  taskId,
+  status,
+}) => {
+  const result = await db.collection(collection).updateOne(
+    {
+      _id: ObjectId.createFromHexString(caseId),
+      "stages.taskGroups.id": taskGroupId,
+      "stages.taskGroups.tasks.id": taskId,
+    },
+    {
+      $set: {
+        "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
+      },
+    },
+    {
+      arrayFilters: [
+        { "stage.id": stageId },
+        { "taskGroup.id": taskGroupId },
+        { "task.id": taskId },
+      ],
+    },
+  );
+
+  if (result.modifiedCount === 0) {
+    throw Boom.notFound(
+      `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
+    );
+  }
+};

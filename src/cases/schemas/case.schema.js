@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { statusSchema } from "./cases/stages/tasks/status.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const CaseStage = Joi.object({
@@ -11,7 +12,7 @@ export const CaseStage = Joi.object({
           .items(
             Joi.object({
               id: UrlSafeId.required(),
-              isComplete: Joi.boolean().required(),
+              status: statusSchema.required(),
             }),
           )
           .min(1)

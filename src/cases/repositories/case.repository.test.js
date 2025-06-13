@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
-import { findAll, findById, save, updateStage } from "./case.repository.js";
+import {
+  findAll,
+  findById,
+  save,
+  updateStage,
+  updateTaskStatus,
+} from "./case.repository.js";
 
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
@@ -184,6 +190,85 @@ describe("updateStage", () => {
 
     await expect(updateStage(caseId, "application-receipt")).rejects.toThrow(
       Boom.notFound(`Case with id "${caseId}" not found`),
+    );
+  });
+});
+
+describe("updateTaskStatus", () => {
+  it("updates the status of a task in a case", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const stageId = "stage-1";
+    const taskGroupId = "task-group-1";
+    const taskId = "task-1";
+    const status = "COMPLETED";
+
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      modifiedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      updateOne,
+    });
+
+    await updateTaskStatus({
+      caseId,
+      stageId,
+      taskGroupId,
+      taskId,
+      status,
+    });
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+
+    expect(updateOne).toHaveBeenCalledWith(
+      {
+        _id: ObjectId.createFromHexString(caseId),
+        "stages.taskGroups.id": taskGroupId,
+        "stages.taskGroups.tasks.id": taskId,
+      },
+      {
+        $set: {
+          "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status":
+            status,
+        },
+      },
+      {
+        arrayFilters: [
+          { "stage.id": stageId },
+          { "taskGroup.id": taskGroupId },
+          { "task.id": taskId },
+        ],
+      },
+    );
+  });
+
+  it("throws Boom.notFound when case or task is not found", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const stageId = "stage-1";
+    const taskGroupId = "task-group-1";
+    const taskId = "task-1";
+    const status = "COMPLETED";
+
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue({
+        acknowledged: true,
+        modifiedCount: 0,
+      }),
+    });
+
+    await expect(
+      updateTaskStatus({
+        caseId,
+        stageId,
+        taskGroupId,
+        taskId,
+        status,
+      }),
+    ).rejects.toThrow(
+      Boom.notFound(
+        'Task with caseId "6800c9feb76f8f854ebf901a", stageId "stage-1", taskGroupId "task-group-1" and taskId "task-1" not found',
+      ),
     );
   });
 });
