@@ -43,7 +43,7 @@
             "tasks": [
               {
                 "id": "simple-review",
-                "isComplete": false
+                "status": "pending"
               }
             ]
           }
@@ -100,7 +100,7 @@
             "tasks": [
               {
                 "id": "simple-review",
-                "isComplete": false
+                "status": "pending"
               }
             ]
           }

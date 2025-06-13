@@ -70,7 +70,7 @@ describe("createCaseUseCase", () => {
                 tasks: [
                   {
                     id: "task-1",
-                    isComplete: false,
+                    status: "pending",
                   },
                 ],
               },

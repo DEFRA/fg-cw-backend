@@ -10,6 +10,7 @@ import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
+import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
 
 export const cases = {
   name: "cases",
@@ -33,6 +34,7 @@ export const cases = {
       createWorkflowRoute,
       findWorkflowsRoute,
       findWorkflowByCodeRoute,
+      updateTaskStatusRoute,
     ]);
   },
 };
