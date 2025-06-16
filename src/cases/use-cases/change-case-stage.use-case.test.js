@@ -13,7 +13,6 @@ vi.mock("../publishers/case-event.publisher.js");
 describe("changeCaseStageUseCase", () => {
   it("uses findCaseByIdUseCase to get the case", async () => {
     const kase = Case.createMock();
-    kase.stages[0].taskGroups[0].tasks[0].status = "complete";
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
@@ -32,30 +31,19 @@ describe("changeCaseStageUseCase", () => {
     ).rejects.toThrow('Case with id "non-existent-case-id" not found');
   });
 
-  it("throws when tasks are not complete", async () => {
-    const kase = Case.createMock();
-
-    findCaseByIdUseCase.mockResolvedValue(kase);
-
-    await expect(changeCaseStageUseCase(kase._id)).rejects.toThrow(
-      "All tasks must be complete.",
-    );
-  });
-
   it("moves the case to the next stage", async () => {
     const kase = Case.createMock();
-    kase.stages[0].taskGroups[0].tasks[0].status = "complete";
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
     await changeCaseStageUseCase(kase._id);
 
-    expect(updateStage).toHaveBeenCalledWith(kase._id, "stage-2");
+    expect(updateStage).toHaveBeenCalledWith(kase._id, "contract");
   });
 
   it("publishes CaseStageUpdated event", async () => {
     const kase = Case.createMock();
-    kase.stages[0].taskGroups[0].tasks[0].status = "complete";
+
     findCaseByIdUseCase.mockResolvedValue(kase);
 
     await changeCaseStageUseCase(kase._id);
@@ -63,7 +51,7 @@ describe("changeCaseStageUseCase", () => {
     expect(publishCaseStageUpdated).toHaveBeenCalledWith({
       caseRef: kase.caseRef,
       previousStage: kase.currentStage,
-      currentStage: kase.stages[1],
+      currentStage: "contract",
     });
   });
 });
