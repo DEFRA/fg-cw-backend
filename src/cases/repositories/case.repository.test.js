@@ -254,6 +254,7 @@ describe("updateTaskStatus", () => {
       updateOne: vi.fn().mockResolvedValue({
         acknowledged: true,
         modifiedCount: 0,
+        matchedCount: 0,
       }),
     });
 
