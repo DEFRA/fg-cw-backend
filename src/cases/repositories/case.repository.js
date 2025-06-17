@@ -96,7 +96,7 @@ export const updateTaskStatus = async ({
     },
   );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     throw Boom.notFound(
       `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
     );
