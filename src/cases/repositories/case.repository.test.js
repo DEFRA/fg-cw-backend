@@ -161,7 +161,7 @@ describe("updateStage", () => {
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
-      modifiedCount: 1,
+      matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
@@ -184,7 +184,7 @@ describe("updateStage", () => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue({
         acknowledged: true,
-        modifiedCount: 0,
+        matchedCount: 0,
       }),
     });
 
@@ -204,7 +204,7 @@ describe("updateTaskStatus", () => {
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
-      modifiedCount: 1,
+      matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
@@ -253,7 +253,6 @@ describe("updateTaskStatus", () => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue({
         acknowledged: true,
-        modifiedCount: 0,
         matchedCount: 0,
       }),
     });
