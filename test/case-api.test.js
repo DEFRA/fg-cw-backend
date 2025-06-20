@@ -1,4 +1,3 @@
-import Wreck from "@hapi/wreck";
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import {
@@ -14,6 +13,7 @@ import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
+import { wreck } from "./helpers/wreck.js";
 
 describe("Cases", () => {
   let cases;
@@ -50,9 +50,7 @@ describe("Cases", () => {
         },
       ]);
 
-      const response = await Wreck.get(`${env.API_URL}/cases`, {
-        json: true,
-      });
+      const response = await wreck.get("/cases");
 
       expect(response.res.statusCode).toBe(200);
 
@@ -90,9 +88,7 @@ describe("Cases", () => {
 
       const caseId = insertedIds[1].toHexString();
 
-      const response = await Wreck.get(`${env.API_URL}/cases/${caseId}`, {
-        json: true,
-      });
+      const response = await wreck.get(`/cases/${caseId}`);
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
