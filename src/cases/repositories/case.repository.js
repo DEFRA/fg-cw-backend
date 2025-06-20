@@ -64,7 +64,7 @@ export const updateStage = async (caseId, nextStage) => {
       { $set: { currentStage: nextStage } },
     );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };
