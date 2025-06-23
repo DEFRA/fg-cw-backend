@@ -1,0 +1,606 @@
+{
+  "consumer": {
+    "name": "fg-cw-frontend"
+  },
+  "interactions": [
+    {
+      "description": "a request for all workflows",
+      "providerState": "workflows are available",
+      "request": {
+        "method": "GET",
+        "path": "/workflows"
+      },
+      "response": {
+        "body": [
+          {
+            "_id": "64def456789012345678abcd",
+            "code": "frps-private-beta",
+            "stages": [
+              {
+                "id": "application-receipt",
+                "taskGroups": [
+                  {
+                    "id": "application-receipt-tasks",
+                    "tasks": [
+                      {
+                        "id": "simple-review",
+                        "title": "Simple Review",
+                        "type": "boolean"
+                      }
+                    ],
+                    "title": "Application Receipt tasks"
+                  }
+                ],
+                "title": "Application Receipt"
+              }
+            ]
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for available workflows",
+      "providerState": "workflows are available",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer caseworker-token123"
+        },
+        "method": "GET",
+        "path": "/api/workflows"
+      },
+      "response": {
+        "body": {
+          "workflows": [
+            {
+              "createdAt": "2024-01-01T00:00:00Z",
+              "description": "Standard workflow for processing adding value grant applications",
+              "id": "WF001",
+              "isActive": true,
+              "lastUpdated": "2024-01-10T14:00:00Z",
+              "name": "Adding Value Grant Assessment",
+              "stages": [
+                {
+                  "estimatedDays": 3,
+                  "name": "Initial Review",
+                  "tasks": [
+                    "Eligibility Check",
+                    "Documentation Review"
+                  ]
+                },
+                {
+                  "estimatedDays": 10,
+                  "name": "Technical Assessment",
+                  "tasks": [
+                    "Technical Review",
+                    "Site Visit"
+                  ]
+                },
+                {
+                  "estimatedDays": 5,
+                  "name": "Final Decision",
+                  "tasks": [
+                    "Final Review",
+                    "Decision Letter"
+                  ]
+                }
+              ],
+              "totalEstimatedDays": 18,
+              "version": "2.1"
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for detailed case information",
+      "providerState": "case 64abc123456789012345678ab exists",
+      "request": {
+        "method": "GET",
+        "path": "/cases/64abc123456789012345678ab"
+      },
+      "response": {
+        "body": {
+          "_id": "64abc123456789012345678ab",
+          "caseRef": "APPLICATION-REF-1",
+          "currentStage": "application-receipt",
+          "dateReceived": "2025-03-27T11:34:52.000Z",
+          "payload": {
+            "answers": {
+              "agreementName": "Test Agreement",
+              "scheme": "SFI",
+              "year": 2024
+            },
+            "metadata": {
+              "clientRef": "TEST-REF-123456",
+              "frn": "987654321",
+              "sbi": "123456789",
+              "submittedAt": "2024-01-15T14:30:00Z"
+            }
+          },
+          "stages": [
+            {
+              "id": "application-receipt",
+              "taskGroups": [
+                {
+                  "id": "application-receipt-tasks",
+                  "tasks": [
+                    {
+                      "id": "simple-review",
+                      "status": "pending"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "status": "IN PROGRESS",
+          "workflowCode": "frps-private-beta"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for detailed case information",
+      "providerState": "case CW24001 exists and is under review",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer caseworker-token123"
+        },
+        "method": "GET",
+        "path": "/api/cases/CW24001"
+      },
+      "response": {
+        "body": {
+          "applicationDetails": {
+            "address": {
+              "county": "Somerset",
+              "line1": "Green Valley Farm",
+              "line2": "Mill Lane",
+              "postcode": "TA1 2BB",
+              "town": "Taunton"
+            },
+            "applicantName": "Green Valley Farms Ltd",
+            "companyNumber": "12345678",
+            "contactEmail": "sarah.johnson@greenvalley.com",
+            "contactPhone": "07777 123456",
+            "projectName": "Advanced Fruit Processing Facility",
+            "sbi": "123456789"
+          },
+          "assignedTo": "sarah.reviewer@defra.gov.uk",
+          "documents": [
+            {
+              "id": "DOC001",
+              "name": "Application Form",
+              "size": 2048576,
+              "status": "verified",
+              "type": "application",
+              "uploadedAt": "2024-01-15T14:30:00Z"
+            },
+            {
+              "id": "DOC002",
+              "name": "Business Plan",
+              "size": 5242880,
+              "status": "verified",
+              "type": "supporting",
+              "uploadedAt": "2024-01-15T14:32:00Z"
+            }
+          ],
+          "id": "CW24001",
+          "lastUpdated": "2024-01-20T10:15:00Z",
+          "notes": [
+            {
+              "author": "admin.clerk@defra.gov.uk",
+              "content": "All required documents received and verified",
+              "createdAt": "2024-01-18T11:35:00Z",
+              "id": "NOTE001",
+              "type": "process"
+            }
+          ],
+          "priority": "normal",
+          "projectDetails": {
+            "completionDate": "2024-12-31",
+            "cost": 350000,
+            "description": "Construction of a new climate-controlled fruit storage facility",
+            "requestedAmount": 140000,
+            "startDate": "2024-06-01",
+            "type": "fruit-storage"
+          },
+          "referenceNumber": "AV-2024-001",
+          "stage": "technical-assessment",
+          "status": "under-review",
+          "submittedAt": "2024-01-15T14:30:00Z",
+          "tasks": [
+            {
+              "assignedTo": "system",
+              "completedAt": "2024-01-15T14:35:00Z",
+              "id": "T001",
+              "name": "Initial Eligibility Check",
+              "outcome": "Eligible",
+              "status": "completed"
+            },
+            {
+              "assignedTo": "admin.clerk@defra.gov.uk",
+              "completedAt": "2024-01-18T11:30:00Z",
+              "id": "T002",
+              "name": "Documentation Review",
+              "outcome": "Complete",
+              "status": "completed"
+            },
+            {
+              "assignedTo": "sarah.reviewer@defra.gov.uk",
+              "dueDate": "2024-01-26T17:00:00Z",
+              "id": "T003",
+              "name": "Technical Assessment",
+              "startedAt": "2024-01-19T09:00:00Z",
+              "status": "in-progress"
+            }
+          ],
+          "workflowId": "WF001"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for non-existent case",
+      "providerState": "case 64abc123456789012345678ff does not exist",
+      "request": {
+        "method": "GET",
+        "path": "/cases/64abc123456789012345678ff"
+      },
+      "response": {
+        "body": {
+          "error": "Not Found",
+          "message": "Case not found",
+          "statusCode": 404
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 404
+      }
+    },
+    {
+      "description": "a request for specific workflow",
+      "providerState": "workflow frps-private-beta exists",
+      "request": {
+        "method": "GET",
+        "path": "/workflows/frps-private-beta"
+      },
+      "response": {
+        "body": {
+          "_id": "64def456789012345678abcd",
+          "code": "frps-private-beta",
+          "payloadDefinition": {
+            "properties": {
+              "answers": {
+                "properties": {
+                  "scheme": {
+                    "type": "string"
+                  },
+                  "year": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "metadata": {
+                "properties": {
+                  "clientRef": {
+                    "type": "string"
+                  },
+                  "sbi": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "stages": [
+            {
+              "actions": [
+                {
+                  "id": "approve",
+                  "label": "Approve"
+                }
+              ],
+              "id": "application-receipt",
+              "taskGroups": [
+                {
+                  "id": "application-receipt-tasks",
+                  "tasks": [
+                    {
+                      "id": "simple-review",
+                      "title": "Simple Review",
+                      "type": "boolean"
+                    }
+                  ],
+                  "title": "Application Receipt tasks"
+                }
+              ],
+              "title": "Application Receipt"
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for user assigned tasks",
+      "providerState": "user has assigned tasks",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer caseworker-token123"
+        },
+        "method": "GET",
+        "path": "/api/tasks/assigned-to/sarah.reviewer%40defra.gov.uk"
+      },
+      "response": {
+        "body": {
+          "summary": {
+            "inProgress": 1,
+            "overdue": 0,
+            "pending": 1,
+            "totalActualHours": 5.5,
+            "totalEstimatedHours": 14,
+            "totalTasks": 2
+          },
+          "tasks": [
+            {
+              "actualHours": 5.5,
+              "caseId": "CW24001",
+              "caseName": "Green Valley Farms Ltd - Advanced Fruit Processing",
+              "dueDate": "2024-01-26T17:00:00Z",
+              "estimatedHours": 8,
+              "id": "T003",
+              "priority": "normal",
+              "referenceNumber": "AV-2024-001",
+              "startedAt": "2024-01-19T09:00:00Z",
+              "status": "in-progress",
+              "taskName": "Technical Assessment"
+            },
+            {
+              "caseId": "CW24005",
+              "caseName": "Meadow Farm Co-op - Dairy Processing",
+              "dueDate": "2024-01-28T17:00:00Z",
+              "estimatedHours": 6,
+              "id": "T008",
+              "priority": "high",
+              "referenceNumber": "AV-2024-005",
+              "status": "pending",
+              "taskName": "Site Visit Assessment"
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to complete a task",
+      "providerState": "task T003 is in progress for case CW24001",
+      "request": {
+        "body": {
+          "comments": "Technical assessment completed. Project meets all requirements.",
+          "completedAt": "2024-01-25T16:30:00Z",
+          "completedBy": "sarah.reviewer@defra.gov.uk",
+          "outcome": "Approved",
+          "status": "completed"
+        },
+        "headers": {
+          "Authorization": "Bearer caseworker-token123",
+          "Content-Type": "application/json"
+        },
+        "method": "PUT",
+        "path": "/api/cases/CW24001/tasks/T003"
+      },
+      "response": {
+        "body": {
+          "caseId": "CW24001",
+          "comments": "Technical assessment completed. Project meets all requirements.",
+          "completedAt": "2024-01-25T16:30:00Z",
+          "completedBy": "sarah.reviewer@defra.gov.uk",
+          "nextTasks": [
+            {
+              "assignedTo": "senior.assessor@defra.gov.uk",
+              "dueDate": "2024-02-01T17:00:00Z",
+              "id": "T004",
+              "name": "Final Review"
+            }
+          ],
+          "outcome": "Approved",
+          "status": "completed",
+          "taskId": "T003"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to list cases",
+      "providerState": "cases exist in the system",
+      "request": {
+        "method": "GET",
+        "path": "/cases"
+      },
+      "response": {
+        "body": [
+          {
+            "_id": "64abc123456789012345678ab",
+            "caseRef": "APPLICATION-REF-1",
+            "currentStage": "application-receipt",
+            "dateReceived": "2025-03-27T11:34:52.000Z",
+            "stages": [
+              {
+                "id": "application-receipt",
+                "taskGroups": [
+                  {
+                    "id": "application-receipt-tasks",
+                    "tasks": [
+                      {
+                        "id": "simple-review",
+                        "status": "pending"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "status": "IN PROGRESS",
+            "workflowCode": "frps-private-beta"
+          }
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to list cases with pagination",
+      "providerState": "cases exist in the system",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer caseworker-token123"
+        },
+        "method": "GET",
+        "path": "/api/cases",
+        "query": "grantType=adding-value&limit=20&page=1"
+      },
+      "response": {
+        "body": {
+          "cases": [
+            {
+              "applicantName": "Green Valley Farms Ltd",
+              "assignedTo": "sarah.reviewer@defra.gov.uk",
+              "grantType": "adding-value",
+              "id": "CW24001",
+              "priority": "normal",
+              "projectName": "Advanced Fruit Processing Facility",
+              "referenceNumber": "AV-2024-001",
+              "stage": "technical-assessment",
+              "status": "under-review",
+              "submittedAt": "2024-01-15T14:30:00Z",
+              "value": 140000
+            },
+            {
+              "applicantName": "Hill Farm Enterprises",
+              "assignedTo": "mark.assessor@defra.gov.uk",
+              "grantType": "adding-value",
+              "id": "CW24002",
+              "priority": "high",
+              "projectName": "Grain Storage Expansion",
+              "referenceNumber": "AV-2024-002",
+              "stage": "documentation-review",
+              "status": "awaiting-documents",
+              "submittedAt": "2024-01-16T09:15:00Z",
+              "value": 85000
+            }
+          ],
+          "filters": {
+            "appliedFilters": {
+              "assignedTo": "all",
+              "grantType": "adding-value",
+              "status": "all"
+            },
+            "availableFilters": {
+              "grantType": [
+                "all",
+                "adding-value",
+                "productivity",
+                "environmental"
+              ],
+              "priority": [
+                "all",
+                "low",
+                "normal",
+                "high",
+                "urgent"
+              ],
+              "status": [
+                "all",
+                "under-review",
+                "awaiting-documents",
+                "approved",
+                "rejected"
+              ]
+            }
+          },
+          "pagination": {
+            "currentPage": 1,
+            "pageSize": 20,
+            "totalCases": 42,
+            "totalPages": 5
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to move case to next stage",
+      "providerState": "case is at application-receipt stage",
+      "request": {
+        "body": {
+          "action": "approve"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/cases/64abc123456789012345678ab/stage"
+      },
+      "response": {
+        "body": {
+          "_id": "64abc123456789012345678ab",
+          "currentStage": "application-review",
+          "status": "IN PROGRESS",
+          "updatedAt": "2025-03-27T12:00:00.000Z"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "15.0.1"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  },
+  "provider": {
+    "name": "fg-cw-backend"
+  }
+}

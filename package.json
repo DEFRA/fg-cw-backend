@@ -15,7 +15,11 @@
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "postinstall": "npm run setup:husky && npm run setup:env",
     "setup:env": "cp --update=none .env.example .env || true",
-    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module"
+    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
+    "test:contracts": "vitest --config test/contracts/vitest.config.js --dir test/contracts",
+    "test:contracts:provider": "vitest --config test/contracts/vitest.config.js test/contracts/provider.verification.test.js",
+    "contracts:download": "SERVICE_NAME=fg-cw-backend node ../../scripts/pact-artifact-manager.js download",
+    "contracts:upload": "SERVICE_NAME=fg-cw-backend node ../../scripts/pact-artifact-manager.js upload"
   },
   "lint-staged": {
     "**/*.js": "npm run lint",
@@ -51,6 +55,7 @@
     "pino-pretty": "13.0.0"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "15.0.1",
     "@vitest/coverage-v8": "3.1.1",
     "eslint": "9.24.0",
     "eslint-config-prettier": "10.1.1",

@@ -29,7 +29,7 @@ services:
   fg-cw-backend:
     build: .
     ports:
-      - "${CW_PORT:-3001}:3001"
+      - "${CW_PORT:-3002}:3002"
     links:
       - "localstack:localstack"
       - "mongodb:mongodb"
