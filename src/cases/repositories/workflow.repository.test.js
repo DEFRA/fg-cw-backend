@@ -6,11 +6,7 @@ import { WorkflowDocument } from "../models/workflow-document.js";
 import { Workflow } from "../models/workflow.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 
-vi.mock("../../common/mongo-client.js", () => ({
-  db: {
-    collection: vi.fn(),
-  },
-}));
+vi.mock("../../common/mongo-client.js");
 
 describe("save", () => {
   it("creates a workflow and returns it", async () => {
