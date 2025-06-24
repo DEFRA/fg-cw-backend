@@ -10,6 +10,7 @@ import { config } from "./common/config.js";
 import { logger } from "./common/logger.js";
 import { mongoClient } from "./common/mongo-client.js";
 import { health } from "./health/index.js";
+import { users } from "./users/index.js";
 
 export const createServer = async () => {
   const server = hapi.server({
@@ -83,7 +84,7 @@ export const createServer = async () => {
     },
   ]);
 
-  await server.register([health, cases]);
+  await server.register([health, cases, users]);
 
   return server;
 };

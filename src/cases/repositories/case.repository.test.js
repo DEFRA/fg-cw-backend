@@ -12,11 +12,7 @@ import {
   updateTaskStatus,
 } from "./case.repository.js";
 
-vi.mock("../../common/mongo-client.js", () => ({
-  db: {
-    collection: vi.fn(),
-  },
-}));
+vi.mock("../../common/mongo-client.js");
 
 describe("save", () => {
   it("creates a case and returns it", async () => {

@@ -1,0 +1,20 @@
+import { update } from "../repositories/user.repository.js";
+import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
+
+const replace = (user, props, prop) => {
+  if (props[prop]) {
+    user[prop] = props[prop];
+    user.updatedAt = new Date().toISOString();
+  }
+};
+
+export const updateUserUseCase = async ({ userId, props }) => {
+  const user = await findUserByIdUseCase(userId);
+
+  replace(user, props, "firstName");
+  replace(user, props, "lastName");
+  replace(user, props, "idpRoles");
+  replace(user, props, "appRoles");
+
+  await update(user);
+};
