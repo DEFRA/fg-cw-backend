@@ -10,7 +10,9 @@ updates:
     groups:
       lint:
         patterns:
-          - "standard"
+          - "neostandard"
+          - "eslint"
+          - "eslint-*"
 
       logging:
         patterns:
@@ -22,7 +24,10 @@ updates:
       tools:
         patterns:
           - "husky"
-          - "c8"
+          - "lint-staged"
+          - "*vitest*"
+          - "prettier"
+          - "prettier-*"
 
     # Schedule run every Monday, local time
     schedule:
