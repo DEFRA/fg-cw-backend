@@ -20,8 +20,7 @@ describe("updateUserUseCase", () => {
     await updateUserUseCase({
       userId,
       props: {
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: ["CW-Admin"],
       },
@@ -31,8 +30,7 @@ describe("updateUserUseCase", () => {
       new User({
         id: userId,
         idpId,
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: ["CW-Admin"],
@@ -67,8 +65,7 @@ describe("updateUserUseCase", () => {
       new User({
         id: userId,
         idpId,
-        firstName: "Bob",
-        lastName: "Bill",
+        name: "Bob Bill",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.ReadWrite"],
         appRoles: ["RPA.Cases.Approve"],

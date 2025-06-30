@@ -30,8 +30,7 @@ describe("createUserRoute", () => {
       url: "/users",
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "John",
-        lastName: "Doe",
+        name: "John",
         email: "john.doe@defra.co.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -46,8 +45,7 @@ describe("createUserRoute", () => {
 
     expect(createUserUseCase).toHaveBeenCalledWith({
       idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-      firstName: "John",
-      lastName: "Doe",
+      name: "John",
       email: "john.doe@defra.co.uk",
       idpRoles: ["defra-idp"],
       appRoles: ["cw-app"],

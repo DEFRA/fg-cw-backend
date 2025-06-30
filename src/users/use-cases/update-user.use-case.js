@@ -11,8 +11,7 @@ const replace = (user, props, prop) => {
 export const updateUserUseCase = async ({ userId, props }) => {
   const user = await findUserByIdUseCase(userId);
 
-  replace(user, props, "firstName");
-  replace(user, props, "lastName");
+  replace(user, props, "name");
   replace(user, props, "idpRoles");
   replace(user, props, "appRoles");
 

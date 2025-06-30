@@ -25,8 +25,7 @@ describe("POST /users", () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -53,8 +52,7 @@ describe("POST /users", () => {
       payload: {
         id: expect.any(String),
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -67,8 +65,7 @@ describe("POST /users", () => {
   it("does not add users with the same email addresses", async () => {
     const payload = {
       idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-      firstName: "Name",
-      lastName: "Surname",
+      name: "Name",
       email: "name.surname@defra.gov.uk",
       idpRoles: ["defra-idp"],
       appRoles: ["cw-app"],

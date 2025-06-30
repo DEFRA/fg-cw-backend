@@ -6,8 +6,7 @@ export const createUserUseCase = async (props) => {
 
   const user = new User({
     idpId: props.idpId,
-    firstName: props.firstName,
-    lastName: props.lastName,
+    name: props.name,
     email: props.email,
     idpRoles: props.idpRoles,
     appRoles: props.appRoles,
