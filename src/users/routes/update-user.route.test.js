@@ -26,8 +26,7 @@ describe("updateUserRoute", () => {
       method: "PATCH",
       url: `/users/${userId}`,
       payload: {
-        firstName: "John",
-        lastName: "Doe",
+        name: "John",
         idpRoles: ["admin"],
         appRoles: ["editor"],
       },
@@ -40,8 +39,7 @@ describe("updateUserRoute", () => {
     expect(updateUserUseCase).toHaveBeenCalledWith({
       userId,
       props: {
-        firstName: "John",
-        lastName: "Doe",
+        name: "John",
         idpRoles: ["admin"],
         appRoles: ["editor"],
       },

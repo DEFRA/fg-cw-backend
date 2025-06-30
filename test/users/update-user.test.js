@@ -25,8 +25,7 @@ describe("PATCH /users/{userId}", () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -37,8 +36,7 @@ describe("PATCH /users/{userId}", () => {
 
     const updateUserResponse = await wreck.patch(`/users/${userId}`, {
       payload: {
-        firstName: "Updated Name",
-        lastName: "Updated Surname",
+        name: "Updated Name",
         email: "NA",
         idpRoles: ["updated-idp", "replaces-all-roles"],
         appRoles: ["updated-app-role"],
@@ -61,8 +59,7 @@ describe("PATCH /users/{userId}", () => {
       payload: {
         id: userId,
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Updated Name",
-        lastName: "Updated Surname",
+        name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["updated-idp", "replaces-all-roles"],
         appRoles: ["updated-app-role"],
@@ -76,8 +73,7 @@ describe("PATCH /users/{userId}", () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -102,8 +98,7 @@ describe("PATCH /users/{userId}", () => {
       payload: {
         id: userId,
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab", // not updated
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],

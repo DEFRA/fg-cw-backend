@@ -18,8 +18,7 @@ describe("createUserUseCase", () => {
   it("creates a user", async () => {
     const user = await createUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      firstName: "Bob",
-      lastName: "Bill",
+      name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: ["RPA.Cases.Approve"],

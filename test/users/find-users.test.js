@@ -25,8 +25,7 @@ describe("GET /users", () => {
     await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -36,8 +35,7 @@ describe("GET /users", () => {
     await wreck.post("/users", {
       payload: {
         idpId: "7467b7e2-1022-45fd-9e81-ab364206de40",
-        firstName: "Another",
-        lastName: "User",
+        name: "Another",
         email: "another.user@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -54,8 +52,7 @@ describe("GET /users", () => {
         {
           id: expect.any(String),
           idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-          firstName: "Name",
-          lastName: "Surname",
+          name: "Name",
           email: "name.surname@defra.gov.uk",
           idpRoles: ["defra-idp"],
           appRoles: ["cw-app"],
@@ -65,8 +62,7 @@ describe("GET /users", () => {
         {
           id: expect.any(String),
           idpId: "7467b7e2-1022-45fd-9e81-ab364206de40",
-          firstName: "Another",
-          lastName: "User",
+          name: "Another",
           email: "another.user@defra.gov.uk",
           idpRoles: ["defra-idp"],
           appRoles: ["cw-app"],
@@ -92,8 +88,7 @@ describe("GET /users", () => {
     await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-        firstName: "Name",
-        lastName: "Surname",
+        name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -103,8 +98,7 @@ describe("GET /users", () => {
     await wreck.post("/users", {
       payload: {
         idpId: "7467b7e2-1022-45fd-9e81-ab364206de40",
-        firstName: "Another",
-        lastName: "User",
+        name: "Another",
         email: "another.user@defra.gov.uk",
         idpRoles: ["defra-idp"],
         appRoles: ["cw-app"],
@@ -123,8 +117,7 @@ describe("GET /users", () => {
         {
           id: expect.any(String),
           idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-          firstName: "Name",
-          lastName: "Surname",
+          name: "Name",
           email: "name.surname@defra.gov.uk",
           idpRoles: ["defra-idp"],
           appRoles: ["cw-app"],
