@@ -21,7 +21,7 @@ describe("createUserUseCase", () => {
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: ["RPA.Cases.Approve"],
+      appRoles: ["ROLE_RPA_CASES_APPROVE"],
     });
 
     expect(save).toHaveBeenCalledWith(user);

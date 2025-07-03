@@ -28,7 +28,7 @@ describe("updateUserRoute", () => {
       payload: {
         name: "John",
         idpRoles: ["admin"],
-        appRoles: ["editor"],
+        appRoles: ["ROLE_EDITOR"],
       },
     });
 
@@ -41,7 +41,7 @@ describe("updateUserRoute", () => {
       props: {
         name: "John",
         idpRoles: ["admin"],
-        appRoles: ["editor"],
+        appRoles: ["ROLE_EDITOR"],
       },
     });
   });

@@ -28,7 +28,7 @@ describe("POST /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["cw-app"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
       },
     });
 
@@ -55,7 +55,7 @@ describe("POST /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["cw-app"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
@@ -68,7 +68,7 @@ describe("POST /users", () => {
       name: "Name",
       email: "name.surname@defra.gov.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["cw-app"],
+      appRoles: ["ROLE_RPA_CASES_APPROVE"],
     };
 
     await wreck.post("/users", {
