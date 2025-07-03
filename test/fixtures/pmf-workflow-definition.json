@@ -1,0 +1,159 @@
+{
+  "code": "pigs-might-fly",
+  "payloadDefinition": {
+    "$id": "https://fg-cw.com/grant-application.schema.json",
+    "type": "object",
+    "properties": {
+      "clientRef": {
+        "type": "string"
+      },
+      "code": {
+        "type": "string"
+      },
+      "createdAt": {
+        "type": "object"
+      },
+      "submittedAt": {
+        "type": "object"
+      },
+      "identifiers": {
+        "type": "object",
+        "properties": {
+          "sbi": {
+            "type": "string"
+          },
+          "frn": {
+            "type": "string"
+          },
+          "crn": {
+            "type": "string"
+          },
+          "defraId": {
+            "type": "string"
+          }
+        }
+      },
+      "answers": {
+        "type": "object",
+        "properties": {
+          "isPigFarmer": {
+            "type": "boolean"
+          },
+          "totalPigs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "whitePigsCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "britishLandraceCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "berkshireCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "otherCount": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "application-received",
+      "title": "Application Received",
+      "taskGroups": [
+        {
+          "id": "review-automated-checks",
+          "title": "Review Automated Checks",
+          "tasks": [
+            {
+              "id": "companies-house-check",
+              "title": "Companies House Check",
+              "type": "boolean"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assessment",
+      "title": "Assessment",
+      "taskGroups": [
+        {
+          "id": "check-application",
+          "title": "Check Application",
+          "tasks": [
+            {
+              "id": "check-application-and-documents",
+              "title": "Check application and documents",
+              "type": "boolean"
+            },
+            {
+              "id": "check-find-farm-and-land-payment-data",
+              "title": "Check on Find farm and land payment data",
+              "type": "boolean"
+            },
+            {
+              "id": "check-rps-dual-funding",
+              "title": "Check on RPS (Dual Funding)",
+              "type": "boolean"
+            }
+          ]
+        },
+        {
+          "id": "registration-checks",
+          "title": "Registration checks",
+          "tasks": [
+            {
+              "id": "confirm-farm-has-cph",
+              "title": "Confirm farm has a CPH",
+              "type": "boolean"
+            },
+            {
+              "id": "confirm-apha-registration",
+              "title": "Confirm APHA registration",
+              "type": "boolean"
+            }
+          ]
+        },
+        {
+          "id": "make-application-decision",
+          "title": "Make application decision",
+          "tasks": [
+            {
+              "id": "decision-on-outcome",
+              "title": "Decision on outcome",
+              "type": "boolean"
+            },
+            {
+              "id": "decision-maker-review",
+              "title": "Decision Maker Review",
+              "type": "boolean"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "confirm-approval",
+          "label": "Confirm Approval"
+        },
+        {
+          "id": "confirm-rejection",
+          "label": "Confirm Rejection"
+        }
+      ]
+    },
+    {
+      "id": "contracted",
+      "title": "Contracted"
+    }
+  ]
+}
