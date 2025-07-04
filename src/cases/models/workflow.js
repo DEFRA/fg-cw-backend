@@ -6,6 +6,7 @@ export class Workflow {
     this.code = props.code;
     this.payloadDefinition = props.payloadDefinition;
     this.stages = props.stages;
+    this.requiredRoles = props.requiredRoles;
   }
 
   static createMock(props) {
@@ -46,6 +47,10 @@ export class Workflow {
           actions: [],
         },
       ],
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
       ...props,
     });
   }
