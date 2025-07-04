@@ -28,14 +28,12 @@ describe("GET /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["cw-app"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
       },
     });
     const userId = createUserResponse.payload.id;
 
     const findUserByIdResponse = await wreck.get(`/users/${userId}`);
-
-    expect(findUserByIdResponse.res.statusCode).toEqual(200);
 
     expect(findUserByIdResponse).toEqual({
       res: expect.objectContaining({
@@ -47,7 +45,7 @@ describe("GET /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["cw-app"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
