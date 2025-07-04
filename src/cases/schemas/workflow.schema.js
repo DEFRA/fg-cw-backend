@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { Stage } from "./task.schema.js";
 
 const WorkflowData = Joi.object({
@@ -10,6 +11,10 @@ const WorkflowData = Joi.object({
     .min(1)
     .required(),
   stages: Joi.array().items(Stage).min(2).required(),
+  requiredRoles: Joi.object({
+    allOf: Joi.array().items(codeSchema).required(),
+    anyOf: Joi.array().items(codeSchema).required(),
+  }).required(),
 });
 
 const Workflow = WorkflowData.keys({
