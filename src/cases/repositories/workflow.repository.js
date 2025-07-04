@@ -11,6 +11,7 @@ const toWorkflow = (doc) =>
     code: doc.code,
     payloadDefinition: doc.payloadDefinition,
     stages: doc.stages,
+    requiredRoles: doc.requiredRoles,
   });
 
 export const save = async (workflow) => {

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { codeSchema } from "../roles/code.schema.js";
+import { codeSchema } from "../../../common/schemas/roles/code.schema.js";
 import { idpRoleSchema } from "../user/idp-role.schema.js";
 import { nameSchema } from "../user/name.schema.js";
 

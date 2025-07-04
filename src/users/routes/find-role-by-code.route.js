@@ -1,6 +1,6 @@
 import Joi from "joi";
+import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { findRoleResponseSchema } from "../schemas/responses/find-role-response.schema.js";
-import { codeSchema } from "../schemas/roles/code.schema.js";
 import { findRoleByCodeUseCase } from "../use-cases/find-role-by-code.use-case.js";
 
 export const findRoleByCodeRoute = {

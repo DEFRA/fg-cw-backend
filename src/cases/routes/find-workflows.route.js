@@ -17,7 +17,6 @@ export const findWorkflowsRoute = {
   },
   async handler() {
     const results = await findWorkflowsUseCase();
-
     return results;
   },
 };
