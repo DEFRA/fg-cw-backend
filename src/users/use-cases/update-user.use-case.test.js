@@ -68,7 +68,7 @@ describe("updateUserUseCase", () => {
         name: "Bob Bill",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.ReadWrite"],
-        appRoles: ["RPA.Cases.Approve"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
