@@ -130,38 +130,12 @@
             {
               "id": "decision-on-outcome",
               "title": "Decision on outcome",
-              "type": "string",
-              "enum": ["approve", "recommend_rejection"],
-              "options": [
-                {
-                  "value": "approve",
-                  "label": "Approve"
-                },
-                {
-                  "value": "recommend_rejection",
-                  "label": "Recommend for Rejection"
-                }
-              ]
+              "type": "boolean"
             },
             {
               "id": "decision-maker-review",
               "title": "Decision Maker Review",
-              "type": "string",
-              "enum": ["rejection_approved", "rejection_overruled_approved"],
-              "options": [
-                {
-                  "value": "rejection_approved",
-                  "label": "Rejection Approved"
-                },
-                {
-                  "value": "rejection_overruled_approved",
-                  "label": "Rejection Overruled - Approved"
-                }
-              ],
-              "condition": {
-                "taskId": "decision-on-outcome",
-                "value": "recommend_rejection"
-              }
+              "type": "boolean"
             }
           ]
         }
@@ -169,19 +143,11 @@
       "actions": [
         {
           "id": "confirm-approval",
-          "label": "Confirm Approval",
-          "condition": {
-            "taskId": "decision-on-outcome",
-            "value": "approve"
-          }
+          "label": "Confirm Approval"
         },
         {
           "id": "confirm-rejection",
-          "label": "Confirm Rejection",
-          "condition": {
-            "taskId": "decision-maker-review",
-            "value": "rejection_approved"
-          }
+          "label": "Confirm Rejection"
         }
       ]
     },

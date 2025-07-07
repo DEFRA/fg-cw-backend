@@ -11,6 +11,10 @@ describe("createWorkflowUseCase", () => {
       code: "wf-001",
       payloadDefinition: {},
       stages: [],
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
     });
 
     expect(save).toHaveBeenCalledWith(workflow);

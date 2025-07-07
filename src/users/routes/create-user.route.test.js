@@ -33,7 +33,7 @@ describe("createUserRoute", () => {
         name: "John",
         email: "john.doe@defra.co.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["cw-app"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
       },
     });
 
@@ -48,7 +48,7 @@ describe("createUserRoute", () => {
       name: "John",
       email: "john.doe@defra.co.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["cw-app"],
+      appRoles: ["ROLE_RPA_CASES_APPROVE"],
     });
   });
 

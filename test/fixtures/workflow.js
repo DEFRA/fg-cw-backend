@@ -112,6 +112,10 @@ export const workflowData1 = {
       actions: [],
     },
   ],
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };
 
 export const workflowData2 = {
@@ -211,4 +215,8 @@ export const workflowData2 = {
       actions: [],
     },
   ],
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };

@@ -23,6 +23,11 @@ describe("users", () => {
       { idpId: 1 },
       { unique: true },
     );
+    expect(db.createIndex).toHaveBeenCalledWith(
+      "roles",
+      { code: 1 },
+      { unique: true },
+    );
   });
 
   it("registers routes", async () => {
@@ -37,6 +42,10 @@ describe("users", () => {
     expect(routes).toEqual([
       {
         method: "post",
+        path: "/roles",
+      },
+      {
+        method: "post",
         path: "/users",
       },
       {
@@ -45,7 +54,15 @@ describe("users", () => {
       },
       {
         method: "get",
+        path: "/roles",
+      },
+      {
+        method: "get",
         path: "/users",
+      },
+      {
+        method: "get",
+        path: "/roles/{code}",
       },
       {
         method: "get",
