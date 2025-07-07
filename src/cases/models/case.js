@@ -10,6 +10,7 @@ export class Case {
     this.currentStage = props.currentStage;
     this.payload = props.payload;
     this.stages = props.stages;
+    this.timeline = props.timeline || [];
   }
 
   static fromWorkflow(workflow, caseEvent) {
