@@ -1,65 +1,33 @@
 {
   "code": "pigs-might-fly",
   "payloadDefinition": {
-    "$id": "https://fg-cw.com/grant-application.schema.json",
     "type": "object",
-    "properties": {
-      "clientRef": {
-        "type": "string"
-      },
-      "code": {
-        "type": "string"
-      },
-      "createdAt": {
-        "type": "object"
-      },
-      "submittedAt": {
-        "type": "object"
-      },
-      "identifiers": {
-        "type": "object",
-        "properties": {
-          "sbi": {
-            "type": "string"
-          },
-          "frn": {
-            "type": "string"
-          },
-          "crn": {
-            "type": "string"
-          },
-          "defraId": {
-            "type": "string"
-          }
-        }
-      },
-      "answers": {
-        "type": "object",
-        "properties": {
-          "isPigFarmer": {
-            "type": "boolean"
-          },
-          "totalPigs": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 1000
-          },
-          "whitePigsCount": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "britishLandraceCount": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "berkshireCount": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "otherCount": {
-            "type": "integer",
-            "minimum": 1
-          }
+    "answers": {
+      "type": "object",
+      "properties": {
+        "isPigFarmer": {
+          "type": "boolean",
+          "label": "Are you a pig farmer?"
+        },
+        "totalPigs": {
+          "type": "integer",
+          "label": "How many pigs do you have?"
+        },
+        "whitePigsCount": {
+          "type": "integer",
+          "label": "How many white pigs do you have?"
+        },
+        "britishLandraceCount": {
+          "type": "integer",
+          "label": "How many British Landrace pigs do you have?"
+        },
+        "berkshireCount": {
+          "type": "integer",
+          "label": "How many Berkshire pigs do you have?"
+        },
+        "otherCount": {
+          "type": "integer",
+          "label": "How many other pigs do you have?"
         }
       }
     }
@@ -74,11 +42,21 @@
           "title": "Review Automated Checks",
           "tasks": [
             {
-              "id": "companies-house-check",
-              "title": "Companies House Check",
+              "id": "review-application-data",
+              "title": "Review application data",
               "type": "boolean"
             }
           ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "accept",
+          "label": "Accept"
+        },
+        {
+          "id": "reject",
+          "label": "Reject"
         }
       ]
     },
@@ -122,22 +100,6 @@
               "type": "boolean"
             }
           ]
-        },
-        {
-          "id": "make-application-decision",
-          "title": "Make application decision",
-          "tasks": [
-            {
-              "id": "decision-on-outcome",
-              "title": "Decision on outcome",
-              "type": "boolean"
-            },
-            {
-              "id": "decision-maker-review",
-              "title": "Decision Maker Review",
-              "type": "boolean"
-            }
-          ]
         }
       ],
       "actions": [
@@ -153,7 +115,13 @@
     },
     {
       "id": "contracted",
-      "title": "Contracted"
+      "title": "Contracted",
+      "taskGroups": [],
+      "actions": []
     }
-  ]
+  ],
+  "requiredRoles": {
+    "allOf": ["ROLE_RPA_ADMIN"],
+    "anyOf": ["ROLE_RPA_ADMIN"]
+  }
 }
