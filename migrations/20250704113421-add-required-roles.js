@@ -7,5 +7,5 @@ export const up = async (db) => {
 export const down = async (db) => {
   await db
     .collection("workflows")
-    .updateMany({}, { $unset: { requiredRoles: undefined } });
+    .updateMany({}, { $unset: { requiredRoles: "" } });
 };

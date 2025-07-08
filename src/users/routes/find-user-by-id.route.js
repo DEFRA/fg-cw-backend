@@ -1,6 +1,6 @@
 import Joi from "joi";
+import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
-import { idSchema } from "../schemas/user/id.schema.js";
 import { findUserByIdUseCase } from "../use-cases/find-user-by-id.use-case.js";
 
 export const findUserByIdRoute = {

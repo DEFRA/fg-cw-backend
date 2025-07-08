@@ -11,6 +11,7 @@ export class CaseDocument {
     this.status = props.status;
     this.dateReceived = new Date(props.dateReceived);
     this.payload = props.payload;
+    this.assignedUser = props.assignedUser;
     this.currentStage = props.currentStage;
     this.stages = props.stages;
   }
@@ -43,6 +44,7 @@ export class CaseDocument {
           taskGroups: [],
         },
       ],
+      assignedUser: null,
       ...props,
     });
   }
