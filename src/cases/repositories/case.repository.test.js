@@ -8,6 +8,7 @@ import {
   findAll,
   findById,
   save,
+  updateAssignedUser,
   updateStage,
   updateTaskStatus,
 } from "./case.repository.js";
@@ -265,6 +266,47 @@ describe("updateTaskStatus", () => {
       Boom.notFound(
         'Task with caseId "6800c9feb76f8f854ebf901a", stageId "stage-1", taskGroupId "task-group-1" and taskId "task-1" not found',
       ),
+    );
+  });
+});
+
+describe("updateAssignedUser", () => {
+  it("updates the assigned user of a case", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const assignedUser = "673c8c2eb76f8f854ebf912b";
+
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      updateOne,
+    });
+
+    await updateAssignedUser(caseId, assignedUser);
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: ObjectId.createFromHexString(caseId) },
+      { $set: { assignedUser } },
+    );
+  });
+
+  it("throws Boom.notFound when case is not found", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const assignedUser = "673c8c2eb76f8f854ebf912b";
+
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue({
+        acknowledged: true,
+        matchedCount: 0,
+      }),
+    });
+
+    await expect(updateAssignedUser(caseId, assignedUser)).rejects.toThrow(
+      Boom.notFound(`Case with id "${caseId}" not found`),
     );
   });
 });

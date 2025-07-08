@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { idSchema } from "../../../common/schemas/user/id.schema.js";
 import { CaseStage } from "../case.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
 
@@ -11,6 +12,7 @@ export const findCaseResponseSchema = Joi.object({
   payload: Joi.object().required(),
   currentStage: UrlSafeId.required(),
   stages: Joi.array().items(CaseStage).required(),
+  assignedUser: idSchema.allow(null),
 })
   .options({
     presence: "required",

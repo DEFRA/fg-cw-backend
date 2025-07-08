@@ -77,6 +77,7 @@ describe("createCaseUseCase", () => {
             ],
           },
         ],
+        assignedUser: null,
       }),
     );
   });

@@ -8,6 +8,7 @@ export class Case {
     this.status = props.status;
     this.dateReceived = props.dateReceived;
     this.currentStage = props.currentStage;
+    this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
     this.timeline = props.timeline || [];
@@ -62,6 +63,7 @@ export class Case {
           taskGroups: [],
         },
       ],
+      assignedUser: null,
       ...props,
     });
   }

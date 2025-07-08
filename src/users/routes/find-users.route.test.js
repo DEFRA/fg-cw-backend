@@ -32,4 +32,41 @@ describe("findUsersRoute", () => {
     expect(statusCode).toEqual(200);
     expect(result).toEqual(users);
   });
+
+  it("returns users by all app roles and any app roles", async () => {
+    const users = [User.createMock(), User.createMock()];
+
+    findUsersUseCase.mockResolvedValue(users);
+
+    const { statusCode, result } = await server.inject({
+      method: "GET",
+      url: "/users?allAppRoles=ROLE_RPA_ADMIN&allAppRoles=ROLE_RPA_SUPER_ADMIN&anyAppRoles=ROLE_ANY_OF",
+    });
+
+    expect(statusCode).toEqual(200);
+    expect(result).toEqual(users);
+    expect(findUsersUseCase).toHaveBeenCalledWith({
+      allAppRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+      anyAppRoles: ["ROLE_ANY_OF"],
+    });
+  });
+
+  it("returns users by idpId", async () => {
+    const users = [User.createMock(), User.createMock()];
+
+    findUsersUseCase.mockResolvedValue(users);
+
+    const { statusCode, result } = await server.inject({
+      method: "GET",
+      url: "/users?idpId=a6b2c9f4-40c4-4f6d-9e7a-3cd37f4cb45e",
+    });
+
+    expect(statusCode).toEqual(200);
+    expect(result).toEqual(users);
+    expect(findUsersUseCase).toHaveBeenCalledWith({
+      idpId: "a6b2c9f4-40c4-4f6d-9e7a-3cd37f4cb45e",
+      allAppRoles: [],
+      anyAppRoles: [],
+    });
+  });
 });

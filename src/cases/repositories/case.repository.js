@@ -18,6 +18,7 @@ const toCase = (doc) =>
     createdAt: doc.createdAt,
     stages: doc.stages,
     timeline: doc.timeline,
+    assignedUser: doc.assignedUser,
   });
 
 export const save = async (kase) => {
@@ -101,5 +102,18 @@ export const updateTaskStatus = async ({
     throw Boom.notFound(
       `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
     );
+  }
+};
+
+export const updateAssignedUser = async (caseId, assignedUser) => {
+  const result = await db
+    .collection(collection)
+    .updateOne(
+      { _id: ObjectId.createFromHexString(caseId) },
+      { $set: { assignedUser } },
+    );
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };

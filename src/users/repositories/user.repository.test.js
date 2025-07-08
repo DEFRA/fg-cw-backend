@@ -184,6 +184,110 @@ describe("findAll", () => {
       }),
     ]);
   });
+
+  it("returns a list of users filtered by allAppRoles", async () => {
+    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
+    const anyAppRoles = [];
+
+    const docs = [
+      UserDocument.createMock({
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+      }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+
+    const result = await findAll({ allAppRoles, anyAppRoles });
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith({
+      appRoles: { $all: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"] },
+    });
+
+    expect(result).toEqual([
+      User.createMock({
+        id: docs[0]._id.toString(),
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+      }),
+    ]);
+  });
+
+  it("returns a list of users filtered by anyAppRoles", async () => {
+    const allAppRoles = [];
+    const anyAppRoles = ["ANY_APP_ROLE"];
+
+    const docs = [
+      UserDocument.createMock({
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+      }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+
+    const result = await findAll({ allAppRoles, anyAppRoles });
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith({
+      appRoles: {
+        $in: ["ANY_APP_ROLE"],
+      },
+    });
+
+    expect(result).toEqual([
+      User.createMock({
+        id: docs[0]._id.toString(),
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+      }),
+    ]);
+  });
+
+  it("returns a list of users filtered by allAppRoles and anyAppRoles", async () => {
+    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
+    const anyAppRoles = ["ANY_APP_ROLE"];
+
+    const docs = [
+      UserDocument.createMock({
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+      }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+
+    const result = await findAll({ allAppRoles, anyAppRoles });
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith({
+      appRoles: {
+        $all: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+        $in: ["ANY_APP_ROLE"],
+      },
+    });
+
+    expect(result).toEqual([
+      User.createMock({
+        id: docs[0]._id.toString(),
+        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+      }),
+    ]);
+  });
 });
 
 describe("findById", () => {
