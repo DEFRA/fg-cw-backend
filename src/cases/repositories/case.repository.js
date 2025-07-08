@@ -17,7 +17,11 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
-    assignedUser: doc.assignedUser,
+    assignedUser: doc.assignedUserId
+      ? {
+          id: doc.assignedUserId,
+        }
+      : null,
   });
 
 export const save = async (kase) => {
@@ -104,13 +108,15 @@ export const updateTaskStatus = async ({
   }
 };
 
-export const updateAssignedUser = async (caseId, assignedUser) => {
-  const result = await db
-    .collection(collection)
-    .updateOne(
-      { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { assignedUser } },
-    );
+export const updateAssignedUser = async (caseId, assignedUserId) => {
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $set: {
+        assignedUserId,
+      },
+    },
+  );
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);

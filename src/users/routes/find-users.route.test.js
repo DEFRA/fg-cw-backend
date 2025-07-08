@@ -46,6 +46,7 @@ describe("findUsersRoute", () => {
     expect(statusCode).toEqual(200);
     expect(result).toEqual(users);
     expect(findUsersUseCase).toHaveBeenCalledWith({
+      ids: [],
       allAppRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
       anyAppRoles: ["ROLE_ANY_OF"],
     });
@@ -65,6 +66,31 @@ describe("findUsersRoute", () => {
     expect(result).toEqual(users);
     expect(findUsersUseCase).toHaveBeenCalledWith({
       idpId: "a6b2c9f4-40c4-4f6d-9e7a-3cd37f4cb45e",
+      ids: [],
+      allAppRoles: [],
+      anyAppRoles: [],
+    });
+  });
+
+  it("returns users by ids", async () => {
+    const users = [User.createMock(), User.createMock()];
+
+    findUsersUseCase.mockResolvedValue(users);
+
+    const query = new URLSearchParams();
+    query.append("ids", users[0].id);
+    query.append("ids", users[1].id);
+
+    const { statusCode, result } = await server.inject({
+      method: "GET",
+      url: `/users?${query}`,
+    });
+
+    expect(statusCode).toEqual(200);
+    expect(result).toEqual(users);
+
+    expect(findUsersUseCase).toHaveBeenCalledWith({
+      ids: users.map((user) => user.id),
       allAppRoles: [],
       anyAppRoles: [],
     });

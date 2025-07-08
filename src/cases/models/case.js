@@ -62,7 +62,10 @@ export class Case {
           taskGroups: [],
         },
       ],
-      assignedUser: null,
+      assignedUser: {
+        id: "user-id",
+        name: "User Name",
+      },
       ...props,
     });
   }
