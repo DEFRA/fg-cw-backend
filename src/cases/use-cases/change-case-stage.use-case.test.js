@@ -38,7 +38,7 @@ describe("changeCaseStageUseCase", () => {
 
     await changeCaseStageUseCase(kase._id);
 
-    expect(updateStage).toHaveBeenCalledWith(kase._id, "contract");
+    expect(updateStage).toHaveBeenCalledWith(kase._id, "stage-2");
   });
 
   it("publishes CaseStageUpdated event", async () => {
@@ -51,7 +51,7 @@ describe("changeCaseStageUseCase", () => {
     expect(publishCaseStageUpdated).toHaveBeenCalledWith({
       caseRef: kase.caseRef,
       previousStage: kase.currentStage,
-      currentStage: "contract",
+      currentStage: "stage-2",
     });
   });
 });
