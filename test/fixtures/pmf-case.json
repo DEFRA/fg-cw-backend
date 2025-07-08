@@ -1,0 +1,79 @@
+{
+  "_id": {
+    "$oid": "686baafc9ac48f446c317655"
+  },
+  "workflowCode": "pigs-might-fly",
+  "caseRef": "PMF-REF-1",
+  "status": "NEW",
+  "dateReceived": "2025-03-27T11:34:52Z",
+  "payload": {
+    "clientRef": "PMF-REF-1",
+    "code": "pigs-might-fly",
+    "createdAt": "2025-03-27T10:34:52.000Z",
+    "submittedAt": "2025-03-28T11:30:52.000Z",
+    "answers": {
+      "isPigFarmer": true,
+      "totalPigs": 10,
+      "whitePigsCount": 2,
+      "britishLandraceCount": 2,
+      "berkshireCount": 3,
+      "otherCount": 3
+    }
+  },
+  "currentStage": "application-received",
+  "stages": [
+    {
+      "id": "application-received",
+      "taskGroups": [
+        {
+          "id": "review-automated-checks",
+          "tasks": [
+            {
+              "id": "review-application-data",
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assessment",
+      "taskGroups": [
+        {
+          "id": "check-application",
+          "tasks": [
+            {
+              "id": "check-application-and-documents",
+              "status": "pending"
+            },
+            {
+              "id": "check-find-farm-and-land-payment-data",
+              "status": "pending"
+            },
+            {
+              "id": "check-rps-dual-funding",
+              "status": "pending"
+            }
+          ]
+        },
+        {
+          "id": "registration-checks",
+          "tasks": [
+            {
+              "id": "confirm-farm-has-cph",
+              "status": "pending"
+            },
+            {
+              "id": "confirm-apha-registration",
+              "status": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contracted",
+      "taskGroups": []
+    }
+  ]
+}
