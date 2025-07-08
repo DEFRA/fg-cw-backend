@@ -53,6 +53,7 @@ export const caseData1 = {
       taskGroups: [],
     },
   ],
+  timeline: [],
 };
 
 export const caseData2 = {
@@ -110,6 +111,7 @@ export const caseData2 = {
       taskGroups: [],
     },
   ],
+  timeline: [],
 };
 
 export const caseData3 = {
