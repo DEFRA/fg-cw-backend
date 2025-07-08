@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { codeSchema } from "../../../common/schemas/roles/code.schema.js";
+import { idSchema } from "../../../common/schemas/user/id.schema.js";
 import { emailSchema } from "../user/email.schema.js";
-import { idSchema } from "../user/id.schema.js";
 import { idpIdSchema } from "../user/idp-id.schema.js";
 import { idpRoleSchema } from "../user/idp-role.schema.js";
 import { nameSchema } from "../user/name.schema.js";
