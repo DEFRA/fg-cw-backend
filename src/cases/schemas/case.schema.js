@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { statusSchema } from "./cases/stages/tasks/status.schema.js";
+import { timelineSchema } from "./cases/timeline/timeline.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const CaseStage = Joi.object({
@@ -22,22 +23,6 @@ export const CaseStage = Joi.object({
     .required(),
 }).label("CaseStage");
 
-const CaseTimeline = Joi.object({
-  eventType: Joi.string()
-    .valid(
-      "CASE_CREATED",
-      "NOTE_ADDED",
-      "CASE_ASSIGNED",
-      "SUBMISSION",
-      "TASK_COMPLETED",
-    )
-    .required(),
-  createdBy: Joi.string().required(),
-  createdAt: Joi.string().isoDate().required(),
-  description: Joi.string().required(),
-  data: Joi.object().optional(),
-}).label("CaseTimeline");
-
 const CaseData = Joi.object({
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
@@ -46,7 +31,7 @@ const CaseData = Joi.object({
   payload: Joi.object().required(),
   currentStage: UrlSafeId.required(),
   stages: Joi.array().items(CaseStage).required(),
-  timeline: Joi.array().items(CaseTimeline).required(),
+  timeline: Joi.array().items(timelineSchema).required(),
 }).label("CaseData");
 
 const Case = CaseData.keys({
