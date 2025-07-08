@@ -15,9 +15,9 @@
       "isPigFarmer": true,
       "totalPigs": 10,
       "whitePigsCount": 2,
-      "britishLandraceCount": 2,
-      "berkshireCount": 3,
-      "otherCount": 3
+      "britishLandracePigsCount": 2,
+      "berkshirePigsCount": 3,
+      "otherPigsCount": 3
     }
   },
   "currentStage": "application-received",
