@@ -58,15 +58,32 @@ export const update = async (user) => {
 };
 
 export const findAll = async (query = {}) => {
+  const filter = createFilter(query);
+
+  const userDocuments = await db.collection(collection).find(filter).toArray();
+
+  return userDocuments.map(toUser);
+};
+
+// eslint-disable-next-line complexity
+const createFilter = (query) => {
   const filter = {};
 
   if (query.idpId) {
     filter.idpId = query.idpId;
   }
 
-  const userDocuments = await db.collection(collection).find(filter).toArray();
+  if (query.allAppRoles?.length) {
+    filter.appRoles ??= {};
+    filter.appRoles.$all = query.allAppRoles;
+  }
 
-  return userDocuments.map(toUser);
+  if (query.anyAppRoles?.length) {
+    filter.appRoles ??= {};
+    filter.appRoles.$in = query.anyAppRoles;
+  }
+
+  return filter;
 };
 
 export const findById = async (userId) => {
