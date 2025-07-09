@@ -11,6 +11,7 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
+    this.timeline = props.timeline || [];
   }
 
   static fromWorkflow(workflow, caseEvent) {

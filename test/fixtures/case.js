@@ -53,6 +53,7 @@ export const caseData1 = {
       taskGroups: [],
     },
   ],
+  timeline: [],
   assignedUser: null,
 };
 
@@ -111,6 +112,7 @@ export const caseData2 = {
       taskGroups: [],
     },
   ],
+  timeline: [],
   assignedUser: null,
 };
 
