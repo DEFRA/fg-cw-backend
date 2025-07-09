@@ -63,8 +63,8 @@ export class Case {
         },
       ],
       assignedUser: {
-        id: "user-id",
-        name: "User Name",
+        id: "64c88faac1f56f71e1b89a33",
+        name: "Test Name",
       },
       ...props,
     });

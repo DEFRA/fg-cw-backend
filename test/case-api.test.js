@@ -9,7 +9,7 @@ import {
   expect,
   it,
 } from "vitest";
-import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
+import { caseData1, caseData2, caseData3Document } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
@@ -120,7 +120,7 @@ describe("Cases", () => {
 
       expect(documents).toEqual([
         {
-          ...caseData3,
+          ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
         },
