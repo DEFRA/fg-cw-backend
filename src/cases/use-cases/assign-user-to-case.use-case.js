@@ -18,6 +18,7 @@ export const assignUserToCaseUseCase = async (command) => {
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
+  // TODO: This permission check should live inside Case once Case and Workflow are merged
   const permissions = new Permissions(workflow.requiredRoles);
 
   if (!permissions.isAuthorised(user.appRoles)) {
