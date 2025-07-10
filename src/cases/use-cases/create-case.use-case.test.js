@@ -77,6 +77,17 @@ describe("createCaseUseCase", () => {
             ],
           },
         ],
+        timeline: [
+          {
+            eventType: "CASE_CREATED",
+            createdAt: expect.any(String),
+            description: "Case received",
+            createdBy: "System",
+            data: {
+              caseRef: "TEST-001",
+            },
+          },
+        ],
         assignedUser: null,
       }),
     );
