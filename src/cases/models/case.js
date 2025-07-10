@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
@@ -33,15 +34,13 @@ export class Case {
         })),
       })),
       timeline: [
-        {
-          eventType: "CASE_CREATED",
-          createdAt: new Date().toISOString(),
-          description: "Case received",
+        new TimelineEvent({
+          eventType: TimelineEvent.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
           },
-        },
+        }),
       ],
     });
   }
@@ -76,7 +75,7 @@ export class Case {
       ],
       timeline: [
         {
-          eventType: "CASE_CREATED",
+          eventType: TimelineEvent.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
           createdBy: "System", // To specify that the case was created by an external system
@@ -85,7 +84,10 @@ export class Case {
           },
         },
       ],
-      assignedUser: null,
+      assignedUser: {
+        id: "64c88faac1f56f71e1b89a33",
+        name: "Test Name",
+      },
       ...props,
     });
   }

@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 
 const collection = "cases";
 
@@ -18,7 +19,11 @@ const toCase = (doc) =>
     createdAt: doc.createdAt,
     stages: doc.stages,
     timeline: doc.timeline,
-    assignedUser: doc.assignedUser,
+    assignedUser: doc.assignedUserId
+      ? {
+          id: doc.assignedUserId,
+        }
+      : null,
   });
 
 export const save = async (kase) => {
@@ -105,13 +110,39 @@ export const updateTaskStatus = async ({
   }
 };
 
-export const updateAssignedUser = async (caseId, assignedUser) => {
-  const result = await db
-    .collection(collection)
-    .updateOne(
-      { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { assignedUser } },
-    );
+export const updateAssignedUser = async (caseId, assignedUserId) => {
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $set: {
+        assignedUserId,
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
+};
+
+export const addTimelineEvent = async (caseId, data) => {
+  const event = new TimelineEvent({
+    eventType: data.eventType,
+    createdBy: data.createdBy,
+    data: data.data,
+  });
+
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $push: {
+        timeline: {
+          $each: [event],
+          $position: 0,
+        },
+      },
+    },
+  );
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
