@@ -53,6 +53,17 @@ export const caseData1 = {
       taskGroups: [],
     },
   ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-1",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
+    },
+  ],
   assignedUser: null,
 };
 
@@ -111,6 +122,17 @@ export const caseData2 = {
       taskGroups: [],
     },
   ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-2",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
+    },
+  ],
   assignedUser: null,
 };
 
@@ -167,6 +189,17 @@ export const caseData3Document = {
     {
       id: "contract",
       taskGroups: [],
+    },
+  ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-3",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
     },
   ],
   assignedUserId: null,

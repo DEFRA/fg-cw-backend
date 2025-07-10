@@ -17,15 +17,15 @@
           "type": "integer",
           "label": "How many white pigs do you have?"
         },
-        "britishLandraceCount": {
+        "britishLandracePigsCount": {
           "type": "integer",
           "label": "How many British Landrace pigs do you have?"
         },
-        "berkshireCount": {
+        "berkshirePigsCount": {
           "type": "integer",
           "label": "How many Berkshire pigs do you have?"
         },
-        "otherCount": {
+        "otherPigsCount": {
           "type": "integer",
           "label": "How many other pigs do you have?"
         }

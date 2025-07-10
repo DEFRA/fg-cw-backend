@@ -17,6 +17,7 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
+    timeline: doc.timeline,
     assignedUser: doc.assignedUserId
       ? {
           id: doc.assignedUserId,

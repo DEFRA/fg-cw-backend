@@ -123,6 +123,17 @@ describe("Cases", () => {
           ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
+          timeline: [
+            {
+              eventType: "CASE_CREATED",
+              createdAt: expect.any(String),
+              description: "Case received",
+              createdBy: "System",
+              data: {
+                caseRef: "APPLICATION-REF-3",
+              },
+            },
+          ],
         },
       ]);
     });
