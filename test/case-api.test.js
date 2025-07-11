@@ -116,7 +116,7 @@ describe("Cases", () => {
         createCaseEvent3,
       );
 
-      const documents = await waitForDocuments(cases);
+      const documents = await waitForDocuments(cases, 10);
 
       expect(documents).toEqual([
         {
