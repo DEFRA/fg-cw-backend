@@ -105,9 +105,11 @@ describe("findAll", () => {
     expect(result).toEqual([
       Case.createMock({
         _id: cases[0]._id.toString(),
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
       }),
       Case.createMock({
         _id: cases[1]._id.toString(),
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
       }),
     ]);
   });
@@ -135,6 +137,7 @@ describe("findById", () => {
     expect(result).toEqual(
       Case.createMock({
         _id: caseId,
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
       }),
     );
   });
@@ -273,7 +276,7 @@ describe("updateTaskStatus", () => {
 describe("updateAssignedUser", () => {
   it("updates the assigned user of a case", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
-    const assignedUser = "673c8c2eb76f8f854ebf912b";
+    const assignedUserId = "673c8c2eb76f8f854ebf912b";
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -284,13 +287,13 @@ describe("updateAssignedUser", () => {
       updateOne,
     });
 
-    await updateAssignedUser(caseId, assignedUser);
+    await updateAssignedUser(caseId, assignedUserId);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { assignedUser } },
+      { $set: { assignedUserId } },
     );
   });
 
