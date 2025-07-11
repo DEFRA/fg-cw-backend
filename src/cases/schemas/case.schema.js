@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { idSchema } from "../../common/schemas/user/id.schema.js";
+import { assignedUserSchema } from "./cases/assigned-user.schema.js";
 import { statusSchema } from "./cases/stages/tasks/status.schema.js";
 import { timelineSchema } from "./cases/timeline/timeline.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
@@ -33,7 +33,7 @@ const CaseData = Joi.object({
   currentStage: UrlSafeId.required(),
   stages: Joi.array().items(CaseStage).required(),
   timeline: Joi.array().items(timelineSchema).required(),
-  assignedUser: idSchema.allow(null),
+  assignedUser: assignedUserSchema.allow(null),
 }).label("CaseData");
 
 const Case = CaseData.keys({

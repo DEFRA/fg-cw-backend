@@ -11,6 +11,7 @@ import { findCasesRoute } from "./routes/find-cases.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
+import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 
 export const cases = {
   name: "cases",
@@ -31,6 +32,7 @@ export const cases = {
       findCasesRoute,
       findCaseByIdRoute,
       changeCaseStageRoute,
+      assignUserToCaseRoute,
       createWorkflowRoute,
       findWorkflowsRoute,
       findWorkflowByCodeRoute,

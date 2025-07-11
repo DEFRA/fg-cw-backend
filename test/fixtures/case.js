@@ -136,7 +136,7 @@ export const caseData2 = {
   assignedUser: null,
 };
 
-export const caseData3 = {
+export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
@@ -202,5 +202,5 @@ export const caseData3 = {
       eventType: "CASE_CREATED",
     },
   ],
-  assignedUser: null,
+  assignedUserId: null,
 };

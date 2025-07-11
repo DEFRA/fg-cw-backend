@@ -83,6 +83,12 @@ const createFilter = (query) => {
     filter.appRoles.$in = query.anyAppRoles;
   }
 
+  if (query.ids?.length) {
+    filter._id = {
+      $in: query.ids.map((id) => ObjectId.createFromHexString(id)),
+    };
+  }
+
   return filter;
 };
 

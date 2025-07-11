@@ -288,6 +288,42 @@ describe("findAll", () => {
       }),
     ]);
   });
+
+  it("returns a list of users filtered by ids", async () => {
+    const id1 = new ObjectId();
+    const id2 = new ObjectId();
+
+    const ids = [id1.toHexString(), id2.toHexString()];
+
+    const docs = [
+      UserDocument.createMock({ _id: ids[0] }),
+      UserDocument.createMock({ _id: ids[1] }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+
+    const result = await findAll({ ids });
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith({
+      _id: { $in: [id1, id2] },
+    });
+
+    expect(result).toEqual([
+      User.createMock({
+        id: docs[0]._id.toString(),
+      }),
+      User.createMock({
+        id: docs[1]._id.toString(),
+      }),
+    ]);
+  });
 });
 
 describe("findById", () => {

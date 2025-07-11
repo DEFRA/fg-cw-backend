@@ -11,7 +11,7 @@ export class CaseDocument {
     this.status = props.status;
     this.dateReceived = new Date(props.dateReceived);
     this.payload = props.payload;
-    this.assignedUser = props.assignedUser;
+    this.assignedUserId = props.assignedUser?.id || null;
     this.currentStage = props.currentStage;
     this.stages = props.stages;
     this.timeline = props.timeline;
@@ -56,7 +56,10 @@ export class CaseDocument {
           },
         },
       ],
-      assignedUser: null,
+      assignedUser: {
+        id: "64c88faac1f56f71e1b89a33",
+        name: "User Name",
+      },
       ...props,
     });
   }
