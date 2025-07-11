@@ -13,6 +13,7 @@ import { caseData1, caseData2, caseData3Document } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
+import { createWorkflow } from "./helpers/workflows.js";
 import { wreck } from "./helpers/wreck.js";
 
 describe("Cases", () => {
@@ -22,6 +23,7 @@ describe("Cases", () => {
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
+    await createWorkflow();
     cases = client.db().collection("cases");
   });
 
@@ -116,7 +118,7 @@ describe("Cases", () => {
         createCaseEvent3,
       );
 
-      const documents = await waitForDocuments(cases, 10);
+      const documents = await waitForDocuments(cases);
 
       expect(documents).toEqual([
         {
