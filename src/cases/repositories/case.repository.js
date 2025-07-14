@@ -110,12 +110,22 @@ export const updateTaskStatus = async ({
   }
 };
 
-export const updateAssignedUser = async (caseId, assignedUserId) => {
+export const updateAssignedUser = async (
+  caseId,
+  assignedUserId,
+  timelineEvent,
+) => {
   const result = await db.collection(collection).updateOne(
     { _id: ObjectId.createFromHexString(caseId) },
     {
       $set: {
         assignedUserId,
+      },
+      $push: {
+        timeline: {
+          $each: [timelineEvent],
+          $position: 0,
+        },
       },
     },
   );

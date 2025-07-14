@@ -1,9 +1,7 @@
 import Joi from "joi";
-import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { assignUserToCaseRequestSchema } from "../schemas/requests/assign-user-to-case-request.schema.js";
 import { assignUserToCaseUseCase } from "../use-cases/assign-user-to-case.use-case.js";
-import { createCaseAssignedTimelineEvent } from "../use-cases/create-case-assigned-timeline-event.use-case.js";
 
 export const assignUserToCaseRoute = {
   method: "PATCH",
@@ -30,19 +28,6 @@ export const assignUserToCaseRoute = {
     await assignUserToCaseUseCase({
       caseId,
       assignedUserId,
-    });
-
-    let userName = null;
-    if (assignedUserId) {
-      userName = (await findUserByIdUseCase(assignedUserId)).name;
-    }
-
-    await createCaseAssignedTimelineEvent({
-      caseId,
-      createdBy: "System", // TODO - to come from authorised user?
-      data: {
-        assignedTo: userName,
-      },
     });
 
     return h.response().code(204);
