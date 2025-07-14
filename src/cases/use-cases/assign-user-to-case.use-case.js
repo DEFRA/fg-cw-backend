@@ -6,13 +6,28 @@ import { updateAssignedUser } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+const createTimelineEvent = (userId, kase) => {
+  return new TimelineEvent({
+    eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+    createdBy: "System", // TODO: user details need to come from authorised user
+    data: {
+      assignedTo: userId,
+      previouslyAssignedTo: kase.assignedUser?.id,
+    },
+  });
+};
+
 export const assignUserToCaseUseCase = async (command) => {
+  const kase = await findCaseByIdUseCase(command.caseId);
+
   if (command.assignedUserId === null) {
-    await updateAssignedUser(command.caseId, null);
+    await updateAssignedUser(
+      command.caseId,
+      null,
+      createTimelineEvent(command.assignedUserId, kase),
+    );
     return;
   }
-
-  const kase = await findCaseByIdUseCase(command.caseId);
 
   const [user, workflow] = await Promise.all([
     findUserByIdUseCase(command.assignedUserId),
@@ -28,14 +43,7 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  const timelineEvent = new TimelineEvent({
-    eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-    createdBy: "System", // TODO: user details need to come from authorised user
-    data: {
-      assignedTo: user.id,
-      previouslyAssignedTo: kase.assignedUser?.id,
-    },
-  });
+  const timelineEvent = createTimelineEvent(user, kase);
 
   await updateAssignedUser(command.caseId, user.id, timelineEvent);
 };
