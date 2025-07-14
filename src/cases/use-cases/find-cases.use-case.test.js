@@ -119,4 +119,123 @@ describe("findCasesUseCase", () => {
     expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
   });
+
+  it("finds workflows and assigns requiredRoles to cases", async () => {
+    const workflow1 = {
+      code: "WORKFLOW_1",
+      requiredRoles: ["ROLE_1", "ROLE_2"],
+    };
+    const workflow2 = { code: "WORKFLOW_2", requiredRoles: ["ROLE_3"] };
+    const workflows = [workflow1, workflow2];
+
+    const casesWithWorkflows = [
+      Case.createMock({ workflowCode: "WORKFLOW_1", assignedUser: null }),
+      Case.createMock({ workflowCode: "WORKFLOW_2", assignedUser: null }),
+    ];
+
+    findAll.mockResolvedValue(casesWithWorkflows);
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(findAll).toHaveBeenCalledWith();
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["WORKFLOW_1", "WORKFLOW_2"],
+    });
+    expect(result[0].requiredRoles).toEqual(["ROLE_1", "ROLE_2"]);
+    expect(result[1].requiredRoles).toEqual(["ROLE_3"]);
+  });
+
+  it("finds cases with different workflow codes and sets the correct requiredRoles", async () => {
+    const workflow1 = {
+      code: "EDITOR_WORKFLOW",
+      requiredRoles: ["PMF_OFFICER", "SUPERVISOR"],
+    };
+    const workflow2 = { code: "ADMIN_WORKFLOW", requiredRoles: ["ADMIN"] };
+    const workflow3 = {
+      code: "USER_WORKFLOW",
+      requiredRoles: ["USER", "VIEWER"],
+    };
+    const workflows = [workflow1, workflow2, workflow3];
+
+    const casesWithDifferentWorkflows = [
+      Case.createMock({ workflowCode: "EDITOR_WORKFLOW", assignedUser: null }),
+      Case.createMock({ workflowCode: "ADMIN_WORKFLOW", assignedUser: null }),
+      Case.createMock({ workflowCode: "USER_WORKFLOW", assignedUser: null }),
+      Case.createMock({ workflowCode: "EDITOR_WORKFLOW", assignedUser: null }),
+    ];
+
+    findAll.mockResolvedValue(casesWithDifferentWorkflows);
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(findAll).toHaveBeenCalledWith();
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: [
+        "EDITOR_WORKFLOW",
+        "ADMIN_WORKFLOW",
+        "USER_WORKFLOW",
+        "EDITOR_WORKFLOW",
+      ],
+    });
+    expect(result[0].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
+    expect(result[1].requiredRoles).toEqual(["ADMIN"]);
+    expect(result[2].requiredRoles).toEqual(["USER", "VIEWER"]);
+    expect(result[3].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
+  });
+
+  it("finds cases with and without matching workflows", async () => {
+    const workflow1 = { code: "EXISTING_WORKFLOW", requiredRoles: ["ROLE_A"] };
+    const workflows = [workflow1];
+
+    const mixedCases = [
+      Case.createMock({
+        workflowCode: "EXISTING_WORKFLOW",
+        requiredRoles: undefined,
+      }),
+      Case.createMock({
+        workflowCode: "MISSING_WORKFLOW",
+        requiredRoles: undefined,
+      }),
+      Case.createMock({
+        workflowCode: "EXISTING_WORKFLOW",
+        requiredRoles: undefined,
+      }),
+    ];
+
+    findAll.mockResolvedValue(mixedCases);
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(findAll).toHaveBeenCalledWith();
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["EXISTING_WORKFLOW", "MISSING_WORKFLOW", "EXISTING_WORKFLOW"],
+    });
+    expect(result[0].requiredRoles).toEqual(["ROLE_A"]);
+    expect(result[1].requiredRoles).toBeUndefined();
+    expect(result[2].requiredRoles).toEqual(["ROLE_A"]);
+  });
+
+  it("extracts workflow codes correctly from cases", async () => {
+    const casesWithWorkflowCodes = [
+      Case.createMock({ workflowCode: "CODE_1", assignedUser: null }),
+      Case.createMock({ workflowCode: "CODE_2", assignedUser: null }),
+      Case.createMock({ workflowCode: "CODE_3", assignedUser: null }),
+    ];
+
+    findAll.mockResolvedValue(casesWithWorkflowCodes);
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([]);
+
+    await findCasesUseCase();
+
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["CODE_1", "CODE_2", "CODE_3"],
+    });
+  });
 });
