@@ -18,25 +18,25 @@ import {
 import { createUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
-let cases;
-let workflows;
-let users;
-
-let client;
-
-beforeAll(async () => {
-  client = new MongoClient(env.MONGO_URI);
-  await client.connect();
-  cases = client.db().collection("cases");
-  workflows = client.db().collection("workflows");
-  users = client.db().collection("users");
-});
-
-afterAll(async () => {
-  await client.close(true);
-});
-
 describe("PATCH /cases/{caseId}/assigned-user", () => {
+  let cases;
+  let workflows;
+  let users;
+
+  let client;
+
+  beforeAll(async () => {
+    client = new MongoClient(env.MONGO_URI);
+    await client.connect();
+    cases = client.db().collection("cases");
+    workflows = client.db().collection("workflows");
+    users = client.db().collection("users");
+  });
+
+  afterAll(async () => {
+    await client.close(true);
+  });
+
   beforeEach(async () => {
     await cases.deleteMany({});
     await workflows.deleteMany({});
