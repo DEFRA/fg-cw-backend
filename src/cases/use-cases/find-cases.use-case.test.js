@@ -1,14 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Case } from "../models/case.js";
 import { findAll } from "../repositories/case.repository.js";
 import { findCasesUseCase } from "./find-cases.use-case.js";
+import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
+vi.mock("./find-workflows.use-case.js");
 
 describe("findCasesUseCase", () => {
+  beforeEach(() => {
+    findWorkflowsUseCase.mockResolvedValue([]);
+  });
+
   it("finds cases without assigned users", async () => {
     const casesWithoutUsers = [
       Case.createMock({ assignedUser: null }),
@@ -17,6 +23,7 @@ describe("findCasesUseCase", () => {
 
     findAll.mockResolvedValue(casesWithoutUsers);
     findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([]);
 
     const result = await findCasesUseCase();
 
