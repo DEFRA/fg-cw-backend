@@ -274,7 +274,7 @@ describe("findCasesUseCase", () => {
     });
   });
 
-  it("handles rejection when one service fails", async () => {
+  it("throws when find user use cases fails", async () => {
     const user1 = User.createMock({ id: "user-1" });
     const cases = [
       Case.createMock({
@@ -283,15 +283,41 @@ describe("findCasesUseCase", () => {
       }),
     ];
 
-    const userError = new Error("User service failed");
+    const userError = new Error("User use case failed");
 
     findAll.mockResolvedValue(cases);
     findUsersUseCase.mockRejectedValue(userError);
     findWorkflowsUseCase.mockResolvedValue([]);
 
-    await expect(findCasesUseCase()).rejects.toThrow("User service failed");
+    await expect(findCasesUseCase()).rejects.toThrow("User use case failed");
 
-    // Both services should have been called despite one failing
+    // Both use cases should have been called despite one failing
+    expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["WORKFLOW_A"],
+    });
+  });
+
+  it("throws when find workflow use case fails", async () => {
+    const user1 = User.createMock({ id: "user-1" });
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "WORKFLOW_A",
+      }),
+    ];
+
+    const workflowError = new Error("Workflow use case failed");
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockResolvedValue([user1]);
+    findWorkflowsUseCase.mockRejectedValue(workflowError);
+
+    await expect(findCasesUseCase()).rejects.toThrow(
+      "Workflow use case failed",
+    );
+
+    expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith({
       codes: ["WORKFLOW_A"],
