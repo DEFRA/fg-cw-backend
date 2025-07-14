@@ -323,4 +323,48 @@ describe("findCasesUseCase", () => {
       codes: ["WORKFLOW_A"],
     });
   });
+
+  it("finds cases with both assigned users and workflows required roles", async () => {
+    const user1 = User.createMock({ id: "user-1", name: "Alice Smith" });
+    const user2 = User.createMock({ id: "user-2", name: "Bob Jones" });
+    const users = [user1, user2];
+
+    const workflow1 = {
+      code: "COMPLEX_WORKFLOW",
+      requiredRoles: ["ADMIN", "REVIEWER"],
+    };
+    const workflow2 = { code: "SIMPLE_WORKFLOW", requiredRoles: ["USER"] };
+    const workflows = [workflow1, workflow2];
+
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "COMPLEX_WORKFLOW",
+      }),
+      Case.createMock({
+        assignedUser: { id: user2.id },
+        workflowCode: "SIMPLE_WORKFLOW",
+      }),
+    ];
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(findAll).toHaveBeenCalledWith();
+    expect(findUsersUseCase).toHaveBeenCalledWith({
+      ids: [user1.id, user2.id],
+    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
+    });
+
+    // Verify both user and workflow enrichment
+    expect(result[0].assignedUser.name).toBe("Alice Smith");
+    expect(result[0].requiredRoles).toEqual(["ADMIN", "REVIEWER"]);
+    expect(result[1].assignedUser.name).toBe("Bob Jones");
+    expect(result[1].requiredRoles).toEqual(["USER"]);
+  });
 });
