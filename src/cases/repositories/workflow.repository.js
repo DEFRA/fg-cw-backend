@@ -40,7 +40,7 @@ export const save = async (workflow) => {
 export const findAll = async (query) => {
   const filter = {};
 
-  if (query.codes?.length) {
+  if (query?.codes?.length) {
     filter.code = {
       $in: query.codes,
     };
