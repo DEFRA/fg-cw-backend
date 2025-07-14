@@ -1,12 +1,11 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
-  addTimelineEvent,
   findAll,
   findById,
   save,
@@ -321,77 +320,6 @@ describe("updateAssignedUser", () => {
     });
 
     await expect(updateAssignedUser(caseId, assignedUser)).rejects.toThrow(
-      Boom.notFound(`Case with id "${caseId}" not found`),
-    );
-  });
-});
-
-describe("addTimelineEvent", () => {
-  beforeEach(() => {
-    const mockDate = new Date(2024, 1, 1); // February 1, 2024
-    vi.setSystemTime(mockDate);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("adds a timeline event to the top of the case timeline", async () => {
-    const caseId = "6800c9feb76f8f854ebf901a";
-
-    const event = {
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      description: "Case assigned",
-      createdBy: "Julian",
-      data: {
-        assignedTo: "Some Username",
-      },
-    };
-
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 1,
-    });
-
-    db.collection.mockReturnValue({
-      updateOne,
-    });
-
-    await addTimelineEvent(caseId, event);
-
-    expect(updateOne).toHaveBeenCalledWith(
-      { _id: ObjectId.createFromHexString(caseId) },
-      {
-        $push: {
-          timeline: {
-            $each: [new TimelineEvent(event)],
-            $position: 0,
-          },
-        },
-      },
-    );
-  });
-
-  it("throws Boom.notFound when case is not found", async () => {
-    const caseId = "6800c9feb76f8f854ebf901a";
-
-    const event = {
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      description: "Case assigned",
-      createdBy: "Julian",
-      data: {
-        assignedTo: "blah",
-      },
-    };
-
-    db.collection.mockReturnValue({
-      updateOne: vi.fn().mockResolvedValue({
-        acknowledged: true,
-        matchedCount: 0,
-      }),
-    });
-
-    await expect(addTimelineEvent(caseId, event)).rejects.toThrow(
       Boom.notFound(`Case with id "${caseId}" not found`),
     );
   });
