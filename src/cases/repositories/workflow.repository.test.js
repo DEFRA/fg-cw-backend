@@ -160,6 +160,50 @@ describe("findAll", () => {
       }),
     ]);
   });
+
+  it("returns all workflows when codes query is empty", async () => {
+    const workflows = [
+      WorkflowDocument.createMock(),
+      WorkflowDocument.createMock(),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(workflows),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: [] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({});
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+      }),
+      Workflow.createMock({
+        _id: workflows[1]._id.toString(),
+      }),
+    ]);
+  });
+
+  it("returns no results when no workflows match the codes", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: ["NON_EXISTENT_CODE"] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({
+      code: { $in: ["NON_EXISTENT_CODE"] },
+    });
+    expect(result).toEqual([]);
+  });
 });
 
 describe("findByCode", () => {
