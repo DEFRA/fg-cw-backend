@@ -2,16 +2,21 @@ import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
+import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
+vi.mock("./find-workflow-by-code.use-case.js");
 
 describe("findCaseByIdUseCase", () => {
   it("finds case by id", async () => {
+    const mockWorkflow = Workflow.createMock();
     const kase = new Case({ _id: "test-case-id" });
 
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id");
@@ -31,12 +36,14 @@ describe("findCaseByIdUseCase", () => {
 
   it("finds case with assigned user and populates user name", async () => {
     const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
     const mockCase = Case.createMock({
       assignedUser: { id: mockUser.id },
     });
 
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
 
