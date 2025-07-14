@@ -238,4 +238,63 @@ describe("findCasesUseCase", () => {
       codes: ["CODE_1", "CODE_2", "CODE_3"],
     });
   });
+
+  it("calls both findUsersUseCase and findWorkflowsUseCase with correct parameters", async () => {
+    const user1 = User.createMock({ id: "user-1" });
+    const user2 = User.createMock({ id: "user-2" });
+    const workflow1 = { code: "WORKFLOW_A", requiredRoles: ["ROLE_1"] };
+    const workflow2 = { code: "WORKFLOW_B", requiredRoles: ["ROLE_2"] };
+
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "WORKFLOW_A",
+      }),
+      Case.createMock({
+        assignedUser: { id: user2.id },
+        workflowCode: "WORKFLOW_B",
+      }),
+      Case.createMock({
+        assignedUser: null,
+        workflowCode: "WORKFLOW_A",
+      }),
+    ];
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockResolvedValue([user1, user2]);
+    findWorkflowsUseCase.mockResolvedValue([workflow1, workflow2]);
+
+    await findCasesUseCase();
+
+    expect(findUsersUseCase).toHaveBeenCalledWith({
+      ids: [user1.id, user2.id],
+    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
+    });
+  });
+
+  it("handles rejection when one service fails", async () => {
+    const user1 = User.createMock({ id: "user-1" });
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "WORKFLOW_A",
+      }),
+    ];
+
+    const userError = new Error("User service failed");
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockRejectedValue(userError);
+    findWorkflowsUseCase.mockResolvedValue([]);
+
+    await expect(findCasesUseCase()).rejects.toThrow("User service failed");
+
+    // Both services should have been called despite one failing
+    expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      codes: ["WORKFLOW_A"],
+    });
+  });
 });
