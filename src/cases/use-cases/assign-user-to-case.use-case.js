@@ -43,7 +43,7 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  const timelineEvent = createTimelineEvent(user, kase);
+  const timelineEvent = createTimelineEvent(user.id, kase);
 
   await updateAssignedUser(command.caseId, user.id, timelineEvent);
 };

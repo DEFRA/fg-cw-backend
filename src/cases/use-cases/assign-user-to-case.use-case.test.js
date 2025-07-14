@@ -194,14 +194,27 @@ describe("assignUserToCaseUseCase", () => {
 
   it("unassigns user when assignedUserId is null", async () => {
     const mockCase = Case.createMock();
+    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    const timelineEvent = new TimelineEvent({
+      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      createdBy: "System", // TODO: user details need to come from authorised user
+      data: {
+        assignedTo: null,
+        previouslyAssignedTo: mockCase.assignedUser.id,
+      },
+    });
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: null,
     });
 
-    expect(updateAssignedUser).toHaveBeenCalledWith(mockCase._id, null);
-    expect(findCaseByIdUseCase).not.toHaveBeenCalled();
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(updateAssignedUser).toHaveBeenCalledWith(
+      mockCase._id,
+      null,
+      timelineEvent,
+    );
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
   });
