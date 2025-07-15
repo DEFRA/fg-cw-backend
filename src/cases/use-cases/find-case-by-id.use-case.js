@@ -39,6 +39,8 @@ export const findCaseByIdUseCase = async (caseId) => {
     const createdByUser = createdByUsers.find((u) => u.id === tl.createdBy);
     if (createdByUser) {
       tl.createdBy = createdByUser;
+    } else {
+      tl.createdBy = { name: "System" };
     }
 
     if (tl.eventType === CASE_ASSIGNED && tl.data.assignedTo) {

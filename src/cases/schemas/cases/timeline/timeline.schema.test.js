@@ -4,7 +4,7 @@ import { timelineSchema } from "./timeline.schema.js";
 describe("timeline schema", () => {
   const valid = {
     eventType: "CASE_CREATED",
-    createdBy: "Mickey Mouse",
+    createdBy: { name: "Mickey Mouse" },
     createdAt: "2025-06-16T09:01:14.072Z",
     description: "Case created",
     data: {
@@ -34,14 +34,14 @@ describe("timeline schema", () => {
     );
   });
 
-  it("must have createdBy as a string", () => {
+  it("must have createdBy as a TimelineUser", () => {
     const { createdBy, ...rest } = valid;
     expect(timelineSchema.validate(rest).error.message).toBe(
-      '"createdBy" is required',
+      '"TimelineUser" is required',
     );
     expect(
       timelineSchema.validate({ ...rest, createdBy: 9999 }).error.message,
-    ).toBe('"createdBy" must be a string');
+    ).toBe('"TimelineUser" must be of type object');
   });
 
   it("must have createdAt as an iso date", () => {

@@ -78,7 +78,7 @@ export class Case {
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
-          createdBy: "System", // To specify that the case was created by an external system
+          createdBy: { name: "System" }, // To specify that the case was created by an external system
           data: {
             caseRef: "case-ref",
           },

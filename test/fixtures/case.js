@@ -125,7 +125,7 @@ export const caseData2 = {
   timeline: [
     {
       createdAt: "2025-01-01T00:00:00.000Z",
-      createdBy: "System",
+      createdBy: { name: "System" },
       data: {
         caseRef: "APPLICATION-REF-2",
       },
