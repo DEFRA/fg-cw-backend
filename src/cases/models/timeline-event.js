@@ -24,10 +24,12 @@ export class TimelineEvent {
   static eventTypes = {
     CASE_CREATED: "CASE_CREATED",
     CASE_ASSIGNED: "CASE_ASSIGNED",
+    CASE_UNASSIGNED: "CASE_UNASSIGNED",
   };
 
   static eventDescriptions = {
     CASE_CREATED: "Case received",
     CASE_ASSIGNED: "Case assigned",
+    CASE_UNASSIGNED: "Case unassigned",
   };
 }

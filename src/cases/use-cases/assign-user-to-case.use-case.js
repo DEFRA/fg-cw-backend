@@ -6,9 +6,9 @@ import { updateAssignedUser } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
-const createTimelineEvent = (userId, kase) => {
+const createTimelineEvent = (userId, kase, type) => {
   return new TimelineEvent({
-    eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+    eventType: type,
     createdBy: "System", // TODO: user details need to come from authorised user
     data: {
       assignedTo: userId,
@@ -24,7 +24,11 @@ export const assignUserToCaseUseCase = async (command) => {
     await updateAssignedUser(
       command.caseId,
       null,
-      createTimelineEvent(command.assignedUserId, kase),
+      createTimelineEvent(
+        command.assignedUserId,
+        kase,
+        TimelineEvent.eventTypes.CASE_UNASSIGNED,
+      ),
     );
     return;
   }
@@ -43,7 +47,11 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  const timelineEvent = createTimelineEvent(user.id, kase);
+  const timelineEvent = createTimelineEvent(
+    user.id,
+    kase,
+    TimelineEvent.eventTypes.CASE_ASSIGNED,
+  );
 
   await updateAssignedUser(command.caseId, user.id, timelineEvent);
 };

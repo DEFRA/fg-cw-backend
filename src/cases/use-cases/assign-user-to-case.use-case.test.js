@@ -196,7 +196,7 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     findCaseByIdUseCase.mockResolvedValue(mockCase);
     const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
       createdBy: "System", // TODO: user details need to come from authorised user
       data: {
         assignedTo: null,
