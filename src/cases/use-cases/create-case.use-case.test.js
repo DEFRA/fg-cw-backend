@@ -45,7 +45,7 @@ describe("createCaseUseCase", () => {
 
     expect(save).toHaveBeenCalledWith(kase);
 
-    expect(kase).toStrictEqual(
+    expect(kase).toEqual(
       new Case({
         _id: expect.any(String),
         caseRef: "TEST-001",

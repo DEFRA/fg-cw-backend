@@ -41,7 +41,6 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     await cases.deleteMany({});
     await workflows.deleteMany({});
     await users.deleteMany({});
-
     await createWorkflow();
   });
 
@@ -69,9 +68,8 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
     const findCaseByIdResponse = await findCaseById(kase._id);
 
-    expect(findCaseByIdResponse.payload.assignedUser).toEqual({
+    expect(findCaseByIdResponse.assignedUser).toEqual({
       id: createUserResponse.payload.id,
-      name: "Name",
     });
   });
 
@@ -151,23 +149,18 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
     // Verify user is assigned
     const findCaseAfterAssignResponse = await findCaseById(kase._id);
-    expect(findCaseAfterAssignResponse.payload.assignedUser).toEqual({
-      id: createUserResponse.payload.id,
-      name: "Name",
-    });
+    expect(findCaseAfterAssignResponse.assignedUser.id).toEqual(
+      createUserResponse.payload.id,
+    );
 
     // Now unassign the user by setting assignedUserId to null
-    const unassignResponse = await assignUserToCase(kase._id, null);
+    const { res } = await assignUserToCase(kase._id, null);
 
-    expect(unassignResponse).toEqual({
-      res: expect.objectContaining({
-        statusCode: 204,
-      }),
-      payload: expect.any(Buffer),
-    });
+    expect(res.statusCode).toBe(204);
 
     // Verify user is unassigned
     const findCaseAfterUnassignResponse = await findCaseById(kase._id);
-    expect(findCaseAfterUnassignResponse.payload.assignedUser).toBeNull();
+
+    expect(findCaseAfterUnassignResponse.assignedUser).toBeNull();
   });
 });

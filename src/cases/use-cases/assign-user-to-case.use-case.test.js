@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
 import { assignUserToCaseUseCase } from "./assign-user-to-case.use-case.js";
@@ -14,6 +15,13 @@ vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
 describe("assignUserToCaseUseCase", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("assigns user to case when user has required roles", async () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
@@ -37,7 +45,20 @@ describe("assignUserToCaseUseCase", () => {
       mockCase.workflowCode,
     );
 
-    expect(updateAssignedUser).toHaveBeenCalledWith(mockCase._id, mockUser.id);
+    const timelineEvent = new TimelineEvent({
+      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      createdBy: "System", // TODO: user details need to come from authorised user
+      data: {
+        assignedTo: mockUser.id,
+        previouslyAssignedTo: mockCase.assignedUser.id,
+      },
+    });
+
+    expect(updateAssignedUser).toHaveBeenCalledWith(
+      mockCase._id,
+      mockUser.id,
+      timelineEvent,
+    );
   });
 
   it("throws when case is not found", async () => {
@@ -110,6 +131,15 @@ describe("assignUserToCaseUseCase", () => {
     });
     const repositoryError = new Error("Database update failed");
 
+    const timelineEvent = new TimelineEvent({
+      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      createdBy: "System", // TODO: user details need to come from authorised user
+      data: {
+        assignedTo: mockUser.id,
+        previouslyAssignedTo: mockCase.assignedUser.id,
+      },
+    });
+
     findCaseByIdUseCase.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
@@ -127,7 +157,11 @@ describe("assignUserToCaseUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
-    expect(updateAssignedUser).toHaveBeenCalledWith(mockCase._id, mockUser.id);
+    expect(updateAssignedUser).toHaveBeenCalledWith(
+      mockCase._id,
+      mockUser.id,
+      timelineEvent,
+    );
   });
 
   it("throws when user lacks required roles", async () => {
@@ -160,14 +194,27 @@ describe("assignUserToCaseUseCase", () => {
 
   it("unassigns user when assignedUserId is null", async () => {
     const mockCase = Case.createMock();
+    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    const timelineEvent = new TimelineEvent({
+      eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
+      createdBy: "System", // TODO: user details need to come from authorised user
+      data: {
+        assignedTo: null,
+        previouslyAssignedTo: mockCase.assignedUser.id,
+      },
+    });
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: null,
     });
 
-    expect(updateAssignedUser).toHaveBeenCalledWith(mockCase._id, null);
-    expect(findCaseByIdUseCase).not.toHaveBeenCalled();
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(updateAssignedUser).toHaveBeenCalledWith(
+      mockCase._id,
+      null,
+      timelineEvent,
+    );
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
   });

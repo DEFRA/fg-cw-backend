@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
   findById,
@@ -290,13 +291,23 @@ describe("updateAssignedUser", () => {
       updateOne,
     });
 
-    await updateAssignedUser(caseId, assignedUserId);
+    const timelineEvent = TimelineEvent.createMock();
+
+    await updateAssignedUser(caseId, assignedUserId, timelineEvent);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { assignedUserId } },
+      {
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
+        },
+        $set: { assignedUserId },
+      },
     );
   });
 
