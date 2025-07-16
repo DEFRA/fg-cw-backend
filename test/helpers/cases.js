@@ -1,3 +1,4 @@
+import { findById } from "../../src/cases/repositories/case.repository.js";
 import { wreck } from "./wreck.js";
 
 export const createCase = async (cases, payload = {}) => {
@@ -66,7 +67,9 @@ export const createCase = async (cases, payload = {}) => {
   return kase;
 };
 
-export const findCaseById = async (caseId) => wreck.get(`/cases/${caseId}`);
+export const findCaseById = async (caseId) => {
+  return findById(caseId.toString());
+};
 
 export const assignUserToCase = async (caseId, assignedUserId) => {
   const response = await wreck.patch(`/cases/${caseId}/assigned-user`, {

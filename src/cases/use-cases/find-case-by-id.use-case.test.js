@@ -67,7 +67,7 @@ describe("findCaseByIdUseCase", () => {
 
   it("throws when user lookup fails for assigned user", async () => {
     const mockCase = new Case({
-      assignedUser: { id: "unknown-user-id" },
+      assignedUser: { id: "unknown-user-id000000000" },
     });
     const userError = new Error("User not found");
 

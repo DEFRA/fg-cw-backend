@@ -18,14 +18,16 @@ const createTimelineEvent = (userId, kase, type) => {
 };
 
 export const assignUserToCaseUseCase = async (command) => {
-  const kase = await findCaseByIdUseCase(command.caseId);
+  const { assignedUserId, caseId } = command;
 
-  if (command.assignedUserId === null) {
+  const kase = await findCaseByIdUseCase(caseId);
+
+  if (assignedUserId === null) {
     await updateAssignedUser(
-      command.caseId,
+      caseId,
       null,
       createTimelineEvent(
-        command.assignedUserId,
+        assignedUserId,
         kase,
         TimelineEvent.eventTypes.CASE_UNASSIGNED,
       ),
@@ -34,7 +36,7 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   const [user, workflow] = await Promise.all([
-    findUserByIdUseCase(command.assignedUserId),
+    findUserByIdUseCase(assignedUserId),
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
@@ -53,5 +55,5 @@ export const assignUserToCaseUseCase = async (command) => {
     TimelineEvent.eventTypes.CASE_ASSIGNED,
   );
 
-  await updateAssignedUser(command.caseId, user.id, timelineEvent);
+  await updateAssignedUser(caseId, user.id, timelineEvent);
 };

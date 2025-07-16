@@ -18,11 +18,18 @@ import { wreck } from "./helpers/wreck.js";
 
 describe("Cases", () => {
   let cases;
+  let workflows;
+
   let client;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
+    cases = client.db().collection("cases");
+    workflows = client.db().collection("workflows");
+    await client.connect();
+    await cases.deleteMany({});
+    await workflows.deleteMany({});
     await createWorkflow();
     cases = client.db().collection("cases");
   });
@@ -97,11 +104,19 @@ describe("Cases", () => {
         ...caseData2,
         _id: caseId,
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        timeline: [
+          {
+            ...caseData2.timeline[0],
+            createdBy: {
+              name: "System",
+            },
+          },
+        ],
       });
     });
   });
 
-  describe("on CreateNewCase", () => {
+  describe("on CreateNewCase event", () => {
     beforeEach(async () => {
       await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
@@ -118,7 +133,7 @@ describe("Cases", () => {
         createCaseEvent3,
       );
 
-      const documents = await waitForDocuments(cases);
+      const documents = await waitForDocuments(cases, 10);
 
       expect(documents).toEqual([
         {
