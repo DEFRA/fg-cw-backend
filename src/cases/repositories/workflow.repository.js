@@ -37,8 +37,19 @@ export const save = async (workflow) => {
   }
 };
 
-export const findAll = async () => {
-  const workflowDocuments = await db.collection(collection).find().toArray();
+export const findAll = async (query) => {
+  const filter = {};
+
+  if (query?.codes?.length) {
+    filter.code = {
+      $in: query.codes,
+    };
+  }
+
+  const workflowDocuments = await db
+    .collection(collection)
+    .find(filter)
+    .toArray();
 
   return workflowDocuments.map(toWorkflow);
 };

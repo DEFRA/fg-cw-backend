@@ -15,4 +15,15 @@ describe("findWorkflowsUseCase", () => {
 
     expect(workflows).toStrictEqual(result);
   });
+
+  it("finds all workflows with a query", async () => {
+    const result = [Workflow.createMock(), Workflow.createMock()];
+
+    findAll.mockResolvedValue(result);
+
+    const workflows = await findWorkflowsUseCase({ codes: [] });
+
+    expect(findAll).toBeCalledWith({ codes: [] });
+    expect(workflows).toStrictEqual(result);
+  });
 });

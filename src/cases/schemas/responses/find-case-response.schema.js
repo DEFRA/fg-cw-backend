@@ -1,7 +1,28 @@
 import Joi from "joi";
-import { CaseStage } from "../case.schema.js";
 import { assignedUserSchema } from "../cases/assigned-user.schema.js";
+import { statusSchema } from "../cases/stages/tasks/status.schema.js";
+import { requiredRolesSchema } from "../requiredRoles.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
+
+export const CaseStage = Joi.object({
+  id: UrlSafeId.required(),
+  taskGroups: Joi.array()
+    .items(
+      Joi.object({
+        id: UrlSafeId.required(),
+        tasks: Joi.array()
+          .items(
+            Joi.object({
+              id: UrlSafeId.required(),
+              status: statusSchema.required(),
+            }),
+          )
+          .min(1)
+          .required(),
+      }),
+    )
+    .required(),
+}).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
@@ -13,6 +34,7 @@ export const findCaseResponseSchema = Joi.object({
   currentStage: UrlSafeId.required(),
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
+  requiredRoles: requiredRolesSchema.required(),
 })
   .options({
     presence: "required",

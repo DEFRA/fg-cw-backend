@@ -65,6 +65,10 @@ export const caseData1 = {
     },
   ],
   assignedUser: null,
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };
 
 export const caseData2 = {
@@ -134,6 +138,10 @@ export const caseData2 = {
     },
   ],
   assignedUser: null,
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };
 
 export const caseData3Document = {

@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findById } from "../repositories/case.repository.js";
+import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 const CASE_ASSIGNED = "CASE_ASSIGNED";
 
@@ -57,6 +58,8 @@ export const findCaseByIdUseCase = async (caseId) => {
   });
 
   kase.timeline = timeline;
+  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  kase.requiredRoles = workflow.requiredRoles;
 
   return kase;
 };

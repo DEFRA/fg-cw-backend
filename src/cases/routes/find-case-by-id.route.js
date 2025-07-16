@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { caseSchema } from "../schemas/case.schema.js";
+import { findCaseResponseSchema } from "../schemas/responses/find-case-response.schema.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 
 export const findCaseByIdRoute = {
@@ -14,7 +14,7 @@ export const findCaseByIdRoute = {
       }),
     },
     response: {
-      schema: caseSchema.Case,
+      schema: findCaseResponseSchema,
     },
   },
   async handler(request) {

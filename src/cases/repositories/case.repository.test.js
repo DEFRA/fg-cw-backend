@@ -107,10 +107,12 @@ describe("findAll", () => {
       Case.createMock({
         _id: cases[0]._id.toString(),
         assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
       Case.createMock({
         _id: cases[1]._id.toString(),
         assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
     ]);
   });
@@ -139,6 +141,7 @@ describe("findById", () => {
       Case.createMock({
         _id: caseId,
         assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
     );
   });
