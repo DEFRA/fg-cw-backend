@@ -67,3 +67,8 @@ const populateTimelineCreatedByUser = (timelineItem, users) => {
     timelineItem.createdBy = { name: "System" };
   }
 };
+
+export const findUserAssignedToCase = async (caseId) => {
+  const kase = await findById(caseId);
+  return kase.assignedUser?.name || "System";
+};

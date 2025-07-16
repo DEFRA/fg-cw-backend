@@ -205,6 +205,7 @@ describe("updateTaskStatus", () => {
     const taskGroupId = "task-group-1";
     const taskId = "task-1";
     const status = "COMPLETED";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -221,6 +222,7 @@ describe("updateTaskStatus", () => {
       taskGroupId,
       taskId,
       status,
+      timelineEvent,
     });
 
     expect(db.collection).toHaveBeenCalledWith("cases");
@@ -235,6 +237,12 @@ describe("updateTaskStatus", () => {
         $set: {
           "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status":
             status,
+        },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
         },
       },
       {
