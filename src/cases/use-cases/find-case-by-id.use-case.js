@@ -37,12 +37,7 @@ export const findCaseByIdUseCase = async (caseId) => {
   });
 
   const timeline = kase.timeline.map((tl) => {
-    const createdByUser = createdByUsers.find((u) => u.id === tl.createdBy);
-    if (createdByUser) {
-      tl.createdBy = createdByUser;
-    } else {
-      tl.createdBy = { name: "System" };
-    }
+    populateTimelineCreatedByUser(tl, createdByUsers);
 
     if (tl.eventType === CASE_ASSIGNED && tl.data.assignedTo) {
       const usr = assignedToUsers.find((atu) => atu.id === tl.data.assignedTo);
@@ -62,4 +57,13 @@ export const findCaseByIdUseCase = async (caseId) => {
   kase.requiredRoles = workflow.requiredRoles;
 
   return kase;
+};
+
+const populateTimelineCreatedByUser = (timelineItem, users) => {
+  const createdByUser = users?.find((u) => u.id === timelineItem.createdBy);
+  if (createdByUser) {
+    timelineItem.createdBy = createdByUser;
+  } else {
+    timelineItem.createdBy = { name: "System" };
+  }
 };

@@ -50,7 +50,8 @@ export class CaseDocument {
           eventType: "CASE_CREATED",
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
-          createdBy: { name: "System" }, // To specify that the case was created by an external system
+          // 'createdBy' is hydrated to full user details on find
+          createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: "case-ref",
           },
