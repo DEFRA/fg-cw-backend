@@ -101,6 +101,109 @@ describe("findAll", () => {
       }),
     ]);
   });
+
+  it("returns workflows filtered by single code", async () => {
+    const workflows = [
+      WorkflowDocument.createMock({ code: "WORKFLOW_A" }),
+      WorkflowDocument.createMock({ code: "WORKFLOW_B" }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([workflows[0]]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: ["WORKFLOW_A"] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({
+      code: { $in: ["WORKFLOW_A"] },
+    });
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+        code: "WORKFLOW_A",
+      }),
+    ]);
+  });
+
+  it("returns workflows filtered by multiple codes", async () => {
+    const workflows = [
+      WorkflowDocument.createMock({ code: "WORKFLOW_A" }),
+      WorkflowDocument.createMock({ code: "WORKFLOW_B" }),
+      WorkflowDocument.createMock({ code: "WORKFLOW_C" }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([workflows[0], workflows[2]]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: ["WORKFLOW_A", "WORKFLOW_C"] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({
+      code: { $in: ["WORKFLOW_A", "WORKFLOW_C"] },
+    });
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+        code: "WORKFLOW_A",
+      }),
+      Workflow.createMock({
+        _id: workflows[2]._id.toString(),
+        code: "WORKFLOW_C",
+      }),
+    ]);
+  });
+
+  it("returns all workflows when codes query is empty", async () => {
+    const workflows = [
+      WorkflowDocument.createMock(),
+      WorkflowDocument.createMock(),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(workflows),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: [] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({});
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+      }),
+      Workflow.createMock({
+        _id: workflows[1]._id.toString(),
+      }),
+    ]);
+  });
+
+  it("returns no results when no workflows match the codes", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = { codes: ["NON_EXISTENT_CODE"] };
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({
+      code: { $in: ["NON_EXISTENT_CODE"] },
+    });
+    expect(result).toEqual([]);
+  });
 });
 
 describe("findByCode", () => {
