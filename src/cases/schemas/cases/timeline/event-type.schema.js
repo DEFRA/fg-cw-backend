@@ -4,6 +4,7 @@ export const timelineEventTypeSchema = Joi.string()
     "CASE_CREATED",
     "NOTE_ADDED",
     "CASE_ASSIGNED",
+    "CASE_UNASSIGNED",
     "SUBMISSION",
     "TASK_COMPLETED",
   )

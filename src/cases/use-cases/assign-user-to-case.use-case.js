@@ -1,20 +1,42 @@
 import Boom from "@hapi/boom";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Permissions } from "../models/permissions.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+const createTimelineEvent = (userId, kase, type) => {
+  return new TimelineEvent({
+    eventType: type,
+    createdBy: "System", // TODO: user details need to come from authorised user
+    data: {
+      assignedTo: userId,
+      previouslyAssignedTo: kase.assignedUser?.id,
+    },
+  });
+};
+
 export const assignUserToCaseUseCase = async (command) => {
-  if (command.assignedUserId === null) {
-    await updateAssignedUser(command.caseId, null);
+  const { assignedUserId, caseId } = command;
+
+  const kase = await findCaseByIdUseCase(caseId);
+
+  if (assignedUserId === null) {
+    await updateAssignedUser(
+      caseId,
+      null,
+      createTimelineEvent(
+        assignedUserId,
+        kase,
+        TimelineEvent.eventTypes.CASE_UNASSIGNED,
+      ),
+    );
     return;
   }
 
-  const kase = await findCaseByIdUseCase(command.caseId);
-
   const [user, workflow] = await Promise.all([
-    findUserByIdUseCase(command.assignedUserId),
+    findUserByIdUseCase(assignedUserId),
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
@@ -27,5 +49,11 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  await updateAssignedUser(command.caseId, user.id);
+  const timelineEvent = createTimelineEvent(
+    user.id,
+    kase,
+    TimelineEvent.eventTypes.CASE_ASSIGNED,
+  );
+
+  await updateAssignedUser(caseId, user.id, timelineEvent);
 };
