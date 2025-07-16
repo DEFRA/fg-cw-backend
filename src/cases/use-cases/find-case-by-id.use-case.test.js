@@ -57,7 +57,7 @@ describe("findCaseByIdUseCase", () => {
       eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
       createdAt: "2025-01-01T00:00:00.000Z",
       description: "Case assigned",
-      createdBy: "64c88faac1f56f71e1b89a44", // To specify that the case was created by an external system
+      createdBy: "64c88faac1f56f71e1b89a44",
       data: {
         assignedTo: "64c88faac1f56f71e1b89a33",
       },

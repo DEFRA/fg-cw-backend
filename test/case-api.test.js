@@ -133,7 +133,7 @@ describe("Cases", () => {
         createCaseEvent3,
       );
 
-      const documents = await waitForDocuments(cases, 10);
+      const documents = await waitForDocuments(cases);
 
       expect(documents).toEqual([
         {
