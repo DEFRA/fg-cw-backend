@@ -12,6 +12,7 @@ export class Case {
     this.payload = props.payload;
     this.stages = props.stages;
     this.timeline = props.timeline || [];
+    this.requiredRoles = props.requiredRoles;
   }
 
   static fromWorkflow(workflow, caseEvent) {
@@ -43,6 +44,7 @@ export class Case {
           },
         },
       ],
+      requiredRoles: workflow.requiredRoles,
     });
   }
 
@@ -88,6 +90,10 @@ export class Case {
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "Test Name",
+      },
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
       },
       ...props,
     });
