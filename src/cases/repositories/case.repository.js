@@ -81,18 +81,32 @@ export const updateTaskStatus = async ({
   taskGroupId,
   taskId,
   status,
+  timelineEvent,
 }) => {
+  const eventToPush = await timelineEvent;
+  const updateOperation = {
+    $set: {
+      "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
+    },
+  };
+
+  // Only add timeline update if timelineEvent is provided
+  if (eventToPush) {
+    updateOperation.$push = {
+      timeline: {
+        $each: [eventToPush],
+        $position: 0,
+      },
+    };
+  }
+
   const result = await db.collection(collection).updateOne(
     {
       _id: ObjectId.createFromHexString(caseId),
       "stages.taskGroups.id": taskGroupId,
       "stages.taskGroups.tasks.id": taskId,
     },
-    {
-      $set: {
-        "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
-      },
-    },
+    updateOperation,
     {
       arrayFilters: [
         { "stage.id": stageId },

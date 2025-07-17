@@ -161,4 +161,23 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("INVALID_WORKFLOW");
   });
+
+  it("finds case with assigned user and populates user name", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock({
+      assignedUser: { id: mockUser.id },
+    });
+
+    findById.mockResolvedValue(mockCase);
+    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    const result = await findCaseByIdUseCase(mockCase._id);
+
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(result.assignedUser.name).toBe(mockUser.name);
+    expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
+    expect(result).toBe(mockCase);
+  });
 });
