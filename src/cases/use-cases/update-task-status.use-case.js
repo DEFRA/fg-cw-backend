@@ -2,7 +2,7 @@ import { TimelineEvent } from "../models/timeline-event.js";
 import { updateTaskStatus } from "../repositories/case.repository.js";
 import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
 
-const createTimelineEvent = async (
+const createTaskTimelineEvent = (
   caseId,
   stageId,
   taskGroupId,
@@ -35,7 +35,7 @@ export const updateTaskStatusUseCase = async (command) => {
     status: command.status,
     timelineEvent:
       command.status === "complete" &&
-      createTimelineEvent(
+      createTaskTimelineEvent(
         command.caseId,
         command.stageId,
         command.taskGroupId,
