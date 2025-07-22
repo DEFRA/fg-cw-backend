@@ -62,13 +62,19 @@ export const findById = async (caseId) => {
   return caseDocument && toCase(caseDocument);
 };
 
-export const updateStage = async (caseId, nextStage) => {
-  const result = await db
-    .collection(collection)
-    .updateOne(
-      { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { currentStage: nextStage } },
-    );
+export const updateStage = async (caseId, nextStage, timelineEvent) => {
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $set: { currentStage: nextStage },
+      $push: {
+        timeline: {
+          $each: [timelineEvent],
+          $position: 0,
+        },
+      },
+    },
+  );
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);

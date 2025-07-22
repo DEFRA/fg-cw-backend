@@ -162,6 +162,7 @@ describe("findById", () => {
 describe("updateStage", () => {
   it("updates the stage of a case", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -172,13 +173,21 @@ describe("updateStage", () => {
       updateOne,
     });
 
-    await updateStage(caseId, "application-receipt");
+    await updateStage(caseId, "application-receipt", timelineEvent);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { currentStage: "application-receipt" } },
+      {
+        $set: { currentStage: "application-receipt" },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
+        },
+      },
     );
   });
 
