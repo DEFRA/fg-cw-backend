@@ -13,7 +13,6 @@ describe("createCaseUseCase", () => {
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
         code: "wf-001",
-        payloadDefinition: {},
         stages: [
           {
             id: "stage-1",
@@ -24,7 +23,6 @@ describe("createCaseUseCase", () => {
                   {
                     id: "task-1",
                     type: "task-type-1",
-                    payloadDefinition: {},
                   },
                 ],
               },
