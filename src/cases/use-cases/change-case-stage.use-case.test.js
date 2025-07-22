@@ -4,7 +4,10 @@ import { Case } from "../models/case.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
 import { changeCaseStageUseCase } from "./change-case-stage.use-case.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import {
+  findCaseByIdUseCase,
+  findUserAssignedToCase,
+} from "./find-case-by-id.use-case.js";
 
 vi.mock("./find-case-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
@@ -35,10 +38,23 @@ describe("changeCaseStageUseCase", () => {
     const kase = Case.createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
+    findUserAssignedToCase.mockResolvedValue("Test User");
 
     await changeCaseStageUseCase(kase._id);
 
-    expect(updateStage).toHaveBeenCalledWith(kase._id, "stage-2");
+    expect(updateStage).toHaveBeenCalledWith(
+      kase._id,
+      "stage-2",
+      expect.objectContaining({
+        eventType: "STAGE_COMPLETED",
+        createdBy: "Test User",
+        description: "Stage completed",
+        data: {
+          caseId: kase._id,
+          stageId: "stage-2",
+        },
+      }),
+    );
   });
 
   it("publishes CaseStageUpdated event", async () => {
