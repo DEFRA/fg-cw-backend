@@ -9,7 +9,7 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
-    payloadDefinition: doc.payloadDefinition,
+    pages: doc.pages,
     stages: doc.stages,
     requiredRoles: doc.requiredRoles,
   });

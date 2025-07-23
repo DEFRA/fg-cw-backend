@@ -9,7 +9,14 @@ describe("createWorkflowUseCase", () => {
   it("creates a workflow", async () => {
     const workflow = await createWorkflowUseCase({
       code: "wf-001",
-      payloadDefinition: {},
+      pages: {
+        cases: {
+          details: {
+            banner: { summary: {} },
+            tabs: { caseDetails: { title: "Test", sections: [] } },
+          },
+        },
+      },
       stages: [],
       requiredRoles: {
         allOf: ["ROLE_1", "ROLE_2"],
@@ -23,7 +30,14 @@ describe("createWorkflowUseCase", () => {
       Workflow.createMock({
         _id: expect.any(String),
         code: "wf-001",
-        payloadDefinition: {},
+        pages: {
+          cases: {
+            details: {
+              banner: { summary: {} },
+              tabs: { caseDetails: { title: "Test", sections: [] } },
+            },
+          },
+        },
         stages: [],
       }),
     );

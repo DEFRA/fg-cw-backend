@@ -9,7 +9,14 @@ describe("findWorkflowByCodeUseCase", () => {
   it("finds a workflow by code", async () => {
     const workflow1 = new Workflow({
       code: "wf-001",
-      payloadDefinition: {},
+      pages: {
+        cases: {
+          details: {
+            banner: { summary: {} },
+            tabs: { caseDetails: { title: "Test", sections: [] } },
+          },
+        },
+      },
       stages: [
         {
           id: "stage-1",
@@ -20,7 +27,6 @@ describe("findWorkflowByCodeUseCase", () => {
                 {
                   id: "task-1",
                   type: "task-type-1",
-                  payloadDefinition: {},
                 },
               ],
             },
