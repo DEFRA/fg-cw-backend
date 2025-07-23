@@ -1,81 +1,43 @@
 export const workflowData1 = {
   code: "frps-private-beta",
-  payloadDefinition: {
-    $id: "https://fg-cw.com/grant-application.schema.json",
-    type: "object",
-    properties: {
-      clientRef: {
-        type: "string",
-      },
-      code: {
-        type: "string",
-      },
-      createdAt: {
-        type: "object",
-      },
-      submittedAt: {
-        type: "object",
-      },
-      identifiers: {
-        type: "object",
-        properties: {
-          sbi: {
-            type: "string",
-          },
-          frn: {
-            type: "string",
-          },
-          crn: {
-            type: "string",
-          },
-          defraId: {
-            type: "string",
+  pages: {
+    cases: {
+      details: {
+        banner: {
+          summary: {
+            sbi: {
+              label: "SBI",
+              ref: "$.payload.identifiers.sbi",
+              type: "string",
+            },
+            clientReference: {
+              label: "Client Reference",
+              ref: "$.payload.clientRef",
+              type: "string",
+            },
           },
         },
-      },
-      answers: {
-        type: "object",
-        properties: {
-          scheme: {
-            type: "string",
-          },
-          year: {
-            type: "integer",
-            minimum: 2000,
-            maximum: 2100,
-          },
-          hasCheckedLandIsUpToDate: {
-            type: "boolean",
-          },
-          actionApplications: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                parcelId: {
-                  type: "string",
-                },
-                sheetId: {
-                  type: "string",
-                },
-                code: {
-                  type: "string",
-                },
-                appliedFor: {
-                  type: "object",
-                  properties: {
-                    unit: {
-                      type: "string",
-                      enum: ["ha", "acres", "sqm", "sqft"],
-                    },
-                    quantity: {
-                      type: "number",
-                      minimum: 0,
-                    },
+        tabs: {
+          caseDetails: {
+            title: "Application",
+            sections: [
+              {
+                title: "Details",
+                type: "list",
+                fields: [
+                  {
+                    ref: "$.payload.answers.scheme",
+                    type: "string",
+                    label: "Scheme",
                   },
-                },
+                  {
+                    ref: "$.payload.answers.year",
+                    type: "number",
+                    label: "Year",
+                  },
+                ],
               },
-            },
+            ],
           },
         },
       },
@@ -120,82 +82,34 @@ export const workflowData1 = {
 
 export const workflowData2 = {
   code: "grant-ref-2",
-  payloadDefinition: {
-    $id: "https://fg-cw.com/grant-application.schema.json",
-    type: "object",
-    properties: {
-      clientRef: {
-        type: "string",
-      },
-      code: {
-        type: "string",
-      },
-      createdAt: {
-        type: "object",
-      },
-      submittedAt: {
-        type: "object",
-      },
-      identifiers: {
-        type: "object",
-        properties: {
-          sbi: {
-            type: "string",
-          },
-          frn: {
-            type: "string",
-          },
-          crn: {
-            type: "string",
-          },
-          defraId: {
-            type: "string",
+  pages: {
+    cases: {
+      details: {
+        banner: {
+          summary: {
+            clientReference: {
+              label: "Client Reference",
+              ref: "$.payload.clientRef",
+              type: "string",
+            },
           },
         },
-      },
-      answers: {
-        type: "object",
-        properties: {
-          scheme: {
-            type: "string",
-          },
-          year: {
-            type: "integer",
-            minimum: 2000,
-            maximum: 2100,
-          },
-          hasCheckedLandIsUpToDate: {
-            type: "boolean",
-          },
-          actionApplications: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                parcelId: {
-                  type: "string",
-                },
-                sheetId: {
-                  type: "string",
-                },
-                code: {
-                  type: "string",
-                },
-                appliedFor: {
-                  type: "object",
-                  properties: {
-                    unit: {
-                      type: "string",
-                      enum: ["ha", "acres", "sqm", "sqft"],
-                    },
-                    quantity: {
-                      type: "number",
-                      minimum: 0,
-                    },
+        tabs: {
+          caseDetails: {
+            title: "Application",
+            sections: [
+              {
+                title: "Details",
+                type: "list",
+                fields: [
+                  {
+                    ref: "$.payload.answers.scheme",
+                    type: "string",
+                    label: "Scheme",
                   },
-                },
+                ],
               },
-            },
+            ],
           },
         },
       },

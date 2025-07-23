@@ -7,7 +7,7 @@ export class WorkflowDocument {
       : new ObjectId();
 
     this.code = props.code;
-    this.payloadDefinition = props.payloadDefinition;
+    this.pages = props.pages;
     this.stages = props.stages;
     this.requiredRoles = props.requiredRoles;
   }
@@ -15,9 +15,38 @@ export class WorkflowDocument {
   static createMock(props) {
     return new WorkflowDocument({
       code: "workflow-code",
-      payloadDefinition: {
-        $id: "https://json-schema.org/draft/2020-12/schema",
-        type: "object",
+      pages: {
+        cases: {
+          details: {
+            banner: {
+              summary: {
+                clientReference: {
+                  label: "Client Reference",
+                  ref: "$.payload.clientRef",
+                  type: "string",
+                },
+              },
+            },
+            tabs: {
+              caseDetails: {
+                title: "Application",
+                sections: [
+                  {
+                    title: "Details",
+                    type: "list",
+                    fields: [
+                      {
+                        ref: "$.payload.answers.field1",
+                        type: "string",
+                        label: "Field 1",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
       },
       stages: [
         {
