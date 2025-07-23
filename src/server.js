@@ -13,6 +13,7 @@ import { logger } from "./common/logger.js";
 import { mongoClient } from "./common/mongo-client.js";
 import { health } from "./health/index.js";
 import { users } from "./users/index.js";
+import { auth } from "./auth/index.js";
 
 export const createServer = async () => {
   const server = hapi.server({
@@ -82,56 +83,36 @@ export const createServer = async () => {
           title: "Case Working Service",
           version: config.get("serviceVersion"),
         },
-      },
+      }
     },
   ]);
 
-  await server.register([health, cases, users]);
+  await server.register(Jwt);
 
   server.auth.strategy("jwt", "jwt", {
-    keys: async (artifacts) => {
-      const jwksUrl =
-        "https://login.microsoftonline.com/common/discovery/v2.0/keys";
-      const { kid } = artifacts.decoded.header;
-
-      try {
-        const response = await fetch(jwksUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch JWKS: ${response.statusText}`);
-        }
-
-        const jwks = await response.json();
-
-        const jwk = jwks.keys.find((key) => key.kid === kid);
-        if (!jwk) {
-          throw Boom.unauthorized("Invalid token key ID (kid)");
-        }
-
-        // Convert JWK to PEM for token verification
-        return Jwt.token.jwkToPem(jwk);
-      } catch (error) {
-        logger.error("Error fetching public key from JWKS:", error.message);
-        throw Boom.unauthorized(
-          "Failed to retrieve public key for token validation",
-        );
-      }
+    keys: {
+      uri: 'https://login.microsoftonline.com/770a2450-0227-4c62-90c7-4e38537f1102/discovery/v2.0/keys'
     },
     verify: {
-      aud: false,
-      iss: false,
+      exp: true,
+      aud: "00000003-0000-0000-c000-000000000000",
+      iss: 'https://login.microsoftonline.com/770a2450-0227-4c62-90c7-4e38537f1102/v2.0',
       sub: false,
+      nbf: true,
+      maxAgeSec: 14400, // 4 hours
+      timeSkewSec: 15
     },
     validate: (artifacts, request, h) => {
       const { payload } = artifacts.decoded;
-      // Perform additional validation if required, e.g., check roles, permissions, etc.
+
       return {
         isValid: true,
-        credentials: { user: payload }, // Attach payload data to credentials
+        credentials: { user: payload }
       };
     },
   });
 
-  server.auth.default("jwt");
+  await server.register([health, cases, users, auth]);
 
   return server;
 };
