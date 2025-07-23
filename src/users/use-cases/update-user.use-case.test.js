@@ -17,7 +17,7 @@ describe("updateUserUseCase", () => {
 
     findById.mockResolvedValue(user);
 
-    await updateUserUseCase({
+    const updatedUser = await updateUserUseCase({
       userId,
       props: {
         name: "Name",
@@ -27,6 +27,19 @@ describe("updateUserUseCase", () => {
     });
 
     expect(update).toHaveBeenCalledWith(
+      new User({
+        id: userId,
+        idpId,
+        name: "Name",
+        email: "bob.bill@defra.gov.uk",
+        idpRoles: ["FCP.Casework.Read"],
+        appRoles: ["CW-Admin"],
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      }),
+    );
+
+    expect(updatedUser).toEqual(
       new User({
         id: userId,
         idpId,
