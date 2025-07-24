@@ -10,7 +10,7 @@ describe("updateTaskStatusUseCase", () => {
     const { findUserAssignedToCase } = await import(
       "./find-case-by-id.use-case.js"
     );
-    vi.mocked(findUserAssignedToCase).mockResolvedValue("Test User");
+    vi.mocked(findUserAssignedToCase).mockReturnValue("Test User");
 
     await updateTaskStatusUseCase({
       caseId: "case-123",

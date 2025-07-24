@@ -38,7 +38,7 @@ describe("changeCaseStageUseCase", () => {
     const kase = Case.createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
-    findUserAssignedToCase.mockResolvedValue("Test User");
+    findUserAssignedToCase.mockReturnValue("Test User");
 
     await changeCaseStageUseCase(kase._id);
 

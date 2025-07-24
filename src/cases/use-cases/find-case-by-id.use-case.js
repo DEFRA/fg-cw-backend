@@ -68,6 +68,6 @@ const populateTimelineCreatedByUser = (timelineItem, users) => {
   }
 };
 
-export const findUserAssignedToCase = (caseId) => {
-  return "System"; // TODO: get user who has completed the task
+export const findUserAssignedToCase = () => {
+  return "System"; // TODO: get user who has completed the task from auth
 };
