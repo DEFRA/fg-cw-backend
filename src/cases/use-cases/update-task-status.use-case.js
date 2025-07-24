@@ -25,7 +25,7 @@ const createTaskTimelineEvent = (
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const assignedUser = await findUserAssignedToCase(command.caseId);
+  const assignedUser = findUserAssignedToCase();
 
   await updateTaskStatus({
     caseId: command.caseId,

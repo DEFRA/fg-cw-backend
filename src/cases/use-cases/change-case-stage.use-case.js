@@ -23,7 +23,7 @@ const createStageTimelineEvent = (caseId, stageId, type, assignedUser) => {
 
 export const changeCaseStageUseCase = async (caseId) => {
   const kase = await findCaseByIdUseCase(caseId);
-  const assignedUser = await findUserAssignedToCase(caseId);
+  const assignedUser = findUserAssignedToCase();
 
   const currentStageIndex = kase.stages.findIndex(
     (stage) => stage.id === kase.currentStage,
