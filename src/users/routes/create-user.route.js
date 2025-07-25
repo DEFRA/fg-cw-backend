@@ -1,4 +1,5 @@
 import { createUserRequestSchema } from "../schemas/requests/create-user-request.schema.js";
+import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
 import { createUserUseCase } from "../use-cases/create-user.use-case.js";
 
 export const createUserRoute = {
@@ -10,14 +11,13 @@ export const createUserRoute = {
     validate: {
       payload: createUserRequestSchema,
     },
+    response: {
+      schema: findUserResponseSchema,
+    },
   },
   async handler(request, h) {
     const user = await createUserUseCase(request.payload);
 
-    return h
-      .response({
-        id: user.id,
-      })
-      .code(201);
+    return h.response(user).code(201);
   },
 };
