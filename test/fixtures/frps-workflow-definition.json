@@ -54,25 +54,25 @@
               },
               {
                 "title": "Action cases data",
-                "type": "list",
+                "type": "table",
                 "fields": [
                   {
-                    "ref": "$.payload.answers.actionApplications.parcelId",
+                    "ref": "$.payload.answers.actionApplications[*].parcelId",
                     "type": "string",
                     "label": "Parcel Id"
                   },
                   {
-                    "ref": "$.payload.answers.actionApplications.sheetId",
+                    "ref": "$.payload.answers.actionApplications[*].sheetId",
                     "type": "string",
                     "label": "Sheet Id"
                   },
                   {
-                    "ref": "$.payload.answers.actionApplications.code",
+                    "ref": "$.payload.answers.actionApplications[*].code",
                     "type": "string",
                     "label": "Code"
                   },
                   {
-                    "ref": "$.payload.answers.actionApplications.appliedFor",
+                    "ref": "$.payload.answers.actionApplications[*].appliedFor",
                     "type": "string",
                     "label": "Applied For"
                   }
