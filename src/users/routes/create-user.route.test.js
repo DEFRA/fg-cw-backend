@@ -20,7 +20,7 @@ describe("createUserRoute", () => {
     await server.stop();
   });
 
-  it("creates a new workflow and returns no content", async () => {
+  it("creates a new user and returns it", async () => {
     const user = User.createMock();
 
     createUserUseCase.mockResolvedValue(user);
@@ -39,9 +39,7 @@ describe("createUserRoute", () => {
 
     expect(statusCode).toEqual(201);
 
-    expect(result).toEqual({
-      id: user.id,
-    });
+    expect(result).toEqual(user);
 
     expect(createUserUseCase).toHaveBeenCalledWith({
       idpId: "abcd1234-5678-90ab-cdef-1234567890ab",

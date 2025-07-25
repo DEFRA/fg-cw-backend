@@ -16,4 +16,6 @@ export const updateUserUseCase = async ({ userId, props }) => {
   replace(user, props, "appRoles");
 
   await update(user);
+
+  return user;
 };

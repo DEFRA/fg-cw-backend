@@ -1,5 +1,6 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { User } from "../models/user.js";
 import { updateUserRequestSchema } from "../schemas/requests/update-user-request.schema.js";
 import { updateUserUseCase } from "../use-cases/update-user.use-case.js";
 import { updateUserRoute } from "./update-user.route.js";
@@ -20,11 +21,13 @@ describe("updateUserRoute", () => {
   });
 
   it("updates a subset of user's details", async () => {
-    const userId = "808b8c8f8c8f8c8f8c8f8c8f";
+    const user = User.createMock();
+
+    updateUserUseCase.mockResolvedValue(user);
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/users/${userId}`,
+      url: `/users/${user.id}`,
       payload: {
         name: "John",
         idpRoles: ["admin"],
@@ -32,12 +35,12 @@ describe("updateUserRoute", () => {
       },
     });
 
-    expect(statusCode).toEqual(204);
+    expect(statusCode).toEqual(200);
 
-    expect(result).toEqual(null);
+    expect(result).toEqual(user);
 
     expect(updateUserUseCase).toHaveBeenCalledWith({
-      userId,
+      userId: user.id,
       props: {
         name: "John",
         idpRoles: ["admin"],

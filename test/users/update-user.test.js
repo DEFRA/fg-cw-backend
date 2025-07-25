@@ -45,9 +45,18 @@ describe("PATCH /users/{userId}", () => {
 
     expect(updateUserResponse).toEqual({
       res: expect.objectContaining({
-        statusCode: 204,
+        statusCode: 200,
       }),
-      payload: expect.any(Buffer),
+      payload: {
+        id: userId,
+        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        name: "Updated Name",
+        email: "name.surname@defra.gov.uk",
+        idpRoles: ["updated-idp", "replaces-all-roles"],
+        appRoles: ["ROLE_RPA_1", "ROLE_RPA_2"],
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      },
     });
 
     const findUserByIdResponse = await wreck.get(`/users/${userId}`);

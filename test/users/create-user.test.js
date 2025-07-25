@@ -38,6 +38,13 @@ describe("POST /users", () => {
       }),
       payload: {
         id: expect.any(String),
+        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        name: "Name",
+        email: "name.surname@defra.gov.uk",
+        idpRoles: ["defra-idp"],
+        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
       },
     });
 
