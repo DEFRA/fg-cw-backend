@@ -10,7 +10,7 @@ const Field = Joi.object({
 
 const Section = Joi.object({
   title: Joi.string().required(),
-  type: Joi.string().valid("list").required(),
+  type: Joi.string().valid("list", "table").required(),
   fields: Joi.array().items(Field).min(1).required(),
 });
 
