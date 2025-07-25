@@ -53,18 +53,18 @@
                 ]
               },
               {
-                "title": "Action cases data",
+                "title": "Selected actions for land parcels",
                 "type": "table",
                 "fields": [
-                  {
-                    "ref": "$.payload.answers.actionApplications[*].parcelId",
-                    "type": "string",
-                    "label": "Parcel Id"
-                  },
                   {
                     "ref": "$.payload.answers.actionApplications[*].sheetId",
                     "type": "string",
                     "label": "Sheet Id"
+                  },
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].parcelId",
+                    "type": "string",
+                    "label": "Parcel Id"
                   },
                   {
                     "ref": "$.payload.answers.actionApplications[*].code",
