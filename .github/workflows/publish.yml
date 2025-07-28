@@ -28,18 +28,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  coverage:
-    name: SonarCloud Scan
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: [build]
-    steps:
       - name: Coverage
         run: |
-          npm ci 
+          npm ci
           npm run test:unit -- --coverage
 
-      - name: Scan
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
