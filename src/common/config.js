@@ -143,6 +143,26 @@ export const config = convict({
       env: "TRACING_HEADER",
     },
   },
+  auth: {
+    keysUri: {
+      doc: "Endpoint for Entra ID keys",
+      format: String,
+      default: null,
+      env: "ENTRA_ID_KEYS_URI",
+    },
+    audience: {
+      doc: "Audience for Entra ID tokens",
+      format: String,
+      default: null,
+      env: "ENTRA_ID_AUD",
+    },
+    issuer: {
+      doc: "Issuer for Entra ID tokens",
+      format: String,
+      default: null,
+      env: "ENTRA_ID_ISS",
+    },
+  },
 });
 
 config.validate({ allowed: "strict" });

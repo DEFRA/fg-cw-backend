@@ -90,20 +90,20 @@ export const createServer = async () => {
 
   server.auth.strategy("jwt", "jwt", {
     keys: {
-      uri: "",
+      uri: config.get("auth.keysUri"),
     },
     verify: {
       exp: true,
-      aud: "",
-      iss: "",
+      aud: config.get("auth.audience"),
+      iss: config.get("auth.issuer"),
       sub: false,
       nbf: true,
       maxAgeSec: 14400, // 4 hours
       timeSkewSec: 15,
     },
-    validate: (artifacts, request, h) => {
+    validate: (artifacts) => {
       const { payload } = artifacts.decoded;
-      console.log("JWT Payload:", payload);
+
       return {
         isValid: true,
         credentials: { user: payload },
