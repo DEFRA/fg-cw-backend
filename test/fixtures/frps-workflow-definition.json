@@ -28,7 +28,8 @@
             "sections": [
               {
                 "title": "Answers",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.scheme",
@@ -54,7 +55,8 @@
               },
               {
                 "title": "Selected actions for land parcels",
-                "type": "table",
+                "type": "array",
+                "component": "table",
                 "fields": [
                   {
                     "ref": "$.payload.answers.actionApplications[*].sheetId",
