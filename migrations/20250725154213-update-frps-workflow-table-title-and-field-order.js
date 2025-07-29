@@ -6,7 +6,8 @@ export const up = async (db) => {
         "pages.cases.details.tabs.caseDetails.sections": [
           {
             title: "Answers",
-            type: "list",
+            type: "object",
+            component: "list",
             fields: [
               {
                 ref: "$.payload.answers.scheme",
@@ -32,7 +33,8 @@ export const up = async (db) => {
           },
           {
             title: "Selected actions for land parcels",
-            type: "table",
+            type: "array",
+            component: "table",
             fields: [
               {
                 ref: "$.payload.answers.actionApplications[*].sheetId",
