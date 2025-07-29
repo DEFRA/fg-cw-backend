@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { codeSchema } from "../../../common/schemas/roles/code.schema.js";
+import { userRoleSchema } from "../../../common/schemas/roles/user.role.schema.js";
 import { idSchema } from "../../../common/schemas/user/id.schema.js";
 import { emailSchema } from "../user/email.schema.js";
 import { idpIdSchema } from "../user/idp-id.schema.js";
@@ -12,7 +12,7 @@ export const findUserResponseSchema = Joi.object({
   name: nameSchema,
   email: emailSchema,
   idpRoles: Joi.array().items(idpRoleSchema),
-  appRoles: Joi.array().items(codeSchema),
+  appRoles: Joi.array().items(userRoleSchema),
 })
   .options({
     presence: "required",

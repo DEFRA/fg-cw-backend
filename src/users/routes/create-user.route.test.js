@@ -33,7 +33,13 @@ describe("createUserRoute", () => {
         name: "John",
         email: "john.doe@defra.co.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: [
+          {
+            name: "ROLE_RPA_CASES_APPROVE",
+            startDate: "2025-07-28T15:28:35.313Z",
+            endDate: "2025-07-28T15:28:35.313Z",
+          },
+        ],
       },
     });
 
@@ -46,7 +52,13 @@ describe("createUserRoute", () => {
       name: "John",
       email: "john.doe@defra.co.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles: [
+        {
+          name: "ROLE_RPA_CASES_APPROVE",
+          startDate: new Date("2025-07-28T15:28:35.313Z"),
+          endDate: new Date("2025-07-28T15:28:35.313Z"),
+        },
+      ],
     });
   });
 
