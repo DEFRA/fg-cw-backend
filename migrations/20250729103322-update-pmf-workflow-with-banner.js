@@ -29,6 +29,55 @@ export const up = async (db) => {
                   },
                 },
               },
+              tabs: {
+                caseDetails: {
+                  title: "Application",
+                  sections: [
+                    {
+                      title: "Applicant Details",
+                      type: "list",
+                      fields: [
+                        {
+                          ref: "$.payload.answers.isPigFarmer",
+                          type: "boolean",
+                          label: "Are you a pig farmer?",
+                        },
+                      ],
+                    },
+                    {
+                      title: "Pig Stock Details",
+                      type: "list",
+                      fields: [
+                        {
+                          ref: "$.payload.answers.totalPigs",
+                          type: "number",
+                          label: "Total Pigs",
+                        },
+                        {
+                          ref: "$.payload.answers.whitePigsCount",
+                          type: "number",
+                          label: "How many White pigs do you have?",
+                        },
+                        {
+                          ref: "$.payload.answers.britishLandracePigsCount",
+                          type: "number",
+                          label: "How many British Landrace pigs do you have?",
+                        },
+                        {
+                          ref: "$.payload.answers.berkshirePigsCount",
+                          type: "number",
+                          label: "How many Berkshire pigs do you have?",
+                        },
+                        {
+                          ref: "$.payload.answers.otherPigsCount",
+                          type: "number",
+                          label: "How many Other pigs do you have?",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
             },
           },
         },
