@@ -28,7 +28,13 @@ describe("GET /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: [
+          {
+            name: "ROLE_RPA_CASES_APPROVE",
+            startDate: "2025-07-28T15:28:35.313Z",
+            endDate: "2025-07-28T15:28:35.313Z",
+          },
+        ],
       },
     });
 
@@ -55,7 +61,13 @@ describe("GET /users", () => {
           name: "Name",
           email: "name.surname@defra.gov.uk",
           idpRoles: ["defra-idp"],
-          appRoles: ["ROLE_RPA_CASES_APPROVE"],
+          appRoles: [
+            {
+              name: "ROLE_RPA_CASES_APPROVE",
+              startDate: "2025-07-28T15:28:35.313Z",
+              endDate: "2025-07-28T15:28:35.313Z",
+            },
+          ],
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -91,7 +103,13 @@ describe("GET /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: [
+          {
+            name: "ROLE_RPA_CASES_APPROVE",
+            startDate: "2025-07-28T15:28:35.313Z",
+            endDate: "2025-07-28T15:28:35.313Z",
+          },
+        ],
       },
     });
 
@@ -120,7 +138,13 @@ describe("GET /users", () => {
           name: "Name",
           email: "name.surname@defra.gov.uk",
           idpRoles: ["defra-idp"],
-          appRoles: ["ROLE_RPA_CASES_APPROVE"],
+          appRoles: [
+            {
+              name: "ROLE_RPA_CASES_APPROVE",
+              startDate: "2025-07-28T15:28:35.313Z",
+              endDate: "2025-07-28T15:28:35.313Z",
+            },
+          ],
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -135,7 +159,18 @@ describe("GET /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE", "ROLE_RPA_ADMIN"],
+        appRoles: [
+          {
+            name: "ROLE_RPA_CASES_APPROVE",
+            startDate: "2025-07-28T15:28:35.313Z",
+            endDate: "2025-07-28T15:28:35.313Z",
+          },
+          {
+            name: "ROLE_RPA_ADMIN",
+            startDate: "2025-07-28T15:28:35.313Z",
+            endDate: "2025-07-28T15:28:35.313Z",
+          },
+        ],
       },
     });
 
