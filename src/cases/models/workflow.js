@@ -30,7 +30,8 @@ export class Workflow {
                 sections: [
                   {
                     title: "Details",
-                    type: "list",
+                    type: "object",
+                    component: "list",
                     fields: [
                       {
                         ref: "$.payload.answers.field1",
