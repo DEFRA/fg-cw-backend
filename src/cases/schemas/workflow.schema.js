@@ -19,6 +19,11 @@ const Tab = Joi.object({
   sections: Joi.array().items(Section).min(1).required(),
 });
 
+const TitleField = Joi.object({
+  ref: Joi.string().required(),
+  type: Joi.string().required(),
+});
+
 const SummaryField = Joi.object({
   label: Joi.string().required(),
   ref: Joi.string().required(),
@@ -26,6 +31,7 @@ const SummaryField = Joi.object({
 });
 
 const Banner = Joi.object({
+  title: TitleField.required(),
   summary: Joi.object().pattern(Joi.string(), SummaryField).min(1).required(),
 });
 
