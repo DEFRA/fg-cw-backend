@@ -10,20 +10,29 @@ export const up = async (db) => {
           cases: {
             details: {
               banner: {
+                title: {
+                  ref: "$.payload.businessName",
+                  type: "string",
+                },
                 summary: {
                   sbi: {
                     label: "SBI",
                     ref: "$.payload.identifiers.sbi",
                     type: "string",
                   },
-                  clientReference: {
-                    label: "Client Reference",
-                    ref: "$.payload.clientRef",
+                  reference: {
+                    label: "Reference",
+                    ref: "$.clientRef",
                     type: "string",
                   },
-                  submittedAt: {
-                    label: "Submitted Date",
-                    ref: "$.payload.submittedAt",
+                  scheme: {
+                    label: "Scheme",
+                    ref: "$.payload.answers.scheme",
+                    type: "string",
+                  },
+                  createdAt: {
+                    label: "Created At",
+                    ref: "$.payload.createdAt",
                     type: "date",
                   },
                 },

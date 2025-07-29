@@ -4,6 +4,10 @@ export const workflowData1 = {
     cases: {
       details: {
         banner: {
+          title: {
+            ref: "$.payload.businessName",
+            type: "string",
+          },
           summary: {
             sbi: {
               label: "SBI",
@@ -86,6 +90,10 @@ export const workflowData2 = {
     cases: {
       details: {
         banner: {
+          title: {
+            ref: "$.payload.businessName",
+            type: "string",
+          },
           summary: {
             clientReference: {
               label: "Client Reference",

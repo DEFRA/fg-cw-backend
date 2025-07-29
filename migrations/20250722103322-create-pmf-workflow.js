@@ -5,15 +5,24 @@ export const up = async (db) => {
       cases: {
         details: {
           banner: {
+            title: {
+              ref: "$.payload.businessName",
+              type: "string",
+            },
             summary: {
-              clientReference: {
-                label: "Client Reference",
-                ref: "$.payload.clientRef",
+              reference: {
+                label: "Reference",
+                ref: "$.caseRef",
                 type: "string",
               },
-              submittedAt: {
-                label: "Submitted Date",
-                ref: "$.payload.submittedAt",
+              status: {
+                label: "Status",
+                ref: "$.status",
+                type: "string",
+              },
+              dateReceived: {
+                label: "Date Received",
+                ref: "$.dateReceived",
                 type: "date",
               },
             },

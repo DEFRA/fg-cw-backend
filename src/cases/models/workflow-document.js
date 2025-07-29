@@ -19,6 +19,10 @@ export class WorkflowDocument {
         cases: {
           details: {
             banner: {
+              title: {
+                ref: "$.payload.businessName",
+                type: "string",
+              },
               summary: {
                 clientReference: {
                   label: "Client Reference",
