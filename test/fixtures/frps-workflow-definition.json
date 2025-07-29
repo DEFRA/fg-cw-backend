@@ -85,7 +85,8 @@
                   {
                     "ref": "$.payload.answers.actionApplications[*].appliedFor",
                     "type": "string",
-                    "label": "Applied For"
+                    "label": "Applied For",
+                    "format": "{{quantity | fixed(4)}} {{unit}}"
                   }
                 ]
               }
