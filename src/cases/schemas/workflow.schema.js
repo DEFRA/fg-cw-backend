@@ -37,7 +37,7 @@ const Banner = Joi.object({
 
 const CaseDetails = Joi.object({
   banner: Banner.required(),
-  tabs: Joi.object().pattern(Joi.string(), Tab).min(1).required(),
+  tabs: Joi.object().pattern(Joi.string(), Tab).required(),
 });
 
 const Cases = Joi.object({
