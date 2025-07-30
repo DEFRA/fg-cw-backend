@@ -6,7 +6,7 @@ import { nameSchema } from "../user/name.schema.js";
 export const updateUserRequestSchema = Joi.object({
   name: nameSchema,
   idpRoles: Joi.array().items(idpRoleSchema).optional(),
-  appRoles: Joi.array().items(userRoleSchema).optional(),
+  appRoles: userRoleSchema.optional(),
 })
   .options({
     stripUnknown: true,

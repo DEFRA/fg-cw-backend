@@ -10,7 +10,7 @@ export const createUserRequestSchema = Joi.object({
   email: emailSchema,
   name: nameSchema,
   idpRoles: Joi.array().items(idpRoleSchema),
-  appRoles: Joi.array().items(userRoleSchema).optional(),
+  appRoles: userRoleSchema.optional(),
 })
   .options({
     presence: "required",

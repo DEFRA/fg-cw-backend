@@ -12,7 +12,7 @@ export const findUserResponseSchema = Joi.object({
   name: nameSchema,
   email: emailSchema,
   idpRoles: Joi.array().items(idpRoleSchema),
-  appRoles: Joi.array().items(userRoleSchema),
+  appRoles: userRoleSchema,
 })
   .options({
     presence: "required",

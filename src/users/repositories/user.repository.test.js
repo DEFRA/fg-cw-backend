@@ -191,7 +191,16 @@ describe("findAll", () => {
 
     const docs = [
       UserDocument.createMock({
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+        appRoles: {
+          ROLE_RPA_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+          ROLE_RPA_SUPER_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       }),
     ];
 
@@ -213,7 +222,13 @@ describe("findAll", () => {
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
+        appRoles: {
+          ROLE_RPA_ADMIN: { startDate: "01/01/2025", endDate: "02/08/2025" },
+          ROLE_RPA_SUPER_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       }),
     ]);
   });

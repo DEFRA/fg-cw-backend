@@ -31,13 +31,12 @@ describe("updateUserRoute", () => {
       payload: {
         name: "John",
         idpRoles: ["admin"],
-        appRoles: [
-          {
-            name: "ROLE_EDITOR",
-            startDate: "2025-07-28T09:52:54.492Z",
-            endDate: "2025-07-29T09:52:54.492Z",
+        appRoles: {
+          ROLE_ADMIN: {
+            startDate: "01/07/2025",
+            endDate: "02/08/2025",
           },
-        ],
+        },
       },
     });
 

@@ -1,12 +1,19 @@
-import joi from "joi";
-import { codeSchema } from "./code.schema.js";
+import JoiDate from "@joi/date";
+import BaseJoi from "joi";
+
+const joi = BaseJoi.extend(JoiDate);
 
 export const userRoleSchema = joi
-  .object({
-    name: codeSchema,
-    startDate: joi.date().iso().optional(),
-    endDate: joi.date().iso().optional(),
-  })
+  .object()
+  .pattern(
+    joi.string().required(), // Role name as key (e.g., "ROLE_ADMIN")
+    joi
+      .object({
+        startDate: joi.date().format("DD/MM/YYYY").optional(),
+        endDate: joi.date().format("DD/MM/YYYY").optional(),
+      })
+      .optional(),
+  )
   .options({
     stripUnknown: true,
   })

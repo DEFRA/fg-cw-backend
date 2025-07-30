@@ -7,7 +7,7 @@ export class User {
     this.name = props.name;
     this.email = props.email;
     this.idpRoles = props.idpRoles || [];
-    this.appRoles = props.appRoles || [];
+    this.appRoles = props.appRoles || {};
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -18,13 +18,12 @@ export class User {
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: [
-        {
-          name: "ROLE_RPA_CASES_APPROVE",
-          startDate: "2025-07-28T15:28:35.313Z",
-          endDate: "2025-07-28T15:28:35.313Z",
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "01/07/2025",
+          endDate: "02/08/2025",
         },
-      ],
+      },
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",
       ...props,

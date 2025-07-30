@@ -28,13 +28,12 @@ describe("GET /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            name: "ROLE_RPA_CASES_APPROVE",
-            startDate: "2025-07-28T15:28:35.313Z",
-            endDate: "2025-07-28T15:28:35.313Z",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
           },
-        ],
+        },
       },
     });
     const userId = createUserResponse.payload.id;
