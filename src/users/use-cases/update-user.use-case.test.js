@@ -22,7 +22,9 @@ describe("updateUserUseCase", () => {
       props: {
         name: "Name",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          "CW-Admin": { startDate: "01/01/2025", endDate: "01/01/2025" },
+        },
       },
     });
 
@@ -33,7 +35,9 @@ describe("updateUserUseCase", () => {
         name: "Name",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          "CW-Admin": { startDate: "01/01/2025", endDate: "01/01/2025" },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
@@ -46,7 +50,9 @@ describe("updateUserUseCase", () => {
         name: "Name",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          "CW-Admin": { startDate: "01/01/2025", endDate: "01/01/2025" },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
@@ -81,13 +87,12 @@ describe("updateUserUseCase", () => {
         name: "Bob Bill",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.ReadWrite"],
-        appRoles: [
-          {
-            name: "ROLE_RPA_CASES_APPROVE",
-            startDate: "2025-07-28T15:28:35.313Z",
-            endDate: "2025-07-28T15:28:35.313Z",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/07/2025",
+            endDate: "02/08/2025",
           },
-        ],
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),

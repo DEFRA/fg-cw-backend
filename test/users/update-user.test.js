@@ -28,7 +28,12 @@ describe("PATCH /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       },
     });
 
@@ -110,7 +115,12 @@ describe("PATCH /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
