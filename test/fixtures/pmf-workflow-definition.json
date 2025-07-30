@@ -4,15 +4,24 @@
     "cases": {
       "details": {
         "banner": {
+          "title": {
+            "ref": "$.payload.businessName",
+            "type": "string"
+          },
           "summary": {
-            "clientReference": {
-              "label": "Client Reference",
-              "ref": "$.payload.clientRef",
+            "reference": {
+              "label": "Reference",
+              "ref": "$.caseRef",
               "type": "string"
             },
-            "submittedAt": {
-              "label": "Submitted Date",
-              "ref": "$.payload.submittedAt",
+            "status": {
+              "label": "Status",
+              "ref": "$.status",
+              "type": "string"
+            },
+            "dateReceived": {
+              "label": "Date Received",
+              "ref": "$.dateReceived",
               "type": "date"
             }
           }
@@ -23,7 +32,8 @@
             "sections": [
               {
                 "title": "Applicant Details",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.isPigFarmer",
@@ -34,7 +44,8 @@
               },
               {
                 "title": "Pig Stock Details",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.totalPigs",

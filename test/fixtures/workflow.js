@@ -4,6 +4,10 @@ export const workflowData1 = {
     cases: {
       details: {
         banner: {
+          title: {
+            ref: "$.payload.businessName",
+            type: "string",
+          },
           summary: {
             sbi: {
               label: "SBI",
@@ -23,7 +27,8 @@ export const workflowData1 = {
             sections: [
               {
                 title: "Details",
-                type: "list",
+                type: "object",
+                component: "list",
                 fields: [
                   {
                     ref: "$.payload.answers.scheme",
@@ -86,6 +91,10 @@ export const workflowData2 = {
     cases: {
       details: {
         banner: {
+          title: {
+            ref: "$.payload.businessName",
+            type: "string",
+          },
           summary: {
             clientReference: {
               label: "Client Reference",
@@ -100,7 +109,8 @@ export const workflowData2 = {
             sections: [
               {
                 title: "Details",
-                type: "list",
+                type: "object",
+                component: "list",
                 fields: [
                   {
                     ref: "$.payload.answers.scheme",
