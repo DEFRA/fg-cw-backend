@@ -406,7 +406,26 @@ describe("findCasesUseCase", () => {
     // Both use cases should have been called despite one failing
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_A"],
+      $expr: {
+        $and: [
+          {
+            $setIsSubset: ["$requiredRoles.allOf", userRoles],
+          },
+          {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                },
+              },
+              0,
+            ],
+          },
+          {
+            codes: ["WORKFLOW_A"],
+          },
+        ],
+      },
     });
   });
 
@@ -432,11 +451,30 @@ describe("findCasesUseCase", () => {
     expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_A"],
+      $expr: {
+        $and: [
+          {
+            $setIsSubset: ["$requiredRoles.allOf", userRoles],
+          },
+          {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                },
+              },
+              0,
+            ],
+          },
+          {
+            codes: ["WORKFLOW_A"],
+          },
+        ],
+      },
     });
   });
 
-  it.only("finds cases with both assigned users and workflows required roles", async () => {
+  it("finds cases with both assigned users and workflows required roles", async () => {
     const user1 = User.createMock({ id: "user-1", name: "Alice Smith" });
     const user2 = User.createMock({ id: "user-2", name: "Bob Jones" });
     const users = [user1, user2];
