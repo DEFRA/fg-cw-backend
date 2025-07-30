@@ -7,7 +7,7 @@ const joi = BaseJoi.extend(JoiDate);
 export const userRoleSchema = joi
   .object()
   .pattern(
-    joi.string().required(), // Role name as key (e.g., "ROLE_ADMIN")
+    joi.string().required(),
     joi
       .object({
         startDate: joi
