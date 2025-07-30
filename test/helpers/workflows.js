@@ -8,6 +8,10 @@ export const createWorkflow = async (payload = {}) => {
         cases: {
           details: {
             banner: {
+              title: {
+                ref: "$.payload.businessName",
+                type: "string",
+              },
               summary: {
                 clientReference: {
                   label: "Client Reference",
@@ -22,7 +26,8 @@ export const createWorkflow = async (payload = {}) => {
                 sections: [
                   {
                     title: "Details",
-                    type: "list",
+                    type: "object",
+                    component: "list",
                     fields: [
                       {
                         ref: "$.payload.answers.scheme",

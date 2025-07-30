@@ -1,22 +1,30 @@
 import Joi from "joi";
+import { typeSchema } from "../../common/schemas/type.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { Stage } from "./task.schema.js";
 
 const Field = Joi.object({
   ref: Joi.string().required(),
-  type: Joi.string().valid("string", "number", "boolean", "date").required(),
+  type: typeSchema,
   label: Joi.string().required(),
+  format: Joi.string(),
 });
 
 const Section = Joi.object({
   title: Joi.string().required(),
-  type: Joi.string().valid("list", "table").required(),
+  type: Joi.string().valid("object", "array").required(),
+  component: Joi.string().valid("list", "table").required(),
   fields: Joi.array().items(Field).min(1).required(),
 });
 
 const Tab = Joi.object({
   title: Joi.string().required(),
   sections: Joi.array().items(Section).min(1).required(),
+});
+
+const TitleField = Joi.object({
+  ref: Joi.string().required(),
+  type: Joi.string().required(),
 });
 
 const SummaryField = Joi.object({
@@ -26,6 +34,7 @@ const SummaryField = Joi.object({
 });
 
 const Banner = Joi.object({
+  title: TitleField.required(),
   summary: Joi.object().pattern(Joi.string(), SummaryField).min(1).required(),
 });
 
