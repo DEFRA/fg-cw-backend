@@ -1,5 +1,6 @@
 import JoiDate from "@joi/date";
 import BaseJoi from "joi";
+import { parseToUTCDate } from "../../dateParser.js";
 
 const joi = BaseJoi.extend(JoiDate);
 
@@ -9,8 +10,26 @@ export const userRoleSchema = joi
     joi.string().required(), // Role name as key (e.g., "ROLE_ADMIN")
     joi
       .object({
-        startDate: joi.date().format("DD/MM/YYYY").optional(),
-        endDate: joi.date().format("DD/MM/YYYY").optional(),
+        startDate: joi
+          .alternatives()
+          .try(
+            joi
+              .string()
+              .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+              .custom(parseToUTCDate),
+            joi.date(),
+          )
+          .optional(),
+        endDate: joi
+          .alternatives()
+          .try(
+            joi
+              .string()
+              .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+              .custom(parseToUTCDate),
+            joi.date(),
+          )
+          .optional(),
       })
       .optional(),
   )
