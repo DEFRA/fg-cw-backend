@@ -1,16 +1,19 @@
 import Joi from "joi";
+import { typeSchema } from "../../common/schemas/type.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { Stage } from "./task.schema.js";
 
 const Field = Joi.object({
   ref: Joi.string().required(),
-  type: Joi.string().valid("string", "number", "boolean", "date").required(),
+  type: typeSchema,
   label: Joi.string().required(),
+  format: Joi.string(),
 });
 
 const Section = Joi.object({
   title: Joi.string().required(),
-  type: Joi.string().valid("list", "table").required(),
+  type: Joi.string().valid("object", "array").required(),
+  component: Joi.string().valid("list", "table").required(),
   fields: Joi.array().items(Field).min(1).required(),
 });
 

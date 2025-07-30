@@ -27,7 +27,8 @@ export const workflowData1 = {
             sections: [
               {
                 title: "Details",
-                type: "list",
+                type: "object",
+                component: "list",
                 fields: [
                   {
                     ref: "$.payload.answers.scheme",
@@ -108,7 +109,8 @@ export const workflowData2 = {
             sections: [
               {
                 title: "Details",
-                type: "list",
+                type: "object",
+                component: "list",
                 fields: [
                   {
                     ref: "$.payload.answers.scheme",
