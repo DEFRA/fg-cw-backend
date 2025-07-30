@@ -60,10 +60,8 @@ export const findCasesUseCase = async () => {
         kase.assignedUser.name = assignedUser.name;
       }
       acc.push(kase);
-      return acc;
-    } else {
-      return acc;
     }
+    return acc;
   }, []);
 
   return casesFiltered;
