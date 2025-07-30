@@ -37,7 +37,8 @@
             "sections": [
               {
                 "title": "Answers",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.scheme",
@@ -62,18 +63,19 @@
                 ]
               },
               {
-                "title": "Action cases data",
-                "type": "table",
+                "title": "Selected actions for land parcels",
+                "type": "array",
+                "component": "table",
                 "fields": [
-                  {
-                    "ref": "$.payload.answers.actionApplications[*].parcelId",
-                    "type": "string",
-                    "label": "Parcel Id"
-                  },
                   {
                     "ref": "$.payload.answers.actionApplications[*].sheetId",
                     "type": "string",
                     "label": "Sheet Id"
+                  },
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].parcelId",
+                    "type": "string",
+                    "label": "Parcel Id"
                   },
                   {
                     "ref": "$.payload.answers.actionApplications[*].code",
@@ -83,7 +85,8 @@
                   {
                     "ref": "$.payload.answers.actionApplications[*].appliedFor",
                     "type": "string",
-                    "label": "Applied For"
+                    "label": "Applied For",
+                    "format": "{{quantity | fixed(4)}} {{unit}}"
                   }
                 ]
               }

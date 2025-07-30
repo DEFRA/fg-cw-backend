@@ -32,7 +32,8 @@
             "sections": [
               {
                 "title": "Applicant Details",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.isPigFarmer",
@@ -43,7 +44,8 @@
               },
               {
                 "title": "Pig Stock Details",
-                "type": "list",
+                "type": "object",
+                "component": "list",
                 "fields": [
                   {
                     "ref": "$.payload.answers.totalPigs",
