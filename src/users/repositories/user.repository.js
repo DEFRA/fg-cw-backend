@@ -74,13 +74,15 @@ const createFilter = (query) => {
   }
 
   if (query.allAppRoles?.length) {
-    filter.appRoles ??= {};
-    filter.appRoles.$all = query.allAppRoles;
+    filter.$and = query.allAppRoles.map((role) => ({
+      [`appRoles.${role}`]: { $exists: true },
+    }));
   }
 
   if (query.anyAppRoles?.length) {
-    filter.appRoles ??= {};
-    filter.appRoles.$in = query.anyAppRoles;
+    filter.$or = query.anyAppRoles.map((role) => ({
+      [`appRoles.${role}`]: { $exists: true },
+    }));
   }
 
   if (query.ids?.length) {

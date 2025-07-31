@@ -43,7 +43,12 @@ describe("GET /users", () => {
         name: "Another",
         email: "another.user@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       },
     });
 
@@ -62,8 +67,8 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
           },
           createdAt: expect.any(String),
@@ -75,7 +80,12 @@ describe("GET /users", () => {
           name: "Another",
           email: "another.user@defra.gov.uk",
           idpRoles: ["defra-idp"],
-          appRoles: ["ROLE_RPA_CASES_APPROVE"],
+          appRoles: {
+            ROLE_RPA_CASES_APPROVE: {
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
+            },
+          },
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -101,13 +111,12 @@ describe("GET /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            name: "ROLE_RPA_CASES_APPROVE",
-            startDate: "2025-07-28T15:28:35.313Z",
-            endDate: "2025-07-28T15:28:35.313Z",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
-        ],
+        },
       },
     });
 
@@ -117,7 +126,12 @@ describe("GET /users", () => {
         name: "Another",
         email: "another.user@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "01/07/2025",
+            endDate: "02/08/2025",
+          },
+        },
       },
     });
 
@@ -136,13 +150,12 @@ describe("GET /users", () => {
           name: "Name",
           email: "name.surname@defra.gov.uk",
           idpRoles: ["defra-idp"],
-          appRoles: [
-            {
-              name: "ROLE_RPA_CASES_APPROVE",
-              startDate: "2025-07-28T15:28:35.313Z",
-              endDate: "2025-07-28T15:28:35.313Z",
+          appRoles: {
+            ROLE_RPA_CASES_APPROVE: {
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
-          ],
+          },
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -204,12 +217,12 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
           },
           createdAt: expect.any(String),
@@ -276,16 +289,16 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_ANY_OF: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
           },
           createdAt: expect.any(String),
@@ -354,16 +367,16 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_ANY_OF: {
-              startDate: "01/01/2025",
-              endDate: "02/08/2025",
+              startDate: "2025-01-01T00:00:00.000Z",
+              endDate: "2025-08-02T00:00:00.000Z",
             },
           },
           createdAt: expect.any(String),
