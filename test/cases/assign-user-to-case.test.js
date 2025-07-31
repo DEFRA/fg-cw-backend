@@ -121,7 +121,12 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
   it("returns 401 unauthorized for user missing required allOf roles", async () => {
     const kase = await createCase(cases);
     const createUserResponse = await createUser({
-      appRoles: ["ROLE_3"], // Missing ROLE_1 and ROLE_2 from allOf
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      }, // Missing ROLE_1 and ROLE_2 from allOf
     });
 
     await expect(
@@ -132,7 +137,16 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
   it("returns 401 unauthorized for user missing required anyOf roles", async () => {
     const kase = await createCase(cases);
     const createUserResponse = await createUser({
-      appRoles: ["ROLE_1", "ROLE_2"], // Missing ROLE_3 from anyOf
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_2: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      }, // Missing ROLE_3 from anyOf
     });
 
     await expect(

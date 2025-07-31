@@ -50,7 +50,12 @@ describe("GET /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },

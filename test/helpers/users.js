@@ -7,7 +7,20 @@ export const createUser = async (payload = {}) => {
       name: "Name",
       email: "name.surname@defra.gov.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_2: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_3: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      },
       ...payload,
     },
   });
