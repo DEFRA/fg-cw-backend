@@ -6,16 +6,26 @@ import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
   // Checks if all roles are in userRoles.
   const allOf = {
-    $setIsSubset: ["$requiredRoles.allOf", userRoles],
+    $or: [
+      { $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []] }, // allow empty roles on workflow
+      { $setIsSubset: ["$requiredRoles.allOf", userRoles] },
+    ],
   };
 
   // Checks any (more than one) are in userRoles.
   const anyOf = {
-    $gt: [
+    $or: [
       {
-        $size: { $setIntersection: ["$requiredRoles.anyOf", userRoles] },
+        $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []], // allow empty roles on workflow
       },
-      0,
+      {
+        $gt: [
+          {
+            $size: { $setIntersection: ["$requiredRoles.anyOf", userRoles] },
+          },
+          0,
+        ],
+      },
     ],
   };
 

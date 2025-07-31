@@ -24,16 +24,30 @@ describe("filters", () => {
       $expr: {
         $and: [
           {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
+              },
+              {
+                $setIsSubset: ["$requiredRoles.allOf", userRoles],
+              },
+            ],
           },
           {
-            $gt: [
+            $or: [
               {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
+                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
               },
-              0,
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                    },
+                  },
+                  0,
+                ],
+              },
             ],
           },
           {},
@@ -48,16 +62,30 @@ describe("filters", () => {
       $expr: {
         $and: [
           {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
+              },
+              {
+                $setIsSubset: ["$requiredRoles.allOf", userRoles],
+              },
+            ],
           },
           {
-            $gt: [
+            $or: [
               {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
+                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
               },
-              0,
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                    },
+                  },
+                  0,
+                ],
+              },
             ],
           },
           {
@@ -66,6 +94,7 @@ describe("filters", () => {
         ],
       },
     };
+
     expect(
       createUserRolesFilter(userRoles, { codes: ["workflow-code-1"] }),
     ).toEqual(expectedFilters);
@@ -208,31 +237,9 @@ describe("findCasesUseCase", () => {
     const result = await findCasesUseCase();
 
     expect(findAll).toHaveBeenCalledWith();
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", ["ROLE_1", "ROLE_2"]],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: [
-                    "$requiredRoles.anyOf",
-                    ["ROLE_1", "ROLE_2"],
-                  ],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["WORKFLOW_1", "WORKFLOW_2"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_1", "WORKFLOW_2"] }),
+    );
     expect(result[0].requiredRoles).toEqual(["ROLE_1", "ROLE_2"]);
     expect(result[1].requiredRoles).toEqual(["ROLE_3"]);
   });
@@ -263,33 +270,16 @@ describe("findCasesUseCase", () => {
     const result = await findCasesUseCase();
 
     expect(findAll).toHaveBeenCalledWith();
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: [
-              "EDITOR_WORKFLOW",
-              "ADMIN_WORKFLOW",
-              "USER_WORKFLOW",
-              "EDITOR_WORKFLOW",
-            ],
-          },
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: [
+          "EDITOR_WORKFLOW",
+          "ADMIN_WORKFLOW",
+          "USER_WORKFLOW",
+          "EDITOR_WORKFLOW",
         ],
-      },
-    });
+      }),
+    );
     expect(result[0].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
     expect(result[1].requiredRoles).toEqual(["ADMIN"]);
     expect(result[2].requiredRoles).toEqual(["USER", "VIEWER"]);
@@ -309,28 +299,11 @@ describe("findCasesUseCase", () => {
 
     await findCasesUseCase(userRoles);
 
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["CODE_1", "CODE_2", "CODE_3"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["CODE_1", "CODE_2", "CODE_3"],
+      }),
+    );
   });
 
   it("calls both findUsersUseCase and findWorkflowsUseCase with correct parameters", async () => {
@@ -363,28 +336,11 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
+      }),
+    );
   });
 
   it("throws when find user use cases fails", async () => {
@@ -406,28 +362,9 @@ describe("findCasesUseCase", () => {
 
     // Both use cases should have been called despite one failing
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["WORKFLOW_A"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_A"] }),
+    );
   });
 
   it("throws when find workflow use case fails", async () => {
@@ -451,28 +388,9 @@ describe("findCasesUseCase", () => {
 
     expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["WORKFLOW_A"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_A"] }),
+    );
   });
 
   it("finds cases with both assigned users and workflows required roles", async () => {
@@ -508,28 +426,11 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $setIsSubset: ["$requiredRoles.allOf", userRoles],
-          },
-          {
-            $gt: [
-              {
-                $size: {
-                  $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                },
-              },
-              0,
-            ],
-          },
-          {
-            codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
-          },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
+      }),
+    );
 
     // Verify both user and workflow enrichment
     expect(result[0].assignedUser.name).toBe("Alice Smith");
