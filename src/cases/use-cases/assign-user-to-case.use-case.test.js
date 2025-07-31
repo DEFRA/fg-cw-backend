@@ -27,7 +27,20 @@ describe("assignUserToCaseUseCase", () => {
     const mockWorkflow = Workflow.createMock();
 
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_2: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_3: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      },
     });
 
     findCaseByIdUseCase.mockResolvedValue(mockCase);
@@ -127,7 +140,20 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_2: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+        ROLE_3: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      },
     });
     const repositoryError = new Error("Database update failed");
 
@@ -168,7 +194,12 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "01/01/2025",
+          endDate: "02/08/2025",
+        },
+      },
     });
 
     findCaseByIdUseCase.mockResolvedValue(mockCase);

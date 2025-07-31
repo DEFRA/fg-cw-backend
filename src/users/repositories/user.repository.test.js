@@ -216,7 +216,18 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
-      appRoles: { $all: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"] },
+      $and: [
+        {
+          "appRoles.ROLE_RPA_ADMIN": {
+            $exists: true,
+          },
+        },
+        {
+          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+            $exists: true,
+          },
+        },
+      ],
     });
 
     expect(result).toEqual([
@@ -239,7 +250,20 @@ describe("findAll", () => {
 
     const docs = [
       UserDocument.createMock({
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+        appRoles: {
+          ANY_APP_ROLE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+          ROLE_RPA_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+          ROLE_RPA_SUPER_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       }),
     ];
 
@@ -255,15 +279,26 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
-      appRoles: {
-        $in: ["ANY_APP_ROLE"],
-      },
+      $or: [{ "appRoles.ANY_APP_ROLE": { $exists: true } }],
     });
 
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
+        appRoles: {
+          ANY_APP_ROLE: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+          ROLE_RPA_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+          ROLE_RPA_SUPER_ADMIN: {
+            startDate: "01/01/2025",
+            endDate: "02/08/2025",
+          },
+        },
       }),
     ]);
   });
@@ -290,10 +325,25 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
-      appRoles: {
-        $all: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"],
-        $in: ["ANY_APP_ROLE"],
-      },
+      $and: [
+        {
+          "appRoles.ROLE_RPA_ADMIN": {
+            $exists: true,
+          },
+        },
+        {
+          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+            $exists: true,
+          },
+        },
+      ],
+      $or: [
+        {
+          "appRoles.ANY_APP_ROLE": {
+            $exists: true,
+          },
+        },
+      ],
     });
 
     expect(result).toEqual([
