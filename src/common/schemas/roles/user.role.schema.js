@@ -1,13 +1,14 @@
 import JoiDate from "@joi/date";
 import BaseJoi from "joi";
 import { parseToUTCDate } from "../../dateParser.js";
+import { codeSchema } from "./code.schema.js";
 
 const joi = BaseJoi.extend(JoiDate);
 
 export const userRoleSchema = joi
   .object()
   .pattern(
-    joi.string().required(),
+    codeSchema,
     joi
       .object({
         startDate: joi
