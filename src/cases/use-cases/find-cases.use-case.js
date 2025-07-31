@@ -27,7 +27,7 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
 };
 
 export const findCasesUseCase = async () => {
-  const userRoles = getAuthenticatedUserRoles();
+  const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
 
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);

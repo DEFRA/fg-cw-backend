@@ -73,10 +73,11 @@ describe("filters", () => {
 });
 
 describe("findCasesUseCase", () => {
-  const userRoles = ["ROLE_1", "ROLE_2"];
+  const userRolesObjects = { ROLE_1: {}, ROLE_2: {} };
+  const userRoles = Object.keys(userRolesObjects);
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
-    getAuthenticatedUserRoles.mockReturnValue(userRoles);
+    getAuthenticatedUserRoles.mockReturnValue(userRolesObjects);
   });
 
   it("finds cases without assigned users", async () => {
