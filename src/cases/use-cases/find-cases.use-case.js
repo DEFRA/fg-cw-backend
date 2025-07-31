@@ -4,7 +4,7 @@ import { findAll } from "../repositories/case.repository.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
-  // Checks if all roles are in userRoles.
+  // Checks if all roles are in userRoles. Allows the workflow roles to be empty.
   const allOf = {
     $or: [
       { $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []] }, // allow empty roles on workflow
@@ -12,7 +12,7 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
     ],
   };
 
-  // Checks any (more than one) are in userRoles.
+  // Checks any (more than one) are in userRoles. Allows the workflow roles to be empty though.
   const anyOf = {
     $or: [
       {
@@ -43,7 +43,6 @@ export const findCasesUseCase = async () => {
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);
   const workflowCodes = cases.map((c) => c.workflowCode);
 
-  // Filter workflows by user roles and case workflow codes.
   const workflowFilter = createUserRolesFilter(userRoles, {
     codes: workflowCodes,
   });
