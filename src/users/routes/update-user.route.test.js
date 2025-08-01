@@ -33,8 +33,8 @@ describe("updateUserRoute", () => {
         idpRoles: ["admin"],
         appRoles: {
           ROLE_ADMIN: {
-            startDate: "01/07/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },

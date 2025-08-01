@@ -24,20 +24,20 @@ describe("updateUserRoleUseCase", () => {
       email: "john.doe@defra.gov.uk",
       appRoles: {
         ROLE_OLD: {
-          startDate: "01/01/2024",
-          endDate: "31/12/2024",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-07-01T00:00:00.000Z",
         },
       },
     };
 
     const newRoles = {
       ROLE_RPA_ADMIN: {
-        startDate: "01/01/2025",
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
       ROLE_RPA_USER: {
-        startDate: "01/01/2025",
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -71,8 +71,8 @@ describe("updateUserRoleUseCase", () => {
       email: "john.doe@defra.gov.uk",
       appRoles: {
         ROLE_EXISTING: {
-          startDate: "01/01/2024",
-          endDate: "31/12/2024",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-07-01T00:00:00.000Z",
         },
       },
     };
@@ -101,8 +101,8 @@ describe("updateUserRoleUseCase", () => {
     const userError = new Error("User not found");
     const newRoles = {
       ROLE_RPA_ADMIN: {
-        startDate: "01/01/2025",
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -130,16 +130,16 @@ describe("updateUserRoleUseCase", () => {
       email: "john.doe@defra.gov.uk",
       appRoles: {
         ROLE_OLD: {
-          startDate: "01/01/2024",
-          endDate: "31/12/2024",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-07-01T00:00:00.000Z",
         },
       },
     };
 
     const newRoles = {
       ROLE_RPA_ADMIN: {
-        startDate: "01/01/2025",
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -170,20 +170,20 @@ describe("updateUserRoleUseCase", () => {
       email: "john.doe@defra.gov.uk",
       appRoles: {
         ROLE_OLD_1: {
-          startDate: "01/01/2024",
-          endDate: "31/12/2024",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-07-01T00:00:00.000Z",
         },
         ROLE_OLD_2: {
-          startDate: "01/01/2024",
-          endDate: "31/12/2024",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-07-01T00:00:00.000Z",
         },
       },
     };
 
     const newRoles = {
       ROLE_NEW_1: {
-        startDate: "01/01/2025",
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -215,7 +215,8 @@ describe("updateUserRoleUseCase", () => {
 
     const newRoles = {
       ROLE_RPA_ADMIN: {
-        startDate: "01/01/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -231,7 +232,8 @@ describe("updateUserRoleUseCase", () => {
     // Assert
     expect(result.appRoles).toEqual(newRoles);
     expect(result.appRoles.ROLE_RPA_ADMIN).toEqual({
-      startDate: "01/01/2025",
+      startDate: "2025-07-01T00:00:00.000Z",
+      endDate: "2025-07-01T00:00:00.000Z",
     });
   });
 
@@ -247,7 +249,8 @@ describe("updateUserRoleUseCase", () => {
 
     const newRoles = {
       ROLE_RPA_ADMIN: {
-        endDate: "31/12/2025",
+        startDate: "2025-07-01T00:00:00.000Z",
+        endDate: "2025-07-01T00:00:00.000Z",
       },
     };
 
@@ -263,7 +266,8 @@ describe("updateUserRoleUseCase", () => {
     // Assert
     expect(result.appRoles).toEqual(newRoles);
     expect(result.appRoles.ROLE_RPA_ADMIN).toEqual({
-      endDate: "31/12/2025",
+      startDate: "2025-07-01T00:00:00.000Z",
+      endDate: "2025-07-01T00:00:00.000Z",
     });
   });
 });
