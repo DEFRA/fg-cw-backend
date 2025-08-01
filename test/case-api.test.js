@@ -112,6 +112,17 @@ describe("Cases", () => {
             },
           },
         ],
+        banner: expect.any(Object),
+        overrideTabs: expect.any(Array),
+        customTabs: expect.any(Array),
+        stages: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            title: expect.any(String),
+            actions: expect.any(Array),
+            taskGroups: expect.any(Array),
+          }),
+        ]),
       });
     });
   });

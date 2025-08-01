@@ -5,6 +5,7 @@ import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 const CASE_ASSIGNED = "CASE_ASSIGNED";
+const defaultTabs = ["tasks", "caseDetails", "notes", "timeline"];
 
 export const findCaseByIdUseCase = async (caseId) => {
   const kase = await findById(caseId);
@@ -53,10 +54,35 @@ export const findCaseByIdUseCase = async (caseId) => {
   });
 
   kase.timeline = timeline;
+
+  // Find workflow
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  const workflowTabs = workflow.pages.cases.details.tabs;
+  const banner = workflow.pages.cases.details.banner;
+
+  // Add override tabs
+  const overrideTabs = defaultTabs
+    .filter((tabId) => tabId in workflowTabs)
+    .map((tabId) => createTabObject(tabId, workflowTabs[tabId]));
+
+  // Add custom tabs
+  const customTabs = Object.entries(workflowTabs)
+    .filter(([tabId]) => !defaultTabs.includes(tabId))
+    .map(([tabId, config]) => createTabObject(tabId, config));
+
+  // Add required roles
   kase.requiredRoles = workflow.requiredRoles;
 
-  return kase;
+  // Add titles to the case
+  const caseWithTitles = addTitles(
+    kase,
+    workflow,
+    overrideTabs,
+    customTabs,
+    banner,
+  );
+
+  return caseWithTitles;
 };
 
 const populateTimelineCreatedByUser = (timelineItem, users) => {
@@ -71,3 +97,51 @@ const populateTimelineCreatedByUser = (timelineItem, users) => {
 export const findUserAssignedToCase = () => {
   return "System"; // TODO: get user who has completed the task from auth
 };
+
+const processTask = (task, wfTaskGroup) => {
+  const workflowTask = wfTaskGroup.tasks.find((wt) => wt.id === task.id);
+
+  return {
+    ...task,
+    title: workflowTask.title,
+    type: workflowTask.type,
+  };
+};
+
+const processTaskGroup = (taskGroup, workflowStage) => {
+  const wfTaskGroup = workflowStage.taskGroups.find(
+    (wtg) => wtg.id === taskGroup.id,
+  );
+
+  return {
+    ...taskGroup,
+    title: wfTaskGroup.title,
+    tasks: taskGroup.tasks.map((task) => processTask(task, wfTaskGroup)),
+  };
+};
+
+const processStage = (stage, workflow) => {
+  const workflowStage = workflow.stages.find((ws) => ws.id === stage.id);
+
+  return {
+    ...stage,
+    title: workflowStage.title,
+    actions: workflowStage.actions,
+    taskGroups: stage.taskGroups.map((taskGroup) =>
+      processTaskGroup(taskGroup, workflowStage),
+    ),
+  };
+};
+
+const addTitles = (kase, workflow, overrideTabs, customTabs, banner) => ({
+  ...kase,
+  stages: kase.stages.map((stage) => processStage(stage, workflow)),
+  banner,
+  overrideTabs,
+  customTabs,
+});
+
+const createTabObject = (tabId, tabConfig) => ({
+  id: tabId,
+  ...tabConfig,
+});
