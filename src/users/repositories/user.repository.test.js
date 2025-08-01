@@ -193,12 +193,12 @@ describe("findAll", () => {
       UserDocument.createMock({
         appRoles: {
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_SUPER_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       }),
@@ -234,10 +234,13 @@ describe("findAll", () => {
       User.createMock({
         id: docs[0]._id.toString(),
         appRoles: {
-          ROLE_RPA_ADMIN: { startDate: "01/01/2025", endDate: "02/08/2025" },
+          ROLE_RPA_ADMIN: {
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
+          },
           ROLE_RPA_SUPER_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       }),
@@ -252,16 +255,16 @@ describe("findAll", () => {
       UserDocument.createMock({
         appRoles: {
           ANY_APP_ROLE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_SUPER_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       }),
@@ -287,16 +290,16 @@ describe("findAll", () => {
         id: docs[0]._id.toString(),
         appRoles: {
           ANY_APP_ROLE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_SUPER_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       }),

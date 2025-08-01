@@ -9,16 +9,16 @@ export const createUser = async (payload = {}) => {
       idpRoles: ["defra-idp"],
       appRoles: {
         ROLE_1: {
-          startDate: "01/01/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_2: {
-          startDate: "01/01/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_3: {
-          startDate: "01/01/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       },
       ...payload,

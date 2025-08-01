@@ -1,5 +1,3 @@
-import Boom from "@hapi/boom";
-
 export class Permissions {
   constructor(props) {
     this.allOf = props.allOf || [];
@@ -7,9 +5,6 @@ export class Permissions {
   }
 
   isAuthorised(roles) {
-    if (Array.isArray(roles)) {
-      throw Boom.badRequest(`Only object is allowed and not arrays`);
-    }
     const keys = Object.keys(roles);
     return this.hasAllRequiredRoles(keys) && this.hasAnyRequiredRole(keys);
   }

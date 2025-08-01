@@ -18,20 +18,13 @@ describe("Permissions", () => {
     expect(permissions.anyOf).toEqual(["ROLE_EDITOR", "ROLE_VIEWER"]);
   });
 
-  it("throws an error if an array is passed in", async () => {
-    const permissions = new Permissions({});
-    expect(() => permissions.isAuthorised(["ROLE_USER"])).toThrow(
-      "Only object is allowed and not arrays",
-    );
-  });
-
   it("authorised when no permissions are required", () => {
     const permissions = new Permissions({});
     expect(
       permissions.isAuthorised({
         ROLE_USER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(true);
@@ -45,16 +38,16 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_USER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_MANAGER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(true);
@@ -67,12 +60,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_USER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(false);
@@ -85,12 +78,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_VIEWER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(false);
@@ -104,12 +97,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_USER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_EDITOR: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(true);
@@ -122,12 +115,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_VIEWER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(false);
@@ -142,12 +135,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_EDITOR: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(true);
@@ -161,12 +154,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_MANAGER: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(false);
@@ -180,12 +173,12 @@ describe("Permissions", () => {
     expect(
       permissions.isAuthorised({
         ROLE_ADMIN: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
         ROLE_EDITOR: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       }),
     ).toBe(false);

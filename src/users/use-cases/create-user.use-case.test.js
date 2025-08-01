@@ -23,8 +23,8 @@ describe("createUserUseCase", () => {
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: {
         ROLE_RPA_CASES_APPROVE: {
-          startDate: "01/07/2025",
-          endDate: "02/08/2025",
+          startDate: "2025-07-01T00:00:00.000Z",
+          endDate: "2025-08-02T00:00:00.000Z",
         },
       },
     });

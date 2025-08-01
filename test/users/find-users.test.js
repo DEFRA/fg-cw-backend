@@ -30,8 +30,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -45,8 +45,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -67,7 +67,7 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -82,7 +82,7 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -113,7 +113,7 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-01-01T00:00:00.000Z",
+            startDate: "2025-07-01T00:00:00.000Z",
             endDate: "2025-08-02T00:00:00.000Z",
           },
         },
@@ -128,8 +128,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/07/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -152,7 +152,7 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -172,12 +172,12 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -191,8 +191,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -217,11 +217,11 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -241,16 +241,16 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_ANY_OF: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -264,8 +264,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -289,15 +289,15 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_ANY_OF: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -317,16 +317,16 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_ANY_OF: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -340,8 +340,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -367,15 +367,15 @@ describe("GET /users", () => {
           idpRoles: ["defra-idp"],
           appRoles: {
             ROLE_RPA_CASES_APPROVE: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_RPA_ADMIN: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
             ROLE_ANY_OF: {
-              startDate: "2025-01-01T00:00:00.000Z",
+              startDate: "2025-07-01T00:00:00.000Z",
               endDate: "2025-08-02T00:00:00.000Z",
             },
           },
@@ -395,16 +395,16 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_ANY_OF: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -418,8 +418,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -447,16 +447,16 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_ANY_OF: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -470,8 +470,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -499,16 +499,16 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_RPA_ADMIN: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
           ROLE_ANY_OF: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
@@ -522,8 +522,8 @@ describe("GET /users", () => {
         idpRoles: ["defra-idp"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
-            startDate: "01/01/2025",
-            endDate: "02/08/2025",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-08-02T00:00:00.000Z",
           },
         },
       },
