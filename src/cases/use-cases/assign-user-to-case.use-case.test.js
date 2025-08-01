@@ -36,16 +36,16 @@ describe("assignUserToCaseUseCase", () => {
     const mockUser = User.createMock({
       appRoles: {
         ROLE_1: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
         ROLE_2: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
         ROLE_3: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
@@ -157,16 +157,16 @@ describe("assignUserToCaseUseCase", () => {
     const mockUser = User.createMock({
       appRoles: {
         ROLE_1: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
         ROLE_2: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
         ROLE_3: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
@@ -201,8 +201,8 @@ describe("assignUserToCaseUseCase", () => {
     const mockUser = User.createMock({
       appRoles: {
         ROLE_1: {
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-08-02T00:00:00.000Z",
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
