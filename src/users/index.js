@@ -5,6 +5,7 @@ import { findRoleByCodeRoute } from "./routes/find-role-by-code.route.js";
 import { findRolesRoute } from "./routes/find-roles.route.js";
 import { findUserByIdRoute } from "./routes/find-user-by-id.route.js";
 import { findUsersRoute } from "./routes/find-users.route.js";
+import { updateUserRoleRoute } from "./routes/update-user-role.route.js";
 import { updateUserRoute } from "./routes/update-user.route.js";
 
 export const users = {
@@ -23,6 +24,7 @@ export const users = {
       createRoleRoute,
       findRolesRoute,
       findRoleByCodeRoute,
+      updateUserRoleRoute,
     ]);
   },
 };
