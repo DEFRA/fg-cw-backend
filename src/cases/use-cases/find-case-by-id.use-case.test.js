@@ -21,6 +21,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
+    findUsersUseCase.mockResolvedValue([]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findById.mockResolvedValue(kase);
 
@@ -29,7 +30,10 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
-    expect(result).toBe(kase);
+    expect(result.banner).toEqual(mockWorkflow.pages.cases.details.banner);
+    expect(result.overrideTabs).toBeDefined();
+    expect(result.customTabs).toBeDefined();
+    expect(result.stages).toBeDefined();
   });
 
   it("throws when case not found", async () => {
@@ -78,7 +82,9 @@ describe("findCaseByIdUseCase", () => {
     );
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
-    expect(result).toBe(mockCase);
+    expect(result.banner).toEqual(mockWorkflow.pages.cases.details.banner);
+    expect(result.overrideTabs).toBeDefined();
+    expect(result.customTabs).toBeDefined();
   });
 
   it("throws when user lookup fails for assigned user", async () => {
@@ -116,7 +122,9 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("TEST_WORKFLOW");
     expect(result.requiredRoles).toEqual(["ROLE_A", "ROLE_B"]);
-    expect(result).toBe(mockCase);
+    expect(result.banner).toEqual(mockWorkflow.pages.cases.details.banner);
+    expect(result.overrideTabs).toBeDefined();
+    expect(result.customTabs).toBeDefined();
   });
 
   it("finds case with both assigned user and workflow", async () => {
@@ -140,7 +148,9 @@ describe("findCaseByIdUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("USER_WORKFLOW");
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(["USER_ROLE"]);
-    expect(result).toBe(mockCase);
+    expect(result.banner).toEqual(mockWorkflow.pages.cases.details.banner);
+    expect(result.overrideTabs).toBeDefined();
+    expect(result.customTabs).toBeDefined();
   });
 
   it("throws when workflow lookup fails", async () => {
@@ -178,6 +188,8 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
-    expect(result).toBe(mockCase);
+    expect(result.banner).toEqual(mockWorkflow.pages.cases.details.banner);
+    expect(result.overrideTabs).toBeDefined();
+    expect(result.customTabs).toBeDefined();
   });
 });
