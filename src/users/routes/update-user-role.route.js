@@ -21,11 +21,9 @@ export const updateUserRoleRoute = {
     },
   },
   async handler(request) {
-    const user = await updateUserRoleUseCase({
+    return await updateUserRoleUseCase({
       userId: request.params.userId,
       props: request.payload,
     });
-
-    return user;
   },
 };

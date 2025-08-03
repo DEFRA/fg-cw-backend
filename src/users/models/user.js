@@ -1,15 +1,34 @@
 import { ObjectId } from "mongodb";
+import { UserRole } from "./userRole.js";
 
 export class User {
-  constructor(props) {
+  constructor(props, options = {}) {
     this.id = props.id || new ObjectId().toHexString();
     this.idpId = props.idpId;
     this.name = props.name;
     this.email = props.email;
     this.idpRoles = props.idpRoles || [];
-    this.appRoles = props.appRoles || {};
+    this.appRoles = props.appRoles;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+  }
+
+  createAppRole(appRoles) {
+    if (!appRoles || typeof appRoles !== "object") {
+      return {};
+    }
+
+    const result = {};
+
+    for (const [roleName, roleData] of Object.entries(appRoles)) {
+      result[roleName] = new UserRole({
+        roleName,
+        startDate: roleData.startDate,
+        endDate: roleData.endDate,
+      });
+    }
+
+    return result;
   }
 
   static createMock(props) {
