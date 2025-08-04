@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { User } from "../models/user.js";
 import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 import { updateUserRoleUseCase } from "./update-user-role.use-case.js";
@@ -7,267 +8,231 @@ vi.mock("../repositories/user.repository.js");
 vi.mock("./find-user-by-id.use-case.js");
 
 describe("updateUserRoleUseCase", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it("should update user roles successfully", async () => {
-    // Arrange
-    const userId = "user123";
-    const mockUser = {
+  it("updates user app roles successfully", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
       id: userId,
-      name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {
-        ROLE_OLD: {
-          startDate: "2025-07-01",
-          endDate: "2025-07-01",
-        },
+      idpId: "5de72998-417c-4b7c-815b-62bb77c25d82",
+    });
+
+    const roleProps = {
+      "CW-Admin": {
+        startDate: "2025-07-01",
+        endDate: "2025-08-02",
       },
     };
 
-    const newRoles = {
-      ROLE_RPA_ADMIN: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      },
-      ROLE_RPA_USER: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      },
-    };
+    mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
     update.mockResolvedValue();
 
-    // Act
     const result = await updateUserRoleUseCase({
       userId,
-      props: newRoles,
+      props: roleProps,
     });
 
-    // Assert
     expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
-    expect(findUserByIdUseCase).toHaveBeenCalledTimes(1);
-
-    expect(mockUser.appRoles).toEqual(newRoles);
+    expect(mockUser.createAppRole).toHaveBeenCalledWith(roleProps);
+    expect(result.appRoles).toEqual(roleProps);
+    expect(result.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
     expect(update).toHaveBeenCalledWith(mockUser);
-    expect(update).toHaveBeenCalledTimes(1);
-
-    expect(result).toEqual(mockUser);
-    expect(result.appRoles).toEqual(newRoles);
   });
 
-  it("should handle empty roles object", async () => {
-    // Arrange
-    const userId = "user123";
-    const mockUser = {
-      id: userId,
-      name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {
-        ROLE_EXISTING: {
-          startDate: "2025-07-01",
-          endDate: "2025-07-01",
-        },
-      },
-    };
+  it("throws error when findUserByIdUseCase fails", async () => {
+    const userId = "invalid-user-id";
+    const error = new Error("User not found");
 
-    const emptyRoles = {};
+    findUserByIdUseCase.mockRejectedValue(error);
 
-    findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
-
-    // Act
-    const result = await updateUserRoleUseCase({
-      userId,
-      props: emptyRoles,
-    });
-
-    // Assert
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
-    expect(mockUser.appRoles).toEqual(emptyRoles);
-    expect(update).toHaveBeenCalledWith(mockUser);
-    expect(result.appRoles).toEqual(emptyRoles);
-  });
-
-  it("should throw error when user is not found", async () => {
-    // Arrange
-    const userId = "nonexistent-user";
-    const userError = new Error("User not found");
-    const newRoles = {
-      ROLE_RPA_ADMIN: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      },
-    };
-
-    findUserByIdUseCase.mockRejectedValue(userError);
-
-    // Act & Assert
     await expect(
       updateUserRoleUseCase({
         userId,
-        props: newRoles,
+        props: { ROLE_ADMIN: { startDate: "2025-01-01" } },
       }),
     ).rejects.toThrow("User not found");
 
     expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
-    expect(findUserByIdUseCase).toHaveBeenCalledTimes(1);
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("should throw error when repository update fails", async () => {
-    // Arrange
-    const userId = "user123";
+  it("throws error when createAppRole method is missing", async () => {
+    const userId = "user-123";
     const mockUser = {
       id: userId,
-      name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {
-        ROLE_OLD: {
-          startDate: "2025-07-01",
-          endDate: "2025-07-01",
-        },
-      },
     };
-
-    const newRoles = {
-      ROLE_RPA_ADMIN: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      },
-    };
-
-    const repositoryError = new Error("Database update failed");
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockRejectedValue(repositoryError);
 
-    // Act & Assert
     await expect(
       updateUserRoleUseCase({
         userId,
-        props: newRoles,
+        props: { ROLE_ADMIN: { startDate: "2025-01-01" } },
+      }),
+    ).rejects.toThrow("user.createAppRole is not a function");
+
+    expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("throws error when update repository fails", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
+      id: userId,
+    });
+
+    const roleProps = {
+      ROLE_ADMIN: {
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
+      },
+    };
+
+    mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
+    findUserByIdUseCase.mockResolvedValue(mockUser);
+
+    const repositoryError = new Error("Database update failed");
+    update.mockRejectedValue(repositoryError);
+
+    await expect(
+      updateUserRoleUseCase({
+        userId,
+        props: roleProps,
       }),
     ).rejects.toThrow("Database update failed");
 
     expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
+    expect(mockUser.createAppRole).toHaveBeenCalledWith(roleProps);
     expect(update).toHaveBeenCalledWith(mockUser);
-    expect(mockUser.appRoles).toEqual(newRoles);
   });
 
-  it("should replace all existing roles with new roles", async () => {
-    // Arrange
-    const userId = "user123";
-    const mockUser = {
+  it("handles empty role props", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
       id: userId,
-      name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {
-        ROLE_OLD_1: {
-          startDate: "2025-07-01",
-          endDate: "2025-07-01",
-        },
-        ROLE_OLD_2: {
-          startDate: "2025-07-01",
-          endDate: "2025-07-01",
-        },
-      },
-    };
+    });
 
-    const newRoles = {
-      ROLE_NEW_1: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      },
-    };
+    const emptyRoleProps = {};
+    mockUser.createAppRole = vi.fn().mockReturnValue(emptyRoleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
     update.mockResolvedValue();
 
-    // Act
     const result = await updateUserRoleUseCase({
       userId,
-      props: newRoles,
+      props: emptyRoleProps,
     });
 
-    // Assert
-    expect(result.appRoles).toEqual(newRoles);
-    expect(result.appRoles).not.toHaveProperty("ROLE_OLD_1");
-    expect(result.appRoles).not.toHaveProperty("ROLE_OLD_2");
-    expect(Object.keys(result.appRoles)).toHaveLength(1);
+    expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
+    expect(mockUser.createAppRole).toHaveBeenCalledWith(emptyRoleProps);
+    expect(result.appRoles).toEqual(emptyRoleProps);
+    expect(update).toHaveBeenCalledWith(mockUser);
   });
 
-  it("should handle roles with only start date", async () => {
-    // Arrange
-    const userId = "user123";
-    const mockUser = {
+  it("handles multiple role assignments", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
       id: userId,
-      name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {},
-    };
+    });
 
-    const newRoles = {
-      ROLE_RPA_ADMIN: {
+    const multipleRoleProps = {
+      "CW-Admin": {
         startDate: "2025-07-01",
-        endDate: "2025-07-01",
+        endDate: "2025-08-02",
+      },
+      "RPA-USER": {
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
+      },
+      ROLE_SUPERVISOR: {
+        startDate: "2025-06-01",
+        endDate: "2025-09-30",
       },
     };
+
+    mockUser.createAppRole = vi.fn().mockReturnValue(multipleRoleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
     update.mockResolvedValue();
 
-    // Act
     const result = await updateUserRoleUseCase({
       userId,
-      props: newRoles,
+      props: multipleRoleProps,
     });
 
-    // Assert
-    expect(result.appRoles).toEqual(newRoles);
-    expect(result.appRoles.ROLE_RPA_ADMIN).toEqual({
-      startDate: "2025-07-01",
-      endDate: "2025-07-01",
-    });
+    expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
+    expect(mockUser.createAppRole).toHaveBeenCalledWith(multipleRoleProps);
+    expect(result.appRoles).toEqual(multipleRoleProps);
+    expect(update).toHaveBeenCalledWith(mockUser);
   });
 
-  it("should handle roles with only end date", async () => {
-    // Arrange
-    const userId = "user123";
-    const mockUser = {
+  it("preserves other user properties when updating roles", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
       id: userId,
       name: "John Doe",
-      email: "john.doe@defra.gov.uk",
-      appRoles: {},
-    };
+      email: "john.doe@example.com",
+      idpRoles: ["FCP.Casework.Read"],
+    });
 
-    const newRoles = {
-      ROLE_RPA_ADMIN: {
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
+    const roleProps = {
+      NEW_ROLE: {
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
       },
     };
+
+    mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
     update.mockResolvedValue();
 
-    // Act
     const result = await updateUserRoleUseCase({
       userId,
-      props: newRoles,
+      props: roleProps,
     });
 
-    // Assert
-    expect(result.appRoles).toEqual(newRoles);
-    expect(result.appRoles.ROLE_RPA_ADMIN).toEqual({
-      startDate: "2025-07-01",
-      endDate: "2025-07-01",
+    // Verify other properties are preserved
+    expect(result.name).toBe("John Doe");
+    expect(result.email).toBe("john.doe@example.com");
+    expect(result.idpRoles).toEqual(["FCP.Casework.Read"]);
+    expect(result.appRoles).toEqual(roleProps);
+    expect(result.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+  });
+
+  it("sets updatedAt to current ISO string", async () => {
+    const userId = "user-123";
+    const mockUser = User.createMock({
+      id: userId,
     });
+
+    const roleProps = {
+      ROLE_TEST: {
+        startDate: "2025-01-01",
+      },
+    };
+
+    mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
+
+    findUserByIdUseCase.mockResolvedValue(mockUser);
+    update.mockResolvedValue();
+
+    const beforeCall = new Date().toISOString();
+    const result = await updateUserRoleUseCase({
+      userId,
+      props: roleProps,
+    });
+    const afterCall = new Date().toISOString();
+
+    // Verify updatedAt is between before and after the call
+    expect(result.updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+    expect(result.updatedAt >= beforeCall).toBe(true);
+    expect(result.updatedAt <= afterCall).toBe(true);
   });
 });
