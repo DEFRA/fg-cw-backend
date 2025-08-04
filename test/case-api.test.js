@@ -76,11 +76,47 @@ describe("Cases", () => {
           ...caseData1,
           _id: expect.any(String),
           dateReceived: new Date(caseData1.dateReceived).toISOString(),
+          pages: expect.any(Object),
+          stages: expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.any(String),
+              title: expect.any(String),
+              actions: expect.any(Array),
+              taskGroups: expect.any(Array),
+            }),
+          ]),
+          timeline: [
+            {
+              ...caseData1.timeline[0],
+              createdBy: {
+                name: "System",
+              },
+            },
+          ],
+          requiredRoles: expect.any(Object),
         },
         {
           ...caseData2,
           _id: expect.any(String),
           dateReceived: new Date(caseData2.dateReceived).toISOString(),
+          pages: expect.any(Object),
+          stages: expect.arrayContaining([
+            expect.objectContaining({
+              id: expect.any(String),
+              title: expect.any(String),
+              actions: expect.any(Array),
+              taskGroups: expect.any(Array),
+            }),
+          ]),
+          timeline: [
+            {
+              ...caseData2.timeline[0],
+              createdBy: {
+                name: "System",
+              },
+            },
+          ],
+          requiredRoles: expect.any(Object),
         },
       ]);
     });
@@ -120,9 +156,7 @@ describe("Cases", () => {
             },
           },
         ],
-        banner: expect.any(Object),
-        overrideTabs: expect.any(Array),
-        customTabs: expect.any(Array),
+        pages: expect.any(Object),
         stages: expect.arrayContaining([
           expect.objectContaining({
             id: expect.any(String),
@@ -131,6 +165,7 @@ describe("Cases", () => {
             taskGroups: expect.any(Array),
           }),
         ]),
+        requiredRoles: expect.any(Object),
       });
     });
   });
