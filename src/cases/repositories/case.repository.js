@@ -3,7 +3,8 @@ import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
-import { Note } from "../models/note.js";
+import { toComments } from "../models/comment.js";
+import { toTimelineEvents } from "../models/timeline-event.js";
 
 const collection = "cases";
 
@@ -18,8 +19,8 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
-    notes: doc.notes?.map((note) => new Note(note)) || [],
-    timeline: doc.timeline,
+    comments: toComments(doc.comments),
+    timeline: toTimelineEvents(doc.timeline),
     assignedUser: doc.assignedUserId
       ? {
           id: doc.assignedUserId,

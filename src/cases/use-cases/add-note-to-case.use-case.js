@@ -1,20 +1,21 @@
-import { Note } from "../models/note.js";
-import { update } from "../repositories/case.repository.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import { getAuthenticatedUser } from "../../common/auth.js";
+import { Comment } from "../models/comment.js";
+import { findById, update } from "../repositories/case.repository.js";
 
 export const addNoteToCaseUseCase = async (command) => {
-  const { caseId, type, content } = command;
+  const { caseId, type, text } = command;
 
-  const kase = await findCaseByIdUseCase(caseId);
+  const kase = await findById(caseId);
 
-  const note = new Note({
+  const comment = new Comment({
     type,
-    content,
-    createdBy: "System", // TODO: This should be coming from the JWT token
+    text,
+    createdBy: getAuthenticatedUser().id,
   });
-  kase.addNote(note);
+
+  kase.addComment(comment);
 
   await update(kase);
 
-  return note;
+  return comment;
 };

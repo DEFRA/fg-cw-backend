@@ -1,12 +1,9 @@
 import { ObjectId } from "mongodb";
-import { assertIsNote, assertIsNotesArray } from "../../common/assert.js";
-import { Note } from "./note.js";
+import { assertIsComment, assertIsCommentsArray } from "./comment.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
-    assertIsNotesArray(props.notes);
-
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -16,7 +13,7 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
-    this.notes = props.notes;
+    this.comments = assertIsCommentsArray(props.comments);
     this.timeline = props.timeline || [];
     this.requiredRoles = props.requiredRoles;
   }
@@ -25,11 +22,26 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
-  addNote(note) {
-    assertIsNote(note);
+  addComment(comment) {
+    assertIsComment(comment);
+    this.comments.push(comment);
+    return comment;
+  }
 
-    this.notes.push(note);
-    return note;
+  getUserIds() {
+    const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
+
+    const timelineUserIds = this.timeline.flatMap((event) =>
+      event.getUserIds(),
+    );
+
+    const commentUserIds = this.comments.flatMap((comment) =>
+      comment.getUserIds(),
+    );
+
+    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
+
+    return [...new Set(allUserIds)];
   }
 
   static fromWorkflow(workflow, caseEvent) {

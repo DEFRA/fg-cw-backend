@@ -20,19 +20,28 @@ export const addNoteToCaseRoute = {
     response: {
       status: {
         [HttpCodes.BadRequest]: ValidationError,
+        [HttpCodes.Created]: Joi.object({
+          caseId: idSchema.required(),
+          noteRef: idSchema.required(),
+        }),
       },
     },
   },
   async handler(request, h) {
     const { caseId } = request.params;
-    const { type, content } = request.payload;
+    const { type, text } = request.payload;
 
     const note = await addNoteToCaseUseCase({
       caseId,
       type,
-      content,
+      text,
     });
 
-    return h.response(note).code(HttpCodes.Created);
+    return h
+      .response({
+        caseId,
+        noteRef: note.ref,
+      })
+      .code(HttpCodes.Created);
   },
 };
