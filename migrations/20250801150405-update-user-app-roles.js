@@ -1,7 +1,3 @@
-/**
- * @param db {import('mongodb').Db}
- * @returns {Promise<void>}
- */
 export const up = async (db) => {
   const users = await db.collection("users").find().toArray();
 
@@ -21,20 +17,12 @@ export const up = async (db) => {
       await db
         .collection("users")
         .updateOne({ _id: user._id }, { $set: { appRoles: rolesObject } });
-
-      console.log(
-        `Migrated user ${user._id}: ${user.appRoles} -> ${JSON.stringify(rolesObject)}`,
-      );
     }
   }
 
   console.log("Migration completed successfully");
 };
 
-/**
- * @param db {import('mongodb').Db}
- * @returns {Promise<void>}
- */
 export const down = async (db) => {
   const users = await db.collection("users").find().toArray();
 

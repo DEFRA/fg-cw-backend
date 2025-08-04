@@ -1,14 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { updateUserRoleUseCase } from "../use-cases/update-user-role.use-case.js";
 import { updateUserRoleRoute } from "./update-user-role.route.js";
 
 vi.mock("../use-cases/update-user-role.use-case.js");
 
 describe("updateUserRoleRoute", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("validation", () => {
     it("validates params with userId schema", () => {
       const paramsSchema = updateUserRoleRoute.options.validate.params;

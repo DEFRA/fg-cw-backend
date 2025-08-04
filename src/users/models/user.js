@@ -14,10 +14,6 @@ export class User {
   }
 
   createAppRole(appRoles) {
-    if (!appRoles || typeof appRoles !== "object") {
-      return {};
-    }
-
     const result = {};
 
     for (const [roleName, roleData] of Object.entries(appRoles)) {
