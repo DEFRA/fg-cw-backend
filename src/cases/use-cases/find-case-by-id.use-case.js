@@ -67,3 +67,7 @@ const populateTimelineCreatedByUser = (timelineItem, users) => {
     timelineItem.createdBy = { name: "System" };
   }
 };
+
+export const findUserAssignedToCase = () => {
+  return "System"; // TODO: get user who has completed the task from auth
+};

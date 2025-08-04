@@ -9,7 +9,7 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
-    payloadDefinition: doc.payloadDefinition,
+    pages: doc.pages,
     stages: doc.stages,
     requiredRoles: doc.requiredRoles,
   });
@@ -37,14 +37,26 @@ export const save = async (workflow) => {
   }
 };
 
-export const findAll = async (query) => {
+// eslint-disable-next-line complexity
+export const createWorkflowFilter = (query = {}) => {
+  const { codes, $expr } = query;
   const filter = {};
 
-  if (query?.codes?.length) {
+  if (codes?.length) {
     filter.code = {
-      $in: query.codes,
+      $in: codes,
     };
   }
+
+  if ($expr) {
+    filter.$expr = $expr;
+  }
+
+  return filter;
+};
+
+export const findAll = async (query) => {
+  const filter = createWorkflowFilter(query);
 
   const workflowDocuments = await db
     .collection(collection)

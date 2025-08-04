@@ -1,11 +1,29 @@
 import Boom from "@hapi/boom";
 
+import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import {
+  findCaseByIdUseCase,
+  findUserAssignedToCase,
+} from "./find-case-by-id.use-case.js";
+
+const createStageTimelineEvent = (caseId, stageId, type, assignedUser) => {
+  return new TimelineEvent({
+    eventType: type,
+    createdBy: assignedUser, // user who completed the task
+    description:
+      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.STAGE_COMPLETED],
+    data: {
+      caseId,
+      stageId,
+    },
+  });
+};
 
 export const changeCaseStageUseCase = async (caseId) => {
   const kase = await findCaseByIdUseCase(caseId);
+  const assignedUser = findUserAssignedToCase();
 
   const currentStageIndex = kase.stages.findIndex(
     (stage) => stage.id === kase.currentStage,
@@ -24,7 +42,16 @@ export const changeCaseStageUseCase = async (caseId) => {
   // Get the next stage ID
   const nextStage = kase.stages[currentStageIndex + 1].id;
 
-  await updateStage(caseId, nextStage);
+  await updateStage(
+    caseId,
+    nextStage,
+    createStageTimelineEvent(
+      caseId,
+      nextStage,
+      TimelineEvent.eventTypes.STAGE_COMPLETED,
+      assignedUser,
+    ),
+  );
 
   await publishCaseStageUpdated({
     caseRef: kase.caseRef,

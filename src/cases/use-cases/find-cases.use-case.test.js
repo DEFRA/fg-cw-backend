@@ -1,18 +1,112 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { User } from "../../users/models/user.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Case } from "../models/case.js";
+import { Workflow } from "../models/workflow.js";
 import { findAll } from "../repositories/case.repository.js";
-import { findCasesUseCase } from "./find-cases.use-case.js";
+import {
+  createUserRolesFilter,
+  findCasesUseCase,
+} from "./find-cases.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflows.use-case.js");
+vi.mock("../../common/auth.js");
+
+describe("filters", () => {
+  const userRoles = ["ROLE_1", "ROLE_3", "ROLE_APP_1"];
+
+  it("creates a filter for user roles", () => {
+    const expectedFilters = {
+      $expr: {
+        $and: [
+          {
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
+              },
+              {
+                $setIsSubset: ["$requiredRoles.allOf", userRoles],
+              },
+            ],
+          },
+          {
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
+              },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+          {},
+        ],
+      },
+    };
+    expect(createUserRolesFilter(userRoles)).toEqual(expectedFilters);
+  });
+
+  it("adds additional filters if passed", () => {
+    const expectedFilters = {
+      $expr: {
+        $and: [
+          {
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
+              },
+              {
+                $setIsSubset: ["$requiredRoles.allOf", userRoles],
+              },
+            ],
+          },
+          {
+            $or: [
+              {
+                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
+              },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+          {
+            codes: ["workflow-code-1"],
+          },
+        ],
+      },
+    };
+
+    expect(
+      createUserRolesFilter(userRoles, { codes: ["workflow-code-1"] }),
+    ).toEqual(expectedFilters);
+  });
+});
 
 describe("findCasesUseCase", () => {
+  const userRolesObjects = { ROLE_1: {}, ROLE_2: {} };
+  const userRoles = Object.keys(userRolesObjects);
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
+    getAuthenticatedUserRoles.mockReturnValue(userRolesObjects);
   });
 
   it("finds cases without assigned users", async () => {
@@ -23,7 +117,7 @@ describe("findCasesUseCase", () => {
 
     findAll.mockResolvedValue(casesWithoutUsers);
     findUsersUseCase.mockResolvedValue([]);
-    findWorkflowsUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
     const result = await findCasesUseCase();
 
@@ -44,6 +138,7 @@ describe("findCasesUseCase", () => {
 
     findAll.mockResolvedValue(casesWithUsers);
     findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
     const result = await findCasesUseCase();
 
@@ -69,6 +164,7 @@ describe("findCasesUseCase", () => {
 
     findAll.mockResolvedValue(mixedCases);
     findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
     const result = await findCasesUseCase();
 
@@ -93,6 +189,7 @@ describe("findCasesUseCase", () => {
 
     findAll.mockResolvedValue(casesWithUsers);
     findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
     const result = await findCasesUseCase();
 
@@ -140,9 +237,9 @@ describe("findCasesUseCase", () => {
     const result = await findCasesUseCase();
 
     expect(findAll).toHaveBeenCalledWith();
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_1", "WORKFLOW_2"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_1", "WORKFLOW_2"] }),
+    );
     expect(result[0].requiredRoles).toEqual(["ROLE_1", "ROLE_2"]);
     expect(result[1].requiredRoles).toEqual(["ROLE_3"]);
   });
@@ -173,52 +270,20 @@ describe("findCasesUseCase", () => {
     const result = await findCasesUseCase();
 
     expect(findAll).toHaveBeenCalledWith();
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: [
-        "EDITOR_WORKFLOW",
-        "ADMIN_WORKFLOW",
-        "USER_WORKFLOW",
-        "EDITOR_WORKFLOW",
-      ],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: [
+          "EDITOR_WORKFLOW",
+          "ADMIN_WORKFLOW",
+          "USER_WORKFLOW",
+          "EDITOR_WORKFLOW",
+        ],
+      }),
+    );
     expect(result[0].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
     expect(result[1].requiredRoles).toEqual(["ADMIN"]);
     expect(result[2].requiredRoles).toEqual(["USER", "VIEWER"]);
     expect(result[3].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
-  });
-
-  it("finds cases with and without matching workflows", async () => {
-    const workflow1 = { code: "EXISTING_WORKFLOW", requiredRoles: ["ROLE_A"] };
-    const workflows = [workflow1];
-
-    const mixedCases = [
-      Case.createMock({
-        workflowCode: "EXISTING_WORKFLOW",
-        requiredRoles: undefined,
-      }),
-      Case.createMock({
-        workflowCode: "MISSING_WORKFLOW",
-        requiredRoles: undefined,
-      }),
-      Case.createMock({
-        workflowCode: "EXISTING_WORKFLOW",
-        requiredRoles: undefined,
-      }),
-    ];
-
-    findAll.mockResolvedValue(mixedCases);
-    findUsersUseCase.mockResolvedValue([]);
-    findWorkflowsUseCase.mockResolvedValue(workflows);
-
-    const result = await findCasesUseCase();
-
-    expect(findAll).toHaveBeenCalledWith();
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["EXISTING_WORKFLOW", "MISSING_WORKFLOW", "EXISTING_WORKFLOW"],
-    });
-    expect(result[0].requiredRoles).toEqual(["ROLE_A"]);
-    expect(result[1].requiredRoles).toBeUndefined();
-    expect(result[2].requiredRoles).toEqual(["ROLE_A"]);
   });
 
   it("extracts workflow codes correctly from cases", async () => {
@@ -232,11 +297,13 @@ describe("findCasesUseCase", () => {
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue([]);
 
-    await findCasesUseCase();
+    await findCasesUseCase(userRoles);
 
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["CODE_1", "CODE_2", "CODE_3"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["CODE_1", "CODE_2", "CODE_3"],
+      }),
+    );
   });
 
   it("calls both findUsersUseCase and findWorkflowsUseCase with correct parameters", async () => {
@@ -269,9 +336,11 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
+      }),
+    );
   });
 
   it("throws when find user use cases fails", async () => {
@@ -293,9 +362,9 @@ describe("findCasesUseCase", () => {
 
     // Both use cases should have been called despite one failing
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_A"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_A"] }),
+    );
   });
 
   it("throws when find workflow use case fails", async () => {
@@ -319,9 +388,9 @@ describe("findCasesUseCase", () => {
 
     expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["WORKFLOW_A"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, { codes: ["WORKFLOW_A"] }),
+    );
   });
 
   it("finds cases with both assigned users and workflows required roles", async () => {
@@ -357,9 +426,11 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createUserRolesFilter(userRoles, {
+        codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
+      }),
+    );
 
     // Verify both user and workflow enrichment
     expect(result[0].assignedUser.name).toBe("Alice Smith");

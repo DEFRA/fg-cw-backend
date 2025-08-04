@@ -1,0 +1,134 @@
+{
+  "code": "frps-private-beta",
+  "pages": {
+    "cases": {
+      "details": {
+        "banner": {
+          "title": {
+            "ref": "$.payload.businessName",
+            "type": "string"
+          },
+          "summary": {
+            "sbi": {
+              "label": "SBI",
+              "ref": "$.payload.identifiers.sbi",
+              "type": "string"
+            },
+            "reference": {
+              "label": "Reference",
+              "ref": "$.caseRef",
+              "type": "string"
+            },
+            "scheme": {
+              "label": "Scheme",
+              "ref": "$.payload.answers.scheme",
+              "type": "string"
+            },
+            "createdAt": {
+              "label": "Created At",
+              "ref": "$.payload.createdAt",
+              "type": "date"
+            }
+          }
+        },
+        "tabs": {
+          "caseDetails": {
+            "title": "Application",
+            "sections": [
+              {
+                "title": "Answers",
+                "type": "object",
+                "component": "list",
+                "fields": [
+                  {
+                    "ref": "$.payload.answers.scheme",
+                    "type": "string",
+                    "label": "Scheme"
+                  },
+                  {
+                    "ref": "$.payload.answers.year",
+                    "type": "number",
+                    "label": "Year"
+                  },
+                  {
+                    "ref": "$.payload.answers.hasCheckedLandIsUpToDate",
+                    "type": "boolean",
+                    "label": "Has checked land is up to date?"
+                  },
+                  {
+                    "ref": "$.payload.answers.agreementName",
+                    "type": "string",
+                    "label": "Agreement Name"
+                  }
+                ]
+              },
+              {
+                "title": "Selected actions for land parcels",
+                "type": "array",
+                "component": "table",
+                "fields": [
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].sheetId",
+                    "type": "string",
+                    "label": "Sheet Id"
+                  },
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].parcelId",
+                    "type": "string",
+                    "label": "Parcel Id"
+                  },
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].code",
+                    "type": "string",
+                    "label": "Code"
+                  },
+                  {
+                    "ref": "$.payload.answers.actionApplications[*].appliedFor",
+                    "type": "string",
+                    "label": "Applied For",
+                    "format": "{{quantity | fixed(4)}} {{unit}}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "application-receipt",
+      "title": "Application Receipt",
+      "taskGroups": [
+        {
+          "id": "application-receipt-tasks",
+          "title": "Application Receipt tasks",
+          "tasks": [
+            {
+              "id": "simple-review",
+              "title": "Simple Review",
+              "type": "boolean"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "approve",
+          "label": "Approve"
+        }
+      ]
+    },
+    {
+      "id": "contract",
+      "title": "Stage for contract management",
+      "taskGroups": [],
+      "actions": []
+    }
+  ],
+  "requiredRoles": {
+    "allOf": ["ROLE_RPA_ADMIN"],
+    "anyOf": ["ROLE_RPA_ADMIN"]
+  }
+}

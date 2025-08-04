@@ -162,6 +162,7 @@ describe("findById", () => {
 describe("updateStage", () => {
   it("updates the stage of a case", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -172,13 +173,21 @@ describe("updateStage", () => {
       updateOne,
     });
 
-    await updateStage(caseId, "application-receipt");
+    await updateStage(caseId, "application-receipt", timelineEvent);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { currentStage: "application-receipt" } },
+      {
+        $set: { currentStage: "application-receipt" },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
+        },
+      },
     );
   });
 
@@ -205,6 +214,7 @@ describe("updateTaskStatus", () => {
     const taskGroupId = "task-group-1";
     const taskId = "task-1";
     const status = "COMPLETED";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
@@ -221,6 +231,7 @@ describe("updateTaskStatus", () => {
       taskGroupId,
       taskId,
       status,
+      timelineEvent,
     });
 
     expect(db.collection).toHaveBeenCalledWith("cases");
@@ -235,6 +246,12 @@ describe("updateTaskStatus", () => {
         $set: {
           "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status":
             status,
+        },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
         },
       },
       {

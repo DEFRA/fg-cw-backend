@@ -4,9 +4,42 @@ export const createWorkflow = async (payload = {}) => {
   const response = await wreck.post("/workflows", {
     payload: {
       code: "frps-private-beta",
-      payloadDefinition: {
-        clientRef: {
-          type: "string",
+      pages: {
+        cases: {
+          details: {
+            banner: {
+              title: {
+                ref: "$.payload.businessName",
+                type: "string",
+              },
+              summary: {
+                clientReference: {
+                  label: "Client Reference",
+                  ref: "$.payload.clientRef",
+                  type: "string",
+                },
+              },
+            },
+            tabs: {
+              caseDetails: {
+                title: "Application",
+                sections: [
+                  {
+                    title: "Details",
+                    type: "object",
+                    component: "list",
+                    fields: [
+                      {
+                        ref: "$.payload.answers.scheme",
+                        type: "string",
+                        label: "Scheme",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
         },
       },
       stages: [
