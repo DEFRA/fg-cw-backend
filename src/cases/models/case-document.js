@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { TimelineEventDocument } from "./timeline-event-document.js";
 
 export class CaseDocument {
   constructor(props) {
@@ -12,9 +13,11 @@ export class CaseDocument {
     this.payload = props.payload;
     this.assignedUserId = props.assignedUser?.id || null;
     this.currentStage = props.currentStage;
-    this.timeline = props.timeline;
     this.stages = props.stages;
-    this.timeline = props.timeline;
+    this.notes = props.notes;
+    this.timeline = props.timeline.map(
+      (timeline) => new TimelineEventDocument(timeline),
+    );
   }
 
   static createMock(props) {

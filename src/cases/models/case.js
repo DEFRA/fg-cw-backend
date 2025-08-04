@@ -1,8 +1,12 @@
 import { ObjectId } from "mongodb";
+import { assertIsNote, assertIsNotesArray } from "../../common/assert.js";
+import { Note } from "./note.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
+    assertIsNotesArray(props.notes);
+
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -12,8 +16,20 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
+    this.notes = props.notes;
     this.timeline = props.timeline || [];
     this.requiredRoles = props.requiredRoles;
+  }
+
+  get objectId() {
+    return ObjectId.createFromHexString(this._id);
+  }
+
+  addNote(note) {
+    assertIsNote(note);
+
+    this.notes.push(note);
+    return note;
   }
 
   static fromWorkflow(workflow, caseEvent) {
@@ -34,6 +50,7 @@ export class Case {
           })),
         })),
       })),
+      notes: caseEvent.notes.map((note) => new Note(note)) || [],
       timeline: [
         new TimelineEvent({
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
