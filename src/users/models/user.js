@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { UserRole } from "./userRole.js";
 
 export class User {
-  constructor(props, options = {}) {
+  constructor(props) {
     this.id = props.id || new ObjectId().toHexString();
     this.idpId = props.idpId;
     this.name = props.name;
