@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../models/user.js";
 import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
@@ -8,6 +8,17 @@ vi.mock("../repositories/user.repository.js");
 vi.mock("./find-user-by-id.use-case.js");
 
 describe("updateUserRoleUseCase", () => {
+  const mockDate = new Date("2025-01-01T00:00:00.000Z");
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(mockDate);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("updates user app roles successfully", async () => {
     const userId = "user-123";
     const mockUser = User.createMock({
@@ -34,9 +45,7 @@ describe("updateUserRoleUseCase", () => {
     expect(findUserByIdUseCase).toHaveBeenCalledWith(userId);
     expect(mockUser.createAppRole).toHaveBeenCalledWith(roleProps);
     expect(result.appRoles).toEqual(roleProps);
-    expect(result.updatedAt).toMatch(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
-    );
+    expect(result.updatedAt).toEqual("2025-01-01T00:00:00.000Z");
     expect(update).toHaveBeenCalledWith(mockUser);
   });
 
