@@ -44,14 +44,19 @@ describe("updateUserRoute", () => {
 
     expect(result).toEqual(user);
 
-    // expect(updateUserUseCase).toHaveBeenCalledWith({
-    //   userId: user.id,
-    //   props: {
-    //     name: "John",
-    //     idpRoles: ["admin"],
-    //     appRoles: ["ROLE_EDITOR"],
-    //   },
-    // });
+    expect(updateUserUseCase).toHaveBeenCalledWith({
+      userId: user.id,
+      props: {
+        name: "John",
+        idpRoles: ["admin"],
+        appRoles: {
+          ROLE_ADMIN: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
+      },
+    });
   });
 
   it("validates payload using updateUserRequestSchema", async () => {
