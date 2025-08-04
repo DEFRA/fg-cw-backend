@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { WorkflowDocument } from "../models/workflow-document.js";
 import { Workflow } from "../models/workflow.js";
+import { createUserRolesFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -203,6 +204,34 @@ describe("findAll", () => {
       code: { $in: ["NON_EXISTENT_CODE"] },
     });
     expect(result).toEqual([]);
+  });
+
+  it("uses filters passed to mongodb", async () => {
+    const workflows = [
+      WorkflowDocument.createMock({ code: "WORKFLOW_A" }),
+      WorkflowDocument.createMock({ code: "WORKFLOW_B" }),
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([workflows[0]]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = createUserRolesFilter(["ROLE_1", "ROLE_3"]);
+    const result = await findAll(query);
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({
+      ...query,
+    });
+
+    expect(result).toEqual([
+      Workflow.createMock({
+        _id: workflows[0]._id.toString(),
+        code: "WORKFLOW_A",
+      }),
+    ]);
   });
 });
 

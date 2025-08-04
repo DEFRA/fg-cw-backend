@@ -51,10 +51,18 @@ describe("Cases", () => {
       await cases.insertMany([
         {
           ...caseData1,
+          requiredRoles: {
+            allOf: ["ROLE_1", "ROLE_2"],
+            anyOf: ["ROLE_3"],
+          },
           dateReceived: new Date(caseData1.dateReceived),
         },
         {
           ...caseData2,
+          requiredRoles: {
+            allOf: ["ROLE_1", "ROLE_2"],
+            anyOf: ["ROLE_3"],
+          },
           dateReceived: new Date(caseData2.dateReceived),
         },
       ]);
