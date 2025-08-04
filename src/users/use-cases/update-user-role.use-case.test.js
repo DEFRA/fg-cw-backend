@@ -16,7 +16,7 @@ describe("updateUserRoleUseCase", () => {
     });
 
     const roleProps = {
-      "CW-Admin": {
+      ROLE_ADMIN: {
         startDate: "2025-07-01",
         endDate: "2025-08-02",
       },
@@ -25,7 +25,6 @@ describe("updateUserRoleUseCase", () => {
     mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
 
     const result = await updateUserRoleUseCase({
       userId,
@@ -118,7 +117,6 @@ describe("updateUserRoleUseCase", () => {
     mockUser.createAppRole = vi.fn().mockReturnValue(emptyRoleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
 
     const result = await updateUserRoleUseCase({
       userId,
@@ -138,7 +136,7 @@ describe("updateUserRoleUseCase", () => {
     });
 
     const multipleRoleProps = {
-      "CW-Admin": {
+      ROLE_ADMIN: {
         startDate: "2025-07-01",
         endDate: "2025-08-02",
       },
@@ -155,7 +153,6 @@ describe("updateUserRoleUseCase", () => {
     mockUser.createAppRole = vi.fn().mockReturnValue(multipleRoleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
 
     const result = await updateUserRoleUseCase({
       userId,
@@ -187,7 +184,6 @@ describe("updateUserRoleUseCase", () => {
     mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
 
     const result = await updateUserRoleUseCase({
       userId,
@@ -219,7 +215,6 @@ describe("updateUserRoleUseCase", () => {
     mockUser.createAppRole = vi.fn().mockReturnValue(roleProps);
 
     findUserByIdUseCase.mockResolvedValue(mockUser);
-    update.mockResolvedValue();
 
     const beforeCall = new Date().toISOString();
     const result = await updateUserRoleUseCase({
