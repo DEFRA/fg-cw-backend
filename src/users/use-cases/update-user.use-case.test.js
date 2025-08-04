@@ -23,7 +23,7 @@ describe("updateUserUseCase", () => {
         name: "Name",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: {
-          "CW-Admin": {
+          ROLE_ADMIN: {
             startDate: "2025-07-01",
             endDate: "2025-08-02",
           },
@@ -39,7 +39,7 @@ describe("updateUserUseCase", () => {
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: {
-          "CW-Admin": {
+          ROLE_ADMIN: {
             startDate: "2025-07-01",
             endDate: "2025-08-02",
           },
@@ -57,7 +57,7 @@ describe("updateUserUseCase", () => {
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: {
-          "CW-Admin": {
+          ROLE_ADMIN: {
             startDate: "2025-07-01",
             endDate: "2025-08-02",
           },
