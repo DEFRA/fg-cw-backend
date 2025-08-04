@@ -58,8 +58,8 @@ const addTimelineInfo = async (kase) => {
 };
 
 const addStages = (kase, workflow) => {
-  const processStage = (stage, workflow) => {
-    const workflowStage = workflow.stages.find((ws) => ws.id === stage.id);
+  const processStage = (stage, workflowInfo) => {
+    const workflowStage = workflowInfo.stages.find((ws) => ws.id === stage.id);
 
     return {
       ...stage,
@@ -106,9 +106,9 @@ const addRequiredRoles = (kase, workflow) => {
 
 export const enrichCaseUseCase = async (kase, workflow) => {
   await addTimelineInfo(kase);
-  await addStages(kase, workflow);
-  await addPages(kase, workflow);
-  await addRequiredRoles(kase, workflow);
+  addStages(kase, workflow);
+  addPages(kase, workflow);
+  addRequiredRoles(kase, workflow);
 
   return kase;
 };
