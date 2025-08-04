@@ -14,7 +14,7 @@ const toCase = (doc) =>
     payload: doc.payload,
     status: doc.status,
     currentStage: doc.currentStage,
-    dateReceived: doc.dateReceived.toISOString(),
+    dateReceived: doc.dateReceived,
     createdAt: doc.createdAt,
     stages: doc.stages,
     timeline: doc.timeline,
