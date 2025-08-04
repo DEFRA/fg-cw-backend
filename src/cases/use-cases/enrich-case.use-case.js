@@ -16,7 +16,9 @@ const addTimelineInfo = async (kase) => {
   if (kase.assignedUser) {
     const user = await findUserByIdUseCase(kase.assignedUser.id);
 
-    kase.assignedUser.name = user.name;
+    if (user) {
+      kase.assignedUser.name = user.name;
+    }
   }
 
   // find timeline user data
