@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { HttpCodes } from "../../common/http-codes.js";
+import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { idSchema } from "../schemas/id.schema.js";
 import { addNoteToCaseRequestSchema } from "../schemas/requests/add-note-to-case-request.schema.js";
