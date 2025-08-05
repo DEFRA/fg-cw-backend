@@ -1,50 +1,40 @@
 export const up = async (db) => {
-  const users = await db.collection("users").find().toArray();
-
-  console.log(`Found ${users.length} users to migrate`);
-
-  // Process each user
-  for (const user of users) {
-    if (Array.isArray(user.appRoles)) {
-      const rolesObject = {};
-
-      user.appRoles.forEach((role) => {
-        if (typeof role === "string") {
-          rolesObject[role] = {};
-        }
-      });
-
-      await db
-        .collection("users")
-        .updateOne({ _id: user._id }, { $set: { appRoles: rolesObject } });
-    }
-  }
+  await db.collection("users").updateMany({}, [
+    {
+      $set: {
+        appRoles: {
+          $arrayToObject: {
+            $map: {
+              input: "$appRoles",
+              as: "role",
+              in: {
+                k: "$$role",
+                v: {},
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
 
   console.log("Migration completed successfully");
 };
 
 export const down = async (db) => {
-  const users = await db.collection("users").find().toArray();
-
-  console.log(`Found ${users.length} users to rollback`);
-
-  for (const user of users) {
-    if (
-      user.appRoles &&
-      typeof user.appRoles === "object" &&
-      !Array.isArray(user.appRoles)
-    ) {
-      const rolesArray = Object.keys(user.appRoles);
-
-      await db
-        .collection("users")
-        .updateOne({ _id: user._id }, { $set: { appRoles: rolesArray } });
-
-      console.log(
-        `Rolled back user ${user._id}: ${JSON.stringify(user.appRoles)} -> ${rolesArray}`,
-      );
-    }
-  }
+  db.collection("users").updateMany({}, [
+    {
+      $set: {
+        appRoles: {
+          $map: {
+            input: { $objectToArray: "$appRoles" },
+            as: "item",
+            in: "$$item.k",
+          },
+        },
+      },
+    },
+  ]);
 
   console.log("Rollback completed successfully");
 };
