@@ -296,7 +296,7 @@ describe("assertIsCommentsArray", () => {
 
   it("throws bad request when not an array", () => {
     expect(() => assertIsCommentsArray("not an array")).toThrow(
-      "Expected an array of Comments",
+      "Expected an array of Comment",
     );
   });
 
