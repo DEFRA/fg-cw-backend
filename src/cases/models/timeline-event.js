@@ -16,10 +16,6 @@ export class TimelineEvent {
       userIds.add(this.data.assignedTo);
     }
 
-    if (this.data?.previouslyAssignedTo) {
-      userIds.add(this.data.previouslyAssignedTo);
-    }
-
     return [...userIds];
   }
 
