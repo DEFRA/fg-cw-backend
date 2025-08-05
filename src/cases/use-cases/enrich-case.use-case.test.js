@@ -23,7 +23,7 @@ describe("enrichCaseUseCase", () => {
     const result = await enrichCaseUseCase(kase, mockWorkflow);
 
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
-    expect(result.pages).toEqual(mockWorkflow.pages);
+    expect(result.pages).toEqual(mockWorkflow.pages.cases);
     expect(result.stages).toBeDefined();
     expect(result.timeline).toBeDefined();
   });

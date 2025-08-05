@@ -97,7 +97,7 @@ const addStages = (kase, workflow) => {
 };
 
 const addPages = (kase, workflow) => {
-  kase.pages = workflow.pages;
+  kase.pages = workflow.pages.cases;
 };
 
 const addRequiredRoles = (kase, workflow) => {
