@@ -1,9 +1,9 @@
 import Joi from "joi";
-import { userRoleSchema } from "../../../common/schemas/roles/user.role.schema.js";
 import { emailSchema } from "../user/email.schema.js";
 import { idpIdSchema } from "../user/idp-id.schema.js";
 import { idpRoleSchema } from "../user/idp-role.schema.js";
 import { nameSchema } from "../user/name.schema.js";
+import { userRoleSchema } from "../user/user-role.schema.js";
 
 export const createUserRequestSchema = Joi.object({
   idpId: idpIdSchema,

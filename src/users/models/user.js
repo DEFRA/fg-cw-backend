@@ -16,9 +16,9 @@ export class User {
   createAppRole(appRoles) {
     const result = {};
 
-    for (const [roleName, roleData] of Object.entries(appRoles)) {
-      result[roleName] = new UserRole({
-        roleName,
+    for (const [name, roleData] of Object.entries(appRoles)) {
+      result[name] = new UserRole({
+        name,
         startDate: roleData.startDate,
         endDate: roleData.endDate,
       });
@@ -34,10 +34,11 @@ export class User {
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: {
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
+        ROLE_RPA_CASES_APPROVE: new UserRole({
+          name: "ROLE_RPA_CASES_APPROVE",
+          startDate: new Date("2025-07-01T00:00:00.000Z"),
+          endDate: new Date("2025-08-02T00:00:00.000Z"),
+        }),
       },
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",

@@ -1,6 +1,6 @@
 import JoiDate from "@joi/date";
 import BaseJoi from "joi";
-import { codeSchema } from "./code.schema.js";
+import { codeSchema } from "../../../common/schemas/roles/code.schema.js";
 
 const joi = BaseJoi.extend(JoiDate);
 
@@ -10,8 +10,8 @@ export const userRoleSchema = joi
     codeSchema,
     joi
       .object({
-        startDate: joi.date().format("YYYY-MM-DD").raw().optional(),
-        endDate: joi.date().format("YYYY-MM-DD").raw().optional(),
+        startDate: joi.date().iso().optional(),
+        endDate: joi.date().iso().optional(),
       })
       .optional(),
   )

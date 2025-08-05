@@ -14,6 +14,8 @@ export const createUserUseCase = async (props) => {
     updatedAt: createdAt,
   });
 
+  user.appRoles = user.createAppRole(props.appRoles);
+
   await save(user);
 
   return user;
