@@ -8,7 +8,7 @@ export class Comment {
     this.text = encodeURIComponent(text);
   }
 
-  createMock(type, text, ref, createdAt) {
+  static createMock({ type, text, ref, createdAt }) {
     return {
       ref,
       type,
