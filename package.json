@@ -12,7 +12,7 @@
     "test": "npm run test:unit -- --run && npm run test:integration -- --run",
     "test:unit": "vitest --config vitest.config.js --dir src",
     "test:integration": "vitest --config test/vitest.config.js --dir test",
-    "dev": "node src/main.js",
+    "dev:debug": "node src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "postinstall": "npm run setup:husky && npm run setup:env",
     "setup:env": "cp --update=none .env.example .env || true",

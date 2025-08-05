@@ -8,4 +8,4 @@ export const addNoteToCaseRequestSchema = Joi.object({
     presence: "required",
     stripUnknown: true,
   })
-  .label("AssignUserToCaseRequestSchema");
+  .label("AddNoteToCaseRequestSchema");
