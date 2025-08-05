@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { EventEnums } from "./event-enums.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
@@ -36,7 +37,7 @@ export class Case {
       })),
       timeline: [
         new TimelineEvent({
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
@@ -77,7 +78,7 @@ export class Case {
       ],
       timeline: [
         {
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
           // 'createdBy' is hydrated on find-case-by-id

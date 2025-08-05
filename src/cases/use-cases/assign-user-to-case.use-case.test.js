@@ -4,6 +4,7 @@ import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
@@ -52,7 +53,7 @@ describe("assignUserToCaseUseCase", () => {
     );
 
     const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      eventType: EventEnums.eventTypes.CASE_ASSIGNED,
       createdBy: "System", // TODO: user details need to come from authorised user
       data: {
         assignedTo: mockUser.id,
@@ -61,7 +62,7 @@ describe("assignUserToCaseUseCase", () => {
     });
 
     const comment = new Comment(
-      TimelineEvent.eventTypes.CASE_ASSIGNED,
+      EventEnums.eventTypes.CASE_ASSIGNED,
       "This is a test comment",
     );
 
@@ -144,7 +145,7 @@ describe("assignUserToCaseUseCase", () => {
     const repositoryError = new Error("Database update failed");
 
     const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      eventType: EventEnums.eventTypes.CASE_ASSIGNED,
       createdBy: "System", // TODO: user details need to come from authorised user
       data: {
         assignedTo: mockUser.id,
@@ -209,7 +210,7 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     findCaseByIdUseCase.mockResolvedValue(mockCase);
     const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
+      eventType: EventEnums.eventTypes.CASE_UNASSIGNED,
       createdBy: "System", // TODO: user details need to come from authorised user
       data: {
         assignedTo: null,

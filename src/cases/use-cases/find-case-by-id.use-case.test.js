@@ -3,7 +3,7 @@ import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Case } from "../models/case.js";
-import { TimelineEvent } from "../models/timeline-event.js";
+import { EventEnums } from "../models/event-enums.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
@@ -54,7 +54,7 @@ describe("findCaseByIdUseCase", () => {
     });
 
     mockCase.timeline.unshift({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+      eventType: EventEnums.eventTypes.CASE_ASSIGNED,
       createdAt: "2025-01-01T00:00:00.000Z",
       description: "Case assigned",
       createdBy: "64c88faac1f56f71e1b89a44",

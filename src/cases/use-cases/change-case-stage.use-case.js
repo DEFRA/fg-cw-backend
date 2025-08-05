@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
@@ -13,7 +14,7 @@ const createStageTimelineEvent = (caseId, stageId, type, assignedUser) => {
     eventType: type,
     createdBy: assignedUser, // user who completed the task
     description:
-      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.STAGE_COMPLETED],
+      EventEnums.eventDescriptions[EventEnums.eventTypes.STAGE_COMPLETED],
     data: {
       caseId,
       stageId,
@@ -48,7 +49,7 @@ export const changeCaseStageUseCase = async (caseId) => {
     createStageTimelineEvent(
       caseId,
       nextStage,
-      TimelineEvent.eventTypes.STAGE_COMPLETED,
+      EventEnums.eventTypes.STAGE_COMPLETED,
       assignedUser,
     ),
   );

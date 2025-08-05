@@ -1,3 +1,4 @@
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { updateTaskStatus } from "../repositories/case.repository.js";
 import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
@@ -14,7 +15,7 @@ const createTaskTimelineEvent = (
     eventType: type,
     createdBy: assignedUser, // user who completed the task
     description:
-      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.TASK_COMPLETED],
+      EventEnums.eventDescriptions[EventEnums.eventTypes.TASK_COMPLETED],
     data: {
       caseId,
       stageId,
@@ -40,7 +41,7 @@ export const updateTaskStatusUseCase = async (command) => {
         command.stageId,
         command.taskGroupId,
         command.taskId,
-        TimelineEvent.eventTypes.TASK_COMPLETED,
+        EventEnums.eventTypes.TASK_COMPLETED,
         assignedUser,
       ),
   });

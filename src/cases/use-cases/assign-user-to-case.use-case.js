@@ -1,16 +1,18 @@
 import Boom from "@hapi/boom";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Comment } from "../models/comment.js";
+import { EventEnums } from "../models/event-enums.js";
 import { Permissions } from "../models/permissions.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
-const createTimelineEvent = (userId, kase, type) => {
+const createTimelineEvent = (userId, kase, type, commentRef = null) => {
   return new TimelineEvent({
     eventType: type,
     createdBy: "System", // TODO: user details need to come from authorised user
+    commentRef,
     data: {
       assignedTo: userId,
       previouslyAssignedTo: kase.assignedUser?.id,
@@ -21,12 +23,30 @@ const createTimelineEvent = (userId, kase, type) => {
 const createComment = (text) => {
   if (text) {
     return new Comment(
-      TimelineEvent.eventTypes.CASE_ASSIGNED, // TODO extract eventTypes
+      EventEnums.eventTypes.CASE_ASSIGNED, // TODO extract eventTypes
       text,
     );
   } else {
     return null;
   }
+};
+
+const unassignUser = async (command) => {
+  const { caseId, notes } = command;
+  const kase = await findCaseByIdUseCase(caseId);
+  const comment = createComment(notes);
+
+  await updateAssignedUser(
+    caseId,
+    null,
+    createTimelineEvent(
+      null,
+      kase,
+      EventEnums.eventTypes.CASE_UNASSIGNED,
+      comment?.ref,
+    ),
+    comment,
+  );
 };
 
 export const assignUserToCaseUseCase = async (command) => {
@@ -35,16 +55,7 @@ export const assignUserToCaseUseCase = async (command) => {
   const kase = await findCaseByIdUseCase(caseId);
 
   if (assignedUserId === null) {
-    await updateAssignedUser(
-      caseId,
-      null,
-      createTimelineEvent(
-        assignedUserId,
-        kase,
-        TimelineEvent.eventTypes.CASE_UNASSIGNED,
-      ),
-      createComment(notes),
-    );
+    unassignUser(command);
     return;
   }
 
@@ -61,17 +72,14 @@ export const assignUserToCaseUseCase = async (command) => {
       `User with id "${user.id}" does not have the required permissions to be assigned to this case.`,
     );
   }
+  const comment = createComment(notes);
 
   const timelineEvent = createTimelineEvent(
     user.id,
     kase,
-    TimelineEvent.eventTypes.CASE_ASSIGNED,
+    EventEnums.eventTypes.CASE_ASSIGNED,
+    comment?.ref,
   );
 
-  await updateAssignedUser(
-    caseId,
-    user.id,
-    timelineEvent,
-    createComment(notes),
-  );
+  await updateAssignedUser(caseId, user.id, timelineEvent, comment);
 };
