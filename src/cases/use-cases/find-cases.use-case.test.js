@@ -5,6 +5,7 @@ import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findAll } from "../repositories/case.repository.js";
+import { enrichCaseUseCase } from "./enrich-case.use-case.js";
 import {
   createUserRolesFilter,
   findCasesUseCase,
@@ -13,6 +14,7 @@ import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
+vi.mock("./enrich-case.use-case.js");
 vi.mock("./find-workflows.use-case.js");
 vi.mock("../../common/auth.js");
 
@@ -107,6 +109,9 @@ describe("findCasesUseCase", () => {
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
     getAuthenticatedUserRoles.mockReturnValue(userRolesObjects);
+    enrichCaseUseCase.mockImplementation((kase, workflow) =>
+      Promise.resolve({ ...kase, requiredRoles: workflow.requiredRoles }),
+    );
   });
 
   it("finds cases without assigned users", async () => {
@@ -123,7 +128,8 @@ describe("findCasesUseCase", () => {
 
     expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [] });
-    expect(result).toEqual(casesWithoutUsers);
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(2);
+    expect(result).toHaveLength(2);
   });
 
   it("finds cases with assigned users and populates user", async () => {
@@ -136,9 +142,20 @@ describe("findCasesUseCase", () => {
       Case.createMock({ assignedUser: { id: user2.id } }),
     ];
 
+    const enrichedCase1 = {
+      ...casesWithUsers[0],
+      assignedUser: { id: user1.id, name: user1.name },
+    };
+    const enrichedCase2 = {
+      ...casesWithUsers[1],
+      assignedUser: { id: user2.id, name: user2.name },
+    };
+
     findAll.mockResolvedValue(casesWithUsers);
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
 
     const result = await findCasesUseCase();
 
@@ -146,6 +163,7 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(2);
     expect(result[0].assignedUser.name).toBe(user1.name);
     expect(result[1].assignedUser.name).toBe(user2.name);
   });
@@ -162,9 +180,24 @@ describe("findCasesUseCase", () => {
       Case.createMock({ assignedUser: { id: user2.id } }),
     ];
 
+    const enrichedCase1 = { ...mixedCases[0], assignedUser: null };
+    const enrichedCase2 = {
+      ...mixedCases[1],
+      assignedUser: { id: user1.id, name: user1.name },
+    };
+    const enrichedCase3 = { ...mixedCases[2], assignedUser: null };
+    const enrichedCase4 = {
+      ...mixedCases[3],
+      assignedUser: { id: user2.id, name: user2.name },
+    };
+
     findAll.mockResolvedValue(mixedCases);
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase3);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase4);
 
     const result = await findCasesUseCase();
 
@@ -172,6 +205,7 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(4);
     expect(result[0].assignedUser).toBeNull();
     expect(result[1].assignedUser.name).toBe(user1.name);
     expect(result[2].assignedUser).toBeNull();
@@ -187,9 +221,20 @@ describe("findCasesUseCase", () => {
       Case.createMock({ assignedUser: { id: "user-missing" } }),
     ];
 
+    const enrichedCase1 = {
+      ...casesWithUsers[0],
+      assignedUser: { id: user1.id, name: user1.name },
+    };
+    const enrichedCase2 = {
+      ...casesWithUsers[1],
+      assignedUser: { id: "user-missing" },
+    };
+
     findAll.mockResolvedValue(casesWithUsers);
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
 
     const result = await findCasesUseCase();
 
@@ -197,6 +242,7 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, "user-missing"],
     });
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(2);
     expect(result[0].assignedUser.name).toBe(user1.name);
     expect(result[1].assignedUser.name).toBeUndefined();
   });
@@ -230,9 +276,20 @@ describe("findCasesUseCase", () => {
       Case.createMock({ workflowCode: "WORKFLOW_2", assignedUser: null }),
     ];
 
+    const enrichedCase1 = {
+      ...casesWithWorkflows[0],
+      requiredRoles: ["ROLE_1", "ROLE_2"],
+    };
+    const enrichedCase2 = {
+      ...casesWithWorkflows[1],
+      requiredRoles: ["ROLE_3"],
+    };
+
     findAll.mockResolvedValue(casesWithWorkflows);
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue(workflows);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
 
     const result = await findCasesUseCase();
 
@@ -240,6 +297,7 @@ describe("findCasesUseCase", () => {
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
       createUserRolesFilter(userRoles, { codes: ["WORKFLOW_1", "WORKFLOW_2"] }),
     );
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(2);
     expect(result[0].requiredRoles).toEqual(["ROLE_1", "ROLE_2"]);
     expect(result[1].requiredRoles).toEqual(["ROLE_3"]);
   });
@@ -263,9 +321,30 @@ describe("findCasesUseCase", () => {
       Case.createMock({ workflowCode: "EDITOR_WORKFLOW", assignedUser: null }),
     ];
 
+    const enrichedCase1 = {
+      ...casesWithDifferentWorkflows[0],
+      requiredRoles: ["PMF_OFFICER", "SUPERVISOR"],
+    };
+    const enrichedCase2 = {
+      ...casesWithDifferentWorkflows[1],
+      requiredRoles: ["ADMIN"],
+    };
+    const enrichedCase3 = {
+      ...casesWithDifferentWorkflows[2],
+      requiredRoles: ["USER", "VIEWER"],
+    };
+    const enrichedCase4 = {
+      ...casesWithDifferentWorkflows[3],
+      requiredRoles: ["PMF_OFFICER", "SUPERVISOR"],
+    };
+
     findAll.mockResolvedValue(casesWithDifferentWorkflows);
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue(workflows);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase3);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase4);
 
     const result = await findCasesUseCase();
 
@@ -280,6 +359,7 @@ describe("findCasesUseCase", () => {
         ],
       }),
     );
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(4);
     expect(result[0].requiredRoles).toEqual(["PMF_OFFICER", "SUPERVISOR"]);
     expect(result[1].requiredRoles).toEqual(["ADMIN"]);
     expect(result[2].requiredRoles).toEqual(["USER", "VIEWER"]);
@@ -327,9 +407,16 @@ describe("findCasesUseCase", () => {
       }),
     ];
 
+    const enrichedCase1 = { ...cases[0], requiredRoles: ["ROLE_1"] };
+    const enrichedCase2 = { ...cases[1], requiredRoles: ["ROLE_2"] };
+    const enrichedCase3 = { ...cases[2], requiredRoles: ["ROLE_1"] };
+
     findAll.mockResolvedValue(cases);
     findUsersUseCase.mockResolvedValue([user1, user2]);
     findWorkflowsUseCase.mockResolvedValue([workflow1, workflow2]);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase3);
 
     await findCasesUseCase();
 
@@ -341,6 +428,7 @@ describe("findCasesUseCase", () => {
         codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
       }),
     );
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(3);
   });
 
   it("throws when find user use cases fails", async () => {
@@ -416,9 +504,22 @@ describe("findCasesUseCase", () => {
       }),
     ];
 
+    const enrichedCase1 = {
+      ...cases[0],
+      assignedUser: { id: user1.id, name: user1.name },
+      requiredRoles: ["ADMIN", "REVIEWER"],
+    };
+    const enrichedCase2 = {
+      ...cases[1],
+      assignedUser: { id: user2.id, name: user2.name },
+      requiredRoles: ["USER"],
+    };
+
     findAll.mockResolvedValue(cases);
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue(workflows);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase1);
+    enrichCaseUseCase.mockResolvedValueOnce(enrichedCase2);
 
     const result = await findCasesUseCase();
 
@@ -431,6 +532,7 @@ describe("findCasesUseCase", () => {
         codes: ["COMPLEX_WORKFLOW", "SIMPLE_WORKFLOW"],
       }),
     );
+    expect(enrichCaseUseCase).toHaveBeenCalledTimes(2);
 
     // Verify both user and workflow enrichment
     expect(result[0].assignedUser.name).toBe("Alice Smith");

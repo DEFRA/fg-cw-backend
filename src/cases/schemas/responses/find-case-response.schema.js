@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { assignedUserSchema } from "../cases/assigned-user.schema.js";
+import { pagesSchema } from "../cases/pages/pages.schema.js";
 import { statusSchema } from "../cases/stages/tasks/status.schema.js";
 import { requiredRolesSchema } from "../requiredRoles.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
@@ -35,6 +36,7 @@ export const findCaseResponseSchema = Joi.object({
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
   requiredRoles: requiredRolesSchema.required(),
+  pages: pagesSchema.required(),
 })
   .options({
     presence: "required",

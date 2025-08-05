@@ -14,6 +14,7 @@ export class Case {
     this.stages = props.stages;
     this.timeline = props.timeline || [];
     this.requiredRoles = props.requiredRoles;
+    this.pages = props.pages;
   }
 
   static fromWorkflow(workflow, caseEvent) {
@@ -43,6 +44,7 @@ export class Case {
           },
         }),
       ],
+      pages: workflow.pages,
       requiredRoles: workflow.requiredRoles,
     });
   }
@@ -72,7 +74,17 @@ export class Case {
         },
         {
           id: "stage-2",
-          taskGroups: [],
+          taskGroups: [
+            {
+              id: "stage-2-tasks",
+              tasks: [
+                {
+                  id: "task-2",
+                  status: "pending",
+                },
+              ],
+            },
+          ],
         },
       ],
       timeline: [
@@ -94,6 +106,84 @@ export class Case {
       requiredRoles: {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
+      },
+      pages: {
+        details: {
+          banner: {
+            title: {
+              ref: "$.payload.businessName",
+              type: "string",
+            },
+            summary: {
+              reference: {
+                label: "Reference",
+                ref: "$.caseRef",
+                type: "string",
+              },
+              status: {
+                label: "Status",
+                ref: "$.status",
+                type: "string",
+              },
+              dateReceived: {
+                label: "Date Received",
+                ref: "$.dateReceived",
+                type: "date",
+              },
+            },
+          },
+          tabs: {
+            caseDetails: {
+              title: "Application",
+              sections: [
+                {
+                  title: "Applicant Details",
+                  type: "object",
+                  component: "list",
+                  fields: [
+                    {
+                      ref: "$.payload.answers.isPigFarmer",
+                      type: "boolean",
+                      label: "Are you a pig farmer?",
+                    },
+                  ],
+                },
+                {
+                  title: "Pig Stock Details",
+                  type: "object",
+                  component: "list",
+                  fields: [
+                    {
+                      ref: "$.payload.answers.totalPigs",
+                      type: "number",
+                      label: "Total Pigs",
+                    },
+                    {
+                      ref: "$.payload.answers.whitePigsCount",
+                      type: "number",
+                      label: "How many White pigs do you have?",
+                    },
+                    {
+                      ref: "$.payload.answers.britishLandracePigsCount",
+                      type: "number",
+                      label: "How many British Landrace pigs do you have?",
+                    },
+                    {
+                      ref: "$.payload.answers.berkshirePigsCount",
+                      type: "number",
+                      label: "How many Berkshire pigs do you have?",
+                    },
+                    {
+                      ref: "$.payload.answers.otherPigsCount",
+                      type: "number",
+                      label: "How many Other pigs do you have?",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
       },
       ...props,
     });

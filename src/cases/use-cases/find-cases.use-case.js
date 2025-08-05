@@ -1,6 +1,7 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
+import { enrichCaseUseCase } from "./enrich-case.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
@@ -54,24 +55,30 @@ export const findCasesUseCase = async () => {
     findWorkflowsUseCase(workflowFilter),
   ]);
 
-  // Remove any cases that the user does not have access to
-  const casesFiltered = cases.reduce((acc, kase) => {
+  // Remove any cases that the user does not have access to and enrich them concurrently
+  const casePromises = cases.map(async (kase) => {
     const workflow = workflows.find((w) => w.code === kase.workflowCode);
 
-    // We only add cases if there's a workflow that was filtered above.
     if (workflow) {
       kase.requiredRoles = workflow.requiredRoles;
 
-      // Only then do we look up the assigned user.
       const assignedUser = users.find((u) => u.id === kase.assignedUser?.id);
 
       if (assignedUser) {
         kase.assignedUser.name = assignedUser.name;
       }
-      acc.push(kase);
+
+      const enrichedCase = await enrichCaseUseCase(kase, workflow);
+      return enrichedCase;
     }
-    return acc;
-  }, []);
+
+    return null; // Return null for cases without matching workflows
+  });
+
+  const enrichedCases = await Promise.all(casePromises);
+
+  // Filter out null values (cases without matching workflows)
+  const casesFiltered = enrichedCases.filter(Boolean);
 
   return casesFiltered;
 };
