@@ -57,6 +57,7 @@ export class CaseDocument {
           },
         },
       ],
+      comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "User Name",

@@ -1,5 +1,9 @@
 import { ObjectId } from "mongodb";
-import { assertIsComment, assertIsCommentsArray } from "./comment.js";
+import {
+  assertIsComment,
+  assertIsCommentsArray,
+  toComment,
+} from "./comment.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
@@ -62,7 +66,7 @@ export class Case {
           })),
         })),
       })),
-      notes: caseEvent.notes.map((note) => new Note(note)) || [],
+      comments: caseEvent.comments?.map(toComment) || [],
       timeline: [
         new TimelineEvent({
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
@@ -105,7 +109,7 @@ export class Case {
         },
       ],
       timeline: [
-        {
+        TimelineEvent.createMock({
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -114,8 +118,9 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        },
+        }),
       ],
+      comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "Test Name",

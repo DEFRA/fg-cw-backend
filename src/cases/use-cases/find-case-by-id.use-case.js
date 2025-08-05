@@ -25,7 +25,7 @@ export const findCaseByIdUseCase = async (caseId) => {
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
   kase.requiredRoles = workflow.requiredRoles;
 
-  kase.notes = kase.comments.map((comment) => ({
+  kase.comments = kase.comments.map((comment) => ({
     ...comment,
     title: comment.title,
     createdBy: userMap.get(comment.createdBy).name,
