@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
+import { Comment } from "../models/comment.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
@@ -13,6 +15,7 @@ vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("node:crypto");
 
 describe("assignUserToCaseUseCase", () => {
   beforeEach(() => {
@@ -26,6 +29,8 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
 
+    randomUUID.mockReturnValue("BNHYYSYUSY4455-0099-DSDDSD");
+
     const mockUser = User.createMock({
       appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
     });
@@ -37,6 +42,7 @@ describe("assignUserToCaseUseCase", () => {
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: mockUser.id,
+      notes: "This is a test comment",
     });
 
     expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
@@ -54,10 +60,16 @@ describe("assignUserToCaseUseCase", () => {
       },
     });
 
+    const comment = new Comment(
+      TimelineEvent.eventTypes.CASE_ASSIGNED,
+      "This is a test comment",
+    );
+
     expect(updateAssignedUser).toHaveBeenCalledWith(
       mockCase._id,
       mockUser.id,
       timelineEvent,
+      comment,
     );
   });
 
@@ -161,6 +173,7 @@ describe("assignUserToCaseUseCase", () => {
       mockCase._id,
       mockUser.id,
       timelineEvent,
+      null,
     );
   });
 
@@ -214,6 +227,7 @@ describe("assignUserToCaseUseCase", () => {
       mockCase._id,
       null,
       timelineEvent,
+      null,
     );
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();

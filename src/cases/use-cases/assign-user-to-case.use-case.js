@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
+import { Comment } from "../models/comment.js";
 import { Permissions } from "../models/permissions.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { updateAssignedUser } from "../repositories/case.repository.js";
@@ -17,8 +18,19 @@ const createTimelineEvent = (userId, kase, type) => {
   });
 };
 
+const createComment = (text) => {
+  if (text) {
+    return new Comment(
+      TimelineEvent.eventTypes.CASE_ASSIGNED, // TODO extract eventTypes
+      text,
+    );
+  } else {
+    return null;
+  }
+};
+
 export const assignUserToCaseUseCase = async (command) => {
-  const { assignedUserId, caseId } = command;
+  const { assignedUserId, caseId, notes } = command;
 
   const kase = await findCaseByIdUseCase(caseId);
 
@@ -31,6 +43,7 @@ export const assignUserToCaseUseCase = async (command) => {
         kase,
         TimelineEvent.eventTypes.CASE_UNASSIGNED,
       ),
+      createComment(notes),
     );
     return;
   }
@@ -55,5 +68,10 @@ export const assignUserToCaseUseCase = async (command) => {
     TimelineEvent.eventTypes.CASE_ASSIGNED,
   );
 
-  await updateAssignedUser(caseId, user.id, timelineEvent);
+  await updateAssignedUser(
+    caseId,
+    user.id,
+    timelineEvent,
+    createComment(notes),
+  );
 };

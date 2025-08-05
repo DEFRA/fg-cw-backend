@@ -21,6 +21,7 @@ export class TimelineEvent {
     });
   }
 
+  // TODO extract these static enums - they can be used for comments
   static eventTypes = {
     CASE_CREATED: "CASE_CREATED",
     CASE_ASSIGNED: "CASE_ASSIGNED",
