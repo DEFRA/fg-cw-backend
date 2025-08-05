@@ -211,4 +211,46 @@ export const caseData3Document = {
     },
   ],
   assignedUserId: null,
+  pages: {
+    cases: {
+      details: {
+        banner: {
+          title: {
+            ref: "$.payload.businessName",
+            type: "string",
+          },
+          summary: {
+            clientReference: {
+              label: "Client Reference",
+              ref: "$.payload.clientRef",
+              type: "string",
+            },
+          },
+        },
+        tabs: {
+          caseDetails: {
+            title: "Application",
+            sections: [
+              {
+                title: "Details",
+                type: "object",
+                component: "list",
+                fields: [
+                  {
+                    ref: "$.payload.answers.scheme",
+                    type: "string",
+                    label: "Scheme",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };

@@ -61,6 +61,10 @@ const addStages = (kase, workflow) => {
   const processStage = (stage, workflowInfo) => {
     const workflowStage = workflowInfo.stages.find((ws) => ws.id === stage.id);
 
+    if (!workflowStage) {
+      return stage;
+    }
+
     return {
       ...stage,
       title: workflowStage.title,
@@ -76,6 +80,10 @@ const addStages = (kase, workflow) => {
       (wtg) => wtg.id === taskGroup.id,
     );
 
+    if (!wfTaskGroup) {
+      return taskGroup;
+    }
+
     return {
       ...taskGroup,
       title: wfTaskGroup.title,
@@ -85,6 +93,10 @@ const addStages = (kase, workflow) => {
 
   const processTask = (task, wfTaskGroup) => {
     const workflowTask = wfTaskGroup.tasks.find((wt) => wt.id === task.id);
+
+    if (!workflowTask) {
+      return task;
+    }
 
     return {
       ...task,

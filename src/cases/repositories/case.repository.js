@@ -23,6 +23,8 @@ const toCase = (doc) =>
           id: doc.assignedUserId,
         }
       : null,
+    requiredRoles: doc.requiredRoles,
+    pages: doc.pages,
   });
 
 export const save = async (kase) => {
