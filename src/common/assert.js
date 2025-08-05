@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 
 export const assertIsArrayOfInstances = (value, Class, name = "object") => {
   if (!Array.isArray(value)) {
-    throw Boom.badRequest(`Expected an array of ${name}s`);
+    throw Boom.badRequest(`Expected an array of ${name}`);
   }
 
   value.forEach((item, index) => {
