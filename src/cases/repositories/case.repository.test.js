@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
+import { Comment } from "../models/comment.js";
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
@@ -310,7 +312,14 @@ describe("updateAssignedUser", () => {
 
     const timelineEvent = TimelineEvent.createMock();
 
-    await updateAssignedUser(caseId, assignedUserId, timelineEvent);
+    const comment = Comment.createMock({
+      type: EventEnums.eventTypes.CASE_ASSIGNED,
+      text: "This is a comment",
+      ref: "1234-BNBNN",
+      createdAt: "2025-08-05T14:45:41.307Z",
+    });
+
+    await updateAssignedUser(caseId, assignedUserId, timelineEvent, comment);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
@@ -320,6 +329,17 @@ describe("updateAssignedUser", () => {
         $push: {
           timeline: {
             $each: [timelineEvent],
+            $position: 0,
+          },
+          comments: {
+            $each: [
+              {
+                createdAt: "2025-08-05T14:45:41.307Z",
+                ref: "1234-BNBNN",
+                text: "This is a comment",
+                type: "CASE_ASSIGNED",
+              },
+            ],
             $position: 0,
           },
         },
