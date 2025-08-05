@@ -2,22 +2,18 @@ import Boom from "@hapi/boom";
 
 export class UserRole {
   constructor(props) {
-    this.roleName = props.roleName;
     this.startDate = props.startDate;
     this.endDate = props.endDate;
 
     if (this.startDate && this.endDate) {
-      this.validateRole();
+      this.validateRole(props.name);
     }
   }
 
-  validateRole() {
-    const startDateObj = new Date(this.startDate);
-    const endDateObj = new Date(this.endDate);
-
-    if (endDateObj <= startDateObj) {
+  validateRole(name) {
+    if (this.endDate <= this.startDate) {
       throw Boom.badRequest(
-        `endDate must be greater than startDate for role ${this.roleName}. startDate: ${this.startDate}, endDate: ${this.endDate}`,
+        `endDate must be greater than startDate for role ${name}.`,
       );
     }
   }

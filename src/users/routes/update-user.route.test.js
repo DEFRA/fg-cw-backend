@@ -1,5 +1,6 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { appRoles } from "../../../test/helpers/appRoles.js";
 import { User } from "../models/user.js";
 import { updateUserRequestSchema } from "../schemas/requests/update-user-request.schema.js";
 import { updateUserUseCase } from "../use-cases/update-user.use-case.js";
@@ -32,7 +33,7 @@ describe("updateUserRoute", () => {
         name: "John",
         idpRoles: ["admin"],
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_RPA_CASES_APPROVE: {
             startDate: "2025-07-01",
             endDate: "2025-08-02",
           },
@@ -49,12 +50,7 @@ describe("updateUserRoute", () => {
       props: {
         name: "John",
         idpRoles: ["admin"],
-        appRoles: {
-          ROLE_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
+        appRoles,
       },
     });
   });

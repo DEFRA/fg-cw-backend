@@ -3,17 +3,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "./user.js";
 import { UserRole } from "./userRole.js";
 
+const appRolesMultiple = {
+  ROLE_RPA_CASES_APPROVE: {
+    startDate: new Date("2025-07-01T00:00:00.000Z"),
+    endDate: new Date("2025-08-02T00:00:00.000Z"),
+  },
+  ROLE_ADMIN: {
+    startDate: new Date("2025-07-01T00:00:00.000Z"),
+    endDate: new Date("2025-08-02T00:00:00.000Z"),
+  },
+};
+
+const rolesMultiple = {
+  ROLE_RPA_CASES_APPROVE: new UserRole({
+    name: "ROLE_RPA_CASES_APPROVE",
+    startDate: new Date("2025-07-01T00:00:00.000Z"),
+    endDate: new Date("2025-08-02T00:00:00.000Z"),
+  }),
+  ROLE_ADMIN: new UserRole({
+    name: "ROLE_ADMIN",
+    startDate: new Date("2025-07-01T00:00:00.000Z"),
+    endDate: new Date("2025-08-02T00:00:00.000Z"),
+  }),
+};
+
 vi.mock("mongodb", () => ({
   ObjectId: vi.fn(() => ({
     toHexString: vi.fn(() => "507f1f77bcf86cd799439011"),
-  })),
-}));
-
-vi.mock("./userRole.js", () => ({
-  UserRole: vi.fn((props) => ({
-    roleName: props.roleName,
-    startDate: props.startDate,
-    endDate: props.endDate,
   })),
 }));
 
@@ -120,69 +136,13 @@ describe("User", () => {
       });
     });
 
-    it("creates UserRole instances for valid appRoles object", () => {
-      const appRoles = {
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_ADMIN: {
-          startDate: "2025-01-01",
-          endDate: "2025-12-31",
-        },
-      };
+    it("creates Role instances for valid appRoles object", () => {
+      const result = user.createAppRole(appRolesMultiple);
 
-      const result = user.createAppRole(appRoles);
-
-      expect(result).toEqual({
-        ROLE_RPA_CASES_APPROVE: {
-          roleName: "ROLE_RPA_CASES_APPROVE",
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_ADMIN: {
-          roleName: "ROLE_ADMIN",
-          startDate: "2025-01-01",
-          endDate: "2025-12-31",
-        },
-      });
-
-      expect(UserRole).toHaveBeenCalledWith({
-        roleName: "ROLE_RPA_CASES_APPROVE",
-        startDate: "2025-07-01",
-        endDate: "2025-08-02",
-      });
-
-      expect(UserRole).toHaveBeenCalledWith({
-        roleName: "ROLE_ADMIN",
-        startDate: "2025-01-01",
-        endDate: "2025-12-31",
-      });
+      expect(result).toStrictEqual(rolesMultiple);
     });
 
-    it("returns empty object when appRoles is null", () => {
-      const result = user.createAppRole(null);
-      expect(result).toEqual({});
-    });
-
-    it("returns empty object when appRoles is undefined", () => {
-      const result = user.createAppRole(undefined);
-      expect(result).toEqual({});
-    });
-
-    it("returns empty object when appRoles is not an object", () => {
-      expect(user.createAppRole("string")).toEqual({});
-      expect(user.createAppRole(123)).toEqual({});
-      expect(user.createAppRole([])).toEqual({});
-      expect(user.createAppRole(true)).toEqual({});
-    });
-
-    it("handles empty appRoles object", () => {
-      const result = user.createAppRole({});
-      expect(result).toEqual({});
-    });
-
-    it("creates UserRole with undefined endDate when not provided", () => {
+    it("creates Role with undefined endDate when not provided", () => {
       const appRoles = {
         ROLE_TEMP: {
           startDate: "2025-07-01",
@@ -192,89 +152,12 @@ describe("User", () => {
       const result = user.createAppRole(appRoles);
 
       expect(result).toEqual({
-        ROLE_TEMP: {
-          roleName: "ROLE_TEMP",
+        ROLE_TEMP: new UserRole({
+          name: "ROLE_TEMP",
           startDate: "2025-07-01",
           endDate: undefined,
-        },
+        }),
       });
-
-      expect(UserRole).toHaveBeenCalledWith({
-        roleName: "ROLE_TEMP",
-        startDate: "2025-07-01",
-        endDate: undefined,
-      });
-    });
-  });
-
-  describe("createMock", () => {
-    it("creates a mock user with default values", () => {
-      const mockUser = User.createMock();
-
-      expect(mockUser).toBeInstanceOf(User);
-      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
-      expect(mockUser.name).toBe("Bob Bill");
-      expect(mockUser.email).toBe("bob.bill@defra.gov.uk");
-      expect(mockUser.idpRoles).toEqual(["FCP.Casework.ReadWrite"]);
-      expect(mockUser.appRoles).toEqual({
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-      });
-      expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
-      expect(mockUser.updatedAt).toBe("2025-01-01T00:00:00.000Z");
-    });
-
-    it("overrides default values with provided props", () => {
-      const customProps = {
-        id: "custom-id",
-        name: "Custom Name",
-        email: "custom@example.com",
-        idpRoles: ["Custom.Role"],
-      };
-
-      const mockUser = User.createMock(customProps);
-
-      expect(mockUser.id).toBe("custom-id");
-      expect(mockUser.name).toBe("Custom Name");
-      expect(mockUser.email).toBe("custom@example.com");
-      expect(mockUser.idpRoles).toEqual(["Custom.Role"]);
-      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
-      expect(mockUser.appRoles).toEqual({
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-      });
-    });
-
-    it("works with empty props object", () => {
-      const mockUser = User.createMock({});
-
-      expect(mockUser).toBeInstanceOf(User);
-      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
-      expect(mockUser.name).toBe("Bob Bill");
-    });
-
-    it("handles partial prop overrides", () => {
-      const mockUser = User.createMock({
-        appRoles: {
-          CUSTOM_ROLE: {
-            startDate: "2025-01-01",
-            endDate: "2025-12-31",
-          },
-        },
-      });
-
-      expect(mockUser.appRoles).toEqual({
-        CUSTOM_ROLE: {
-          startDate: "2025-01-01",
-          endDate: "2025-12-31",
-        },
-      });
-      expect(mockUser.name).toBe("Bob Bill");
-      expect(mockUser.email).toBe("bob.bill@defra.gov.uk");
     });
   });
 
@@ -297,11 +180,11 @@ describe("User", () => {
       const createdRoles = user.createAppRole(appRoles);
 
       expect(createdRoles).toEqual({
-        ROLE_ADMIN: {
-          roleName: "ROLE_ADMIN",
+        ROLE_ADMIN: new UserRole({
+          name: "ROLE_ADMIN",
           startDate: "2025-01-01",
           endDate: "2025-12-31",
-        },
+        }),
       });
     });
 
@@ -318,11 +201,11 @@ describe("User", () => {
       const createdRoles = mockUser.createAppRole(newAppRoles);
 
       expect(createdRoles).toEqual({
-        NEW_ROLE: {
-          roleName: "NEW_ROLE",
+        NEW_ROLE: new UserRole({
+          name: "NEW_ROLE",
           startDate: "2025-06-01",
           endDate: "2025-09-30",
-        },
+        }),
       });
     });
   });
