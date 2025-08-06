@@ -57,6 +57,7 @@ describe("cases", () => {
       { method: "get", path: "/workflows/{code}" },
       { method: "post", path: "/workflows" },
       { method: "post", path: "/cases/{caseId}/stage" },
+      { method: "post", path: "/cases/{caseId}/notes" },
       { method: "patch", path: "/cases/{caseId}/assigned-user" },
       {
         method: "patch",

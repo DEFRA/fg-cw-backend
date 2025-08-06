@@ -116,7 +116,9 @@ describe("Cases", () => {
           {
             ...caseData2.timeline[0],
             createdBy: {
+              id: "System",
               name: "System",
+              email: "system@example.com",
             },
           },
         ],

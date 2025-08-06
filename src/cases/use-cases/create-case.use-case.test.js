@@ -86,6 +86,7 @@ describe("createCaseUseCase", () => {
             },
           },
         ],
+        comments: [],
         assignedUser: null,
       }),
     );

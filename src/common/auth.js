@@ -7,3 +7,12 @@ export const getAuthenticatedUserRoles = () => ({
   ROLE_2: {},
   ROLE_3: {},
 });
+
+export const getAuthenticatedUser = () => {
+  // TODO: This user should be coming from the JWT token
+  return {
+    id: "System",
+    name: "System",
+    email: "system@example.com",
+  };
+};

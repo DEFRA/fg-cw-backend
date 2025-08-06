@@ -64,6 +64,7 @@ export const caseData1 = {
       eventType: "CASE_CREATED",
     },
   ],
+  comments: [],
   assignedUser: null,
   requiredRoles: {
     allOf: ["ROLE_1", "ROLE_2"],
@@ -137,6 +138,7 @@ export const caseData2 = {
       eventType: "CASE_CREATED",
     },
   ],
+  comments: [],
   assignedUser: null,
   requiredRoles: {
     allOf: ["ROLE_1", "ROLE_2"],
@@ -210,5 +212,6 @@ export const caseData3Document = {
       eventType: "CASE_CREATED",
     },
   ],
+  comments: [],
   assignedUserId: null,
 };

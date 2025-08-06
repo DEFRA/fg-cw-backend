@@ -4,6 +4,7 @@ import { db, mongoClient } from "../common/mongo-client.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
+import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { changeCaseStageRoute } from "./routes/change-case-stage.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
@@ -33,6 +34,7 @@ export const cases = {
       findCaseByIdRoute,
       changeCaseStageRoute,
       assignUserToCaseRoute,
+      addNoteToCaseRoute,
       createWorkflowRoute,
       findWorkflowsRoute,
       findWorkflowByCodeRoute,
