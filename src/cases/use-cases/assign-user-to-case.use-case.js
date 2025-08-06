@@ -4,7 +4,7 @@ import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Permissions } from "../models/permissions.js";
 import { TimelineEvent } from "../models/timeline-event.js";
-import { updateAssignedUser } from "../repositories/case.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -20,34 +20,35 @@ const createTimelineEvent = (userId, kase, type, commentRef = null) => {
   });
 };
 
-const createComment = (text) => {
+const createComment = (
+  kase,
+  text,
+  type = EventEnums.eventTypes.CASE_ASSIGNED,
+) => {
   if (text) {
-    return new Comment({
-      type: EventEnums.eventTypes.CASE_ASSIGNED,
-      createdBy: "System",
-      text,
-    });
+    return kase.addComment(
+      new Comment({
+        type,
+        createdBy: "System",
+        text,
+      }),
+    );
   } else {
     return null;
   }
 };
 
 const unassignUser = async (command) => {
+  const type = EventEnums.eventTypes.CASE_UNASSIGNED;
   const { caseId, notes } = command;
   const kase = await findCaseByIdUseCase(caseId);
-  const comment = createComment(notes);
 
-  await updateAssignedUser(
-    caseId,
-    null,
-    createTimelineEvent(
-      null,
-      kase,
-      EventEnums.eventTypes.CASE_UNASSIGNED,
-      comment?.ref,
-    ),
-    comment,
-  );
+  kase.setAssignedUserId(null);
+
+  const comment = createComment(kase, notes, type);
+  const timelineEvent = createTimelineEvent(null, kase, type, comment?.ref);
+  kase.addTimelineEvent(timelineEvent);
+  await update(kase);
 };
 
 export const assignUserToCaseUseCase = async (command) => {
@@ -56,8 +57,7 @@ export const assignUserToCaseUseCase = async (command) => {
   const kase = await findCaseByIdUseCase(caseId);
 
   if (assignedUserId === null) {
-    unassignUser(command);
-    return;
+    return unassignUser(command);
   }
 
   const [user, workflow] = await Promise.all([
@@ -73,14 +73,19 @@ export const assignUserToCaseUseCase = async (command) => {
       `User with id "${user.id}" does not have the required permissions to be assigned to this case.`,
     );
   }
-  const comment = createComment(notes);
+
+  kase.setAssignedUserId(assignedUserId);
+
+  const comment = createComment(kase, notes);
 
   const timelineEvent = createTimelineEvent(
-    user.id,
+    assignedUserId,
     kase,
     EventEnums.eventTypes.CASE_ASSIGNED,
     comment?.ref,
   );
 
-  await updateAssignedUser(caseId, user.id, timelineEvent, comment);
+  kase.addTimelineEvent(timelineEvent);
+
+  await update(kase);
 };

@@ -1,3 +1,4 @@
+import { assertInstanceOf } from "../../common/assert.js";
 import { EventEnums } from "./event-enums.js";
 
 export class TimelineEvent {
@@ -42,4 +43,8 @@ export const toTimelineEvents = (props) => {
 
 export const toTimelineEvent = (props) => {
   return new TimelineEvent(props);
+};
+
+export const assertIsTimelineEvent = (obj) => {
+  return assertInstanceOf(obj, TimelineEvent, "TimelineEvent");
 };

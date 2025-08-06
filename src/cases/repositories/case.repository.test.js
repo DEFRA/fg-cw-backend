@@ -4,15 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
-import { Comment } from "../models/comment.js";
-import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
   findById,
   save,
   update,
-  updateAssignedUser,
   updateStage,
   updateTaskStatus,
 } from "./case.repository.js";
@@ -353,78 +350,6 @@ describe("updateTaskStatus", () => {
       Boom.notFound(
         'Task with caseId "6800c9feb76f8f854ebf901a", stageId "stage-1", taskGroupId "task-group-1" and taskId "task-1" not found',
       ),
-    );
-  });
-});
-
-describe("updateAssignedUser", () => {
-  it("updates the assigned user of a case", async () => {
-    const caseId = "6800c9feb76f8f854ebf901a";
-    const assignedUserId = "673c8c2eb76f8f854ebf912b";
-
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 1,
-    });
-
-    db.collection.mockReturnValue({
-      updateOne,
-    });
-
-    const timelineEvent = TimelineEvent.createMock();
-
-    const commentId = new ObjectId().toHexString();
-    const comment = Comment.createMock({
-      type: EventEnums.eventTypes.CASE_ASSIGNED,
-      text: "This is a comment",
-      ref: commentId,
-      createdAt: "2025-08-05T14:45:41.307Z",
-      createdBy: "Julian",
-    });
-
-    await updateAssignedUser(caseId, assignedUserId, timelineEvent, comment);
-
-    expect(db.collection).toHaveBeenCalledWith("cases");
-
-    expect(updateOne).toHaveBeenCalledWith(
-      { _id: ObjectId.createFromHexString(caseId) },
-      {
-        $push: {
-          timeline: {
-            $each: [timelineEvent],
-            $position: 0,
-          },
-          comments: {
-            $each: [
-              {
-                createdAt: "2025-08-05T14:45:41.307Z",
-                ref: commentId,
-                createdBy: "Julian",
-                text: "This is a comment",
-                type: "CASE_ASSIGNED",
-              },
-            ],
-            $position: 0,
-          },
-        },
-        $set: { assignedUserId },
-      },
-    );
-  });
-
-  it("throws Boom.notFound when case is not found", async () => {
-    const caseId = "6800c9feb76f8f854ebf901a";
-    const assignedUser = "673c8c2eb76f8f854ebf912b";
-
-    db.collection.mockReturnValue({
-      updateOne: vi.fn().mockResolvedValue({
-        acknowledged: true,
-        matchedCount: 0,
-      }),
-    });
-
-    await expect(updateAssignedUser(caseId, assignedUser)).rejects.toThrow(
-      Boom.notFound(`Case with id "${caseId}" not found`),
     );
   });
 });

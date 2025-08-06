@@ -5,7 +5,7 @@ import {
   toComment,
 } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { TimelineEvent } from "./timeline-event.js";
+import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
@@ -27,10 +27,22 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
+  setAssignedUserId(userId) {
+    this.assignedUserId = userId;
+    this.assignedUser = userId ? { id: userId } : null;
+    return this;
+  }
+
   addComment(comment) {
     assertIsComment(comment);
-    this.comments.push(comment);
+    this.comments.unshift(comment);
     return comment;
+  }
+
+  addTimelineEvent(timelineEvent) {
+    assertIsTimelineEvent(timelineEvent);
+    this.timeline.unshift(timelineEvent);
+    return timelineEvent;
   }
 
   getUserIds() {

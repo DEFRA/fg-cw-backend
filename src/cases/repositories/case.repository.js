@@ -151,38 +151,3 @@ export const updateTaskStatus = async ({
     );
   }
 };
-
-export const updateAssignedUser = async (
-  caseId,
-  assignedUserId,
-  timelineEvent,
-  comment,
-) => {
-  const $push = {
-    timeline: {
-      $each: [timelineEvent],
-      $position: 0,
-    },
-  };
-
-  if (comment) {
-    $push.comments = {
-      $each: [comment],
-      $position: 0,
-    };
-  }
-
-  const result = await db.collection(collection).updateOne(
-    { _id: ObjectId.createFromHexString(caseId) },
-    {
-      $set: {
-        assignedUserId,
-      },
-      $push,
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
-};

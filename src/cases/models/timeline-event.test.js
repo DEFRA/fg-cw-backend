@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EventEnums } from "./event-enums.js";
-import { TimelineEvent } from "./timeline-event.js";
+import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
 
 describe("TimelineEvent", () => {
   describe("getUserIds", () => {
@@ -109,6 +109,33 @@ describe("TimelineEvent", () => {
       const userIds = timelineEvent.getUserIds();
 
       expect(userIds).toEqual(["user-123"]);
+    });
+  });
+
+  describe("assertIsTimelineEvent", () => {
+    it("should validate object is timeline event", () => {
+      const valid = TimelineEvent.createMock();
+      const result = assertIsTimelineEvent(valid);
+      expect(result).toBe(valid);
+    });
+
+    it("should throw bad request if when not a TimelineEvent", () => {
+      const invalid = [
+        {
+          createdAt: new Date().toISOString(),
+          eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+          data: {},
+        },
+        {},
+        null,
+        undefined,
+      ];
+
+      invalid.forEach((i) => {
+        expect(() => assertIsTimelineEvent(i)).toThrow(
+          "Must provide a valid TimelineEvent object",
+        );
+      });
     });
   });
 });

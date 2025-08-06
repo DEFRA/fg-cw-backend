@@ -149,6 +149,7 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
     // Verify user is assigned
     const findCaseAfterAssignResponse = await findCaseById(kase._id);
+
     expect(findCaseAfterAssignResponse.assignedUser.id).toEqual(
       createUserResponse.payload.id,
     );
