@@ -48,7 +48,7 @@ const unassignUser = async (command) => {
   const comment = createComment(kase, notes, type);
   const timelineEvent = createTimelineEvent(null, kase, type, comment?.ref);
   kase.addTimelineEvent(timelineEvent);
-  await update(kase);
+  return update(kase);
 };
 
 export const assignUserToCaseUseCase = async (command) => {
@@ -87,5 +87,5 @@ export const assignUserToCaseUseCase = async (command) => {
 
   kase.addTimelineEvent(timelineEvent);
 
-  await update(kase);
+  return update(kase);
 };
