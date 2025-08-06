@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
-import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
-import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
+import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
@@ -9,9 +8,8 @@ import { findById } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
-vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
 describe("findCaseByIdUseCase", () => {
@@ -20,7 +18,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findById.mockResolvedValue(kase);
 
@@ -53,26 +51,32 @@ describe("findCaseByIdUseCase", () => {
       id: "64c88faac1f56f71e1b89a33",
     });
 
-    mockCase.timeline.unshift({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      createdAt: "2025-01-01T00:00:00.000Z",
-      description: "Case assigned",
-      createdBy: "64c88faac1f56f71e1b89a44",
-      data: {
-        assignedTo: "64c88faac1f56f71e1b89a33",
-      },
-    });
+    mockCase.timeline.unshift(
+      TimelineEvent.createMock({
+        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        description: "Case assigned",
+        createdBy: "64c88faac1f56f71e1b89a44",
+        data: {
+          assignedTo: "64c88faac1f56f71e1b89a33",
+        },
+      }),
+    );
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
-    findUsersUseCase.mockResolvedValueOnce([mockUserAssigned]);
-    findUsersUseCase.mockResolvedValueOnce([mockUserAssigned]);
+    findAll.mockResolvedValue([mockUser, mockUserAssigned]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
+    expect(findAll).toHaveBeenCalledWith({
+      ids: [
+        mockUser.id,
+        "64c88faac1f56f71e1b89a44",
+        "64c88faac1f56f71e1b89a33",
+      ],
+    });
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
@@ -88,14 +92,14 @@ describe("findCaseByIdUseCase", () => {
     const userError = new Error("User not found");
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockRejectedValue(userError);
+    findAll.mockRejectedValue(userError);
 
     await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
       "User not found",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockCase.assignedUser.id);
+    expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
   });
 
   it("finds workflow by code and assigns requiredRoles to case", async () => {
@@ -108,7 +112,7 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
@@ -130,13 +134,13 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
+    expect(findAll).toHaveBeenCalledWith({ ids: [mockUser.id] });
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("USER_WORKFLOW");
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(["USER_ROLE"]);
@@ -151,7 +155,7 @@ describe("findCaseByIdUseCase", () => {
     const workflowError = new Error("Workflow not found");
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
 
     await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
@@ -170,7 +174,7 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);

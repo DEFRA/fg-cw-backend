@@ -9,6 +9,7 @@ import {
   findAll,
   findById,
   save,
+  update,
   updateAssignedUser,
   updateStage,
   updateTaskStatus,
@@ -85,6 +86,66 @@ describe("save", () => {
       Boom.internal(
         'Case with caseRef "case-ref" and workflowCode "workflow-code" could not be created, the operation was not acknowledged',
       ),
+    );
+  });
+});
+
+describe("update", () => {
+  it("updates a case and returns it", async () => {
+    const replaceOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      replaceOne,
+    });
+
+    const caseMock = Case.createMock();
+
+    const result = await update(caseMock);
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+
+    expect(replaceOne).toHaveBeenCalledWith(
+      { _id: caseMock.objectId },
+      new CaseDocument(caseMock),
+    );
+
+    expect(result).toBe(caseMock);
+  });
+
+  it("throws bad request when case is not found", async () => {
+    const replaceOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 0,
+    });
+
+    db.collection.mockReturnValue({
+      replaceOne,
+    });
+
+    const caseMock = Case.createMock();
+
+    await expect(update(caseMock)).rejects.toThrow(
+      `Case with id "${caseMock._id}" not found`,
+    );
+  });
+
+  it("throws bad request when write is unacknowledged", async () => {
+    const replaceOne = vi.fn().mockResolvedValue({
+      acknowledged: false,
+      matchedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      replaceOne,
+    });
+
+    const caseMock = Case.createMock();
+
+    await expect(update(caseMock)).rejects.toThrow(
+      `Case with caseRef "${caseMock.caseRef}" could not be updated, the operation was not acknowledged`,
     );
   });
 });

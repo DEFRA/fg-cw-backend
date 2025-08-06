@@ -1,4 +1,9 @@
 import { ObjectId } from "mongodb";
+import {
+  assertIsComment,
+  assertIsCommentsArray,
+  toComment,
+} from "./comment.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 export class Case {
@@ -12,8 +17,35 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
+    this.comments = assertIsCommentsArray(props.comments);
     this.timeline = props.timeline || [];
     this.requiredRoles = props.requiredRoles;
+  }
+
+  get objectId() {
+    return ObjectId.createFromHexString(this._id);
+  }
+
+  addComment(comment) {
+    assertIsComment(comment);
+    this.comments.push(comment);
+    return comment;
+  }
+
+  getUserIds() {
+    const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
+
+    const timelineUserIds = this.timeline.flatMap((event) =>
+      event.getUserIds(),
+    );
+
+    const commentUserIds = this.comments.flatMap((comment) =>
+      comment.getUserIds(),
+    );
+
+    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
+
+    return [...new Set(allUserIds)];
   }
 
   static fromWorkflow(workflow, caseEvent) {
@@ -34,6 +66,7 @@ export class Case {
           })),
         })),
       })),
+      comments: caseEvent.comments?.map(toComment) || [],
       timeline: [
         new TimelineEvent({
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
@@ -76,7 +109,7 @@ export class Case {
         },
       ],
       timeline: [
-        {
+        TimelineEvent.createMock({
           eventType: TimelineEvent.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -85,8 +118,9 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        },
+        }),
       ],
+      comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "Test Name",

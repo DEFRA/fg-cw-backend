@@ -3,6 +3,8 @@ import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
+import { toComments } from "../models/comment.js";
+import { toTimelineEvents } from "../models/timeline-event.js";
 
 const collection = "cases";
 
@@ -17,7 +19,8 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
-    timeline: doc.timeline,
+    comments: toComments(doc.comments),
+    timeline: toTimelineEvents(doc.timeline),
     assignedUser: doc.assignedUserId
       ? {
           id: doc.assignedUserId,
@@ -46,6 +49,26 @@ export const save = async (kase) => {
       `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" could not be created, the operation was not acknowledged`,
     );
   }
+};
+
+export const update = async (kase) => {
+  const caseDocument = new CaseDocument(kase);
+
+  const result = await db
+    .collection(collection)
+    .replaceOne({ _id: kase.objectId }, caseDocument);
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${kase._id}" not found`);
+  }
+
+  if (!result.acknowledged) {
+    throw Boom.internal(
+      `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
+    );
+  }
+
+  return kase;
 };
 
 export const findAll = async () => {

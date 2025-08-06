@@ -1,10 +1,22 @@
 export class TimelineEvent {
   constructor(props) {
-    this.createdAt = new Date().toISOString();
+    this.createdAt = props.createdAt || new Date().toISOString();
     this.eventType = props.eventType;
     this.createdBy = props.createdBy;
     this.description = TimelineEvent.eventDescriptions[props.eventType];
     this.data = props.data;
+  }
+
+  getUserIds() {
+    const userIds = new Set();
+
+    userIds.add(this.createdBy);
+
+    if (this.data?.assignedTo) {
+      userIds.add(this.data.assignedTo);
+    }
+
+    return [...userIds];
   }
 
   static createMock(props) {
@@ -37,3 +49,11 @@ export class TimelineEvent {
     STAGE_COMPLETED: "Stage completed",
   };
 }
+
+export const toTimelineEvents = (props) => {
+  return props?.map(toTimelineEvent) || [];
+};
+
+export const toTimelineEvent = (props) => {
+  return new TimelineEvent(props);
+};
