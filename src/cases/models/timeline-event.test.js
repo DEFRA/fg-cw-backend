@@ -1,34 +1,113 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EventEnums } from "./event-enums.js";
+import { describe, expect, it } from "vitest";
 import { TimelineEvent } from "./timeline-event.js";
 
-describe("timeline-event", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+describe("TimelineEvent", () => {
+  describe("getUserIds", () => {
+    it("returns array with createdBy user ID", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        createdBy: "user-123",
+      });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+      const userIds = timelineEvent.getUserIds();
 
-  it("should create a timeline event", () => {
-    vi.setSystemTime(new Date("2025-06-16T09:01:14.072Z"));
-
-    const expected = TimelineEvent.createMock({
-      eventType: EventEnums.eventTypes.TASK_COMPLETED,
-      data: {
-        someProp: "Some Value",
-      },
+      expect(userIds).toEqual(["user-123"]);
     });
 
-    expect(
-      new TimelineEvent({
-        eventType: EventEnums.eventTypes.TASK_COMPLETED,
-        createdBy: "Mickey Mouse",
+    it("returns array with createdBy and assignedTo user IDs", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        createdBy: "user-123",
         data: {
-          someProp: "Some Value",
+          assignedTo: "user-456",
         },
-      }),
-    ).toEqual(expected);
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(expect.arrayContaining(["user-123", "user-456"]));
+      expect(userIds).toHaveLength(2);
+    });
+
+    it("returns unique user IDs when createdBy and assignedTo are the same", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        createdBy: "user-123",
+        data: {
+          assignedTo: "user-123",
+        },
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+      expect(userIds).toHaveLength(1);
+    });
+
+    it("returns only createdBy when data is null", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        createdBy: "user-123",
+        data: null,
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+    });
+
+    it("returns only createdBy when data is undefined", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        createdBy: "user-123",
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+    });
+
+    it("returns only createdBy when data exists but assignedTo is missing", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.TASK_COMPLETED,
+        createdBy: "user-123",
+        data: {
+          taskId: "task-456",
+          otherProperty: "value",
+        },
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+    });
+
+    it("returns only createdBy when assignedTo is null", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
+        createdBy: "user-123",
+        data: {
+          assignedTo: null,
+        },
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+    });
+
+    it("returns only createdBy when assignedTo is undefined", () => {
+      const timelineEvent = new TimelineEvent({
+        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        createdBy: "user-123",
+        data: {
+          assignedTo: undefined,
+        },
+      });
+
+      const userIds = timelineEvent.getUserIds();
+
+      expect(userIds).toEqual(["user-123"]);
+    });
   });
 });

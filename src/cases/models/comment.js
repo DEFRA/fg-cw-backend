@@ -1,19 +1,68 @@
-import { randomUUID } from "node:crypto";
+import Boom from "@hapi/boom";
+import Joi from "joi";
+import { ObjectId } from "mongodb";
+import {
+  assertInstanceOf,
+  assertIsArrayOfInstances,
+} from "../../common/assert.js";
+import { idSchema } from "../schemas/id.schema.js";
 
 export class Comment {
-  constructor(type, text) {
-    this.ref = randomUUID();
-    this.type = type;
-    this.createdAt = new Date().toISOString();
-    this.text = encodeURIComponent(text);
+  static validationSchema = Joi.object({
+    ref: idSchema,
+    type: Joi.string().required(),
+    text: Joi.string().required(),
+    createdBy: Joi.string().required(),
+    createdAt: Joi.string().isoDate(),
+  });
+
+  constructor(props) {
+    const { error, value } = Comment.validationSchema.validate(props, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    if (error) {
+      throw Boom.badRequest(
+        `Invalid Comment: ${error.details.map((d) => d.message).join(", ")}`,
+      );
+    }
+
+    this.ref = value.ref || new ObjectId().toHexString();
+    this.type = value.type;
+    this.text = value.text;
+    this.createdBy = value.createdBy;
+    this.createdAt = value.createdAt || new Date().toISOString();
   }
 
-  static createMock({ type, text, ref, createdAt }) {
-    return {
-      ref,
-      type,
-      text,
-      createdAt,
-    };
+  getUserIds() {
+    return [this.createdBy];
+  }
+
+  get title() {
+    switch (this.type) {
+      case "NOTE_ADDED":
+        return "General";
+      case "TASK_COMPLETED":
+        return "Task";
+      default:
+        return "General";
+    }
   }
 }
+
+export const toComment = (props) => {
+  return new Comment(props);
+};
+
+export const toComments = (props) => {
+  return props?.map(toComment) || [];
+};
+
+export const assertIsComment = (obj) => {
+  return assertInstanceOf(obj, Comment, "Comment");
+};
+
+export const assertIsCommentsArray = (arr) => {
+  return assertIsArrayOfInstances(arr, Comment, "Comment");
+};

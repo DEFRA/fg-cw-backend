@@ -12,8 +12,8 @@ export class CaseDocument {
     this.payload = props.payload;
     this.assignedUserId = props.assignedUser?.id || null;
     this.currentStage = props.currentStage;
-    this.timeline = props.timeline;
     this.stages = props.stages;
+    this.comments = props.comments;
     this.timeline = props.timeline;
   }
 
@@ -57,6 +57,7 @@ export class CaseDocument {
           },
         },
       ],
+      comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "User Name",
