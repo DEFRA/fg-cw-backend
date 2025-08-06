@@ -373,11 +373,13 @@ describe("updateAssignedUser", () => {
 
     const timelineEvent = TimelineEvent.createMock();
 
+    const commentId = new ObjectId().toHexString();
     const comment = Comment.createMock({
       type: EventEnums.eventTypes.CASE_ASSIGNED,
       text: "This is a comment",
-      ref: "1234-BNBNN",
+      ref: commentId,
       createdAt: "2025-08-05T14:45:41.307Z",
+      createdBy: "Julian",
     });
 
     await updateAssignedUser(caseId, assignedUserId, timelineEvent, comment);
@@ -396,7 +398,8 @@ describe("updateAssignedUser", () => {
             $each: [
               {
                 createdAt: "2025-08-05T14:45:41.307Z",
-                ref: "1234-BNBNN",
+                ref: commentId,
+                createdBy: "Julian",
                 text: "This is a comment",
                 type: "CASE_ASSIGNED",
               },

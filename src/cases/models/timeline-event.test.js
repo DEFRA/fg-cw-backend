@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { EventEnums } from "./event-enums.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 describe("TimelineEvent", () => {
   describe("getUserIds", () => {
     it("returns array with createdBy user ID", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        eventType: EventEnums.eventTypes.CASE_CREATED,
         createdBy: "user-123",
       });
 
@@ -16,7 +17,7 @@ describe("TimelineEvent", () => {
 
     it("returns array with createdBy and assignedTo user IDs", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
         createdBy: "user-123",
         data: {
           assignedTo: "user-456",
@@ -31,7 +32,7 @@ describe("TimelineEvent", () => {
 
     it("returns unique user IDs when createdBy and assignedTo are the same", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
         createdBy: "user-123",
         data: {
           assignedTo: "user-123",
@@ -46,7 +47,7 @@ describe("TimelineEvent", () => {
 
     it("returns only createdBy when data is null", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        eventType: EventEnums.eventTypes.CASE_CREATED,
         createdBy: "user-123",
         data: null,
       });
@@ -58,7 +59,7 @@ describe("TimelineEvent", () => {
 
     it("returns only createdBy when data is undefined", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        eventType: EventEnums.eventTypes.CASE_CREATED,
         createdBy: "user-123",
       });
 
@@ -69,7 +70,7 @@ describe("TimelineEvent", () => {
 
     it("returns only createdBy when data exists but assignedTo is missing", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.TASK_COMPLETED,
+        eventType: EventEnums.eventTypes.TASK_COMPLETED,
         createdBy: "user-123",
         data: {
           taskId: "task-456",
@@ -84,7 +85,7 @@ describe("TimelineEvent", () => {
 
     it("returns only createdBy when assignedTo is null", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
+        eventType: EventEnums.eventTypes.CASE_UNASSIGNED,
         createdBy: "user-123",
         data: {
           assignedTo: null,
@@ -98,7 +99,7 @@ describe("TimelineEvent", () => {
 
     it("returns only createdBy when assignedTo is undefined", () => {
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
         createdBy: "user-123",
         data: {
           assignedTo: undefined,

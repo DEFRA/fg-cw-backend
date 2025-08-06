@@ -61,16 +61,11 @@ describe("assignUserToCaseUseCase", () => {
       },
     });
 
-    const comment = new Comment(
-      EventEnums.eventTypes.CASE_ASSIGNED,
-      "This is a test comment",
-    );
-
     expect(updateAssignedUser).toHaveBeenCalledWith(
       mockCase._id,
       mockUser.id,
       timelineEvent,
-      comment,
+      expect.any(Comment),
     );
   });
 

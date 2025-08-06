@@ -22,10 +22,11 @@ const createTimelineEvent = (userId, kase, type, commentRef = null) => {
 
 const createComment = (text) => {
   if (text) {
-    return new Comment(
-      EventEnums.eventTypes.CASE_ASSIGNED, // TODO extract eventTypes
+    return new Comment({
+      type: EventEnums.eventTypes.CASE_ASSIGNED,
+      createdBy: "System",
       text,
-    );
+    });
   } else {
     return null;
   }

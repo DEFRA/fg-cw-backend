@@ -111,7 +111,7 @@ export class Case {
       ],
       timeline: [
         TimelineEvent.createMock({
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
           // 'createdBy' is hydrated on find-case-by-id

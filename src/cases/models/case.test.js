@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { describe, expect, it } from "vitest";
 import { Case } from "./case.js";
 import { Comment } from "./comment.js";
+import { EventEnums } from "./event-enums.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 describe("Case", () => {
@@ -206,7 +207,7 @@ describe("Case", () => {
       });
 
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        eventType: EventEnums.eventTypes.CASE_CREATED,
         createdBy: "user-4",
         data: { assignedTo: "user-5" },
       });
@@ -268,7 +269,7 @@ describe("Case", () => {
       });
 
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        eventType: EventEnums.eventTypes.CASE_CREATED,
         createdBy: "user-1",
       });
 

@@ -6,6 +6,7 @@ import {
   assertIsArrayOfInstances,
 } from "../../common/assert.js";
 import { idSchema } from "../schemas/id.schema.js";
+import { EventEnums } from "./event-enums.js";
 
 export class Comment {
   static validationSchema = Joi.object({
@@ -40,14 +41,12 @@ export class Comment {
   }
 
   get title() {
-    switch (this.type) {
-      case "NOTE_ADDED":
-        return "General";
-      case "TASK_COMPLETED":
-        return "Task";
-      default:
-        return "General";
-    }
+    const title = EventEnums.noteDescriptions[this.type];
+    return title || EventEnums.noteDescriptions.NOTE_ADDED;
+  }
+
+  static createMock(props) {
+    return new Comment(props);
   }
 }
 
