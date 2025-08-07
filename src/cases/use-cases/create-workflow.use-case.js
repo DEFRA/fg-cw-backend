@@ -4,8 +4,9 @@ import { save } from "../repositories/workflow.repository.js";
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
-    payloadDefinition: createWorkflowCommand.payloadDefinition,
+    pages: createWorkflowCommand.pages,
     stages: createWorkflowCommand.stages,
+    requiredRoles: createWorkflowCommand.requiredRoles,
   });
 
   await save(workflow);

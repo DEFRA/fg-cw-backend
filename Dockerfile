@@ -16,7 +16,11 @@ COPY --chown=node:node scripts/run.sh scripts/run.sh
 COPY --chown=node:node migrate-mongo-config.js ./
 COPY --chown=node:node migrations ./migrations
 
-RUN npm ci --omit=dev \
+RUN if [ -f package-lock.json ]; then \
+    npm ci --omit=dev; \
+  else \
+    npm install --omit=dev; \
+  fi && \
   chmod +x scripts/run.sh
 
 COPY --chown=node:node src src

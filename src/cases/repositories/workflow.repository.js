@@ -9,8 +9,9 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
-    payloadDefinition: doc.payloadDefinition,
+    pages: doc.pages,
     stages: doc.stages,
+    requiredRoles: doc.requiredRoles,
   });
 
 export const save = async (workflow) => {
@@ -36,8 +37,19 @@ export const save = async (workflow) => {
   }
 };
 
-export const findAll = async () => {
-  const workflowDocuments = await db.collection(collection).find().toArray();
+export const findAll = async (query) => {
+  const filter = {};
+
+  if (query?.codes?.length) {
+    filter.code = {
+      $in: query.codes,
+    };
+  }
+
+  const workflowDocuments = await db
+    .collection(collection)
+    .find(filter)
+    .toArray();
 
   return workflowDocuments.map(toWorkflow);
 };

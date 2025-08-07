@@ -1,8 +1,8 @@
-import Wreck from "@hapi/wreck";
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
+import { wreck } from "./helpers/wreck.js";
 
 describe("Workflows", () => {
   let workflows;
@@ -25,8 +25,7 @@ describe("Workflows", () => {
 
     it("adds a workflow", async () => {
       const payload = { ...workflowData1 };
-      const response = await Wreck.post(`${env.API_URL}/workflows`, {
-        json: true,
+      const response = await wreck.post("/workflows", {
         payload,
       });
 
@@ -43,14 +42,12 @@ describe("Workflows", () => {
 
     it("throws when workflow code exists", async () => {
       const payload = { ...workflowData1 };
-      await Wreck.post(`${env.API_URL}/workflows`, {
-        json: true,
+      await wreck.post("/workflows", {
         payload,
       });
 
       await expect(
-        Wreck.post(`${env.API_URL}/workflows`, {
-          json: true,
+        wreck.post("/workflows", {
           payload,
         }),
       ).rejects.toThrow("Response Error: 409 Conflict");
@@ -65,9 +62,7 @@ describe("Workflows", () => {
     it("finds workflows", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(`${env.API_URL}/workflows`, {
-        json: true,
-      });
+      const response = await wreck.get("/workflows");
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual([
@@ -91,12 +86,7 @@ describe("Workflows", () => {
     it("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
-      const response = await Wreck.get(
-        `${env.API_URL}/workflows/frps-private-beta`,
-        {
-          json: true,
-        },
-      );
+      const response = await wreck.get("/workflows/frps-private-beta");
 
       expect(response.res.statusCode).toBe(200);
 

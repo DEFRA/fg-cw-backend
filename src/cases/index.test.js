@@ -5,17 +5,8 @@ import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
-vi.mock("migrate-mongo", () => ({
-  up: vi.fn(),
-}));
-
-vi.mock("../common/mongo-client.js", () => ({
-  db: {
-    createIndex: vi.fn(),
-  },
-  mongoClient: {},
-}));
-
+vi.mock("migrate-mongo");
+vi.mock("../common/mongo-client.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
 
 describe("cases", () => {
@@ -66,6 +57,7 @@ describe("cases", () => {
       { method: "get", path: "/workflows/{code}" },
       { method: "post", path: "/workflows" },
       { method: "post", path: "/cases/{caseId}/stage" },
+      { method: "patch", path: "/cases/{caseId}/assigned-user" },
       {
         method: "patch",
         path: "/cases/{caseId}/stages/{stageId}/task-groups/{taskGroupId}/tasks/{taskId}/status",

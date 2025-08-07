@@ -53,6 +53,22 @@ export const caseData1 = {
       taskGroups: [],
     },
   ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-1",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
+    },
+  ],
+  assignedUser: null,
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };
 
 export const caseData2 = {
@@ -110,9 +126,25 @@ export const caseData2 = {
       taskGroups: [],
     },
   ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-2",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
+    },
+  ],
+  assignedUser: null,
+  requiredRoles: {
+    allOf: ["ROLE_1", "ROLE_2"],
+    anyOf: ["ROLE_3"],
+  },
 };
 
-export const caseData3 = {
+export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-3",
   status: "NEW",
@@ -167,4 +199,16 @@ export const caseData3 = {
       taskGroups: [],
     },
   ],
+  timeline: [
+    {
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        caseRef: "APPLICATION-REF-3",
+      },
+      description: "Case received",
+      eventType: "CASE_CREATED",
+    },
+  ],
+  assignedUserId: null,
 };

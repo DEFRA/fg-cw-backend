@@ -13,7 +13,6 @@ describe("createCaseUseCase", () => {
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
         code: "wf-001",
-        payloadDefinition: {},
         stages: [
           {
             id: "stage-1",
@@ -24,7 +23,6 @@ describe("createCaseUseCase", () => {
                   {
                     id: "task-1",
                     type: "task-type-1",
-                    payloadDefinition: {},
                   },
                 ],
               },
@@ -45,7 +43,7 @@ describe("createCaseUseCase", () => {
 
     expect(save).toHaveBeenCalledWith(kase);
 
-    expect(kase).toStrictEqual(
+    expect(kase).toEqual(
       new Case({
         _id: expect.any(String),
         caseRef: "TEST-001",
@@ -77,6 +75,18 @@ describe("createCaseUseCase", () => {
             ],
           },
         ],
+        timeline: [
+          {
+            eventType: "CASE_CREATED",
+            createdAt: expect.any(String),
+            description: "Case received",
+            createdBy: "System",
+            data: {
+              caseRef: "TEST-001",
+            },
+          },
+        ],
+        assignedUser: null,
       }),
     );
   });

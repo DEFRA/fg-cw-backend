@@ -1,4 +1,3 @@
-import Wreck from "@hapi/wreck";
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import {
@@ -10,18 +9,28 @@ import {
   expect,
   it,
 } from "vitest";
-import { caseData1, caseData2, caseData3 } from "./fixtures/case.js";
+import { caseData1, caseData2, caseData3Document } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
 import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
+import { createWorkflow } from "./helpers/workflows.js";
+import { wreck } from "./helpers/wreck.js";
 
 describe("Cases", () => {
   let cases;
+  let workflows;
+
   let client;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
+    cases = client.db().collection("cases");
+    workflows = client.db().collection("workflows");
+    await client.connect();
+    await cases.deleteMany({});
+    await workflows.deleteMany({});
+    await createWorkflow();
     cases = client.db().collection("cases");
   });
 
@@ -50,9 +59,7 @@ describe("Cases", () => {
         },
       ]);
 
-      const response = await Wreck.get(`${env.API_URL}/cases`, {
-        json: true,
-      });
+      const response = await wreck.get("/cases");
 
       expect(response.res.statusCode).toBe(200);
 
@@ -90,20 +97,26 @@ describe("Cases", () => {
 
       const caseId = insertedIds[1].toHexString();
 
-      const response = await Wreck.get(`${env.API_URL}/cases/${caseId}`, {
-        json: true,
-      });
+      const response = await wreck.get(`/cases/${caseId}`);
 
       expect(response.res.statusCode).toBe(200);
       expect(response.payload).toEqual({
         ...caseData2,
         _id: caseId,
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        timeline: [
+          {
+            ...caseData2.timeline[0],
+            createdBy: {
+              name: "System",
+            },
+          },
+        ],
       });
     });
   });
 
-  describe("on CreateNewCase", () => {
+  describe("on CreateNewCase event", () => {
     beforeEach(async () => {
       await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
@@ -124,9 +137,20 @@ describe("Cases", () => {
 
       expect(documents).toEqual([
         {
-          ...caseData3,
+          ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
+          timeline: [
+            {
+              eventType: "CASE_CREATED",
+              createdAt: expect.any(String),
+              description: "Case received",
+              createdBy: "System",
+              data: {
+                caseRef: "APPLICATION-REF-3",
+              },
+            },
+          ],
         },
       ]);
     });

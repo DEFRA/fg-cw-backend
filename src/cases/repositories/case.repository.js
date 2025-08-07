@@ -17,6 +17,12 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
+    timeline: doc.timeline,
+    assignedUser: doc.assignedUserId
+      ? {
+          id: doc.assignedUserId,
+        }
+      : null,
   });
 
 export const save = async (kase) => {
@@ -56,15 +62,21 @@ export const findById = async (caseId) => {
   return caseDocument && toCase(caseDocument);
 };
 
-export const updateStage = async (caseId, nextStage) => {
-  const result = await db
-    .collection(collection)
-    .updateOne(
-      { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { currentStage: nextStage } },
-    );
+export const updateStage = async (caseId, nextStage, timelineEvent) => {
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $set: { currentStage: nextStage },
+      $push: {
+        timeline: {
+          $each: [timelineEvent],
+          $position: 0,
+        },
+      },
+    },
+  );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };
@@ -75,18 +87,32 @@ export const updateTaskStatus = async ({
   taskGroupId,
   taskId,
   status,
+  timelineEvent,
 }) => {
+  const eventToPush = await timelineEvent;
+  const updateOperation = {
+    $set: {
+      "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
+    },
+  };
+
+  // Only add timeline update if timelineEvent is provided
+  if (eventToPush) {
+    updateOperation.$push = {
+      timeline: {
+        $each: [eventToPush],
+        $position: 0,
+      },
+    };
+  }
+
   const result = await db.collection(collection).updateOne(
     {
       _id: ObjectId.createFromHexString(caseId),
       "stages.taskGroups.id": taskGroupId,
       "stages.taskGroups.tasks.id": taskId,
     },
-    {
-      $set: {
-        "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
-      },
-    },
+    updateOperation,
     {
       arrayFilters: [
         { "stage.id": stageId },
@@ -96,9 +122,34 @@ export const updateTaskStatus = async ({
     },
   );
 
-  if (result.modifiedCount === 0) {
+  if (result.matchedCount === 0) {
     throw Boom.notFound(
       `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
     );
+  }
+};
+
+export const updateAssignedUser = async (
+  caseId,
+  assignedUserId,
+  timelineEvent,
+) => {
+  const result = await db.collection(collection).updateOne(
+    { _id: ObjectId.createFromHexString(caseId) },
+    {
+      $set: {
+        assignedUserId,
+      },
+      $push: {
+        timeline: {
+          $each: [timelineEvent],
+          $position: 0,
+        },
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };

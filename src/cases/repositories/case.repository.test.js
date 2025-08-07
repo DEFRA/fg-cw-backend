@@ -4,19 +4,17 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
   findById,
   save,
+  updateAssignedUser,
   updateStage,
   updateTaskStatus,
 } from "./case.repository.js";
 
-vi.mock("../../common/mongo-client.js", () => ({
-  db: {
-    collection: vi.fn(),
-  },
-}));
+vi.mock("../../common/mongo-client.js");
 
 describe("save", () => {
   it("creates a case and returns it", async () => {
@@ -108,9 +106,13 @@ describe("findAll", () => {
     expect(result).toEqual([
       Case.createMock({
         _id: cases[0]._id.toString(),
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
       Case.createMock({
         _id: cases[1]._id.toString(),
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
     ]);
   });
@@ -138,6 +140,8 @@ describe("findById", () => {
     expect(result).toEqual(
       Case.createMock({
         _id: caseId,
+        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
+        requiredRoles: undefined,
       }),
     );
   });
@@ -158,23 +162,32 @@ describe("findById", () => {
 describe("updateStage", () => {
   it("updates the stage of a case", async () => {
     const caseId = "6800c9feb76f8f854ebf901a";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
-      modifiedCount: 1,
+      matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
       updateOne,
     });
 
-    await updateStage(caseId, "application-receipt");
+    await updateStage(caseId, "application-receipt", timelineEvent);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
-      { $set: { currentStage: "application-receipt" } },
+      {
+        $set: { currentStage: "application-receipt" },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
+        },
+      },
     );
   });
 
@@ -184,7 +197,7 @@ describe("updateStage", () => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue({
         acknowledged: true,
-        modifiedCount: 0,
+        matchedCount: 0,
       }),
     });
 
@@ -201,10 +214,11 @@ describe("updateTaskStatus", () => {
     const taskGroupId = "task-group-1";
     const taskId = "task-1";
     const status = "COMPLETED";
+    const timelineEvent = TimelineEvent.createMock();
 
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
-      modifiedCount: 1,
+      matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
@@ -217,6 +231,7 @@ describe("updateTaskStatus", () => {
       taskGroupId,
       taskId,
       status,
+      timelineEvent,
     });
 
     expect(db.collection).toHaveBeenCalledWith("cases");
@@ -231,6 +246,12 @@ describe("updateTaskStatus", () => {
         $set: {
           "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status":
             status,
+        },
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
         },
       },
       {
@@ -253,7 +274,7 @@ describe("updateTaskStatus", () => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue({
         acknowledged: true,
-        modifiedCount: 0,
+        matchedCount: 0,
       }),
     });
 
@@ -269,6 +290,57 @@ describe("updateTaskStatus", () => {
       Boom.notFound(
         'Task with caseId "6800c9feb76f8f854ebf901a", stageId "stage-1", taskGroupId "task-group-1" and taskId "task-1" not found',
       ),
+    );
+  });
+});
+
+describe("updateAssignedUser", () => {
+  it("updates the assigned user of a case", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const assignedUserId = "673c8c2eb76f8f854ebf912b";
+
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+    });
+
+    db.collection.mockReturnValue({
+      updateOne,
+    });
+
+    const timelineEvent = TimelineEvent.createMock();
+
+    await updateAssignedUser(caseId, assignedUserId, timelineEvent);
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: ObjectId.createFromHexString(caseId) },
+      {
+        $push: {
+          timeline: {
+            $each: [timelineEvent],
+            $position: 0,
+          },
+        },
+        $set: { assignedUserId },
+      },
+    );
+  });
+
+  it("throws Boom.notFound when case is not found", async () => {
+    const caseId = "6800c9feb76f8f854ebf901a";
+    const assignedUser = "673c8c2eb76f8f854ebf912b";
+
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue({
+        acknowledged: true,
+        matchedCount: 0,
+      }),
+    });
+
+    await expect(updateAssignedUser(caseId, assignedUser)).rejects.toThrow(
+      Boom.notFound(`Case with id "${caseId}" not found`),
     );
   });
 });

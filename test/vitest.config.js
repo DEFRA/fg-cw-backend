@@ -12,6 +12,7 @@ export default defineConfig({
     sequence: {
       concurrent: false,
     },
+    fileParallelism: false,
     env: {
       CW_PORT,
       MONGO_PORT,

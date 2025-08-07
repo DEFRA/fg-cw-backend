@@ -5,7 +5,6 @@ export const findWorkflowsResponseSchema = Joi.array()
   .items(workflowSchema.Workflow)
   .required()
   .options({
-    presence: "required",
     stripUnknown: true,
   })
   .label("FindWorkflowsResponse");
