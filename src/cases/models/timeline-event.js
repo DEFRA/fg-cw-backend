@@ -13,7 +13,12 @@ export class TimelineEvent {
   getUserIds() {
     const userIds = new Set();
 
-    userIds.add(this.createdBy);
+    // prevent system being passed as an object
+    if (this.createdBy.id) {
+      userIds.add(this.createdBy.id);
+    } else {
+      userIds.add(this.createdBy);
+    }
 
     if (this.data?.assignedTo) {
       userIds.add(this.data.assignedTo);
