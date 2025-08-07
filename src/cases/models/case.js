@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import {
   assertIsComment,
   assertIsCommentsArray,
+  Comment,
   toComment,
 } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
@@ -27,10 +28,46 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
+  createComment(text, type) {
+    if (text) {
+      return this.addComment(
+        new Comment({
+          type,
+          createdBy: "System",
+          text,
+        }),
+      );
+    } else {
+      return null;
+    }
+  }
+
+  createTimelineEvent(userId, type, commentRef = null) {
+    return new TimelineEvent({
+      eventType: type,
+      createdBy: "System", // TODO: user details need to come from authorised user
+      commentRef,
+      data: {
+        assignedTo: userId,
+        previouslyAssignedTo: this.assignedUser?.id,
+      },
+    });
+  }
+
   setAssignedUserId(userId) {
     this.assignedUserId = userId;
     this.assignedUser = userId ? { id: userId } : null;
-    return this;
+  }
+
+  assignUser(userId, note) {
+    const type = userId
+      ? EventEnums.eventTypes.CASE_ASSIGNED
+      : EventEnums.eventTypes.CASE_UNASSIGNED;
+    const comment = this.createComment(note, type);
+    const timelineEvent = this.createTimelineEvent(userId, type, comment?.ref);
+
+    this.setAssignedUserId(userId);
+    this.addTimelineEvent(timelineEvent);
   }
 
   addComment(comment) {

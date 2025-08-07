@@ -1,63 +1,21 @@
 import Boom from "@hapi/boom";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
-import { Comment } from "../models/comment.js";
-import { EventEnums } from "../models/event-enums.js";
 import { Permissions } from "../models/permissions.js";
-import { TimelineEvent } from "../models/timeline-event.js";
-import { update } from "../repositories/case.repository.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
-
-const createTimelineEvent = (userId, kase, type, commentRef = null) => {
-  return new TimelineEvent({
-    eventType: type,
-    createdBy: "System", // TODO: user details need to come from authorised user
-    commentRef,
-    data: {
-      assignedTo: userId,
-      previouslyAssignedTo: kase.assignedUser?.id,
-    },
-  });
-};
-
-const createComment = (
-  kase,
-  text,
-  type = EventEnums.eventTypes.CASE_ASSIGNED,
-) => {
-  if (text) {
-    return kase.addComment(
-      new Comment({
-        type,
-        createdBy: "System",
-        text,
-      }),
-    );
-  } else {
-    return null;
-  }
-};
-
-const unassignUser = async (command) => {
-  const type = EventEnums.eventTypes.CASE_UNASSIGNED;
-  const { caseId, notes } = command;
-  const kase = await findCaseByIdUseCase(caseId);
-
-  kase.setAssignedUserId(null);
-
-  const comment = createComment(kase, notes, type);
-  const timelineEvent = createTimelineEvent(null, kase, type, comment?.ref);
-  kase.addTimelineEvent(timelineEvent);
-  return update(kase);
-};
 
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes } = command;
 
-  const kase = await findCaseByIdUseCase(caseId);
+  const kase = await findById(caseId);
+
+  if (!kase) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
 
   if (assignedUserId === null) {
-    return unassignUser(command);
+    kase.assignUser(null, notes);
+    return update(kase);
   }
 
   const [user, workflow] = await Promise.all([
@@ -65,6 +23,7 @@ export const assignUserToCaseUseCase = async (command) => {
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
+  // Check if the user we want to assign has permissions for the case...
   // TODO: This permission check should live inside Case once Case and Workflow are merged
   const permissions = new Permissions(workflow.requiredRoles);
 
@@ -74,18 +33,6 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  kase.setAssignedUserId(assignedUserId);
-
-  const comment = createComment(kase, notes);
-
-  const timelineEvent = createTimelineEvent(
-    assignedUserId,
-    kase,
-    EventEnums.eventTypes.CASE_ASSIGNED,
-    comment?.ref,
-  );
-
-  kase.addTimelineEvent(timelineEvent);
-
+  kase.assignUser(assignedUserId, notes);
   return update(kase);
 };
