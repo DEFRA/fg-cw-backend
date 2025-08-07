@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { appRoles } from "../../../test/helpers/appRoles.js";
 import { User } from "../models/user.js";
 import { findById, update } from "../repositories/user.repository.js";
 import { updateUserUseCase } from "./update-user.use-case.js";
@@ -22,7 +23,12 @@ describe("updateUserUseCase", () => {
       props: {
         name: "Name",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          ROLE_ADMIN: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -33,7 +39,12 @@ describe("updateUserUseCase", () => {
         name: "Name",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          ROLE_ADMIN: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
@@ -46,7 +57,12 @@ describe("updateUserUseCase", () => {
         name: "Name",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.Read"],
-        appRoles: ["CW-Admin"],
+        appRoles: {
+          ROLE_ADMIN: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),
@@ -81,7 +97,7 @@ describe("updateUserUseCase", () => {
         name: "Bob Bill",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["FCP.Casework.ReadWrite"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }),

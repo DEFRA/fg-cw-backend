@@ -21,7 +21,12 @@ export class UserDocument {
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: new Date("2025-07-01T00:00:00.000Z"),
+          endDate: new Date("2025-08-02T00:00:00.000Z"),
+        },
+      },
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",
       ...props,

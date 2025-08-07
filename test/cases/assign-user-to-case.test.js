@@ -118,26 +118,40 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     );
   });
 
-  it("returns 401 unauthorized for user missing required allOf roles", async () => {
+  it("returns 401 unauthorised for user missing required allOf roles", async () => {
     const kase = await createCase(cases);
     const createUserResponse = await createUser({
-      appRoles: ["ROLE_3"], // Missing ROLE_1 and ROLE_2 from allOf
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
     });
 
     await expect(
       assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("Response Error: 401 Unauthorized");
   });
 
-  it("returns 401 unauthorized for user missing required anyOf roles", async () => {
+  it("returns 401 unauthorised for user missing required anyOf roles", async () => {
     const kase = await createCase(cases);
     const createUserResponse = await createUser({
-      appRoles: ["ROLE_1", "ROLE_2"], // Missing ROLE_3 from anyOf
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_2: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      }, // Missing ROLE_3 from anyOf
     });
 
     await expect(
       assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow("Response Error: 401 Unauthorized");
   });
 
   it("unassigns a user when assignedUserId is set to null", async () => {
