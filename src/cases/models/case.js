@@ -34,7 +34,7 @@ export class Case {
         new Comment({
           type,
           createdBy: "System",
-          text,
+          text: encodeURIComponent(text),
         }),
       );
     } else {
