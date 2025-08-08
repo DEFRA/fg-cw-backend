@@ -18,7 +18,8 @@ export class Comment {
   });
 
   constructor(props) {
-    const { error, value } = Comment.validationSchema.validate(props, {
+    const { encode, ...rest } = props;
+    const { error, value } = Comment.validationSchema.validate(rest, {
       stripUnknown: true,
       abortEarly: false,
     });
@@ -31,9 +32,13 @@ export class Comment {
 
     this.ref = value.ref || new ObjectId().toHexString();
     this.type = value.type;
-    this.text = encodeURIComponent(value.text);
+    this.text = this.safeEncodeText(value.text, encode);
     this.createdBy = value.createdBy;
     this.createdAt = value.createdAt || new Date().toISOString();
+  }
+
+  safeEncodeText(text, encode = true) {
+    return encode ? encodeURIComponent(text) : text;
   }
 
   getUserIds() {
@@ -49,7 +54,14 @@ export class Comment {
     return new Comment(props);
   }
 
-  // returns a comment or null if text is empty
+  /**
+   * Creates a comment if text is passed otherwise returns null.
+   * Use to avoid having to check if comment is defined when creating objects that use comment.ref
+   * @param {string} text
+   * @param {EventType} type
+   * @param {guid} createdById
+   * @returns
+   */
   static createOptionalComment(text, type, createdById) {
     if (text) {
       return new Comment({
@@ -63,8 +75,13 @@ export class Comment {
   }
 }
 
+/**
+ * When returning data from db we do not want to encode the text. To prevent this pass in encode: false to the constructor.
+ * @param {CommentProps} props
+ * @returns
+ */
 export const toComment = (props) => {
-  return new Comment(props);
+  return new Comment({ ...props, encode: false });
 };
 
 export const toComments = (props) => {

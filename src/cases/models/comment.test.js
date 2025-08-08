@@ -182,8 +182,22 @@ describe("toComment", () => {
 
     expect(comment).toBeInstanceOf(Comment);
     expect(comment.type).toBe("NOTE_ADDED");
-    expect(comment.text).toBe("Test%20comment%20text");
+    expect(comment.text).toBe("Test comment text");
     expect(comment.createdBy).toBe("user-123");
+  });
+
+  it("should not attempt to re-encode comment text after creation", () => {
+    const props = {
+      type: "NOTE_ADDED",
+      text: "Test comment text",
+      createdBy: "user-123",
+    };
+
+    const comment = new Comment(props);
+    expect(comment.text).toBe("Test%20comment%20text");
+
+    const comment2 = toComment(comment);
+    expect(comment2.text).toBe("Test%20comment%20text");
   });
 });
 
@@ -207,8 +221,8 @@ describe("toComments", () => {
     expect(comments).toHaveLength(2);
     expect(comments[0]).toBeInstanceOf(Comment);
     expect(comments[1]).toBeInstanceOf(Comment);
-    expect(comments[0].text).toBe("First%20comment");
-    expect(comments[1].text).toBe("Second%20comment");
+    expect(comments[0].text).toBe("First comment");
+    expect(comments[1].text).toBe("Second comment");
   });
 
   it("returns empty array when props is null", () => {
