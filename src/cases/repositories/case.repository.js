@@ -73,7 +73,6 @@ export const update = async (kase) => {
 
 export const findAll = async () => {
   const caseDocuments = await db.collection(collection).find().toArray();
-
   return caseDocuments.map(toCase);
 };
 
@@ -112,7 +111,7 @@ export const updateTaskStatus = async ({
   status,
   timelineEvent,
 }) => {
-  const eventToPush = await timelineEvent;
+  const eventToPush = timelineEvent;
   const updateOperation = {
     $set: {
       "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
@@ -149,30 +148,5 @@ export const updateTaskStatus = async ({
     throw Boom.notFound(
       `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
     );
-  }
-};
-
-export const updateAssignedUser = async (
-  caseId,
-  assignedUserId,
-  timelineEvent,
-) => {
-  const result = await db.collection(collection).updateOne(
-    { _id: ObjectId.createFromHexString(caseId) },
-    {
-      $set: {
-        assignedUserId,
-      },
-      $push: {
-        timeline: {
-          $each: [timelineEvent],
-          $position: 0,
-        },
-      },
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };

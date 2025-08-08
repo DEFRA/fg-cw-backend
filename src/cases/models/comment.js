@@ -6,6 +6,7 @@ import {
   assertIsArrayOfInstances,
 } from "../../common/assert.js";
 import { idSchema } from "../schemas/id.schema.js";
+import { EventEnums } from "./event-enums.js";
 
 export class Comment {
   static validationSchema = Joi.object({
@@ -17,7 +18,8 @@ export class Comment {
   });
 
   constructor(props) {
-    const { error, value } = Comment.validationSchema.validate(props, {
+    const { encode, ...rest } = props;
+    const { error, value } = Comment.validationSchema.validate(rest, {
       stripUnknown: true,
       abortEarly: false,
     });
@@ -30,9 +32,13 @@ export class Comment {
 
     this.ref = value.ref || new ObjectId().toHexString();
     this.type = value.type;
-    this.text = value.text;
+    this.text = this.safeEncodeText(value.text, encode);
     this.createdBy = value.createdBy;
     this.createdAt = value.createdAt || new Date().toISOString();
+  }
+
+  safeEncodeText(text, encode = true) {
+    return encode ? encodeURIComponent(text) : text;
   }
 
   getUserIds() {
@@ -40,19 +46,42 @@ export class Comment {
   }
 
   get title() {
-    switch (this.type) {
-      case "NOTE_ADDED":
-        return "General";
-      case "TASK_COMPLETED":
-        return "Task";
-      default:
-        return "General";
+    const title = EventEnums.noteDescriptions[this.type];
+    return title || EventEnums.noteDescriptions.NOTE_ADDED;
+  }
+
+  static createMock(props) {
+    return new Comment(props);
+  }
+
+  /**
+   * Creates a comment if text is passed otherwise returns null.
+   * Use to avoid having to check if comment is defined when creating objects that use comment.ref
+   * @param {string} text
+   * @param {EventType} type
+   * @param {guid} createdById
+   * @returns
+   */
+  static createOptionalComment(text, type, createdById) {
+    if (text) {
+      return new Comment({
+        createdBy: createdById,
+        type,
+        text,
+      });
+    } else {
+      return null;
     }
   }
 }
 
+/**
+ * When returning data from db we do not want to encode the text. To prevent this pass in encode: false to the constructor.
+ * @param {CommentProps} props
+ * @returns
+ */
 export const toComment = (props) => {
-  return new Comment(props);
+  return new Comment({ ...props, encode: false });
 };
 
 export const toComments = (props) => {

@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { describe, expect, it } from "vitest";
 import { Case } from "./case.js";
 import { Comment } from "./comment.js";
+import { EventEnums } from "./event-enums.js";
 import { TimelineEvent } from "./timeline-event.js";
 
 describe("Case", () => {
@@ -196,19 +197,19 @@ describe("Case", () => {
       const comment1 = new Comment({
         type: "NOTE_ADDED",
         text: "Comment 1",
-        createdBy: "user-2",
+        createdBy: "AA0999099909090FF9898989",
       });
 
       const comment2 = new Comment({
         type: "NOTE_ADDED",
         text: "Comment 2",
-        createdBy: "user-3",
+        createdBy: "BB0999099909090FF9898989",
       });
 
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
-        createdBy: "user-4",
-        data: { assignedTo: "user-5" },
+        eventType: EventEnums.eventTypes.CASE_CREATED,
+        createdBy: "090999099909090FF9898989",
+        data: { assignedTo: "FF0999099909090FF9898989" },
       });
 
       const caseInstance = new Case({
@@ -217,7 +218,7 @@ describe("Case", () => {
         status: "NEW",
         dateReceived: "2025-01-01T00:00:00.000Z",
         currentStage: "stage-1",
-        assignedUser: { id: "user-1", name: "Test User" },
+        assignedUser: { id: "EE0999099909090FF9898989", name: "Test User" },
         payload: {},
         stages: [],
         comments: [comment1, comment2],
@@ -229,11 +230,11 @@ describe("Case", () => {
 
       expect(userIds).toEqual(
         expect.arrayContaining([
-          "user-1",
-          "user-2",
-          "user-3",
-          "user-4",
-          "user-5",
+          "090999099909090FF9898989",
+          "FF0999099909090FF9898989",
+          "EE0999099909090FF9898989",
+          "AA0999099909090FF9898989",
+          "BB0999099909090FF9898989",
         ]),
       );
       expect(userIds).toHaveLength(5);
@@ -264,12 +265,12 @@ describe("Case", () => {
       const comment = new Comment({
         type: "NOTE_ADDED",
         text: "Comment",
-        createdBy: "user-1",
+        createdBy: "AAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       const timelineEvent = new TimelineEvent({
-        eventType: TimelineEvent.eventTypes.CASE_CREATED,
-        createdBy: "user-1",
+        eventType: EventEnums.eventTypes.CASE_CREATED,
+        createdBy: "AAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
       const caseInstance = new Case({
@@ -278,7 +279,7 @@ describe("Case", () => {
         status: "NEW",
         dateReceived: "2025-01-01T00:00:00.000Z",
         currentStage: "stage-1",
-        assignedUser: { id: "user-1", name: "Test User" },
+        assignedUser: { id: "AAAAAAAAAAAAAAAAAAAAAAAA", name: "Test User" },
         payload: {},
         stages: [],
         comments: [comment],
@@ -288,7 +289,7 @@ describe("Case", () => {
 
       const userIds = caseInstance.getUserIds();
 
-      expect(userIds).toEqual(["user-1"]);
+      expect(userIds).toEqual(["AAAAAAAAAAAAAAAAAAAAAAAA"]);
       expect(userIds).toHaveLength(1);
     });
   });
