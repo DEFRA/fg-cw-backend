@@ -29,7 +29,7 @@ describe("addNoteToCaseUseCase", () => {
 
     expect(result).toBeInstanceOf(Comment);
     expect(result.type).toBe("NOTE_ADDED");
-    expect(result.text).toBe("This%20is%20a%20test%20note");
+    expect(result.text).toBe("This is a test note");
     expect(result.createdBy).toBe("user-123");
     expect(result.ref).toBeDefined();
     expect(result.createdAt).toBeDefined();
@@ -54,7 +54,7 @@ describe("addNoteToCaseUseCase", () => {
     const result = await addNoteToCaseUseCase(command);
 
     expect(result.type).toBe("TASK_COMPLETED");
-    expect(result.text).toBe("Task%20has%20been%20completed");
+    expect(result.text).toBe("Task has been completed");
     expect(result.createdBy).toBe("user-456");
   });
 
