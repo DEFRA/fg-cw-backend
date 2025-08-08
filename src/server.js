@@ -1,10 +1,12 @@
 import { tracing } from "@defra/hapi-tracing";
 import hapi from "@hapi/hapi";
 import Inert from "@hapi/inert";
+import Jwt from "@hapi/jwt";
 import Vision from "@hapi/vision";
 import hapiPino from "hapi-pino";
 import hapiPulse from "hapi-pulse";
 import HapiSwagger from "hapi-swagger";
+import { auth } from "./auth/index.js";
 import { cases } from "./cases/index.js";
 import { config } from "./common/config.js";
 import { logger } from "./common/logger.js";
@@ -84,7 +86,32 @@ export const createServer = async () => {
     },
   ]);
 
-  await server.register([health, cases, users]);
+  await server.register(Jwt);
+
+  server.auth.strategy("jwt", "jwt", {
+    keys: {
+      uri: config.get("auth.keysUri"),
+    },
+    verify: {
+      exp: true,
+      aud: config.get("auth.audience"),
+      iss: config.get("auth.issuer"),
+      sub: false,
+      nbf: true,
+      maxAgeSec: 14400, // 4 hours
+      timeSkewSec: 15,
+    },
+    validate: (artifacts) => {
+      const { payload } = artifacts.decoded;
+
+      return {
+        isValid: true,
+        credentials: { user: payload },
+      };
+    },
+  });
+
+  await server.register([health, cases, users, auth]);
 
   return server;
 };

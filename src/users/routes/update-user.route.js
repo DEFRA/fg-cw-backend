@@ -20,12 +20,12 @@ export const updateUserRoute = {
       schema: findUserResponseSchema,
     },
   },
-  async handler(request) {
+  async handler(request, h) {
     const user = await updateUserUseCase({
       userId: request.params.userId,
       props: request.payload,
     });
 
-    return user;
+    return h.response(user).code(200);
   },
 };
