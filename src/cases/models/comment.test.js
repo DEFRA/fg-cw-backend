@@ -22,7 +22,7 @@ describe("Comment", () => {
 
       expect(comment.ref).toBe("64c88faac1f56f71e1b89a33");
       expect(comment.type).toBe("NOTE_ADDED");
-      expect(comment.text).toBe("Test comment text");
+      expect(comment.text).toBe("Test%20comment%20text");
       expect(comment.createdBy).toBe("user-123");
       expect(comment.createdAt).toBe("2025-01-01T00:00:00.000Z");
     });
@@ -184,6 +184,20 @@ describe("toComment", () => {
     expect(comment.type).toBe("NOTE_ADDED");
     expect(comment.text).toBe("Test comment text");
     expect(comment.createdBy).toBe("user-123");
+  });
+
+  it("should not attempt to re-encode comment text after creation", () => {
+    const props = {
+      type: "NOTE_ADDED",
+      text: "Test comment text",
+      createdBy: "user-123",
+    };
+
+    const comment = new Comment(props);
+    expect(comment.text).toBe("Test%20comment%20text");
+
+    const comment2 = toComment(comment);
+    expect(comment2.text).toBe("Test%20comment%20text");
   });
 });
 

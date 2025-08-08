@@ -2,9 +2,11 @@ import { ObjectId } from "mongodb";
 import {
   assertIsComment,
   assertIsCommentsArray,
+  Comment,
   toComment,
 } from "./comment.js";
-import { TimelineEvent } from "./timeline-event.js";
+import { EventEnums } from "./event-enums.js";
+import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
@@ -26,10 +28,56 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
+  get previousUserId() {
+    return this.assignedUser?.id;
+  }
+
+  setAssignedUser(userId) {
+    this.assignedUserId = userId;
+    this.assignedUser = userId ? { id: userId } : null;
+  }
+
+  assignUser(userId, authenticatedUserId, note) {
+    const type = userId
+      ? EventEnums.eventTypes.CASE_ASSIGNED
+      : EventEnums.eventTypes.CASE_UNASSIGNED;
+
+    const comment = Comment.createOptionalComment(
+      note,
+      type,
+      authenticatedUserId,
+    );
+
+    if (comment) {
+      this.addComment(comment);
+    }
+
+    const previousUserId = this.previousUserId;
+
+    const timelineEvent = TimelineEvent.createTimelineEvent(
+      type,
+      authenticatedUserId,
+      {
+        assignedTo: userId,
+        previouslyAssignedTo: previousUserId,
+      },
+      comment?.ref,
+    );
+
+    this.setAssignedUser(userId);
+    this.addTimelineEvent(timelineEvent);
+  }
+
   addComment(comment) {
     assertIsComment(comment);
-    this.comments.push(comment);
+    this.comments.unshift(comment);
     return comment;
+  }
+
+  addTimelineEvent(timelineEvent) {
+    assertIsTimelineEvent(timelineEvent);
+    this.timeline.unshift(timelineEvent);
+    return timelineEvent;
   }
 
   getUserIds() {
@@ -69,7 +117,7 @@ export class Case {
       comments: caseEvent.comments?.map(toComment) || [],
       timeline: [
         new TimelineEvent({
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
@@ -110,7 +158,7 @@ export class Case {
       ],
       timeline: [
         TimelineEvent.createMock({
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
           // 'createdBy' is hydrated on find-case-by-id

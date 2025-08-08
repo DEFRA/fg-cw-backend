@@ -1,18 +1,18 @@
+import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
-import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
-import { updateAssignedUser } from "../repositories/case.repository.js";
+import { findById, update } from "../repositories/case.repository.js";
 import { assignUserToCaseUseCase } from "./assign-user-to-case.use-case.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("node:crypto");
 
 describe("assignUserToCaseUseCase", () => {
   beforeEach(() => {
@@ -26,46 +26,36 @@ describe("assignUserToCaseUseCase", () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
 
+    randomUUID.mockReturnValue("BNHYYSYUSY4455-0099-DSDDSD");
+
     const mockUser = User.createMock({
       appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
     });
 
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: mockUser.id,
+      notes: "This is a test comment",
     });
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
 
-    const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      createdBy: "System", // TODO: user details need to come from authorised user
-      data: {
-        assignedTo: mockUser.id,
-        previouslyAssignedTo: mockCase.assignedUser.id,
-      },
-    });
-
-    expect(updateAssignedUser).toHaveBeenCalledWith(
-      mockCase._id,
-      mockUser.id,
-      timelineEvent,
-    );
+    expect(update).toHaveBeenCalledWith(mockCase);
   });
 
-  it("throws when case is not found", async () => {
+  it("throws when findById throws", async () => {
     const caseError = new Error("Case not found");
     const mockUser = User.createMock();
 
-    findCaseByIdUseCase.mockRejectedValue(caseError);
+    findById.mockRejectedValueOnce(caseError);
 
     await expect(
       assignUserToCaseUseCase({
@@ -74,17 +64,28 @@ describe("assignUserToCaseUseCase", () => {
       }),
     ).rejects.toThrow("Case not found");
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith("invalid-case-id");
+    expect(findById).toHaveBeenCalledWith("invalid-case-id");
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
-    expect(updateAssignedUser).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("throws not found when when case is null or undefined", async () => {
+    const mockUser = User.createMock();
+
+    await expect(
+      assignUserToCaseUseCase({
+        caseId: "invalid-case-id",
+        assignedUserId: mockUser.id,
+      }),
+    ).rejects.toThrow('Case with id "invalid-case-id" not found');
   });
 
   it("throws when user is not found", async () => {
     const mockCase = Case.createMock();
     const userError = new Error("User not found");
 
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockRejectedValue(userError);
 
     await expect(
@@ -94,9 +95,9 @@ describe("assignUserToCaseUseCase", () => {
       }),
     ).rejects.toThrow("User not found");
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findUserByIdUseCase).toHaveBeenCalledWith("invalid-user-id");
-    expect(updateAssignedUser).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("throws when workflow is not found", async () => {
@@ -104,7 +105,7 @@ describe("assignUserToCaseUseCase", () => {
     const mockUser = User.createMock();
     const workflowError = new Error("Workflow not found");
 
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
 
@@ -115,12 +116,12 @@ describe("assignUserToCaseUseCase", () => {
       }),
     ).rejects.toThrow("Workflow not found");
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
-    expect(updateAssignedUser).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("throws when update fails", async () => {
@@ -131,19 +132,10 @@ describe("assignUserToCaseUseCase", () => {
     });
     const repositoryError = new Error("Database update failed");
 
-    const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      createdBy: "System", // TODO: user details need to come from authorised user
-      data: {
-        assignedTo: mockUser.id,
-        previouslyAssignedTo: mockCase.assignedUser.id,
-      },
-    });
-
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
-    updateAssignedUser.mockRejectedValue(repositoryError);
+    update.mockRejectedValue(repositoryError);
 
     await expect(
       assignUserToCaseUseCase({
@@ -152,16 +144,12 @@ describe("assignUserToCaseUseCase", () => {
       }),
     ).rejects.toThrow("Database update failed");
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
-    expect(updateAssignedUser).toHaveBeenCalledWith(
-      mockCase._id,
-      mockUser.id,
-      timelineEvent,
-    );
+    expect(update).toHaveBeenCalledWith(mockCase);
   });
 
   it("throws when user lacks required roles", async () => {
@@ -171,7 +159,7 @@ describe("assignUserToCaseUseCase", () => {
       appRoles: ["ROLE_1"],
     });
 
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
+    findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
@@ -184,37 +172,25 @@ describe("assignUserToCaseUseCase", () => {
       `User with id "${mockUser.id}" does not have the required permissions to be assigned to this case.`,
     );
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
-    expect(updateAssignedUser).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("unassigns user when assignedUserId is null", async () => {
     const mockCase = Case.createMock();
-    findCaseByIdUseCase.mockResolvedValue(mockCase);
-    const timelineEvent = new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_UNASSIGNED,
-      createdBy: "System", // TODO: user details need to come from authorised user
-      data: {
-        assignedTo: null,
-        previouslyAssignedTo: mockCase.assignedUser.id,
-      },
-    });
+    findById.mockResolvedValue(mockCase);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: null,
     });
 
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(mockCase._id);
-    expect(updateAssignedUser).toHaveBeenCalledWith(
-      mockCase._id,
-      null,
-      timelineEvent,
-    );
+    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(update).toHaveBeenCalledWith(mockCase);
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
   });

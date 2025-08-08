@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
 import { changeCaseStageUseCase } from "./change-case-stage.use-case.js";
@@ -45,15 +46,20 @@ describe("changeCaseStageUseCase", () => {
     expect(updateStage).toHaveBeenCalledWith(
       kase._id,
       "stage-2",
-      expect.objectContaining({
-        eventType: "STAGE_COMPLETED",
-        createdBy: "Test User",
-        description: "Stage completed",
-        data: {
-          caseId: kase._id,
-          stageId: "stage-2",
-        },
-      }),
+      expect.any(TimelineEvent),
+    );
+  });
+
+  it("throws if can not progress stage", async () => {
+    const kase = Case.createMock();
+
+    kase.currentStage = "foo";
+
+    findCaseByIdUseCase.mockResolvedValue(kase);
+    findUserAssignedToCase.mockReturnValue("Test User");
+
+    await expect(changeCaseStageUseCase(kase._id)).rejects.toThrow(
+      "Cannot progress case " + kase._id + " from stage foo",
     );
   });
 

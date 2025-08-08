@@ -1,10 +1,39 @@
+import Boom from "@hapi/boom";
+import Joi from "joi";
+import { assertInstanceOf } from "../../common/assert.js";
+import { timelineEventTypeSchema } from "../schemas/cases/timeline/event-type.schema.js";
+import { idSchema } from "../schemas/id.schema.js";
+import { systemSchema } from "../schemas/system.schema.js";
+import { EventEnums } from "./event-enums.js";
 export class TimelineEvent {
+  static validationSchema = Joi.object({
+    eventType: timelineEventTypeSchema,
+    createdBy: Joi.alternatives().try(idSchema, systemSchema),
+    data: Joi.object().allow(null).optional(),
+    commentRef: idSchema.allow(null),
+    createdAt: Joi.string().isoDate(),
+    description: Joi.string(),
+  }).label("TimelineValidationSchema");
+
   constructor(props) {
-    this.createdAt = props.createdAt || new Date().toISOString();
-    this.eventType = props.eventType;
-    this.createdBy = props.createdBy;
-    this.description = TimelineEvent.eventDescriptions[props.eventType];
-    this.data = props.data;
+    const { error, value } = TimelineEvent.validationSchema.validate(props, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    if (error) {
+      throw Boom.badRequest(
+        `Invalid TimelineEvent: ${error.details.map((d) => d.message).join(", ")}`,
+      );
+    }
+
+    this.createdAt = value.createdAt || new Date().toISOString();
+    this.eventType = value.eventType;
+    this.createdBy = value.createdBy;
+    this.commentRef = value.commentRef;
+    this.description =
+      value.description || EventEnums.eventDescriptions[value.eventType];
+    this.data = value.data;
   }
 
   getUserIds() {
@@ -21,11 +50,11 @@ export class TimelineEvent {
 
   static createMock(props) {
     return new TimelineEvent({
-      eventType: TimelineEvent.eventTypes.CASE_CREATED,
-      createdBy: "Mickey Mouse",
+      eventType: EventEnums.eventTypes.CASE_CREATED,
+      createdBy: "System",
       createdAt: "2025-06-16T09:01:14.072Z",
       description:
-        TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.CASE_CREATED],
+        EventEnums.eventDescriptions[EventEnums.eventTypes.CASE_CREATED],
       data: {
         someOtherDetail: "any string",
       },
@@ -33,21 +62,14 @@ export class TimelineEvent {
     });
   }
 
-  static eventTypes = {
-    CASE_CREATED: "CASE_CREATED",
-    CASE_ASSIGNED: "CASE_ASSIGNED",
-    CASE_UNASSIGNED: "CASE_UNASSIGNED",
-    TASK_COMPLETED: "TASK_COMPLETED",
-    STAGE_COMPLETED: "STAGE_COMPLETED",
-  };
-
-  static eventDescriptions = {
-    CASE_CREATED: "Case received",
-    CASE_ASSIGNED: "Case assigned",
-    CASE_UNASSIGNED: "Case unassigned",
-    TASK_COMPLETED: "Task completed",
-    STAGE_COMPLETED: "Stage completed",
-  };
+  static createTimelineEvent(eventType, createdById, data, commentRef = null) {
+    return new TimelineEvent({
+      createdBy: createdById,
+      eventType,
+      commentRef,
+      data,
+    });
+  }
 }
 
 export const toTimelineEvents = (props) => {
@@ -56,4 +78,8 @@ export const toTimelineEvents = (props) => {
 
 export const toTimelineEvent = (props) => {
   return new TimelineEvent(props);
+};
+
+export const assertIsTimelineEvent = (obj) => {
+  return assertInstanceOf(obj, TimelineEvent, "TimelineEvent");
 };

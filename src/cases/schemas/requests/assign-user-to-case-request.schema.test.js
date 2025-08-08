@@ -24,4 +24,20 @@ describe("assignUserToCaseRequestSchema", () => {
     expect(error.name).toEqual("ValidationError");
     expect(error.details[0].message).toContain('"assignedUserId" is required');
   });
+
+  it("allows note text to be passed", () => {
+    const { error } = assignUserToCaseRequestSchema.validate({
+      assignedUserId: null,
+      notes: "This is a note for assigning user...",
+    });
+    expect(error).toBeUndefined();
+  });
+
+  it("expects note text to be a string", () => {
+    const { error } = assignUserToCaseRequestSchema.validate({
+      assignedUserId: null,
+      notes: 1234,
+    });
+    expect(error.details[0].message).toBe('"notes" must be a string');
+  });
 });

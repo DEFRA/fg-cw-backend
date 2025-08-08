@@ -1,29 +1,14 @@
 import Boom from "@hapi/boom";
 
+import { getAuthenticatedUser } from "../../common/auth.js";
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
-import {
-  findCaseByIdUseCase,
-  findUserAssignedToCase,
-} from "./find-case-by-id.use-case.js";
-
-const createStageTimelineEvent = (caseId, stageId, type, assignedUser) => {
-  return new TimelineEvent({
-    eventType: type,
-    createdBy: assignedUser, // user who completed the task
-    description:
-      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.STAGE_COMPLETED],
-    data: {
-      caseId,
-      stageId,
-    },
-  });
-};
+import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 
 export const changeCaseStageUseCase = async (caseId) => {
   const kase = await findCaseByIdUseCase(caseId);
-  const assignedUser = findUserAssignedToCase();
 
   const currentStageIndex = kase.stages.findIndex(
     (stage) => stage.id === kase.currentStage,
@@ -45,11 +30,13 @@ export const changeCaseStageUseCase = async (caseId) => {
   await updateStage(
     caseId,
     nextStage,
-    createStageTimelineEvent(
-      caseId,
-      nextStage,
-      TimelineEvent.eventTypes.STAGE_COMPLETED,
-      assignedUser,
+    TimelineEvent.createTimelineEvent(
+      EventEnums.eventTypes.STAGE_COMPLETED,
+      getAuthenticatedUser().id,
+      {
+        caseId,
+        stageId: nextStage,
+      },
     ),
   );
 

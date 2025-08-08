@@ -1,38 +1,22 @@
 import Boom from "@hapi/boom";
+import { getAuthenticatedUser } from "../../common/auth.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Permissions } from "../models/permissions.js";
-import { TimelineEvent } from "../models/timeline-event.js";
-import { updateAssignedUser } from "../repositories/case.repository.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
-const createTimelineEvent = (userId, kase, type) => {
-  return new TimelineEvent({
-    eventType: type,
-    createdBy: "System", // TODO: user details need to come from authorised user
-    data: {
-      assignedTo: userId,
-      previouslyAssignedTo: kase.assignedUser?.id,
-    },
-  });
-};
-
 export const assignUserToCaseUseCase = async (command) => {
-  const { assignedUserId, caseId } = command;
+  const { assignedUserId, caseId, notes } = command;
 
-  const kase = await findCaseByIdUseCase(caseId);
+  const kase = await findById(caseId);
+
+  if (!kase) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
 
   if (assignedUserId === null) {
-    await updateAssignedUser(
-      caseId,
-      null,
-      createTimelineEvent(
-        assignedUserId,
-        kase,
-        TimelineEvent.eventTypes.CASE_UNASSIGNED,
-      ),
-    );
-    return;
+    kase.assignUser(null, getAuthenticatedUser().id, notes);
+    return update(kase);
   }
 
   const [user, workflow] = await Promise.all([
@@ -40,6 +24,7 @@ export const assignUserToCaseUseCase = async (command) => {
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
+  // Check if the user we want to assign has permissions for the case...
   // TODO: This permission check should live inside Case once Case and Workflow are merged
   const permissions = new Permissions(workflow.requiredRoles);
 
@@ -49,11 +34,6 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  const timelineEvent = createTimelineEvent(
-    user.id,
-    kase,
-    TimelineEvent.eventTypes.CASE_ASSIGNED,
-  );
-
-  await updateAssignedUser(caseId, user.id, timelineEvent);
+  kase.assignUser(assignedUserId, getAuthenticatedUser().id, notes);
+  return update(kase);
 };

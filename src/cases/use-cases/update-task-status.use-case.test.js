@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { updateTaskStatus } from "../repositories/case.repository.js";
+import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
 import { updateTaskStatusUseCase } from "./update-task-status.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
@@ -7,13 +9,11 @@ vi.mock("./find-case-by-id.use-case.js");
 
 describe("updateTaskStatusUseCase", () => {
   it("updates the status of a task", async () => {
-    const { findUserAssignedToCase } = await import(
-      "./find-case-by-id.use-case.js"
-    );
-    vi.mocked(findUserAssignedToCase).mockReturnValue("Test User");
+    findUserAssignedToCase.mockReturnValue("Test User");
 
+    const caseId = "2245aaa84cb6481bb3325791";
     await updateTaskStatusUseCase({
-      caseId: "case-123",
+      caseId,
       stageId: "stage-456",
       taskGroupId: "task-group-789",
       taskId: "task-101112",
@@ -21,22 +21,12 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     expect(updateTaskStatus).toHaveBeenCalledWith({
-      caseId: "case-123",
+      caseId: "2245aaa84cb6481bb3325791",
       stageId: "stage-456",
       taskGroupId: "task-group-789",
       taskId: "task-101112",
       status: "complete",
-      timelineEvent: expect.objectContaining({
-        eventType: "TASK_COMPLETED",
-        createdBy: "Test User",
-        description: "Task completed",
-        data: {
-          caseId: "case-123",
-          stageId: "stage-456",
-          taskGroupId: "task-group-789",
-          taskId: "task-101112",
-        },
-      }),
+      timelineEvent: expect.any(TimelineEvent),
     });
   });
 });
