@@ -28,45 +28,43 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
-  createComment(text, type) {
-    if (text) {
-      return this.addComment(
-        new Comment({
-          type,
-          createdBy: "System",
-          text: encodeURIComponent(text),
-        }),
-      );
-    } else {
-      return null;
-    }
+  get previousUserId() {
+    return this.assignedUser?.id;
   }
 
-  createTimelineEvent(userId, type, commentRef = null) {
-    return new TimelineEvent({
-      eventType: type,
-      createdBy: "System", // TODO: user details need to come from authorised user
-      commentRef,
-      data: {
-        assignedTo: userId,
-        previouslyAssignedTo: this.assignedUser?.id,
-      },
-    });
-  }
-
-  setAssignedUserId(userId) {
+  setAssignedUser(userId) {
     this.assignedUserId = userId;
     this.assignedUser = userId ? { id: userId } : null;
   }
 
-  assignUser(userId, note) {
+  assignUser(userId, authenticatedUserId, note) {
     const type = userId
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
-    const comment = this.createComment(note, type);
-    const timelineEvent = this.createTimelineEvent(userId, type, comment?.ref);
 
-    this.setAssignedUserId(userId);
+    const comment = Comment.createOptionalComment(
+      note,
+      type,
+      authenticatedUserId,
+    );
+
+    if (comment) {
+      this.addComment(comment);
+    }
+
+    const previousUserId = this.previousUserId;
+
+    const timelineEvent = TimelineEvent.createTimelineEvent(
+      type,
+      authenticatedUserId,
+      {
+        assignedTo: userId,
+        previouslyAssignedTo: previousUserId,
+      },
+      comment?.ref,
+    );
+
+    this.setAssignedUser(userId);
     this.addTimelineEvent(timelineEvent);
   }
 

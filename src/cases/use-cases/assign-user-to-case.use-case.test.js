@@ -51,11 +51,11 @@ describe("assignUserToCaseUseCase", () => {
     expect(update).toHaveBeenCalledWith(mockCase);
   });
 
-  it("throws when case is not found", async () => {
+  it("throws when findById throws", async () => {
     const caseError = new Error("Case not found");
     const mockUser = User.createMock();
 
-    findById.mockRejectedValue(caseError);
+    findById.mockRejectedValueOnce(caseError);
 
     await expect(
       assignUserToCaseUseCase({
@@ -68,6 +68,17 @@ describe("assignUserToCaseUseCase", () => {
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("throws not found when when case is null or undefined", async () => {
+    const mockUser = User.createMock();
+
+    await expect(
+      assignUserToCaseUseCase({
+        caseId: "invalid-case-id",
+        assignedUserId: mockUser.id,
+      }),
+    ).rejects.toThrow('Case with id "invalid-case-id" not found');
   });
 
   it("throws when user is not found", async () => {

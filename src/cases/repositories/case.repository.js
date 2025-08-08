@@ -73,7 +73,6 @@ export const update = async (kase) => {
 
 export const findAll = async () => {
   const caseDocuments = await db.collection(collection).find().toArray();
-
   return caseDocuments.map(toCase);
 };
 
@@ -112,7 +111,7 @@ export const updateTaskStatus = async ({
   status,
   timelineEvent,
 }) => {
-  const eventToPush = await timelineEvent;
+  const eventToPush = timelineEvent;
   const updateOperation = {
     $set: {
       "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,

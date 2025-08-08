@@ -31,7 +31,7 @@ export class Comment {
 
     this.ref = value.ref || new ObjectId().toHexString();
     this.type = value.type;
-    this.text = value.text;
+    this.text = encodeURIComponent(value.text);
     this.createdBy = value.createdBy;
     this.createdAt = value.createdAt || new Date().toISOString();
   }
@@ -47,6 +47,19 @@ export class Comment {
 
   static createMock(props) {
     return new Comment(props);
+  }
+
+  // returns a comment or null if text is empty
+  static createOptionalComment(text, type, createdById) {
+    if (text) {
+      return new Comment({
+        createdBy: createdById,
+        type,
+        text,
+      });
+    } else {
+      return null;
+    }
   }
 }
 

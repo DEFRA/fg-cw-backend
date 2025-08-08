@@ -7,5 +7,6 @@ export const timelineEventTypeSchema = Joi.string()
     "CASE_UNASSIGNED",
     "SUBMISSION",
     "TASK_COMPLETED",
+    "STAGE_COMPLETED",
   )
   .required();

@@ -22,7 +22,7 @@ describe("Comment", () => {
 
       expect(comment.ref).toBe("64c88faac1f56f71e1b89a33");
       expect(comment.type).toBe("NOTE_ADDED");
-      expect(comment.text).toBe("Test comment text");
+      expect(comment.text).toBe("Test%20comment%20text");
       expect(comment.createdBy).toBe("user-123");
       expect(comment.createdAt).toBe("2025-01-01T00:00:00.000Z");
     });
@@ -182,7 +182,7 @@ describe("toComment", () => {
 
     expect(comment).toBeInstanceOf(Comment);
     expect(comment.type).toBe("NOTE_ADDED");
-    expect(comment.text).toBe("Test comment text");
+    expect(comment.text).toBe("Test%20comment%20text");
     expect(comment.createdBy).toBe("user-123");
   });
 });
@@ -207,8 +207,8 @@ describe("toComments", () => {
     expect(comments).toHaveLength(2);
     expect(comments[0]).toBeInstanceOf(Comment);
     expect(comments[1]).toBeInstanceOf(Comment);
-    expect(comments[0].text).toBe("First comment");
-    expect(comments[1].text).toBe("Second comment");
+    expect(comments[0].text).toBe("First%20comment");
+    expect(comments[1].text).toBe("Second%20comment");
   });
 
   it("returns empty array when props is null", () => {
