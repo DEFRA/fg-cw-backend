@@ -152,6 +152,7 @@ describe("Cases", () => {
           dateReceived: expect.any(Date),
           timeline: [
             {
+              commentRef: null,
               eventType: "CASE_CREATED",
               createdAt: expect.any(String),
               description: "Case received",
