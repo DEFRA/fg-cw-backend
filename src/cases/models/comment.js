@@ -18,8 +18,7 @@ export class Comment {
   });
 
   constructor(props) {
-    const { encode, ...rest } = props;
-    const { error, value } = Comment.validationSchema.validate(rest, {
+    const { error, value } = Comment.validationSchema.validate(props, {
       stripUnknown: true,
       abortEarly: false,
     });
@@ -32,13 +31,9 @@ export class Comment {
 
     this.ref = value.ref || new ObjectId().toHexString();
     this.type = value.type;
-    this.text = this.safeEncodeText(value.text, encode);
+    this.text = value.text;
     this.createdBy = value.createdBy;
     this.createdAt = value.createdAt || new Date().toISOString();
-  }
-
-  safeEncodeText(text, encode = true) {
-    return encode ? encodeURIComponent(text) : text;
   }
 
   getUserIds() {
@@ -81,7 +76,7 @@ export class Comment {
  * @returns
  */
 export const toComment = (props) => {
-  return new Comment({ ...props, encode: false });
+  return new Comment(props);
 };
 
 export const toComments = (props) => {
