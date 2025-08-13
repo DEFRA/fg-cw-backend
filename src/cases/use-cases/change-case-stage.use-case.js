@@ -24,6 +24,21 @@ export const changeCaseStageUseCase = async (caseId) => {
     );
   }
 
+  const allTasksStatus = [];
+  kase.stages[currentStageIndex].taskGroups.forEach((taskGroup) => {
+    taskGroup.tasks.forEach((task) => allTasksStatus.push(task.status));
+  });
+
+  const allTasksComplete = allTasksStatus.every(
+    (status) => status === "complete",
+  );
+
+  if (!allTasksComplete) {
+    throw Boom.badRequest(
+      `Cannot progress case ${caseId} from stage ${kase.currentStage} - some tasks are not complete.`,
+    );
+  }
+
   // Get the next stage ID
   const nextStage = kase.stages[currentStageIndex + 1].id;
 

@@ -14,9 +14,15 @@ vi.mock("./find-case-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../publishers/case-event.publisher.js");
 
+const createMock = () => {
+  const kase = Case.createMock();
+  kase.stages[0].taskGroups[0].tasks[0].status = "complete";
+  return kase;
+};
+
 describe("changeCaseStageUseCase", () => {
   it("uses findCaseByIdUseCase to get the case", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
@@ -35,8 +41,20 @@ describe("changeCaseStageUseCase", () => {
     ).rejects.toThrow('Case with id "non-existent-case-id" not found');
   });
 
+  it("throws when tasks are not complete", async () => {
+    const kase = createMock();
+    kase.stages[0].taskGroups[0].tasks[0].status = "pending";
+
+    findCaseByIdUseCase.mockResolvedValue(kase);
+    findUserAssignedToCase.mockReturnValue("Test User");
+
+    await expect(() => changeCaseStageUseCase(kase._id)).rejects.toThrow(
+      `Cannot progress case ${kase._id} from stage ${kase.currentStage} - some tasks are not complete.`,
+    );
+  });
+
   it("moves the case to the next stage", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
     findUserAssignedToCase.mockReturnValue("Test User");
@@ -51,7 +69,7 @@ describe("changeCaseStageUseCase", () => {
   });
 
   it("throws if can not progress stage", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     kase.currentStage = "foo";
 
@@ -64,7 +82,7 @@ describe("changeCaseStageUseCase", () => {
   });
 
   it("publishes CaseStageUpdated event", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
