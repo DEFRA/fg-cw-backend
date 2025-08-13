@@ -24,6 +24,10 @@ export default defineConfig({
       AWS_ACCESS_KEY_ID: "test",
       AWS_SECRET_ACCESS_KEY: "test",
       CREATE_NEW_CASE_SQS_URL: `http://sqs.eu-west-2.127.0.0.1:${LOCALSTACK_PORT}/000000000000/create_new_case`,
+      OIDC_JWKS_URI:
+        "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+      OIDC_VERIFY_ISS: "https://sts.windows.net/common/",
+      OIDC_VERIFY_AUD: "api://common",
     },
     hookTimeout: 120000,
   },
