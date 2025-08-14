@@ -60,25 +60,6 @@ describe("addNoteToCaseUseCase", () => {
 
   it("throws error when case is not found", async () => {
     const command = {
-      caseId: "invalid-case-id",
-      type: "NOTE_ADDED",
-      text: "This is a test note",
-    };
-
-    const caseError = new Error("Case not found");
-    findById.mockRejectedValue(caseError);
-
-    await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
-      "Case not found",
-    );
-
-    expect(findById).toHaveBeenCalledWith("invalid-case-id");
-    expect(getAuthenticatedUser).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  it("throws error when findById returns null", async () => {
-    const command = {
       caseId: "non-existent-case-id",
       type: "NOTE_ADDED",
       text: "This is a test note",
@@ -86,7 +67,9 @@ describe("addNoteToCaseUseCase", () => {
 
     findById.mockResolvedValue(null);
 
-    await expect(addNoteToCaseUseCase(command)).rejects.toThrow();
+    await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
+      'Case with id "non-existent-case-id" not found',
+    );
 
     expect(findById).toHaveBeenCalledWith("non-existent-case-id");
     expect(update).not.toHaveBeenCalled();

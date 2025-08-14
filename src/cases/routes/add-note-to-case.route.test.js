@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import hapi from "@hapi/hapi";
 import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -190,6 +191,26 @@ describe("addNoteToCaseRoute", () => {
     });
   });
 
+  it("returns 404 not found when case does not exist", async () => {
+    const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
+    const payload = {
+      type: "NOTE_ADDED",
+      text: "This is a test note",
+    };
+
+    addNoteToCaseUseCase.mockRejectedValue(
+      Boom.notFound(`Case with id "${caseId}" not found`),
+    );
+
+    const { statusCode } = await server.inject({
+      method: "POST",
+      url: `/cases/${caseId}/notes`,
+      payload,
+    });
+
+    expect(statusCode).toEqual(404);
+  });
+
   it("returns 500 internal server error when use case throws error", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
     const payload = {
@@ -197,7 +218,9 @@ describe("addNoteToCaseRoute", () => {
       text: "This is a test note",
     };
 
-    addNoteToCaseUseCase.mockRejectedValue(new Error("Case not found"));
+    addNoteToCaseUseCase.mockRejectedValue(
+      new Error("Database connection failed"),
+    );
 
     const { statusCode } = await server.inject({
       method: "POST",
