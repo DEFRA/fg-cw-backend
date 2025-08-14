@@ -11,7 +11,9 @@ import { EventEnums } from "./event-enums.js";
 export class Comment {
   static validationSchema = Joi.object({
     ref: idSchema,
-    type: Joi.string().required(),
+    type: Joi.string()
+      .valid(...Object.values(EventEnums.eventTypes))
+      .required(),
     text: Joi.string().required(),
     createdBy: Joi.string().required(),
     createdAt: Joi.string().isoDate(),
