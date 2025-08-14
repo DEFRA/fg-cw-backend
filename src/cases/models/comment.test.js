@@ -6,6 +6,7 @@ import {
   toComment,
   toComments,
 } from "./comment.js";
+import { EventEnums } from "./event-enums.js";
 
 describe("Comment", () => {
   describe("constructor", () => {
@@ -121,6 +122,52 @@ describe("Comment", () => {
 
       expect(() => new Comment(props)).toThrow("Invalid Comment");
     });
+
+    describe("type validation", () => {
+      it("accepts all valid event types from EventEnums", () => {
+        Object.values(EventEnums.eventTypes).forEach((eventType) => {
+          const props = {
+            type: eventType,
+            text: "Test comment text",
+            createdBy: "user-123",
+          };
+
+          const comment = new Comment(props);
+          expect(comment.type).toBe(eventType);
+        });
+      });
+
+      it("throws bad request when type is invalid", () => {
+        const props = {
+          type: "INVALID_TYPE",
+          text: "Test comment text",
+          createdBy: "user-123",
+        };
+
+        expect(() => new Comment(props)).toThrow("Invalid Comment");
+        expect(() => new Comment(props)).toThrow('"type" must be one of');
+      });
+
+      it("throws bad request when type is empty string", () => {
+        const props = {
+          type: "",
+          text: "Test comment text",
+          createdBy: "user-123",
+        };
+
+        expect(() => new Comment(props)).toThrow("Invalid Comment");
+      });
+
+      it("throws bad request when type is null", () => {
+        const props = {
+          type: null,
+          text: "Test comment text",
+          createdBy: "user-123",
+        };
+
+        expect(() => new Comment(props)).toThrow("Invalid Comment");
+      });
+    });
   });
 
   describe("getUserIds", () => {
@@ -156,16 +203,6 @@ describe("Comment", () => {
       });
 
       expect(comment.title).toBe("Task");
-    });
-
-    it("returns 'General' for unknown type", () => {
-      const comment = new Comment({
-        type: "UNKNOWN_TYPE",
-        text: "Unknown type comment",
-        createdBy: "user-123",
-      });
-
-      expect(comment.title).toBe("General");
     });
   });
 });
