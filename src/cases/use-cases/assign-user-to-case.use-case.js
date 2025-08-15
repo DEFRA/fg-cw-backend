@@ -15,7 +15,10 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   if (assignedUserId === null) {
-    kase.assignUser(null, getAuthenticatedUser().id, notes);
+    kase.unassignUser({
+      text: notes,
+      createdBy: getAuthenticatedUser().id,
+    });
     return update(kase);
   }
 
@@ -34,6 +37,11 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  kase.assignUser(assignedUserId, getAuthenticatedUser().id, notes);
+  kase.assignUser({
+    assignedUserId,
+    text: notes,
+    createdBy: getAuthenticatedUser().id,
+  });
+
   return update(kase);
 };

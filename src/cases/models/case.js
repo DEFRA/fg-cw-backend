@@ -2,11 +2,14 @@ import { ObjectId } from "mongodb";
 import {
   assertIsComment,
   assertIsCommentsArray,
-  Comment,
   toComment,
 } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
+import {
+  assertIsTimelineEvent,
+  assertIsTimeLineEventArray,
+  TimelineEvent,
+} from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
@@ -20,7 +23,7 @@ export class Case {
     this.payload = props.payload;
     this.stages = props.stages;
     this.comments = assertIsCommentsArray(props.comments);
-    this.timeline = props.timeline || [];
+    this.timeline = assertIsTimeLineEventArray(props.timeline);
     this.requiredRoles = props.requiredRoles;
   }
 
@@ -28,56 +31,62 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
-  get previousUserId() {
-    return this.assignedUser?.id;
+  unassignUser({ text, createdBy }) {
+    this.assignUser({
+      assignedUserId: null,
+      text,
+      createdBy,
+    });
   }
 
-  setAssignedUser(userId) {
+  assignUser({ assignedUserId, text, createdBy }) {
+    const eventType = assignedUserId
+      ? EventEnums.eventTypes.CASE_ASSIGNED
+      : EventEnums.eventTypes.CASE_UNASSIGNED;
+
+    const timelineEvent = TimelineEvent.createAssignUserEvent({
+      eventType,
+      data: {
+        assignedTo: assignedUserId,
+        previouslyAssignedTo: this.assignedUser?.id,
+      },
+      text,
+      createdBy,
+    });
+
+    this.#setAssignedUser(assignedUserId);
+    this.#addTimelineEvent(timelineEvent);
+  }
+
+  addNote({ text, createdBy }) {
+    const timelineEvent = TimelineEvent.createNoteAddedEvent({
+      text,
+      createdBy,
+    });
+    this.#addTimelineEvent(timelineEvent);
+    return timelineEvent.comment;
+  }
+
+  #setAssignedUser(userId) {
     this.assignedUserId = userId;
     this.assignedUser = userId ? { id: userId } : null;
   }
 
-  assignUser(userId, authenticatedUserId, note) {
-    const type = userId
-      ? EventEnums.eventTypes.CASE_ASSIGNED
-      : EventEnums.eventTypes.CASE_UNASSIGNED;
+  #addTimelineEvent(timelineEvent) {
+    assertIsTimelineEvent(timelineEvent);
+    this.timeline.unshift(timelineEvent);
 
-    const comment = Comment.createOptionalComment(
-      note,
-      type,
-      authenticatedUserId,
-    );
-
-    if (comment) {
-      this.addComment(comment);
+    if (timelineEvent.comment) {
+      this.#addComment(timelineEvent.comment);
     }
 
-    const previousUserId = this.previousUserId;
-
-    const timelineEvent = TimelineEvent.createTimelineEvent(
-      type,
-      authenticatedUserId,
-      {
-        assignedTo: userId,
-        previouslyAssignedTo: previousUserId,
-      },
-      comment?.ref,
-    );
-
-    this.setAssignedUser(userId);
-    this.addTimelineEvent(timelineEvent);
+    return timelineEvent;
   }
 
-  addComment(comment) {
+  #addComment(comment) {
     assertIsComment(comment);
     this.comments.unshift(comment);
     return comment;
-  }
-
-  addTimelineEvent(timelineEvent) {
-    assertIsTimelineEvent(timelineEvent);
-    this.timeline.unshift(timelineEvent);
-    return timelineEvent;
   }
 
   getUserIds() {
