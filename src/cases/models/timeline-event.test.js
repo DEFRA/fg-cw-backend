@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, NOTE_ADDED, CASE_ASSIGNED, CASE_UNASSIGNED, SUBMISSION, TASK_COMPLETED, STAGE_COMPLETED]',
+        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
       );
     });
   });
@@ -153,6 +153,142 @@ describe("TimelineEvent", () => {
           "Must provide a valid TimelineEvent object",
         );
       });
+    });
+  });
+
+  describe("createTimelineEvent", () => {
+    it("creates timeline event with comment when text provided", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.NOTE_ADDED,
+        text: "Test note",
+        data: { key: "value" },
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createTimelineEvent(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.NOTE_ADDED);
+      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
+      expect(timelineEvent.data).toEqual({ key: "value" });
+      expect(timelineEvent.comment).toBeDefined();
+      expect(timelineEvent.comment.text).toBe("Test note");
+      expect(timelineEvent.comment.type).toBe(EventEnums.eventTypes.NOTE_ADDED);
+    });
+
+    it("creates timeline event without comment when text not provided", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.CASE_CREATED,
+        createdBy: "System",
+      };
+
+      const timelineEvent = TimelineEvent.createTimelineEvent(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_CREATED);
+      expect(timelineEvent.createdBy).toBe("System");
+      expect(timelineEvent.comment).toBeNull();
+    });
+  });
+
+  describe("createAssignUserEvent", () => {
+    it("creates assignment timeline event with comment", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+        data: {
+          assignedTo: "64c88faac1f56f71e1b89a34",
+          previouslyAssignedTo: null,
+        },
+        text: "Assignment note",
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_ASSIGNED);
+      expect(timelineEvent.data.assignedTo).toBe("64c88faac1f56f71e1b89a34");
+      expect(timelineEvent.comment.text).toBe("Assignment note");
+      expect(timelineEvent.comment.type).toBe(
+        EventEnums.eventTypes.CASE_ASSIGNED,
+      );
+    });
+
+    it("creates assignment timeline event without comment", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+        data: {
+          assignedTo: "64c88faac1f56f71e1b89a34",
+          previouslyAssignedTo: null,
+        },
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_ASSIGNED);
+      expect(timelineEvent.data.assignedTo).toBe("64c88faac1f56f71e1b89a34");
+      expect(timelineEvent.comment).toBe(null);
+    });
+
+    it("creates unassignment timeline event with comment", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.CASE_UNASSIGNED,
+        data: {
+          assignedTo: null,
+          previouslyAssignedTo: "64c88faac1f56f71e1b89a34",
+        },
+        text: "Unassignment note",
+        createdBy: "System",
+      };
+
+      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+
+      expect(timelineEvent.eventType).toBe(
+        EventEnums.eventTypes.CASE_UNASSIGNED,
+      );
+      expect(timelineEvent.data.previouslyAssignedTo).toBe(
+        "64c88faac1f56f71e1b89a34",
+      );
+      expect(timelineEvent.comment.text).toBe("Unassignment note");
+      expect(timelineEvent.comment.type).toBe(
+        EventEnums.eventTypes.CASE_UNASSIGNED,
+      );
+    });
+
+    it("creates unassignment timeline event without comment", () => {
+      const props = {
+        eventType: EventEnums.eventTypes.CASE_UNASSIGNED,
+        data: {
+          assignedTo: null,
+          previouslyAssignedTo: "64c88faac1f56f71e1b89a34",
+        },
+        createdBy: "System",
+      };
+
+      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+
+      expect(timelineEvent.eventType).toBe(
+        EventEnums.eventTypes.CASE_UNASSIGNED,
+      );
+      expect(timelineEvent.data.previouslyAssignedTo).toBe(
+        "64c88faac1f56f71e1b89a34",
+      );
+      expect(timelineEvent.comment).toBeNull();
+    });
+  });
+
+  describe("createNoteAddedEvent", () => {
+    it("creates note added timeline event", () => {
+      const props = {
+        text: "General note",
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createNoteAddedEvent(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.NOTE_ADDED);
+      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
+      expect(timelineEvent.comment).toBeDefined();
+      expect(timelineEvent.comment.text).toBe("General note");
+      expect(timelineEvent.comment.type).toBe(EventEnums.eventTypes.NOTE_ADDED);
     });
   });
 });
