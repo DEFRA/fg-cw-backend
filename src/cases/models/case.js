@@ -23,7 +23,7 @@ export class Case {
     this.payload = props.payload;
     this.stages = props.stages;
     this.comments = assertIsCommentsArray(props.comments);
-    this.timeline = assertIsTimeLineEventArray(props.timeline);
+    this.timeline = assertIsTimeLineEventArray(props.timeline ?? []);
     this.requiredRoles = props.requiredRoles;
   }
 
