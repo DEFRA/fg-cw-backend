@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import {
   assertIsComment,
@@ -59,6 +60,10 @@ export class Case {
   }
 
   addNote({ text, createdBy }) {
+    if (!text || !text.trim()) {
+      throw Boom.badRequest(`Note text is required and cannot be empty.`);
+    }
+
     const timelineEvent = TimelineEvent.createNoteAddedEvent({
       text,
       createdBy,
