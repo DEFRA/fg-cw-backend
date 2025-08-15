@@ -4,13 +4,15 @@ import { assertInstanceOf } from "../../common/assert.js";
 import { timelineEventTypeSchema } from "../schemas/cases/timeline/event-type.schema.js";
 import { idSchema } from "../schemas/id.schema.js";
 import { systemSchema } from "../schemas/system.schema.js";
+import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+
 export class TimelineEvent {
   static validationSchema = Joi.object({
-    eventType: timelineEventTypeSchema,
+    eventType: timelineEventTypeSchema.required(),
     createdBy: Joi.alternatives().try(idSchema, systemSchema),
     data: Joi.object().allow(null).optional(),
-    commentRef: idSchema.allow(null),
+    comment: Comment.validationSchema.allow(null).optional(),
     createdAt: Joi.string().isoDate(),
     description: Joi.string(),
   }).label("TimelineValidationSchema");
@@ -30,7 +32,7 @@ export class TimelineEvent {
     this.createdAt = value.createdAt || new Date().toISOString();
     this.eventType = value.eventType;
     this.createdBy = value.createdBy;
-    this.commentRef = value.commentRef;
+    this.comment = value.comment;
     this.description =
       value.description || EventEnums.eventDescriptions[value.eventType];
     this.data = value.data;
@@ -62,22 +64,57 @@ export class TimelineEvent {
     });
   }
 
-  static createTimelineEvent(eventType, createdById, data, commentRef = null) {
+  static createTimelineEvent({ eventType, data = null, text, createdBy }) {
+    const comment = Comment.createOptionalComment({
+      type: eventType,
+      text,
+      createdBy,
+    });
+
     return new TimelineEvent({
-      createdBy: createdById,
       eventType,
-      commentRef,
+      comment,
       data,
+      createdBy,
+    });
+  }
+
+  static createAssignUserEvent({ eventType, data, text, createdBy }) {
+    return TimelineEvent.createTimelineEvent({
+      eventType,
+      data,
+      text,
+      createdBy,
+    });
+  }
+
+  static createNoteAddedEvent({ text, createdBy }) {
+    return TimelineEvent.createTimelineEvent({
+      eventType: EventEnums.eventTypes.NOTE_ADDED,
+      text,
+      createdBy,
     });
   }
 }
 
-export const toTimelineEvents = (props) => {
-  return props?.map(toTimelineEvent) || [];
+export const toTimelineEvents = (timelineEventDocs, comments) => {
+  return (
+    timelineEventDocs?.map((timelineEventDoc) =>
+      toTimelineEvent(timelineEventDoc, comments),
+    ) || []
+  );
 };
 
-export const toTimelineEvent = (props) => {
-  return new TimelineEvent(props);
+export const toTimelineEvent = (timelineEventDoc, comments) => {
+  const comment = timelineEventDoc.commentRef
+    ? comments.find((c) => c.ref === timelineEventDoc.commentRef)
+    : null;
+
+  return new TimelineEvent({ ...timelineEventDoc, comment });
+};
+
+export const assertIsTimeLineEventArray = (arr) => {
+  return arr.map((obj) => assertIsTimelineEvent(obj));
 };
 
 export const assertIsTimelineEvent = (obj) => {

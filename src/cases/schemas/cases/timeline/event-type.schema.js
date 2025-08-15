@@ -1,12 +1,6 @@
 import Joi from "joi";
-export const timelineEventTypeSchema = Joi.string()
-  .valid(
-    "CASE_CREATED",
-    "NOTE_ADDED",
-    "CASE_ASSIGNED",
-    "CASE_UNASSIGNED",
-    "SUBMISSION",
-    "TASK_COMPLETED",
-    "STAGE_COMPLETED",
-  )
-  .required();
+import { EventEnums } from "../../../models/event-enums.js";
+
+export const timelineEventTypeSchema = Joi.string().valid(
+  ...Object.values(EventEnums.eventTypes),
+);

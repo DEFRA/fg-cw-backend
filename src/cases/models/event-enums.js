@@ -13,12 +13,12 @@ export const EventEnums = {
     CASE_UNASSIGNED: "Case unassigned",
     TASK_COMPLETED: "Task completed",
     STAGE_COMPLETED: "Stage completed",
-    NOTE_ADDED: "NOTE_ADDED",
+    NOTE_ADDED: "General note added",
   },
   noteDescriptions: {
     NOTE_ADDED: "General",
     TASK_COMPLETED: "Task",
-    CASE_UNASSIGNED: "Assignment",
+    CASE_UNASSIGNED: "Unassignment",
     CASE_ASSIGNED: "Assignment",
   },
 };
