@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getAuthenticatedUser } from "../../common/auth.js";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
@@ -8,6 +9,7 @@ import { findById, update } from "../repositories/case.repository.js";
 import { assignUserToCaseUseCase } from "./assign-user-to-case.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+vi.mock("../../common/auth.js");
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-case-by-id.use-case.js");
@@ -24,7 +26,10 @@ describe("assignUserToCaseUseCase", () => {
 
   it("assigns user to case when user has required roles", async () => {
     const mockCase = Case.createMock();
+    mockCase.assignUser = vi.fn();
+
     const mockWorkflow = Workflow.createMock();
+    const authenticatedUser = { id: "auth-user-123" };
 
     randomUUID.mockReturnValue("BNHYYSYUSY4455-0099-DSDDSD");
 
@@ -35,6 +40,7 @@ describe("assignUserToCaseUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
@@ -47,6 +53,12 @@ describe("assignUserToCaseUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
+    expect(getAuthenticatedUser).toHaveBeenCalled();
+    expect(mockCase.assignUser).toHaveBeenCalledWith({
+      assignedUserId: mockUser.id,
+      text: "This is a test comment",
+      createdBy: authenticatedUser.id,
+    });
 
     expect(update).toHaveBeenCalledWith(mockCase);
   });
@@ -126,15 +138,19 @@ describe("assignUserToCaseUseCase", () => {
 
   it("throws when update fails", async () => {
     const mockCase = Case.createMock();
+    mockCase.assignUser = vi.fn();
+
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
       appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
     });
+    const authenticatedUser = { id: "auth-user-123" };
     const repositoryError = new Error("Database update failed");
 
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockRejectedValue(repositoryError);
 
     await expect(
@@ -155,6 +171,7 @@ describe("assignUserToCaseUseCase", () => {
   it("throws when user lacks required roles", async () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
+    const authenticatedUser = { id: "auth-user-123" };
     const mockUser = User.createMock({
       appRoles: ["ROLE_1"],
     });
@@ -162,6 +179,7 @@ describe("assignUserToCaseUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(
       assignUserToCaseUseCase({
@@ -182,14 +200,24 @@ describe("assignUserToCaseUseCase", () => {
 
   it("unassigns user when assignedUserId is null", async () => {
     const mockCase = Case.createMock();
+    mockCase.unassignUser = vi.fn();
+    const authenticatedUser = { id: "auth-user-123" };
+
     findById.mockResolvedValue(mockCase);
+    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
       assignedUserId: null,
+      notes: "Unassigning user",
     });
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(getAuthenticatedUser).toHaveBeenCalled();
+    expect(mockCase.unassignUser).toHaveBeenCalledWith({
+      text: "Unassigning user",
+      createdBy: authenticatedUser.id,
+    });
     expect(update).toHaveBeenCalledWith(mockCase);
     expect(findUserByIdUseCase).not.toHaveBeenCalled();
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
