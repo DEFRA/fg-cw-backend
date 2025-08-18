@@ -1,5 +1,4 @@
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { updateTaskStatus } from "../repositories/case.repository.js";
 
@@ -15,15 +14,14 @@ export const updateTaskStatusUseCase = async (command) => {
     status,
     timelineEvent:
       command.status === "complete" &&
-      TimelineEvent.createTimelineEvent(
-        EventEnums.eventTypes.TASK_COMPLETED,
-        authUser.id,
-        {
+      TimelineEvent.createTaskCompleted({
+        data: {
           caseId,
           stageId,
           taskGroupId,
           taskId,
         },
-      ),
+        createdBy: authUser.id,
+      }),
   });
 };

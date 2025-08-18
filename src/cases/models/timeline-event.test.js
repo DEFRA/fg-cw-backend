@@ -165,7 +165,7 @@ describe("TimelineEvent", () => {
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createTimelineEvent(props);
+      const timelineEvent = TimelineEvent.create(props);
 
       expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.NOTE_ADDED);
       expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
@@ -181,7 +181,7 @@ describe("TimelineEvent", () => {
         createdBy: "System",
       };
 
-      const timelineEvent = TimelineEvent.createTimelineEvent(props);
+      const timelineEvent = TimelineEvent.create(props);
 
       expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_CREATED);
       expect(timelineEvent.createdBy).toBe("System");
@@ -201,7 +201,7 @@ describe("TimelineEvent", () => {
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+      const timelineEvent = TimelineEvent.createAssignUser(props);
 
       expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_ASSIGNED);
       expect(timelineEvent.data.assignedTo).toBe("64c88faac1f56f71e1b89a34");
@@ -221,7 +221,7 @@ describe("TimelineEvent", () => {
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+      const timelineEvent = TimelineEvent.createAssignUser(props);
 
       expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_ASSIGNED);
       expect(timelineEvent.data.assignedTo).toBe("64c88faac1f56f71e1b89a34");
@@ -239,7 +239,7 @@ describe("TimelineEvent", () => {
         createdBy: "System",
       };
 
-      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+      const timelineEvent = TimelineEvent.createAssignUser(props);
 
       expect(timelineEvent.eventType).toBe(
         EventEnums.eventTypes.CASE_UNASSIGNED,
@@ -263,7 +263,7 @@ describe("TimelineEvent", () => {
         createdBy: "System",
       };
 
-      const timelineEvent = TimelineEvent.createAssignUserEvent(props);
+      const timelineEvent = TimelineEvent.createAssignUser(props);
 
       expect(timelineEvent.eventType).toBe(
         EventEnums.eventTypes.CASE_UNASSIGNED,
@@ -282,7 +282,7 @@ describe("TimelineEvent", () => {
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createNoteAddedEvent(props);
+      const timelineEvent = TimelineEvent.createNoteAdded(props);
 
       expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.NOTE_ADDED);
       expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");

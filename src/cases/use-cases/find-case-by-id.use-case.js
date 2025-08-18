@@ -20,6 +20,7 @@ export const findCaseByIdUseCase = async (caseId) => {
       tl.data.assignedTo = userMap.get(tl.data.assignedTo);
     }
     tl.commentRef = mapComment(tl.comment);
+    tl.comment = undefined;
     return tl;
   });
 
@@ -51,5 +52,5 @@ export const findUserAssignedToCase = () => {
 };
 
 const mapComment = (comment) => {
-  return comment?.ref || null;
+  return comment?.ref || undefined;
 };

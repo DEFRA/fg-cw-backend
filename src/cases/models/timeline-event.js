@@ -64,7 +64,7 @@ export class TimelineEvent {
     });
   }
 
-  static createTimelineEvent({ eventType, data = null, text, createdBy }) {
+  static create({ eventType, data = null, text, createdBy }) {
     const comment = Comment.createOptionalComment({
       type: eventType,
       text,
@@ -79,8 +79,8 @@ export class TimelineEvent {
     });
   }
 
-  static createAssignUserEvent({ eventType, data, text, createdBy }) {
-    return TimelineEvent.createTimelineEvent({
+  static createAssignUser({ eventType, data, text, createdBy }) {
+    return TimelineEvent.create({
       eventType,
       data,
       text,
@@ -88,10 +88,26 @@ export class TimelineEvent {
     });
   }
 
-  static createNoteAddedEvent({ text, createdBy }) {
-    return TimelineEvent.createTimelineEvent({
+  static createNoteAdded({ text, createdBy }) {
+    return TimelineEvent.create({
       eventType: EventEnums.eventTypes.NOTE_ADDED,
       text,
+      createdBy,
+    });
+  }
+
+  static createStageCompleted({ data, createdBy }) {
+    return TimelineEvent.create({
+      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      data,
+      createdBy,
+    });
+  }
+
+  static createTaskCompleted({ data, createdBy }) {
+    return TimelineEvent.create({
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      data,
       createdBy,
     });
   }
@@ -111,10 +127,6 @@ export const toTimelineEvent = (timelineEventDoc, comments) => {
     : null;
 
   return new TimelineEvent({ ...timelineEventDoc, comment });
-};
-
-export const assertIsTimeLineEventArray = (arr) => {
-  return arr.map((obj) => assertIsTimelineEvent(obj));
 };
 
 export const assertIsTimelineEvent = (obj) => {

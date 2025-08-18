@@ -3,13 +3,10 @@ import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
-import { toComments } from "../models/comment.js";
-import { toTimelineEvents } from "../models/timeline-event.js";
 
 const collection = "cases";
 
 const toCase = (doc) => {
-  const comments = toComments(doc.comments);
   return new Case({
     _id: doc._id.toHexString(),
     caseRef: doc.caseRef,
@@ -20,8 +17,8 @@ const toCase = (doc) => {
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
-    comments,
-    timeline: toTimelineEvents(doc.timeline, comments),
+    comments: doc.comments,
+    timeline: doc.timeline,
     assignedUser: doc.assignedUserId
       ? {
           id: doc.assignedUserId,

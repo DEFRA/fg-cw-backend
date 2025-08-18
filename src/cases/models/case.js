@@ -1,19 +1,18 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import {
-  assertIsComment,
-  assertIsCommentsArray,
-  toComment,
-} from "./comment.js";
+import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
   assertIsTimelineEvent,
-  assertIsTimeLineEventArray,
   TimelineEvent,
+  toTimelineEvents,
 } from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
+    const comments = toComments(props.comments);
+    const timeline = toTimelineEvents(props.timeline, comments);
+
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -23,8 +22,8 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
-    this.comments = assertIsCommentsArray(props.comments);
-    this.timeline = assertIsTimeLineEventArray(props.timeline ?? []);
+    this.comments = comments;
+    this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
   }
 
@@ -45,7 +44,7 @@ export class Case {
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
 
-    const timelineEvent = TimelineEvent.createAssignUserEvent({
+    const timelineEvent = TimelineEvent.createAssignUser({
       eventType,
       data: {
         assignedTo: assignedUserId,
@@ -64,12 +63,28 @@ export class Case {
       throw Boom.badRequest(`Note text is required and cannot be empty.`);
     }
 
-    const timelineEvent = TimelineEvent.createNoteAddedEvent({
+    const timelineEvent = TimelineEvent.createNoteAdded({
       text,
       createdBy,
     });
     this.#addTimelineEvent(timelineEvent);
     return timelineEvent.comment;
+  }
+
+  getUserIds() {
+    const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
+
+    const timelineUserIds = this.timeline.flatMap((event) =>
+      event.getUserIds(),
+    );
+
+    const commentUserIds = this.comments.flatMap((comment) =>
+      comment.getUserIds(),
+    );
+
+    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
+
+    return [...new Set(allUserIds)];
   }
 
   #setAssignedUser(userId) {
@@ -94,22 +109,6 @@ export class Case {
     return comment;
   }
 
-  getUserIds() {
-    const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
-
-    const timelineUserIds = this.timeline.flatMap((event) =>
-      event.getUserIds(),
-    );
-
-    const commentUserIds = this.comments.flatMap((comment) =>
-      comment.getUserIds(),
-    );
-
-    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
-
-    return [...new Set(allUserIds)];
-  }
-
   static fromWorkflow(workflow, caseEvent) {
     return new Case({
       caseRef: caseEvent.clientRef,
@@ -128,15 +127,15 @@ export class Case {
           })),
         })),
       })),
-      comments: caseEvent.comments?.map(toComment) || [],
+      comments: caseEvent.comments,
       timeline: [
-        new TimelineEvent({
+        {
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
           },
-        }),
+        },
       ],
       requiredRoles: workflow.requiredRoles,
     });
@@ -171,7 +170,7 @@ export class Case {
         },
       ],
       timeline: [
-        TimelineEvent.createMock({
+        {
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -180,7 +179,7 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        }),
+        },
       ],
       comments: [],
       assignedUser: {

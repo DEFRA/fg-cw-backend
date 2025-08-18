@@ -144,11 +144,12 @@ describe("addNoteToCaseUseCase", () => {
   });
 
   it("preserves existing comments when adding new note", async () => {
-    const existingComment = new Comment({
+    const existingComment = {
+      ref: new ObjectId().toHexString(),
       type: "NOTE_ADDED",
       text: "Existing comment",
       createdBy: "user-999",
-    });
+    };
 
     const mockCase = Case.createMock({
       comments: [existingComment],
@@ -166,7 +167,7 @@ describe("addNoteToCaseUseCase", () => {
     const result = await addNoteToCaseUseCase(command);
 
     expect(mockCase.comments).toHaveLength(2);
-    expect(mockCase.comments).toContain(existingComment);
+    expect(mockCase.comments[1].ref).toEqual(existingComment.ref);
     expect(mockCase.comments).toContain(result);
     expect(update).toHaveBeenCalledWith(mockCase);
   });

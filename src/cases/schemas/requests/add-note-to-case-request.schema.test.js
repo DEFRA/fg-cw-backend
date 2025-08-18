@@ -4,7 +4,6 @@ import { addNoteToCaseRequestSchema } from "./add-note-to-case-request.schema.js
 describe("addNoteToCaseRequestSchema", () => {
   it("validates valid request with type and text", () => {
     const validRequest = {
-      type: "NOTE_ADDED",
       text: "This is a test note",
     };
 
@@ -16,7 +15,6 @@ describe("addNoteToCaseRequestSchema", () => {
 
   it("strips unknown properties", () => {
     const requestWithUnknown = {
-      type: "NOTE_ADDED",
       text: "This is a test note",
       unknownProperty: "should be stripped",
       anotherUnknown: 123,
@@ -27,26 +25,12 @@ describe("addNoteToCaseRequestSchema", () => {
 
     expect(error).toBeUndefined();
     expect(value).toEqual({
-      type: "NOTE_ADDED",
       text: "This is a test note",
     });
   });
 
-  it("rejects request missing type", () => {
-    const invalidRequest = {
-      text: "This is a test note",
-    };
-
-    const { error } = addNoteToCaseRequestSchema.validate(invalidRequest);
-
-    expect(error).toBeDefined();
-    expect(error.details[0].message).toContain('"type" is required');
-  });
-
   it("rejects request missing text", () => {
-    const invalidRequest = {
-      type: "NOTE_ADDED",
-    };
+    const invalidRequest = {};
 
     const { error } = addNoteToCaseRequestSchema.validate(invalidRequest);
 
@@ -54,21 +38,8 @@ describe("addNoteToCaseRequestSchema", () => {
     expect(error.details[0].message).toContain('"text" is required');
   });
 
-  it("rejects request with empty type string", () => {
-    const invalidRequest = {
-      type: "",
-      text: "This is a test note",
-    };
-
-    const { error } = addNoteToCaseRequestSchema.validate(invalidRequest);
-
-    expect(error).toBeDefined();
-    expect(error.details[0].message).toContain("is not allowed to be empty");
-  });
-
   it("rejects request with empty text string", () => {
     const invalidRequest = {
-      type: "NOTE_ADDED",
       text: "",
     };
 
@@ -78,21 +49,8 @@ describe("addNoteToCaseRequestSchema", () => {
     expect(error.details[0].message).toContain("is not allowed to be empty");
   });
 
-  it("rejects request with null type", () => {
-    const invalidRequest = {
-      type: null,
-      text: "This is a test note",
-    };
-
-    const { error } = addNoteToCaseRequestSchema.validate(invalidRequest);
-
-    expect(error).toBeDefined();
-    expect(error.details[0].message).toContain('"type" must be a string');
-  });
-
   it("rejects request with null text", () => {
     const invalidRequest = {
-      type: "NOTE_ADDED",
       text: null,
     };
 
