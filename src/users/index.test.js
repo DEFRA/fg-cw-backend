@@ -20,7 +20,7 @@ describe("users", () => {
 
     expect(db.createIndex).toHaveBeenCalledWith(
       "users",
-      { idpId: 1 },
+      { idpId: 1, email: 1 },
       { unique: true },
     );
     expect(db.createIndex).toHaveBeenCalledWith(

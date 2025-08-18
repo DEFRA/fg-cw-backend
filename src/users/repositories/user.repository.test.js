@@ -42,7 +42,7 @@ describe("save", () => {
     const user = User.createMock();
 
     await expect(save(user)).rejects.toThrow(
-      Boom.conflict(`User with the same idpId already exists`),
+      Boom.conflict(`User with the same idpId or email already exists`),
     );
   });
 
