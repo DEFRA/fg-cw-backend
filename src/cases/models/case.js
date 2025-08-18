@@ -59,7 +59,7 @@ export class Case {
   }
 
   addNote({ text, createdBy }) {
-    if (!text || !text.trim()) {
+    if (!text?.trim()) {
       throw Boom.badRequest(`Note text is required and cannot be empty.`);
     }
 
