@@ -27,7 +27,7 @@ export const save = async (user) => {
     result = await db.collection(collection).insertOne(userDocument);
   } catch (error) {
     if (error.code === 11000) {
-      throw Boom.conflict(`User with the same idpId already exists`);
+      throw Boom.conflict(`User with the same idpId or email already exists`);
     }
     throw error;
   }

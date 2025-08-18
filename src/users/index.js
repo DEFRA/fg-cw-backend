@@ -12,7 +12,7 @@ export const users = {
   name: "users",
   async register(server) {
     await Promise.all([
-      db.createIndex("users", { idpId: 1 }, { unique: true }),
+      db.createIndex("users", { idpId: 1, email: 1 }, { unique: true }),
       db.createIndex("roles", { code: 1 }, { unique: true }),
     ]);
 
