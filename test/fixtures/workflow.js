@@ -61,6 +61,7 @@ export const workflowData1 = {
               id: "simple-review",
               title: "Simple Review",
               type: "boolean",
+              hasNote: "none",
             },
           ],
         },
