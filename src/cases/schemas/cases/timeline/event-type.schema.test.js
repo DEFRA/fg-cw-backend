@@ -5,10 +5,11 @@ describe("eventType Schema", () => {
   it("allows valid eventTypes", () => {
     [
       "CASE_CREATED",
-      "NOTE_ADDED",
       "CASE_ASSIGNED",
-      "SUBMISSION",
+      "CASE_UNASSIGNED",
       "TASK_COMPLETED",
+      "STAGE_COMPLETED",
+      "NOTE_ADDED",
     ].forEach((t) =>
       expect(timelineEventTypeSchema.validate(t).error).toBeUndefined(),
     );

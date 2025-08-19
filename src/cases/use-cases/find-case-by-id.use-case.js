@@ -16,9 +16,11 @@ export const findCaseByIdUseCase = async (caseId) => {
   kase.assignedUser = userMap.get(kase.assignedUser?.id) || null;
   kase.timeline = kase.timeline.map((tl) => {
     tl.createdBy = userMap.get(tl.createdBy);
-    if (tl.data.assignedTo) {
+    if (tl.data?.assignedTo) {
       tl.data.assignedTo = userMap.get(tl.data.assignedTo);
     }
+    tl.commentRef = mapComment(tl.comment);
+    tl.comment = undefined;
     return tl;
   });
 
@@ -47,4 +49,8 @@ const createUserMap = async (userIds) => {
 
 export const findUserAssignedToCase = () => {
   return "System"; // TODO: get user who has completed the task from auth
+};
+
+const mapComment = (comment) => {
+  return comment?.ref || undefined;
 };

@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseUseCase } from "./create-case.use-case.js";
@@ -9,6 +10,15 @@ vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
 describe("createCaseUseCase", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-01-01T00:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("creates a case", async () => {
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
@@ -29,66 +39,74 @@ describe("createCaseUseCase", () => {
             ],
           },
         ],
+        requiredRoles: {
+          allOf: ["ROLE_1", "ROLE_2"],
+          anyOf: ["ROLE_3"],
+        },
       }),
     );
 
     const kase = await createCaseUseCase({
       code: "wf-001",
       clientRef: "TEST-001",
-      createdAt: new Date().toISOString(),
-      submittedAt: new Date().toISOString(),
+      createdAt: "2025-01-01T00:00:00.000Z",
+      submittedAt: "2025-01-01T00:00:00.000Z",
       identifiers: {},
       answers: {},
     });
 
     expect(save).toHaveBeenCalledWith(kase);
 
-    expect(kase).toEqual(
-      new Case({
-        _id: expect.any(String),
-        caseRef: "TEST-001",
-        workflowCode: "wf-001",
-        status: "NEW",
-        dateReceived: expect.any(String),
-        payload: {
-          clientRef: "TEST-001",
-          code: "wf-001",
-          createdAt: expect.any(String),
-          submittedAt: expect.any(String),
-          identifiers: {},
-          answers: {},
-        },
-        currentStage: "stage-1",
-        stages: [
-          {
-            id: "stage-1",
-            taskGroups: [
-              {
-                id: "task-group-1",
-                tasks: [
-                  {
-                    id: "task-1",
-                    status: "pending",
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        timeline: [
-          {
-            eventType: "CASE_CREATED",
-            createdAt: expect.any(String),
-            description: "Case received",
-            createdBy: "System",
-            data: {
-              caseRef: "TEST-001",
+    const expectedCase = new Case({
+      _id: expect.any(String),
+      caseRef: "TEST-001",
+      workflowCode: "wf-001",
+      status: "NEW",
+      dateReceived: "2025-01-01T00:00:00.000Z",
+      payload: {
+        clientRef: "TEST-001",
+        code: "wf-001",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        submittedAt: "2025-01-01T00:00:00.000Z",
+        identifiers: {},
+        answers: {},
+      },
+      currentStage: "stage-1",
+      stages: [
+        {
+          id: "stage-1",
+          taskGroups: [
+            {
+              id: "task-group-1",
+              tasks: [
+                {
+                  id: "task-1",
+                  status: "pending",
+                },
+              ],
             },
+          ],
+        },
+      ],
+      timeline: [
+        TimelineEvent.create({
+          eventType: "CASE_CREATED",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          description: "Case received",
+          createdBy: "System",
+          data: {
+            caseRef: "TEST-001",
           },
-        ],
-        comments: [],
-        assignedUser: null,
-      }),
-    );
+        }),
+      ],
+      comments: [],
+      assignedUser: null,
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
+    });
+
+    expect(kase).toEqual(expectedCase);
   });
 });

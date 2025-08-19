@@ -29,11 +29,10 @@ export const addNoteToCaseRoute = {
   },
   async handler(request, h) {
     const { caseId } = request.params;
-    const { type, text } = request.payload;
+    const { text } = request.payload;
 
     const note = await addNoteToCaseUseCase({
       caseId,
-      type,
       text,
     });
 
