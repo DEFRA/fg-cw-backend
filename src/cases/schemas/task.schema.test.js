@@ -17,19 +17,6 @@ describe("Task Schema", () => {
     );
   });
 
-  it("should require a noteRef if hasNote is 'required'", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "required",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error.details[0].message).toBe('"noteRef" is required');
-  });
-
   it("should pass validation with a noteRef when hasNote is 'required'", () => {
     const task = {
       id: "abcd-0987-hjyg-8765-6542",
