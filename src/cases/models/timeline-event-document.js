@@ -8,7 +8,3 @@ export class TimelineEventDocument {
     this.data = props.data;
   }
 }
-
-export const toTimelineEventDocument = (props) => {
-  return new TimelineEventDocument(props);
-};
