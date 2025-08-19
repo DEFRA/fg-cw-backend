@@ -16,7 +16,7 @@ export class CaseDocument {
     this.stages = props.stages;
     this.comments = props.comments;
     this.timeline = props.timeline.map(
-      (props) => new TimelineEventDocument(props),
+      (timelineProps) => new TimelineEventDocument(timelineProps),
     );
   }
 
