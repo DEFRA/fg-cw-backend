@@ -3,13 +3,11 @@ import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
 import { CaseDocument } from "../models/case-document.js";
 import { Case } from "../models/case.js";
-import { toComments } from "../models/comment.js";
-import { toTimelineEvents } from "../models/timeline-event.js";
 
 const collection = "cases";
 
-const toCase = (doc) =>
-  new Case({
+const toCase = (doc) => {
+  return new Case({
     _id: doc._id.toHexString(),
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
@@ -19,14 +17,15 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
-    comments: toComments(doc.comments),
-    timeline: toTimelineEvents(doc.timeline),
+    comments: doc.comments,
+    timeline: doc.timeline,
     assignedUser: doc.assignedUserId
       ? {
           id: doc.assignedUserId,
         }
       : null,
   });
+};
 
 export const save = async (kase) => {
   const caseDocument = new CaseDocument(kase);

@@ -1,10 +1,9 @@
 import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { Comment } from "../models/comment.js";
 import { findById, update } from "../repositories/case.repository.js";
 
 export const addNoteToCaseUseCase = async (command) => {
-  const { caseId, type, text } = command;
+  const { caseId, text } = command;
 
   const kase = await findById(caseId);
 
@@ -12,15 +11,12 @@ export const addNoteToCaseUseCase = async (command) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  const comment = new Comment({
-    type,
+  const note = kase.addNote({
     text,
     createdBy: getAuthenticatedUser().id,
   });
 
-  kase.addComment(comment);
-
   await update(kase);
 
-  return comment;
+  return note;
 };

@@ -8,7 +8,7 @@ export const TimelineUser = Joi.object({
 }).label("TimelineUser");
 
 export const timelineSchema = Joi.object({
-  eventType: timelineEventTypeSchema,
+  eventType: timelineEventTypeSchema.required(),
   createdBy: TimelineUser.required(),
   createdAt: Joi.string().isoDate().required(),
   description: Joi.string().required(),

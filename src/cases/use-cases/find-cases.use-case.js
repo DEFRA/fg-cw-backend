@@ -36,6 +36,16 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
   };
 };
 
+const mapTimeline = (timeline) => {
+  return (
+    timeline?.map((tl) => ({
+      ...tl,
+      commentRef: tl.comment ? tl.comment.ref : undefined,
+      comment: undefined,
+    })) || []
+  );
+};
+
 export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
@@ -68,6 +78,7 @@ export const findCasesUseCase = async () => {
       if (assignedUser) {
         kase.assignedUser.name = assignedUser.name;
       }
+      kase.timeline = mapTimeline(kase.timeline);
       acc.push(kase);
     }
     return acc;

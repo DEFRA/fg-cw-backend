@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { Case } from "../models/case.js";
@@ -9,12 +10,14 @@ vi.mock("../../common/auth.js");
 vi.mock("../repositories/case.repository.js");
 
 describe("addNoteToCaseUseCase", () => {
+  const validUserId = new ObjectId().toHexString();
+  const authenticatedUser = { id: validUserId };
+
   it("adds note to case successfully", async () => {
     const mockCase = Case.createMock();
-    const authenticatedUser = { id: "user-123" };
+
     const command = {
       caseId: mockCase._id,
-      type: "NOTE_ADDED",
       text: "This is a test note",
     };
 
@@ -30,7 +33,7 @@ describe("addNoteToCaseUseCase", () => {
     expect(result).toBeInstanceOf(Comment);
     expect(result.type).toBe("NOTE_ADDED");
     expect(result.text).toBe("This is a test note");
-    expect(result.createdBy).toBe("user-123");
+    expect(result.createdBy).toBe(authenticatedUser.id);
     expect(result.ref).toBeDefined();
     expect(result.createdAt).toBeDefined();
 
@@ -38,12 +41,11 @@ describe("addNoteToCaseUseCase", () => {
     expect(mockCase.comments).toContain(result);
   });
 
-  it("adds note with different type", async () => {
+  it("creates note with NOTE_ADDED type", async () => {
     const mockCase = Case.createMock();
-    const authenticatedUser = { id: "user-456" };
+
     const command = {
       caseId: mockCase._id,
-      type: "TASK_COMPLETED",
       text: "Task has been completed",
     };
 
@@ -53,15 +55,14 @@ describe("addNoteToCaseUseCase", () => {
 
     const result = await addNoteToCaseUseCase(command);
 
-    expect(result.type).toBe("TASK_COMPLETED");
+    expect(result.type).toBe("NOTE_ADDED");
     expect(result.text).toBe("Task has been completed");
-    expect(result.createdBy).toBe("user-456");
+    expect(result.createdBy).toBe(authenticatedUser.id);
   });
 
   it("throws error when case is not found", async () => {
     const command = {
       caseId: "non-existent-case-id",
-      type: "NOTE_ADDED",
       text: "This is a test note",
     };
 
@@ -75,12 +76,16 @@ describe("addNoteToCaseUseCase", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("throws error when comment creation fails", async () => {
-    const mockCase = Case.createMock();
-    const authenticatedUser = { id: "user-123" };
+  it("throws error when addNote fails", async () => {
+    const mockCase = {
+      ...Case.createMock(),
+      addNote: vi.fn().mockImplementation(() => {
+        throw new Error("Failed to add note");
+      }),
+    };
+
     const command = {
       caseId: mockCase._id,
-      type: "", // Invalid type - empty string
       text: "This is a test note",
     };
 
@@ -88,7 +93,7 @@ describe("addNoteToCaseUseCase", () => {
     getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
-      "Invalid Comment",
+      "Failed to add note",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
@@ -98,10 +103,9 @@ describe("addNoteToCaseUseCase", () => {
 
   it("throws error when comment text is missing", async () => {
     const mockCase = Case.createMock();
-    const authenticatedUser = { id: "user-123" };
+
     const command = {
       caseId: mockCase._id,
-      type: "NOTE_ADDED",
       text: "", // Invalid text - empty string
     };
 
@@ -109,33 +113,7 @@ describe("addNoteToCaseUseCase", () => {
     getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
-      "Invalid Comment",
-    );
-
-    expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  it("throws error when addComment fails", async () => {
-    const mockCase = {
-      ...Case.createMock(),
-      addComment: vi.fn().mockImplementation(() => {
-        throw new Error("Failed to add comment");
-      }),
-    };
-    const authenticatedUser = { id: "user-123" };
-    const command = {
-      caseId: mockCase._id,
-      type: "NOTE_ADDED",
-      text: "This is a test note",
-    };
-
-    findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
-
-    await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
-      "Failed to add comment",
+      "Note text is required and cannot be empty",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
@@ -145,10 +123,9 @@ describe("addNoteToCaseUseCase", () => {
 
   it("throws error when repository update fails", async () => {
     const mockCase = Case.createMock();
-    const authenticatedUser = { id: "user-123" };
+
     const command = {
       caseId: mockCase._id,
-      type: "NOTE_ADDED",
       text: "This is a test note",
     };
 
@@ -167,20 +144,19 @@ describe("addNoteToCaseUseCase", () => {
   });
 
   it("preserves existing comments when adding new note", async () => {
-    const existingComment = new Comment({
+    const existingComment = {
+      ref: new ObjectId().toHexString(),
       type: "NOTE_ADDED",
       text: "Existing comment",
       createdBy: "user-999",
-    });
+    };
 
     const mockCase = Case.createMock({
       comments: [existingComment],
     });
 
-    const authenticatedUser = { id: "user-123" };
     const command = {
       caseId: mockCase._id,
-      type: "NOTE_ADDED",
       text: "New comment",
     };
 
@@ -191,7 +167,7 @@ describe("addNoteToCaseUseCase", () => {
     const result = await addNoteToCaseUseCase(command);
 
     expect(mockCase.comments).toHaveLength(2);
-    expect(mockCase.comments).toContain(existingComment);
+    expect(mockCase.comments[1].ref).toEqual(existingComment.ref);
     expect(mockCase.comments).toContain(result);
     expect(update).toHaveBeenCalledWith(mockCase);
   });
