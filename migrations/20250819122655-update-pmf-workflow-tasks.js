@@ -43,7 +43,7 @@ export const up = async (db) => {
               type: "boolean",
               comment: {
                 label: "Note",
-                helpText: "All notes are saved for auditing purposes",
+                helpText: "Required note",
                 type: "REQUIRED",
               },
             },
@@ -53,8 +53,8 @@ export const up = async (db) => {
               type: "boolean",
               comment: {
                 label: "Note",
-                helpText: "All notes are saved for auditing purposes",
-                type: "REQUIRED",
+                helpText: "Optional note",
+                type: "OPTIONAL",
               },
             },
             {
@@ -63,7 +63,7 @@ export const up = async (db) => {
               type: "boolean",
               comment: {
                 label: "Note",
-                helpText: "All notes are saved for auditing purposes",
+                helpText: "Optional note",
                 type: "OPTIONAL",
               },
             },
@@ -79,7 +79,7 @@ export const up = async (db) => {
               type: "boolean",
               comment: {
                 label: "Note",
-                helpText: "All notes are saved for auditing purposes",
+                helpText: "Required notes",
                 type: "REQUIRED",
               },
             },
@@ -89,7 +89,7 @@ export const up = async (db) => {
               type: "boolean",
               comment: {
                 label: "Note",
-                helpText: "All notes are saved for auditing purposes",
+                helpText: "Required notes",
                 type: "REQUIRED",
               },
             },
@@ -97,11 +97,6 @@ export const up = async (db) => {
               id: "so3757-confirm-area-check",
               title: "Confirm available area check",
               type: "boolean",
-              comment: {
-                label: "Note",
-                helpText: "All notes are saved for auditing purposes",
-                type: "OPTIONAL",
-              },
             },
           ],
         },
