@@ -4,25 +4,21 @@ export const up = async (db) => {
     {
       $set: {
         // Update tasks - no note required
-        "stages.0.taskGroups.0.tasks.0.hasNote": "none",
         "stages.1.taskGroups.0.tasks": [
           {
             id: "check-application-and-documents",
             title: "Check application and documents",
             type: "boolean",
-            hasNote: "none",
           },
           {
             id: "check-find-farm-and-land-payment-data",
             title: "Check on Find farm and land payment data",
             type: "boolean",
-            hasNote: "none",
           },
           {
             id: "check-rps-dual-funding",
             title: "Check on RPS (Dual Funding)",
             type: "boolean",
-            hasNote: "none",
           },
         ],
         "stages.1.taskGroups.1.tasks": [
@@ -30,13 +26,11 @@ export const up = async (db) => {
             id: "confirm-farm-has-cph",
             title: "Confirm farm has a CPH",
             type: "boolean",
-            hasNote: "none",
           },
           {
             id: "confirm-apha-registration",
             title: "Confirm APHA registration",
             type: "boolean",
-            hasNote: "none",
           },
         ],
         "stages.1.taskGroups.2": {
@@ -47,19 +41,31 @@ export const up = async (db) => {
               id: "so3757-3159",
               title: "SFI available area check",
               type: "boolean",
-              hasNote: "required",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "REQUIRED",
+              },
             },
             {
               id: "so3757-3164",
               title: "SFI available area check",
               type: "boolean",
-              hasNote: "required",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "REQUIRED",
+              },
             },
             {
               id: "so3757-confirm-area-check",
               title: "Confirm available area check",
               type: "boolean",
-              hasNote: "optional",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "OPTIONAL",
+              },
             },
           ],
         },
@@ -71,19 +77,31 @@ export const up = async (db) => {
               id: "so3756-3059",
               title: "SFI intersecting layers check",
               type: "boolean",
-              hasNote: "required",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "REQUIRED",
+              },
             },
             {
               id: "so3756-3064",
               title: "SFI intersecting layers check",
               type: "boolean",
-              hasNote: "optional",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "REQUIRED",
+              },
             },
             {
               id: "so3757-confirm-area-check",
               title: "Confirm available area check",
               type: "boolean",
-              hasNote: "optional",
+              comment: {
+                label: "Note",
+                helpText: "All notes are saved for auditing purposes",
+                type: "OPTIONAL",
+              },
             },
           ],
         },
@@ -98,7 +116,6 @@ export const down = async (db) => {
     {
       $set: {
         // Revert task note
-        "stages.0.taskGroups.0.tasks.0.hasNote": null,
         "stages.1.taskGroups.0.tasks": [
           {
             id: "check-application-and-documents",

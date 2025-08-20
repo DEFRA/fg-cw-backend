@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { getAuthenticatedUser } from "../../common/auth.js";
 import {
   assertIsComment,
   assertIsCommentsArray,
@@ -35,6 +36,48 @@ export class Case {
   setAssignedUser(userId) {
     this.assignedUserId = userId;
     this.assignedUser = userId ? { id: userId } : null;
+  }
+
+  findTask(stageId, taskGroupId, taskId) {
+    const stage = this.stages.find((s) => s.id === stageId);
+    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
+    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+    return task;
+  }
+
+  updateTaskStatus(stageId, taskGroupId, taskId, status, note) {
+    const type = EventEnums.eventTypes.TASK_COMPLETED;
+    const authenticatedUserId = getAuthenticatedUser().id;
+    const comment = Comment.createOptionalComment(
+      note,
+      type,
+      authenticatedUserId,
+    );
+
+    const task = this.findTask(stageId, taskGroupId, taskId);
+
+    if (comment) {
+      this.addComment(comment);
+      task.commentRef = comment.ref;
+    }
+
+    task.status = status;
+
+    if (status === "complete") {
+      const timelineEvent = TimelineEvent.createTimelineEvent(
+        type,
+        authenticatedUserId,
+        {
+          caseId: this._id,
+          stageId,
+          taskGroupId,
+          taskId,
+        },
+        comment?.ref,
+      );
+
+      this.addTimelineEvent(timelineEvent);
+    }
   }
 
   assignUser(userId, authenticatedUserId, note) {

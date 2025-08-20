@@ -1,12 +1,12 @@
 import Joi from "joi";
+import { comment } from "./comment.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const Task = Joi.object({
   id: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
-  hasNote: Joi.string().valid("required", "optional", "none").default("none"),
-  noteRef: UrlSafeId.optional(),
+  comment: comment.optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({

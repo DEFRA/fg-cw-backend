@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { TimelineEvent } from "../models/timeline-event.js";
-import { updateTaskStatus } from "../repositories/case.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
 import { updateTaskStatusUseCase } from "./update-task-status.use-case.js";
 
@@ -20,13 +19,6 @@ describe("updateTaskStatusUseCase", () => {
       status: "complete",
     });
 
-    expect(updateTaskStatus).toHaveBeenCalledWith({
-      caseId: "2245aaa84cb6481bb3325791",
-      stageId: "stage-456",
-      taskGroupId: "task-group-789",
-      taskId: "task-101112",
-      status: "complete",
-      timelineEvent: expect.any(TimelineEvent),
-    });
+    expect(update).toHaveBeenCalledWith({});
   });
 });

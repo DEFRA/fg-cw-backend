@@ -2,96 +2,85 @@ import { describe, expect, it } from "vitest";
 import { Task } from "./task.schema.js";
 
 describe("Task Schema", () => {
-  it("should not allow invalid hasNote", () => {
+  it("should allow missing optional comment", () => {
     const task = {
       id: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
-      hasNote: "yes",
     };
 
     const { error } = Task.validate(task);
 
+    expect(error).toBeUndefined();
+  });
+
+  it("should have label if comment is provided", () => {
+    const task = {
+      id: "abcd-0987-hjyg-8765-6542",
+      title: "Test task",
+      type: "boolean",
+      comment: {
+        type: "CONDITIONAL",
+        helpText: "Please provide a note",
+      },
+    };
+
+    const { error } = Task.validate(task);
+
+    expect(error.details[0].message).toBe('"comment.label" is required');
+  });
+
+  it("should have helpText if comment is provided", () => {
+    const task = {
+      id: "abcd-0987-hjyg-8765-6542",
+      title: "Test task",
+      type: "boolean",
+      comment: {
+        type: "CONDITIONAL",
+        label: "Note",
+      },
+    };
+
+    const { error } = Task.validate(task);
+
+    expect(error.details[0].message).toBe('"comment.helpText" is required');
+  });
+
+  it("should validate allowed types", () => {
+    const types = ["CONDITIONAL", "REQUIRED", "OPTIONAL"];
+    const task = {
+      id: "abcd-0987-hjyg-8765-6542",
+      title: "Test task",
+      type: "boolean",
+      comment: {
+        type: "CONDITIONAL",
+        label: "Note",
+        helpText: "Please provide a note",
+      },
+    };
+
+    types.forEach((type) => {
+      task.comment.type = type;
+      const { error } = Task.validate(task);
+      expect(error).toBeUndefined();
+    });
+  });
+
+  it("should error with unknown comment type", () => {
+    const task = {
+      id: "abcd-0987-hjyg-8765-6542",
+      title: "Test task",
+      type: "boolean",
+      comment: {
+        type: "NOT_ALLOWED_TYPE",
+        label: "Note",
+        helpText: "Please provide a note",
+      },
+    };
+
+    const { error } = Task.validate(task);
     expect(error.details[0].message).toBe(
-      '"hasNote" must be one of [required, optional, none]',
+      '"comment.type" must be one of [CONDITIONAL, REQUIRED, OPTIONAL]',
     );
-  });
-
-  it("should pass validation with a noteRef when hasNote is 'required'", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "required",
-      noteRef: "1234-0987-hjyg-8765-6542",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
-  });
-
-  it("should not require a noteRef if hasNote is 'none'", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "none",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
-  });
-
-  it("should not require a noteRef if hasNote is 'optional'", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "optional",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
-  });
-
-  it("should pass validation with a noteRef if hasNote is 'optional'", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "optional",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
-  });
-
-  it("should allow 'none' as hasNote", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-      hasNote: "none",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
-  });
-
-  it("should allow undefined hasNote", () => {
-    const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
-      type: "boolean",
-    };
-
-    const { error } = Task.validate(task);
-
-    expect(error).toBeUndefined();
   });
 });
