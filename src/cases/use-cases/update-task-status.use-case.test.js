@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { update } from "../repositories/case.repository.js";
-import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
+import { Case } from "../models/case.js";
+import { findById, update } from "../repositories/case.repository.js";
 import { updateTaskStatusUseCase } from "./update-task-status.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
@@ -8,17 +8,21 @@ vi.mock("./find-case-by-id.use-case.js");
 
 describe("updateTaskStatusUseCase", () => {
   it("updates the status of a task", async () => {
-    findUserAssignedToCase.mockReturnValue("Test User");
+    const kase = Case.createMock();
+    findById.mockResolvedValue(kase);
 
-    const caseId = "2245aaa84cb6481bb3325791";
     await updateTaskStatusUseCase({
-      caseId,
-      stageId: "stage-456",
-      taskGroupId: "task-group-789",
-      taskId: "task-101112",
+      caseId: kase._id,
+      stageId: "stage-1",
+      taskGroupId: "stage-1-tasks",
+      taskId: "task-1",
       status: "complete",
+      comment: "This is a note/comment",
     });
 
-    expect(update).toHaveBeenCalledWith({});
+    const task = kase.stages[0].taskGroups[0].tasks[0];
+    expect(task.status).toBe("complete");
+    expect(task.commentRef).toBeDefined();
+    expect(update).toHaveBeenCalledWith(kase);
   });
 });
