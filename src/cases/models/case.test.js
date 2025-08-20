@@ -293,4 +293,78 @@ describe("Case", () => {
       expect(userIds).toHaveLength(1);
     });
   });
+
+  describe("updateTaskStatus", () => {
+    it("should find task", () => {
+      const kase = Case.createMock();
+      expect(kase.findTask("stage-1", "stage-1-tasks", "task-1")).toEqual({
+        id: "task-1",
+        status: "pending",
+      });
+    });
+
+    it("should throw if taskgroup doesn't exist", () => {
+      const kase = Case.createMock();
+      expect(() =>
+        kase.findTask("stage-1", "stage-2-tasks", "task-1"),
+      ).toThrowError(
+        "Can not find Task with id task-1 from taskGroup stage-2-tasks in stage stage-1",
+      );
+    });
+
+    it("should throw if stage doesn't exist", () => {
+      const kase = Case.createMock();
+      expect(() =>
+        kase.findTask("stage-unknown", "stage-1-tasks", "task-1"),
+      ).toThrowError(
+        "Can not find Task with id task-1 from taskGroup stage-1-tasks in stage stage-unknown",
+      );
+    });
+
+    it("should update stage", () => {
+      let task;
+      const kase = Case.createMock();
+      task = kase.findTask("stage-1", "stage-1-tasks", "task-1");
+      expect(task.status).toBe("pending");
+      expect(task.commentRef).toBeUndefined();
+
+      kase.updateTaskStatus(
+        "stage-1",
+        "stage-1-tasks",
+        "task-1",
+        "complete",
+        "This is a note",
+      );
+      task = kase.findTask("stage-1", "stage-1-tasks", "task-1");
+      expect(task.status).toBe("complete");
+      expect(task.commentRef).toBeDefined();
+    });
+  });
+
+  describe("assignUser", () => {
+    it("should assign user with no note", () => {
+      const kase = Case.createMock();
+      expect(kase.assignedUser.id).toBe("64c88faac1f56f71e1b89a33");
+      kase.assignUser("11118faac1f56f71e1b00000", "aaaa8faac1f56f71e1b44444");
+      expect(kase.assignedUser.id).toBe("11118faac1f56f71e1b00000");
+      expect(kase.timeline[0].eventType).toBe("CASE_ASSIGNED");
+      expect(kase.timeline[0].data).toEqual({
+        assignedTo: "11118faac1f56f71e1b00000",
+        previouslyAssignedTo: "64c88faac1f56f71e1b89a33",
+      });
+      expect(kase.timeline[0].createdBy).toBe("aaaa8faac1f56f71e1b44444");
+    });
+
+    it("should assign user with note", () => {
+      const kase = Case.createMock();
+      expect(kase.assignedUser.id).toBe("64c88faac1f56f71e1b89a33");
+      kase.assignUser(
+        "11118faac1f56f71e1b00000",
+        "aaaa8faac1f56f71e1b44444",
+        "Note",
+      );
+      expect(kase.timeline[0].commentRef).toBeDefined();
+      expect(kase.comments[0].text).toBe("Note");
+    });
+  });
 });
