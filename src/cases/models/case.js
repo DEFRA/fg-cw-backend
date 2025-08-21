@@ -70,6 +70,8 @@ export class Case {
     }
 
     task.status = status;
+    task.updatedAt = new Date().toISOString();
+    task.updatedBy = authenticatedUserId;
 
     if (status === "complete") {
       const timelineEvent = TimelineEvent.createTimelineEvent(
@@ -142,7 +144,20 @@ export class Case {
       comment.getUserIds(),
     );
 
-    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
+    const taskUserIds = this.stages
+      .flatMap((stage) =>
+        stage.taskGroups.flatMap((taskGroup) =>
+          taskGroup.tasks.flatMap((t) => t.updatedBy),
+        ),
+      )
+      .filter((id) => id !== undefined);
+
+    const allUserIds = [
+      ...caseUserIds,
+      ...timelineUserIds,
+      ...commentUserIds,
+      ...taskUserIds,
+    ];
 
     return [...new Set(allUserIds)];
   }

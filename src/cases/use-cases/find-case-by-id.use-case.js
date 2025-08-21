@@ -31,6 +31,19 @@ export const findCaseByIdUseCase = async (caseId) => {
     createdBy: userMap.get(comment.createdBy).name,
   }));
 
+  kase.stages = kase.stages.map((stage) => {
+    return {
+      ...stage,
+      taskGroups: stage.taskGroups.map((taskGroup) => ({
+        ...taskGroup,
+        tasks: taskGroup.tasks.map((task) => ({
+          ...task,
+          updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,
+        })),
+      })),
+    };
+  });
+
   return kase;
 };
 

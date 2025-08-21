@@ -112,6 +112,25 @@ describe("Cases", () => {
         ...caseData2,
         _id: caseId,
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        stages: [
+          {
+            ...caseData2.stages[0],
+            taskGroups: [
+              {
+                ...caseData2.stages[0].taskGroups[0],
+                tasks: [
+                  {
+                    ...caseData2.stages[0].taskGroups[0].tasks[0],
+                    updatedBy: null,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            ...caseData2.stages[1],
+          },
+        ],
         timeline: [
           {
             ...caseData2.timeline[0],
