@@ -1,17 +1,19 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import {
-  assertIsComment,
-  assertIsCommentsArray,
-  Comment,
-  toComment,
-} from "./comment.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
+import {
+  assertIsTimelineEvent,
+  TimelineEvent,
+  toTimelineEvents,
+} from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
+    const comments = toComments(props.comments);
+    const timeline = toTimelineEvents(props.timeline, comments);
+
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -21,8 +23,8 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
-    this.comments = assertIsCommentsArray(props.comments);
-    this.timeline = props.timeline || [];
+    this.comments = comments;
+    this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
   }
 
@@ -30,8 +32,12 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
-  get previousUserId() {
-    return this.assignedUser?.id;
+  unassignUser({ text, createdBy }) {
+    this.assignUser({
+      assignedUserId: null,
+      text,
+      createdBy,
+    });
   }
 
   setAssignedUser(userId) {
@@ -95,42 +101,31 @@ export class Case {
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
 
-    const comment = Comment.createOptionalComment(
-      note,
+    const timelineEvent = TimelineEvent.createAssignUser({
       type,
-      authenticatedUserId,
-    );
+      data: {
+        assignedTo: userId,
+        previouslyAssignedTo: this.assignedUser?.id,
+      },
+      note,
+      createdBy: authenticatedUserId,
+    });
 
-    if (comment) {
-      this.addComment(comment);
+    this.#setAssignedUser(userId);
+    this.#addTimelineEvent(timelineEvent);
+  }
+
+  addNote({ text, createdBy }) {
+    if (!text?.trim()) {
+      throw Boom.badRequest(`Note text is required and cannot be empty.`);
     }
 
-    const previousUserId = this.previousUserId;
-
-    const timelineEvent = TimelineEvent.createTimelineEvent(
-      type,
-      authenticatedUserId,
-      {
-        assignedTo: userId,
-        previouslyAssignedTo: previousUserId,
-      },
-      comment?.ref,
-    );
-
-    this.setAssignedUser(userId);
-    this.addTimelineEvent(timelineEvent);
-  }
-
-  addComment(comment) {
-    assertIsComment(comment);
-    this.comments.unshift(comment);
-    return comment;
-  }
-
-  addTimelineEvent(timelineEvent) {
-    assertIsTimelineEvent(timelineEvent);
-    this.timeline.unshift(timelineEvent);
-    return timelineEvent;
+    const timelineEvent = TimelineEvent.createNoteAdded({
+      text,
+      createdBy,
+    });
+    this.#addTimelineEvent(timelineEvent);
+    return timelineEvent.comment;
   }
 
   getUserIds() {
@@ -162,6 +157,28 @@ export class Case {
     return [...new Set(allUserIds)];
   }
 
+  #setAssignedUser(userId) {
+    this.assignedUserId = userId;
+    this.assignedUser = userId ? { id: userId } : null;
+  }
+
+  #addTimelineEvent(timelineEvent) {
+    assertIsTimelineEvent(timelineEvent);
+    this.timeline.unshift(timelineEvent);
+
+    if (timelineEvent.comment) {
+      this.#addComment(timelineEvent.comment);
+    }
+
+    return timelineEvent;
+  }
+
+  #addComment(comment) {
+    assertIsComment(comment);
+    this.comments.unshift(comment);
+    return comment;
+  }
+
   static fromWorkflow(workflow, caseEvent) {
     return new Case({
       caseRef: caseEvent.clientRef,
@@ -180,15 +197,15 @@ export class Case {
           })),
         })),
       })),
-      comments: caseEvent.comments?.map(toComment) || [],
+      comments: caseEvent.comments,
       timeline: [
-        new TimelineEvent({
+        {
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
           },
-        }),
+        },
       ],
       requiredRoles: workflow.requiredRoles,
     });
@@ -223,7 +240,7 @@ export class Case {
         },
       ],
       timeline: [
-        TimelineEvent.createMock({
+        {
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -232,7 +249,7 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        }),
+        },
       ],
       comments: [],
       assignedUser: {

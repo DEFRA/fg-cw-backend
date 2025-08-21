@@ -5,15 +5,14 @@ import {
   assertInstanceOf,
   assertIsArrayOfInstances,
 } from "../../common/assert.js";
+import { timelineEventTypeSchema } from "../schemas/cases/timeline/event-type.schema.js";
 import { idSchema } from "../schemas/id.schema.js";
 import { EventEnums } from "./event-enums.js";
 
 export class Comment {
   static validationSchema = Joi.object({
     ref: idSchema,
-    type: Joi.string()
-      .valid(...Object.values(EventEnums.eventTypes))
-      .required(),
+    type: timelineEventTypeSchema.required(),
     text: Joi.string().required(),
     createdBy: Joi.string().required(),
     createdAt: Joi.string().isoDate(),
@@ -51,18 +50,10 @@ export class Comment {
     return new Comment(props);
   }
 
-  /**
-   * Creates a comment if text is passed otherwise returns null.
-   * Use to avoid having to check if comment is defined when creating objects that use comment.ref
-   * @param {string} text
-   * @param {EventType} type
-   * @param {guid} createdById
-   * @returns
-   */
-  static createOptionalComment(text, type, createdById) {
+  static createOptionalComment({ type, text, createdBy }) {
     if (text) {
       return new Comment({
-        createdBy: createdById,
+        createdBy,
         type,
         text,
       });
@@ -72,11 +63,6 @@ export class Comment {
   }
 }
 
-/**
- * When returning data from db we do not want to encode the text. To prevent this pass in encode: false to the constructor.
- * @param {CommentProps} props
- * @returns
- */
 export const toComment = (props) => {
   return new Comment(props);
 };

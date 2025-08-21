@@ -1,7 +1,6 @@
 import Boom from "@hapi/boom";
 
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
@@ -45,14 +44,13 @@ export const changeCaseStageUseCase = async (caseId) => {
   await updateStage(
     caseId,
     nextStage,
-    TimelineEvent.createTimelineEvent(
-      EventEnums.eventTypes.STAGE_COMPLETED,
-      getAuthenticatedUser().id,
-      {
+    TimelineEvent.createStageCompleted({
+      data: {
         caseId,
         stageId: nextStage,
       },
-    ),
+      createdBy: getAuthenticatedUser().id,
+    }),
   );
 
   await publishCaseStageUpdated({
