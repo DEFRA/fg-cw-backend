@@ -16,6 +16,7 @@ export const setup = async ({ globalConfig }) => {
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
+      ENTRA_PORT: env.ENTRA_PORT,
     })
     .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()
