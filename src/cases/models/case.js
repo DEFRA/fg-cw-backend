@@ -85,22 +85,22 @@ export class Case {
     }
   }
 
-  assignUser(userId, authenticatedUserId, note) {
-    const eventType = userId
+  assignUser({ assignedUserId, createdBy, text }) {
+    const eventType = assignedUserId
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
 
     const timelineEvent = TimelineEvent.createAssignUser({
       eventType,
+      text,
       data: {
-        assignedTo: userId,
+        assignedTo: assignedUserId,
         previouslyAssignedTo: this.assignedUser?.id,
       },
-      note,
-      createdBy: authenticatedUserId,
+      createdBy,
     });
 
-    this.#setAssignedUser(userId);
+    this.#setAssignedUser(assignedUserId);
     this.#addTimelineEvent(timelineEvent);
   }
 

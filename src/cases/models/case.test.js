@@ -350,9 +350,12 @@ describe("Case", () => {
   describe("assignUser", () => {
     it("should assign user with no note", () => {
       const kase = Case.createMock();
-      expect(kase.assignedUser.id).toBe("64c88faac1f56f71e1b89a33");
-      kase.assignUser("11118faac1f56f71e1b00000", "aaaa8faac1f56f71e1b44444");
-      expect(kase.assignedUser.id).toBe("11118faac1f56f71e1b00000");
+      expect(kase.assignedUserId).toBeUndefined();
+      kase.assignUser({
+        assignedUserId: "11118faac1f56f71e1b00000",
+        createdBy: "aaaa8faac1f56f71e1b44444",
+      });
+      expect(kase.assignedUserId).toBe("11118faac1f56f71e1b00000");
       expect(kase.timeline[0].eventType).toBe("CASE_ASSIGNED");
       expect(kase.timeline[0].data).toEqual({
         assignedTo: "11118faac1f56f71e1b00000",
@@ -364,12 +367,12 @@ describe("Case", () => {
     it("should assign user with note", () => {
       const kase = Case.createMock();
       expect(kase.assignedUser.id).toBe("64c88faac1f56f71e1b89a33");
-      kase.assignUser(
-        "11118faac1f56f71e1b00000",
-        "aaaa8faac1f56f71e1b44444",
-        "Note",
-      );
-      expect(kase.timeline[0].commentRef).toBeDefined();
+      kase.assignUser({
+        assignedUserId: "11118faac1f56f71e1b00000",
+        createdBy: "aaaa8faac1f56f71e1b44444",
+        text: "Note",
+      });
+      expect(kase.timeline[0].comment).toBeDefined();
       expect(kase.comments[0].text).toBe("Note");
     });
   });
