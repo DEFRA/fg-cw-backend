@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { assertIsComment, Comment, toComments } from "./comment.js";
+import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
   assertIsTimelineEvent,
@@ -60,49 +60,38 @@ export class Case {
   }
 
   updateTaskStatus(stageId, taskGroupId, taskId, status, note) {
-    const type = EventEnums.eventTypes.TASK_COMPLETED;
     const authenticatedUserId = getAuthenticatedUser().id;
-    const comment = Comment.createOptionalComment(
-      note,
-      type,
-      authenticatedUserId,
-    );
 
     const task = this.findTask(stageId, taskGroupId, taskId);
-
-    if (comment) {
-      this.addComment(comment);
-      task.commentRef = comment.ref;
-    }
 
     task.status = status;
     task.updatedAt = new Date().toISOString();
     task.updatedBy = authenticatedUserId;
 
     if (status === "complete") {
-      const timelineEvent = TimelineEvent.createTimelineEvent(
-        type,
-        authenticatedUserId,
-        {
+      const timelineEvent = TimelineEvent.createTaskCompleted({
+        createdBy: authenticatedUserId,
+        text: note,
+        data: {
           caseId: this._id,
           stageId,
           taskGroupId,
           taskId,
         },
-        comment?.ref,
-      );
+      });
 
-      this.addTimelineEvent(timelineEvent);
+      this.#addTimelineEvent(timelineEvent);
+      task.commentRef = timelineEvent.comment.ref;
     }
   }
 
   assignUser(userId, authenticatedUserId, note) {
-    const type = userId
+    const eventType = userId
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
 
     const timelineEvent = TimelineEvent.createAssignUser({
-      type,
+      eventType,
       data: {
         assignedTo: userId,
         previouslyAssignedTo: this.assignedUser?.id,
