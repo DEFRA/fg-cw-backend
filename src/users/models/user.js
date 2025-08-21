@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { UserRole } from "./userRole.js";
 
 export class User {
   constructor(props) {
@@ -7,9 +8,23 @@ export class User {
     this.name = props.name;
     this.email = props.email;
     this.idpRoles = props.idpRoles || [];
-    this.appRoles = props.appRoles || [];
+    this.appRoles = props.appRoles;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+  }
+
+  createAppRole(appRoles) {
+    const result = {};
+
+    for (const [name, roleData] of Object.entries(appRoles)) {
+      result[name] = new UserRole({
+        name,
+        startDate: roleData.startDate,
+        endDate: roleData.endDate,
+      });
+    }
+
+    return result;
   }
 
   static createMock(props) {
@@ -18,7 +33,13 @@ export class User {
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: new UserRole({
+          name: "ROLE_RPA_CASES_APPROVE",
+          startDate: new Date("2025-07-01T00:00:00.000Z"),
+          endDate: new Date("2025-08-02T00:00:00.000Z"),
+        }),
+      },
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",
       ...props,
