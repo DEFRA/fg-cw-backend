@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
-const validatePayloadComment = (comment, required) => {
+export const validatePayloadComment = (comment, required) => {
   if (required && !comment) {
     throw Boom.badRequest("Comment is required");
   }
