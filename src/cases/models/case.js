@@ -86,7 +86,7 @@ export class Case {
       });
 
       this.#addTimelineEvent(timelineEvent);
-      task.commentRef = timelineEvent.comment.ref;
+      task.commentRef = timelineEvent.comment?.ref;
     }
   }
 
