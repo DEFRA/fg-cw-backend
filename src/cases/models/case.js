@@ -85,7 +85,8 @@ export class Case {
       createdBy,
     });
 
-    this.#getCurrentStage().setOutcome({
+    const currentStage = this.#getCurrentStage();
+    currentStage.setOutcome({
       actionId,
       commentRef: timelineEvent.comment?.ref,
       createdBy,
