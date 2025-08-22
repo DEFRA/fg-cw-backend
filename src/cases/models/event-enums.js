@@ -5,7 +5,6 @@ export const EventEnums = {
     CASE_UNASSIGNED: "CASE_UNASSIGNED",
     TASK_COMPLETED: "TASK_COMPLETED",
     STAGE_COMPLETED: "STAGE_COMPLETED",
-    STAGE_OUTCOME: "STAGE_OUTCOME",
     NOTE_ADDED: "NOTE_ADDED",
   },
   eventDescriptions: {
