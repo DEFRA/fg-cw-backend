@@ -120,7 +120,7 @@
           "label": "Approve",
           "comment": {
             "label": "Approval reason note",
-            "hint": "All notes will be saved for auditing purposes",
+            "helpText": "All notes will be saved for auditing purposes",
             "type": "REQUIRED"
           }
         }

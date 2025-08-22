@@ -104,7 +104,7 @@
           "label": "Approve",
           "comment": {
             "label": "Approval reason note",
-            "hint": "All notes will be saved for auditing purposes",
+            "helpText": "All notes will be saved for auditing purposes",
             "type": "REQUIRED"
           }
         },
@@ -113,7 +113,7 @@
           "label": "Put on hold",
           "comment": {
             "label": "Note (optional)",
-            "hint": "All notes will be saved for auditing purposes",
+            "helpText": "All notes will be saved for auditing purposes",
             "type": "OPTIONAL"
           }
         },
