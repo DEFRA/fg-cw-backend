@@ -11,6 +11,20 @@ export class Workflow {
     this.requiredRoles = props.requiredRoles;
   }
 
+  findTask(stageId, taskGroupId, taskId) {
+    const stage = this.findStage(stageId);
+    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
+    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+
+    if (!task) {
+      throw Boom.notFound(
+        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
+      );
+    }
+
+    return task;
+  }
+
   validateStageActionComment({ stageId, actionId, comment }) {
     const stage = this.findStage(stageId);
     const action = this.findAction(stage, actionId);

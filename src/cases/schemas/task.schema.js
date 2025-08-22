@@ -1,11 +1,12 @@
 import Joi from "joi";
-import { commentSchema } from "./comment.schema.js";
+import { comment } from "./comment.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
-const Task = Joi.object({
+export const Task = Joi.object({
   id: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
+  comment: comment.optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({
@@ -17,7 +18,7 @@ const TaskGroup = Joi.object({
 const Action = Joi.object({
   id: UrlSafeId.required(),
   label: Joi.string().required(),
-  comment: commentSchema.optional(),
+  comment: comment.optional(),
 }).label("Action");
 
 export const Stage = Joi.object({

@@ -41,18 +41,63 @@ export class Case {
     });
   }
 
-  assignUser({ assignedUserId, text, createdBy }) {
+  findTask({ stageId, taskGroupId, taskId }) {
+    const stage = this.stages.find((s) => s.id === stageId);
+    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
+    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+
+    if (!task) {
+      throw Boom.notFound(
+        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
+      );
+    }
+
+    return task;
+  }
+
+  updateTaskStatus({
+    stageId,
+    taskGroupId,
+    taskId,
+    status,
+    comment,
+    updatedBy,
+  }) {
+    const task = this.findTask({ stageId, taskGroupId, taskId });
+
+    task.status = status;
+    task.updatedAt = new Date().toISOString();
+    task.updatedBy = updatedBy;
+
+    if (status === "complete") {
+      const timelineEvent = TimelineEvent.createTaskCompleted({
+        createdBy: updatedBy,
+        text: comment,
+        data: {
+          caseId: this._id,
+          stageId,
+          taskGroupId,
+          taskId,
+        },
+      });
+
+      this.#addTimelineEvent(timelineEvent);
+      task.commentRef = timelineEvent.comment.ref;
+    }
+  }
+
+  assignUser({ assignedUserId, createdBy, text }) {
     const eventType = assignedUserId
       ? EventEnums.eventTypes.CASE_ASSIGNED
       : EventEnums.eventTypes.CASE_UNASSIGNED;
 
     const timelineEvent = TimelineEvent.createAssignUser({
       eventType,
+      text,
       data: {
         assignedTo: assignedUserId,
         previouslyAssignedTo: this.assignedUser?.id,
       },
-      text,
       createdBy,
     });
 
@@ -110,7 +155,20 @@ export class Case {
       comment.getUserIds(),
     );
 
-    const allUserIds = [...caseUserIds, ...timelineUserIds, ...commentUserIds];
+    const taskUserIds = this.stages
+      .flatMap((stage) =>
+        stage.taskGroups.flatMap((taskGroup) =>
+          taskGroup.tasks.flatMap((t) => t.updatedBy),
+        ),
+      )
+      .filter((id) => id !== undefined);
+
+    const allUserIds = [
+      ...caseUserIds,
+      ...timelineUserIds,
+      ...commentUserIds,
+      ...taskUserIds,
+    ];
 
     return [...new Set(allUserIds)];
   }
