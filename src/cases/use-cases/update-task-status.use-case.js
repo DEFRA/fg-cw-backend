@@ -1,27 +1,38 @@
+import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { TimelineEvent } from "../models/timeline-event.js";
-import { updateTaskStatus } from "../repositories/case.repository.js";
+import { findById, update } from "../repositories/case.repository.js";
+import { findByCode } from "../repositories/workflow.repository.js";
+
+export const validatePayloadComment = (comment, required) => {
+  if (required && !comment) {
+    throw Boom.badRequest("Comment is required");
+  }
+};
 
 export const updateTaskStatusUseCase = async (command) => {
-  const authUser = getAuthenticatedUser();
-  const { caseId, stageId, taskGroupId, taskId, status } = command;
+  const { caseId, stageId, taskGroupId, taskId, status, comment } = command;
 
-  await updateTaskStatus({
-    caseId,
+  const kase = await findById(caseId);
+
+  if (!kase) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
+
+  // get workflow->task to validate comment
+  const workflow = await findByCode(kase.workflowCode);
+  const task = workflow.findTask(stageId, taskGroupId, taskId);
+
+  validatePayloadComment(comment, task.comment?.type === "REQUIRED");
+
+  const updatedBy = getAuthenticatedUser().id;
+  kase.updateTaskStatus({
     stageId,
     taskGroupId,
     taskId,
     status,
-    timelineEvent:
-      command.status === "complete" &&
-      TimelineEvent.createTaskCompleted({
-        data: {
-          caseId,
-          stageId,
-          taskGroupId,
-          taskId,
-        },
-        createdBy: authUser.id,
-      }),
+    comment,
+    updatedBy,
   });
+
+  return update(kase);
 };

@@ -104,10 +104,11 @@ export class TimelineEvent {
     });
   }
 
-  static createTaskCompleted({ data, createdBy }) {
+  static createTaskCompleted({ data, text, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
       data,
+      text,
       createdBy,
     });
   }
