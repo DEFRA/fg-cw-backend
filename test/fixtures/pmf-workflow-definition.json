@@ -167,7 +167,7 @@
       ],
       "actions": [
         {
-          "id": "confirm-approval",
+          "id": "approve",
           "label": "Confirm Approval"
         },
         {
