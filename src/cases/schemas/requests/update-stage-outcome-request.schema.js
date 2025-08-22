@@ -2,7 +2,7 @@ import Joi from "joi";
 
 export const updateStageOutcomeRequestSchema = Joi.object({
   actionId: Joi.string().required(),
-  comment: Joi.string().optional(),
+  comment: Joi.string().allow("", null).optional(),
 })
   .options({
     presence: "required",

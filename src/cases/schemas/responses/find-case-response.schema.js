@@ -23,6 +23,13 @@ export const CaseStage = Joi.object({
       }),
     )
     .required(),
+  outcome: Joi.object({
+    actionId: UrlSafeId.required(),
+    comment: Joi.string().optional(),
+    commentRef: Joi.string().optional(),
+  })
+    .allow(null)
+    .optional(),
 }).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({

@@ -11,13 +11,16 @@ export class Stage {
       commentRef: Joi.string().optional(),
       createdBy: Joi.string().required(),
       createdAt: Joi.string().isoDate(),
-    }).optional(),
+    })
+      .allow(null)
+      .optional(),
   }).label("StageSchema");
 
   constructor(props) {
     const value = validateModel(props, Stage.schema);
     this.id = value.id;
     this.taskGroups = value.taskGroups.map((tg) => new TaskGroup(tg));
+    this.outcome = value.outcome;
   }
 
   setOutcome({ actionId, commentRef, createdBy }) {

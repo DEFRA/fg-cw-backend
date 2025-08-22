@@ -28,7 +28,6 @@ export class Workflow {
   validateStageActionComment({ stageId, actionId, comment }) {
     const stage = this.findStage(stageId);
     const action = this.findAction(stage, actionId);
-
     this.validateComment({ stageId, actionId, action, comment });
 
     return true;

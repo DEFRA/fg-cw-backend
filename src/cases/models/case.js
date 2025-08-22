@@ -55,6 +55,10 @@ export class Case {
     return task;
   }
 
+  findComment(commentRef) {
+    return this.comments.find((c) => c.ref === commentRef);
+  }
+
   updateTaskStatus({
     stageId,
     taskGroupId,
