@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
@@ -40,12 +39,7 @@ export class Case {
     });
   }
 
-  setAssignedUser(userId) {
-    this.assignedUserId = userId;
-    this.assignedUser = userId ? { id: userId } : null;
-  }
-
-  findTask(stageId, taskGroupId, taskId) {
+  findTask({ stageId, taskGroupId, taskId }) {
     const stage = this.stages.find((s) => s.id === stageId);
     const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
     const task = taskGroup?.tasks.find((t) => t.id === taskId);
@@ -59,19 +53,24 @@ export class Case {
     return task;
   }
 
-  updateTaskStatus(stageId, taskGroupId, taskId, status, note) {
-    const authenticatedUserId = getAuthenticatedUser().id;
-
-    const task = this.findTask(stageId, taskGroupId, taskId);
+  updateTaskStatus({
+    stageId,
+    taskGroupId,
+    taskId,
+    status,
+    comment,
+    updatedBy,
+  }) {
+    const task = this.findTask({ stageId, taskGroupId, taskId });
 
     task.status = status;
     task.updatedAt = new Date().toISOString();
-    task.updatedBy = authenticatedUserId;
+    task.updatedBy = updatedBy;
 
     if (status === "complete") {
       const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: authenticatedUserId,
-        text: note,
+        createdBy: updatedBy,
+        text: comment,
         data: {
           caseId: this._id,
           stageId,

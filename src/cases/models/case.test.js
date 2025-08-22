@@ -303,7 +303,13 @@ describe("Case", () => {
   describe("updateTaskStatus", () => {
     it("should find task", () => {
       const kase = Case.createMock();
-      expect(kase.findTask("stage-1", "stage-1-tasks", "task-1")).toEqual({
+      expect(
+        kase.findTask({
+          stageId: "stage-1",
+          taskGroupId: "stage-1-tasks",
+          taskId: "task-1",
+        }),
+      ).toEqual({
         id: "task-1",
         status: "pending",
       });
@@ -312,7 +318,11 @@ describe("Case", () => {
     it("should throw if taskgroup doesn't exist", () => {
       const kase = Case.createMock();
       expect(() =>
-        kase.findTask("stage-1", "stage-2-tasks", "task-1"),
+        kase.findTask({
+          stageId: "stage-1",
+          taskGroupId: "stage-2-tasks",
+          taskId: "task-1",
+        }),
       ).toThrowError(
         "Can not find Task with id task-1 from taskGroup stage-2-tasks in stage stage-1",
       );
@@ -321,29 +331,41 @@ describe("Case", () => {
     it("should throw if stage doesn't exist", () => {
       const kase = Case.createMock();
       expect(() =>
-        kase.findTask("stage-unknown", "stage-1-tasks", "task-1"),
+        kase.findTask({
+          stageId: "stage-unknown",
+          taskGroupId: "stage-1-tasks",
+          taskId: "task-1",
+        }),
       ).toThrowError(
         "Can not find Task with id task-1 from taskGroup stage-1-tasks in stage stage-unknown",
       );
     });
 
     it("should update stage", () => {
-      let task;
       const kase = Case.createMock();
-      task = kase.findTask("stage-1", "stage-1-tasks", "task-1");
-      expect(task.status).toBe("pending");
-      expect(task.commentRef).toBeUndefined();
+      const task1 = kase.findTask({
+        stageId: "stage-1",
+        taskGroupId: "stage-1-tasks",
+        taskId: "task-1",
+      });
+      expect(task1.status).toBe("pending");
+      expect(task1.commentRef).toBeUndefined();
 
-      kase.updateTaskStatus(
-        "stage-1",
-        "stage-1-tasks",
-        "task-1",
-        "complete",
-        "This is a note",
-      );
-      task = kase.findTask("stage-1", "stage-1-tasks", "task-1");
-      expect(task.status).toBe("complete");
-      expect(task.commentRef).toBeDefined();
+      kase.updateTaskStatus({
+        stageId: "stage-1",
+        taskGroupId: "stage-1-tasks",
+        taskId: "task-1",
+        status: "complete",
+        comment: "This is a note",
+        updatedBy: "099999999999999999999999",
+      });
+      const task2 = kase.findTask({
+        stageId: "stage-1",
+        taskGroupId: "stage-1-tasks",
+        taskId: "task-1",
+      });
+      expect(task2.status).toBe("complete");
+      expect(task2.commentRef).toBeDefined();
     });
   });
 
