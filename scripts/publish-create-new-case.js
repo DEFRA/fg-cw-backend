@@ -1,5 +1,10 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
+/**
+ *  call npm run publish:case:new to create a case for frps-private-beta
+ *  call npm run publish:case:pmf to create a case for pigs-might-fly
+ */
+
 const sns = new SQSClient({
   region: "eu-west-2",
   endpoint: "http://localhost:4566",
@@ -51,6 +56,12 @@ const message = {
 };
 
 console.log("Sending message to SQS queue:", queueUrl);
+
+if (process.argv.length === 3) {
+  console.log("Sending sqs case for " + process.argv[2]);
+  message.data.code = process.argv[2];
+  message.data.clientRef = "APPLICATION-PMF-001";
+}
 
 await sns.send(
   new SendMessageCommand({

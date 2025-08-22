@@ -25,6 +25,22 @@ describe("updateTaskStatusRequestSchema", () => {
     expect(error.details[0].message).toContain('"status" is required');
   });
 
+  it("allows comment", () => {
+    const { error } = updateTaskStatusRequestSchema.validate({
+      status: "complete",
+      comment: "This is a comment",
+    });
+    expect(error).toBeUndefined();
+  });
+
+  it("allows null comment", () => {
+    const { error } = updateTaskStatusRequestSchema.validate({
+      status: "complete",
+      comment: null,
+    });
+    expect(error).toBeUndefined();
+  });
+
   it("removes other fields", () => {
     const { value, error } = updateTaskStatusRequestSchema.validate({
       status: "complete",

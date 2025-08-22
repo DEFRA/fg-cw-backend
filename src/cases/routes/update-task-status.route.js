@@ -27,7 +27,7 @@ export const updateTaskStatusRoute = {
   },
   async handler(request, h) {
     const { caseId, stageId, taskGroupId, taskId } = request.params;
-    const { status } = request.payload;
+    const { status, comment } = request.payload;
 
     await updateTaskStatusUseCase({
       caseId,
@@ -35,6 +35,7 @@ export const updateTaskStatusRoute = {
       taskId,
       taskGroupId,
       status,
+      comment,
     });
 
     return h.response().code(204);

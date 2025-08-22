@@ -39,8 +39,8 @@ export const assignUserToCaseUseCase = async (command) => {
 
   kase.assignUser({
     assignedUserId,
-    text: notes,
     createdBy: getAuthenticatedUser().id,
+    text: notes,
   });
 
   return update(kase);
