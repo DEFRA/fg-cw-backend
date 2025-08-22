@@ -25,5 +25,6 @@ export const Stage = Joi.object({
   id: Joi.string().required(),
   title: Joi.string().required(),
   taskGroups: Joi.array().items(TaskGroup).required(),
+  actionsTitle: Joi.string().optional(),
   actions: Joi.array().items(Action).required(),
 }).label("Stage");
