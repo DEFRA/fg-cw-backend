@@ -220,7 +220,7 @@ export class Case {
       );
     }
 
-    if (!currentStage.allTasksComplete) {
+    if (!currentStage.allTasksComplete()) {
       throw Boom.badRequest(
         `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
       );
