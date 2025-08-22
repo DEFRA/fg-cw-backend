@@ -113,10 +113,16 @@
           ]
         }
       ],
+      "actionsTitle": "Decision",
       "actions": [
         {
           "id": "approve",
-          "label": "Approve"
+          "label": "Approve",
+          "comment": {
+            "label": "Approval reason note",
+            "hint": "All notes will be saved for auditing purposes",
+            "type": "REQUIRED"
+          }
         }
       ]
     },

@@ -1,4 +1,3 @@
-import Boom from "@hapi/boom";
 import Joi from "joi";
 import { assertInstanceOf } from "../../common/assert.js";
 import { timelineEventTypeSchema } from "../schemas/cases/timeline/event-type.schema.js";
@@ -6,28 +5,20 @@ import { idSchema } from "../schemas/id.schema.js";
 import { systemSchema } from "../schemas/system.schema.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+import { validateModel } from "./validate-model.js";
 
 export class TimelineEvent {
-  static validationSchema = Joi.object({
+  static schema = Joi.object({
     eventType: timelineEventTypeSchema.required(),
     createdBy: Joi.alternatives().try(idSchema, systemSchema),
     data: Joi.object().allow(null).optional(),
-    comment: Comment.validationSchema.allow(null).optional(),
+    comment: Comment.schema.allow(null).optional(),
     createdAt: Joi.string().isoDate(),
     description: Joi.string(),
-  }).label("TimelineValidationSchema");
+  }).label("TimelineEventSchema");
 
   constructor(props) {
-    const { error, value } = TimelineEvent.validationSchema.validate(props, {
-      stripUnknown: true,
-      abortEarly: false,
-    });
-
-    if (error) {
-      throw Boom.badRequest(
-        `Invalid TimelineEvent: ${error.details.map((d) => d.message).join(", ")}`,
-      );
-    }
+    const value = validateModel(props, TimelineEvent.schema);
 
     this.createdAt = value.createdAt || new Date().toISOString();
     this.eventType = value.eventType;
@@ -64,7 +55,7 @@ export class TimelineEvent {
     });
   }
 
-  static create({ eventType, data = null, text, createdBy }) {
+  static create({ eventType, data = null, text, description, createdBy }) {
     const comment = Comment.createOptionalComment({
       type: eventType,
       text,
@@ -75,6 +66,7 @@ export class TimelineEvent {
       eventType,
       comment,
       data,
+      description,
       createdBy,
     });
   }

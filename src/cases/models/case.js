@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+import { toStages } from "./stage.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -12,6 +13,7 @@ export class Case {
   constructor(props) {
     const comments = toComments(props.comments);
     const timeline = toTimelineEvents(props.timeline, comments);
+    const stages = toStages(props.stages);
 
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
@@ -21,7 +23,7 @@ export class Case {
     this.currentStage = props.currentStage;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
-    this.stages = props.stages;
+    this.stages = stages;
     this.comments = comments;
     this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
@@ -71,6 +73,31 @@ export class Case {
     return timelineEvent.comment;
   }
 
+  updateStageOutcome({ actionId, comment, createdBy }) {
+    const timelineEvent = TimelineEvent.create({
+      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      data: {
+        actionId,
+        stageId: this.currentStage,
+      },
+      text: comment,
+      description: `Application ${actionId}`,
+      createdBy,
+    });
+
+    this.#getCurrentStage().setOutcome({
+      actionId,
+      commentRef: timelineEvent.comment?.ref,
+      createdBy,
+    });
+
+    this.#addTimelineEvent(timelineEvent);
+
+    if (actionId === "approve") {
+      this.#moveToNextStage();
+    }
+  }
+
   getUserIds() {
     const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
 
@@ -107,6 +134,50 @@ export class Case {
     assertIsComment(comment);
     this.comments.unshift(comment);
     return comment;
+  }
+
+  #getCurrentStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    return this.stages[currentStageIndex];
+  }
+
+  #moveToNextStage() {
+    const nextStage = this.#getNextStage();
+    this.currentStage = nextStage.id;
+    return nextStage;
+  }
+
+  #getNextStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    const currentStage = this.#getCurrentStage();
+
+    if (currentStageIndex === this.stages.length - 1) {
+      throw Boom.notFound(
+        `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
+      );
+    }
+
+    if (!currentStage.allTasksComplete) {
+      throw Boom.badRequest(
+        `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
+      );
+    }
+
+    return this.stages[currentStageIndex + 1];
+  }
+
+  #getCurrentStageIndex() {
+    const currentStageIndex = this.stages.findIndex(
+      (stage) => stage.id === this.currentStage,
+    );
+
+    if (currentStageIndex === -1) {
+      throw Boom.notFound(
+        `Cannot find current stage index for ${this.currentStage}, case ${this._id}`,
+      );
+    }
+
+    return currentStageIndex;
   }
 
   static fromWorkflow(workflow, caseEvent) {

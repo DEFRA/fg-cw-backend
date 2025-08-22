@@ -1,7 +1,6 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { changeCaseStageUseCase } from "../use-cases/change-case-stage.use-case.js";
-import { changeCaseStageRoute } from "./change-case-stage.route.js";
+import { updateStageOutcomeRoute } from "./update-stage-outcome.route.js";
 
 vi.mock("../use-cases/change-case-stage.use-case.js");
 
@@ -10,7 +9,7 @@ describe("changeCaseStageRoute", () => {
 
   beforeAll(async () => {
     server = hapi.server();
-    server.route(changeCaseStageRoute);
+    server.route(updateStageOutcomeRoute);
     await server.initialize();
   });
 
@@ -31,6 +30,6 @@ describe("changeCaseStageRoute", () => {
 
     expect(result).toEqual(null);
 
-    expect(changeCaseStageUseCase).toHaveBeenCalledWith(caseId);
+    expect(updateStageOutcomeRoute).toHaveBeenCalledWith(caseId);
   });
 });

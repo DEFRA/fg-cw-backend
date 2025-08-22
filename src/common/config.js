@@ -89,7 +89,7 @@ export const config = convict({
     uri: {
       doc: "URI for mongodb",
       format: String,
-      default: "mongodb://127.0.0.1:27017/",
+      default: "localhost:27017",
       env: "MONGO_URI",
     },
     databaseName: {
