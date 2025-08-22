@@ -5,7 +5,7 @@ import { updateStageOutcomeRequestSchema } from "../schemas/requests/update-stag
 import { updateStageOutcomeUseCase } from "../use-cases/update-stage-outcome.use-case.js";
 
 export const updateStageOutcomeRoute = {
-  method: "PUT",
+  method: "PATCH",
   path: "/cases/{caseId}/stage/outcome",
   options: {
     description: "Update case stage outcome",

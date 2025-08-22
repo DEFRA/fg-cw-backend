@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
+        'Invalid TimelineEventSchema: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
       );
     });
   });

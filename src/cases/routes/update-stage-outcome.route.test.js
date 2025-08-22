@@ -1,10 +1,11 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { updateStageOutcomeUseCase } from "../use-cases/update-stage-outcome.use-case.js";
 import { updateStageOutcomeRoute } from "./update-stage-outcome.route.js";
 
-vi.mock("../use-cases/change-case-stage.use-case.js");
+vi.mock("../use-cases/update-stage-outcome.use-case.js");
 
-describe("changeCaseStageRoute", () => {
+describe("updateStageOutcomeUseCase", () => {
   let server;
 
   beforeAll(async () => {
@@ -17,19 +18,26 @@ describe("changeCaseStageRoute", () => {
     await server.stop();
   });
 
-  it("moves the case to next stage and returns no content", async () => {
+  it("calls the use case with the correct parameters", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
 
     const { statusCode, result } = await server.inject({
-      method: "POST",
-      url: `/cases/${caseId}/stage`,
-      payload: {},
+      method: "PATCH",
+      url: `/cases/${caseId}/stage/outcome`,
+      payload: {
+        actionId: "approve",
+        comment: "This is a test comment",
+      },
     });
 
     expect(statusCode).toEqual(204);
 
     expect(result).toEqual(null);
 
-    expect(updateStageOutcomeRoute).toHaveBeenCalledWith(caseId);
+    expect(updateStageOutcomeUseCase).toHaveBeenCalledWith({
+      caseId,
+      actionId: "approve",
+      comment: "This is a test comment",
+    });
   });
 });
