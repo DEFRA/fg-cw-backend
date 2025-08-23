@@ -6,6 +6,7 @@ export const Task = Joi.object({
   id: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
+  comment: comment.optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({
