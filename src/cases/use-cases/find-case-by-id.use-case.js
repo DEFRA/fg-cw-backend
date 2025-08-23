@@ -56,7 +56,7 @@ export const findCaseByIdUseCase = async (caseId) => {
 };
 
 const createUserMap = async (userIds) => {
-  const ids = userIds.filter((id) => id !== "System");
+  const ids = userIds.filter((id) => id !== "System" && id !== null);
   const users = await findAll({ ids });
   const userMap = new Map(users.map((user) => [user.id, user]));
 
