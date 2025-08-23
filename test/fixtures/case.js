@@ -121,12 +121,10 @@ export const caseData2 = {
           ],
         },
       ],
-      outcome: null,
     },
     {
       id: "contract",
       taskGroups: [],
-      outcome: null,
     },
   ],
   timeline: [
@@ -197,12 +195,10 @@ export const caseData3Document = {
           ],
         },
       ],
-      outcome: null,
     },
     {
       id: "contract",
       taskGroups: [],
-      outcome: null,
     },
   ],
   timeline: [

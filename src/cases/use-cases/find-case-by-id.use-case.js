@@ -48,7 +48,7 @@ export const findCaseByIdUseCase = async (caseId) => {
             ...stage.outcome,
             comment: kase.findComment(stage.outcome?.commentRef)?.text,
           }
-        : null,
+        : undefined,
     };
   });
 

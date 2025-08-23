@@ -225,7 +225,7 @@ describe("findCaseByIdUseCase", () => {
 
       expect(result.stages[0].outcome).toEqual({
         actionId: "approve",
-        commentRef: commentRef,
+        commentRef,
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
         comment: "Application approved with conditions",
@@ -308,7 +308,6 @@ describe("findCaseByIdUseCase", () => {
           {
             id: "stage-1",
             taskGroups: [],
-            outcome: null,
           },
         ],
       });
@@ -319,7 +318,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id);
 
-      expect(result.stages[0].outcome).toBeNull();
+      expect(result.stages[0].outcome).toBeUndefined();
     });
 
     it("handles multiple stages with different outcome scenarios", async () => {
@@ -344,7 +343,6 @@ describe("findCaseByIdUseCase", () => {
           {
             id: "stage-2",
             taskGroups: [],
-            outcome: null,
           },
           {
             id: "stage-3",
@@ -382,7 +380,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id);
 
       expect(result.stages[0].outcome.comment).toBe("First stage approved");
-      expect(result.stages[1].outcome).toBeNull();
+      expect(result.stages[1].outcome).toBeUndefined();
       expect(result.stages[2].outcome.comment).toBe(
         "Application rejected due to incomplete information",
       );

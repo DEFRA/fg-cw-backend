@@ -29,9 +29,7 @@ export const CaseStage = Joi.object({
     actionId: UrlSafeId.required(),
     comment: Joi.string().optional(),
     commentRef: Joi.string().optional(),
-  })
-    .allow(null)
-    .optional(),
+  }).optional(),
 }).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({

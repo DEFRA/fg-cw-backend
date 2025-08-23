@@ -126,7 +126,6 @@ describe("Cases", () => {
                 ],
               },
             ],
-            outcome: null,
           },
           {
             ...caseData2.stages[1],

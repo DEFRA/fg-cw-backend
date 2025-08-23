@@ -2,7 +2,6 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { toStages } from "./stage.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -13,7 +12,6 @@ export class Case {
   constructor(props) {
     const comments = toComments(props.comments);
     const timeline = toTimelineEvents(props.timeline, comments);
-    const stages = toStages(props.stages);
 
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
@@ -23,7 +21,7 @@ export class Case {
     this.currentStage = props.currentStage;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
-    this.stages = stages;
+    this.stages = props.stages;
     this.comments = comments;
     this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
@@ -135,11 +133,16 @@ export class Case {
     });
 
     const currentStage = this.#getCurrentStage();
-    currentStage.setOutcome({
+
+    currentStage.outcome = {
       actionId,
-      commentRef: timelineEvent.comment?.ref,
       createdBy,
-    });
+      createdAt: new Date().toISOString(),
+    };
+
+    if (timelineEvent.comment) {
+      currentStage.outcome.commentRef = timelineEvent.comment.ref;
+    }
 
     this.#addTimelineEvent(timelineEvent);
 
@@ -220,7 +223,11 @@ export class Case {
       );
     }
 
-    if (!currentStage.allTasksComplete()) {
+    const allTasksComplete = currentStage.taskGroups
+      .flatMap((group) => group.tasks)
+      .every((task) => task.status === "complete");
+
+    if (!allTasksComplete) {
       throw Boom.badRequest(
         `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
       );
