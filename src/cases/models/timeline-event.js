@@ -64,7 +64,7 @@ export class TimelineEvent {
     });
   }
 
-  static create({ eventType, data = null, text, createdBy }) {
+  static create({ eventType, data = null, text, description, createdBy }) {
     const comment = Comment.createOptionalComment({
       type: eventType,
       text,
@@ -75,6 +75,7 @@ export class TimelineEvent {
       eventType,
       comment,
       data,
+      description,
       createdBy,
     });
   }
