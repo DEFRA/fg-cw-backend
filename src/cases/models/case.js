@@ -64,6 +64,7 @@ export class Case {
     status,
     comment,
     updatedBy,
+    taskTitle,
   }) {
     const task = this.findTask({ stageId, taskGroupId, taskId });
 
@@ -75,6 +76,7 @@ export class Case {
       const timelineEvent = TimelineEvent.createTaskCompleted({
         createdBy: updatedBy,
         text: comment,
+        taskTitle,
         data: {
           caseId: this._id,
           stageId,

@@ -105,9 +105,10 @@ export class TimelineEvent {
     });
   }
 
-  static createTaskCompleted({ data, text, createdBy }) {
+  static createTaskCompleted({ data, text, createdBy, taskTitle }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      description: `Task '${taskTitle}' completed`,
       data,
       text,
       createdBy,

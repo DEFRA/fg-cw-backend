@@ -32,6 +32,7 @@ export const updateTaskStatusUseCase = async (command) => {
     status,
     comment,
     updatedBy,
+    taskTitle: task.title,
   });
 
   return update(kase);
