@@ -18,6 +18,7 @@ export const EventEnums = {
   noteDescriptions: {
     NOTE_ADDED: "General",
     TASK_COMPLETED: "Task",
+    STAGE_COMPLETED: "Stage",
     CASE_UNASSIGNED: "Unassignment",
     CASE_ASSIGNED: "Assignment",
   },

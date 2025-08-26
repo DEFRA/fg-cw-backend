@@ -185,4 +185,205 @@ describe("findCaseByIdUseCase", () => {
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
     expect(result).toBe(mockCase);
   });
+
+  describe("stage outcome comment resolution", () => {
+    it("resolves outcome comment text when outcome and comment exist", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      // Create a case with stage outcome that references a comment
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+        comments: [
+          {
+            ref: commentRef,
+            type: "STAGE_COMPLETED",
+            text: "Application approved with conditions",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T12:00:00.000Z",
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        commentRef,
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: "Application approved with conditions",
+      });
+    });
+
+    it("handles outcome with no comment reference", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: undefined,
+      });
+    });
+
+    it("handles outcome with comment reference that doesn't exist", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef: "64c88faac1f56f71e1b89a34",
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+        comments: [],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        commentRef: "64c88faac1f56f71e1b89a34",
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: undefined,
+      });
+    });
+
+    it("handles stage with no outcome", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toBeUndefined();
+    });
+
+    it("handles multiple stages with different outcome scenarios", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const commentRef1 = "64c88faac1f56f71e1b89a35";
+      const commentRef2 = "64c88faac1f56f71e1b89a36";
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef: commentRef1,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+          {
+            id: "stage-2",
+            taskGroups: [],
+          },
+          {
+            id: "stage-3",
+            taskGroups: [],
+            outcome: {
+              actionId: "reject",
+              commentRef: commentRef2,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T13:00:00.000Z",
+            },
+          },
+        ],
+        comments: [
+          {
+            ref: commentRef1,
+            type: "STAGE_COMPLETED",
+            text: "First stage approved",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T12:00:00.000Z",
+          },
+          {
+            ref: commentRef2,
+            type: "STAGE_COMPLETED",
+            text: "Application rejected due to incomplete information",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T13:00:00.000Z",
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome.comment).toBe("First stage approved");
+      expect(result.stages[1].outcome).toBeUndefined();
+      expect(result.stages[2].outcome.comment).toBe(
+        "Application rejected due to incomplete information",
+      );
+    });
+  });
 });
