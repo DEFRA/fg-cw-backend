@@ -25,9 +25,13 @@ export const updateStageOutcomeUseCase = async ({
   });
 
   const previousStage = kase.currentStage;
+
+  const workflowStage = workflow.stages.find((s) => s.id === kase.currentStage);
+
   kase.updateStageOutcome({
     actionId,
     comment,
+    stageTitle: workflowStage.title,
     createdBy: getAuthenticatedUser().id,
   });
 

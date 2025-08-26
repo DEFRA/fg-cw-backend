@@ -57,6 +57,7 @@ describe("updateStageOutcomeUseCase", () => {
         actionId: "approve",
         comment: "Application approved with conditions",
         createdBy: authenticatedUser.id,
+        stageTitle: "Stage 1",
       });
       expect(update).toHaveBeenCalledWith(mockCase);
       expect(publishCaseStageUpdated).toHaveBeenCalledWith({
@@ -77,6 +78,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "reject",
         comment: null,
+        stageTitle: "Stage 1",
       };
 
       findById.mockResolvedValue(mockCase);
@@ -97,6 +99,7 @@ describe("updateStageOutcomeUseCase", () => {
         actionId: "reject",
         comment: null,
         createdBy: authenticatedUser.id,
+        stageTitle: "Stage 2",
       });
     });
 
@@ -146,6 +149,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        stageTitle: "Stage 1",
       };
 
       findById.mockResolvedValue(mockCase);
@@ -161,6 +165,7 @@ describe("updateStageOutcomeUseCase", () => {
         actionId: "approve",
         comment: "Test comment",
         createdBy: specificUserId,
+        stageTitle: "Stage 1",
       });
     });
   });
@@ -304,12 +309,13 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
-      mockCase.currentStage = "specific-stage-id";
+      mockCase.currentStage = "stage-1";
 
       const command = {
         caseId: mockCase._id,
         actionId: "specific-action",
         comment: "specific comment text",
+        stageTitle: "Stage 1",
       };
 
       findById.mockResolvedValue(mockCase);
@@ -323,7 +329,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionId: "specific-action",
-        stageId: "specific-stage-id",
+        stageId: "stage-1",
         comment: "specific comment text",
       });
     });

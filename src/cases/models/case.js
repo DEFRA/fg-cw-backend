@@ -122,7 +122,7 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  updateStageOutcome({ actionId, comment, createdBy }) {
+  updateStageOutcome({ actionId, comment, createdBy, stageTitle }) {
     const timelineEvent = TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
       data: {
@@ -130,7 +130,7 @@ export class Case {
         stageId: this.currentStage,
       },
       text: comment,
-      description: `Application ${actionId}`,
+      description: `Stage '${stageTitle}' outcome (${actionId})`,
       createdBy,
     });
 

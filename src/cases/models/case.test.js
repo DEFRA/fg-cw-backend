@@ -477,8 +477,9 @@ describe("Case", () => {
     it("updates stage outcome with comment and creates timeline event", () => {
       caseInstance.updateStageOutcome({
         actionId: "approve",
-        comment: "Application approved successfully",
+        comment: "Stage approved successfully",
         createdBy: validUserId,
+        stageTitle: "Stage 002",
       });
 
       const currentStage = caseInstance.stages[0];
@@ -492,12 +493,12 @@ describe("Case", () => {
       expect(caseInstance.timeline[0].eventType).toBe("STAGE_COMPLETED");
       expect(caseInstance.timeline[0].data.actionId).toBe("approve");
       expect(caseInstance.timeline[0].data.stageId).toBe("stage-1");
-      expect(caseInstance.timeline[0].description).toBe("Application approve");
+      expect(caseInstance.timeline[0].description).toBe(
+        "Stage 'Stage 002' outcome (approve)",
+      );
 
       expect(caseInstance.comments).toHaveLength(1);
-      expect(caseInstance.comments[0].text).toBe(
-        "Application approved successfully",
-      );
+      expect(caseInstance.comments[0].text).toBe("Stage approved successfully");
     });
 
     it("updates stage outcome without comment", () => {
