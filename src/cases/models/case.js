@@ -53,6 +53,10 @@ export class Case {
     return task;
   }
 
+  findComment(commentRef) {
+    return this.comments.find((c) => c.ref === commentRef);
+  }
+
   updateTaskStatus({
     stageId,
     taskGroupId,
@@ -80,7 +84,7 @@ export class Case {
       });
 
       this.#addTimelineEvent(timelineEvent);
-      task.commentRef = timelineEvent.comment.ref;
+      task.commentRef = timelineEvent.comment?.ref;
     }
   }
 
@@ -114,6 +118,37 @@ export class Case {
     });
     this.#addTimelineEvent(timelineEvent);
     return timelineEvent.comment;
+  }
+
+  updateStageOutcome({ actionId, comment, createdBy }) {
+    const timelineEvent = TimelineEvent.create({
+      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      data: {
+        actionId,
+        stageId: this.currentStage,
+      },
+      text: comment,
+      description: `Application ${actionId}`,
+      createdBy,
+    });
+
+    const currentStage = this.#getCurrentStage();
+
+    currentStage.outcome = {
+      actionId,
+      createdBy,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (timelineEvent.comment) {
+      currentStage.outcome.commentRef = timelineEvent.comment.ref;
+    }
+
+    this.#addTimelineEvent(timelineEvent);
+
+    if (actionId === "approve") {
+      this.#moveToNextStage();
+    }
   }
 
   getUserIds() {
@@ -165,6 +200,54 @@ export class Case {
     assertIsComment(comment);
     this.comments.unshift(comment);
     return comment;
+  }
+
+  #getCurrentStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    return this.stages[currentStageIndex];
+  }
+
+  #moveToNextStage() {
+    const nextStage = this.#getNextStage();
+    this.currentStage = nextStage.id;
+    return nextStage;
+  }
+
+  #getNextStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    const currentStage = this.#getCurrentStage();
+
+    if (currentStageIndex === this.stages.length - 1) {
+      throw Boom.notFound(
+        `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
+      );
+    }
+
+    const allTasksComplete = currentStage.taskGroups
+      .flatMap((group) => group.tasks)
+      .every((task) => task.status === "complete");
+
+    if (!allTasksComplete) {
+      throw Boom.badRequest(
+        `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
+      );
+    }
+
+    return this.stages[currentStageIndex + 1];
+  }
+
+  #getCurrentStageIndex() {
+    const currentStageIndex = this.stages.findIndex(
+      (stage) => stage.id === this.currentStage,
+    );
+
+    if (currentStageIndex === -1) {
+      throw Boom.notFound(
+        `Cannot find current stage index for ${this.currentStage}, case ${this._id}`,
+      );
+    }
+
+    return currentStageIndex;
   }
 
   static fromWorkflow(workflow, caseEvent) {

@@ -97,10 +97,25 @@
           ]
         }
       ],
+      "actionsTitle": "Decision",
       "actions": [
         {
-          "id": "accept",
-          "label": "Accept"
+          "id": "approve",
+          "label": "Approve",
+          "comment": {
+            "label": "Approval reason note",
+            "helpText": "All notes will be saved for auditing purposes",
+            "type": "REQUIRED"
+          }
+        },
+        {
+          "id": "on-hold",
+          "label": "Put on hold",
+          "comment": {
+            "label": "Note (optional)",
+            "helpText": "All notes will be saved for auditing purposes",
+            "type": "OPTIONAL"
+          }
         },
         {
           "id": "reject",
@@ -152,7 +167,7 @@
       ],
       "actions": [
         {
-          "id": "confirm-approval",
+          "id": "approve",
           "label": "Confirm Approval"
         },
         {

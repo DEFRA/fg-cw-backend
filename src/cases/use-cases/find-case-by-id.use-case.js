@@ -43,6 +43,12 @@ export const findCaseByIdUseCase = async (caseId) => {
           updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,
         })),
       })),
+      outcome: stage.outcome
+        ? {
+            ...stage.outcome,
+            comment: kase.findComment(stage.outcome?.commentRef)?.text,
+          }
+        : undefined,
     };
   });
 

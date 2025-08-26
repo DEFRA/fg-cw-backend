@@ -6,12 +6,12 @@ import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscribe
 
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
-import { changeCaseStageRoute } from "./routes/change-case-stage.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
+import { updateStageOutcomeRoute } from "./routes/update-stage-outcome.route.js";
 import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
 
 export const cases = {
@@ -32,7 +32,7 @@ export const cases = {
     server.route([
       findCasesRoute,
       findCaseByIdRoute,
-      changeCaseStageRoute,
+      updateStageOutcomeRoute,
       assignUserToCaseRoute,
       addNoteToCaseRoute,
       createWorkflowRoute,
