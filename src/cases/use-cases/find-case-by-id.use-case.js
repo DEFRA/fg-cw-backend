@@ -1,8 +1,28 @@
 import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { findAll } from "../../users/repositories/user.repository.js";
+import { EventEnums } from "../models/event-enums.js";
 import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+
+const findWorkflowTask = (workflow, stageId, taskGroupId, taskId) => {
+  const task = workflow.stages
+    .find((s) => s.id === stageId)
+    .taskGroups.find((tg) => tg.id === taskGroupId)
+    .tasks.find((t) => t.id === taskId);
+  return task;
+};
+
+const formatTimelineItemDescription = (tl, tasks, stages) => {
+  switch (tl.eventType) {
+    case EventEnums.eventTypes.TASK_COMPLETED:
+      return `Task '${tasks.get(tl.data.taskId).title}' completed`;
+    case EventEnums.eventTypes.STAGE_COMPLETED:
+      return `Stage '${stages.get(tl.data.stageId).title}' completed`;
+    default:
+      return EventEnums.eventDescriptions[tl.eventType];
+  }
+};
 
 export const findCaseByIdUseCase = async (caseId) => {
   const kase = await findById(caseId);
@@ -14,15 +34,6 @@ export const findCaseByIdUseCase = async (caseId) => {
   const userMap = await createUserMap(kase.getUserIds());
 
   kase.assignedUser = userMap.get(kase.assignedUser?.id) || null;
-  kase.timeline = kase.timeline.map((tl) => {
-    tl.createdBy = userMap.get(tl.createdBy);
-    if (tl.data?.assignedTo) {
-      tl.data.assignedTo = userMap.get(tl.data.assignedTo);
-    }
-    tl.commentRef = mapComment(tl.comment);
-    tl.comment = undefined;
-    return tl;
-  });
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
   kase.requiredRoles = workflow.requiredRoles;
@@ -33,15 +44,28 @@ export const findCaseByIdUseCase = async (caseId) => {
     createdBy: userMap.get(comment.createdBy).name,
   }));
 
+  const tasks = new Map();
+  const stages = new Map();
+
   kase.stages = kase.stages.map((stage) => {
+    stages.set(
+      stage.id,
+      workflow.stages.find((s) => s.id === stage.id),
+    );
     return {
       ...stage,
       taskGroups: stage.taskGroups.map((taskGroup) => ({
         ...taskGroup,
-        tasks: taskGroup.tasks.map((task) => ({
-          ...task,
-          updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,
-        })),
+        tasks: taskGroup.tasks.map((task) => {
+          tasks.set(
+            task.id,
+            findWorkflowTask(workflow, stage.id, taskGroup.id, task.id),
+          );
+          return {
+            ...task,
+            updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,
+          };
+        }),
       })),
       outcome: stage.outcome
         ? {
@@ -50,6 +74,17 @@ export const findCaseByIdUseCase = async (caseId) => {
           }
         : undefined,
     };
+  });
+
+  kase.timeline = kase.timeline.map((tl) => {
+    tl.createdBy = userMap.get(tl.createdBy);
+    if (tl.data?.assignedTo) {
+      tl.data.assignedTo = userMap.get(tl.data.assignedTo);
+    }
+    tl.commentRef = mapComment(tl.comment);
+    tl.comment = undefined;
+    tl.description = formatTimelineItemDescription(tl, tasks, stages);
+    return tl;
   });
 
   return kase;
