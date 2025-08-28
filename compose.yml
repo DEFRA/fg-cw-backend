@@ -27,7 +27,7 @@ services:
     restart: always
 
   entra:
-    image: defradigital/fg-entra-stub-frontend:0.9.0
+    image: defradigital/fg-entra-stub-frontend:0.11.0
     ports:
       - "${ENTRA_PORT:-3010}:3010"
     networks:
