@@ -41,23 +41,12 @@ export const findCaseByIdUseCase = async (caseId) => {
     createdBy: userMap.get(comment.createdBy).name,
   }));
 
-  const tasks = new Map();
-  const stages = new Map();
-
   kase.stages = kase.stages.map((stage) => {
-    stages.set(
-      stage.id,
-      workflow.stages.find((s) => s.id === stage.id),
-    );
     return {
       ...stage,
       taskGroups: stage.taskGroups.map((taskGroup) => ({
         ...taskGroup,
         tasks: taskGroup.tasks.map((task) => {
-          tasks.set(
-            task.id,
-            workflow.findTask(stage.id, taskGroup.id, task.id),
-          );
           return {
             ...task,
             updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,

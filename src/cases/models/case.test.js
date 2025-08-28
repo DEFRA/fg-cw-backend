@@ -399,6 +399,21 @@ describe("Case", () => {
     });
   });
 
+  describe("find stage", () => {
+    it("finds stage", () => {
+      const kase = Case.createMock();
+      const stage = kase.findStage("stage-1");
+      expect(stage).toBeDefined();
+    });
+
+    it("throws 404 if stage not found", () => {
+      const kase = Case.createMock();
+      expect(() => kase.findStage("stage-100")).toThrow(
+        "Can not find Stage with id stage-100",
+      );
+    });
+  });
+
   describe("findComment", () => {
     it("finds comment by reference", () => {
       const props = createValidProps();
