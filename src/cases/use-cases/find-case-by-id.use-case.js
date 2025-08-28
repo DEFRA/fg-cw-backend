@@ -13,6 +13,7 @@ const findWorkflowTask = (workflow, stageId, taskGroupId, taskId) => {
   return task;
 };
 
+// we format the description on fetching data incase the stage/task changes.
 const formatTimelineItemDescription = (tl, tasks, stages) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED:
@@ -20,7 +21,7 @@ const formatTimelineItemDescription = (tl, tasks, stages) => {
     case EventEnums.eventTypes.STAGE_COMPLETED:
       return `Stage '${stages.get(tl.data.stageId).title}' outcome (${tl.data.actionId})`;
     default:
-      return EventEnums.eventDescriptions[tl.eventType];
+      return tl.description || EventEnums.eventDescriptions[tl.eventType];
   }
 };
 

@@ -128,7 +128,6 @@ export class Case {
         stageId: this.currentStage,
       },
       text: comment,
-      description: `Application ${actionId}`,
       createdBy,
     });
 
