@@ -2,14 +2,13 @@ import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
+import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 const findWorkflowTask = (workflow, stageId, taskGroupId, taskId) => {
-  const task = workflow.stages
-    .find((s) => s.id === stageId)
-    .taskGroups.find((tg) => tg.id === taskGroupId)
-    .tasks.find((t) => t.id === taskId);
+  const wf = new Workflow(workflow);
+  const task = wf.findTask(stageId, taskGroupId, taskId);
   return task;
 };
 
