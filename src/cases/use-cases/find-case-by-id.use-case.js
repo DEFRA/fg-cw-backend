@@ -18,7 +18,7 @@ const formatTimelineItemDescription = (tl, tasks, stages) => {
     case EventEnums.eventTypes.TASK_COMPLETED:
       return `Task '${tasks.get(tl.data.taskId).title}' completed`;
     case EventEnums.eventTypes.STAGE_COMPLETED:
-      return `Stage '${stages.get(tl.data.stageId).title}' completed`;
+      return `Stage '${stages.get(tl.data.stageId).title}' outcome (${tl.data.actionId})`;
     default:
       return EventEnums.eventDescriptions[tl.eventType];
   }
