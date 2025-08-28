@@ -2,23 +2,20 @@ import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
-import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
-const findWorkflowTask = (workflow, stageId, taskGroupId, taskId) => {
-  const wf = new Workflow(workflow);
-  const task = wf.findTask(stageId, taskGroupId, taskId);
-  return task;
-};
-
 // we format the description on fetching data incase the stage/task changes.
-const formatTimelineItemDescription = (tl, tasks, stages) => {
+const formatTimelineItemDescription = (tl, kase) => {
   switch (tl.eventType) {
-    case EventEnums.eventTypes.TASK_COMPLETED:
-      return `Task '${tasks.get(tl.data.taskId).title}' completed`;
-    case EventEnums.eventTypes.STAGE_COMPLETED:
-      return `Stage '${stages.get(tl.data.stageId).title}' outcome (${tl.data.actionId})`;
+    case EventEnums.eventTypes.TASK_COMPLETED: {
+      const { stageId, taskGroupId, taskId } = tl.data;
+      return `Task '${kase.findTask({ stageId, taskGroupId, taskId }).title}' completed`;
+    }
+    case EventEnums.eventTypes.STAGE_COMPLETED: {
+      const stage = kase.findStage(tl.data.stageId);
+      return `Stage '${stage.title}' outcome (${tl.data.actionId})`;
+    }
     default:
       return tl.description || EventEnums.eventDescriptions[tl.eventType];
   }
@@ -59,7 +56,7 @@ export const findCaseByIdUseCase = async (caseId) => {
         tasks: taskGroup.tasks.map((task) => {
           tasks.set(
             task.id,
-            findWorkflowTask(workflow, stage.id, taskGroup.id, task.id),
+            workflow.findTask(stage.id, taskGroup.id, task.id),
           );
           return {
             ...task,
@@ -83,7 +80,7 @@ export const findCaseByIdUseCase = async (caseId) => {
     }
     tl.commentRef = mapComment(tl.comment);
     tl.comment = undefined;
-    tl.description = formatTimelineItemDescription(tl, tasks, stages);
+    tl.description = formatTimelineItemDescription(tl, kase);
     return tl;
   });
 
