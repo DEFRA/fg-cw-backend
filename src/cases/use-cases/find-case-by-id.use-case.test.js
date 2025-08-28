@@ -23,8 +23,7 @@ describe("formatTimelineItemDescription", () => {
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
       createdAt: "2025-01-01T00:00:00.000Z",
       description: "Task Completed",
-      // 'createdBy' is hydrated on find-case-by-id
-      createdBy: "System", // To specify that the case was created by an external system
+      createdBy: "System",
       data: {
         stageId: "stage-1",
         taskGroupId: "stage-1-tasks",
@@ -43,8 +42,7 @@ describe("formatTimelineItemDescription", () => {
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
       createdAt: "2025-01-01T00:00:00.000Z",
       description: "Stage Completed",
-      // 'createdBy' is hydrated on find-case-by-id
-      createdBy: "System", // To specify that the case was created by an external system
+      createdBy: "System",
       data: {
         stageId: "stage-1",
         actionId: "reject",
@@ -62,8 +60,7 @@ describe("formatTimelineItemDescription", () => {
       eventType: EventEnums.eventTypes.CASE_ASSIGNED,
       createdAt: "2025-01-01T00:00:00.000Z",
       description: "description was set",
-      // 'createdBy' is hydrated on find-case-by-id
-      createdBy: "System", // To specify that the case was created by an external system
+      createdBy: "System",
       data: {},
     };
 
@@ -77,8 +74,7 @@ describe("formatTimelineItemDescription", () => {
     const timelineItem = {
       eventType: EventEnums.eventTypes.CASE_ASSIGNED,
       createdAt: "2025-01-01T00:00:00.000Z",
-      // 'createdBy' is hydrated on find-case-by-id
-      createdBy: "System", // To specify that the case was created by an external system
+      createdBy: "System",
       data: {},
     };
 
