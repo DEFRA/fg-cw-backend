@@ -34,7 +34,20 @@ describe("assignUserToCaseUseCase", () => {
     randomUUID.mockReturnValue("BNHYYSYUSY4455-0099-DSDDSD");
 
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_2: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_3: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
     });
 
     findById.mockResolvedValue(mockCase);
@@ -142,7 +155,20 @@ describe("assignUserToCaseUseCase", () => {
 
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1", "ROLE_2", "ROLE_3"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_2: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_3: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
     });
     const authenticatedUser = { id: "auth-user-123" };
     const repositoryError = new Error("Database update failed");
@@ -173,7 +199,12 @@ describe("assignUserToCaseUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const authenticatedUser = { id: "auth-user-123" };
     const mockUser = User.createMock({
-      appRoles: ["ROLE_1"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
     });
 
     findById.mockResolvedValue(mockCase);

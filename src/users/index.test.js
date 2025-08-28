@@ -54,6 +54,10 @@ describe("users", () => {
           path: "/users/{userId}",
         },
         {
+          method: "patch",
+          path: "/users/{userId}/roles",
+        },
+        {
           method: "get",
           path: "/roles",
         },
