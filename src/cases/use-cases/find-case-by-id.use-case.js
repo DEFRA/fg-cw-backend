@@ -6,14 +6,14 @@ import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 // we format the description on fetching data incase the stage/task changes.
-const formatTimelineItemDescription = (tl, kase) => {
+export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
       const { stageId, taskGroupId, taskId } = tl.data;
-      return `Task '${kase.findTask({ stageId, taskGroupId, taskId }).title}' completed`;
+      return `Task '${workflow.findTask(stageId, taskGroupId, taskId).title}' completed`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
-      const stage = kase.findStage(tl.data.stageId);
+      const stage = workflow.findStage(tl.data.stageId);
       return `Stage '${stage.title}' outcome (${tl.data.actionId})`;
     }
     default:
@@ -69,7 +69,7 @@ export const findCaseByIdUseCase = async (caseId) => {
     }
     tl.commentRef = mapComment(tl.comment);
     tl.comment = undefined;
-    tl.description = formatTimelineItemDescription(tl, kase);
+    tl.description = formatTimelineItemDescription(tl, workflow);
     return tl;
   });
 

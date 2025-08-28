@@ -6,12 +6,87 @@ import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
-import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
+import {
+  findCaseByIdUseCase,
+  formatTimelineItemDescription,
+} from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
+
+describe("formatTimelineItemDescription", () => {
+  it("formats task completed", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "Task Completed",
+      // 'createdBy' is hydrated on find-case-by-id
+      createdBy: "System", // To specify that the case was created by an external system
+      data: {
+        stageId: "stage-1",
+        taskGroupId: "stage-1-tasks",
+        taskId: "task-1",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Task 'Task 1' completed",
+    );
+  });
+
+  it("formats stage completed", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "Stage Completed",
+      // 'createdBy' is hydrated on find-case-by-id
+      createdBy: "System", // To specify that the case was created by an external system
+      data: {
+        stageId: "stage-1",
+        actionId: "reject",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Stage 'Stage 1' outcome (reject)",
+    );
+  });
+
+  it("returns description if set", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "description was set",
+      // 'createdBy' is hydrated on find-case-by-id
+      createdBy: "System", // To specify that the case was created by an external system
+      data: {},
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "description was set",
+    );
+  });
+
+  it("builds description if not set", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      // 'createdBy' is hydrated on find-case-by-id
+      createdBy: "System", // To specify that the case was created by an external system
+      data: {},
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      EventEnums.eventDescriptions[EventEnums.eventTypes.CASE_ASSIGNED],
+    );
+  });
+});
 
 describe("findCaseByIdUseCase", () => {
   it("finds case by id", async () => {
