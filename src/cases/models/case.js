@@ -53,6 +53,15 @@ export class Case {
     return task;
   }
 
+  findStage(stageId) {
+    const stage = this.stages.find((s) => s.id === stageId);
+    if (!stage) {
+      throw Boom.notFound(`Can not find Stage with id ${stageId}`);
+    }
+
+    return stage;
+  }
+
   findComment(commentRef) {
     return this.comments.find((c) => c.ref === commentRef);
   }
@@ -121,14 +130,12 @@ export class Case {
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
-    const timelineEvent = TimelineEvent.create({
-      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+    const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
         actionId,
         stageId: this.currentStage,
       },
       text: comment,
-      description: `Application ${actionId}`,
       createdBy,
     });
 

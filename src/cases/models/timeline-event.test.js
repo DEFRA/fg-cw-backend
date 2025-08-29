@@ -291,4 +291,44 @@ describe("TimelineEvent", () => {
       expect(timelineEvent.comment.type).toBe(EventEnums.eventTypes.NOTE_ADDED);
     });
   });
+
+  describe("createStageCompleteEvent", () => {
+    it("creates a stage complete event", () => {
+      const props = {
+        data: {
+          stageId: "64c88faac1f56f71e1b99999",
+          actionId: "approve",
+        },
+        text: "Stage complete",
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createStageCompleted(props);
+      expect(timelineEvent.eventType).toBe(
+        EventEnums.eventTypes.STAGE_COMPLETED,
+      );
+      expect(timelineEvent.comment.text).toBe("Stage complete");
+      expect(timelineEvent.data.stageId).toBe("64c88faac1f56f71e1b99999");
+      expect(timelineEvent.data.actionId).toBe("approve");
+    });
+  });
+
+  describe("createTaskCompleted", () => {
+    it("creates a task complete event", () => {
+      const props = {
+        data: {
+          taskId: "64c88faac1f56f71e1b99999",
+        },
+        text: "Task complete",
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createTaskCompleted(props);
+      expect(timelineEvent.eventType).toBe(
+        EventEnums.eventTypes.TASK_COMPLETED,
+      );
+      expect(timelineEvent.comment.text).toBe("Task complete");
+      expect(timelineEvent.data.taskId).toBe("64c88faac1f56f71e1b99999");
+    });
+  });
 });
