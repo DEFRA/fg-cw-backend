@@ -25,7 +25,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(() => validatePayloadComment(undefined, false)).not.toThrowError();
   });
 
-  it("throws is case not found", async () => {
+  it("throws if case not found", async () => {
     const workflow = Workflow.createMock();
     findByCode.mockResolvedValue(workflow);
     findById.mockResolvedValue(null);

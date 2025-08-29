@@ -399,6 +399,21 @@ describe("Case", () => {
     });
   });
 
+  describe("find stage", () => {
+    it("finds stage", () => {
+      const kase = Case.createMock();
+      const stage = kase.findStage("stage-1");
+      expect(stage).toBeDefined();
+    });
+
+    it("throws 404 if stage not found", () => {
+      const kase = Case.createMock();
+      expect(() => kase.findStage("stage-100")).toThrow(
+        "Can not find Stage with id stage-100",
+      );
+    });
+  });
+
   describe("findComment", () => {
     it("finds comment by reference", () => {
       const props = createValidProps();
@@ -492,7 +507,6 @@ describe("Case", () => {
       expect(caseInstance.timeline[0].eventType).toBe("STAGE_COMPLETED");
       expect(caseInstance.timeline[0].data.actionId).toBe("approve");
       expect(caseInstance.timeline[0].data.stageId).toBe("stage-1");
-      expect(caseInstance.timeline[0].description).toBe("Application approve");
 
       expect(caseInstance.comments).toHaveLength(1);
       expect(caseInstance.comments[0].text).toBe(
