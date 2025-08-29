@@ -4,6 +4,7 @@ import { db, mongoClient } from "../common/mongo-client.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 
+import { config } from "../common/config.js";
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
@@ -17,6 +18,12 @@ import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
 export const cases = {
   name: "cases",
   async register(server) {
+    if (config.get("cdpEnvironment") === "prod") {
+      logger.info("Resetting migration changelog for prod environment");
+
+      await db.collection("changelog").deleteMany({});
+    }
+
     logger.info("Running DB Migrations");
     await up(db, mongoClient);
     logger.info("Finished running DB Migrations");
