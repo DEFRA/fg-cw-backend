@@ -36,8 +36,8 @@ export class User {
       appRoles: {
         ROLE_RPA_CASES_APPROVE: new UserRole({
           name: "ROLE_RPA_CASES_APPROVE",
-          startDate: new Date("2025-07-01T00:00:00.000Z"),
-          endDate: new Date("2025-08-02T00:00:00.000Z"),
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         }),
       },
       createdAt: "2025-01-01T00:00:00.000Z",

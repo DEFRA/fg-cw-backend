@@ -10,8 +10,39 @@ export const userRoleSchema = joi
     codeSchema,
     joi
       .object({
-        startDate: joi.date().iso().optional(),
-        endDate: joi.date().iso().optional(),
+        startDate: joi
+          .string()
+          .custom((value, helpers) => {
+            const { error } = joi.date().iso().validate(value);
+            if (error) {
+              return helpers.error("date.format");
+            }
+            return value;
+          })
+          .optional()
+          .description("Start date in YYYY-MM-DD format")
+          .example("2025-01-31")
+          .messages({
+            "date.format":
+              "Start date must be a valid ISO date string (YYYY-MM-DD)",
+          }),
+
+        endDate: joi
+          .string()
+          .custom((value, helpers) => {
+            const { error } = joi.date().iso().validate(value);
+            if (error) {
+              return helpers.error("date.format");
+            }
+            return value;
+          })
+          .optional()
+          .description("End date in YYYY-MM-DD format")
+          .example("2025-10-31")
+          .messages({
+            "date.format":
+              "End date must be a valid ISO date string (YYYY-MM-DD)",
+          }),
       })
       .optional(),
   )

@@ -7,13 +7,13 @@ describe("UserRole", () => {
     it("creates a UserRole with all properties", () => {
       const props = {
         name: "ROLE_ADMIN",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
         endDate: new Date("2025-12-01T00:00:00.000Z"),
       };
 
       const role = new UserRole(props);
 
-      expect(role.startDate).toEqual(new Date("2025-07-01T00:00:00.000Z"));
+      expect(role.startDate).toEqual(new Date("2025-07-01"));
       expect(role.endDate).toEqual(new Date("2025-12-01T00:00:00.000Z"));
     });
 
@@ -64,7 +64,7 @@ describe("UserRole", () => {
     it("does not call validateRole when endDate is missing", () => {
       const props = {
         name: "ROLE_TEST",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
       };
 
       expect(() => new UserRole(props)).not.toThrow();
@@ -73,7 +73,7 @@ describe("UserRole", () => {
     it("calls validateRole when both startDate and endDate are present", () => {
       const props = {
         name: "ROLE_TEST",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
         endDate: new Date("2025-12-01T00:00:00.000Z"),
       };
 
@@ -83,7 +83,7 @@ describe("UserRole", () => {
     it("throws error when endDate is before startDate", () => {
       const props = {
         name: "ROLE_INVALID",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
         endDate: new Date("2025-01-01T00:00:00.000Z"),
       };
 
@@ -95,8 +95,8 @@ describe("UserRole", () => {
     it("throws error when endDate equals startDate", () => {
       const props = {
         name: "ROLE_SAME_DATE",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
-        endDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
+        endDate: new Date("2025-07-01"),
       };
 
       expect(() => new UserRole(props)).toThrow(
@@ -109,7 +109,7 @@ describe("UserRole", () => {
     it("validates successfully when endDate is after startDate", () => {
       const userRole = new UserRole({
         name: "ROLE_VALID",
-        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        startDate: new Date("2025-07-01"),
         endDate: new Date("2025-12-01T00:00:00.000Z"),
       });
 
@@ -121,7 +121,7 @@ describe("UserRole", () => {
         () =>
           new UserRole({
             name: "ROLE_TEST",
-            startDate: new Date("2025-07-01T00:00:00.000Z"),
+            startDate: new Date("2025-07-01"),
             endDate: new Date("2025-01-01T00:00:00.000Z"),
           }),
       ).toThrow(
