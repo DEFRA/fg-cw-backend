@@ -8,6 +8,10 @@ const processTask = ({ id }, tasks) => {
 };
 
 const mapTasksToStages = (kaseStages, tasks) => {
+  if (!tasks) {
+    return kaseStages;
+  }
+
   const stages = kaseStages.map((s) => {
     return {
       id: s.id,
