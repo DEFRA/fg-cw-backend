@@ -6,8 +6,8 @@ import { Case } from "../models/case.js";
 
 const collection = "cases";
 
-const toCase = (doc) =>
-  new Case({
+const toCase = (doc) => {
+  return new Case({
     _id: doc._id.toHexString(),
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
@@ -17,6 +17,7 @@ const toCase = (doc) =>
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     stages: doc.stages,
+    comments: doc.comments,
     timeline: doc.timeline,
     assignedUser: doc.assignedUserId
       ? {
@@ -24,6 +25,7 @@ const toCase = (doc) =>
         }
       : null,
   });
+};
 
 export const save = async (kase) => {
   const caseDocument = new CaseDocument(kase);
@@ -48,9 +50,28 @@ export const save = async (kase) => {
   }
 };
 
+export const update = async (kase) => {
+  const caseDocument = new CaseDocument(kase);
+
+  const result = await db
+    .collection(collection)
+    .replaceOne({ _id: kase.objectId }, caseDocument);
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${kase._id}" not found`);
+  }
+
+  if (!result.acknowledged) {
+    throw Boom.internal(
+      `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
+    );
+  }
+
+  return kase;
+};
+
 export const findAll = async () => {
   const caseDocuments = await db.collection(collection).find().toArray();
-
   return caseDocuments.map(toCase);
 };
 
@@ -67,79 +88,6 @@ export const updateStage = async (caseId, nextStage, timelineEvent) => {
     { _id: ObjectId.createFromHexString(caseId) },
     {
       $set: { currentStage: nextStage },
-      $push: {
-        timeline: {
-          $each: [timelineEvent],
-          $position: 0,
-        },
-      },
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
-};
-
-export const updateTaskStatus = async ({
-  caseId,
-  stageId,
-  taskGroupId,
-  taskId,
-  status,
-  timelineEvent,
-}) => {
-  const eventToPush = await timelineEvent;
-  const updateOperation = {
-    $set: {
-      "stages.$[stage].taskGroups.$[taskGroup].tasks.$[task].status": status,
-    },
-  };
-
-  // Only add timeline update if timelineEvent is provided
-  if (eventToPush) {
-    updateOperation.$push = {
-      timeline: {
-        $each: [eventToPush],
-        $position: 0,
-      },
-    };
-  }
-
-  const result = await db.collection(collection).updateOne(
-    {
-      _id: ObjectId.createFromHexString(caseId),
-      "stages.taskGroups.id": taskGroupId,
-      "stages.taskGroups.tasks.id": taskId,
-    },
-    updateOperation,
-    {
-      arrayFilters: [
-        { "stage.id": stageId },
-        { "taskGroup.id": taskGroupId },
-        { "task.id": taskId },
-      ],
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(
-      `Task with caseId "${caseId}", stageId "${stageId}", taskGroupId "${taskGroupId}" and taskId "${taskId}" not found`,
-    );
-  }
-};
-
-export const updateAssignedUser = async (
-  caseId,
-  assignedUserId,
-  timelineEvent,
-) => {
-  const result = await db.collection(collection).updateOne(
-    { _id: ObjectId.createFromHexString(caseId) },
-    {
-      $set: {
-        assignedUserId,
-      },
       $push: {
         timeline: {
           $each: [timelineEvent],

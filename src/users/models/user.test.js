@@ -5,25 +5,25 @@ import { UserRole } from "./userRole.js";
 
 const appRolesMultiple = {
   ROLE_RPA_CASES_APPROVE: {
-    startDate: new Date("2025-07-01"),
-    endDate: new Date("2025-08-02"),
+    startDate: "2025-07-01",
+    endDate: "2025-08-02",
   },
   ROLE_ADMIN: {
-    startDate: new Date("2025-07-01"),
-    endDate: new Date("2025-08-02"),
+    startDate: "2025-07-01",
+    endDate: "2025-08-02",
   },
 };
 
 const rolesMultiple = {
   ROLE_RPA_CASES_APPROVE: new UserRole({
     name: "ROLE_RPA_CASES_APPROVE",
-    startDate: new Date("2025-07-01"),
-    endDate: new Date("2025-08-02"),
+    startDate: "2025-07-01",
+    endDate: "2025-08-02",
   }),
   ROLE_ADMIN: new UserRole({
     name: "ROLE_ADMIN",
-    startDate: new Date("2025-07-01"),
-    endDate: new Date("2025-08-02"),
+    startDate: "2025-07-01",
+    endDate: "2025-08-02",
   }),
 };
 

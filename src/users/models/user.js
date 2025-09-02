@@ -16,7 +16,9 @@ export class User {
   createAppRole(appRoles) {
     const result = {};
 
-    for (const [name, roleData] of Object.entries(appRoles)) {
+    const rolesToProcess = appRoles.appRoles || appRoles;
+
+    for (const [name, roleData] of Object.entries(rolesToProcess)) {
       result[name] = new UserRole({
         name,
         startDate: roleData.startDate,

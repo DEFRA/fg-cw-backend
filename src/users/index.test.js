@@ -1,6 +1,6 @@
-import hapi from "@hapi/hapi";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../common/mongo-client.js";
+import { createServer } from "../server/index.js";
 import { users } from "./index.js";
 
 vi.mock("migrate-mongo");
@@ -10,8 +10,8 @@ vi.mock("./subscribers/create-new-case.subscriber.js");
 describe("users", () => {
   let server;
 
-  beforeEach(() => {
-    server = hapi.server();
+  beforeEach(async () => {
+    server = await createServer();
   });
 
   it("creates indexes on startup", async () => {
@@ -39,39 +39,41 @@ describe("users", () => {
       method: r.method,
     }));
 
-    expect(routes).toEqual([
-      {
-        method: "post",
-        path: "/roles",
-      },
-      {
-        method: "post",
-        path: "/users",
-      },
-      {
-        method: "patch",
-        path: "/users/{userId}",
-      },
-      {
-        method: "patch",
-        path: "/users/{userId}/roles",
-      },
-      {
-        method: "get",
-        path: "/roles",
-      },
-      {
-        method: "get",
-        path: "/users",
-      },
-      {
-        method: "get",
-        path: "/roles/{code}",
-      },
-      {
-        method: "get",
-        path: "/users/{userId}",
-      },
-    ]);
+    expect(routes).toEqual(
+      expect.arrayContaining([
+        {
+          method: "post",
+          path: "/roles",
+        },
+        {
+          method: "post",
+          path: "/users",
+        },
+        {
+          method: "patch",
+          path: "/users/{userId}",
+        },
+        {
+          method: "get",
+          path: "/roles",
+        },
+        {
+          method: "get",
+          path: "/secret",
+        },
+        {
+          method: "get",
+          path: "/users",
+        },
+        {
+          method: "get",
+          path: "/roles/{code}",
+        },
+        {
+          method: "get",
+          path: "/users/{userId}",
+        },
+      ]),
+    );
   });
 });

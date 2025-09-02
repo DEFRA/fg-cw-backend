@@ -55,13 +55,17 @@ describe("cases", () => {
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/{caseId}" },
       { method: "get", path: "/workflows/{code}" },
-      { method: "post", path: "/workflows" },
-      { method: "post", path: "/cases/{caseId}/stage" },
       { method: "patch", path: "/cases/{caseId}/assigned-user" },
+      {
+        method: "patch",
+        path: "/cases/{caseId}/stage/outcome",
+      },
       {
         method: "patch",
         path: "/cases/{caseId}/stages/{stageId}/task-groups/{taskGroupId}/tasks/{taskId}/status",
       },
+      { method: "post", path: "/workflows" },
+      { method: "post", path: "/cases/{caseId}/notes" },
     ]);
   });
 });

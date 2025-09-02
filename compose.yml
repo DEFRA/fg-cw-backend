@@ -26,6 +26,13 @@ services:
       - mongodb-data:/data
     restart: always
 
+  entra:
+    image: defradigital/fg-entra-stub-frontend:0.11.0
+    ports:
+      - "${ENTRA_PORT:-3010}:3010"
+    networks:
+      - cdp-tenant
+
   fg-cw-backend:
     build: .
     ports:
@@ -33,10 +40,13 @@ services:
     links:
       - "localstack:localstack"
       - "mongodb:mongodb"
+      - "entra:entra"
     depends_on:
       localstack:
         condition: service_healthy
       mongodb:
+        condition: service_started
+      entra:
         condition: service_started
     env_file:
       - ".env"

@@ -1,47 +1,38 @@
-import { TimelineEvent } from "../models/timeline-event.js";
-import { updateTaskStatus } from "../repositories/case.repository.js";
-import { findUserAssignedToCase } from "./find-case-by-id.use-case.js";
+import Boom from "@hapi/boom";
+import { getAuthenticatedUser } from "../../common/auth.js";
+import { findById, update } from "../repositories/case.repository.js";
+import { findByCode } from "../repositories/workflow.repository.js";
 
-const createTaskTimelineEvent = (
-  caseId,
-  stageId,
-  taskGroupId,
-  taskId,
-  type,
-  assignedUser,
-) => {
-  return new TimelineEvent({
-    eventType: type,
-    createdBy: assignedUser, // user who completed the task
-    description:
-      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.TASK_COMPLETED],
-    data: {
-      caseId,
-      stageId,
-      taskGroupId,
-      taskId,
-    },
-  });
+export const validatePayloadComment = (comment, required) => {
+  if (required && !comment) {
+    throw Boom.badRequest("Comment is required");
+  }
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const assignedUser = findUserAssignedToCase();
+  const { caseId, stageId, taskGroupId, taskId, status, comment } = command;
 
-  await updateTaskStatus({
-    caseId: command.caseId,
-    stageId: command.stageId,
-    taskGroupId: command.taskGroupId,
-    taskId: command.taskId,
-    status: command.status,
-    timelineEvent:
-      command.status === "complete" &&
-      createTaskTimelineEvent(
-        command.caseId,
-        command.stageId,
-        command.taskGroupId,
-        command.taskId,
-        TimelineEvent.eventTypes.TASK_COMPLETED,
-        assignedUser,
-      ),
+  const kase = await findById(caseId);
+
+  if (!kase) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
+
+  // get workflow->task to validate comment
+  const workflow = await findByCode(kase.workflowCode);
+  const task = workflow.findTask(stageId, taskGroupId, taskId);
+
+  validatePayloadComment(comment, task.comment?.type === "REQUIRED");
+
+  const updatedBy = getAuthenticatedUser().id;
+  kase.updateTaskStatus({
+    stageId,
+    taskGroupId,
+    taskId,
+    status,
+    comment,
+    updatedBy,
   });
+
+  return update(kase);
 };

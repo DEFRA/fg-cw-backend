@@ -1,8 +1,18 @@
+import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { TimelineEvent } from "./timeline-event.js";
+import { assertIsComment, toComments } from "./comment.js";
+import { EventEnums } from "./event-enums.js";
+import {
+  assertIsTimelineEvent,
+  TimelineEvent,
+  toTimelineEvents,
+} from "./timeline-event.js";
 
 export class Case {
   constructor(props) {
+    const comments = toComments(props.comments);
+    const timeline = toTimelineEvents(props.timeline, comments);
+
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
@@ -12,8 +22,232 @@ export class Case {
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
     this.stages = props.stages;
-    this.timeline = props.timeline || [];
+    this.comments = comments;
+    this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
+  }
+
+  get objectId() {
+    return ObjectId.createFromHexString(this._id);
+  }
+
+  unassignUser({ text, createdBy }) {
+    this.assignUser({
+      assignedUserId: null,
+      text,
+      createdBy,
+    });
+  }
+
+  findTask({ stageId, taskGroupId, taskId }) {
+    const stage = this.stages.find((s) => s.id === stageId);
+    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
+    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+
+    if (!task) {
+      throw Boom.notFound(
+        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
+      );
+    }
+
+    return task;
+  }
+
+  findComment(commentRef) {
+    return this.comments.find((c) => c.ref === commentRef);
+  }
+
+  updateTaskStatus({
+    stageId,
+    taskGroupId,
+    taskId,
+    status,
+    comment,
+    updatedBy,
+  }) {
+    const task = this.findTask({ stageId, taskGroupId, taskId });
+
+    task.status = status;
+    task.updatedAt = new Date().toISOString();
+    task.updatedBy = updatedBy;
+
+    if (status === "complete") {
+      const timelineEvent = TimelineEvent.createTaskCompleted({
+        createdBy: updatedBy,
+        text: comment,
+        data: {
+          caseId: this._id,
+          stageId,
+          taskGroupId,
+          taskId,
+        },
+      });
+
+      this.#addTimelineEvent(timelineEvent);
+      task.commentRef = timelineEvent.comment?.ref;
+    }
+  }
+
+  assignUser({ assignedUserId, createdBy, text }) {
+    const eventType = assignedUserId
+      ? EventEnums.eventTypes.CASE_ASSIGNED
+      : EventEnums.eventTypes.CASE_UNASSIGNED;
+
+    const timelineEvent = TimelineEvent.createAssignUser({
+      eventType,
+      text,
+      data: {
+        assignedTo: assignedUserId,
+        previouslyAssignedTo: this.assignedUser?.id,
+      },
+      createdBy,
+    });
+
+    this.#setAssignedUser(assignedUserId);
+    this.#addTimelineEvent(timelineEvent);
+  }
+
+  addNote({ text, createdBy }) {
+    if (!text?.trim()) {
+      throw Boom.badRequest(`Note text is required and cannot be empty.`);
+    }
+
+    const timelineEvent = TimelineEvent.createNoteAdded({
+      text,
+      createdBy,
+    });
+    this.#addTimelineEvent(timelineEvent);
+    return timelineEvent.comment;
+  }
+
+  updateStageOutcome({ actionId, comment, createdBy }) {
+    const timelineEvent = TimelineEvent.create({
+      eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      data: {
+        actionId,
+        stageId: this.currentStage,
+      },
+      text: comment,
+      description: `Application ${actionId}`,
+      createdBy,
+    });
+
+    const currentStage = this.#getCurrentStage();
+
+    currentStage.outcome = {
+      actionId,
+      createdBy,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (timelineEvent.comment) {
+      currentStage.outcome.commentRef = timelineEvent.comment.ref;
+    }
+
+    this.#addTimelineEvent(timelineEvent);
+
+    if (actionId === "approve") {
+      this.#moveToNextStage();
+    }
+  }
+
+  getUserIds() {
+    const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
+
+    const timelineUserIds = this.timeline.flatMap((event) =>
+      event.getUserIds(),
+    );
+
+    const commentUserIds = this.comments.flatMap((comment) =>
+      comment.getUserIds(),
+    );
+
+    const taskUserIds = this.stages
+      .flatMap((stage) =>
+        stage.taskGroups.flatMap((taskGroup) =>
+          taskGroup.tasks.flatMap((t) => t.updatedBy),
+        ),
+      )
+      .filter((id) => id !== undefined);
+
+    const allUserIds = [
+      ...caseUserIds,
+      ...timelineUserIds,
+      ...commentUserIds,
+      ...taskUserIds,
+    ];
+
+    return [...new Set(allUserIds)];
+  }
+
+  #setAssignedUser(userId) {
+    this.assignedUserId = userId;
+    this.assignedUser = userId ? { id: userId } : null;
+  }
+
+  #addTimelineEvent(timelineEvent) {
+    assertIsTimelineEvent(timelineEvent);
+    this.timeline.unshift(timelineEvent);
+
+    if (timelineEvent.comment) {
+      this.#addComment(timelineEvent.comment);
+    }
+
+    return timelineEvent;
+  }
+
+  #addComment(comment) {
+    assertIsComment(comment);
+    this.comments.unshift(comment);
+    return comment;
+  }
+
+  #getCurrentStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    return this.stages[currentStageIndex];
+  }
+
+  #moveToNextStage() {
+    const nextStage = this.#getNextStage();
+    this.currentStage = nextStage.id;
+    return nextStage;
+  }
+
+  #getNextStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    const currentStage = this.#getCurrentStage();
+
+    if (currentStageIndex === this.stages.length - 1) {
+      throw Boom.notFound(
+        `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
+      );
+    }
+
+    const allTasksComplete = currentStage.taskGroups
+      .flatMap((group) => group.tasks)
+      .every((task) => task.status === "complete");
+
+    if (!allTasksComplete) {
+      throw Boom.badRequest(
+        `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
+      );
+    }
+
+    return this.stages[currentStageIndex + 1];
+  }
+
+  #getCurrentStageIndex() {
+    const currentStageIndex = this.stages.findIndex(
+      (stage) => stage.id === this.currentStage,
+    );
+
+    if (currentStageIndex === -1) {
+      throw Boom.notFound(
+        `Cannot find current stage index for ${this.currentStage}, case ${this._id}`,
+      );
+    }
+
+    return currentStageIndex;
   }
 
   static fromWorkflow(workflow, caseEvent) {
@@ -34,14 +268,15 @@ export class Case {
           })),
         })),
       })),
+      comments: caseEvent.comments,
       timeline: [
-        new TimelineEvent({
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+        {
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
             caseRef: caseEvent.clientRef,
           },
-        }),
+        },
       ],
       requiredRoles: workflow.requiredRoles,
     });
@@ -77,7 +312,7 @@ export class Case {
       ],
       timeline: [
         {
-          eventType: TimelineEvent.eventTypes.CASE_CREATED,
+          eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
           // 'createdBy' is hydrated on find-case-by-id
@@ -87,6 +322,7 @@ export class Case {
           },
         },
       ],
+      comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
         name: "Test Name",

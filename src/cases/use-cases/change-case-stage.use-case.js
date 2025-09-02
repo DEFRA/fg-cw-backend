@@ -1,29 +1,13 @@
 import Boom from "@hapi/boom";
 
+import { getAuthenticatedUser } from "../../common/auth.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
-import {
-  findCaseByIdUseCase,
-  findUserAssignedToCase,
-} from "./find-case-by-id.use-case.js";
-
-const createStageTimelineEvent = (caseId, stageId, type, assignedUser) => {
-  return new TimelineEvent({
-    eventType: type,
-    createdBy: assignedUser, // user who completed the task
-    description:
-      TimelineEvent.eventDescriptions[TimelineEvent.eventTypes.STAGE_COMPLETED],
-    data: {
-      caseId,
-      stageId,
-    },
-  });
-};
+import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 
 export const changeCaseStageUseCase = async (caseId) => {
   const kase = await findCaseByIdUseCase(caseId);
-  const assignedUser = findUserAssignedToCase();
 
   const currentStageIndex = kase.stages.findIndex(
     (stage) => stage.id === kase.currentStage,
@@ -39,18 +23,34 @@ export const changeCaseStageUseCase = async (caseId) => {
     );
   }
 
+  const allTasksStatus = [];
+  kase.stages[currentStageIndex].taskGroups.forEach((taskGroup) => {
+    taskGroup.tasks.forEach((task) => allTasksStatus.push(task.status));
+  });
+
+  const allTasksComplete = allTasksStatus.every(
+    (status) => status === "complete",
+  );
+
+  if (!allTasksComplete) {
+    throw Boom.badRequest(
+      `Cannot progress case ${caseId} from stage ${kase.currentStage} - some tasks are not complete.`,
+    );
+  }
+
   // Get the next stage ID
   const nextStage = kase.stages[currentStageIndex + 1].id;
 
   await updateStage(
     caseId,
     nextStage,
-    createStageTimelineEvent(
-      caseId,
-      nextStage,
-      TimelineEvent.eventTypes.STAGE_COMPLETED,
-      assignedUser,
-    ),
+    TimelineEvent.createStageCompleted({
+      data: {
+        caseId,
+        stageId: nextStage,
+      },
+      createdBy: getAuthenticatedUser().id,
+    }),
   );
 
   await publishCaseStageUpdated({

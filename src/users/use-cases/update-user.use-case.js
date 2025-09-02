@@ -13,7 +13,7 @@ export const updateUserUseCase = async ({ userId, props }) => {
 
   replace(user, props, "name");
   replace(user, props, "idpRoles");
-  replace(user, props, "appRoles");
+  user.appRoles = user.createAppRole(props);
 
   await update(user);
 

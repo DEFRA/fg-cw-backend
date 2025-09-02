@@ -7,14 +7,14 @@ describe("UserRole", () => {
     it("creates a UserRole with all properties", () => {
       const props = {
         name: "ROLE_ADMIN",
-        startDate: new Date("2025-07-01"),
-        endDate: new Date("2025-12-01T00:00:00.000Z"),
+        startDate: "2025-07-01",
+        endDate: "2025-12-01",
       };
 
       const role = new UserRole(props);
 
-      expect(role.startDate).toEqual(new Date("2025-07-01"));
-      expect(role.endDate).toEqual(new Date("2025-12-01T00:00:00.000Z"));
+      expect(role.startDate).toEqual("2025-07-01");
+      expect(role.endDate).toEqual("2025-12-01");
     });
 
     it("creates a UserRole with only name", () => {
@@ -31,31 +31,31 @@ describe("UserRole", () => {
     it("creates a Role with name and startDate only", () => {
       const props = {
         name: "ROLE_TEMP",
-        startDate: new Date("2025-12-01T00:00:00.000Z"),
+        startDate: "2025-12-01",
       };
 
       const role = new UserRole(props);
 
-      expect(role.startDate).toEqual(new Date("2025-12-01T00:00:00.000Z"));
+      expect(role.startDate).toEqual("2025-12-01");
       expect(role.endDate).toBeUndefined();
     });
 
     it("creates a UserRole with name and endDate only", () => {
       const props = {
         name: "ROLE_LIMITED",
-        endDate: new Date("2025-12-01T00:00:00.000Z"),
+        endDate: "2025-12-01",
       };
 
       const userRole = new UserRole(props);
 
       expect(userRole.startDate).toBeUndefined();
-      expect(userRole.endDate).toEqual(new Date("2025-12-01T00:00:00.000Z"));
+      expect(userRole.endDate).toEqual("2025-12-01");
     });
 
     it("does not call validateRole when startDate is missing", () => {
       const props = {
         name: "ROLE_TEST",
-        endDate: new Date("2025-01-01T00:00:00.000Z"),
+        endDate: "2025-01-01",
       };
 
       expect(() => new UserRole(props)).not.toThrow();
@@ -64,7 +64,7 @@ describe("UserRole", () => {
     it("does not call validateRole when endDate is missing", () => {
       const props = {
         name: "ROLE_TEST",
-        startDate: new Date("2025-07-01"),
+        startDate: "2025-07-01",
       };
 
       expect(() => new UserRole(props)).not.toThrow();
@@ -73,8 +73,8 @@ describe("UserRole", () => {
     it("calls validateRole when both startDate and endDate are present", () => {
       const props = {
         name: "ROLE_TEST",
-        startDate: new Date("2025-07-01"),
-        endDate: new Date("2025-12-01T00:00:00.000Z"),
+        startDate: "2025-07-01",
+        endDate: "2025-12-01",
       };
 
       expect(() => new UserRole(props)).not.toThrow();
@@ -83,8 +83,8 @@ describe("UserRole", () => {
     it("throws error when endDate is before startDate", () => {
       const props = {
         name: "ROLE_INVALID",
-        startDate: new Date("2025-07-01"),
-        endDate: new Date("2025-01-01T00:00:00.000Z"),
+        startDate: "2025-07-01",
+        endDate: "2025-01-01",
       };
 
       expect(() => new UserRole(props)).toThrow(
@@ -95,8 +95,8 @@ describe("UserRole", () => {
     it("throws error when endDate equals startDate", () => {
       const props = {
         name: "ROLE_SAME_DATE",
-        startDate: new Date("2025-07-01"),
-        endDate: new Date("2025-07-01"),
+        startDate: "2025-07-01",
+        endDate: "2025-07-01",
       };
 
       expect(() => new UserRole(props)).toThrow(
@@ -109,8 +109,8 @@ describe("UserRole", () => {
     it("validates successfully when endDate is after startDate", () => {
       const userRole = new UserRole({
         name: "ROLE_VALID",
-        startDate: new Date("2025-07-01"),
-        endDate: new Date("2025-12-01T00:00:00.000Z"),
+        startDate: "2025-07-01",
+        endDate: "2025-12-01",
       });
 
       expect(() => userRole.validateRole()).not.toThrow();
@@ -121,8 +121,8 @@ describe("UserRole", () => {
         () =>
           new UserRole({
             name: "ROLE_TEST",
-            startDate: new Date("2025-07-01"),
-            endDate: new Date("2025-01-01T00:00:00.000Z"),
+            startDate: "2025-07-01",
+            endDate: "2025-01-01",
           }),
       ).toThrow(
         Boom.badRequest(
@@ -135,8 +135,8 @@ describe("UserRole", () => {
       const userRole = new UserRole({
         name: "ROLE_EQUAL_DATES",
       });
-      userRole.startDate = "2025-06-15T10:00:00Z";
-      userRole.endDate = "2025-06-15T10:00:00Z";
+      userRole.startDate = "2025-06-15";
+      userRole.endDate = "2025-06-15";
 
       expect(() => userRole.validateRole()).toThrow();
 
@@ -151,8 +151,8 @@ describe("UserRole", () => {
     it("handles different date formats correctly", () => {
       const userRole = new UserRole({
         name: "ROLE_DATE_FORMAT",
-        startDate: "2025-01-01T00:00:00Z",
-        endDate: "2025-01-01T00:00:01Z",
+        startDate: "2025-01-01",
+        endDate: "2026-01-01",
       });
 
       expect(() => userRole.validateRole()).not.toThrow();
@@ -161,8 +161,8 @@ describe("UserRole", () => {
     it("handles ISO date strings correctly", () => {
       const userRole = new UserRole({
         name: "ROLE_ISO_DATE",
-        startDate: "2025-01-01T10:30:00.000Z",
-        endDate: "2025-01-01T10:30:00.001Z",
+        startDate: "2025-01-01",
+        endDate: "2026-01-01",
       });
 
       expect(() => userRole.validateRole()).not.toThrow();

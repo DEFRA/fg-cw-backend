@@ -1,17 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
-import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
-import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
+import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
+import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findCaseByIdUseCase } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
-vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
 describe("findCaseByIdUseCase", () => {
@@ -20,7 +19,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findById.mockResolvedValue(kase);
 
@@ -53,26 +52,32 @@ describe("findCaseByIdUseCase", () => {
       id: "64c88faac1f56f71e1b89a33",
     });
 
-    mockCase.timeline.unshift({
-      eventType: TimelineEvent.eventTypes.CASE_ASSIGNED,
-      createdAt: "2025-01-01T00:00:00.000Z",
-      description: "Case assigned",
-      createdBy: "64c88faac1f56f71e1b89a44",
-      data: {
-        assignedTo: "64c88faac1f56f71e1b89a33",
-      },
-    });
+    mockCase.timeline.unshift(
+      TimelineEvent.createMock({
+        eventType: EventEnums.eventTypes.CASE_ASSIGNED,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        description: "Case assigned",
+        createdBy: "64c88faac1f56f71e1b89a44",
+        data: {
+          assignedTo: "64c88faac1f56f71e1b89a33",
+        },
+      }),
+    );
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
-    findUsersUseCase.mockResolvedValueOnce([mockUserAssigned]);
-    findUsersUseCase.mockResolvedValueOnce([mockUserAssigned]);
+    findAll.mockResolvedValue([mockUser, mockUserAssigned]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
+    expect(findAll).toHaveBeenCalledWith({
+      ids: [
+        mockUser.id,
+        "64c88faac1f56f71e1b89a44",
+        "64c88faac1f56f71e1b89a33",
+      ],
+    });
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
@@ -88,14 +93,14 @@ describe("findCaseByIdUseCase", () => {
     const userError = new Error("User not found");
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockRejectedValue(userError);
+    findAll.mockRejectedValue(userError);
 
     await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
       "User not found",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockCase.assignedUser.id);
+    expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
   });
 
   it("finds workflow by code and assigns requiredRoles to case", async () => {
@@ -108,7 +113,7 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
@@ -130,13 +135,13 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findUserByIdUseCase).toHaveBeenCalledWith(mockUser.id);
+    expect(findAll).toHaveBeenCalledWith({ ids: [mockUser.id] });
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("USER_WORKFLOW");
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(["USER_ROLE"]);
@@ -151,7 +156,7 @@ describe("findCaseByIdUseCase", () => {
     const workflowError = new Error("Workflow not found");
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
 
     await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
@@ -170,7 +175,7 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findUserByIdUseCase.mockResolvedValue(mockUser);
+    findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
     const result = await findCaseByIdUseCase(mockCase._id);
@@ -179,5 +184,206 @@ describe("findCaseByIdUseCase", () => {
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
     expect(result).toBe(mockCase);
+  });
+
+  describe("stage outcome comment resolution", () => {
+    it("resolves outcome comment text when outcome and comment exist", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      // Create a case with stage outcome that references a comment
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+        comments: [
+          {
+            ref: commentRef,
+            type: "STAGE_COMPLETED",
+            text: "Application approved with conditions",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T12:00:00.000Z",
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        commentRef,
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: "Application approved with conditions",
+      });
+    });
+
+    it("handles outcome with no comment reference", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: undefined,
+      });
+    });
+
+    it("handles outcome with comment reference that doesn't exist", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef: "64c88faac1f56f71e1b89a34",
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+        ],
+        comments: [],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toEqual({
+        actionId: "approve",
+        commentRef: "64c88faac1f56f71e1b89a34",
+        createdBy: mockUser.id,
+        createdAt: "2025-01-01T12:00:00.000Z",
+        comment: undefined,
+      });
+    });
+
+    it("handles stage with no outcome", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome).toBeUndefined();
+    });
+
+    it("handles multiple stages with different outcome scenarios", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+
+      const commentRef1 = "64c88faac1f56f71e1b89a35";
+      const commentRef2 = "64c88faac1f56f71e1b89a36";
+
+      const mockCase = Case.createMock({
+        stages: [
+          {
+            id: "stage-1",
+            taskGroups: [],
+            outcome: {
+              actionId: "approve",
+              commentRef: commentRef1,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T12:00:00.000Z",
+            },
+          },
+          {
+            id: "stage-2",
+            taskGroups: [],
+          },
+          {
+            id: "stage-3",
+            taskGroups: [],
+            outcome: {
+              actionId: "reject",
+              commentRef: commentRef2,
+              createdBy: mockUser.id,
+              createdAt: "2025-01-01T13:00:00.000Z",
+            },
+          },
+        ],
+        comments: [
+          {
+            ref: commentRef1,
+            type: "STAGE_COMPLETED",
+            text: "First stage approved",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T12:00:00.000Z",
+          },
+          {
+            ref: commentRef2,
+            type: "STAGE_COMPLETED",
+            text: "Application rejected due to incomplete information",
+            createdBy: mockUser.id,
+            createdAt: "2025-01-01T13:00:00.000Z",
+          },
+        ],
+      });
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id);
+
+      expect(result.stages[0].outcome.comment).toBe("First stage approved");
+      expect(result.stages[1].outcome).toBeUndefined();
+      expect(result.stages[2].outcome.comment).toBe(
+        "Application rejected due to incomplete information",
+      );
+    });
   });
 });

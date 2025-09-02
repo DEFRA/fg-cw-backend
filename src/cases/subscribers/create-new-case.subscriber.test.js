@@ -27,7 +27,7 @@ describe("createNewCaseSubscriber", () => {
     };
 
     createCaseUseCase.mockResolvedValue(
-      new Case({
+      Case.createMock({
         _id: "case-id-123",
         caseRef: "TEST-001",
         workflowCode: "wf-001",

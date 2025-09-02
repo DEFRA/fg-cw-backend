@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
+import { TimelineEvent } from "../models/timeline-event.js";
 import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
 import { updateStage } from "../repositories/case.repository.js";
 import { changeCaseStageUseCase } from "./change-case-stage.use-case.js";
@@ -13,9 +14,15 @@ vi.mock("./find-case-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../publishers/case-event.publisher.js");
 
+const createMock = () => {
+  const kase = Case.createMock();
+  kase.stages[0].taskGroups[0].tasks[0].status = "complete";
+  return kase;
+};
+
 describe("changeCaseStageUseCase", () => {
   it("uses findCaseByIdUseCase to get the case", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 
@@ -34,8 +41,20 @@ describe("changeCaseStageUseCase", () => {
     ).rejects.toThrow('Case with id "non-existent-case-id" not found');
   });
 
+  it("throws when tasks are not complete", async () => {
+    const kase = createMock();
+    kase.stages[0].taskGroups[0].tasks[0].status = "pending";
+
+    findCaseByIdUseCase.mockResolvedValue(kase);
+    findUserAssignedToCase.mockReturnValue("Test User");
+
+    await expect(() => changeCaseStageUseCase(kase._id)).rejects.toThrow(
+      `Cannot progress case ${kase._id} from stage ${kase.currentStage} - some tasks are not complete.`,
+    );
+  });
+
   it("moves the case to the next stage", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
     findUserAssignedToCase.mockReturnValue("Test User");
@@ -45,20 +64,25 @@ describe("changeCaseStageUseCase", () => {
     expect(updateStage).toHaveBeenCalledWith(
       kase._id,
       "stage-2",
-      expect.objectContaining({
-        eventType: "STAGE_COMPLETED",
-        createdBy: "Test User",
-        description: "Stage completed",
-        data: {
-          caseId: kase._id,
-          stageId: "stage-2",
-        },
-      }),
+      expect.any(TimelineEvent),
+    );
+  });
+
+  it("throws if can not progress stage", async () => {
+    const kase = createMock();
+
+    kase.currentStage = "foo";
+
+    findCaseByIdUseCase.mockResolvedValue(kase);
+    findUserAssignedToCase.mockReturnValue("Test User");
+
+    await expect(changeCaseStageUseCase(kase._id)).rejects.toThrow(
+      "Cannot progress case " + kase._id + " from stage foo",
     );
   });
 
   it("publishes CaseStageUpdated event", async () => {
-    const kase = Case.createMock();
+    const kase = createMock();
 
     findCaseByIdUseCase.mockResolvedValue(kase);
 

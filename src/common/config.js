@@ -85,14 +85,6 @@ export const config = convict({
         : ["req", "res", "responseTime"],
     },
   },
-  api: {
-    pageSize: {
-      doc: "Default page size for pagination",
-      format: Number,
-      default: 20,
-      env: "DEFAULT_LIMIT",
-    },
-  },
   mongo: {
     uri: {
       doc: "URI for mongodb",
@@ -141,6 +133,42 @@ export const config = convict({
       format: String,
       default: "x-cdp-request-id",
       env: "TRACING_HEADER",
+    },
+  },
+  oidc: {
+    jwks: {
+      uri: {
+        doc: "The JWKS URI to retrieve public keys for token verification",
+        format: "url",
+        default: null,
+        env: "OIDC_JWKS_URI",
+      },
+    },
+    verify: {
+      aud: {
+        doc: "The audience of the token",
+        format: String,
+        default: null,
+        env: "OIDC_VERIFY_AUD",
+      },
+      iss: {
+        doc: "The issuer of the token",
+        format: "url",
+        default: null,
+        env: "OIDC_VERIFY_ISS",
+      },
+    },
+  },
+  entra: {
+    roles: {
+      doc: "Roles assigned to users in Microsoft Entra ID",
+      format: Array,
+      default: [
+        "FCP.Casework.Read",
+        "FCP.Casework.ReadWrite",
+        "FCP.Casework.Admin",
+      ],
+      env: "AZURE_ENTRA_APP_ROLES",
     },
   },
 });

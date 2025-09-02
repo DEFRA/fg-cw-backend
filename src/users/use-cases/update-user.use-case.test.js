@@ -78,6 +78,13 @@ describe("updateUserUseCase", () => {
       idpId,
     });
 
+    const roleProps = {
+      ROLE_RPA_CASES_APPROVE: {
+        startDate: "2025-07-01",
+        endDate: "2025-08-02",
+      },
+    };
+
     findById.mockResolvedValue(user);
 
     await updateUserUseCase({
@@ -87,6 +94,7 @@ describe("updateUserUseCase", () => {
         email: "new.email@defra.gov.uk",
         createdAt: "2025-01-01T00:00:00.000Z",
         updatedAt: "2025-01-01T00:00:00.000Z",
+        appRoles: roleProps,
       },
     });
 
