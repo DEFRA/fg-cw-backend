@@ -1,5 +1,6 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { appRoles } from "../../../test/helpers/appRoles.js";
 import { User } from "../models/user.js";
 import { createUserRequestSchema } from "../schemas/requests/create-user-request.schema.js";
 import { createUserUseCase } from "../use-cases/create-user.use-case.js";
@@ -33,7 +34,12 @@ describe("createUserRoute", () => {
         name: "John",
         email: "john.doe@defra.co.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -46,7 +52,7 @@ describe("createUserRoute", () => {
       name: "John",
       email: "john.doe@defra.co.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles,
     });
   });
 
