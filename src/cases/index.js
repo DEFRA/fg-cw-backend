@@ -17,9 +17,10 @@ import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
 export const cases = {
   name: "cases",
   async register(server) {
-    logger.info("Running DB Migrations");
-    await up(db, mongoClient);
-    logger.info("Finished running DB Migrations");
+    logger.info("Running migrations");
+    const migrated = await up(db, mongoClient);
+    migrated.forEach((fileName) => logger.info(`Migrated: ${fileName}`));
+    logger.info("Finished running migrations");
 
     server.events.on("start", async () => {
       await createNewCaseSubscriber.start();
