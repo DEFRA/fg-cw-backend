@@ -73,7 +73,7 @@ export class Case {
   setTaskStatus({ stageId, taskGroupId, taskId, status, comment, updatedBy }) {
     const caseTask = this.findTask(taskId);
 
-    caseTask.updateStatus(status, updatedBy, comment);
+    caseTask.updateStatus(status, updatedBy);
 
     if (status === "complete") {
       const timelineEvent = TimelineEvent.createTaskCompleted({

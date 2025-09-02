@@ -42,7 +42,7 @@ export class Task {
     this.updatedBy = value.updatedBy;
   }
 
-  updateStatus(status, updatedBy, comment) {
+  updateStatus(status, updatedBy) {
     const { error, value } = TaskStatus.validate(status, {
       stripUnknown: true,
       abortEarly: false,
@@ -57,10 +57,6 @@ export class Task {
     this.status = value;
     this.updatedBy = updatedBy;
     this.updatedAt = new Date().toISOString();
-
-    if (value === "complete") {
-      this.commentRef = comment?.ref;
-    }
   }
 
   updateCommentRef(commentRef) {
