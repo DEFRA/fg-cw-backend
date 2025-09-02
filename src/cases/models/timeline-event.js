@@ -97,10 +97,11 @@ export class TimelineEvent {
     });
   }
 
-  static createStageCompleted({ data, createdBy }) {
+  static createStageCompleted({ data, text, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
       data,
+      text,
       createdBy,
     });
   }
