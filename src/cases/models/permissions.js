@@ -5,7 +5,8 @@ export class Permissions {
   }
 
   isAuthorised(roles) {
-    return this.hasAllRequiredRoles(roles) && this.hasAnyRequiredRole(roles);
+    const keys = Object.keys(roles);
+    return this.hasAllRequiredRoles(keys) && this.hasAnyRequiredRole(keys);
   }
 
   hasAllRequiredRoles(roles) {

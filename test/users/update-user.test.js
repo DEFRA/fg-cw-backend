@@ -28,7 +28,12 @@ describe("PATCH /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -39,7 +44,16 @@ describe("PATCH /users/{userId}", () => {
         name: "Updated Name",
         email: "NA",
         idpRoles: ["updated-idp", "replaces-all-roles"],
-        appRoles: ["ROLE_RPA_1", "ROLE_RPA_2"],
+        appRoles: {
+          ROLE_RPA_1: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+          ROLE_RPA_2: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -53,7 +67,16 @@ describe("PATCH /users/{userId}", () => {
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["updated-idp", "replaces-all-roles"],
-        appRoles: ["ROLE_RPA_1", "ROLE_RPA_2"],
+        appRoles: {
+          ROLE_RPA_1: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+          ROLE_RPA_2: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
@@ -71,21 +94,35 @@ describe("PATCH /users/{userId}", () => {
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["updated-idp", "replaces-all-roles"],
-        appRoles: ["ROLE_RPA_1", "ROLE_RPA_2"],
+        appRoles: {
+          ROLE_RPA_1: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+          ROLE_RPA_2: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
     });
   });
 
-  it("does not update other propeties", async () => {
+  it("does not update other properties", async () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
         idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -110,7 +147,12 @@ describe("PATCH /users/{userId}", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
