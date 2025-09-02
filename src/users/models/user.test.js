@@ -1,37 +1,22 @@
 import { ObjectId } from "mongodb";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRole } from "./app-role.js";
 import { User } from "./user.js";
-
-const appRolesMultiple = {
-  ROLE_RPA_CASES_APPROVE: {
-    startDate: "2025-07-01",
-    endDate: "2025-08-02",
-  },
-  ROLE_ADMIN: {
-    startDate: "2025-07-01",
-    endDate: "2025-08-02",
-  },
-};
-
-const rolesMultiple = {
-  ROLE_RPA_CASES_APPROVE: new AppRole({
-    name: "ROLE_RPA_CASES_APPROVE",
-    startDate: "2025-07-01",
-    endDate: "2025-08-02",
-  }),
-  ROLE_ADMIN: new AppRole({
-    name: "ROLE_ADMIN",
-    startDate: "2025-07-01",
-    endDate: "2025-08-02",
-  }),
-};
 
 vi.mock("mongodb", () => ({
   ObjectId: vi.fn(() => ({
     toHexString: vi.fn(() => "507f1f77bcf86cd799439011"),
   })),
 }));
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("User", () => {
   beforeEach(() => {
@@ -98,17 +83,6 @@ describe("User", () => {
       expect(user.idpRoles).toEqual([]);
     });
 
-    it("accepts empty options parameter", () => {
-      const props = {
-        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-        name: "John Doe",
-        email: "john.doe@defra.gov.uk",
-      };
-
-      expect(() => new User(props)).not.toThrow();
-      expect(() => new User(props, {})).not.toThrow();
-    });
-
     it("handles undefined properties gracefully", () => {
       const props = {
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
@@ -122,91 +96,305 @@ describe("User", () => {
       expect(user.createdAt).toBeUndefined();
       expect(user.updatedAt).toBeUndefined();
     });
+
+    it("handles empty props object", () => {
+      const props = {};
+
+      const user = new User(props);
+
+      expect(user.id).toBe("507f1f77bcf86cd799439011");
+      expect(user.idpId).toBeUndefined();
+      expect(user.name).toBeUndefined();
+      expect(user.email).toBeUndefined();
+      expect(user.idpRoles).toEqual([]);
+      expect(user.appRoles).toBeUndefined();
+      expect(user.createdAt).toBeUndefined();
+      expect(user.updatedAt).toBeUndefined();
+    });
   });
 
-  describe("createAppRole", () => {
-    let user;
-
-    beforeEach(() => {
-      user = new User({
-        id: "test-id",
+  describe("setName", () => {
+    it("updates the user name and updatedAt timestamp", () => {
+      const user = new User({
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-        name: "John Doe",
-        email: "john.doe@defra.gov.uk",
+        name: "Original Name",
+        updatedAt: "2025-01-01T00:00:00.000Z",
       });
+
+      user.setName("New Name");
+
+      expect(user.name).toBe("New Name");
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
     });
 
-    it("creates Role instances for valid appRoles object", () => {
-      const result = user.createAppRole(appRolesMultiple);
+    it("handles null name value", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Original Name",
+      });
 
-      expect(result).toStrictEqual(rolesMultiple);
+      user.setName(null);
+
+      expect(user.name).toBeNull();
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
     });
 
-    it("creates Role with undefined endDate when not provided", () => {
-      const appRoles = {
-        ROLE_TEMP: {
+    it("handles undefined name value", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Original Name",
+      });
+
+      user.setName(undefined);
+
+      expect(user.name).toBeUndefined();
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("handles empty string name", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Original Name",
+      });
+
+      user.setName("");
+
+      expect(user.name).toBe("");
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+  });
+
+  describe("assignIdpRoles", () => {
+    it("updates idpRoles and updatedAt timestamp", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        idpRoles: ["OLD_ROLE"],
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      });
+
+      const newRoles = ["FCP.Casework.ReadWrite", "ADMIN"];
+      user.assignIdpRoles(newRoles);
+
+      expect(user.idpRoles).toEqual(["FCP.Casework.ReadWrite", "ADMIN"]);
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("handles empty array of roles", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        idpRoles: ["EXISTING_ROLE"],
+      });
+
+      user.assignIdpRoles([]);
+
+      expect(user.idpRoles).toEqual([]);
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("handles null roles", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        idpRoles: ["EXISTING_ROLE"],
+      });
+
+      user.assignIdpRoles(null);
+
+      expect(user.idpRoles).toBeNull();
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("replaces existing roles completely", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        idpRoles: ["ROLE1", "ROLE2", "ROLE3"],
+      });
+
+      user.assignIdpRoles(["NEW_ROLE"]);
+
+      expect(user.idpRoles).toEqual(["NEW_ROLE"]);
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+  });
+
+  describe("assignAppRoles", () => {
+    it("updates appRoles and updatedAt timestamp", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        appRoles: { OLD_ROLE: { startDate: "2025-01-01" } },
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      });
+
+      const newAppRoles = {
+        ROLE_RPA_CASES_APPROVE: {
           startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_ADMIN: {
+          startDate: "2025-06-01",
+          endDate: "2025-12-31",
         },
       };
 
-      const result = user.createAppRole(appRoles);
+      user.assignAppRoles(newAppRoles);
 
-      expect(result).toEqual({
-        ROLE_TEMP: new AppRole({
-          name: "ROLE_TEMP",
-          startDate: "2025-07-01",
-          endDate: undefined,
-        }),
+      expect(user.appRoles).toEqual(newAppRoles);
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("handles empty object of roles", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        appRoles: { EXISTING_ROLE: { startDate: "2025-01-01" } },
       });
+
+      user.assignAppRoles({});
+
+      expect(user.appRoles).toEqual({});
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("handles null roles", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        appRoles: { EXISTING_ROLE: { startDate: "2025-01-01" } },
+      });
+
+      user.assignAppRoles(null);
+
+      expect(user.appRoles).toBeNull();
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("replaces existing app roles completely", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        appRoles: {
+          ROLE1: { startDate: "2025-01-01" },
+          ROLE2: { startDate: "2025-02-01" },
+        },
+      });
+
+      const newAppRoles = {
+        NEW_ROLE: { startDate: "2025-03-01", endDate: "2025-03-31" },
+      };
+
+      user.assignAppRoles(newAppRoles);
+
+      expect(user.appRoles).toEqual(newAppRoles);
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
     });
   });
 
-  describe("integration", () => {
-    it("creates a user and then creates app roles", () => {
+  describe("createMock", () => {
+    it("creates a mock user with default values", () => {
+      const mockUser = User.createMock();
+
+      expect(mockUser).toBeInstanceOf(User);
+      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
+      expect(mockUser.name).toBe("Bob Bill");
+      expect(mockUser.email).toBe("bob.bill@defra.gov.uk");
+      expect(mockUser.idpRoles).toEqual(["FCP.Casework.ReadWrite"]);
+      expect(mockUser.appRoles.ROLE_RPA_CASES_APPROVE).toBeInstanceOf(AppRole);
+      expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
+      expect(mockUser.updatedAt).toBe("2025-01-01T00:00:00.000Z");
+    });
+
+    it("creates a mock user with overridden properties", () => {
+      const overrides = {
+        name: "Jane Doe",
+        email: "jane.doe@defra.gov.uk",
+        idpRoles: ["CUSTOM_ROLE"],
+      };
+
+      const mockUser = User.createMock(overrides);
+
+      expect(mockUser.name).toBe("Jane Doe");
+      expect(mockUser.email).toBe("jane.doe@defra.gov.uk");
+      expect(mockUser.idpRoles).toEqual(["CUSTOM_ROLE"]);
+      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
+      expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
+    });
+
+    it("creates mock user with custom app roles", () => {
+      const customAppRoles = {
+        CUSTOM_ROLE: new AppRole({
+          name: "CUSTOM_ROLE",
+          startDate: "2025-05-01",
+          endDate: "2025-05-31",
+        }),
+      };
+
+      const mockUser = User.createMock({ appRoles: customAppRoles });
+
+      expect(mockUser.appRoles).toEqual(customAppRoles);
+      expect(mockUser.appRoles.CUSTOM_ROLE).toBeInstanceOf(AppRole);
+    });
+
+    it("creates mock user with empty props", () => {
+      const mockUser = User.createMock({});
+
+      expect(mockUser).toBeInstanceOf(User);
+      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
+      expect(mockUser.name).toBe("Bob Bill");
+    });
+
+    it("creates mock user with null overrides", () => {
+      const mockUser = User.createMock({ name: null, email: null });
+
+      expect(mockUser.name).toBeNull();
+      expect(mockUser.email).toBeNull();
+      expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
+    });
+  });
+
+  describe("integration scenarios", () => {
+    it("can chain multiple operations", () => {
+      const user = new User({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Original Name",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      });
+
+      user.setName("Updated Name");
+      user.assignIdpRoles(["NEW_ROLE1", "NEW_ROLE2"]);
+      user.assignAppRoles({
+        APP_ROLE: { startDate: "2025-01-01", endDate: "2025-12-31" },
+      });
+
+      expect(user.name).toBe("Updated Name");
+      expect(user.idpRoles).toEqual(["NEW_ROLE1", "NEW_ROLE2"]);
+      expect(user.appRoles).toEqual({
+        APP_ROLE: { startDate: "2025-01-01", endDate: "2025-12-31" },
+      });
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
+    });
+
+    it("maintains object integrity after multiple updates", () => {
       const user = new User({
         id: "test-id",
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-        name: "John Doe",
-        email: "john.doe@defra.gov.uk",
+        name: "Test User",
+        email: "test@defra.gov.uk",
+        createdAt: "2025-01-01T00:00:00.000Z",
       });
 
-      const appRoles = {
-        ROLE_ADMIN: {
-          startDate: "2025-01-01",
-          endDate: "2025-12-31",
-        },
-      };
+      const originalId = user.id;
+      const originalIdpId = user.idpId;
+      const originalEmail = user.email;
+      const originalCreatedAt = user.createdAt;
 
-      const createdRoles = user.createAppRole(appRoles);
+      user.setName("New Name");
+      user.assignIdpRoles(["ROLE1"]);
+      user.assignAppRoles({ ROLE: { startDate: "2025-01-01" } });
 
-      expect(createdRoles).toEqual({
-        ROLE_ADMIN: new AppRole({
-          name: "ROLE_ADMIN",
-          startDate: "2025-01-01",
-          endDate: "2025-12-31",
-        }),
-      });
-    });
-
-    it("mock user can create app roles", () => {
-      const mockUser = User.createMock();
-
-      const newAppRoles = {
-        NEW_ROLE: {
-          startDate: "2025-06-01",
-          endDate: "2025-09-30",
-        },
-      };
-
-      const createdRoles = mockUser.createAppRole(newAppRoles);
-
-      expect(createdRoles).toEqual({
-        NEW_ROLE: new AppRole({
-          name: "NEW_ROLE",
-          startDate: "2025-06-01",
-          endDate: "2025-09-30",
-        }),
-      });
+      expect(user.id).toBe(originalId);
+      expect(user.idpId).toBe(originalIdpId);
+      expect(user.email).toBe(originalEmail);
+      expect(user.createdAt).toBe(originalCreatedAt);
+      expect(user.name).toBe("New Name");
+      expect(user.idpRoles).toEqual(["ROLE1"]);
+      expect(user.appRoles).toEqual({ ROLE: { startDate: "2025-01-01" } });
+      expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
     });
   });
 });

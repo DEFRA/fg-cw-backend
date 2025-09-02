@@ -13,20 +13,19 @@ export class User {
     this.updatedAt = props.updatedAt;
   }
 
-  createAppRole(appRoles) {
-    const result = {};
+  setName(value) {
+    this.name = value;
+    this.updatedAt = new Date().toISOString();
+  }
 
-    const rolesToProcess = appRoles.appRoles || appRoles;
+  assignIdpRoles(idpRoles) {
+    this.idpRoles = idpRoles;
+    this.updatedAt = new Date().toISOString();
+  }
 
-    for (const [name, roleData] of Object.entries(rolesToProcess)) {
-      result[name] = new AppRole({
-        name,
-        startDate: roleData.startDate,
-        endDate: roleData.endDate,
-      });
-    }
-
-    return result;
+  assignAppRoles(appRoles) {
+    this.appRoles = appRoles;
+    this.updatedAt = new Date().toISOString();
   }
 
   static createMock(props) {
