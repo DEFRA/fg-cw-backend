@@ -17,8 +17,6 @@ export const up = async (db) => {
       },
     },
   ]);
-
-  console.log("Migration completed successfully");
 };
 
 export const down = async (db) => {
@@ -35,6 +33,4 @@ export const down = async (db) => {
       },
     },
   ]);
-
-  console.log("Rollback completed successfully");
 };

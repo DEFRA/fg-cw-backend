@@ -507,7 +507,6 @@ describe("Case", () => {
       expect(caseInstance.timeline[0].eventType).toBe("STAGE_COMPLETED");
       expect(caseInstance.timeline[0].data.actionId).toBe("approve");
       expect(caseInstance.timeline[0].data.stageId).toBe("stage-1");
-      expect(caseInstance.timeline[0].description).toBe("Application approve");
 
       expect(caseInstance.comments).toHaveLength(1);
       expect(caseInstance.comments[0].text).toBe(

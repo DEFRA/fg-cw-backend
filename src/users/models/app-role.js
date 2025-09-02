@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 
-export class UserRole {
+export class AppRole {
   constructor(props) {
     this.startDate = props.startDate;
     this.endDate = props.endDate;

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppRole } from "./app-role.js";
 import { User } from "./user.js";
-import { UserRole } from "./userRole.js";
 
 const appRolesMultiple = {
   ROLE_RPA_CASES_APPROVE: {
@@ -15,12 +15,12 @@ const appRolesMultiple = {
 };
 
 const rolesMultiple = {
-  ROLE_RPA_CASES_APPROVE: new UserRole({
+  ROLE_RPA_CASES_APPROVE: new AppRole({
     name: "ROLE_RPA_CASES_APPROVE",
     startDate: "2025-07-01",
     endDate: "2025-08-02",
   }),
-  ROLE_ADMIN: new UserRole({
+  ROLE_ADMIN: new AppRole({
     name: "ROLE_ADMIN",
     startDate: "2025-07-01",
     endDate: "2025-08-02",
@@ -152,7 +152,7 @@ describe("User", () => {
       const result = user.createAppRole(appRoles);
 
       expect(result).toEqual({
-        ROLE_TEMP: new UserRole({
+        ROLE_TEMP: new AppRole({
           name: "ROLE_TEMP",
           startDate: "2025-07-01",
           endDate: undefined,
@@ -180,7 +180,7 @@ describe("User", () => {
       const createdRoles = user.createAppRole(appRoles);
 
       expect(createdRoles).toEqual({
-        ROLE_ADMIN: new UserRole({
+        ROLE_ADMIN: new AppRole({
           name: "ROLE_ADMIN",
           startDate: "2025-01-01",
           endDate: "2025-12-31",
@@ -201,7 +201,7 @@ describe("User", () => {
       const createdRoles = mockUser.createAppRole(newAppRoles);
 
       expect(createdRoles).toEqual({
-        NEW_ROLE: new UserRole({
+        NEW_ROLE: new AppRole({
           name: "NEW_ROLE",
           startDate: "2025-06-01",
           endDate: "2025-09-30",

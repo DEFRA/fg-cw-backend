@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { UserRole } from "./userRole.js";
+import { AppRole } from "./app-role.js";
 
 export class User {
   constructor(props) {
@@ -19,7 +19,7 @@ export class User {
     const rolesToProcess = appRoles.appRoles || appRoles;
 
     for (const [name, roleData] of Object.entries(rolesToProcess)) {
-      result[name] = new UserRole({
+      result[name] = new AppRole({
         name,
         startDate: roleData.startDate,
         endDate: roleData.endDate,
@@ -36,7 +36,7 @@ export class User {
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: {
-        ROLE_RPA_CASES_APPROVE: new UserRole({
+        ROLE_RPA_CASES_APPROVE: new AppRole({
           name: "ROLE_RPA_CASES_APPROVE",
           startDate: "2025-07-01",
           endDate: "2025-08-02",
