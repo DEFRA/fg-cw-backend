@@ -1,5 +1,27 @@
 import { ObjectId } from "mongodb";
+import { TaskDocument } from "./task-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
+
+const processTask = ({ id }, tasks) => {
+  const task = tasks.get(id);
+  return new TaskDocument(task);
+};
+
+const mapTasksToStages = (kaseStages, tasks) => {
+  const stages = kaseStages.map((s) => {
+    return {
+      id: s.id,
+      outcome: s.outcome,
+      taskGroups: s.taskGroups.map((tg) => {
+        return {
+          id: tg.id,
+          tasks: tg.tasks.map((t) => processTask(t, tasks)),
+        };
+      }),
+    };
+  });
+  return stages;
+};
 
 export class CaseDocument {
   constructor(props) {
@@ -13,7 +35,7 @@ export class CaseDocument {
     this.payload = props.payload;
     this.assignedUserId = props.assignedUser?.id || null;
     this.currentStage = props.currentStage;
-    this.stages = props.stages;
+    this.stages = mapTasksToStages(props.stages, props.tasks);
     this.comments = props.comments;
     this.timeline = props.timeline.map(
       (timelineProps) => new TimelineEventDocument(timelineProps),
