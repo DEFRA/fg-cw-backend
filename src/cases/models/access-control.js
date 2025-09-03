@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 
 export class AccessControl {
   constructor(user) {
-    this.appRoles = this.getValidRoles(user.appRoles || {});
+    this.userAppRoles = this.#getValidRoles(user.appRoles || {});
   }
 
   authorise(requiredRoles) {
@@ -14,31 +14,31 @@ export class AccessControl {
 
   canAccess(requiredRoles) {
     return (
-      this.hasAllRequiredRoles(requiredRoles.allOf, this.appRoles) &&
-      this.hasAnyRequiredRole(requiredRoles.anyOf, this.appRoles)
+      this.#hasAllRequiredRoles(requiredRoles.allOf) &&
+      this.#hasAnyRequiredRole(requiredRoles.anyOf)
     );
   }
 
-  hasAllRequiredRoles(requiredRoles, userRoles) {
+  #hasAllRequiredRoles(requiredRoles) {
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
-    return requiredRoles.every((role) => userRoles.includes(role));
+    return requiredRoles.every((role) => this.userAppRoles.includes(role));
   }
 
-  hasAnyRequiredRole(requiredRoles, userRoles) {
+  #hasAnyRequiredRole(requiredRoles) {
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
-    return requiredRoles.some((role) => userRoles.includes(role));
+    return requiredRoles.some((role) => this.userAppRoles.includes(role));
   }
 
-  getValidRoles(appRoles) {
+  #getValidRoles(appRoles) {
     const now = new Date();
     const validRoles = [];
 
     for (const [roleName, roleData] of Object.entries(appRoles)) {
-      if (this.isRoleValid(roleData, now)) {
+      if (this.#isRoleValid(roleData, now)) {
         validRoles.push(roleName);
       }
     }
@@ -46,7 +46,7 @@ export class AccessControl {
     return validRoles;
   }
 
-  isRoleValid(roleData, currentDate) {
+  #isRoleValid(roleData, currentDate) {
     if (!roleData.startDate || !roleData.endDate) {
       return false;
     }
