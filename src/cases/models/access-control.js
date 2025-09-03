@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 
 export class AccessControl {
   constructor(user) {
-    this.userAppRoles = this.#getValidRoles(user.appRoles || {});
+    this.userAppRoles = this.#getValidRoles(user?.appRoles || {});
   }
 
   authorise(requiredRoles) {
