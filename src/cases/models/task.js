@@ -6,11 +6,11 @@ export const TaskStatus = Joi.string().valid("complete", "pending");
 
 export class Task {
   static validationSchema = Joi.object({
-    id: UrlSafeId.required(),
+    id: UrlSafeId.required().label("id"),
     status: TaskStatus.required(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
-    commentRef: UrlSafeId.optional().allow(null, ""),
+    commentRef: UrlSafeId.optional().allow(null, "").label("commentRef"),
   });
 
   constructor(props) {
