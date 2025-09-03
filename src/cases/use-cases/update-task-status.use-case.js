@@ -25,7 +25,7 @@ export const updateTaskStatusUseCase = async (command) => {
   validatePayloadComment(comment, task.comment?.type === "REQUIRED");
 
   const updatedBy = getAuthenticatedUser().id;
-  kase.updateTaskStatus({
+  kase.setTaskStatus({
     stageId,
     taskGroupId,
     taskId,

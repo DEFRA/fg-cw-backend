@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+import { toTasks } from "./task.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -25,6 +26,8 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
+
+    this.tasks = toTasks(this.stages);
   }
 
   get objectId() {
@@ -39,15 +42,16 @@ export class Case {
     });
   }
 
-  findTask({ stageId, taskGroupId, taskId }) {
-    const stage = this.stages.find((s) => s.id === stageId);
-    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
-    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+  /**
+   *
+   * @param {string} taskId
+   * @returns task with given taskId or throws if task not found
+   */
+  findTask(taskId) {
+    const task = this.tasks.get(taskId);
 
     if (!task) {
-      throw Boom.notFound(
-        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
-      );
+      throw Boom.notFound(`Can not find Task with id ${taskId}!`);
     }
 
     return task;
@@ -66,19 +70,10 @@ export class Case {
     return this.comments.find((c) => c.ref === commentRef);
   }
 
-  updateTaskStatus({
-    stageId,
-    taskGroupId,
-    taskId,
-    status,
-    comment,
-    updatedBy,
-  }) {
-    const task = this.findTask({ stageId, taskGroupId, taskId });
+  setTaskStatus({ stageId, taskGroupId, taskId, status, comment, updatedBy }) {
+    const caseTask = this.findTask(taskId);
 
-    task.status = status;
-    task.updatedAt = new Date().toISOString();
-    task.updatedBy = updatedBy;
+    caseTask.updateStatus(status, updatedBy);
 
     if (status === "complete") {
       const timelineEvent = TimelineEvent.createTaskCompleted({
@@ -93,7 +88,7 @@ export class Case {
       });
 
       this.#addTimelineEvent(timelineEvent);
-      task.commentRef = timelineEvent.comment?.ref;
+      caseTask.updateCommentRef(timelineEvent.comment?.ref);
     }
   }
 

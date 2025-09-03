@@ -59,7 +59,7 @@ describe("updateTaskStatusUseCase", () => {
       comment: "This is a note/comment",
     });
 
-    const task = kase.stages[0].taskGroups[0].tasks[0];
+    const task = kase.findTask("task-1");
     expect(task.status).toBe("complete");
     expect(task.commentRef).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);
