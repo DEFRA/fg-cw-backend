@@ -1,28 +1,74 @@
 #!/bin/bash
-export AWS_REGION=eu-west-2
-export AWS_DEFAULT_REGION=eu-west-2
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
 
-# S3 buckets
-# aws --endpoint-url=http://localhost:4566 s3 mb s3://my-bucket
+set -e
 
-# SNS topic
-aws --endpoint-url=http://localhost:4566 sns create-topic --name grant_application_created
-# SNS topic - case stage updated
-aws --endpoint-url=http://localhost:4566 sns create-topic --name case_stage_updated
+function create_topic() {
+  local topic_name=$1
+  local topic_arn=$(awslocal sns create-topic --name $topic_name --query "TopicArn" --output text)
+  echo $topic_arn
+}
 
-# SQS queues
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name create_new_case
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name create_new_case-deadletter
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name create_new_case-recovery
+function create_queue() {
+  local queue_name=$1
 
-# Configure dead letter queue
-aws --endpoint-url=http://localhost:4566 sqs set-queue-attributes \
---queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case \
---attributes '{ "RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:eu-west-2:000000000000:create_new_case-deadletter\", \"maxReceiveCount\":\"3\", \"visibilityTimeout\":\"30\"}" }'
+  # Create the DLQ
+  local dlq_url=$(
+    awslocal sqs create-queue \
+    --queue-name "$queue_name-dead-letter-queue" \
+    --query "QueueUrl" --output text
+  )
 
-# Subscribe queue to topic
-aws --endpoint-url=http://localhost:4566 sns subscribe --topic-arn arn:aws:sns:eu-west-2:000000000000:grant_application_created \
---protocol sqs --notification-endpoint arn:aws:sqs:eu-west-2:000000000000:create_new_case \
---attributes '{ "RawMessageDelivery": "true"}'
+  local dlq_arn=$(
+    awslocal sqs get-queue-attributes \
+      --queue-url $dlq_url \
+      --attribute-name "QueueArn" \
+      --query "Attributes.QueueArn" \
+      --output text
+  )
+
+  # Create the queue with DLQ attached
+  local queue_url=$(
+    awslocal sqs create-queue \
+      --queue-name $queue_name \
+      --attributes '{ "RedrivePolicy": "{\"deadLetterTargetArn\":\"'$dlq_arn'\",\"maxReceiveCount\":\"1\"}" }' \
+      --query "QueueUrl" \
+      --output text
+  )
+
+  local queue_arn=$(
+    awslocal sqs get-queue-attributes \
+      --queue-url $queue_url \
+      --attribute-name "QueueArn" \
+      --query "Attributes.QueueArn" \
+      --output text
+  )
+
+  echo $queue_arn
+}
+
+function subscribe_queue_to_topic() {
+  local topic_arn=$1
+  local queue_arn=$2
+
+  awslocal sns subscribe --topic-arn $topic_arn --protocol sqs --notification-endpoint $queue_arn --attributes '{ "RawMessageDelivery": "true" }'
+}
+
+function setup_topic_and_queues() {
+  local topic_name=$1
+
+  local topic_arn=$(create_topic $topic_name)
+  local queue_arn=$(create_queue $topic_name)
+
+  subscribe_queue_to_topic $topic_arn $queue_arn
+}
+
+# ----- Commands -----
+create_queue "create_new_case"
+create_queue "cw__sqs__create_new_case"
+create_queue "cw__sqs__update_case_status"
+
+
+# ----- Events ------
+setup_topic_and_queues "case_stage_updated"
+setup_topic_and_queues "cw__sns__case_created"
+setup_topic_and_queues "cw__sns__case_status_updated"
