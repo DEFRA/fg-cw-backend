@@ -309,6 +309,13 @@ describe("Case", () => {
       });
     });
 
+    it("should throw an error if task not found", () => {
+      const kase = Case.createMock();
+      expect(() => kase.findTask("uknown-task-id")).toThrow(
+        "Can not find Task with id uknown-task-id",
+      );
+    });
+
     it("should update status", () => {
       const kase = Case.createMock();
       const task1 = kase.findTask("task-1");
