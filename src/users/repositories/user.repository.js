@@ -101,3 +101,11 @@ export const findById = async (userId) => {
 
   return userDocument && toUser(userDocument);
 };
+
+export const findByIdpId = async (idpId) => {
+  const userDocument = await db.collection(collection).findOne({
+    idpId,
+  });
+
+  return userDocument && toUser(userDocument);
+};
