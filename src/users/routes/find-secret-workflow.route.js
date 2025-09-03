@@ -20,10 +20,9 @@ export const findSecretWorkflowRoute = {
 
     const user = await getAuthenticatedUserUseCase(idpId);
 
-    const { workflowCode } = request.params;
-
-    const result = await findSecretWorkflowUseCase(workflowCode, user);
-
-    return result;
+    return await findSecretWorkflowUseCase({
+      workflowCode: request.params.workflowCode,
+      user,
+    });
   },
 };
