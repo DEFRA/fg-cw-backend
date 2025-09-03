@@ -1,6 +1,5 @@
 import Joi from "joi";
 import { findSecretWorkflowUseCase } from "../use-cases/find-secret-workflow.use-case.js";
-import { getAuthenticatedUserUseCase } from "../use-cases/get-authenticated-user-use.case.js";
 
 export const findSecretWorkflowRoute = {
   method: "GET",
@@ -16,13 +15,9 @@ export const findSecretWorkflowRoute = {
     },
   },
   async handler(request) {
-    const { idpId } = request.auth.credentials;
-
-    const user = await getAuthenticatedUserUseCase(idpId);
-
     return await findSecretWorkflowUseCase({
       workflowCode: request.params.workflowCode,
-      user,
+      user: request.auth.credentials.user,
     });
   },
 };
