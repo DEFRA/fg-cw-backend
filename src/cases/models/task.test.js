@@ -98,6 +98,18 @@ describe("Task", () => {
     task.updateStatus("complete", "1k0a7-9xv4f2h1n3q8c5w2999");
     expect(task.updatedAt).toBeDefined();
   });
+
+  it("should throw an error if the status is invalid", () => {
+    const task = new Task({
+      id: "k0a7-9xv4f2h1n3q8c5w2999",
+      status: "pending",
+    });
+    expect(() =>
+      task.updateStatus("invalid_status", "k0a7-9xv4f2h1n3q8c5w2999"),
+    ).toThrow(
+      'Invalid Task Status: "value" must be one of [complete, pending]',
+    );
+  });
 });
 
 describe("toTask", () => {
