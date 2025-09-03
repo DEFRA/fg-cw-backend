@@ -63,12 +63,12 @@ export const toTasks = (stages) => {
   const tasks = new Map();
   stages.forEach((s) =>
     s.taskGroups.forEach((tg) =>
-      tg.tasks.forEach((t) => tasks.set(t.id, toTask(t, {}))),
+      tg.tasks.forEach((t) => tasks.set(t.id, toTask(t))),
     ),
   );
   return tasks;
 };
 
-export const toTask = (caseTask, workflowTask) => {
-  return new Task({ ...caseTask, ...workflowTask });
+export const toTask = (caseTask) => {
+  return new Task(caseTask);
 };
