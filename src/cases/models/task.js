@@ -1,23 +1,16 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
-import { assertInstanceOf } from "../../common/assert.js";
-import { comment } from "../schemas/comment.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 
 export const TaskStatus = Joi.string().valid("complete", "pending");
 
 export class Task {
   static validationSchema = Joi.object({
-    id: Joi.string()
-      .regex(/[a-z0-9-]/)
-      .required(),
+    id: UrlSafeId.required(),
     status: TaskStatus.required(),
-    type: Joi.string().valid("boolean").optional(),
-    title: Joi.string().optional(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
     commentRef: UrlSafeId.optional().allow(null, ""),
-    comment: comment.optional().allow(null),
   });
 
   constructor(props) {
@@ -33,9 +26,6 @@ export class Task {
     }
 
     this.id = value.id;
-    this.title = value.title;
-    this.type = value.type;
-    this.comment = value.comment;
     this.status = value.status;
     this.commentRef = value.commentRef;
     this.updatedAt = value.updatedAt;
@@ -81,8 +71,4 @@ export const toTasks = (stages) => {
 
 export const toTask = (caseTask, workflowTask) => {
   return new Task({ ...caseTask, ...workflowTask });
-};
-
-export const assertIsTask = (obj) => {
-  return assertInstanceOf(obj, Task, "Task");
 };
