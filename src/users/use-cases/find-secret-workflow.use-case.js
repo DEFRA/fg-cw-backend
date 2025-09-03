@@ -13,17 +13,14 @@ export const findSecretWorkflowUseCase = async (workflowCode, user) => {
 
   return {
     message: "Access granted to workflow",
-    timestamp: new Date().toISOString(),
-    user: {
-      id: user.id,
-      name: user.name,
-      idpId: user.idpId,
-      idpRoles: user.idpRoles,
-      appRoles: user.appRoles,
-    },
     workflow: {
       code: workflow.code,
       requiredRoles: workflow.requiredRoles,
+    },
+    user: {
+      id: user.id,
+      name: user.name,
+      appRoles: user.appRoles,
     },
   };
 };

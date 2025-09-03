@@ -51,8 +51,11 @@ export class AccessControl {
       return false;
     }
 
-    const startDate = new Date(roleData.startDate);
-    const endDate = new Date(roleData.endDate);
+    const startDateStr = roleData.startDate + "T00:00:00.000Z";
+    const endDateStr = roleData.endDate + "T23:59:59.999Z";
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
 
     return currentDate >= startDate && currentDate <= endDate;
   }
