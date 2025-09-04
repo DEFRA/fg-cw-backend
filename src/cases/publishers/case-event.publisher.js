@@ -1,6 +1,7 @@
 import { config } from "../../common/config.js";
 import { publish } from "../../common/sns-client.js";
 import { CaseStageUpdatedEvent } from "../events/case-stage-updated.event.js";
+import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 
 export const publishCaseStageUpdated = async ({
   caseRef,
@@ -13,4 +14,17 @@ export const publishCaseStageUpdated = async ({
     currentStage,
   });
   await publish(config.get("aws.caseStageUpdatedTopicArn"), event);
+};
+
+export const publishCaseStatusUpdated = async ({
+  caseRef,
+  previousStatus,
+  currentStatus,
+}) => {
+  const event = new CaseStatusUpdatedEvent({
+    caseRef,
+    previousStatus,
+    currentStatus,
+  });
+  await publish(config.get("aws.sns.caseStatusUpdatedTopicArn"), event);
 };
