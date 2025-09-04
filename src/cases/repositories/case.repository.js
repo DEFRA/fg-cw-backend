@@ -75,6 +75,13 @@ export const findAll = async () => {
   return caseDocuments.map(toCase);
 };
 
+export const findByCaseRef = async (caseRef) => {
+  const caseDocument = await db.collection(collection).findOne({
+    caseRef,
+  });
+  return caseDocument && toCase(caseDocument);
+};
+
 export const findById = async (caseId) => {
   const caseDocument = await db.collection(collection).findOne({
     _id: ObjectId.createFromHexString(caseId),

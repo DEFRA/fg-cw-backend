@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
+import { path, setObjectPath } from "../../common/object-path.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { toTasks } from "./task.js";
@@ -122,6 +123,32 @@ export class Case {
     });
     this.#addTimelineEvent(timelineEvent);
     return timelineEvent.comment;
+  }
+
+  addAgreementToPhaseStage({ newStatus, supplementaryData }) {
+    const { phase, stage, targetNode, data } = supplementaryData;
+    const { agreementRef, createdAt, agreementStatus } = data;
+    const nodeData = {
+      agreementRef,
+      createdAt,
+      agreementStatus,
+    };
+    this.status = newStatus;
+
+    // checks to see if path exists... if not, creates it and sets data
+    if (path(this, "phases", phase, "stages", stage, targetNode)) {
+      this.phases[phase].stages[stage][targetNode].push(nodeData);
+    } else {
+      setObjectPath(
+        this,
+        [nodeData],
+        "phases",
+        phase,
+        "stages",
+        stage,
+        targetNode,
+      );
+    }
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {

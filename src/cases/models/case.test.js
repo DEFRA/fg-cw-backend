@@ -336,6 +336,35 @@ describe("Case", () => {
     });
   });
 
+  describe("addAgreementToPhaseStage", () => {
+    it("should set agreement data", () => {
+      const status = "REVIEW";
+      const data = {
+        phase: "PRE_AWARD",
+        stage: "AWARD",
+        targetNode: "agreements",
+        data: {
+          agreementRef: "AGREEMENT-REF-123",
+          createdAt: "2023-10-01T12:00:00Z",
+          agreementStatus: "OFFERED",
+        },
+      };
+
+      const kase = Case.createMock();
+      kase.addAgreementToPhaseStage({
+        newStatus: status,
+        supplementaryData: data,
+      });
+      expect(kase.phases.PRE_AWARD.stages.AWARD.agreements).toEqual([
+        {
+          agreementRef: "AGREEMENT-REF-123",
+          createdAt: "2023-10-01T12:00:00Z",
+          agreementStatus: "OFFERED",
+        },
+      ]);
+    });
+  });
+
   describe("assignUser", () => {
     it("should assign user with no note", () => {
       const kase = Case.createMock();
