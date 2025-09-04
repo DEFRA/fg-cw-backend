@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { caseData1, caseData2, caseData3Document } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
+import { purgeQueue, sendMessage } from "./helpers/sqs.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
 import { createWorkflow } from "./helpers/workflows.js";
 import { wreck } from "./helpers/wreck.js";
@@ -150,12 +150,12 @@ describe("Cases", () => {
 
   describe("on CreateNewCase event", () => {
     beforeEach(async () => {
-      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await purgeQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
     afterEach(async () => {
-      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await purgeQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
@@ -186,10 +186,7 @@ describe("Cases", () => {
       expected[0].stages[0].outcome = null;
       expected[0].stages[1].outcome = null;
 
-      await sendSnsMessage(
-        "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
-        createCaseEvent3,
-      );
+      await sendMessage(env.CREATE_NEW_CASE_SQS_URL, createCaseEvent3);
 
       const documents = await waitForDocuments(cases);
 
