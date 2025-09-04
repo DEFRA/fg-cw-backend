@@ -20,6 +20,7 @@ export const findSecretWorkflowUseCase = async ({ workflowCode, user }) => {
     user: {
       id: user.id,
       name: user.name,
+      email: user.email,
       appRoles: user.appRoles,
     },
   };
