@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { caseData1, caseData2, caseData3Document } from "./fixtures/case.js";
 import createCaseEvent3 from "./fixtures/create-case-event-3.json";
-import { purgeSqsQueue, sendSnsMessage } from "./helpers/sns-utils.js";
+import { purgeQueue, sendMessage } from "./helpers/sqs.js";
 import { waitForDocuments } from "./helpers/wait-for-documents.js";
 import { createWorkflow } from "./helpers/workflows.js";
 import { wreck } from "./helpers/wreck.js";
@@ -74,11 +74,13 @@ describe("Cases", () => {
       expect(response.payload).toEqual([
         {
           ...caseData1,
+          tasks: {},
           _id: expect.any(String),
           dateReceived: new Date(caseData1.dateReceived).toISOString(),
         },
         {
           ...caseData2,
+          tasks: {},
           _id: expect.any(String),
           dateReceived: new Date(caseData2.dateReceived).toISOString(),
         },
@@ -112,6 +114,7 @@ describe("Cases", () => {
         ...caseData2,
         _id: caseId,
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        tasks: {},
         stages: [
           {
             ...caseData2.stages[0],
@@ -147,24 +150,17 @@ describe("Cases", () => {
 
   describe("on CreateNewCase event", () => {
     beforeEach(async () => {
-      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await purgeQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
     afterEach(async () => {
-      await purgeSqsQueue(env.CREATE_NEW_CASE_SQS_URL);
+      await purgeQueue(env.CREATE_NEW_CASE_SQS_URL);
       await cases.deleteMany({});
     });
 
     it("creates a new case", async () => {
-      await sendSnsMessage(
-        "arn:aws:sns:eu-west-2:000000000000:grant_application_created",
-        createCaseEvent3,
-      );
-
-      const documents = await waitForDocuments(cases);
-
-      expect(documents).toEqual([
+      const expected = [
         {
           ...caseData3Document,
           _id: expect.any(ObjectId),
@@ -182,7 +178,19 @@ describe("Cases", () => {
             },
           ],
         },
-      ]);
+      ];
+
+      expected[0].stages[0].taskGroups[0].tasks[0].commentRef = null;
+      expected[0].stages[0].taskGroups[0].tasks[0].updatedAt = null;
+      expected[0].stages[0].taskGroups[0].tasks[0].updatedBy = null;
+      expected[0].stages[0].outcome = null;
+      expected[0].stages[1].outcome = null;
+
+      await sendMessage(env.CREATE_NEW_CASE_SQS_URL, createCaseEvent3);
+
+      const documents = await waitForDocuments(cases);
+
+      expect(documents).toEqual(expected);
     });
   });
 });
