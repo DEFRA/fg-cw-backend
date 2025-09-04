@@ -4,10 +4,8 @@ export const setObjectPath = (obj, value, ...args) => {
   if (args.length === 0) {
     obj[arg] = value;
     return;
-  } else {
-    if (!obj[arg]) {
-      obj[arg] = {};
-    }
+  } else if (!obj[arg]) {
+    obj[arg] = {};
   }
 
   return setObjectPath(obj[arg], value, ...args);
