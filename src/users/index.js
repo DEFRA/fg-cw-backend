@@ -3,6 +3,7 @@ import { createRoleRoute } from "./routes/create-role.route.js";
 import { createUserRoute } from "./routes/create-user.route.js";
 import { findRoleByCodeRoute } from "./routes/find-role-by-code.route.js";
 import { findRolesRoute } from "./routes/find-roles.route.js";
+import { findSecretWorkflowRoute } from "./routes/find-secret-workflow.route.js";
 import { findSecretRoute } from "./routes/find-secret.route.js";
 import { findUserByIdRoute } from "./routes/find-user-by-id.route.js";
 import { findUsersRoute } from "./routes/find-users.route.js";
@@ -25,6 +26,7 @@ export const users = {
       findRolesRoute,
       findRoleByCodeRoute,
       findSecretRoute,
+      findSecretWorkflowRoute,
     ]);
   },
 };
