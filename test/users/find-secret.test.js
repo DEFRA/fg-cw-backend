@@ -22,9 +22,12 @@ describe("GET /secret", () => {
         statusCode: 200,
       }),
       payload: {
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-        idpRoles: ["FCP.Casework.Admin"],
-        name: "Test Admin",
+        raw: {
+          idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+          idpRoles: ["FCP.Casework.Admin"],
+          name: "Test Admin",
+        },
+        user: null,
       },
     });
   });
