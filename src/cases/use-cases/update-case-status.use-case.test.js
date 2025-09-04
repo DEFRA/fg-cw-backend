@@ -25,7 +25,6 @@ describe("updateCaseStatusUseCase", () => {
       const mockCase = Case.createMock();
       mockCase.caseRef = "CASE-123";
       mockCase.status = "NEW";
-      mockCase.currentStage = "stage-1";
 
       const command = {
         caseId: mockCase._id,
@@ -47,8 +46,8 @@ describe("updateCaseStatusUseCase", () => {
       expect(update).toHaveBeenCalledWith(mockCase);
       expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-123",
-        previousStage: mockCase.previousStatus,
-        currentStage: mockCase.currentStage,
+        previousStatus: mockCase.previousStatus,
+        currentStatus: mockCase.currentStatus,
       });
     });
 
@@ -56,7 +55,6 @@ describe("updateCaseStatusUseCase", () => {
       const mockCase = Case.createMock();
       mockCase.caseRef = "CASE-456";
       mockCase.status = "NEW";
-      mockCase.currentStage = "stage-2";
 
       const command = {
         caseId: mockCase._id,
@@ -76,8 +74,8 @@ describe("updateCaseStatusUseCase", () => {
       );
       expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-456",
-        previousStage: mockCase.previousStage,
-        currentStage: mockCase.currentStage,
+        previousStatus: mockCase.previousStatus,
+        currentStatus: mockCase.currentStatus,
       });
     });
 
