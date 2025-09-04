@@ -47,6 +47,7 @@ describe("auth validate function", () => {
     });
 
     await auth.register(server);
+    // extract validate function for testing
     validateFn = server.auth.strategy.mock.calls[0][2].validate;
   });
 

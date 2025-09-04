@@ -2,7 +2,14 @@ import Jwt from "@hapi/jwt";
 import { config as defaultConfig } from "../../common/config.js";
 import { findAll as userFindAll } from "../../users/repositories/user.repository.js";
 
-const makeAuthPlugin = ({ jwtPlugin, config, findAll }) => {
+export const createAuthPlugin = (overrides = {}) => {
+  const { jwtPlugin, config, findAll } = {
+    jwtPlugin: Jwt,
+    config: defaultConfig,
+    findAll: userFindAll,
+    ...overrides,
+  };
+
   return {
     name: "auth",
     async register(server) {
@@ -51,14 +58,5 @@ const makeAuthPlugin = ({ jwtPlugin, config, findAll }) => {
     },
   };
 };
-
-const defaultDeps = {
-  jwtPlugin: Jwt,
-  config: defaultConfig,
-  findAll: userFindAll,
-};
-
-export const createAuthPlugin = (overrides = {}) =>
-  makeAuthPlugin({ ...defaultDeps, ...overrides });
 
 export const auth = createAuthPlugin();
