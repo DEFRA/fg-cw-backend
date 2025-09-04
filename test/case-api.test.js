@@ -165,6 +165,7 @@ describe("Cases", () => {
           ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
+          phases: null,
           timeline: [
             {
               commentRef: null,
