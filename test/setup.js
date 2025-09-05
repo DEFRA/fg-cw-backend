@@ -17,6 +17,10 @@ export const setup = async ({ globalConfig }) => {
       MONGO_PORT: env.MONGO_PORT,
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
+      // Pass OIDC configuration to container
+      OIDC_JWKS_URI: env.OIDC_JWKS_URI,
+      OIDC_VERIFY_ISS: env.OIDC_VERIFY_ISS,
+      OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
     })
     .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()

@@ -14,6 +14,10 @@ export default defineConfig({
       concurrent: false,
     },
     fileParallelism: false,
+    reporters: ["default", "html"],
+    outputFile: {
+      html: "./test/reports/index.html",
+    },
     env: {
       CW_PORT,
       MONGO_PORT,
@@ -27,7 +31,7 @@ export default defineConfig({
       AWS_SECRET_ACCESS_KEY: "test",
       CREATE_NEW_CASE_SQS_URL: `http://sqs.eu-west-2.127.0.0.1:${LOCALSTACK_PORT}/000000000000/create_new_case`,
       OIDC_JWKS_URI: `http://localhost:${ENTRA_PORT}/jwks`,
-      OIDC_VERIFY_ISS: `https://localhost:${ENTRA_PORT}`,
+      OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",
       OIDC_SIGN_TOKEN_ENDPOINT: `http://localhost:${ENTRA_PORT}/sign`,
     },

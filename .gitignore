@@ -9,4 +9,8 @@ coverage
 .cache
 .eslintcache
 
+# Test reports
+test/reports/
+test/logs/
+
 .env
