@@ -8,6 +8,8 @@ export const up = async (db) => {
             {
               id: "award",
               title: "Award",
+              taskGroups: [],
+              actions: [],
               agreements: [],
             },
           ],
@@ -25,6 +27,7 @@ export const up = async (db) => {
             {
               id: "award",
               title: "Award",
+              taskGroups: [],
               agreements: [],
             },
           ],

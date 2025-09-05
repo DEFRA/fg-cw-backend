@@ -30,13 +30,16 @@ export const CaseStage = Joi.object({
   })
     .optional()
     .allow(null),
+  agreements: Joi.array().optional().allow(null),
 }).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
-  status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),
+  status: Joi.string()
+    .valid("NEW", "IN PROGRESS", "COMPLETED", "REVIEW")
+    .required(),
   dateReceived: Joi.date().iso().required(),
   payload: Joi.object().required(),
   currentStage: UrlSafeId.required(),

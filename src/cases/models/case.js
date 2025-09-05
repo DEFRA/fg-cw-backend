@@ -130,9 +130,11 @@ export class Case {
 
   addDataToStage(stageData) {
     const { stage, targetNode, data } = stageData;
-    this.stages.find((s) => {
-      return s.id === stage;
-    })[targetNode] = data;
+    this.stages
+      .find((s) => {
+        return s.id === stage;
+      })
+      [targetNode].push(data);
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
