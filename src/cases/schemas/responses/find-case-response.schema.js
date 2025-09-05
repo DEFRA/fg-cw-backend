@@ -15,7 +15,7 @@ export const CaseStage = Joi.object({
             Joi.object({
               id: UrlSafeId.required(),
               status: statusSchema.required(),
-              commentRef: UrlSafeId.optional(),
+              commentRef: UrlSafeId.allow(null).optional(),
             }),
           )
           .min(1)
@@ -23,6 +23,13 @@ export const CaseStage = Joi.object({
       }),
     )
     .required(),
+  outcome: Joi.object({
+    actionId: UrlSafeId.required(),
+    comment: Joi.string().optional(),
+    commentRef: Joi.string().optional(),
+  })
+    .optional()
+    .allow(null),
 }).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({

@@ -28,7 +28,12 @@ describe("POST /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
       },
     });
 
@@ -42,7 +47,12 @@ describe("POST /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
@@ -62,7 +72,12 @@ describe("POST /users", () => {
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-07-01",
+            endDate: "2025-08-02",
+          },
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
@@ -75,7 +90,12 @@ describe("POST /users", () => {
       name: "Name",
       email: "name.surname@defra.gov.uk",
       idpRoles: ["defra-idp"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
     };
 
     await wreck.post("/users", {

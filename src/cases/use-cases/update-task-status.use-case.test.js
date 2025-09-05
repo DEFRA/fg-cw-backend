@@ -25,7 +25,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(() => validatePayloadComment(undefined, false)).not.toThrowError();
   });
 
-  it("throws is case not found", async () => {
+  it("throws if case not found", async () => {
     const workflow = Workflow.createMock();
     findByCode.mockResolvedValue(workflow);
     findById.mockResolvedValue(null);
@@ -59,7 +59,7 @@ describe("updateTaskStatusUseCase", () => {
       comment: "This is a note/comment",
     });
 
-    const task = kase.stages[0].taskGroups[0].tasks[0];
+    const task = kase.findTask("task-1");
     expect(task.status).toBe("complete");
     expect(task.commentRef).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);

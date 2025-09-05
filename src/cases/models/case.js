@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+import { toTasks } from "./task.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -25,6 +26,8 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.requiredRoles = props.requiredRoles;
+
+    this.tasks = toTasks(this.stages);
   }
 
   get objectId() {
@@ -39,33 +42,38 @@ export class Case {
     });
   }
 
-  findTask({ stageId, taskGroupId, taskId }) {
-    const stage = this.stages.find((s) => s.id === stageId);
-    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
-    const task = taskGroup?.tasks.find((t) => t.id === taskId);
+  /**
+   *
+   * @param {string} taskId
+   * @returns task with given taskId or throws if task not found
+   */
+  findTask(taskId) {
+    const task = this.tasks.get(taskId);
 
     if (!task) {
-      throw Boom.notFound(
-        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
-      );
+      throw Boom.notFound(`Can not find Task with id ${taskId}!`);
     }
 
     return task;
   }
 
-  updateTaskStatus({
-    stageId,
-    taskGroupId,
-    taskId,
-    status,
-    comment,
-    updatedBy,
-  }) {
-    const task = this.findTask({ stageId, taskGroupId, taskId });
+  findStage(stageId) {
+    const stage = this.stages.find((s) => s.id === stageId);
+    if (!stage) {
+      throw Boom.notFound(`Can not find Stage with id ${stageId}`);
+    }
 
-    task.status = status;
-    task.updatedAt = new Date().toISOString();
-    task.updatedBy = updatedBy;
+    return stage;
+  }
+
+  findComment(commentRef) {
+    return this.comments.find((c) => c.ref === commentRef);
+  }
+
+  setTaskStatus({ stageId, taskGroupId, taskId, status, comment, updatedBy }) {
+    const caseTask = this.findTask(taskId);
+
+    caseTask.updateStatus(status, updatedBy);
 
     if (status === "complete") {
       const timelineEvent = TimelineEvent.createTaskCompleted({
@@ -80,7 +88,7 @@ export class Case {
       });
 
       this.#addTimelineEvent(timelineEvent);
-      task.commentRef = timelineEvent.comment.ref;
+      caseTask.updateCommentRef(timelineEvent.comment?.ref);
     }
   }
 
@@ -114,6 +122,35 @@ export class Case {
     });
     this.#addTimelineEvent(timelineEvent);
     return timelineEvent.comment;
+  }
+
+  updateStageOutcome({ actionId, comment, createdBy }) {
+    const timelineEvent = TimelineEvent.createStageCompleted({
+      data: {
+        actionId,
+        stageId: this.currentStage,
+      },
+      text: comment,
+      createdBy,
+    });
+
+    const currentStage = this.#getCurrentStage();
+
+    currentStage.outcome = {
+      actionId,
+      createdBy,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (timelineEvent.comment) {
+      currentStage.outcome.commentRef = timelineEvent.comment.ref;
+    }
+
+    this.#addTimelineEvent(timelineEvent);
+
+    if (actionId === "approve") {
+      this.#moveToNextStage();
+    }
   }
 
   getUserIds() {
@@ -165,6 +202,54 @@ export class Case {
     assertIsComment(comment);
     this.comments.unshift(comment);
     return comment;
+  }
+
+  #getCurrentStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    return this.stages[currentStageIndex];
+  }
+
+  #moveToNextStage() {
+    const nextStage = this.#getNextStage();
+    this.currentStage = nextStage.id;
+    return nextStage;
+  }
+
+  #getNextStage() {
+    const currentStageIndex = this.#getCurrentStageIndex();
+    const currentStage = this.#getCurrentStage();
+
+    if (currentStageIndex === this.stages.length - 1) {
+      throw Boom.notFound(
+        `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
+      );
+    }
+
+    const allTasksComplete = currentStage.taskGroups
+      .flatMap((group) => group.tasks)
+      .every((task) => task.status === "complete");
+
+    if (!allTasksComplete) {
+      throw Boom.badRequest(
+        `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
+      );
+    }
+
+    return this.stages[currentStageIndex + 1];
+  }
+
+  #getCurrentStageIndex() {
+    const currentStageIndex = this.stages.findIndex(
+      (stage) => stage.id === this.currentStage,
+    );
+
+    if (currentStageIndex === -1) {
+      throw Boom.notFound(
+        `Cannot find current stage index for ${this.currentStage}, case ${this._id}`,
+      );
+    }
+
+    return currentStageIndex;
   }
 
   static fromWorkflow(workflow, caseEvent) {

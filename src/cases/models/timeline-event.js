@@ -64,7 +64,7 @@ export class TimelineEvent {
     });
   }
 
-  static create({ eventType, data = null, text, createdBy }) {
+  static create({ eventType, data = null, text, description, createdBy }) {
     const comment = Comment.createOptionalComment({
       type: eventType,
       text,
@@ -75,6 +75,7 @@ export class TimelineEvent {
       eventType,
       comment,
       data,
+      description,
       createdBy,
     });
   }
@@ -96,10 +97,11 @@ export class TimelineEvent {
     });
   }
 
-  static createStageCompleted({ data, createdBy }) {
+  static createStageCompleted({ data, text, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
       data,
+      text,
       createdBy,
     });
   }

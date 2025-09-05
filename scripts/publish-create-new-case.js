@@ -5,7 +5,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
  *  call npm run publish:case:pmf to create a case for pigs-might-fly
  */
 
-const sns = new SQSClient({
+const sqs = new SQSClient({
   region: "eu-west-2",
   endpoint: "http://localhost:4566",
   credentials: {
@@ -63,7 +63,7 @@ if (process.argv.length === 3) {
   message.data.clientRef = "APPLICATION-PMF-001";
 }
 
-await sns.send(
+await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
     MessageBody: JSON.stringify(message),
