@@ -275,6 +275,7 @@ export class Case {
       payload: caseEvent,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
+        agreements: stage.agreements || null,
         taskGroups: stage.taskGroups?.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup?.tasks.map((task) => ({
