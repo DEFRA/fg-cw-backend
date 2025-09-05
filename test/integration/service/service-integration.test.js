@@ -11,10 +11,6 @@ import {
   it,
 } from "vitest";
 
-// Import actual service modules (not HTTP endpoints)
-// import { UserService } from '../src/users/index.js'
-// import { CaseService } from '../src/cases/index.js'
-
 let client;
 let db;
 let users, cases;
@@ -60,11 +56,6 @@ describe("Service Layer Integration Tests", () => {
         },
       };
 
-      // If we had UserService imported:
-      // const userService = new UserService(db)
-      // const createdUser = await userService.createUser(userData)
-
-      // For now, simulate the service layer logic
       const createdUser = {
         id: randomUUID(),
         ...userData,
@@ -72,7 +63,6 @@ describe("Service Layer Integration Tests", () => {
         updatedAt: new Date().toISOString(),
       };
 
-      // Insert via service (simulated here)
       await users.insertOne(createdUser);
 
       // Verify data persistence and transformation

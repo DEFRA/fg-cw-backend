@@ -4,7 +4,6 @@ import { createUserRoute } from "./routes/create-user.route.js";
 import { findRoleByCodeRoute } from "./routes/find-role-by-code.route.js";
 import { findRolesRoute } from "./routes/find-roles.route.js";
 import { findSecretWorkflowRoute } from "./routes/find-secret-workflow.route.js";
-// findSecretRoute removed - test endpoint no longer needed
 import { findUserByIdRoute } from "./routes/find-user-by-id.route.js";
 import { findUsersRoute } from "./routes/find-users.route.js";
 import { updateUserRoute } from "./routes/update-user.route.js";
@@ -25,7 +24,6 @@ export const users = {
       createRoleRoute,
       findRolesRoute,
       findRoleByCodeRoute,
-      // findSecretRoute removed
       findSecretWorkflowRoute,
     ]);
   },
