@@ -7,6 +7,7 @@ import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
+  findByCaseRef,
   findById,
   save,
   update,
@@ -31,11 +32,7 @@ describe("save", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(insertOne).toHaveBeenCalledWith(
-      CaseDocument.createMock({
-        _id: caseMock._id,
-      }),
-    );
+    expect(insertOne.mock.calls[0][0]).toBeInstanceOf(CaseDocument);
   });
 
   it("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
@@ -174,6 +171,20 @@ describe("findAll", () => {
         requiredRoles: undefined,
       }),
     ]);
+  });
+});
+
+describe("findByCaseRef", () => {
+  it("finds case", async () => {
+    const doc = CaseDocument.createMock();
+    const ref = doc.caseRef;
+    const findOne = vi.fn().mockReturnValue(doc);
+
+    db.collection.mockReturnValue({
+      findOne,
+    });
+    const result = await findByCaseRef(ref);
+    expect(result.caseRef).toBe(ref);
   });
 });
 

@@ -124,6 +124,19 @@ export class Case {
     return timelineEvent.comment;
   }
 
+  updateCaseStatus(newStatus) {
+    this.status = newStatus;
+  }
+
+  addDataToStage(stageData) {
+    const { stage, targetNode, data } = stageData;
+    this.stages
+      .find((s) => {
+        return s.id === stage;
+      })
+      [targetNode].push(data);
+  }
+
   updateStageOutcome({ actionId, comment, createdBy }) {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
@@ -262,9 +275,10 @@ export class Case {
       payload: caseEvent,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
-        taskGroups: stage.taskGroups.map((taskGroup) => ({
+        agreements: stage.agreements || null,
+        taskGroups: stage.taskGroups?.map((taskGroup) => ({
           id: taskGroup.id,
-          tasks: taskGroup.tasks.map((task) => ({
+          tasks: taskGroup?.tasks.map((task) => ({
             id: task.id,
             status: "pending",
           })),

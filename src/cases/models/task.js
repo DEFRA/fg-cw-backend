@@ -62,8 +62,8 @@ export class Task {
 export const toTasks = (stages) => {
   const tasks = new Map();
   stages.forEach((s) =>
-    s.taskGroups.forEach((tg) =>
-      tg.tasks.forEach((t) => tasks.set(t.id, toTask(t))),
+    s.taskGroups?.forEach((tg) =>
+      tg?.tasks.forEach((t) => tasks.set(t.id, toTask(t))),
     ),
   );
   return tasks;
