@@ -36,7 +36,9 @@ export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
-  status: Joi.string().valid("NEW", "IN PROGRESS", "COMPLETED").required(),
+  status: Joi.string()
+    .valid("NEW", "IN PROGRESS", "APPROVED", "COMPLETED")
+    .required(),
   dateReceived: Joi.date().iso().required(),
   payload: Joi.object().required(),
   currentStage: UrlSafeId.required(),

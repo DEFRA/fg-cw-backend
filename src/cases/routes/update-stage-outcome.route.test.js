@@ -1,9 +1,11 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { updateCaseStatusUseCase } from "../use-cases/update-case-status.use-case.js";
 import { updateStageOutcomeUseCase } from "../use-cases/update-stage-outcome.use-case.js";
 import { updateStageOutcomeRoute } from "./update-stage-outcome.route.js";
 
 vi.mock("../use-cases/update-stage-outcome.use-case.js");
+vi.mock("../use-cases/update-case-status.use-case.js");
 
 describe("updateStageOutcomeUseCase", () => {
   let server;
@@ -38,6 +40,11 @@ describe("updateStageOutcomeUseCase", () => {
       caseId,
       actionId: "approve",
       comment: "This is a test comment",
+    });
+
+    expect(updateCaseStatusUseCase).toHaveBeenCalledWith({
+      caseId,
+      status: "APPROVED",
     });
   });
 });

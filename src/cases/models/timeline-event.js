@@ -114,6 +114,14 @@ export class TimelineEvent {
       createdBy,
     });
   }
+
+  static createCaseApproved({ data, createdBy }) {
+    return TimelineEvent.create({
+      eventType: EventEnums.eventTypes.CASE_APPROVED,
+      data,
+      createdBy,
+    });
+  }
 }
 
 export const toTimelineEvents = (timelineEventDocs, comments) => {
