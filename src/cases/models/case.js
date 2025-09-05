@@ -125,15 +125,18 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  addAgreementToPhaseStage({ newStatus, supplementaryData }) {
-    const { phase, stage, targetNode, data } = supplementaryData;
+  updateCaseStatus(newStatus) {
+    this.status = newStatus;
+  }
+
+  addDataToPhaseStage(stageData) {
+    const { phase, stage, targetNode, data } = stageData;
     const { agreementRef, createdAt, agreementStatus } = data;
     const nodeData = {
       agreementRef,
       createdAt,
       agreementStatus,
     };
-    this.status = newStatus;
 
     // checks to see if path exists... if not, creates it and sets data
     if (path(this, "phases", phase, "stages", stage, targetNode)) {

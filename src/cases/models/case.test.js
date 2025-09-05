@@ -336,9 +336,18 @@ describe("Case", () => {
     });
   });
 
-  describe("addAgreementToPhaseStage", () => {
-    it("should set agreement data", () => {
+  describe("updateCaseStatus", () => {
+    it("should set status", () => {
       const status = "REVIEW";
+
+      const kase = Case.createMock();
+      kase.updateCaseStatus(status);
+      expect(kase.status).toEqual("REVIEW");
+    });
+  });
+
+  describe("addDataToPhaseStage", () => {
+    it("should set agreement data", () => {
       const data = {
         phase: "PRE_AWARD",
         stage: "AWARD",
@@ -351,10 +360,7 @@ describe("Case", () => {
       };
 
       const kase = Case.createMock();
-      kase.addAgreementToPhaseStage({
-        newStatus: status,
-        supplementaryData: data,
-      });
+      kase.addDataToPhaseStage(data);
       expect(kase.phases.PRE_AWARD.stages.AWARD.agreements).toEqual([
         {
           agreementRef: "AGREEMENT-REF-123",
