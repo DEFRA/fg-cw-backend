@@ -15,11 +15,12 @@ const mapTasksToStages = (kaseStages, tasks) => {
   const stages = kaseStages.map((s) => {
     return {
       id: s.id,
-      outcome: s.outcome,
-      taskGroups: s.taskGroups.map((tg) => {
+      outcome: s.outcome || null,
+      agreements: s.agreements || null,
+      taskGroups: s.taskGroups?.map((tg) => {
         return {
           id: tg.id,
-          tasks: tg.tasks.map((t) => processTask(t, tasks)),
+          tasks: tg?.tasks.map((t) => processTask(t, tasks)),
         };
       }),
     };
@@ -44,7 +45,6 @@ export class CaseDocument {
     this.timeline = props.timeline.map(
       (timelineProps) => new TimelineEventDocument(timelineProps),
     );
-    this.phases = props.phases;
   }
 
   static createMock(props) {

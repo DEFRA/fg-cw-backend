@@ -2,6 +2,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 /**
  *  call npm run publish:case:agreement to publish agreement command
+ *  you can add your own clientRef  npm run publish:case:agreement -- <CLIENT_REF>
  */
 
 const sns = new SQSClient({
@@ -14,7 +15,7 @@ const sns = new SQSClient({
 });
 
 const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sns__case_status_updated";
+  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__update_case_status";
 
 const message = {
   id: "event-id-4",
@@ -28,7 +29,7 @@ const message = {
     newStatus: "REVIEW",
     supplementaryData: {
       phase: "PRE_AWARD",
-      stage: "AWARD",
+      stage: "award",
       targetNode: "agreements",
       data: {
         agreementRef: "AGREEMENT-REF-123",
@@ -40,6 +41,12 @@ const message = {
 };
 
 console.log("Sending message to SQS queue:", queueUrl);
+
+// customise clientRef
+if (process.argv.length === 3) {
+  console.log("Sending sqs case for " + process.argv[2]);
+  message.data.clientRef = process.argv[2];
+}
 
 await sns.send(
   new SendMessageCommand({

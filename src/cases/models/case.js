@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { path, setObjectPath } from "../../common/object-path.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { toTasks } from "./task.js";
@@ -129,29 +128,11 @@ export class Case {
     this.status = newStatus;
   }
 
-  addDataToPhaseStage(stageData) {
-    const { phase, stage, targetNode, data } = stageData;
-    const { agreementRef, createdAt, agreementStatus } = data;
-    const nodeData = {
-      agreementRef,
-      createdAt,
-      agreementStatus,
-    };
-
-    // checks to see if path exists... if not, creates it and sets data
-    if (path(this, "phases", phase, "stages", stage, targetNode)) {
-      this.phases[phase].stages[stage][targetNode].push(nodeData);
-    } else {
-      setObjectPath(
-        this,
-        [nodeData],
-        "phases",
-        phase,
-        "stages",
-        stage,
-        targetNode,
-      );
-    }
+  addDataToStage(stageData) {
+    const { stage, targetNode, data } = stageData;
+    this.stages.find((s) => {
+      return s.id === stage;
+    })[targetNode] = data;
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
@@ -292,9 +273,9 @@ export class Case {
       payload: caseEvent,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
-        taskGroups: stage.taskGroups.map((taskGroup) => ({
+        taskGroups: stage.taskGroups?.map((taskGroup) => ({
           id: taskGroup.id,
-          tasks: taskGroup.tasks.map((task) => ({
+          tasks: taskGroup?.tasks.map((task) => ({
             id: task.id,
             status: "pending",
           })),

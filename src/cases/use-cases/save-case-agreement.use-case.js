@@ -11,7 +11,7 @@ export const addAgreementToCaseUseCase = async (command) => {
   const { newStatus, supplementaryData } = command;
 
   kase.updateCaseStatus(newStatus);
-  kase.addDataToPhaseStage(supplementaryData);
+  kase.addDataToStage(supplementaryData);
 
   await update(kase);
 
