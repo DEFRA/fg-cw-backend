@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import { findByCaseRef, update } from "../repositories/case.repository.js";
-import { addAgreementToCaseUseCase } from "./save-case-agreement.use-case.js";
+import { updateCaseStatusUseCase } from "./update-case-status.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 
@@ -10,7 +10,7 @@ describe("save case agreement use case", () => {
     findByCaseRef.mockResolvedValue(null);
 
     await expect(() =>
-      addAgreementToCaseUseCase({ caseRef: "ABCD1234" }),
+      updateCaseStatusUseCase({ caseRef: "ABCD1234" }),
     ).rejects.toThrow('Case with ref "ABCD1234" not found');
   });
 
@@ -20,7 +20,7 @@ describe("save case agreement use case", () => {
       newStatus: "REVIEW",
       supplementaryData: {
         phase: "PRE_AWARD",
-        stage: "FOO",
+        stage: "award",
         targetNode: "agreements",
         data: {
           agreementRef: "0987GHYU",
@@ -28,13 +28,17 @@ describe("save case agreement use case", () => {
       },
     };
     const kase = Case.createMock();
+    kase.stages.push({
+      id: "award",
+      agreements: [],
+    });
     findByCaseRef.mockResolvedValue(kase);
-    const returnvalue = await addAgreementToCaseUseCase(data);
+    const returnvalue = await updateCaseStatusUseCase(data);
 
     expect(findByCaseRef).toHaveBeenCalledWith(data.caseRef);
-    expect(kase.phases.PRE_AWARD.stages.FOO.agreements[0].agreementRef).toBe(
-      "0987GHYU",
-    );
+    expect(
+      kase.stages.find((s) => s.id === "award").agreements[0].agreementRef,
+    ).toBe("0987GHYU");
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnvalue).toBe(kase);
   });

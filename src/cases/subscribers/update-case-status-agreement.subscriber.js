@@ -1,7 +1,7 @@
 import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { SqsSubscriber } from "../../common/sqs-subscriber.js";
-import { addAgreementToCaseUseCase } from "../use-cases/save-case-agreement.use-case.js";
+import { updateCaseStatusUseCase } from "../use-cases/update-case-status.use-case.js";
 
 export const createUpdateStatusAgreementConsumer = new SqsSubscriber({
   queueUrl: config.get("aws.sqs.updateStatusUrl"),
@@ -10,7 +10,7 @@ export const createUpdateStatusAgreementConsumer = new SqsSubscriber({
 
     const { clientRef, ...rest } = data;
 
-    await addAgreementToCaseUseCase({ caseRef: clientRef, ...rest });
+    await updateCaseStatusUseCase({ caseRef: clientRef, ...rest });
 
     logger.info(`Updated case status with ref "${data.clientRef}"`);
   },

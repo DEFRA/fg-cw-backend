@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { findByCaseRef, update } from "../repositories/case.repository.js";
 
-export const addAgreementToCaseUseCase = async (command) => {
+export const updateCaseStatusUseCase = async (command) => {
   const kase = await findByCaseRef(command.caseRef);
 
   if (!kase) {
