@@ -2,7 +2,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 /**
  *  call npm run publish:case:agreement to publish agreement command
- *  you can add your own clientRef  npm run publish:case:agreement -- <CLIENT_REF>
+ *  you can add your own clientRef  npm run publish:case:agreement <CLIENT_REF>
  */
 
 const sns = new SQSClient({
