@@ -84,7 +84,13 @@ describe("End-to-End Workflow Integration Tests", () => {
         email: `e2e-test-caseworker-${Date.now()}@defra.gov.uk`,
         name: "E2E Test Caseworker",
         idpRoles: ["defra-idp"],
-        appRoles: ["ROLE_RPA_CASES_APPROVE"],
+        appRoles: [
+          {
+            code: "ROLE_RPA_CASES_APPROVE",
+            name: "RPA Cases Approve",
+            description: "Can approve RPA cases",
+          },
+        ],
       };
 
       const userResponse = await wreck.post("/users", { payload: userData });
@@ -421,7 +427,13 @@ describe("End-to-End Workflow Integration Tests", () => {
       email: `data-flow-test-${Date.now()}@defra.gov.uk`,
       name: "Data Flow Test User",
       idpRoles: ["defra-idp"],
-      appRoles: ["ROLE_RPA_CASES_APPROVE"],
+      appRoles: [
+        {
+          code: "ROLE_RPA_CASES_APPROVE",
+          name: "RPA Cases Approve",
+          description: "Can approve RPA cases",
+        },
+      ],
     };
 
     const userResponse = await wreck.post("/users", { payload: userData });
