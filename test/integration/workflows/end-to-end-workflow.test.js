@@ -84,13 +84,12 @@ describe("End-to-End Workflow Integration Tests", () => {
         email: `e2e-test-caseworker-${Date.now()}@defra.gov.uk`,
         name: "E2E Test Caseworker",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
 
       const userResponse = await wreck.post("/users", { payload: userData });

@@ -52,13 +52,12 @@ describe("Service Layer Integration Tests", () => {
         email: "test-service-user@defra.gov.uk",
         name: "Service Test User",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
 
       // If we had UserService imported:
@@ -95,13 +94,12 @@ describe("Service Layer Integration Tests", () => {
         email: "test-service-1@defra.gov.uk",
         name: "User One",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
 
       const userData2 = {
@@ -109,13 +107,12 @@ describe("Service Layer Integration Tests", () => {
         email: "test-service-2@defra.gov.uk",
         name: "User Two",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
 
       // Create first user
@@ -192,13 +189,12 @@ describe("Service Layer Integration Tests", () => {
         email: "test-service-caseworker@defra.gov.uk",
         name: "Test Caseworker",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
       await users.insertOne(user);
 
@@ -245,13 +241,12 @@ describe("Service Layer Integration Tests", () => {
         email: "test-service-workflow@defra.gov.uk",
         name: "Workflow Test User",
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
       };
       await users.insertOne(caseworker);
 
@@ -361,13 +356,12 @@ describe("Service Layer Integration Tests", () => {
         email: `test-service-bulk-${index}@defra.gov.uk`,
         name: `Bulk User ${index}`,
         idpRoles: ["defra-idp"],
-        appRoles: [
-          {
-            code: "ROLE_RPA_CASES_APPROVE",
-            name: "RPA Cases Approve",
-            description: "Can approve RPA cases",
+        appRoles: {
+          ROLE_RPA_CASES_APPROVE: {
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
           },
-        ],
+        },
         createdAt: new Date().toISOString(),
       }));
 
