@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { findById, update } from "../repositories/case.repository.js";
