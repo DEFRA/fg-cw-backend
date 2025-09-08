@@ -2,7 +2,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 /**
  *  call npm run publish:case:agreement to publish agreement command
- *  you can add your own clientRef  npm run publish:case:agreement <CLIENT_REF>
+ *  you can add your own caseRef npm run publish:case:agreement <CASE_REF> <WORKFLOW_CODE>
  */
 
 const sns = new SQSClient({
@@ -25,7 +25,8 @@ const message = {
   type: "cloud.defra.development.fg-gas-backend.application.agreement",
   datacontenttype: "application/json",
   data: {
-    clientRef: "APPLICATION-PMF-001",
+    caseRef: "APPLICATION-PMF-001",
+    workflowCode: "pigs-might-fly",
     newStatus: "REVIEW",
     supplementaryData: {
       phase: "PRE_AWARD",
@@ -43,9 +44,12 @@ const message = {
 console.log("Sending message to SQS queue:", queueUrl);
 
 // customise clientRef
-if (process.argv.length === 3) {
-  console.log("Sending sqs case for " + process.argv[2]);
-  message.data.clientRef = process.argv[2];
+if (process.argv.length === 4) {
+  console.log(
+    "Sending sqs case for " + process.argv[2] + " " + process.argv[3],
+  );
+  message.data.caseRef = process.argv[2];
+  message.data.workflowCode = process.argv[3];
 }
 
 await sns.send(
