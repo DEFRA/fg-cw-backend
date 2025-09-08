@@ -153,6 +153,21 @@ export class Case {
     }
   }
 
+  updateStatus(status, createdBy) {
+    this.status = status;
+
+    if (status === "APPROVED") {
+      const timelineEvent = TimelineEvent.createCaseApproved({
+        data: {
+          status,
+        },
+        createdBy,
+      });
+
+      this.#addTimelineEvent(timelineEvent);
+    }
+  }
+
   getUserIds() {
     const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
 

@@ -606,4 +606,44 @@ describe("Case", () => {
       expect(linkedComment.type).toBe("STAGE_COMPLETED");
     });
   });
+
+  describe("updateStatus", () => {
+    it("updates status to APPROVED and creates timeline event", () => {
+      const caseInstance = createTestCase();
+      expect(caseInstance.status).toBe("NEW");
+      expect(caseInstance.timeline).toHaveLength(0);
+
+      caseInstance.updateStatus("APPROVED", validUserId);
+
+      expect(caseInstance.status).toBe("APPROVED");
+      expect(caseInstance.timeline).toHaveLength(1);
+      expect(caseInstance.timeline[0].eventType).toBe(
+        EventEnums.eventTypes.CASE_APPROVED,
+      );
+      expect(caseInstance.timeline[0].createdBy).toBe(validUserId);
+      expect(caseInstance.timeline[0].data.status).toBe("APPROVED");
+    });
+
+    it("creates timeline event with correct properties when status is APPROVED", () => {
+      const caseInstance = createTestCase();
+      const beforeUpdate = new Date();
+
+      caseInstance.updateStatus("APPROVED", validUserId);
+
+      const afterUpdate = new Date();
+      const timelineEvent = caseInstance.timeline[0];
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_APPROVED);
+      expect(timelineEvent.createdBy).toBe(validUserId);
+      expect(timelineEvent.data).toEqual({ status: "APPROVED" });
+      expect(timelineEvent.description).toBe("Case approved");
+      expect(timelineEvent.comment).toBeNull();
+
+      const createdAt = new Date(timelineEvent.createdAt);
+      expect(createdAt.getTime()).toBeGreaterThanOrEqual(
+        beforeUpdate.getTime(),
+      );
+      expect(createdAt.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+    });
+  });
 });
