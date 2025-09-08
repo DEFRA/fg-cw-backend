@@ -165,6 +165,10 @@ describe("Cases", () => {
           ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
+          stages: caseData3Document.stages.map((s) => ({
+            ...s,
+            agreements: [],
+          })),
           timeline: [
             {
               commentRef: null,

@@ -336,6 +336,31 @@ describe("Case", () => {
     });
   });
 
+  describe("addDataToStage", () => {
+    it("should set stage data", () => {
+      const data = {
+        phase: "PRE_AWARD",
+        stage: "award",
+        targetNode: "agreements",
+        data: {
+          agreementRef: "AGREEMENT-REF-123",
+          createdAt: "2023-10-01T12:00:00Z",
+          agreementStatus: "OFFERED",
+        },
+      };
+
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        agreements: [],
+      });
+      kase.addDataToStage(data);
+      expect(kase.stages.find((s) => s.id === "award").agreements[0]).toEqual(
+        data.data,
+      );
+    });
+  });
+
   describe("assignUser", () => {
     it("should assign user with no note", () => {
       const kase = Case.createMock();

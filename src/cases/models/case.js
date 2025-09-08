@@ -124,6 +124,15 @@ export class Case {
     return timelineEvent.comment;
   }
 
+  addDataToStage(stageData) {
+    const { stage, targetNode, data } = stageData;
+    this.stages
+      .find((s) => {
+        return s.id === stage;
+      })
+      [targetNode].push(data);
+  }
+
   updateStageOutcome({ actionId, comment, createdBy }) {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
@@ -277,6 +286,7 @@ export class Case {
       payload: caseEvent,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
+        agreements: stage.agreements || null,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({

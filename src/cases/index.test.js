@@ -5,11 +5,13 @@ import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
+import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
 vi.mock("migrate-mongo");
 vi.mock("../common/logger.js");
 vi.mock("../common/mongo-client.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
+vi.mock("./subscribers/update-case-status-agreement.subscriber.js");
 
 describe("cases", () => {
   let server;
@@ -47,6 +49,7 @@ describe("cases", () => {
     server.events.emit("start");
 
     expect(createNewCaseSubscriber.start).toHaveBeenCalled();
+    expect(createUpdateStatusAgreementConsumer.start).toHaveBeenCalled();
   });
 
   it("stops subscribers on shutdown", async () => {
@@ -56,6 +59,7 @@ describe("cases", () => {
     server.events.emit("stop");
 
     expect(createNewCaseSubscriber.stop).toHaveBeenCalled();
+    expect(createUpdateStatusAgreementConsumer.stop).toHaveBeenCalled();
   });
 
   it("registers routes", async () => {
