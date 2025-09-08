@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { SqsSubscriber } from "../../common/sqs-subscriber.js";
-import { updateCaseStatusUseCase } from "../use-cases/update-case-status.use-case.js";
+import { updateCaseStatusWithDataUseCase } from "../use-cases/update-case-status-with-data.use-case.js";
 import { createUpdateStatusAgreementConsumer } from "./update-case-status-agreement.subscriber.js";
 
-vi.mock("../use-cases/update-case-status.use-case.js");
+vi.mock("../use-cases/update-case-status-with-data.use-case.js");
 
 describe("update status command", () => {
   it("is an instance of sqs subscriber", () => {
@@ -11,7 +11,7 @@ describe("update status command", () => {
   });
 
   it("should process update case status command", async () => {
-    updateCaseStatusUseCase.mockResolvedValue({});
+    updateCaseStatusWithDataUseCase.mockResolvedValue({});
     const message = {
       data: {
         caseRef: "advetgstfsatftftfatftft",
@@ -47,6 +47,6 @@ describe("update status command", () => {
     };
 
     await createUpdateStatusAgreementConsumer.onMessage(message);
-    expect(updateCaseStatusUseCase).toBeCalledWith(expected);
+    expect(updateCaseStatusWithDataUseCase).toBeCalledWith(expected);
   });
 });
