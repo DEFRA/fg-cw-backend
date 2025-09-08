@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
+        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
       );
     });
   });
@@ -329,6 +329,40 @@ describe("TimelineEvent", () => {
       );
       expect(timelineEvent.comment.text).toBe("Task complete");
       expect(timelineEvent.data.taskId).toBe("64c88faac1f56f71e1b99999");
+    });
+  });
+
+  describe("createCaseApproved", () => {
+    it("creates a case approved event", () => {
+      const props = {
+        data: {
+          approvalDate: "2024-01-15T10:00:00Z",
+          approvedBy: "64c88faac1f56f71e1b89a34",
+        },
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createCaseApproved(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_APPROVED);
+      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
+      expect(timelineEvent.data.approvalDate).toBe("2024-01-15T10:00:00Z");
+      expect(timelineEvent.data.approvedBy).toBe("64c88faac1f56f71e1b89a34");
+      expect(timelineEvent.comment).toBeNull();
+    });
+
+    it("creates a case approved event with minimal data", () => {
+      const props = {
+        data: {},
+        createdBy: "System",
+      };
+
+      const timelineEvent = TimelineEvent.createCaseApproved(props);
+
+      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_APPROVED);
+      expect(timelineEvent.createdBy).toBe("System");
+      expect(timelineEvent.data).toEqual({});
+      expect(timelineEvent.comment).toBeNull();
     });
   });
 });
