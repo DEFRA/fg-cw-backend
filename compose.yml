@@ -48,8 +48,20 @@ services:
         condition: service_started
       entra:
         condition: service_started
-    env_file:
-      - ".env"
+    environment:
+      # Use environment variables instead of .env file to allow test overrides
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      MONGO_URI: mongodb://mongodb:27017/
+      AWS_REGION: ${AWS_REGION:-eu-west-2}
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      CREATE_NEW_CASE_SQS_URL: ${CREATE_NEW_CASE_SQS_URL:-http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case}
+      # OIDC settings - use service name for container-to-container communication
+      OIDC_JWKS_URI: ${OIDC_JWKS_URI:-https://login.microsoftonline.com/common/discovery/v2.0/keys}
+      OIDC_VERIFY_ISS: ${OIDC_VERIFY_ISS:-https://sts.windows.net/common/}
+      OIDC_VERIFY_AUD: ${OIDC_VERIFY_AUD:-api://client-id}
     networks:
       - cdp-tenant
     develop:

@@ -30,8 +30,8 @@ export default defineConfig({
       AWS_ACCESS_KEY_ID: "test",
       AWS_SECRET_ACCESS_KEY: "test",
       CREATE_NEW_CASE_SQS_URL: `http://sqs.eu-west-2.127.0.0.1:${LOCALSTACK_PORT}/000000000000/create_new_case`,
-      OIDC_JWKS_URI: `http://localhost:${ENTRA_PORT}/jwks`,
-      OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
+      OIDC_JWKS_URI: "http://entra:3010/jwks", // Container-to-container URL
+      OIDC_VERIFY_ISS: "http://localhost:3010", // Token issuer (string match)
       OIDC_VERIFY_AUD: "api://client1",
       OIDC_SIGN_TOKEN_ENDPOINT: `http://localhost:${ENTRA_PORT}/sign`,
     },
