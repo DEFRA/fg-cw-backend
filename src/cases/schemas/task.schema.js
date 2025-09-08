@@ -27,4 +27,5 @@ export const Stage = Joi.object({
   taskGroups: Joi.array().items(TaskGroup).required(),
   actionsTitle: Joi.string().optional(),
   actions: Joi.array().items(Action).required(),
+  agreements: Joi.array().optional().allow(null),
 }).label("Stage");

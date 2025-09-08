@@ -75,6 +75,7 @@ describe("createCaseUseCase", () => {
       stages: [
         {
           id: "stage-1",
+          agreements: null,
           taskGroups: [
             {
               id: "task-group-1",
