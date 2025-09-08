@@ -336,16 +336,6 @@ describe("Case", () => {
     });
   });
 
-  describe("updateCaseStatus", () => {
-    it("should set status", () => {
-      const status = "REVIEW";
-
-      const kase = Case.createMock();
-      kase.updateCaseStatus(status);
-      expect(kase.status).toEqual("REVIEW");
-    });
-  });
-
   describe("addDataToStage", () => {
     it("should set stage data", () => {
       const data = {

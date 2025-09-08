@@ -124,10 +124,6 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  updateCaseStatus(newStatus) {
-    this.status = newStatus;
-  }
-
   addDataToStage(stageData) {
     const { stage, targetNode, data } = stageData;
     this.stages
