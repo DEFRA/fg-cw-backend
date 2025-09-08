@@ -13,8 +13,13 @@ describe("save case agreement use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 
     await expect(() =>
-      updateCaseStatusWithDataUseCase({ caseRef: "ABCD1234" }),
-    ).rejects.toThrow('Case with ref "ABCD1234" not found');
+      updateCaseStatusWithDataUseCase({
+        caseRef: "ABCD1234",
+        workflowCode: "workflow-1",
+      }),
+    ).rejects.toThrow(
+      'Case with caseRef "ABCD1234" and workflowCode "workflow-1" not found',
+    );
   });
 
   it("should add agreement data to case and call update", async () => {

@@ -14,7 +14,9 @@ export const updateCaseStatusWithDataUseCase = async ({
   const kase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
 
   if (!kase) {
-    throw Boom.notFound(`Case with ref "${caseRef}" not found`);
+    throw Boom.notFound(
+      `Case with caseRef "${caseRef}" and workflowCode "${workflowCode}" not found`,
+    );
   }
   const createdBy = getAuthenticatedUser().id;
 

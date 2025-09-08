@@ -5,7 +5,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
  *  you can add your own caseRef npm run publish:case:agreement <CASE_REF> <WORKFLOW_CODE>
  */
 
-const sns = new SQSClient({
+const sqs = new SQSClient({
   region: "eu-west-2",
   endpoint: "http://localhost:4566",
   credentials: {
@@ -52,7 +52,7 @@ if (process.argv.length === 4) {
   message.data.workflowCode = process.argv[3];
 }
 
-await sns.send(
+await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
     MessageBody: JSON.stringify(message),
