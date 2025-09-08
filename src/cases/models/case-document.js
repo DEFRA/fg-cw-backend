@@ -20,7 +20,7 @@ const mapTasksToStages = (kaseStages, tasks) => {
       taskGroups: s.taskGroups.map((tg) => {
         return {
           id: tg.id,
-          tasks: tg?.tasks.map((t) => processTask(t, tasks)),
+          tasks: tg.tasks.map((t) => processTask(t, tasks)),
         };
       }),
     };

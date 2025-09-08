@@ -289,7 +289,7 @@ export class Case {
         agreements: stage.agreements || null,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
-          tasks: taskGroup?.tasks.map((task) => ({
+          tasks: taskGroup.tasks.map((task) => ({
             id: task.id,
             status: "pending",
           })),
