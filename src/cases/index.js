@@ -3,6 +3,7 @@ import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
+import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
@@ -23,11 +24,13 @@ export const cases = {
     logger.info("Finished running migrations");
 
     server.events.on("start", async () => {
-      await createNewCaseSubscriber.start();
+      createNewCaseSubscriber.start();
+      createUpdateStatusAgreementConsumer.start();
     });
 
     server.events.on("stop", async () => {
-      await createNewCaseSubscriber.stop();
+      createNewCaseSubscriber.stop();
+      createUpdateStatusAgreementConsumer.stop();
     });
 
     server.route([
