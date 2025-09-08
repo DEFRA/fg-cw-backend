@@ -14,7 +14,8 @@ describe("update status command", () => {
     updateCaseStatusUseCase.mockResolvedValue({});
     const message = {
       data: {
-        clientRef: "advetgstfsatftftfatftft",
+        caseRef: "advetgstfsatftftfatftft",
+        workflowCode: "workflow-code-1",
         newStatus: "REVIEW",
         supplementaryData: {
           phase: "PRE_AWARD",
@@ -31,6 +32,7 @@ describe("update status command", () => {
 
     const expected = {
       caseRef: "advetgstfsatftftfatftft",
+      workflowCode: "workflow-code-1",
       newStatus: "REVIEW",
       supplementaryData: {
         phase: "PRE_AWARD",

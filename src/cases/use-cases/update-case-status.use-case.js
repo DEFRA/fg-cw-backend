@@ -1,14 +1,20 @@
 import Boom from "@hapi/boom";
-import { findByCaseRef, update } from "../repositories/case.repository.js";
+import {
+  findByCaseRefAndWorkflowCode,
+  update,
+} from "../repositories/case.repository.js";
 
-export const updateCaseStatusUseCase = async (command) => {
-  const kase = await findByCaseRef(command.caseRef);
+export const updateCaseStatusUseCase = async ({
+  caseRef,
+  workflowCode,
+  newStatus,
+  supplementaryData,
+}) => {
+  const kase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
 
   if (!kase) {
-    throw Boom.notFound(`Case with ref "${command.caseRef}" not found`);
+    throw Boom.notFound(`Case with ref "${caseRef}" not found`);
   }
-
-  const { newStatus, supplementaryData } = command;
 
   kase.updateCaseStatus(newStatus);
   kase.addDataToStage(supplementaryData);

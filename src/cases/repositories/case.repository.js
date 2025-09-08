@@ -75,9 +75,10 @@ export const findAll = async () => {
   return caseDocuments.map(toCase);
 };
 
-export const findByCaseRef = async (caseRef) => {
+export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
   const caseDocument = await db.collection(collection).findOne({
     caseRef,
+    workflowCode,
   });
   return caseDocument && toCase(caseDocument);
 };

@@ -7,7 +7,7 @@ import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
   findAll,
-  findByCaseRef,
+  findByCaseRefAndWorkflowCode,
   findById,
   save,
   update,
@@ -174,7 +174,7 @@ describe("findAll", () => {
   });
 });
 
-describe("findByCaseRef", () => {
+describe("findByCaseRefAndWorkflowCode", () => {
   it("finds case", async () => {
     const doc = CaseDocument.createMock();
     const ref = doc.caseRef;
@@ -183,7 +183,7 @@ describe("findByCaseRef", () => {
     db.collection.mockReturnValue({
       findOne,
     });
-    const result = await findByCaseRef(ref);
+    const result = await findByCaseRefAndWorkflowCode(ref, "workflow-code");
     expect(result.caseRef).toBe(ref);
   });
 });

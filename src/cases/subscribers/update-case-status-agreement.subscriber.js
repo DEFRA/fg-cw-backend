@@ -8,10 +8,10 @@ export const createUpdateStatusAgreementConsumer = new SqsSubscriber({
   async onMessage(message) {
     const { data } = message;
 
-    const { clientRef, ...rest } = data;
+    await updateCaseStatusUseCase(data);
 
-    await updateCaseStatusUseCase({ caseRef: clientRef, ...rest });
-
-    logger.info(`Updated case status with ref "${data.clientRef}"`);
+    logger.info(
+      `Updated case status with caseRef "${data.caseRef}" and workflowCode "${data.workflowCode}"`,
+    );
   },
 });

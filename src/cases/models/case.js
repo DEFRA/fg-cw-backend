@@ -276,7 +276,7 @@ export class Case {
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
         agreements: stage.agreements || null,
-        taskGroups: stage.taskGroups?.map((taskGroup) => ({
+        taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup?.tasks.map((task) => ({
             id: task.id,
