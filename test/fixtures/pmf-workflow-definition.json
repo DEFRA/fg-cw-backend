@@ -186,5 +186,11 @@
   "requiredRoles": {
     "allOf": ["ROLE_RPA_ADMIN"],
     "anyOf": ["ROLE_RPA_ADMIN"]
+  },
+  "definitions": {
+    "agreementsService": {
+      "internalUrl": "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer",
+      "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer"
+    }
   }
 }
