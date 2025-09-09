@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
+import { resolveBannerPaths } from "../../common/resolve-paths.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { findById } from "../repositories/case.repository.js";
@@ -73,6 +74,10 @@ export const findCaseByIdUseCase = async (caseId) => {
     return tl;
   });
 
+  const banner = workflow.pages.cases.details.banner;
+  kase.banner = resolveBannerPaths(banner, kase);
+  kase.links = mapCaseLinks(kase);
+
   return kase;
 };
 
@@ -93,4 +98,40 @@ export const findUserAssignedToCase = () => {
 
 const mapComment = (comment) => {
   return comment?.ref || undefined;
+};
+
+const mapCaseLinks = (kase) => {
+  const caseId = kase._id;
+  const links = [
+    {
+      id: "tasks",
+      href: `/cases/${caseId}`,
+      text: "Tasks",
+    },
+    {
+      id: "caseDetails",
+      href: `/cases/${caseId}/case-details`,
+      text: "Case Details",
+    },
+    {
+      id: "notes",
+      href: `/cases/${caseId}/notes`,
+      text: "Notes",
+    },
+    {
+      id: "timeline",
+      href: `/cases/${caseId}/timeline`,
+      text: "Timeline",
+    },
+  ];
+
+  if (kase.hasAgreements) {
+    links.push({
+      id: "agreements",
+      href: `/cases/${caseId}/agreements`,
+      text: "Agreements",
+    });
+  }
+
+  return links;
 };
