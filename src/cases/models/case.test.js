@@ -671,4 +671,81 @@ describe("Case", () => {
       expect(createdAt.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
     });
   });
+
+  describe("hasAgreements", () => {
+    it("returns true when award stage has agreements", () => {
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        agreements: [
+          {
+            agreementRef: "AGREEMENT-001",
+            createdAt: "2023-10-01T12:00:00Z",
+            agreementStatus: "OFFERED",
+          },
+        ],
+      });
+      expect(kase.hasAgreements).toBe(true);
+    });
+
+    it("returns false when award stage has no agreements", () => {
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        agreements: [],
+      });
+      expect(kase.hasAgreements).toBe(false);
+    });
+
+    it("returns false when no award stage exists", () => {
+      const kase = Case.createMock();
+      expect(kase.hasAgreements).toBe(false);
+    });
+  });
+
+  describe("getAgreements", () => {
+    it("returns agreements array when award stage exists with agreements", () => {
+      const agreements = [
+        {
+          agreementRef: "AGREEMENT-001",
+          createdAt: "2023-10-01T12:00:00Z",
+          agreementStatus: "REJECTED",
+        },
+        {
+          agreementRef: "AGREEMENT-002",
+          createdAt: "2023-10-02T14:30:00Z",
+          agreementStatus: "AGREED",
+        },
+      ];
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        agreements,
+      });
+      expect(kase.getAgreements()).toEqual(agreements);
+    });
+
+    it("returns empty array when award stage has no agreements", () => {
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        agreements: [],
+      });
+      expect(kase.getAgreements()).toEqual([]);
+    });
+
+    it("returns empty array when no award stage exists", () => {
+      const kase = Case.createMock();
+      expect(kase.getAgreements()).toEqual([]);
+    });
+
+    it("returns empty array when award stage exists but has no agreements property", () => {
+      const kase = Case.createMock();
+      kase.stages.push({
+        id: "award",
+        // no agreements property
+      });
+      expect(kase.getAgreements()).toEqual([]);
+    });
+  });
 });

@@ -177,6 +177,15 @@ export class Case {
     }
   }
 
+  get hasAgreements() {
+    return this.getAgreements().length > 0;
+  }
+
+  getAgreements() {
+    const awardStage = this.stages?.find((s) => s?.id === "award");
+    return awardStage?.agreements || [];
+  }
+
   getUserIds() {
     const caseUserIds = this.assignedUser ? [this.assignedUser.id] : [];
 
