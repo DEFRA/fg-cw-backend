@@ -144,6 +144,41 @@ describe("Cases", () => {
             },
           },
         ],
+        banner: {
+          summary: {
+            clientReference: {
+              label: "Client Reference",
+              type: "string",
+              value: "APPLICATION-REF-2",
+            },
+          },
+          title: {
+            type: "string",
+            value: "",
+          },
+        },
+        links: [
+          {
+            href: `/cases/${caseId}`,
+            id: "tasks",
+            text: "Tasks",
+          },
+          {
+            href: `/cases/${caseId}/case-details`,
+            id: "caseDetails",
+            text: "Case Details",
+          },
+          {
+            href: `/cases/${caseId}/notes`,
+            id: "notes",
+            text: "Notes",
+          },
+          {
+            href: `/cases/${caseId}/timeline`,
+            id: "timeline",
+            text: "Timeline",
+          },
+        ],
       });
     });
   });
