@@ -27,9 +27,7 @@ const Section = Joi.object({
   id: Joi.string().optional(),
   title: Joi.string().optional(),
   type: Joi.string().valid("object", "array").optional(),
-  component: Joi.string()
-    .valid("heading", "labeledText", "list", "table")
-    .optional(),
+  component: Joi.string().optional(),
   fields: Joi.array().items(Field).optional(),
   level: Joi.number().optional(),
   classes: Joi.string().optional(),
@@ -63,8 +61,9 @@ const Banner = Joi.object({
 
 const CaseDetails = Joi.object({
   banner: Banner.required(),
+  tabLinks: Joi.array().optional(),
   tabs: Joi.object().pattern(Joi.string(), Tab).unknown(true).required(),
-});
+}).unknown(true);
 
 const Cases = Joi.object({
   details: CaseDetails.required(),

@@ -16,6 +16,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
 
   const root = {
     ...kase,
+    caseId,
     definitions: { ...workflow.definitions },
   };
 
@@ -32,7 +33,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     caseRef: kase.caseRef,
     tabId,
     banner: kase.banner,
-    links: buildCaseLinks(kase),
+    links: resolveTabLinks(root, workflow?.pages?.cases?.details?.tabLinks),
     content: data,
   };
 };
@@ -335,43 +336,14 @@ const resolveFieldCells = (root, fieldDef, rows) => {
   });
 };
 
-const buildCaseLinks = (kase) => {
-  const caseId = kase._id;
-  const links = [
-    {
-      id: "tasks",
-      href: `/cases/${caseId}`,
-      text: "Tasks",
-    },
-    {
-      id: "case-details",
-      href: `/cases/${caseId}/case-details`,
-      text: "Case Details",
-    },
-    {
-      id: "notes",
-      href: `/cases/${caseId}/notes`,
-      text: "Notes",
-    },
-    {
-      id: "timeline",
-      href: `/cases/${caseId}/timeline`,
-      text: "Timeline",
-    },
-  ];
+const resolveTabLinks = (root, tabLinkDefinitions) => {
+  if (!tabLinkDefinitions) return [];
 
-  // TODO: this should be dynamic based on renderIf
-  links.push({
-    id: "agreements",
-    href: `/cases/${caseId}/tabs/agreements`,
-    text: "Agreements",
-  });
-
-  links.push({
-    id: "caseDetails",
-    href: `/cases/${caseId}/tabs/caseDetails`,
-    text: "Test Dynamic Case Details",
-  });
-
-  return links;
+  return tabLinkDefinitions
+    .filter((linkDef) => shouldRender(root, linkDef))
+    .map((linkDef) => ({
+      id: linkDef.id,
+      href: resolveParam(root, linkDef.href),
+      text: resolveParam(root, linkDef.text),
+    }));
 };
