@@ -9,6 +9,7 @@ export class Workflow {
     this.pages = props.pages;
     this.stages = props.stages;
     this.requiredRoles = props.requiredRoles;
+    this.definitions = props.definitions;
   }
 
   findTask(stageId, taskGroupId, taskId) {

@@ -45,6 +45,7 @@ export class CaseDocument {
     this.timeline = props.timeline.map(
       (timelineProps) => new TimelineEventDocument(timelineProps),
     );
+    this.agreements = props.agreements;
   }
 
   static createMock(props) {

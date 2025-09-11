@@ -4,23 +4,46 @@ import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { Stage } from "./task.schema.js";
 
 const Field = Joi.object({
-  ref: Joi.string().required(),
-  type: typeSchema,
-  label: Joi.string().required(),
-  format: Joi.string(),
-});
+  ref: Joi.string().optional(),
+  type: typeSchema.optional(),
+  label: Joi.string().optional(),
+  format: Joi.string().optional(),
+  id: Joi.string().optional(),
+  component: Joi.string()
+    .valid("text", "date", "url", "copyToClipboard", "status", "container")
+    .optional(),
+  elements: Joi.array().items(Joi.object().unknown(true)).optional(),
+  text: Joi.alternatives().try(Joi.string(), Joi.object()).optional(),
+  href: Joi.alternatives().try(Joi.string(), Joi.object()).optional(),
+  target: Joi.string().optional(),
+  rel: Joi.string().optional(),
+  classes: Joi.string().optional(),
+  buttonText: Joi.string().optional(),
+  feedbackText: Joi.string().optional(),
+  classesMap: Joi.object().optional(),
+}).unknown(true);
 
 const Section = Joi.object({
-  title: Joi.string().required(),
-  type: Joi.string().valid("object", "array").required(),
-  component: Joi.string().valid("list", "table").required(),
-  fields: Joi.array().items(Field).min(1).required(),
-});
+  id: Joi.string().optional(),
+  title: Joi.string().optional(),
+  type: Joi.string().valid("object", "array").optional(),
+  component: Joi.string()
+    .valid("heading", "labeledText", "list", "table")
+    .optional(),
+  fields: Joi.array().items(Field).optional(),
+  level: Joi.number().optional(),
+  classes: Joi.string().optional(),
+  rowsRef: Joi.string().optional(),
+  firstCellIsHeader: Joi.boolean().optional(),
+  text: Joi.alternatives().try(Joi.string(), Joi.object()).optional(),
+  label: Joi.object().optional(),
+}).unknown(true);
 
 const Tab = Joi.object({
-  title: Joi.string().required(),
+  title: Joi.string().optional(),
+  renderIf: Joi.string().optional(),
   sections: Joi.array().items(Section).min(1).required(),
-});
+}).unknown(true);
 
 const TitleField = Joi.object({
   ref: Joi.string().required(),
@@ -34,13 +57,13 @@ const SummaryField = Joi.object({
 });
 
 const Banner = Joi.object({
-  title: TitleField.required(),
-  summary: Joi.object().pattern(Joi.string(), SummaryField).min(1).required(),
-});
+  title: TitleField.optional(),
+  summary: Joi.object().pattern(Joi.string(), SummaryField).optional(),
+}).unknown(true);
 
 const CaseDetails = Joi.object({
   banner: Banner.required(),
-  tabs: Joi.object().pattern(Joi.string(), Tab).required(),
+  tabs: Joi.object().pattern(Joi.string(), Tab).unknown(true).required(),
 });
 
 const Cases = Joi.object({
@@ -58,7 +81,8 @@ const WorkflowData = Joi.object({
   pages: Pages.required(),
   stages: Joi.array().items(Stage).min(2).required(),
   requiredRoles: requiredRolesSchema.required(),
-});
+  definitions: Joi.object().optional(),
+}).unknown(true);
 
 const Workflow = WorkflowData.keys({
   _id: Joi.string().hex().length(24).required(),

@@ -33,6 +33,8 @@ export const findCaseByIdUseCase = async (caseId) => {
   kase.assignedUser = userMap.get(kase.assignedUser?.id) || null;
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  kase.tabs = workflow.pages.cases.details.tabs;
+  kase.definitions = workflow.definitions;
   kase.requiredRoles = workflow.requiredRoles;
 
   kase.comments = kase.comments.map((comment) => ({

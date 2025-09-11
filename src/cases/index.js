@@ -8,6 +8,7 @@ import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-s
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
+import { findCaseByIdTabIdRoute } from "./routes/find-case-by-id-tab-id.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
@@ -43,6 +44,7 @@ export const cases = {
       findWorkflowsRoute,
       findWorkflowByCodeRoute,
       updateTaskStatusRoute,
+      findCaseByIdTabIdRoute,
     ]);
   },
 };

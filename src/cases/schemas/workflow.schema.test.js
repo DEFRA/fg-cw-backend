@@ -25,17 +25,6 @@ describe("workflowSchema", () => {
       );
     });
 
-    it("requires tab title if data exists", () => {
-      const data = structuredClone(workflowData1);
-      delete data.pages.cases.details.tabs.caseDetails.title;
-
-      const { error } = WorkflowData.validate(data);
-      expect(error.name).toEqual("ValidationError");
-      expect(error.details[0].message).toEqual(
-        '"pages.cases.details.tabs.caseDetails.title" is required',
-      );
-    });
-
     it("requires tab sections if data exists", () => {
       const data = structuredClone(workflowData1);
       delete data.pages.cases.details.tabs.caseDetails.sections;
