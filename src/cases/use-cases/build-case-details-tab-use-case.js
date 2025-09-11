@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
-import { resolveBannerPaths } from "../../common/resolve-paths.js";
 import {
+  buildBanner,
   buildTabLinks,
   buildUrl,
   resolveParam,
@@ -33,14 +33,8 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     );
   }
 
-  const [bannerJson] = JSONPath({
-    json: workflow,
-    path: `$.pages.cases.details.banner`,
-  });
-
-  const banner = resolveBannerPaths(bannerJson, kase);
+  const banner = buildBanner(kase, workflow);
   const links = buildTabLinks(kase, workflow);
-
   const content = buildTab(root, tabDefinition);
 
   return {
@@ -249,16 +243,4 @@ const resolveFieldCells = (root, fieldDef, rows) => {
 
     return resolvedCell;
   });
-};
-
-const resolveTabLinks = (root, tabLinkDefinitions) => {
-  if (!tabLinkDefinitions) return [];
-
-  return tabLinkDefinitions
-    .filter((linkDef) => shouldRender(root, linkDef))
-    .map((linkDef) => ({
-      id: linkDef.id,
-      href: resolveParam(root, linkDef.href),
-      text: resolveParam(root, linkDef.text),
-    }));
 };

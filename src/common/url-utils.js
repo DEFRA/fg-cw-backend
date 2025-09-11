@@ -1,4 +1,5 @@
 import { JSONPath } from "jsonpath-plus";
+import { resolveBannerPaths } from "./resolve-paths.js";
 
 const isRef = (s) =>
   typeof s === "string" && (s.startsWith("$.") || s.startsWith("@."));
@@ -116,4 +117,13 @@ export const buildTabLinks = (kase, workflow) => {
       ? buildUrl(root, link.href.buildUrl)
       : resolveParam(root, link.href),
   }));
+};
+
+export const buildBanner = (kase, workflow) => {
+  const [bannerJson] = JSONPath({
+    json: workflow,
+    path: "$.pages.cases.details.banner",
+  });
+
+  return resolveBannerPaths(bannerJson, kase);
 };
