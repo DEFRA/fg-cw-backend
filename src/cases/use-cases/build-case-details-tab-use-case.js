@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
+import { resolveBannerPaths } from "../../common/resolve-paths.js";
 import {
   buildTabLinks,
   buildUrl,
@@ -32,15 +33,23 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     );
   }
 
-  const data = buildTab(root, tabDefinition);
+  const [bannerJson] = JSONPath({
+    json: workflow,
+    path: `$.pages.cases.details.banner`,
+  });
+
+  const banner = resolveBannerPaths(bannerJson, kase);
+  const links = buildTabLinks(kase, workflow);
+
+  const content = buildTab(root, tabDefinition);
 
   return {
     caseId,
     caseRef: kase.caseRef,
     tabId,
-    banner: kase.banner,
-    links: buildTabLinks(kase, workflow),
-    content: data,
+    banner,
+    links,
+    content,
   };
 };
 
