@@ -1,5 +1,11 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
+import {
+  buildTabLinks,
+  buildUrl,
+  resolveParam,
+  resolveTextComponent,
+} from "../../common/url-utils.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -33,7 +39,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     caseRef: kase.caseRef,
     tabId,
     banner: kase.banner,
-    links: resolveTabLinks(root, workflow?.pages?.cases?.details?.tabLinks),
+    links: buildTabLinks(kase, workflow),
     content: data,
   };
 };
@@ -57,106 +63,6 @@ export const buildTab = (root, tabDefinition) => {
         return buildGenericSection(root, section);
     }
   });
-};
-
-const isRef = (s) =>
-  typeof s === "string" && (s.startsWith("$.") || s.startsWith("@."));
-
-const isEscapedRef = (s) =>
-  typeof s === "string" && (s.startsWith("\\$.") || s.startsWith("\\@."));
-
-const evalPath = (root, path, row) => {
-  if (typeof path !== "string") return [];
-  if (path.startsWith("\\$.") || path.startsWith("\\@.")) return []; // escaped: caller handles
-  if (path.startsWith("$.")) return JSONPath({ json: root, path });
-  if (path.startsWith("@.")) {
-    const jsonPath = "$." + path.slice(2);
-    const targetObject = row == null ? root : row;
-    return JSONPath({ json: targetObject, path: jsonPath });
-  }
-  return JSONPath({ json: root, path });
-};
-
-/** Return a single value for a JSONPath (first match or empty string). */
-const jp = (root, path, row) => {
-  const out = evalPath(root, path, row);
-  return out.length ? out[0] : "";
-};
-
-/** -------- URL builder (RFC6570 level-1-ish) -------- */
-const expandUriTemplate = (template, params) =>
-  template.replace(/\{([^\}]+)\}/g, (_, key) =>
-    encodeURIComponent(params[key] ?? ""),
-  );
-
-const buildUrl = (root, spec, row) => {
-  // spec = { template, params }
-  const template =
-    typeof spec.template === "string"
-      ? isEscapedRef(spec.template)
-        ? spec.template.slice(1)
-        : isRef(spec.template)
-          ? jp(root, spec.template, row)
-          : spec.template
-      : "";
-
-  const params = Object.fromEntries(
-    Object.entries(spec.params || {}).map(([k, v]) => [
-      k,
-      resolveParam(root, v, row),
-    ]),
-  );
-
-  return expandUriTemplate(template, params);
-};
-
-const resolveParam = (root, entry, row) => {
-  if (entry == null) return undefined;
-
-  if (typeof entry === "string") {
-    if (isEscapedRef(entry)) return entry.slice(1); // "\\$.x" -> "$.x"
-    if (isRef(entry)) return jp(root, entry, row);
-    return entry; // plain literal
-  }
-
-  if (typeof entry !== "object") {
-    return entry;
-  }
-
-  if ("ref" in entry) {
-    return jp(root, entry.ref, row);
-  }
-  if ("buildUrl" in entry) return buildUrl(root, entry.buildUrl, row);
-  return entry;
-};
-
-const resolveTextComponent = (root, textEntry, row) => {
-  if (textEntry == null) return undefined;
-
-  if (typeof textEntry === "string") {
-    return resolveParam(root, textEntry, row);
-  }
-
-  if (typeof textEntry === "object") {
-    if ("text" in textEntry) {
-      const resolvedTextObj = {};
-
-      // Process ALL properties in the text object
-      for (const [key, value] of Object.entries(textEntry)) {
-        const resolvedValue = resolveParam(root, value, row);
-        if (resolvedValue !== undefined) {
-          resolvedTextObj[key] = resolvedValue;
-        }
-      }
-
-      return resolvedTextObj;
-    } else {
-      // Handle objects like {buildUrl: ...} by resolving via resolveParam
-      return resolveParam(root, textEntry, row);
-    }
-  }
-
-  return textEntry;
 };
 
 const buildTable = (root, sectionDef) => {
