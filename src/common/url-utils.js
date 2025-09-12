@@ -110,20 +110,37 @@ export const shouldRender = (root, item) => {
 
 export const buildTabLinks = (kase, workflow) => {
   const caseId = kase._id;
+
+  const links = [
+    {
+      id: "tasks",
+      href: `/cases/${caseId}`,
+      text: "Tasks",
+    },
+    {
+      id: "notes",
+      href: `/cases/${caseId}/notes`,
+      text: "Notes",
+    },
+    {
+      id: "timeline",
+      href: `/cases/${caseId}/timeline`,
+      text: "Timeline",
+    },
+  ];
+
   const root = {
     ...kase,
-    caseId,
     definitions: { ...workflow.definitions },
   };
 
-  const [tabLinks] = JSONPath({
+  const tabs = JSONPath({
     json: workflow,
-    path: "$.pages.cases.details.links",
+    path: "$.pages.cases.details.tabs[*].link",
   });
 
-  return tabLinks
-    ?.filter((link) => shouldRender(root, link))
-    .map((link) => ({
+  tabs.forEach((link) => {
+    const processedLink = {
       ...link,
       href: link.href?.urlTemplate
         ? buildUrl(root, {
@@ -131,7 +148,16 @@ export const buildTabLinks = (kase, workflow) => {
             params: link.href.params,
           })
         : resolveParam(root, link.href),
-    }));
+    };
+
+    if (link.index) {
+      links.splice(link.index, 0, processedLink);
+    } else {
+      links.push(processedLink);
+    }
+  });
+
+  return links.filter((link) => shouldRender(root, link));
 };
 
 export const buildBanner = (kase, workflow) => {
