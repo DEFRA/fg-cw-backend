@@ -6,6 +6,7 @@ import {
   buildUrl,
   resolveParam,
   resolveTextComponent,
+  shouldRender,
 } from "../../common/url-utils.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -51,14 +52,6 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     links,
     content,
   };
-};
-
-const shouldRender = (root, tabDefinition) => {
-  if (tabDefinition?.renderIf) {
-    return Boolean(resolveParam(root, tabDefinition.renderIf));
-  }
-
-  return true;
 };
 
 export const buildTab = (root, tabDefinition) => {
@@ -130,7 +123,7 @@ const buildList = (root, sectionDef) => {
       if (k === "component" || k === "label") continue;
 
       if (k === "href") {
-        // allow string, urlTemplate, or legacy object with uriTemplate/params/query
+        // allow string, urlTemplate
         const maybe = resolveParam(root, v);
         if (typeof maybe === "string") {
           resolvedField.href = maybe;
@@ -139,8 +132,6 @@ const buildList = (root, sectionDef) => {
             template: v.urlTemplate,
             params: v.params,
           });
-        } else if (v && typeof v === "object" && "uriTemplate" in v) {
-          resolvedField.href = buildUrl(root, v);
         }
       } else if (k === "elements") {
         resolvedField.elements = v.map((element) => {
@@ -186,8 +177,6 @@ const buildGenericSection = (root, sectionDef) => {
               template: ev.urlTemplate,
               params: ev.params,
             });
-          } else if (ev && typeof ev === "object" && "uriTemplate" in ev) {
-            resolvedElement[ek] = buildUrl(root, ev);
           } else {
             resolvedElement[ek] = resolveParam(root, ev);
           }
@@ -228,7 +217,7 @@ const resolveFieldCells = (root, fieldDef, rows) => {
       if (k === "text") {
         resolvedCell.text = resolveTextComponent(root, v, rowItem);
       } else if (k === "href") {
-        // allow string, urlTemplate, or object with uriTemplate/params/query
+        // allow string, urlTemplate
         const maybe = resolveParam(root, v, rowItem);
         if (typeof maybe === "string") {
           resolvedCell.href = maybe;
@@ -238,8 +227,6 @@ const resolveFieldCells = (root, fieldDef, rows) => {
             { template: v.urlTemplate, params: v.params },
             rowItem,
           );
-        } else if (v && typeof v === "object" && "uriTemplate" in v) {
-          resolvedCell.href = buildUrl(root, v, rowItem);
         }
       } else if (k === "elements") {
         resolvedCell.elements = v.map((element) => {

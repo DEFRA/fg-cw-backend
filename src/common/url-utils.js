@@ -25,7 +25,7 @@ export const jp = (root, path, row) => {
   return out.length ? out[0] : "";
 };
 
-export const expandUriTemplate = (template, params) =>
+export const expandUrlTemplate = (template, params) =>
   template.replace(/\{([^\}]+)\}/g, (_, key) =>
     encodeURIComponent(params[key] ?? ""),
   );
@@ -47,7 +47,7 @@ export const buildUrl = (root, spec, row) => {
     ]),
   );
 
-  return expandUriTemplate(template, params);
+  return expandUrlTemplate(template, params);
 };
 
 export const resolveParam = (root, entry, row) => {
@@ -63,16 +63,13 @@ export const resolveParam = (root, entry, row) => {
     return entry;
   }
 
-  if ("ref" in entry) {
-    return jp(root, entry.ref, row);
-  }
   if ("urlTemplate" in entry)
     return buildUrl(
       root,
       { template: entry.urlTemplate, params: entry.params },
       row,
     );
-  if ("uriTemplate" in entry) return buildUrl(root, entry, row);
+
   return entry;
 };
 
@@ -104,6 +101,13 @@ export const resolveTextComponent = (root, textEntry, row) => {
   return textEntry;
 };
 
+export const shouldRender = (root, item) => {
+  if (item?.renderIf) {
+    return Boolean(resolveParam(root, item.renderIf));
+  }
+  return true;
+};
+
 export const buildTabLinks = (kase, workflow) => {
   const caseId = kase._id;
   const root = {
@@ -117,17 +121,17 @@ export const buildTabLinks = (kase, workflow) => {
     path: "$.pages.cases.details.links",
   });
 
-  return tabLinks?.map((link) => ({
-    ...link,
-    href: link.href?.urlTemplate
-      ? buildUrl(root, {
-          template: link.href.urlTemplate,
-          params: link.href.params,
-        })
-      : link.href?.uriTemplate
-        ? buildUrl(root, link.href)
+  return tabLinks
+    ?.filter((link) => shouldRender(root, link))
+    .map((link) => ({
+      ...link,
+      href: link.href?.urlTemplate
+        ? buildUrl(root, {
+            template: link.href.urlTemplate,
+            params: link.href.params,
+          })
         : resolveParam(root, link.href),
-  }));
+    }));
 };
 
 export const buildBanner = (kase, workflow) => {
