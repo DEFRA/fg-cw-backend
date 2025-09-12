@@ -21,6 +21,12 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     path: `$.pages.cases.details.tabs.${tabId}`,
   });
 
+  if (!tabDefinition) {
+    throw Boom.notFound(
+      `Tab "${tabId}" not found in workflow "${workflow.code}"`,
+    );
+  }
+
   const root = {
     ...kase,
     caseId,
@@ -124,12 +130,15 @@ const buildList = (root, sectionDef) => {
       if (k === "component" || k === "label") continue;
 
       if (k === "href") {
-        // allow string, buildUrl, or legacy object with uriTemplate/params/query
+        // allow string, urlTemplate, or legacy object with uriTemplate/params/query
         const maybe = resolveParam(root, v);
         if (typeof maybe === "string") {
           resolvedField.href = maybe;
-        } else if (v && typeof v === "object" && "buildUrl" in v) {
-          resolvedField.href = buildUrl(root, v.buildUrl);
+        } else if (v && typeof v === "object" && "urlTemplate" in v) {
+          resolvedField.href = buildUrl(root, {
+            template: v.urlTemplate,
+            params: v.params,
+          });
         } else if (v && typeof v === "object" && "uriTemplate" in v) {
           resolvedField.href = buildUrl(root, v);
         }
@@ -172,8 +181,13 @@ const buildGenericSection = (root, sectionDef) => {
         for (const [ek, ev] of Object.entries(element)) {
           if (ek === "text" || ek === "label") {
             resolvedElement[ek] = resolveTextComponent(root, ev);
-          } else if (ev && typeof ev === "object" && "buildUrl" in ev) {
-            resolvedElement[ek] = buildUrl(root, ev.buildUrl);
+          } else if (ev && typeof ev === "object" && "urlTemplate" in ev) {
+            resolvedElement[ek] = buildUrl(root, {
+              template: ev.urlTemplate,
+              params: ev.params,
+            });
+          } else if (ev && typeof ev === "object" && "uriTemplate" in ev) {
+            resolvedElement[ek] = buildUrl(root, ev);
           } else {
             resolvedElement[ek] = resolveParam(root, ev);
           }
@@ -214,12 +228,16 @@ const resolveFieldCells = (root, fieldDef, rows) => {
       if (k === "text") {
         resolvedCell.text = resolveTextComponent(root, v, rowItem);
       } else if (k === "href") {
-        // allow string, buildUrl, or object with uriTemplate/params/query
+        // allow string, urlTemplate, or object with uriTemplate/params/query
         const maybe = resolveParam(root, v, rowItem);
         if (typeof maybe === "string") {
           resolvedCell.href = maybe;
-        } else if (v && typeof v === "object" && "buildUrl" in v) {
-          resolvedCell.href = buildUrl(root, v.buildUrl, rowItem);
+        } else if (v && typeof v === "object" && "urlTemplate" in v) {
+          resolvedCell.href = buildUrl(
+            root,
+            { template: v.urlTemplate, params: v.params },
+            rowItem,
+          );
         } else if (v && typeof v === "object" && "uriTemplate" in v) {
           resolvedCell.href = buildUrl(root, v, rowItem);
         }

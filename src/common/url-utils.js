@@ -66,7 +66,13 @@ export const resolveParam = (root, entry, row) => {
   if ("ref" in entry) {
     return jp(root, entry.ref, row);
   }
-  if ("buildUrl" in entry) return buildUrl(root, entry.buildUrl, row);
+  if ("urlTemplate" in entry)
+    return buildUrl(
+      root,
+      { template: entry.urlTemplate, params: entry.params },
+      row,
+    );
+  if ("uriTemplate" in entry) return buildUrl(root, entry, row);
   return entry;
 };
 
@@ -108,14 +114,19 @@ export const buildTabLinks = (kase, workflow) => {
 
   const [tabLinks] = JSONPath({
     json: workflow,
-    path: "$.pages.cases.details.tabLinks",
+    path: "$.pages.cases.details.links",
   });
 
   return tabLinks?.map((link) => ({
     ...link,
-    href: link.href?.buildUrl
-      ? buildUrl(root, link.href.buildUrl)
-      : resolveParam(root, link.href),
+    href: link.href?.urlTemplate
+      ? buildUrl(root, {
+          template: link.href.urlTemplate,
+          params: link.href.params,
+        })
+      : link.href?.uriTemplate
+        ? buildUrl(root, link.href)
+        : resolveParam(root, link.href),
   }));
 };
 
