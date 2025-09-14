@@ -136,10 +136,18 @@ export const buildTabLinks = (kase, workflow) => {
 
   const tabs = JSONPath({
     json: workflow,
-    path: "$.pages.cases.details.tabs[*].link",
+    path: "$.pages.cases.details.tabs[*]",
   });
 
-  tabs.forEach((link) => {
+  tabs.forEach((tab) => {
+    // Check renderIf at the tab level first
+    if (!shouldRender(root, tab)) {
+      return; // Skip this tab entirely
+    }
+
+    const link = tab.link;
+    if (!link) return; // Skip if no link
+
     const processedLink = {
       ...link,
       href: link.href?.urlTemplate
@@ -157,7 +165,7 @@ export const buildTabLinks = (kase, workflow) => {
     }
   });
 
-  return links.filter((link) => shouldRender(root, link));
+  return links;
 };
 
 export const buildBanner = (kase, workflow) => {
