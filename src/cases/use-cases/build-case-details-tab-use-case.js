@@ -18,7 +18,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   const tabDefinition = getTabDefinition({ root, workflow, tabId });
   if (!shouldRender(root, tabDefinition)) {
     throw Boom.notFound(
-      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveJSONPath(root, tabDefinition?.renderIf)}`,
+      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveJSONPath({ root, path: tabDefinition?.renderIf })}`,
     );
   }
 
@@ -80,7 +80,7 @@ const buildTable = (root, sectionDef) => {
     });
   });
 
-  const resolvedSection = resolveJSONPath(root, resolvable);
+  const resolvedSection = resolveJSONPath({ root, path: resolvable });
   resolvedSection.rows = tableRows;
 
   return resolvedSection;
@@ -93,7 +93,7 @@ const buildList = (root, sectionDef) => {
     return buildField(root, fieldDef);
   });
 
-  const resolvedSection = resolveJSONPath(root, resolvable);
+  const resolvedSection = resolveJSONPath({ root, path: resolvable });
   resolvedSection.rows = rows;
 
   if (!resolvedSection.component) {
@@ -104,7 +104,7 @@ const buildList = (root, sectionDef) => {
 };
 
 const buildGenericSection = (root, sectionDef) => {
-  const resolvedSection = resolveJSONPath(root, sectionDef);
+  const resolvedSection = resolveJSONPath({ root, path: sectionDef });
 
   if (!resolvedSection.component) {
     resolvedSection.component = "text";
@@ -116,9 +116,13 @@ const buildGenericSection = (root, sectionDef) => {
 const buildField = (root, fieldDef, rowItem = null) => {
   const { component, label, ...resolvable } = fieldDef;
 
-  const resolvedField = resolveJSONPath(root, resolvable, rowItem);
+  const resolvedField = resolveJSONPath({
+    root,
+    path: resolvable,
+    row: rowItem,
+  });
   resolvedField.component = component || "text";
-  resolvedField.label = resolveJSONPath(root, label, rowItem);
+  resolvedField.label = resolveJSONPath({ root, path: label, row: rowItem });
 
   return resolvedField;
 };
