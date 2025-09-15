@@ -31,7 +31,7 @@ const createPages = () => ({
               title: "Details",
               type: "object",
               component: "list",
-              fields: [
+              rows: [
                 {
                   text: "$.payload.answers.field1",
                   type: "string",
