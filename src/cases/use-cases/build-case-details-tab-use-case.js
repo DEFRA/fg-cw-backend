@@ -3,7 +3,8 @@ import { JSONPath } from "jsonpath-plus";
 import {
   buildBanner,
   buildTabLinks,
-  resolveRecursively,
+  createRootContext,
+  resolveJSONPath,
   shouldRender,
 } from "../../common/json-utils.js";
 import { findById } from "../repositories/case.repository.js";
@@ -12,15 +13,12 @@ import { findByCode } from "../repositories/workflow.repository.js";
 export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   const kase = await findById(caseId);
   const workflow = await findByCode(kase.workflowCode);
-  const root = {
-    ...kase,
-    definitions: { ...workflow.definitions },
-  };
+  const root = createRootContext(kase, workflow);
 
   const tabDefinition = getTabDefinition({ root, workflow, tabId });
   if (!shouldRender(root, tabDefinition)) {
     throw Boom.notFound(
-      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveRecursively(root, tabDefinition?.renderIf)}`,
+      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveJSONPath(root, tabDefinition?.renderIf)}`,
     );
   }
 
@@ -82,7 +80,7 @@ const buildTable = (root, sectionDef) => {
     });
   });
 
-  const resolvedSection = resolveRecursively(root, resolvable);
+  const resolvedSection = resolveJSONPath(root, resolvable);
   resolvedSection.rows = tableRows;
 
   return resolvedSection;
@@ -95,7 +93,7 @@ const buildList = (root, sectionDef) => {
     return buildField(root, fieldDef);
   });
 
-  const resolvedSection = resolveRecursively(root, resolvable);
+  const resolvedSection = resolveJSONPath(root, resolvable);
   resolvedSection.rows = rows;
 
   if (!resolvedSection.component) {
@@ -106,7 +104,7 @@ const buildList = (root, sectionDef) => {
 };
 
 const buildGenericSection = (root, sectionDef) => {
-  const resolvedSection = resolveRecursively(root, sectionDef);
+  const resolvedSection = resolveJSONPath(root, sectionDef);
 
   if (!resolvedSection.component) {
     resolvedSection.component = "text";
@@ -118,9 +116,9 @@ const buildGenericSection = (root, sectionDef) => {
 const buildField = (root, fieldDef, rowItem = null) => {
   const { component, label, ...resolvable } = fieldDef;
 
-  const resolvedField = resolveRecursively(root, resolvable, rowItem);
+  const resolvedField = resolveJSONPath(root, resolvable, rowItem);
   resolvedField.component = component || "text";
-  resolvedField.label = resolveRecursively(root, label, rowItem);
+  resolvedField.label = resolveJSONPath(root, label, rowItem);
 
   return resolvedField;
 };

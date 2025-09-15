@@ -1,32 +1,32 @@
 import { JSONPath } from "jsonpath-plus";
 
-export const resolveRecursively = (root, value, row) => {
-  if (value == null) {
-    return value;
+export const resolveJSONPath = (root, path, row) => {
+  if (path == null) {
+    return path;
   }
 
-  if (typeof value === "string") {
-    if (isLiteralRef(value)) return value.slice(1);
-    if (isRef(value)) return jp(root, value, row);
-    return value;
+  if (typeof path === "string") {
+    if (isLiteralRef(path)) return path.slice(1);
+    if (isRef(path)) return jp(root, path, row);
+    return path;
   }
 
-  if (Array.isArray(value)) {
-    return value.map((item) => resolveRecursively(root, item, row));
+  if (Array.isArray(path)) {
+    return path.map((item) => resolveJSONPath(root, item, row));
   }
 
-  if (typeof value === "object") {
+  if (typeof path === "object") {
     // Special case: urlTemplate objects
-    if ("urlTemplate" in value) {
-      const template = resolveRecursively(root, value.urlTemplate, row);
-      const params = resolveRecursively(root, value.params || {}, row);
+    if ("urlTemplate" in path) {
+      const template = resolveJSONPath(root, path.urlTemplate, row);
+      const params = resolveJSONPath(root, path.params || {}, row);
       return populateUrlTemplate(template, params);
     }
 
     // recursively resolve all properties
     const resolved = {};
-    for (const [key, val] of Object.entries(value)) {
-      const resolvedValue = resolveRecursively(root, val, row);
+    for (const [key, val] of Object.entries(path)) {
+      const resolvedValue = resolveJSONPath(root, val, row);
       if (resolvedValue !== undefined) {
         resolved[key] = resolvedValue;
       }
@@ -34,9 +34,13 @@ export const resolveRecursively = (root, value, row) => {
     return resolved;
   }
 
-  return value;
+  return path;
 };
 
+export const createRootContext = (kase, workflow) => ({
+  ...kase,
+  definitions: { ...workflow.definitions },
+});
 const isRef = (path) => isRootRef(path) || isRowRef(path);
 const isRootRef = (path) => typeof path === "string" && path.startsWith("$.");
 const isRowRef = (path) => typeof path === "string" && path.startsWith("@.");
@@ -71,7 +75,7 @@ export const populateUrlTemplate = (template, params) =>
 
 export const shouldRender = (root, item) => {
   if (item?.renderIf) {
-    return Boolean(resolveRecursively(root, item.renderIf));
+    return Boolean(resolveJSONPath(root, item.renderIf));
   }
   return true;
 };
@@ -97,10 +101,7 @@ export const buildTabLinks = (kase, workflow) => {
     },
   ];
 
-  const root = {
-    ...kase,
-    definitions: { ...workflow.definitions },
-  };
+  const root = createRootContext(kase, workflow);
 
   const tabs = JSONPath({
     json: workflow,
@@ -119,7 +120,7 @@ export const buildTabLinks = (kase, workflow) => {
 
     const processedLink = {
       ...link,
-      href: resolveRecursively(root, link.href),
+      href: resolveJSONPath(root, link.href),
     };
 
     if (link.index) {
@@ -138,5 +139,6 @@ export const buildBanner = (kase, workflow) => {
     path: "$.pages.cases.details.banner",
   });
 
-  return resolveRecursively(kase, bannerJson);
+  const root = createRootContext(kase, workflow);
+  return resolveJSONPath(root, bannerJson);
 };
