@@ -10,28 +10,27 @@ const createPages = () => ({
     details: {
       banner: {
         title: {
-          ref: "$.payload.businessName",
+          text: "$.payload.businessName",
           type: "string",
         },
         summary: {
           clientReference: {
+            text: "$.payload.clientRef",
             label: "Client Reference",
-            ref: "$.payload.clientRef",
             type: "string",
           },
         },
       },
       tabs: {
-        caseDetails: {
-          title: "Application",
-          sections: [
+        "case-details": {
+          content: [
             {
               title: "Details",
               type: "object",
               component: "list",
               fields: [
                 {
-                  ref: "$.payload.answers.field1",
+                  text: "$.payload.answers.field1",
                   type: "string",
                   label: "Field 1",
                 },
