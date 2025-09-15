@@ -74,7 +74,7 @@ const resolveRow = ({ path, row }) => {
 };
 
 export const populateUrlTemplate = (template, params) =>
-  template.replace(/\{([^\}]+)\}/g, (_, key) =>
+  template.replace(/\{([^}]+)}/g, (_, key) =>
     encodeURIComponent(params[key] ?? ""),
   );
 
