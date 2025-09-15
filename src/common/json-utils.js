@@ -1,40 +1,50 @@
 import { JSONPath } from "jsonpath-plus";
 
 export const resolveJSONPath = ({ root, path, row }) => {
-  if (path == null) {
-    return path;
+  if (path == null) return path;
+
+  switch (true) {
+    case typeof path === "string":
+      return resolveJSONString({ path, root, row });
+    case Array.isArray(path):
+      return resolveJSONArray({ path, root, row });
+    case typeof path === "object":
+      return resolveJSONObject({ path, root, row });
+    default:
+      return path;
   }
+};
 
-  if (typeof path === "string") {
-    if (isLiteralRef(path)) return path.slice(1);
-    if (isRef(path)) return jp({ root, path, row });
-    return path;
-  }
-
-  if (Array.isArray(path)) {
-    return path.map((item) => resolveJSONPath({ root, path: item, row }));
-  }
-
-  if (typeof path === "object") {
-    // Special case: urlTemplate objects
-    if ("urlTemplate" in path) {
-      const template = resolveJSONPath({ root, path: path.urlTemplate, row });
-      const params = resolveJSONPath({ root, path: path.params || {}, row });
-      return populateUrlTemplate(template, params);
-    }
-
-    // recursively resolve all properties
-    const resolved = {};
-    for (const [key, val] of Object.entries(path)) {
-      const resolvedValue = resolveJSONPath({ root, path: val, row });
-      if (resolvedValue !== undefined) {
-        resolved[key] = resolvedValue;
-      }
-    }
-    return resolved;
-  }
-
+const resolveJSONString = ({ path, root, row }) => {
+  if (isLiteralRef(path)) return path.slice(1);
+  if (isRef(path)) return jp({ root, path, row });
   return path;
+};
+
+const resolveJSONArray = ({ path, root, row }) =>
+  path.map((item) => resolveJSONPath({ root, path: item, row }));
+
+const resolveJSONObject = ({ path, root, row }) => {
+  // Special case: urlTemplate objects
+  if ("urlTemplate" in path) {
+    return resolveUrlTemplate({ path, root, row });
+  }
+
+  // recursively resolve all properties
+  const resolved = {};
+  Object.entries(path).forEach(([key, val]) => {
+    const resolvedValue = resolveJSONPath({ root, path: val, row });
+    if (resolvedValue !== undefined) {
+      resolved[key] = resolvedValue;
+    }
+  });
+  return resolved;
+};
+
+const resolveUrlTemplate = ({ path, root, row }) => {
+  const template = resolveJSONPath({ root, path: path.urlTemplate, row });
+  const params = resolveJSONPath({ root, path: path.params || {}, row });
+  return populateUrlTemplate(template, params);
 };
 
 export const createRootContext = (kase, workflow) => ({
