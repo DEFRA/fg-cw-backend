@@ -1,18 +1,12 @@
 import { JSONPath } from "jsonpath-plus";
 
+// eslint-disable-next-line complexity
 export const resolveJSONPath = ({ root, path, row }) => {
   if (path == null) return path;
-
-  switch (true) {
-    case typeof path === "string":
-      return resolveJSONString({ path, root, row });
-    case Array.isArray(path):
-      return resolveJSONArray({ path, root, row });
-    case typeof path === "object":
-      return resolveJSONObject({ path, root, row });
-    default:
-      return path;
-  }
+  if (typeof path === "string") return resolveJSONString({ path, root, row });
+  if (Array.isArray(path)) return resolveJSONArray({ path, root, row });
+  if (typeof path === "object") return resolveJSONObject({ path, root, row });
+  return path;
 };
 
 const resolveJSONString = ({ path, root, row }) => {
@@ -64,15 +58,16 @@ export const jp = ({ root, path, row }) => {
   return out.length ? out[0] : "";
 };
 
+// eslint-disable-next-line complexity
 const evalPath = ({ root, path, row }) => {
   if (typeof path !== "string") return [];
   if (isLiteralRef(path)) return [];
   if (isRootRef(path)) return JSONPath({ json: root, path });
-  if (isRowRef(path)) return getRowValue({ path, row });
+  if (isRowRef(path)) return resolveRow({ path, row });
   return JSONPath({ json: root, path });
 };
 
-const getRowValue = ({ path, row }) => {
+const resolveRow = ({ path, row }) => {
   if (row == null) return [];
   const jsonPath = "$." + path.slice(2);
   return JSONPath({ json: row, path: jsonPath });
