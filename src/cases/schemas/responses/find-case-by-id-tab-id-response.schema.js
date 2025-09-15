@@ -2,7 +2,7 @@ import Joi from "joi";
 import { UrlSafeId } from "../url-safe-id.schema.js";
 import { bannerSchema, componentSchema } from "../workflow.schema.js";
 
-const schemaLink = Joi.object({
+const linkSchema = Joi.object({
   id: UrlSafeId.required(),
   href: Joi.string().required(),
   text: Joi.string().required(),
@@ -14,7 +14,7 @@ export const findCaseByIdTabIdResponseSchema = Joi.object({
   caseRef: Joi.string().required(),
   tabId: UrlSafeId.required(),
   banner: bannerSchema.required(),
-  links: Joi.array().items(schemaLink).min(1).required(),
+  links: Joi.array().items(linkSchema).min(1).required(),
   content: Joi.array().items(componentSchema).required(),
 })
   .options({
