@@ -31,196 +31,141 @@
             }
           }
         },
-        "tabs" : {
-          "caseDetails" : {
-            "sections" : [
+        "tabs": {
+          "caseDetails": {
+            "title": "Application",
+            "sections": [
               {
-                "id" : "title",
-                "component" : "heading",
-                "text" : "Application",
-                "level" : 2,
-                "classes" : "govuk-!-margin-top-8 govuk-!-margin-bottom-1"
-              },
-              {
-                "id" : "submittedDate",
-                "component" : "container",
-                "classes" : "govuk-body",
-                "elements" : [
+                "title": "Answers",
+                "type": "object",
+                "component": "list",
+                "fields": [
                   {
-                    "text" : "submitted:",
-                    "classes" : "govuk-!-font-weight-regular"
+                    "ref": "$.payload.answers.scheme",
+                    "type": "string",
+                    "label": "Scheme"
                   },
                   {
-                    "text" : "$.payload.submittedAt",
-                    "classes" : "govuk-!-font-weight-bold",
-                    "filters" : [
-                      {
-                        "name" : "formatDate"
-                      }
-                    ]
+                    "ref": "$.payload.answers.year",
+                    "type": "number",
+                    "label": "Year"
+                  },
+                  {
+                    "ref": "$.payload.answers.hasCheckedLandIsUpToDate",
+                    "type": "boolean",
+                    "label": "Has checked land is up to date?"
+                  },
+                  {
+                    "ref": "$.payload.answers.agreementName",
+                    "type": "string",
+                    "label": "Agreement Name"
                   }
                 ]
               },
               {
-                "title" : "Answers",
-                "type" : "object",
-                "fields" : [
+                "title": "Selected actions for land parcels",
+                "type": "array",
+                "component": "table",
+                "fields": [
                   {
-                    "text" : "$.payload.answers.scheme",
-                    "type" : "string",
-                    "label" : "Scheme"
+                    "ref": "$.payload.answers.actionApplications[*].sheetId",
+                    "type": "string",
+                    "label": "Sheet Id"
                   },
                   {
-                    "text" : "$.payload.answers.year",
-                    "type" : "number",
-                    "label" : "Year"
+                    "ref": "$.payload.answers.actionApplications[*].parcelId",
+                    "type": "string",
+                    "label": "Parcel Id"
                   },
                   {
-                    "text" : "$.payload.answers.hasCheckedLandIsUpToDate",
-                    "type" : "boolean",
-                    "label" : "Has checked land is up to date?"
+                    "ref": "$.payload.answers.actionApplications[*].code",
+                    "type": "string",
+                    "label": "Code"
                   },
                   {
-                    "text" : "$.payload.answers.agreementName",
-                    "type" : "string",
-                    "label" : "Agreement Name"
+                    "ref": "$.payload.answers.actionApplications[*].appliedFor",
+                    "type": "string",
+                    "label": "Applied For",
+                    "format": "{{quantity | fixed(4)}} {{unit}}"
                   }
-                ],
-                "component" : "list"
-              },
-              {
-                "rowsRef" : "$.payload.answers.actionApplications[*]",
-                "title" : "Selected actions for land parcels",
-                "type" : "array",
-                "fields" : [
-                  {
-                    "text" : "@.sheetId",
-                    "type" : "string",
-                    "label" : "Sheet Id"
-                  },
-                  {
-                    "text" : "@.parcelId",
-                    "type" : "string",
-                    "label" : "Parcel Id"
-                  },
-                  {
-                    "text" : "@.code",
-                    "type" : "string",
-                    "label" : "Code"
-                  },
-                  {
-                    "id" : "appliedFor",
-                    "component" : "container",
-                    "label" : "Applied For",
-                    "elements" : [
-                      {
-                        "text" : "@.appliedFor.quantity",
-                        "type" : "number",
-                        "filters" : [
-                          {
-                            "name" : "fixed",
-                            "decimals" : 4
-                          }
-                        ]
-                      },
-                      {
-                        "text" : "@.appliedFor.unit",
-                        "type" : "string"
-                      }
-                    ]
-                  }
-                ],
-                "component" : "table",
-                "firstCellIsHeader" : true
+                ]
               }
             ]
           },
-          "agreements" : {
-            "renderIf" : "$.agreements[0]",
-            "sections" : [
+          "agreements": {
+            "displayIf": "$.agreements[0]",
+            "title": "Case grant funding agreement",
+            "subtitle": "Check the grant funding agreement system to see the final terms of the agreement.",
+            "sections": [
               {
-                "id" : "title",
-                "component" : "heading",
-                "text" : "Case grant funding agreement",
-                "level" : 2,
-                "classes" : "govuk-!-margin-top-8"
-              },
-              {
-                "id" : "subtitle",
-                "component" : "heading",
-                "text" : "Check the grant funding agreement system to see the final terms of the agreement.",
-                "level" : 3,
-                "classes" : "govuk-inset-text"
-              },
-              {
-                "id" : "agreementName",
-                "component" : "container",
-                "classes" : "govuk-body",
-                "elements" : [
+                "title": "Agreements",
+                "type": "array",
+                "component": "table",
+                "rowsRef": "$.agreements[*]",
+                "fields": [
                   {
-                    "text" : "Agreement name:",
-                    "classes" : "govuk-!-font-weight-bold"
+                    "label": "Reference",
+                    "params": {
+                      "value": "@.agreementRef"
+                    }
                   },
                   {
-                    "text" : "[agreement name]"
-                  }
-                ]
-              },
-              {
-                "type" : "array",
-                "component" : "table",
-                "rowsRef" : "$.agreements[*]",
-                "fields" : [
-                  {
-                    "label" : "Reference",
-                    "text" : "@.agreementRef"
+                    "label": "Date",
+                    "component": "date",
+                    "params": {
+                      "value": "@.createdAt"
+                    }
                   },
                   {
-                    "label" : "Date",
-                    "component" : "date",
-                    "text" : "@.createdAt"
-                  },
-                  {
-                    "id" : "internal",
-                    "component" : "container",
-                    "label" : "View",
-                    "elements" : [
-                      {
-                        "label" : "Internal",
-                        "component" : "url",
-                        "text" : "Internal",
-                        "href" : {
-                          "urlTemplate" : "$.definitions.agreementsService.internalUrlTemplate",
-                          "params" : {
-                            "agreementRef" : "@.agreementRef"
+                    "label": "Internal",
+                    "component": "url",
+                    "params": {
+                      "text": "Internal",
+                      "href": {
+                        "buildUrl": {
+                          "uriTemplate": "$.definitions.agreementsService.internalUriTemplate",
+                          "params": {
+                            "caseRef": "$.caseRef",
+                            "agreementRef": "@.agreementRef"
+                          },
+                          "query": {
+                            "created": "@.createdAt"
                           }
-                        },
-                        "target" : "_blank",
-                        "rel" : "noopener",
-                        "classes" : "govuk-!-margin-right-6"
+                        }
                       },
-                      {
-                        "label" : "External",
-                        "component" : "copyToClipboard",
-                        "text" : {
-                          "urlTemplate" : "$.definitions.agreementsService.externalUrlTemplate",
-                          "params" : {
-                            "agreementRef" : "@.agreementRef"
-                          }
-                        },
-                        "buttonText" : "Copy external",
-                        "feedbackText" : "Copied to clipboard"
-                      }
-                    ]
+                      "target": "_blank",
+                      "rel": "noopener"
+                    }
                   },
                   {
-                    "label" : "Status",
-                    "component" : "status",
-                    "text" : "@.agreementStatus",
-                    "classesMap" : {
-                      "OFFERED" : "govuk-tag--yellow",
-                      "ACCEPTED" : "govuk-tag--blue",
-                      "WITHDRAWN" : "govuk-tag--grey"
+                    "label": "Copy external URL",
+                    "component": "copyToClipboard",
+                    "params": {
+                      "text": {
+                        "buildUrl": {
+                          "uriTemplate": "$.definitions.agreementsService.externalUriTemplate",
+                          "params": {
+                            "agreementRef": "@.agreementRef"
+                          },
+                          "query": {
+                            "status": "@.agreementStatus"
+                          }
+                        }
+                      },
+                      "buttonText": "Copy external",
+                      "feedbackText": "Copied to clipboard"
+                    }
+                  },
+                  {
+                    "label": "Status",
+                    "component": "status",
+                    "params": {
+                      "value": "@.agreementStatus",
+                      "classesMap": {
+                        "OFFERED": "govuk-tag--yellow",
+                        "ACCEPTED": "govuk-tag--blue",
+                        "WITHDRAWN": "govuk-tag--grey"
+                      }
                     }
                   }
                 ]
