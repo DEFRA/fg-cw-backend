@@ -3,16 +3,28 @@ import { applyFormat } from "./format.js";
 
 // eslint-disable-next-line complexity
 export const resolveJSONPath = ({ root, path, row }) => {
-  if (path == null) return path;
-  if (typeof path === "string") return resolveJSONString({ path, root, row });
-  if (Array.isArray(path)) return resolveJSONArray({ path, root, row });
-  if (typeof path === "object") return resolveJSONObject({ path, root, row });
+  if (path == null) {
+    return path;
+  }
+  if (typeof path === "string") {
+    return resolveJSONString({ path, root, row });
+  }
+  if (Array.isArray(path)) {
+    return resolveJSONArray({ path, root, row });
+  }
+  if (typeof path === "object") {
+    return resolveJSONObject({ path, root, row });
+  }
   return path;
 };
 
 const resolveJSONString = ({ path, root, row }) => {
-  if (isLiteralRef(path)) return path.slice(1);
-  if (isRef(path)) return jp({ root, path, row });
+  if (isLiteralRef(path)) {
+    return path.slice(1);
+  }
+  if (isRef(path)) {
+    return jp({ root, path, row });
+  }
   return path;
 };
 
@@ -21,7 +33,9 @@ const resolveJSONArray = ({ path, root, row }) =>
 
 const resolveJSONObject = ({ path, root, row }) => {
   const specialCase = handleSpecialCases({ path, root, row });
-  if (specialCase) return specialCase;
+  if (specialCase) {
+    return specialCase;
+  }
 
   const resolved = resolveGenericObject({ path, root, row });
   return applyFormatsRecursively(resolved);
@@ -119,15 +133,25 @@ export const jp = ({ root, path, row }) => {
 
 // eslint-disable-next-line complexity
 const evalPath = ({ root, path, row }) => {
-  if (typeof path !== "string") return [];
-  if (isLiteralRef(path)) return [];
-  if (isRootRef(path)) return JSONPath({ json: root, path });
-  if (isRowRef(path)) return resolveRow({ path, row });
+  if (typeof path !== "string") {
+    return [];
+  }
+  if (isLiteralRef(path)) {
+    return [];
+  }
+  if (isRootRef(path)) {
+    return JSONPath({ json: root, path });
+  }
+  if (isRowRef(path)) {
+    return resolveRow({ path, row });
+  }
   return JSONPath({ json: root, path });
 };
 
 const resolveRow = ({ path, row }) => {
-  if (row == null) return [];
+  if (row == null) {
+    return [];
+  }
   const jsonPath = "$." + path.slice(2);
   return JSONPath({ json: row, path: jsonPath });
 };

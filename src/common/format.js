@@ -21,7 +21,9 @@ export const formatFunctions = {
 
 export const parseFormatString = (formatString) => {
   const match = formatString.match(/^(\w+)(?:\(([^)]*)\))?$/);
-  if (!match) throw new Error(`Invalid format: ${formatString}`);
+  if (!match) {
+    throw new Error(`Invalid format: ${formatString}`);
+  }
 
   const [, name, paramString] = match;
   const params = paramString
