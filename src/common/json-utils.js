@@ -7,22 +7,26 @@ const isRef = (s) =>
 const isEscapedRef = (s) =>
   typeof s === "string" && (s.startsWith("\\$.") || s.startsWith("\\@."));
 
-const evalPath = (root, path, row) => {
-  if (typeof path !== "string") return [];
-  if (path.startsWith("\\$.") || path.startsWith("\\@.")) return []; // escaped: caller handles
-  if (path.startsWith("$.")) return JSONPath({ json: root, path });
-  if (path.startsWith("@.")) {
-    const jsonPath = "$." + path.slice(2);
-    const targetObject = row == null ? root : row;
-    return JSONPath({ json: targetObject, path: jsonPath });
-  }
-  return JSONPath({ json: root, path });
-};
-
 /** Return a single value for a JSONPath (first match or empty string). */
 export const jp = (root, path, row) => {
   const out = evalPath(root, path, row);
   return out.length ? out[0] : "";
+};
+
+const evalPath = (root, path, row) => {
+  if (typeof path !== "string") return [];
+  if (isLiteral(path)) return []; // escaped literal: caller handles
+  if (path.startsWith("$.")) return JSONPath({ json: root, path });
+  if (path.startsWith("@.")) return getRowValue(path, row);
+  return JSONPath({ json: root, path });
+};
+
+const isLiteral = (path) => path.startsWith("\\$.") || path.startsWith("\\@.");
+
+const getRowValue = (path, row) => {
+  if (row == null) return [];
+  const jsonPath = "$." + path.slice(2);
+  return JSONPath({ json: row, path: jsonPath });
 };
 
 export const expandUrlTemplate = (template, params) =>
@@ -151,12 +155,7 @@ export const buildTabLinks = (kase, workflow) => {
 
     const processedLink = {
       ...link,
-      href: link.href?.urlTemplate
-        ? buildUrl(root, {
-            template: link.href.urlTemplate,
-            params: link.href.params,
-          })
-        : resolveParam(root, link.href),
+      href: buildHref(root, link),
     };
 
     if (link.index) {
@@ -167,6 +166,15 @@ export const buildTabLinks = (kase, workflow) => {
   });
 
   return links;
+};
+
+const buildHref = (root, link) => {
+  return link.href?.urlTemplate
+    ? buildUrl(root, {
+        template: link.href.urlTemplate,
+        params: link.href.params,
+      })
+    : resolveParam(root, link.href);
 };
 
 export const buildBanner = (kase, workflow) => {

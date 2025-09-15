@@ -14,26 +14,12 @@ import { findByCode } from "../repositories/workflow.repository.js";
 export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   const kase = await findById(caseId);
   const workflow = await findByCode(kase.workflowCode);
-
-  // TODO: check permissions!!!
-
-  const [tabDefinition] = JSONPath({
-    json: workflow,
-    path: `$.pages.cases.details.tabs.${tabId}`,
-  });
-
-  if (!tabDefinition) {
-    throw Boom.notFound(
-      `Tab "${tabId}" not found in workflow "${workflow.code}"`,
-    );
-  }
-
   const root = {
     ...kase,
-    caseId,
     definitions: { ...workflow.definitions },
   };
 
+  const tabDefinition = getTabDefinition({ root, workflow, tabId });
   if (!shouldRender(root, tabDefinition)) {
     throw Boom.notFound(
       `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveParam(root, tabDefinition?.renderIf)}`,
@@ -54,6 +40,23 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   };
 };
 
+const getTabDefinition = ({ workflow, tabId }) => {
+  // TODO: check permissions!!!
+
+  const [tabDefinition] = JSONPath({
+    json: workflow,
+    path: `$.pages.cases.details.tabs.${tabId}`,
+  });
+
+  if (!tabDefinition) {
+    throw Boom.notFound(
+      `Tab "${tabId}" not found in workflow "${workflow.code}"`,
+    );
+  }
+
+  return tabDefinition;
+};
+
 export const buildTab = (root, tabDefinition) => {
   return tabDefinition.sections.map((section) => {
     switch (section.component) {
@@ -69,11 +72,11 @@ export const buildTab = (root, tabDefinition) => {
 
 const buildTable = (root, sectionDef) => {
   const rowsRef = sectionDef.rowsRef;
-  if (!rowsRef && sectionDef.type !== "array") {
-    throw new Error("rowsRef is required for array sections");
+  if (!rowsRef) {
+    throw new Error("rowsRef is required for tables");
   }
 
-  const rows = rowsRef ? JSONPath({ json: root, path: rowsRef }) : [];
+  const rows = JSONPath({ json: root, path: rowsRef });
 
   const cellsByCol = sectionDef.fields.map((f) =>
     resolveFieldCells(root, f, rows),
