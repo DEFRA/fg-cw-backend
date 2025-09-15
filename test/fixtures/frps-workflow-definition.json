@@ -5,29 +5,30 @@
       "details": {
         "banner": {
           "title": {
-            "ref": "$.payload.businessName",
+            "text": "$.payload.businessName",
             "type": "string"
           },
           "summary": {
             "sbi": {
               "label": "SBI",
-              "ref": "$.payload.identifiers.sbi",
+              "text": "$.payload.identifiers.sbi",
               "type": "string"
             },
             "reference": {
               "label": "Reference",
-              "ref": "$.caseRef",
+              "text": "$.caseRef",
               "type": "string"
             },
             "scheme": {
               "label": "Scheme",
-              "ref": "$.payload.answers.scheme",
+              "text": "$.payload.answers.scheme",
               "type": "string"
             },
             "createdAt": {
               "label": "Created At",
-              "ref": "$.payload.createdAt",
-              "type": "date"
+              "text": "$.payload.createdAt",
+              "type": "date",
+              "format": "formatDate"
             }
           }
         },
