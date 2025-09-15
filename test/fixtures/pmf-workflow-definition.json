@@ -5,40 +5,41 @@
       "details": {
         "banner": {
           "title": {
-            "ref": "$.payload.businessName",
+            "text": "$.payload.businessName",
             "type": "string"
           },
           "summary": {
             "reference": {
               "label": "Reference",
-              "ref": "$.caseRef",
+              "text": "$.caseRef",
               "type": "string"
             },
             "status": {
               "label": "Status",
-              "ref": "$.status",
+              "text": "$.status",
               "type": "string"
             },
             "dateReceived": {
               "label": "Date Received",
-              "ref": "$.dateReceived",
-              "type": "date"
+              "text": "$.dateReceived",
+              "type": "date",
+              "format": "formatDate"
             }
           }
         },
         "tabs": {
-          "caseDetails": {
-            "title": "Application",
+          "case-details": {
             "sections": [
               {
                 "title": "Applicant Details",
                 "type": "object",
                 "component": "list",
-                "fields": [
+                "rows": [
                   {
-                    "ref": "$.payload.answers.isPigFarmer",
+                    "text": "$.payload.answers.isPigFarmer",
                     "type": "boolean",
-                    "label": "Are you a pig farmer?"
+                    "label": "Are you a pig farmer?",
+                    "format": "yesNo"
                   }
                 ]
               },
@@ -46,29 +47,29 @@
                 "title": "Pig Stock Details",
                 "type": "object",
                 "component": "list",
-                "fields": [
+                "rows": [
                   {
-                    "ref": "$.payload.answers.totalPigs",
+                    "text": "$.payload.answers.totalPigs",
                     "type": "number",
                     "label": "Total Pigs"
                   },
                   {
-                    "ref": "$.payload.answers.whitePigsCount",
+                    "text": "$.payload.answers.whitePigsCount",
                     "type": "number",
                     "label": "How many White pigs do you have?"
                   },
                   {
-                    "ref": "$.payload.answers.britishLandracePigsCount",
+                    "text": "$.payload.answers.britishLandracePigsCount",
                     "type": "number",
                     "label": "How many British Landrace pigs do you have?"
                   },
                   {
-                    "ref": "$.payload.answers.berkshirePigsCount",
+                    "text": "$.payload.answers.berkshirePigsCount",
                     "type": "number",
                     "label": "How many Berkshire pigs do you have?"
                   },
                   {
-                    "ref": "$.payload.answers.otherPigsCount",
+                    "text": "$.payload.answers.otherPigsCount",
                     "type": "number",
                     "label": "How many Other pigs do you have?"
                   }
