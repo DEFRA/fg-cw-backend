@@ -20,6 +20,11 @@ const resolveJSONArray = ({ path, root, row }) =>
   path.map((item) => resolveJSONPath({ root, path: item, row }));
 
 const resolveJSONObject = ({ path, root, row }) => {
+  // Special case: table objects with rowsRef and rows
+  if (path.rowsRef && path.rows) {
+    return resolveTableSection({ path, root, row });
+  }
+
   // Special case: urlTemplate objects
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
@@ -71,6 +76,20 @@ const resolveUrlTemplate = ({ path, root, row }) => {
   const template = resolveJSONPath({ root, path: path.urlTemplate, row });
   const params = resolveJSONPath({ root, path: path.params || {}, row });
   return populateUrlTemplate(template, params);
+};
+
+const resolveTableSection = ({ path, root, row }) => {
+  const { rowsRef, rows, ...resolvable } = path;
+  const dataRows = JSONPath({ json: root, path: rowsRef });
+
+  const tableRows = dataRows.map((rowItem) => {
+    return resolveJSONPath({ root, path: rows, row: rowItem });
+  });
+
+  const resolvedSection = resolveJSONPath({ root, path: resolvable, row });
+  resolvedSection.rows = tableRows;
+
+  return resolvedSection;
 };
 
 export const createRootContext = (kase, workflow) => ({

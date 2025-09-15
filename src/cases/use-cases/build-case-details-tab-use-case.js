@@ -24,7 +24,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
 
   const banner = buildBanner(kase, workflow);
   const links = buildTabLinks(kase, workflow);
-  const content = buildTab(root, tabDefinition);
+  const content = resolveJSONPath({ root, path: tabDefinition.content });
 
   return {
     caseId,
@@ -51,64 +51,4 @@ const getTabDefinition = ({ workflow, tabId }) => {
   }
 
   return tabDefinition;
-};
-
-export const buildTab = (root, tabDefinition) => {
-  return tabDefinition.sections.map((section) => {
-    switch (section.component) {
-      case "table":
-        return buildTable(root, section);
-      case "list":
-        return buildList(root, section);
-      default:
-        return buildGenericSection(root, section);
-    }
-  });
-};
-
-const buildTable = (root, sectionDef) => {
-  const { rowsRef, fields, ...resolvable } = sectionDef;
-  if (!rowsRef) {
-    throw new Error("rowsRef is required for tables");
-  }
-
-  const dataRows = JSONPath({ json: root, path: rowsRef });
-
-  const tableRows = dataRows.map((rowItem) => {
-    return fields.map((fieldDef) => {
-      return resolveJSONPath({ root, path: fieldDef, row: rowItem });
-    });
-  });
-
-  const resolvedSection = resolveJSONPath({ root, path: resolvable });
-  resolvedSection.rows = tableRows;
-
-  return resolvedSection;
-};
-
-const buildList = (root, sectionDef) => {
-  const { fields, ...resolvable } = sectionDef;
-
-  const rows = fields.map((fieldDef) => {
-    return resolveJSONPath({ root, path: fieldDef });
-  });
-
-  const resolvedSection = resolveJSONPath({ root, path: resolvable });
-  resolvedSection.rows = rows;
-
-  if (!resolvedSection.component) {
-    resolvedSection.component = "list";
-  }
-
-  return resolvedSection;
-};
-
-const buildGenericSection = (root, sectionDef) => {
-  const resolvedSection = resolveJSONPath({ root, path: sectionDef });
-
-  if (!resolvedSection.component) {
-    resolvedSection.component = "text";
-  }
-
-  return resolvedSection;
 };
