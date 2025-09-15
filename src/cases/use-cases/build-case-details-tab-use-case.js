@@ -6,7 +6,7 @@ import {
   createRootContext,
   resolveJSONPath,
   shouldRender,
-} from "../../common/json-utils.js";
+} from "../../common/json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -76,7 +76,7 @@ const buildTable = (root, sectionDef) => {
 
   const tableRows = dataRows.map((rowItem) => {
     return fields.map((fieldDef) => {
-      return buildField(root, fieldDef, rowItem);
+      return resolveJSONPath({ root, path: fieldDef, row: rowItem });
     });
   });
 
@@ -90,7 +90,7 @@ const buildList = (root, sectionDef) => {
   const { fields, ...resolvable } = sectionDef;
 
   const rows = fields.map((fieldDef) => {
-    return buildField(root, fieldDef);
+    return resolveJSONPath({ root, path: fieldDef });
   });
 
   const resolvedSection = resolveJSONPath({ root, path: resolvable });
@@ -111,18 +111,4 @@ const buildGenericSection = (root, sectionDef) => {
   }
 
   return resolvedSection;
-};
-
-const buildField = (root, fieldDef, rowItem = null) => {
-  const { component, label, ...resolvable } = fieldDef;
-
-  const resolvedField = resolveJSONPath({
-    root,
-    path: resolvable,
-    row: rowItem,
-  });
-  resolvedField.component = component || "text";
-  resolvedField.label = resolveJSONPath({ root, path: label, row: rowItem });
-
-  return resolvedField;
 };

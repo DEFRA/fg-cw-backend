@@ -1,4 +1,5 @@
 import { JSONPath } from "jsonpath-plus";
+import { applyFormat } from "./format.js";
 
 // eslint-disable-next-line complexity
 export const resolveJSONPath = ({ root, path, row }) => {
@@ -32,7 +33,38 @@ const resolveJSONObject = ({ path, root, row }) => {
       resolved[key] = resolvedValue;
     }
   });
-  return resolved;
+
+  // set default component to "text" if component property exists but has no value
+  if ("component" in path && !resolved.component) {
+    resolved.component = "text";
+  }
+
+  // apply formats recursively throughout the resolved structure
+  return applyFormatsRecursively(resolved);
+};
+
+const applyFormatsRecursively = (obj) => {
+  if (Array.isArray(obj)) {
+    return obj.map(applyFormatsRecursively);
+  }
+
+  if (typeof obj === "object" && obj !== null) {
+    const result = { ...obj };
+
+    // Apply format to current level if present
+    if (result.format && result.text !== undefined) {
+      result.text = applyFormat(result.text, result.format);
+    }
+
+    // Recursively apply to all nested objects
+    Object.keys(result).forEach((key) => {
+      result[key] = applyFormatsRecursively(result[key]);
+    });
+
+    return result;
+  }
+
+  return obj;
 };
 
 const resolveUrlTemplate = ({ path, root, row }) => {

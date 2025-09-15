@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { buildBanner, buildTabLinks } from "../../common/json-utils.js";
+import { buildBanner, buildTabLinks } from "../../common/json.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { findById } from "../repositories/case.repository.js";
