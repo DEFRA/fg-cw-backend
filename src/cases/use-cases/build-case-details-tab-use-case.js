@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import {
   buildBanner,
-  buildTabLinks,
+  buildLinks,
   createRootContext,
   resolveJSONPath,
   shouldRender,
@@ -23,7 +23,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   }
 
   const banner = buildBanner(kase, workflow);
-  const links = buildTabLinks(kase, workflow);
+  const links = buildLinks(kase, workflow);
   const content = resolveJSONPath({ root, path: tabDefinition.content });
 
   return {

@@ -142,7 +142,7 @@ export const shouldRender = (root, item) => {
   return true;
 };
 
-export const buildTabLinks = (kase, workflow) => {
+export const buildLinks = (kase, workflow) => {
   const caseId = kase._id;
 
   const links = [
