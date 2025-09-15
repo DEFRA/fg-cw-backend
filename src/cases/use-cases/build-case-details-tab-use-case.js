@@ -76,19 +76,12 @@ const buildTable = (root, sectionDef) => {
     throw new Error("rowsRef is required for tables");
   }
 
-  const rows = JSONPath({ json: root, path: rowsRef });
+  const dataRows = JSONPath({ json: root, path: rowsRef });
 
-  const cellsByCol = sectionDef.fields.map((f) =>
-    resolveFieldCells(root, f, rows),
-  );
-
-  const tableRows = rows.map((_, i) => {
-    const rowObj = {};
-    sectionDef.fields.forEach((f, colIdx) => {
-      const cell = cellsByCol[colIdx][i];
-      if (cell) rowObj[f.label || `col${colIdx}`] = cell;
+  const tableRows = dataRows.map((rowItem) => {
+    return sectionDef.fields.map((fieldDef) => {
+      return resolveField(root, fieldDef, rowItem);
     });
-    return rowObj;
   });
 
   const resolvedSection = {
@@ -114,53 +107,14 @@ const buildTable = (root, sectionDef) => {
 };
 
 const buildList = (root, sectionDef) => {
-  const fields = sectionDef.fields.map((fieldDef) => {
-    const component = fieldDef.component || "text";
-    const resolvedField = {
-      component,
-      label: resolveTextComponent(root, fieldDef.label),
-    };
-
-    for (const [k, v] of Object.entries(fieldDef)) {
-      // Skip properties that are already handled or structural
-      if (k === "component" || k === "label") continue;
-
-      if (k === "href") {
-        // allow string, urlTemplate
-        const maybe = resolveParam(root, v);
-        if (typeof maybe === "string") {
-          resolvedField.href = maybe;
-        } else if (v && typeof v === "object" && "urlTemplate" in v) {
-          resolvedField.href = buildUrl(root, {
-            template: v.urlTemplate,
-            params: v.params,
-          });
-        }
-      } else if (k === "elements") {
-        resolvedField.elements = v.map((element) => {
-          const resolvedElement = {};
-          for (const [ek, ev] of Object.entries(element)) {
-            if (ek === "text" || ek === "label") {
-              resolvedElement[ek] = resolveTextComponent(root, ev);
-            } else {
-              resolvedElement[ek] = resolveParam(root, ev);
-            }
-          }
-          return resolvedElement;
-        });
-      } else {
-        const val = resolveParam(root, v);
-        if (val !== undefined) resolvedField[k] = val;
-      }
-    }
-
-    return resolvedField;
+  const rows = sectionDef.fields.map((fieldDef) => {
+    return resolveField(root, fieldDef);
   });
 
   return {
     title: resolveTextComponent(root, sectionDef.title),
     component: sectionDef.component || "list",
-    fields,
+    rows,
   };
 };
 
@@ -203,52 +157,48 @@ const buildGenericSection = (root, sectionDef) => {
   return resolvedSection;
 };
 
-const resolveFieldCells = (root, fieldDef, rows) => {
-  // For each row item (from rowsRef), resolve the field into a single cell model
+const resolveField = (root, fieldDef, rowItem = null) => {
   const component = fieldDef.component || "text";
+  const resolvedField = {
+    component,
+    label: resolveTextComponent(root, fieldDef.label, rowItem),
+  };
 
-  return rows.map((rowItem) => {
-    const resolvedCell = {
-      component,
-      label: resolveTextComponent(root, fieldDef.label, rowItem),
-    };
+  for (const [k, v] of Object.entries(fieldDef)) {
+    // Skip properties that are already handled or structural
+    if (k === "component" || k === "label") continue;
 
-    for (const [k, v] of Object.entries(fieldDef)) {
-      // Skip properties that are already handled or structural
-      if (k === "component" || k === "label") continue;
-
-      if (k === "text") {
-        resolvedCell.text = resolveTextComponent(root, v, rowItem);
-      } else if (k === "href") {
-        // allow string, urlTemplate
-        const maybe = resolveParam(root, v, rowItem);
-        if (typeof maybe === "string") {
-          resolvedCell.href = maybe;
-        } else if (v && typeof v === "object" && "urlTemplate" in v) {
-          resolvedCell.href = buildUrl(
-            root,
-            { template: v.urlTemplate, params: v.params },
-            rowItem,
-          );
-        }
-      } else if (k === "elements") {
-        resolvedCell.elements = v.map((element) => {
-          const resolvedElement = {};
-          for (const [ek, ev] of Object.entries(element)) {
-            if (ek === "text" || ek === "label") {
-              resolvedElement[ek] = resolveTextComponent(root, ev, rowItem);
-            } else {
-              resolvedElement[ek] = resolveParam(root, ev, rowItem);
-            }
-          }
-          return resolvedElement;
-        });
-      } else {
-        const val = resolveParam(root, v, rowItem);
-        if (val !== undefined) resolvedCell[k] = val;
+    if (k === "text") {
+      resolvedField.text = resolveTextComponent(root, v, rowItem);
+    } else if (k === "href") {
+      // allow string, urlTemplate
+      const maybe = resolveParam(root, v, rowItem);
+      if (typeof maybe === "string") {
+        resolvedField.href = maybe;
+      } else if (v && typeof v === "object" && "urlTemplate" in v) {
+        resolvedField.href = buildUrl(
+          root,
+          { template: v.urlTemplate, params: v.params },
+          rowItem,
+        );
       }
+    } else if (k === "elements") {
+      resolvedField.elements = v.map((element) => {
+        const resolvedElement = {};
+        for (const [ek, ev] of Object.entries(element)) {
+          if (ek === "text" || ek === "label") {
+            resolvedElement[ek] = resolveTextComponent(root, ev, rowItem);
+          } else {
+            resolvedElement[ek] = resolveParam(root, ev, rowItem);
+          }
+        }
+        return resolvedElement;
+      });
+    } else {
+      const val = resolveParam(root, v, rowItem);
+      if (val !== undefined) resolvedField[k] = val;
     }
+  }
 
-    return resolvedCell;
-  });
+  return resolvedField;
 };
