@@ -4,7 +4,6 @@ import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { Stage } from "./task.schema.js";
 
 const Field = Joi.object({
-  ref: Joi.string().optional(),
   type: typeSchema.optional(),
   label: Joi.string().optional(),
   format: Joi.string().optional(),
@@ -42,23 +41,24 @@ const Tab = Joi.object({
 }).unknown(true);
 
 const TitleField = Joi.object({
-  ref: Joi.string().required(),
+  text: Joi.string().allow("").optional(),
   type: Joi.string().required(),
 });
 
 const SummaryField = Joi.object({
   label: Joi.string().required(),
-  ref: Joi.string().required(),
+  text: Joi.string().required(),
   type: Joi.string().valid("string", "number", "boolean", "date").required(),
+  format: Joi.string().optional(),
 });
 
-const Banner = Joi.object({
+export const bannerSchema = Joi.object({
   title: TitleField.optional(),
   summary: Joi.object().pattern(Joi.string(), SummaryField).optional(),
 }).unknown(true);
 
 const CaseDetails = Joi.object({
-  banner: Banner.required(),
+  banner: bannerSchema.required(),
   tabLinks: Joi.array().optional(),
   tabs: Joi.object().pattern(Joi.string(), Tab).unknown(true).required(),
 }).unknown(true);

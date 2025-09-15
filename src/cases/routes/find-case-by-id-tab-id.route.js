@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { findCaseByIdTabIdResponseSchema } from "../schemas/responses/find-case-by-id-tab-id-response.schema.js";
 import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab-use-case.js";
 
 export const findCaseByIdTabIdRoute = {
@@ -14,15 +15,13 @@ export const findCaseByIdTabIdRoute = {
       }),
     },
     response: {
-      // schema: findCaseAgreementsResponseSchema,
+      schema: findCaseByIdTabIdResponseSchema,
     },
   },
   async handler(request) {
     const { caseId, tabId } = request.params;
 
     const tabData = await buildCaseDetailsTabUseCase(caseId, tabId);
-
-    console.log(JSON.stringify(tabData, null, 2));
 
     return tabData;
   },
