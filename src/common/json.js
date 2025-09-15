@@ -20,17 +20,23 @@ const resolveJSONArray = ({ path, root, row }) =>
   path.map((item) => resolveJSONPath({ root, path: item, row }));
 
 const resolveJSONObject = ({ path, root, row }) => {
-  // Special case: table objects with rowsRef and rows
+  const specialCase = handleSpecialCases({ path, root, row });
+  if (specialCase) return specialCase;
+
+  return resolveGenericObject({ path, root, row });
+};
+
+const handleSpecialCases = ({ path, root, row }) => {
   if (path.rowsRef && path.rows) {
     return resolveTableSection({ path, root, row });
   }
-
-  // Special case: urlTemplate objects
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
+  return null;
+};
 
-  // recursively resolve all properties
+const resolveGenericObject = ({ path, root, row }) => {
   const resolved = {};
   Object.entries(path).forEach(([key, val]) => {
     const resolvedValue = resolveJSONPath({ root, path: val, row });
@@ -39,12 +45,10 @@ const resolveJSONObject = ({ path, root, row }) => {
     }
   });
 
-  // set default component to "text" if component property exists but has no value
   if ("component" in path && !resolved.component) {
     resolved.component = "text";
   }
 
-  // apply formats recursively throughout the resolved structure
   return applyFormatsRecursively(resolved);
 };
 
@@ -54,22 +58,24 @@ const applyFormatsRecursively = (obj) => {
   }
 
   if (typeof obj === "object" && obj !== null) {
-    const result = { ...obj };
-
-    // Apply format to current level if present
-    if (result.format && result.text !== undefined) {
-      result.text = applyFormat(result.text, result.format);
-    }
-
-    // Recursively apply to all nested objects
-    Object.keys(result).forEach((key) => {
-      result[key] = applyFormatsRecursively(result[key]);
-    });
-
-    return result;
+    return applyFormatsToObject(obj);
   }
 
   return obj;
+};
+
+const applyFormatsToObject = (obj) => {
+  const result = { ...obj };
+
+  if (result.format && result.text !== undefined) {
+    result.text = applyFormat(result.text, result.format);
+  }
+
+  Object.keys(result).forEach((key) => {
+    result[key] = applyFormatsRecursively(result[key]);
+  });
+
+  return result;
 };
 
 const resolveUrlTemplate = ({ path, root, row }) => {
