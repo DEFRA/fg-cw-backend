@@ -23,7 +23,8 @@ const resolveJSONObject = ({ path, root, row }) => {
   const specialCase = handleSpecialCases({ path, root, row });
   if (specialCase) return specialCase;
 
-  return resolveGenericObject({ path, root, row });
+  const resolved = resolveGenericObject({ path, root, row });
+  return applyFormatsRecursively(resolved);
 };
 
 const handleSpecialCases = ({ path, root, row }) => {
@@ -49,7 +50,7 @@ const resolveGenericObject = ({ path, root, row }) => {
     resolved.component = "text";
   }
 
-  return applyFormatsRecursively(resolved);
+  return resolved;
 };
 
 const applyFormatsRecursively = (obj) => {
@@ -69,6 +70,7 @@ const applyFormatsToObject = (obj) => {
 
   if (result.format && result.text !== undefined) {
     result.text = applyFormat(result.text, result.format);
+    delete result.format;
   }
 
   Object.keys(result).forEach((key) => {

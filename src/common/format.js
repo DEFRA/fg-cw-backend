@@ -1,6 +1,6 @@
 import { logger } from "./logger.js";
 
-const formatFunctions = {
+export const formatFunctions = {
   formatDate: (value) => {
     const date = new Date(value);
     return date.toLocaleDateString("en-GB", {
@@ -12,10 +12,14 @@ const formatFunctions = {
 
   fixed: (value, decimals) => Number(value).toFixed(decimals),
 
-  yesNo: (value) => (value ? "Yes" : "No"),
+  yesNo: (value) =>
+    value === true ||
+    (typeof value === "string" && value.toLowerCase() === "true")
+      ? "Yes"
+      : "No",
 };
 
-const parseFormatString = (formatString) => {
+export const parseFormatString = (formatString) => {
   const match = formatString.match(/^(\w+)(?:\(([^)]*)\))?$/);
   if (!match) throw new Error(`Invalid format: ${formatString}`);
 
@@ -31,7 +35,7 @@ const parseFormatString = (formatString) => {
   return { name, params };
 };
 
-const applyFormat = (value, formatString) => {
+export const applyFormat = (value, formatString) => {
   try {
     const { name, params } = parseFormatString(formatString);
     const formatFn = formatFunctions[name];
@@ -47,5 +51,3 @@ const applyFormat = (value, formatString) => {
     return value;
   }
 };
-
-export { applyFormat, formatFunctions };
