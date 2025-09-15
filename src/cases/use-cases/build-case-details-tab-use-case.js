@@ -3,9 +3,7 @@ import { JSONPath } from "jsonpath-plus";
 import {
   buildBanner,
   buildTabLinks,
-  buildUrl,
-  resolveParam,
-  resolveTextComponent,
+  resolveRecursively,
   shouldRender,
 } from "../../common/json-utils.js";
 import { findById } from "../repositories/case.repository.js";
@@ -22,7 +20,7 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
   const tabDefinition = getTabDefinition({ root, workflow, tabId });
   if (!shouldRender(root, tabDefinition)) {
     throw Boom.notFound(
-      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveParam(root, tabDefinition?.renderIf)}`,
+      `Should not render Case with id "${caseId}", ${tabDefinition?.renderIf} is ${resolveRecursively(root, tabDefinition?.renderIf)}`,
     );
   }
 
@@ -71,7 +69,7 @@ export const buildTab = (root, tabDefinition) => {
 };
 
 const buildTable = (root, sectionDef) => {
-  const rowsRef = sectionDef.rowsRef;
+  const { rowsRef, fields, ...resolvable } = sectionDef;
   if (!rowsRef) {
     throw new Error("rowsRef is required for tables");
   }
@@ -79,77 +77,37 @@ const buildTable = (root, sectionDef) => {
   const dataRows = JSONPath({ json: root, path: rowsRef });
 
   const tableRows = dataRows.map((rowItem) => {
-    return sectionDef.fields.map((fieldDef) => {
-      return resolveField(root, fieldDef, rowItem);
+    return fields.map((fieldDef) => {
+      return buildField(root, fieldDef, rowItem);
     });
   });
 
-  const resolvedSection = {
-    title: resolveTextComponent(root, sectionDef.title),
-    component: sectionDef.component || "table",
-    rows: tableRows,
-  };
-
-  for (const [k, v] of Object.entries(sectionDef)) {
-    if (
-      k === "rowsRef" ||
-      k === "fields" ||
-      k === "component" ||
-      k === "title" ||
-      k === "type"
-    )
-      continue;
-    const val = resolveParam(root, v);
-    if (val !== undefined) resolvedSection[k] = val;
-  }
+  const resolvedSection = resolveRecursively(root, resolvable);
+  resolvedSection.rows = tableRows;
 
   return resolvedSection;
 };
 
 const buildList = (root, sectionDef) => {
-  const rows = sectionDef.fields.map((fieldDef) => {
-    return resolveField(root, fieldDef);
+  const { fields, ...resolvable } = sectionDef;
+
+  const rows = fields.map((fieldDef) => {
+    return buildField(root, fieldDef);
   });
 
-  return {
-    title: resolveTextComponent(root, sectionDef.title),
-    component: sectionDef.component || "list",
-    rows,
-  };
+  const resolvedSection = resolveRecursively(root, resolvable);
+  resolvedSection.rows = rows;
+
+  if (!resolvedSection.component) {
+    resolvedSection.component = "list";
+  }
+
+  return resolvedSection;
 };
 
 const buildGenericSection = (root, sectionDef) => {
-  const resolvedSection = {};
+  const resolvedSection = resolveRecursively(root, sectionDef);
 
-  // Process all properties of the section definition
-  for (const [key, value] of Object.entries(sectionDef)) {
-    if (key === "elements") {
-      resolvedSection.elements = value.map((element) => {
-        const resolvedElement = {};
-        for (const [ek, ev] of Object.entries(element)) {
-          if (ek === "text" || ek === "label") {
-            resolvedElement[ek] = resolveTextComponent(root, ev);
-          } else if (ev && typeof ev === "object" && "urlTemplate" in ev) {
-            resolvedElement[ek] = buildUrl(root, {
-              template: ev.urlTemplate,
-              params: ev.params,
-            });
-          } else {
-            resolvedElement[ek] = resolveParam(root, ev);
-          }
-        }
-        return resolvedElement;
-      });
-    } else if (key === "text" || key === "label") {
-      // Handle text/label properties that can be strings or objects
-      resolvedSection[key] = resolveTextComponent(root, value);
-    } else {
-      // Resolve other properties normally
-      resolvedSection[key] = resolveParam(root, value);
-    }
-  }
-
-  // Default component to "text" if not specified
   if (!resolvedSection.component) {
     resolvedSection.component = "text";
   }
@@ -157,48 +115,12 @@ const buildGenericSection = (root, sectionDef) => {
   return resolvedSection;
 };
 
-const resolveField = (root, fieldDef, rowItem = null) => {
-  const component = fieldDef.component || "text";
-  const resolvedField = {
-    component,
-    label: resolveTextComponent(root, fieldDef.label, rowItem),
-  };
+const buildField = (root, fieldDef, rowItem = null) => {
+  const { component, label, ...resolvable } = fieldDef;
 
-  for (const [k, v] of Object.entries(fieldDef)) {
-    // Skip properties that are already handled or structural
-    if (k === "component" || k === "label") continue;
-
-    if (k === "text") {
-      resolvedField.text = resolveTextComponent(root, v, rowItem);
-    } else if (k === "href") {
-      // allow string, urlTemplate
-      const maybe = resolveParam(root, v, rowItem);
-      if (typeof maybe === "string") {
-        resolvedField.href = maybe;
-      } else if (v && typeof v === "object" && "urlTemplate" in v) {
-        resolvedField.href = buildUrl(
-          root,
-          { template: v.urlTemplate, params: v.params },
-          rowItem,
-        );
-      }
-    } else if (k === "elements") {
-      resolvedField.elements = v.map((element) => {
-        const resolvedElement = {};
-        for (const [ek, ev] of Object.entries(element)) {
-          if (ek === "text" || ek === "label") {
-            resolvedElement[ek] = resolveTextComponent(root, ev, rowItem);
-          } else {
-            resolvedElement[ek] = resolveParam(root, ev, rowItem);
-          }
-        }
-        return resolvedElement;
-      });
-    } else {
-      const val = resolveParam(root, v, rowItem);
-      if (val !== undefined) resolvedField[k] = val;
-    }
-  }
+  const resolvedField = resolveRecursively(root, resolvable, rowItem);
+  resolvedField.component = component || "text";
+  resolvedField.label = resolveRecursively(root, label, rowItem);
 
   return resolvedField;
 };
