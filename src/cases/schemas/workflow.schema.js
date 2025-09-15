@@ -19,7 +19,7 @@ export const bannerSchema = Joi.object({
       Joi.string(),
       Joi.object({
         label: Joi.string().required(),
-        text: Joi.string().required(),
+        text: Joi.string().allow("").optional(),
         type: Joi.string()
           .valid("string", "number", "boolean", "date")
           .required(),

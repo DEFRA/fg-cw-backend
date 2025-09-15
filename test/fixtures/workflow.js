@@ -285,6 +285,9 @@ export const workflowData1 = {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
   },
+  definitions: {
+    key1: "test",
+  },
 };
 
 export const workflowData2 = {
@@ -294,28 +297,27 @@ export const workflowData2 = {
       details: {
         banner: {
           title: {
-            ref: "$.payload.businessName",
+            text: "$.payload.businessName",
             type: "string",
           },
           summary: {
             clientReference: {
               label: "Client Reference",
-              ref: "$.payload.clientRef",
+              text: "$.payload.clientRef",
               type: "string",
             },
           },
         },
         tabs: {
-          caseDetails: {
-            title: "Application",
-            sections: [
+          "case-details": {
+            content: [
               {
                 title: "Details",
                 type: "object",
                 component: "list",
-                fields: [
+                rows: [
                   {
-                    ref: "$.payload.answers.scheme",
+                    text: "$.payload.answers.scheme",
                     type: "string",
                     label: "Scheme",
                   },
@@ -344,5 +346,8 @@ export const workflowData2 = {
   requiredRoles: {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
+  },
+  definitions: {
+    key1: "test",
   },
 };

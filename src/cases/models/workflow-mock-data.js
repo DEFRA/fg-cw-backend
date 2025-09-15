@@ -3,6 +3,9 @@ export const createWorkflowMockData = () => ({
   pages: createPages(),
   stages: createStages(),
   requiredRoles: createRequiredRoles(),
+  definitions: {
+    key1: "value1",
+  },
 });
 
 const createPages = () => ({

@@ -144,6 +144,61 @@ describe("Cases", () => {
             },
           },
         ],
+        agreements: [],
+        banner: {
+          summary: {
+            createdAt: {
+              label: "Created At",
+              text: "27 Mar 2025",
+              type: "date",
+            },
+            reference: {
+              label: "Reference",
+              text: "APPLICATION-REF-2",
+              type: "string",
+            },
+            sbi: {
+              label: "SBI",
+              text: "SBI001",
+              type: "string",
+            },
+            scheme: {
+              label: "Scheme",
+              text: "SFI",
+              type: "string",
+            },
+          },
+          title: {
+            text: "",
+            type: "string",
+          },
+        },
+        definitions: {
+          key1: "test",
+        },
+        links: [
+          {
+            href: `/cases/${caseId}`,
+            id: "tasks",
+            text: "Tasks",
+          },
+          {
+            href: `/cases/${caseId}/case-details`,
+            id: "case-details",
+            index: 1,
+            text: "Case Details",
+          },
+          {
+            href: `/cases/${caseId}/notes`,
+            id: "notes",
+            text: "Notes",
+          },
+          {
+            href: `/cases/${caseId}/timeline`,
+            id: "timeline",
+            text: "Timeline",
+          },
+        ],
       });
     });
   });
