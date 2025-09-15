@@ -140,13 +140,14 @@ export const buildTabLinks = (kase, workflow) => {
   });
 
   tabs.forEach((tab) => {
-    // Check renderIf at the tab level first
     if (!shouldRender(root, tab)) {
-      return; // Skip this tab entirely
+      return;
     }
 
     const link = tab.link;
-    if (!link) return; // Skip if no link
+    if (!link) {
+      return; // Skip if no link
+    }
 
     const processedLink = {
       ...link,

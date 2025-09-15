@@ -7,7 +7,7 @@ import {
   resolveParam,
   resolveTextComponent,
   shouldRender,
-} from "../../common/url-utils.js";
+} from "../../common/json-utils.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 

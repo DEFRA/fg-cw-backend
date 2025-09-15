@@ -9,9 +9,7 @@ const Field = Joi.object({
   label: Joi.string().optional(),
   format: Joi.string().optional(),
   id: Joi.string().optional(),
-  component: Joi.string()
-    .valid("text", "date", "url", "copyToClipboard", "status", "container")
-    .optional(),
+  component: Joi.string().optional(),
   elements: Joi.array().items(Joi.object().unknown(true)).optional(),
   text: Joi.alternatives().try(Joi.string(), Joi.object()).optional(),
   href: Joi.alternatives().try(Joi.string(), Joi.object()).optional(),
