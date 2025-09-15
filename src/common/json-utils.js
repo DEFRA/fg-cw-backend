@@ -1,5 +1,41 @@
 import { JSONPath } from "jsonpath-plus";
-import { resolveBannerPaths } from "./resolve-paths.js";
+
+export const resolveRecursively = (root, value, row) => {
+  if (value == null) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    if (isLiteralRef(value)) return value.slice(1);
+    if (isRef(value)) return jp(root, value, row);
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveRecursively(root, item, row));
+  }
+
+  if (typeof value === "object") {
+    // Special case: urlTemplate objects
+    if ("urlTemplate" in value) {
+      const template = resolveRecursively(root, value.urlTemplate, row);
+      const params = resolveRecursively(root, value.params || {}, row);
+      return populateUrlTemplate(template, params);
+    }
+
+    // recursively resolve all properties
+    const resolved = {};
+    for (const [key, val] of Object.entries(value)) {
+      const resolvedValue = resolveRecursively(root, val, row);
+      if (resolvedValue !== undefined) {
+        resolved[key] = resolvedValue;
+      }
+    }
+    return resolved;
+  }
+
+  return value;
+};
 
 const isRef = (path) => isRootRef(path) || isRowRef(path);
 const isRootRef = (path) => typeof path === "string" && path.startsWith("$.");
@@ -26,46 +62,6 @@ const getRowValue = (path, row) => {
   if (row == null) return [];
   const jsonPath = "$." + path.slice(2);
   return JSONPath({ json: row, path: jsonPath });
-};
-
-export const resolveRecursively = (root, value, row) => {
-  // Handle null/undefined
-  if (value == null) return value;
-
-  // Handle strings - resolve refs and literals
-  if (typeof value === "string") {
-    if (isLiteralRef(value)) return value.slice(1);
-    if (isRef(value)) return jp(root, value, row);
-    return value;
-  }
-
-  // Handle arrays - recursively resolve each element
-  if (Array.isArray(value)) {
-    return value.map((item) => resolveRecursively(root, item, row));
-  }
-
-  // Handle objects
-  if (typeof value === "object") {
-    // Special case: urlTemplate objects
-    if ("urlTemplate" in value) {
-      const template = resolveRecursively(root, value.urlTemplate, row);
-      const params = resolveRecursively(root, value.params || {}, row);
-      return populateUrlTemplate(template, params);
-    }
-
-    // General object processing - recursively resolve all properties
-    const resolved = {};
-    for (const [key, val] of Object.entries(value)) {
-      const resolvedValue = resolveRecursively(root, val, row);
-      if (resolvedValue !== undefined) {
-        resolved[key] = resolvedValue;
-      }
-    }
-    return resolved;
-  }
-
-  // Handle primitives (numbers, booleans, etc.)
-  return value;
 };
 
 export const populateUrlTemplate = (template, params) =>
@@ -142,5 +138,5 @@ export const buildBanner = (kase, workflow) => {
     path: "$.pages.cases.details.banner",
   });
 
-  return resolveBannerPaths(bannerJson, kase);
+  return resolveRecursively(kase, bannerJson);
 };
