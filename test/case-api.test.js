@@ -177,7 +177,7 @@ describe("Cases", () => {
               description: "Case received",
               createdBy: "System",
               data: {
-                caseRef: "APPLICATION-REF-3",
+                caseRef: "CASE-REF-3",
               },
             },
           ],

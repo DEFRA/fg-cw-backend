@@ -47,12 +47,14 @@ describe("createCaseUseCase", () => {
     );
 
     const kase = await createCaseUseCase({
-      code: "wf-001",
-      clientRef: "TEST-001",
-      createdAt: "2025-01-01T00:00:00.000Z",
-      submittedAt: "2025-01-01T00:00:00.000Z",
-      identifiers: {},
-      answers: {},
+      workflowCode: "wf-001",
+      caseRef: "TEST-001",
+      payload: {
+        createdAt: "2025-01-01T00:00:00.000Z",
+        submittedAt: "2025-01-01T00:00:00.000Z",
+        identifiers: {},
+        answers: {},
+      },
     });
 
     expect(save).toHaveBeenCalledWith(kase);
@@ -64,8 +66,6 @@ describe("createCaseUseCase", () => {
       status: "NEW",
       dateReceived: "2025-01-01T00:00:00.000Z",
       payload: {
-        clientRef: "TEST-001",
-        code: "wf-001",
         createdAt: "2025-01-01T00:00:00.000Z",
         submittedAt: "2025-01-01T00:00:00.000Z",
         identifiers: {},

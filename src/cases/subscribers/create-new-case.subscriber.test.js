@@ -14,10 +14,9 @@ describe("createNewCaseSubscriber", () => {
   it("creates a case in response to CreateNewCase event", async () => {
     const message = {
       data: {
-        code: "wf-001",
+        caseRef: "TEST-001",
+        workflowCode: "wf-001",
         payload: {
-          clientRef: "TEST-001",
-          code: "wf-001",
           createdAt: new Date().toISOString(),
           submittedAt: new Date().toISOString(),
           identifiers: {},
