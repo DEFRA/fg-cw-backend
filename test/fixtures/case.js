@@ -152,7 +152,6 @@ export const caseData3Document = {
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
-    clientRef: "APPLICATION-REF-3",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
