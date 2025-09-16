@@ -59,7 +59,7 @@ export const up = async (db, _client, context) => {
                       component: "heading",
                       text: "Application",
                       level: 2,
-                      classes: "govuk-!-margin-top-8 govuk-!-margin-bottom-1",
+                      classes: "govuk-!-margin-top-6 govuk-!-margin-bottom-1",
                     },
                     {
                       id: "submittedDate",
@@ -167,7 +167,7 @@ export const up = async (db, _client, context) => {
                       component: "heading",
                       text: "Case grant funding agreement",
                       level: 2,
-                      classes: "govuk-!-margin-top-8",
+                      classes: "govuk-!-margin-top-6",
                     },
                     {
                       id: "subtitle",
