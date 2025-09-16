@@ -20,7 +20,7 @@ export const createWorkflow = async (payload = {}) => {
                 },
                 reference: {
                   label: "Reference",
-                  text: "$.caseRef",
+                  text: "$.payload.clientRef",
                   type: "string",
                 },
                 scheme: {
@@ -197,8 +197,9 @@ export const createWorkflow = async (payload = {}) => {
                       },
                       {
                         label: "Date",
-                        component: "date",
                         text: "@.createdAt",
+                        type: "date",
+                        format: "formatDate",
                       },
                       {
                         id: "internal",

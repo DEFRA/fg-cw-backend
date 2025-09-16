@@ -16,7 +16,7 @@ export const workflowData1 = {
             },
             reference: {
               label: "Reference",
-              text: "$.caseRef",
+              text: "$.payload.clientRef",
               type: "string",
             },
             scheme: {
@@ -193,8 +193,9 @@ export const workflowData1 = {
                   },
                   {
                     label: "Date",
-                    component: "date",
                     text: "@.createdAt",
+                    type: "date",
+                    format: "formatDate",
                   },
                   {
                     id: "internal",

@@ -4,6 +4,7 @@ export const caseData1 = {
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
+    clientRef: "APPLICATION-REF-1",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -77,6 +78,7 @@ export const caseData2 = {
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52Z",
   payload: {
+    clientRef: "APPLICATION-REF-2",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -150,6 +152,7 @@ export const caseData3Document = {
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
+    clientRef: "APPLICATION-REF-3",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
