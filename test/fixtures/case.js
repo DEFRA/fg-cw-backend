@@ -4,8 +4,6 @@ export const caseData1 = {
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
-    clientRef: "APPLICATION-REF-1",
-    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -75,12 +73,10 @@ export const caseData1 = {
 
 export const caseData2 = {
   workflowCode: "frps-private-beta",
-  caseRef: "APPLICATION-REF-2",
+  caseRef: "CASE-REF-2",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52Z",
   payload: {
-    clientRef: "APPLICATION-REF-2",
-    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -150,12 +146,10 @@ export const caseData2 = {
 
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
-  caseRef: "APPLICATION-REF-3",
+  caseRef: "CASE-REF-3",
   status: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
-    clientRef: "APPLICATION-REF-3",
-    code: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
