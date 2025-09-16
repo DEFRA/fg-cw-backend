@@ -57,7 +57,7 @@ export const workflowData1 = {
                 id: "submittedDate",
                 component: "container",
                 classes: "govuk-body",
-                elements: [
+                items: [
                   {
                     text: "submitted:",
                     classes: "govuk-!-font-weight-regular",
@@ -125,7 +125,7 @@ export const workflowData1 = {
                     id: "appliedFor",
                     component: "container",
                     label: "Applied For",
-                    elements: [
+                    items: [
                       {
                         text: "@.appliedFor.quantity",
                         type: "number",
@@ -172,7 +172,7 @@ export const workflowData1 = {
                 id: "agreementName",
                 component: "container",
                 classes: "govuk-body",
-                elements: [
+                items: [
                   {
                     text: "Agreement name:",
                     classes: "govuk-!-font-weight-bold",
@@ -200,7 +200,7 @@ export const workflowData1 = {
                     id: "internal",
                     component: "container",
                     label: "View",
-                    elements: [
+                    items: [
                       {
                         label: "Internal",
                         component: "url",

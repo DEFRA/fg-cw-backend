@@ -201,7 +201,7 @@ describe("resolveJSONPath", () => {
 
       const path = {
         component: "container",
-        elements: [
+        items: [
           {
             text: "$.metrics.score",
             format: "fixed(1)",
@@ -223,7 +223,7 @@ describe("resolveJSONPath", () => {
       const result = resolveJSONPath({ root: mockRootWithNumbers, path });
       expect(result).toEqual({
         component: "container",
-        elements: [
+        items: [
           {
             text: "85.7",
             label: "Score",

@@ -65,7 +65,7 @@ export const up = async (db, _client, context) => {
                       id: "submittedDate",
                       component: "container",
                       classes: "govuk-body",
-                      elements: [
+                      items: [
                         {
                           text: "submitted:",
                           classes: "govuk-!-font-weight-regular",
@@ -133,7 +133,7 @@ export const up = async (db, _client, context) => {
                           id: "appliedFor",
                           component: "container",
                           label: "Applied For",
-                          elements: [
+                          items: [
                             {
                               text: "@.appliedFor.quantity",
                               type: "number",
@@ -180,7 +180,7 @@ export const up = async (db, _client, context) => {
                       id: "agreementName",
                       component: "container",
                       classes: "govuk-body",
-                      elements: [
+                      items: [
                         {
                           text: "Agreement name:",
                           classes: "govuk-!-font-weight-bold",
@@ -208,7 +208,7 @@ export const up = async (db, _client, context) => {
                           id: "internal",
                           component: "container",
                           label: "View",
-                          elements: [
+                          items: [
                             {
                               label: "Internal",
                               component: "url",
