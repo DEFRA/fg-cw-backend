@@ -216,7 +216,7 @@ export const up = async (db, _client, context) => {
                               text: "Internal",
                               href: {
                                 urlTemplate:
-                                  "$.definitions.agreementsService.internalUrlTemplate",
+                                  "$.definitions.agreementsService.internalUrl",
                                 params: {
                                   agreementRef: "@.agreementRef",
                                 },
@@ -230,7 +230,7 @@ export const up = async (db, _client, context) => {
                               component: "copyToClipboard",
                               text: {
                                 urlTemplate:
-                                  "$.definitions.agreementsService.externalUrlTemplate",
+                                  "$.definitions.agreementsService.externalUrl",
                                 params: {
                                   agreementRef: "@.agreementRef",
                                 },
@@ -381,41 +381,41 @@ const definitionsLookup = {
   local: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer",
+        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       externalUrl:
-        "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer",
+        "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
   },
   dev: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer",
+        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       externalUrl:
-        "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer",
+        "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
   },
   test: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.test.cdp-int.defra.cloud/agreement/review-offer",
+        "https://farming-grants-agreements-api.test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       externalUrl:
-        "https://grants-ui.test.cdp-int.defra.cloud/agreement/review-offer",
+        "https://grants-ui.test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
   },
   "perf-test": {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.perf-test.cdp-int.defra.cloud/agreement/review-offer",
+        "https://farming-grants-agreements-api.perf-test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       externalUrl:
-        "https://grants-ui.perf-test.cdp-int.defra.cloud/agreement/review-offer",
+        "https://grants-ui.perf-test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
   },
   prod: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.prod.cdp-int.defra.cloud/agreement/review-offer",
+        "https://farming-grants-agreements-api.prod.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       externalUrl:
-        "https://grants-ui.prod.cdp-int.defra.cloud/agreement/review-offer",
+        "https://grants-ui.prod.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
   },
 };

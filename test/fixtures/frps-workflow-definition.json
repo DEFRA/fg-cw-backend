@@ -206,7 +206,7 @@
                         "component": "url",
                         "text": "Internal",
                         "href": {
-                          "urlTemplate": "$.definitions.agreementsService.internalUrlTemplate",
+                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
                           "params": {
                             "agreementRef": "@.agreementRef"
                           }
@@ -219,7 +219,7 @@
                         "label": "External",
                         "component": "copyToClipboard",
                         "text": {
-                          "urlTemplate": "$.definitions.agreementsService.externalUrlTemplate",
+                          "urlTemplate": "$.definitions.agreementsService.externalUrl",
                           "params": {
                             "agreementRef": "@.agreementRef"
                           }
@@ -290,8 +290,8 @@
   },
   "definitions": {
     "agreementsService": {
-      "internalUrlTemplate": "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
-      "externalUrlTemplate": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
+      "internalUrl": "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+      "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
     }
   }
 }
