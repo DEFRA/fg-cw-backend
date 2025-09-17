@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.use-case.js";
 import { findCaseByIdTabIdRoute } from "./find-case-by-id-tab-id.route.js";
 
-vi.mock("../use-cases/build-case-details-tab-use-case.js");
+vi.mock("../use-cases/build-case-details-tab.use-case.js");
 
 describe("findCaseByIdTabIdRoute", () => {
   let server;
