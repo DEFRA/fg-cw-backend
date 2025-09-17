@@ -154,7 +154,7 @@ describe("Cases", () => {
             },
             reference: {
               label: "Reference",
-              text: "APPLICATION-REF-2",
+              text: "CASE-REF-2",
               type: "string",
             },
             sbi: {

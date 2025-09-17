@@ -24,7 +24,7 @@ export const up = async (db, _client, context) => {
                   },
                   reference: {
                     label: "Reference",
-                    text: "$.payload.clientRef",
+                    text: "$.caseRef",
                     type: "string",
                   },
                   scheme: {

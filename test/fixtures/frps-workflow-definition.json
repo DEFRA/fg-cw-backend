@@ -16,7 +16,7 @@
             },
             "reference": {
               "label": "Reference",
-              "text": "$.payload.clientRef",
+              "text": "$.caseRef",
               "type": "string"
             },
             "scheme": {

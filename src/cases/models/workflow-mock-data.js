@@ -18,7 +18,7 @@ const createPages = () => ({
         },
         summary: {
           clientReference: {
-            text: "$.payload.clientRef",
+            text: "$.caseRef",
             label: "Client Reference",
             type: "string",
           },

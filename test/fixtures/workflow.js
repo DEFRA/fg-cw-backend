@@ -16,7 +16,7 @@ export const workflowData1 = {
             },
             reference: {
               label: "Reference",
-              text: "$.payload.clientRef",
+              text: "$.caseRef",
               type: "string",
             },
             scheme: {
@@ -304,7 +304,7 @@ export const workflowData2 = {
           summary: {
             clientReference: {
               label: "Client Reference",
-              text: "$.payload.clientRef",
+              text: "$.caseRef",
               type: "string",
             },
           },
