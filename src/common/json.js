@@ -3,7 +3,7 @@ import { applyFormat } from "./format.js";
 
 // eslint-disable-next-line complexity
 export const resolveJSONPath = ({ root, path, row }) => {
-  if (path == null) {
+  if (path === null) {
     return path;
   }
   if (typeof path === "string") {
@@ -149,7 +149,7 @@ const evalPath = ({ root, path, row }) => {
 };
 
 const resolveRow = ({ path, row }) => {
-  if (row == null) {
+  if (row === null) {
     return [];
   }
   const jsonPath = "$." + path.slice(2);
