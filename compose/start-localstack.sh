@@ -65,7 +65,7 @@ function setup_topic_and_queues() {
 # ----- Commands -----
 create_queue "create_new_case"
 create_queue "cw__sqs__create_new_case"
-create_queue "cw__sqs__update_status"
+create_queue "cw__sqs__update_case_status"
 
 
 # ----- Events ------
