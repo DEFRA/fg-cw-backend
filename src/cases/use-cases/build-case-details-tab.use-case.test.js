@@ -3,7 +3,7 @@ import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
-import { buildCaseDetailsTabUseCase } from "./build-case-details-tab-use-case.js";
+import { buildCaseDetailsTabUseCase } from "./build-case-details-tab.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");

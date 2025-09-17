@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { findCaseByIdTabIdResponseSchema } from "../schemas/responses/find-case-by-id-tab-id-response.schema.js";
-import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab-use-case.js";
+import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.use-case.js";
 
 export const findCaseByIdTabIdRoute = {
   method: "GET",
