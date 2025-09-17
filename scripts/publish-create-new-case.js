@@ -15,7 +15,7 @@ const sqs = new SQSClient({
 });
 
 const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case";
+  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
 
 const message = {
   id: "event-id-3",
@@ -25,8 +25,8 @@ const message = {
   type: "cloud.defra.development.fg-gas-backend.application.created",
   datacontenttype: "application/json",
   data: {
-    clientRef: "APPLICATION-REF-3",
-    code: "frps-private-beta",
+    caseRef: "APPLICATION-REF-3",
+    workflowCode: "frps-private-beta",
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
     identifiers: {
@@ -59,8 +59,8 @@ console.log("Sending message to SQS queue:", queueUrl);
 
 if (process.argv.length === 3) {
   console.log("Sending sqs case for " + process.argv[2]);
-  message.data.code = process.argv[2];
-  message.data.clientRef = "APPLICATION-PMF-001";
+  message.data.workflowCode = process.argv[2];
+  message.data.caseRef = "APPLICATION-PMF-001";
 }
 
 await sqs.send(
