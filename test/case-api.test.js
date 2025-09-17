@@ -173,9 +173,6 @@ describe("Cases", () => {
             type: "string",
           },
         },
-        definitions: {
-          key1: "test",
-        },
         links: [
           {
             href: `/cases/${caseId}`,
