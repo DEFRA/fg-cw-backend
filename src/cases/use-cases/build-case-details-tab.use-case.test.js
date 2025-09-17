@@ -113,7 +113,7 @@ describe("buildCaseDetailsTabUseCase", () => {
           details: {
             tabs: {
               agreements: {
-                renderIf: "$.agreements[0]", // Should return falsy for empty array
+                renderIf: "$.agreements[0]",
                 content: [],
               },
             },
@@ -127,7 +127,9 @@ describe("buildCaseDetailsTabUseCase", () => {
 
     await expect(
       buildCaseDetailsTabUseCase("test-case-id", "agreements"),
-    ).rejects.toThrow('Should not render Case with id "test-case-id"');
+    ).rejects.toThrow(
+      'Tab "agreements" should not render: $.agreements[0] resolves to falsy value',
+    );
   });
 
   it("handles tab with renderIf condition that evaluates to true", async () => {
@@ -148,7 +150,7 @@ describe("buildCaseDetailsTabUseCase", () => {
             },
             tabs: {
               agreements: {
-                renderIf: "$.agreements[0]", // Should return truthy for non-empty array
+                renderIf: "$.agreements[0]",
                 content: [
                   {
                     id: "agreements",
