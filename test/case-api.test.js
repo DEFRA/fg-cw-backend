@@ -144,7 +144,6 @@ describe("Cases", () => {
             },
           },
         ],
-        agreements: [],
         banner: {
           summary: {
             createdAt: {
@@ -196,6 +195,7 @@ describe("Cases", () => {
             text: "Timeline",
           },
         ],
+        supplementaryData: { agreements: [] },
       });
     });
   });
@@ -233,6 +233,7 @@ describe("Cases", () => {
               },
             },
           ],
+          supplementaryData: null,
         },
       ];
 

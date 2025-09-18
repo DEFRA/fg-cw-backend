@@ -113,7 +113,7 @@ describe("buildCaseDetailsTabUseCase", () => {
           details: {
             tabs: {
               agreements: {
-                renderIf: "$.agreements[0]",
+                renderIf: "$.supplementaryData.agreements[0]",
                 content: [],
               },
             },
@@ -128,7 +128,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     await expect(
       buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "agreements" should not render: $.agreements[0] resolves to falsy value',
+      'Tab "agreements" should not render: $.supplementaryData.agreements[0] resolves to falsy value',
     );
   });
 
@@ -137,7 +137,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       _id: "test-case-id",
       caseRef: "TEST-REF-001",
       workflowCode: "test-workflow",
-      agreements: [{ agreementRef: "AGR-001" }], // Non-empty agreements array
+      supplementaryData: { agreements: [{ agreementRef: "AGR-001" }] },
     });
 
     const mockWorkflow = Workflow.createMock({
@@ -150,7 +150,7 @@ describe("buildCaseDetailsTabUseCase", () => {
             },
             tabs: {
               agreements: {
-                renderIf: "$.agreements[0]",
+                renderIf: "$.supplementaryData.agreements[0]",
                 content: [
                   {
                     id: "agreements",

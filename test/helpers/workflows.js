@@ -146,7 +146,7 @@ export const createWorkflow = async (payload = {}) => {
                 ],
               },
               agreements: {
-                renderIf: "$.agreements[0]",
+                renderIf: "$.supplementaryData.agreements[0]",
                 link: {
                   id: "agreements",
                   href: {
@@ -189,7 +189,7 @@ export const createWorkflow = async (payload = {}) => {
                   {
                     type: "array",
                     component: "table",
-                    rowsRef: "$.agreements[*]",
+                    rowsRef: "$.supplementaryData.agreements[*]",
                     rows: [
                       {
                         label: "Reference",

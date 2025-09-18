@@ -150,7 +150,7 @@ export const up = async (db, _client, context) => {
                   ],
                 },
                 agreements: {
-                  renderIf: "$.agreements[0]",
+                  renderIf: "$.supplementaryData.agreements[0]",
                   link: {
                     id: "agreements",
                     href: {
@@ -193,7 +193,7 @@ export const up = async (db, _client, context) => {
                     {
                       type: "array",
                       component: "table",
-                      rowsRef: "$.agreements[*]",
+                      rowsRef: "$.supplementaryData.agreements[*]",
                       rows: [
                         {
                           label: "Reference",

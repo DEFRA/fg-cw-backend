@@ -142,7 +142,7 @@ export const workflowData1 = {
             ],
           },
           agreements: {
-            renderIf: "$.agreements[0]",
+            renderIf: "$.supplementaryData.agreements[0]",
             link: {
               id: "agreements",
               href: {
@@ -185,7 +185,7 @@ export const workflowData1 = {
               {
                 type: "array",
                 component: "table",
-                rowsRef: "$.agreements[*]",
+                rowsRef: "$.supplementaryData.agreements[*]",
                 rows: [
                   {
                     label: "Reference",

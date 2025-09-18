@@ -28,7 +28,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
-    this.agreements = props.agreements || [];
+    this.supplementaryData = props.supplementaryData;
   }
 
   get objectId() {

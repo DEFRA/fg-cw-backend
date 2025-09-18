@@ -10,7 +10,7 @@ describe("shouldRender", () => {
   const mockRoot = {
     showSection: true,
     hideSection: false,
-    agreements: [{ id: 1 }],
+    supplementaryData: { agreements: [{ id: 1 }] },
     emptyArray: [],
     nullValue: null,
   };
@@ -35,7 +35,7 @@ describe("shouldRender", () => {
 
   it("should return true when renderIf resolves to non-empty array", () => {
     const item = {
-      renderIf: "$.agreements[0]",
+      renderIf: "$.supplementaryData.agreements[0]",
       content: "show if has agreements",
     };
     const result = shouldRender(mockRoot, item);
@@ -143,7 +143,7 @@ describe("buildLinks", () => {
               },
             },
             agreements: {
-              renderIf: "$.agreements[0]",
+              renderIf: "$.supplementaryData.agreements[0]",
               link: {
                 id: "agreements",
                 href: "/cases/case-123/agreements",
@@ -243,7 +243,7 @@ describe("buildLinks", () => {
   it("should handle case with agreements that should render", () => {
     const caseWithAgreements = {
       ...mockCase,
-      agreements: [{ id: "agreement-1" }],
+      supplementaryData: { agreements: [{ id: "agreement-1" }] },
     };
 
     const result = buildLinks(caseWithAgreements, mockWorkflow);
