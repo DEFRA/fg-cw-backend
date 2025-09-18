@@ -18,6 +18,7 @@ export const updateCaseStatusUseCase = async ({ caseId, status }) => {
 
   await publishCaseStatusUpdated({
     caseRef: kase.caseRef,
+    workflowCode: kase.workflowCode,
     previousStatus: kase.previousStatus,
     currentStatus: kase.currentStatus,
   });

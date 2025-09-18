@@ -18,11 +18,13 @@ export const publishCaseStageUpdated = async ({
 
 export const publishCaseStatusUpdated = async ({
   caseRef,
+  workflowCode,
   previousStatus,
   currentStatus,
 }) => {
   const event = new CaseStatusUpdatedEvent({
     caseRef,
+    workflowCode,
     previousStatus,
     currentStatus,
   });
