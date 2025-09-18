@@ -25,7 +25,7 @@ describe("cases", () => {
     await server.register(cases);
     await server.initialize();
 
-    expect(up).toHaveBeenCalledWith(db, mongoClient);
+    expect(up).toHaveBeenCalledWith(db, mongoClient, { environment: "local" });
   });
 
   it("logs applied migrations", async () => {
@@ -76,6 +76,10 @@ describe("cases", () => {
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/{caseId}" },
       { method: "get", path: "/workflows/{code}" },
+      {
+        method: "get",
+        path: "/cases/{caseId}/tabs/{tabId}",
+      },
       { method: "patch", path: "/cases/{caseId}/assigned-user" },
       {
         method: "patch",

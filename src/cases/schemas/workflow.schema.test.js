@@ -25,129 +25,44 @@ describe("workflowSchema", () => {
       );
     });
 
-    it("requires tab title if data exists", () => {
+    it("requires tab content if data exists", () => {
       const data = structuredClone(workflowData1);
-      delete data.pages.cases.details.tabs.caseDetails.title;
+      delete data.pages.cases.details.tabs["case-details"].content;
 
       const { error } = WorkflowData.validate(data);
       expect(error.name).toEqual("ValidationError");
       expect(error.details[0].message).toEqual(
-        '"pages.cases.details.tabs.caseDetails.title" is required',
+        '"pages.cases.details.tabs.case-details.content" is required',
       );
     });
 
-    it("requires tab sections if data exists", () => {
+    it("requires at least one content component in tab", () => {
       const data = structuredClone(workflowData1);
-      delete data.pages.cases.details.tabs.caseDetails.sections;
+      data.pages.cases.details.tabs["case-details"].content = [];
 
       const { error } = WorkflowData.validate(data);
       expect(error.name).toEqual("ValidationError");
       expect(error.details[0].message).toEqual(
-        '"pages.cases.details.tabs.caseDetails.sections" is required',
+        '"pages.cases.details.tabs.case-details.content" must contain at least 1 items',
       );
     });
 
-    it("requires at least one section in tab", () => {
-      const data = structuredClone(workflowData1);
-      data.pages.cases.details.tabs.caseDetails.sections = [];
-
-      const { error } = WorkflowData.validate(data);
-      expect(error.name).toEqual("ValidationError");
-      expect(error.details[0].message).toEqual(
-        '"pages.cases.details.tabs.caseDetails.sections" must contain at least 1 items',
-      );
-    });
-
-    describe("field validation", () => {
-      it("accepts valid field type from typeSchema", () => {
+    describe("content validation", () => {
+      it("accepts valid content type object", () => {
         const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].fields[0].type =
-          "string";
+        data.pages.cases.details.tabs["case-details"].content[2].type =
+          "object";
 
         const { error } = WorkflowData.validate(data);
         expect(error).toBeUndefined();
       });
 
-      it("rejects invalid field type", () => {
+      it("accepts valid content type array", () => {
         const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].fields[0].type =
-          "invalid";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error.name).toEqual("ValidationError");
-        expect(error.details[0].message).toEqual(
-          '"pages.cases.details.tabs.caseDetails.sections[0].fields[0].type" must be one of [string, number, boolean, date, object, array]',
-        );
-      });
-
-      it("accepts optional field format", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].fields[0].format =
-          "date";
+        data.pages.cases.details.tabs["case-details"].content[0].type = "array";
 
         const { error } = WorkflowData.validate(data);
         expect(error).toBeUndefined();
-      });
-    });
-
-    describe("section validation", () => {
-      it("accepts valid section type object", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].type = "object";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error).toBeUndefined();
-      });
-
-      it("accepts valid section type array", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].type = "array";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error).toBeUndefined();
-      });
-
-      it("rejects invalid section type", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].type = "string";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error.name).toEqual("ValidationError");
-        expect(error.details[0].message).toEqual(
-          '"pages.cases.details.tabs.caseDetails.sections[0].type" must be one of [object, array]',
-        );
-      });
-
-      it("requires section component", () => {
-        const data = structuredClone(workflowData1);
-        delete data.pages.cases.details.tabs.caseDetails.sections[0].component;
-
-        const { error } = WorkflowData.validate(data);
-        expect(error.name).toEqual("ValidationError");
-        expect(error.details[0].message).toEqual(
-          '"pages.cases.details.tabs.caseDetails.sections[0].component" is required',
-        );
-      });
-
-      it("accepts valid component types", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].component =
-          "table";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error).toBeUndefined();
-      });
-
-      it("rejects invalid component type", () => {
-        const data = structuredClone(workflowData1);
-        data.pages.cases.details.tabs.caseDetails.sections[0].component =
-          "invalid";
-
-        const { error } = WorkflowData.validate(data);
-        expect(error.name).toEqual("ValidationError");
-        expect(error.details[0].message).toEqual(
-          '"pages.cases.details.tabs.caseDetails.sections[0].component" must be one of [list, table]',
-        );
       });
     });
   });
