@@ -3,6 +3,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 /**
  *  call npm run publish:case:agreement to publish agreement command
  *  you can add your own caseRef npm run publish:case:agreement <CASE_REF> <WORKFLOW_CODE>
+ *  optionally you can set the status also to OFFERED, OFFER_ACCEPTED, OFFER_WITHDRAWN
  */
 
 const sqs = new SQSClient({
@@ -27,10 +28,10 @@ const message = {
   data: {
     caseRef: "APPLICATION-PMF-001",
     workflowCode: "pigs-might-fly",
-    newStatus: "REVIEW",
+    newStatus: "OFFERED",
     supplementaryData: {
       phase: "PRE_AWARD",
-      stage: "award",
+      stage: "AWARD",
       targetNode: "agreements",
       data: {
         agreementRef: "AGREEMENT-REF-123",
@@ -50,6 +51,12 @@ if (process.argv.length === 4) {
   );
   message.data.caseRef = process.argv[2];
   message.data.workflowCode = process.argv[3];
+}
+
+if (process.argv.length === 5) {
+  const status = process.argv[4];
+  console.log("Setting status to " + status);
+  message.data.newStatus = status;
 }
 
 await sqs.send(
