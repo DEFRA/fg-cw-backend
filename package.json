@@ -57,7 +57,7 @@
     "hapi-pino": "12.1.0",
     "hapi-pulse": "3.0.1",
     "hapi-swagger": "^17.3.2",
-    "joi": "17.13.3",
+    "joi": "18.0.1",
     "jose": "6.0.12",
     "jsonpath-plus": "10.3.0",
     "migrate-mongo": "12.1.3",
