@@ -3,6 +3,9 @@ export const createWorkflowMockData = () => ({
   pages: createPages(),
   stages: createStages(),
   requiredRoles: createRequiredRoles(),
+  definitions: {
+    key1: "value1",
+  },
 });
 
 const createPages = () => ({
@@ -10,28 +13,27 @@ const createPages = () => ({
     details: {
       banner: {
         title: {
-          ref: "$.payload.businessName",
+          text: "$.payload.businessName",
           type: "string",
         },
         summary: {
           clientReference: {
+            text: "$.caseRef",
             label: "Client Reference",
-            ref: "$.payload.clientRef",
             type: "string",
           },
         },
       },
       tabs: {
-        caseDetails: {
-          title: "Application",
-          sections: [
+        "case-details": {
+          content: [
             {
               title: "Details",
               type: "object",
               component: "list",
-              fields: [
+              rows: [
                 {
-                  ref: "$.payload.answers.field1",
+                  text: "$.payload.answers.field1",
                   type: "string",
                   label: "Field 1",
                 },

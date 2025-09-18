@@ -22,24 +22,34 @@ describe("createWorkflowUseCase", () => {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
       },
+      definitions: {
+        key1: "value1",
+      },
     });
 
     expect(save).toHaveBeenCalledWith(workflow);
 
-    expect(workflow).toStrictEqual(
-      Workflow.createMock({
-        _id: expect.any(String),
-        code: "wf-001",
-        pages: {
-          cases: {
-            details: {
-              banner: { summary: {} },
-              tabs: { caseDetails: { title: "Test", sections: [] } },
-            },
+    const expectedWorkflow = new Workflow({
+      _id: expect.any(String),
+      code: "wf-001",
+      pages: {
+        cases: {
+          details: {
+            banner: { summary: {} },
+            tabs: { caseDetails: { title: "Test", sections: [] } },
           },
         },
-        stages: [],
-      }),
-    );
+      },
+      stages: [],
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
+      definitions: {
+        key1: "value1",
+      },
+    });
+
+    expect(workflow).toStrictEqual(expectedWorkflow);
   });
 });
