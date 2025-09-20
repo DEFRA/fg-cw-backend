@@ -1,10 +1,10 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import {
+  assertPathExists,
   buildBanner,
   buildLinks,
   createRootContext,
-  shouldRender,
 } from "../../common/build-view-model.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
@@ -44,15 +44,7 @@ const getTabDefinition = ({ root, workflow, tabId }) => {
     );
   }
 
-  assertShouldRender({ root, tabDefinition, tabId });
+  assertPathExists(root, tabDefinition?.renderIf);
 
   return tabDefinition;
-};
-
-const assertShouldRender = ({ root, tabDefinition, tabId }) => {
-  if (!shouldRender(root, tabDefinition)) {
-    throw Boom.notFound(
-      `Tab "${tabId}" should not render: ${tabDefinition?.renderIf} resolves to falsy value`,
-    );
-  }
 };

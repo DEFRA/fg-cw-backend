@@ -128,7 +128,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     await expect(
       buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "agreements" should not render: $.supplementaryData.agreements[0] resolves to falsy value',
+      "Path does not exist, $.supplementaryData.agreements[0] resolves to falsy value",
     );
   });
 
