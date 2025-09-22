@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
+import { buildDynamicContent } from "../../common/build-dynamic-content.js";
 import {
   assertPathExists,
   buildBanner,
@@ -39,12 +40,24 @@ const getTabDefinition = ({ root, workflow, tabId }) => {
   });
 
   if (!tabDefinition) {
-    throw Boom.notFound(
-      `Tab "${tabId}" not found in workflow "${workflow.code}"`,
-    );
+    return handleMissingTabDefinition({ root, workflow, tabId });
   }
 
-  assertPathExists(root, tabDefinition?.renderIf);
+  if (tabDefinition.renderIf) {
+    assertPathExists(root, tabDefinition.renderIf);
+  }
 
   return tabDefinition;
+};
+
+const handleMissingTabDefinition = ({ root, workflow, tabId }) => {
+  if (tabId === "case-details") {
+    return {
+      content: buildDynamicContent(root.payload),
+    };
+  }
+
+  throw Boom.notFound(
+    `Tab "${tabId}" not found in workflow "${workflow.code}"`,
+  );
 };
