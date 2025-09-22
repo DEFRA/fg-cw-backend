@@ -71,10 +71,10 @@
     "eslint": "9.29.0",
     "eslint-config-prettier": "10.1.5",
     "husky": "9.1.7",
-    "lint-staged": "^16.1.2",
+    "lint-staged": "^16.2.0",
     "neostandard": "0.12.1",
-    "prettier": "3.5.3",
-    "prettier-plugin-organize-imports": "4.1.0",
+    "prettier": "3.6.2",
+    "prettier-plugin-organize-imports": "4.3.0",
     "testcontainers": "^11.0.3",
     "vitest": "3.2.4"
   }
