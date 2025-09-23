@@ -223,7 +223,6 @@ describe("buildCaseDetailsTabUseCase", () => {
   });
 
   it("builds case details tab with real workflow data", async () => {
-    // Using realistic workflow data similar to the fixture
     const mockCase = Case.createMock({
       _id: "64c88faac1f56f71e1b89a77",
       caseRef: "APPLICATION-REF-001",
@@ -359,6 +358,7 @@ describe("buildCaseDetailsTabUseCase", () => {
           scheme: "SFI",
           year: 2025,
           hasCheckedLandIsUpToDate: true,
+          checkedDate: "2025-03-28T11:30:52.000Z",
           actionApplications: [
             {
               code: "CMOR1",
@@ -467,6 +467,14 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(booleanRow).toBeDefined();
     expect(booleanRow.type).toBe("boolean");
     expect(booleanRow.text).toBe("Yes");
+
+    // Check that date values are processed correctly
+    const dateRow = answersComponent.rows.find(
+      (row) => row.id === "checkedDate",
+    );
+    expect(dateRow).toBeDefined();
+    expect(dateRow.type).toBe("date");
+    expect(dateRow.text).toBe("28 Mar 2025");
 
     // Verify table component for action applications array
     const tableComponent = result.content.find(
