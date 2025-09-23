@@ -194,9 +194,9 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "case-details" not found in workflow "minimal-workflow"',
+      'Tab "agreements" not found in workflow "minimal-workflow"',
     );
   });
 
@@ -216,9 +216,9 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "case-details" not found in workflow "minimal-workflow"',
+      'Tab "agreements" not found in workflow "minimal-workflow"',
     );
   });
 

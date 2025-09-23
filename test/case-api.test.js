@@ -181,7 +181,6 @@ describe("Cases", () => {
           {
             href: `/cases/${caseId}/case-details`,
             id: "case-details",
-            index: 1,
             text: "Case Details",
           },
           {
