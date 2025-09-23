@@ -36,6 +36,9 @@ const processValue = (key, value) => {
   }
 
   if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [];
+    }
     return [createTableComponent(key, value)];
   }
 
