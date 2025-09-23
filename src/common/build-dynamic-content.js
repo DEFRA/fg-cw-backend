@@ -12,7 +12,14 @@ export const buildDynamicContent = (payload) => {
     Object.entries(payload).filter(([key]) => !EXCLUDE_KEYS.includes(key)),
   );
 
-  const content = [];
+  const content = [
+    {
+      id: "title",
+      component: "heading",
+      text: "Application",
+      level: 2,
+    },
+  ];
 
   Object.entries(filteredPayload).forEach(([key, value]) => {
     const components = processValue(key, value);
@@ -112,10 +119,11 @@ const isDateString = (value) => {
     return false;
   }
 
-  // ISO 8601 patterns
-  const iso8601Regex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/;
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/;
 
-  if (!iso8601Regex.test(value)) return false;
+  if (!isoDateRegex.test(value)) {
+    return false;
+  }
 
   const date = new Date(value);
   return !isNaN(date.getTime());
