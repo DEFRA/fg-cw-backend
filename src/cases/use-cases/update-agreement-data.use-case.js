@@ -4,7 +4,7 @@ import {
   update,
 } from "../repositories/case.repository.js";
 
-export const updateCaseStatusWithDataUseCase = async ({
+export const updateAgreementDataUseCase = async ({
   caseRef,
   workflowCode,
   newStatus,
@@ -18,10 +18,8 @@ export const updateCaseStatusWithDataUseCase = async ({
     );
   }
 
-  if (supplementaryData?.targetNode === "agreements") {
-    kase.addAgreementData({ agreementData: supplementaryData, newStatus });
-    await update(kase);
-  }
+  kase.addAgreementData({ agreementData: supplementaryData, newStatus });
+  await update(kase);
 
   return kase;
 };

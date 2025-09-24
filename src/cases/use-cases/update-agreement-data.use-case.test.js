@@ -4,7 +4,7 @@ import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
-import { updateCaseStatusWithDataUseCase } from "./update-case-status-with-data.use-case.js";
+import { updateAgreementDataUseCase } from "./update-agreement-data.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 
@@ -13,7 +13,7 @@ describe("save case agreement use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 
     await expect(() =>
-      updateCaseStatusWithDataUseCase({
+      updateAgreementDataUseCase({
         caseRef: "ABCD1234",
         workflowCode: "workflow-1",
       }),
@@ -40,7 +40,7 @@ describe("save case agreement use case", () => {
     const kase = Case.createMock();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateCaseStatusWithDataUseCase(data);
+    const returnvalue = await updateAgreementDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
