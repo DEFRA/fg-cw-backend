@@ -1,4 +1,11 @@
-import { isDateString } from "./date-helpers.js";
+import {
+  camelCaseToTitleCase,
+  createHeadingComponent,
+  createListComponent,
+  createSimpleComponent,
+  createTableComponent,
+  isObject,
+} from "./component-factory.js";
 
 const EXCLUDE_KEYS = [
   "clientRef",
@@ -15,12 +22,7 @@ export const buildDynamicContent = (payload) => {
   );
 
   const content = [
-    {
-      id: "title",
-      component: "heading",
-      text: "Application",
-      level: 2,
-    },
+    createHeadingComponent({ id: "title", text: "Application", level: 2 }),
   ];
 
   Object.entries(filteredPayload).forEach(([key, value]) => {
@@ -41,7 +43,12 @@ const processValue = (key, value) => {
     if (value.length === 0) {
       return [];
     }
-    return [createTableComponent(key, value)];
+    return [
+      createTableComponent({
+        id: key,
+        array: value,
+      }),
+    ];
   }
 
   if (isObject(value)) {
@@ -67,7 +74,12 @@ const processObject = (key, obj) => {
 
   // If there are simple props, create a list component for them
   if (Object.keys(simpleProps).length > 0) {
-    components.push(createListComponent(key, simpleProps));
+    components.push(
+      createListComponent({
+        id: key,
+        obj: simpleProps,
+      }),
+    );
   }
 
   // Process complex properties
@@ -75,24 +87,6 @@ const processObject = (key, obj) => {
   components.push(...complexComponents);
 
   return components;
-};
-
-const createSimpleComponent = (key, value) => {
-  if (isDateString(value)) {
-    return createTextComponent(key, value, {
-      type: "date",
-      format: "formatDate",
-    });
-  }
-
-  if (typeof value === "boolean") {
-    return createTextComponent(key, value, {
-      type: "boolean",
-      format: "yesNo",
-    });
-  }
-
-  return createTextComponent(key, value);
 };
 
 const processComplexProperties = (key, complexProps) => {
@@ -117,84 +111,4 @@ const createCustomTitle = (objKey, parentKey) => {
   return isNumericKey && hasMeaningfulParent
     ? `${camelCaseToTitleCase(parentKey)} ${objKey}`
     : null;
-};
-
-const isObject = (value) => {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-};
-
-const camelCaseToTitleCase = (str = "") => {
-  return (
-    str
-      // insert a space before any uppercase letter
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
-      // uppercase the first character of each word
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-      .trim()
-  );
-};
-
-const createTextComponent = (key, value, params = {}) => {
-  return {
-    id: key,
-    component: "text",
-    text: value,
-    type: typeof value,
-    label: camelCaseToTitleCase(key),
-    ...params,
-  };
-};
-
-const createListComponent = (key, obj) => {
-  const rows = Object.entries(obj).map(([objKey, objValue]) =>
-    createSimpleComponent(objKey, objValue),
-  );
-
-  return {
-    id: key,
-    component: "list",
-    title: camelCaseToTitleCase(key),
-    type: "object",
-    rows,
-  };
-};
-
-const createTableComponent = (key, array) => {
-  const rows = array.map((item) => {
-    return Object.entries(item).map(([itemKey, itemValue]) =>
-      processTableCellValue(itemKey, itemValue),
-    );
-  });
-
-  return {
-    id: key,
-    component: "table",
-    label: camelCaseToTitleCase(key),
-    title: camelCaseToTitleCase(key),
-    type: "array",
-    rows,
-  };
-};
-const processTableCellValue = (itemKey, itemValue) => {
-  if (Array.isArray(itemValue)) {
-    return createTableComponent(itemKey, itemValue);
-  }
-
-  if (isObject(itemValue)) {
-    return createContainerCell(itemKey, itemValue);
-  }
-
-  return createSimpleComponent(itemKey, itemValue);
-};
-
-const createContainerCell = (itemKey, itemValue) => {
-  return {
-    id: itemKey,
-    component: "container",
-    label: camelCaseToTitleCase(itemKey),
-    items: Object.entries(itemValue).map(([, subValue]) => ({
-      text: subValue,
-      type: typeof subValue,
-    })),
-  };
 };
