@@ -113,13 +113,6 @@ export const config = convict({
       default: "eu-west-2",
       env: "AWS_REGION",
     },
-    createNewCaseSqsUrl: {
-      doc: "URL of the SQS queue for case creation events",
-      format: String,
-      default:
-        "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case",
-      env: "CREATE_NEW_CASE_SQS_URL",
-    },
     caseStageUpdatedTopicArn: {
       doc: "ARN of the SNS topic to publish case stage updates",
       format: String,
@@ -153,7 +146,7 @@ export const config = convict({
         doc: "URL of the SQS queue for case status update commands",
         format: String,
         default:
-          "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_status",
+          "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_case_status",
         env: "CW__SQS__UPDATE_STATUS_URL",
       },
     },

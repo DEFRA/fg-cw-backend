@@ -24,6 +24,7 @@ const toCase = (doc) => {
           id: doc.assignedUserId,
         }
       : null,
+    supplementaryData: doc.supplementaryData,
   });
 };
 

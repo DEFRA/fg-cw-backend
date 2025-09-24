@@ -46,6 +46,7 @@ describe("updateCaseStatusUseCase", () => {
       expect(update).toHaveBeenCalledWith(mockCase);
       expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-123",
+        workflowCode: "workflow-code",
         previousStatus: mockCase.previousStatus,
         currentStatus: mockCase.currentStatus,
       });
@@ -74,6 +75,7 @@ describe("updateCaseStatusUseCase", () => {
       );
       expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-456",
+        workflowCode: "workflow-code",
         previousStatus: mockCase.previousStatus,
         currentStatus: mockCase.currentStatus,
       });
