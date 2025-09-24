@@ -24,6 +24,7 @@ const toCase = (doc) => {
           id: doc.assignedUserId,
         }
       : null,
+    supplementaryData: doc.supplementaryData,
   });
 };
 
@@ -73,6 +74,14 @@ export const update = async (kase) => {
 export const findAll = async () => {
   const caseDocuments = await db.collection(collection).find().toArray();
   return caseDocuments.map(toCase);
+};
+
+export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
+  const caseDocument = await db.collection(collection).findOne({
+    caseRef,
+    workflowCode,
+  });
+  return caseDocument && toCase(caseDocument);
 };
 
 export const findById = async (caseId) => {

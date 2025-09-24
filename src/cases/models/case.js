@@ -28,6 +28,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
+    this.supplementaryData = props.supplementaryData;
   }
 
   get objectId() {
@@ -122,6 +123,15 @@ export class Case {
     });
     this.#addTimelineEvent(timelineEvent);
     return timelineEvent.comment;
+  }
+
+  addDataToStage(stageData) {
+    const { stage, targetNode, data } = stageData;
+    this.stages
+      .find((s) => {
+        return s.id === stage;
+      })
+      [targetNode].push(data);
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
@@ -267,16 +277,17 @@ export class Case {
     return currentStageIndex;
   }
 
-  static fromWorkflow(workflow, caseEvent) {
+  static new({ caseRef, payload, workflow }) {
     return new Case({
-      caseRef: caseEvent.clientRef,
+      caseRef,
       workflowCode: workflow.code,
       status: "NEW",
       dateReceived: new Date().toISOString(),
       currentStage: workflow.stages[0].id,
-      payload: caseEvent,
+      payload,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
+        agreements: stage.agreements || null,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({
@@ -285,13 +296,12 @@ export class Case {
           })),
         })),
       })),
-      comments: caseEvent.comments,
       timeline: [
         {
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdBy: "System", // To specify that the case was created by an external system
           data: {
-            caseRef: caseEvent.clientRef,
+            caseRef,
           },
         },
       ],

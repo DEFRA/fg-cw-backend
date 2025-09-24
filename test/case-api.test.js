@@ -144,6 +144,57 @@ describe("Cases", () => {
             },
           },
         ],
+        banner: {
+          summary: {
+            createdAt: {
+              label: "Created At",
+              text: "27 Mar 2025",
+              type: "date",
+            },
+            reference: {
+              label: "Reference",
+              text: "CASE-REF-2",
+              type: "string",
+            },
+            sbi: {
+              label: "SBI",
+              text: "SBI001",
+              type: "string",
+            },
+            scheme: {
+              label: "Scheme",
+              text: "SFI",
+              type: "string",
+            },
+          },
+          title: {
+            text: "",
+            type: "string",
+          },
+        },
+        links: [
+          {
+            href: `/cases/${caseId}`,
+            id: "tasks",
+            text: "Tasks",
+          },
+          {
+            href: `/cases/${caseId}/case-details`,
+            id: "case-details",
+            text: "Case Details",
+          },
+          {
+            href: `/cases/${caseId}/notes`,
+            id: "notes",
+            text: "Notes",
+          },
+          {
+            href: `/cases/${caseId}/timeline`,
+            id: "timeline",
+            text: "Timeline",
+          },
+        ],
+        supplementaryData: { agreements: [] },
       });
     });
   });
@@ -165,6 +216,10 @@ describe("Cases", () => {
           ...caseData3Document,
           _id: expect.any(ObjectId),
           dateReceived: expect.any(Date),
+          stages: caseData3Document.stages.map((s) => ({
+            ...s,
+            agreements: [],
+          })),
           timeline: [
             {
               commentRef: null,
@@ -173,10 +228,11 @@ describe("Cases", () => {
               description: "Case received",
               createdBy: "System",
               data: {
-                caseRef: "APPLICATION-REF-3",
+                caseRef: "CASE-REF-3",
               },
             },
           ],
+          supplementaryData: null,
         },
       ];
 
