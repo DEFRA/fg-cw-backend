@@ -142,7 +142,6 @@ export class Case {
 
   addAgreementData({ agreementData, newStatus }) {
     this.updateStatus(newStatus, null);
-
     const agreements = this.supplementaryData.agreements;
     const { agreementStatus, createdAt, agreementRef } = agreementData.data;
 

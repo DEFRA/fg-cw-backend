@@ -16,7 +16,7 @@ const sqs = new SQSClient({
 });
 
 const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__update_status";
+  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__update_case_status";
 
 const message = {
   id: "event-id-4",
@@ -30,8 +30,8 @@ const message = {
     workflowCode: "pigs-might-fly",
     newStatus: "OFFERED",
     supplementaryData: {
-      phase: "PRE_AWARD",
-      stage: "AWARD",
+      phase: null,
+      stage: null,
       targetNode: "agreements",
       data: {
         agreementRef: "AGREEMENT-REF-123",
@@ -57,6 +57,7 @@ if (process.argv.length === 5) {
   const status = process.argv[4];
   console.log("Setting status to " + status);
   message.data.newStatus = status;
+  message.data.supplementaryData.data.agreementStatus = status;
 }
 
 await sqs.send(
