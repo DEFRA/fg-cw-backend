@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import {
   findByCaseRefAndWorkflowCode,
   update,
@@ -18,12 +17,11 @@ export const updateCaseStatusWithDataUseCase = async ({
       `Case with caseRef "${caseRef}" and workflowCode "${workflowCode}" not found`,
     );
   }
-  const createdBy = getAuthenticatedUser().id;
 
-  kase.updateStatus(newStatus, createdBy);
-  kase.addDataToStage(supplementaryData);
-
-  await update(kase);
+  if (supplementaryData?.targetNode === "agreements") {
+    kase.addAgreementData({ agreementData: supplementaryData, newStatus });
+    await update(kase);
+  }
 
   return kase;
 };

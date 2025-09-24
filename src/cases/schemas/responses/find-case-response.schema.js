@@ -30,7 +30,6 @@ export const CaseStage = Joi.object({
   })
     .optional()
     .allow(null),
-  agreements: Joi.array().optional().allow(null),
 }).label("CaseStage");
 
 export const findCaseResponseSchema = Joi.object({
@@ -46,6 +45,21 @@ export const findCaseResponseSchema = Joi.object({
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
   requiredRoles: requiredRolesSchema.required(),
+  supplementaryData: Joi.object({
+    agreements: Joi.object().pattern(
+      /^/,
+      Joi.object({
+        latestStatus: Joi.string(),
+        updatedAt: Joi.date().iso(),
+        history: Joi.array().items(
+          Joi.object({
+            agreementStatus: Joi.string(),
+            createdAt: Joi.date().iso(),
+          }),
+        ),
+      }),
+    ),
+  }),
 })
   .options({
     presence: "required",

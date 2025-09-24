@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
+import { Agreement, toAgreements } from "./agreement.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { toTasks } from "./task.js";
@@ -8,6 +9,11 @@ import {
   TimelineEvent,
   toTimelineEvents,
 } from "./timeline-event.js";
+
+const processSupplementaryData = (data) => ({
+  ...data,
+  agreements: toAgreements(data?.agreements || {}),
+});
 
 export class Case {
   constructor(props) {
@@ -28,7 +34,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
-    this.supplementaryData = props.supplementaryData;
+    this.supplementaryData = processSupplementaryData(props.supplementaryData);
   }
 
   get objectId() {
@@ -132,6 +138,25 @@ export class Case {
         return s.id === stage;
       })
       [targetNode].push(data);
+  }
+
+  addAgreementData({ agreementData, newStatus }) {
+    this.updateStatus(newStatus, null);
+
+    const agreements = this.supplementaryData.agreements;
+    const { agreementStatus, createdAt, agreementRef } = agreementData.data;
+
+    if (agreements[agreementRef]) {
+      const agreement = agreements[agreementRef];
+      agreement.addHistoryEntry({ agreementStatus, createdAt });
+    } else {
+      const agreement = Agreement.new({
+        agreementRef,
+        agreementStatus,
+        date: createdAt,
+      });
+      agreements[agreementRef] = agreement;
+    }
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
@@ -287,7 +312,6 @@ export class Case {
       payload,
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
-        agreements: stage.agreements || null,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({
@@ -317,6 +341,9 @@ export class Case {
       dateReceived: "2025-01-01T00:00:00.000Z",
       currentStage: "stage-1",
       payload: {},
+      supplementaryData: {
+        agreements: {},
+      },
       stages: [
         {
           id: "stage-1",

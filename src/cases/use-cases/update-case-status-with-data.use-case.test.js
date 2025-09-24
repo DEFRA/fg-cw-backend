@@ -28,30 +28,27 @@ describe("save case agreement use case", () => {
       workflowCode: "workflow-1",
       newStatus: "REVIEW",
       supplementaryData: {
-        phase: "PRE_AWARD",
-        stage: "award",
+        phase: null,
+        stage: null,
         targetNode: "agreements",
         data: {
           agreementRef: "0987GHYU",
+          agreementStatus: "OFFERED",
         },
       },
     };
     const kase = Case.createMock();
-    kase.stages.push({
-      id: "award",
-      agreements: [],
-    });
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
     const returnvalue = await updateCaseStatusWithDataUseCase(data);
 
+    const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
     );
-    expect(
-      kase.stages.find((s) => s.id === "award").agreements[0].agreementRef,
-    ).toBe("0987GHYU");
+    expect(caseAgreements["0987GHYU"].latestStatus).toBe("OFFERED");
+    expect(caseAgreements["0987GHYU"].history).toHaveLength(1);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnvalue).toBe(kase);
   });

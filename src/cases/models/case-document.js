@@ -16,7 +16,6 @@ const mapTasksToStages = (kaseStages, tasks) => {
     return {
       id: s.id,
       outcome: s.outcome || null,
-      agreements: s.agreements || [],
       taskGroups: s.taskGroups.map((tg) => {
         return {
           id: tg.id,

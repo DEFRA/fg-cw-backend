@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it } from "vitest";
+import { Agreement } from "./agreement.js";
 import { Case } from "./case.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
@@ -333,6 +334,58 @@ describe("Case", () => {
       const task2 = kase.findTask("task-1");
       expect(task2.status).toBe("complete");
       expect(task2.commentRef).toBeDefined();
+    });
+  });
+
+  describe("addAgreementData", () => {
+    it("should add a new agreement to supplementaryData", () => {
+      const createdAt = new Date().toISOString();
+      const kase = Case.createMock();
+      const agreementData = {
+        data: {
+          agreementStatus: "OFFERED",
+          agreementRef: "ref-1",
+          createdAt,
+        },
+      };
+      kase.addAgreementData({ agreementData, newStatus: "OFFERED" });
+      expect(kase.status).toBe("OFFERED");
+      expect(kase.supplementaryData.agreements["ref-1"]).toBeInstanceOf(
+        Agreement,
+      );
+      expect(kase.supplementaryData.agreements["ref-1"].history).toHaveLength(
+        1,
+      );
+    });
+
+    it("should add history to an existing agreement", () => {
+      const createdAt = new Date().toISOString();
+      const kase = Case.createMock({
+        supplementaryData: {
+          agreements: {
+            "ref-1": Agreement.new({
+              agreementRef: "ref-1",
+              date: new Date().toISOString(),
+            }),
+          },
+        },
+      });
+
+      const agreementData = {
+        data: {
+          agreementStatus: "ACCEPTED",
+          agreementRef: "ref-1",
+          createdAt,
+        },
+      };
+      kase.addAgreementData({ agreementData, newStatus: "ACCEPTED" });
+      expect(kase.status).toBe("ACCEPTED");
+      expect(kase.supplementaryData.agreements["ref-1"].history).toHaveLength(
+        2,
+      );
+      expect(kase.supplementaryData.agreements["ref-1"].latestStatus).toBe(
+        "ACCEPTED",
+      );
     });
   });
 
