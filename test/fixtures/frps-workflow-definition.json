@@ -34,17 +34,6 @@
         },
         "tabs": {
           "case-details": {
-            "link": {
-              "id": "case-details",
-              "href": {
-                "urlTemplate": "/cases/{caseId}/case-details",
-                "params": {
-                  "caseId": "$._id"
-                }
-              },
-              "text": "Case Details",
-              "index": 1
-            },
             "content": [
               {
                 "id": "title",
@@ -143,16 +132,6 @@
           },
           "agreements": {
             "renderIf": "$.supplementaryData.agreements[0]",
-            "link": {
-              "id": "agreements",
-              "href": {
-                "urlTemplate": "/cases/{caseId}/agreements",
-                "params": {
-                  "caseId": "$._id"
-                }
-              },
-              "text": "Agreements"
-            },
             "content": [
               {
                 "id": "title",
