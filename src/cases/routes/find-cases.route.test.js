@@ -21,6 +21,8 @@ describe("findCasesRoute", () => {
 
   it("returns cases", async () => {
     const cases = [Case.createMock(), Case.createMock()];
+    cases[0].supplementaryData.agreements = [];
+    cases[1].supplementaryData.agreements = [];
 
     findCasesUseCase.mockResolvedValue(cases);
 

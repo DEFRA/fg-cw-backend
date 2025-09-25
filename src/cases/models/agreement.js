@@ -53,10 +53,10 @@ export class Agreement {
 }
 
 export const toAgreements = (data) => {
-  const agreements = Object.keys(data).reduce((acc, key) => {
-    const { latestStatus, updatedAt, history } = data[key];
-    acc[key] = new Agreement({
-      agreementRef: key,
+  const agreements = Object.keys(data).reduce((acc, agreementRef) => {
+    const { latestStatus, updatedAt, history } = data[agreementRef];
+    acc[agreementRef] = new Agreement({
+      agreementRef,
       latestStatus,
       updatedAt,
       history,

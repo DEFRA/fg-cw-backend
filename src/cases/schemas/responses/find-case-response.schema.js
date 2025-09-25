@@ -32,6 +32,16 @@ export const CaseStage = Joi.object({
     .allow(null),
 }).label("CaseStage");
 
+export const agreementSchema = Joi.object({
+  agreementRef: Joi.string().pattern(/^[a-zA-Z0-9-]+$/),
+  agreementStatus: Joi.string().pattern(/^[A-Z_]+$/),
+  createdAt: Joi.date().iso(),
+}).label("Agreement");
+
+export const supplementaryDataSchema = Joi.object({
+  agreements: Joi.array().items(agreementSchema),
+});
+
 export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
@@ -54,21 +64,7 @@ export const findCaseResponseSchema = Joi.object({
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
   requiredRoles: requiredRolesSchema.required(),
-  supplementaryData: Joi.object({
-    agreements: Joi.object().pattern(
-      /^/,
-      Joi.object({
-        latestStatus: Joi.string(),
-        updatedAt: Joi.date().iso(),
-        history: Joi.array().items(
-          Joi.object({
-            agreementStatus: Joi.string(),
-            createdAt: Joi.date().iso(),
-          }),
-        ),
-      }),
-    ),
-  }),
+  supplementaryData: supplementaryDataSchema,
 })
   .options({
     presence: "required",
