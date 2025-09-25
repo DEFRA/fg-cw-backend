@@ -128,7 +128,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     await expect(
       buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "agreements" should not render: $.supplementaryData.agreements[0] resolves to falsy value',
+      "Path does not exist, $.supplementaryData.agreements[0] resolves to falsy value",
     );
   });
 
@@ -194,9 +194,9 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "case-details" not found in workflow "minimal-workflow"',
+      'Tab "agreements" not found in workflow "minimal-workflow"',
     );
   });
 
@@ -216,14 +216,13 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
     ).rejects.toThrow(
-      'Tab "case-details" not found in workflow "minimal-workflow"',
+      'Tab "agreements" not found in workflow "minimal-workflow"',
     );
   });
 
   it("builds case details tab with real workflow data", async () => {
-    // Using realistic workflow data similar to the fixture
     const mockCase = Case.createMock({
       _id: "64c88faac1f56f71e1b89a77",
       caseRef: "APPLICATION-REF-001",
@@ -344,5 +343,145 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(result.content[0].text).toBe("Application");
     expect(result.content[1].rows[0].text).toBe("SFI");
     expect(result.content[1].rows[1].text).toBe(2025);
+  });
+
+  it("generates dynamic content when case-details tab is not defined in workflow", async () => {
+    const mockCase = Case.createMock({
+      _id: "test-case-id",
+      caseRef: "TEST-REF-001",
+      workflowCode: "test-workflow",
+      payload: {
+        businessName: "Test Business",
+        clientRef: "CLIENT-REF-001",
+        identifiers: { sbi: "SBI001" },
+        answers: {
+          scheme: "SFI",
+          year: 2025,
+          hasCheckedLandIsUpToDate: true,
+          checkedDate: "2025-03-28T11:30:52.000Z",
+          actionApplications: [
+            {
+              code: "CMOR1",
+              parcelId: "9485",
+              appliedFor: {
+                unit: "ha",
+                quantity: 0.14472089,
+              },
+            },
+          ],
+        },
+        applicant: {
+          business: {
+            name: "Test Farm Business",
+            email: {
+              address: "test@example.com",
+            },
+          },
+        },
+        submittedAt: "2025-03-28T11:30:52.000Z",
+      },
+    });
+
+    // Workflow WITHOUT case-details tab - should trigger dynamic content generation
+    const mockWorkflow = Workflow.createMock({
+      code: "test-workflow",
+      pages: {
+        cases: {
+          details: {
+            banner: {
+              title: {
+                text: "$.payload.businessName",
+                type: "string",
+              },
+            },
+            tabs: {
+              "other-tab": {
+                content: [
+                  {
+                    id: "other-content",
+                    component: "text",
+                    text: "Other content",
+                  },
+                ],
+              },
+              // Note: NO "case-details" tab defined!
+            },
+          },
+        },
+      },
+    });
+
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+
+    const result = await buildCaseDetailsTabUseCase(
+      "test-case-id",
+      "case-details",
+    );
+
+    // Verify basic structure
+    expect(result.caseId).toBe("test-case-id");
+    expect(result.caseRef).toBe("TEST-REF-001");
+    expect(result.tabId).toBe("case-details");
+    expect(result.banner).toBeDefined();
+    expect(result.links).toBeDefined();
+
+    // Verify dynamic content generation
+    expect(result.content).toBeDefined();
+    expect(Array.isArray(result.content)).toBe(true);
+    expect(result.content.length).toBeGreaterThan(1);
+
+    // Should have default heading as first component from buildDynamicContent
+    expect(result.content[0]).toEqual({
+      id: "title",
+      component: "heading",
+      text: "Application",
+      level: 2,
+    });
+
+    // Should contain components for non-excluded payload fields
+    const componentIds = result.content.map((comp) => comp.id);
+    expect(componentIds).toContain("answers");
+    expect(componentIds).toContain("business"); // From applicant.business
+    expect(componentIds).toContain("actionApplications"); // From answers.actionApplications
+
+    // Should NOT contain excluded fields
+    expect(componentIds).not.toContain("clientRef");
+    expect(componentIds).not.toContain("submittedAt");
+    expect(componentIds).not.toContain("identifiers");
+
+    // Verify specific component structure for answers
+    const answersComponent = result.content.find(
+      (comp) => comp.id === "answers",
+    );
+    expect(answersComponent).toBeDefined();
+    expect(answersComponent.component).toBe("list");
+    expect(answersComponent.title).toBe("Answers");
+    expect(answersComponent.type).toBe("object");
+    expect(Array.isArray(answersComponent.rows)).toBe(true);
+
+    // Check that boolean values are processed correctly
+    const booleanRow = answersComponent.rows.find(
+      (row) => row.id === "hasCheckedLandIsUpToDate",
+    );
+    expect(booleanRow).toBeDefined();
+    expect(booleanRow.type).toBe("boolean");
+    expect(booleanRow.text).toBe("Yes");
+
+    // Check that date values are processed correctly
+    const dateRow = answersComponent.rows.find(
+      (row) => row.id === "checkedDate",
+    );
+    expect(dateRow).toBeDefined();
+    expect(dateRow.type).toBe("date");
+    expect(dateRow.text).toBe("28 Mar 2025");
+
+    // Verify table component for action applications array
+    const tableComponent = result.content.find(
+      (comp) => comp.component === "table",
+    );
+    expect(tableComponent).toBeDefined();
+    expect(tableComponent.type).toBe("array");
+    expect(Array.isArray(tableComponent.rows)).toBe(true);
   });
 });
