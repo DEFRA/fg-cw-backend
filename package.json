@@ -18,7 +18,7 @@
     "test:integration:workflows": "vitest --config test/vitest.config.js test/integration/workflows --run",
     "test:report": "npm run test:unit -- --run && npm run test:integration:report",
     "test:report:custom": "node scripts/generate-test-report.js",
-    "dev": "node --env-file .env src/main.js",
+    "dev": "nodemon --env-file .env src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
     "publish:case:agreement": "node scripts/publish-case-agreement-update-command.js",
