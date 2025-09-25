@@ -18,7 +18,7 @@ export const createListComponent = ({ id, obj }) => {
 
   return {
     id,
-    component: "list",
+    component: "summary-list",
     title: camelCaseToTitleCase(id),
     type: "object",
     rows,

@@ -85,6 +85,44 @@ describe("resolveJSONPath", () => {
       });
       expect(result).toBe("plain string");
     });
+
+    it("should resolve embedded JSON paths in strings", () => {
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path: "Parcel ID: $.caseRef $.payload.answers.scheme checks",
+      });
+      expect(result).toBe("Parcel ID: REF-001 SFI checks");
+    });
+
+    it("should handle mixed embedded paths and literal escapes", () => {
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path: "Status: $.caseRef (format: \\$.literal)",
+      });
+      expect(result).toBe("Status: REF-001 (format: $.literal)");
+    });
+
+    it("should handle multiple embedded row references", () => {
+      const row = { id: "row-1", name: "Row Name", status: "active" };
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path: "Row @.id has name @.name with status @.status",
+        row,
+      });
+      expect(result).toBe("Row row-1 has name Row Name with status active");
+    });
+
+    it("should resolve your specific example", () => {
+      const mockRootWithStatus = {
+        ...mockRoot,
+        status: "active",
+      };
+      const result = resolveJSONPath({
+        root: mockRootWithStatus,
+        path: "Parcel ID: $.caseRef $.status checks",
+      });
+      expect(result).toBe("Parcel ID: REF-001 active checks");
+    });
   });
 
   describe("array path resolution", () => {
@@ -97,7 +135,7 @@ describe("resolveJSONPath", () => {
     it("should handle nested arrays", () => {
       const path = [["$.caseRef", "$.payload.answers.scheme"], "plain text"];
       const result = resolveJSONPath({ root: mockRoot, path });
-      expect(result).toEqual([["REF-001", "SFI"], "plain text"]);
+      expect(result).toEqual(["REF-001", "SFI", "plain text"]);
     });
   });
 
@@ -300,6 +338,68 @@ describe("resolveJSONPath", () => {
           ],
         ],
       });
+    });
+  });
+
+  describe("repeatable section resolution", () => {
+    const mockRootWithParcels = {
+      ...mockRoot,
+      parcels: [
+        { id: "P001", status: "active", area: 12.5 },
+        { id: "P002", status: "pending", area: 8.3 },
+      ],
+    };
+
+    it("should resolve repeatable sections with rowsRef and items", () => {
+      const path = {
+        component: "repeatable",
+        title: "Parcel List",
+        rowsRef: "$.parcels[*]",
+        items: [
+          {
+            text: "Parcel ID: @.id has status @.status",
+            component: "text",
+          },
+          {
+            text: "Area: @.area hectares",
+            component: "text",
+          },
+        ],
+      };
+      const result = resolveJSONPath({ root: mockRootWithParcels, path });
+
+      expect(result).toEqual([
+        { text: "Parcel ID: P001 has status active", component: "text" },
+        { text: "Area: 12.5 hectares", component: "text" },
+        { text: "Parcel ID: P002 has status pending", component: "text" },
+        { text: "Area: 8.3 hectares", component: "text" },
+      ]);
+    });
+
+    it("should handle repeatable sections with single item template", () => {
+      const path = {
+        component: "container",
+        classes: "parcel-list",
+        rowsRef: "$.parcels[*]",
+        items: [
+          {
+            text: "Parcel @.id: @.status (@.area ha)",
+            classes: "govuk-body govuk-!-font-weight-bold",
+          },
+        ],
+      };
+      const result = resolveJSONPath({ root: mockRootWithParcels, path });
+
+      expect(result).toEqual([
+        {
+          text: "Parcel P001: active (12.5 ha)",
+          classes: "govuk-body govuk-!-font-weight-bold",
+        },
+        {
+          text: "Parcel P002: pending (8.3 ha)",
+          classes: "govuk-body govuk-!-font-weight-bold",
+        },
+      ]);
     });
   });
 
