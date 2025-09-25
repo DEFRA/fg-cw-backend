@@ -2,15 +2,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createWorkflow } from "../../helpers/workflows.js";
 import { wreck } from "../../helpers/wreck.js";
 
@@ -22,11 +14,6 @@ beforeAll(async () => {
   users = client.db().collection("users");
   cases = client.db().collection("cases");
   workflows = client.db().collection("workflows");
-  // Note: roles collection not needed for current workflow tests
-
-  // Ensure we have a workflow for testing
-  await workflows.deleteMany({});
-  await createWorkflow();
 });
 
 afterAll(async () => {
@@ -37,20 +24,12 @@ describe("End-to-End Workflow Integration Tests", () => {
   let testData = {};
 
   beforeEach(async () => {
-    // Clean up test data
-    await users.deleteMany({ email: { $regex: "^e2e-test-" } });
-    await cases.deleteMany({ caseRef: { $regex: "^E2E-TEST-" } });
+    await createWorkflow();
 
     testData = {
       clientRef: `E2E-TEST-${Date.now()}`,
       timestamp: new Date().toISOString(),
     };
-  });
-
-  afterEach(async () => {
-    // Clean up after each test
-    await users.deleteMany({ email: { $regex: "^e2e-test-" } });
-    await cases.deleteMany({ caseRef: { $regex: "^E2E-TEST-" } });
   });
 
   it("should complete full case workflow from creation to completion", async () => {
