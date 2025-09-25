@@ -1,8 +1,8 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 
 /**
- *  call npm run publish:case:agreement to publish agreement command
- *  you can add your own caseRef npm run publish:case:agreement <CASE_REF> <WORKFLOW_CODE>
+ *  call npm run publish:case:status:update to update status of a case
+ *  you can add your own caseRef npm run publish:case:status:update <CASE_REF> <WORKFLOW_CODE>
  *  optionally you can set the status also to OFFERED, OFFER_ACCEPTED, OFFER_WITHDRAWN
  */
 
@@ -23,7 +23,7 @@ const message = {
   time: "2025-03-28T11:30:52.000Z",
   source: "fg-gas-backend",
   specversion: "1.0",
-  type: "cloud.defra.development.fg-gas-backend.application.agreement",
+  type: "cloud.defra.development.fg-gas-backend.case.update.status",
   datacontenttype: "application/json",
   data: {
     caseRef: "APPLICATION-PMF-001",
@@ -44,7 +44,6 @@ const message = {
 
 console.log("Sending message to SQS queue:", queueUrl);
 
-// customise clientRef
 if (process.argv.length === 4) {
   console.log(
     "Sending sqs case for " + process.argv[2] + " " + process.argv[3],

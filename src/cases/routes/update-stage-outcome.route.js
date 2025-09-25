@@ -2,7 +2,6 @@ import Joi from "joi";
 import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { updateStageOutcomeRequestSchema } from "../schemas/requests/update-stage-outcome-request.schema.js";
-import { updateCaseStatusUseCase } from "../use-cases/update-case-status.use-case.js";
 import { updateStageOutcomeUseCase } from "../use-cases/update-stage-outcome.use-case.js";
 
 export const updateStageOutcomeRoute = {
@@ -27,11 +26,11 @@ export const updateStageOutcomeRoute = {
     const { caseId } = request.params;
     const { actionId, comment } = request.payload;
 
-    await updateStageOutcomeUseCase({ caseId, actionId, comment });
-
-    if (actionId === "approve") {
-      await updateCaseStatusUseCase({ caseId, status: "APPROVED" });
-    }
+    await updateStageOutcomeUseCase({
+      caseId,
+      actionId,
+      comment,
+    });
 
     return h.response().code(HttpCodes.NoContent);
   },

@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { MongoClient } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
@@ -20,7 +19,6 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   db = client.db();
   cases = db.collection("cases");
-  // Note: workflows collection not needed for current event tests
 });
 
 afterAll(async () => {

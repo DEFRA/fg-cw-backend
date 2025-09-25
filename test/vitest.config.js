@@ -6,18 +6,17 @@ const MONGO_PORT = 27018;
 const LOCALSTACK_PORT = 4567;
 const ENTRA_PORT = 3011;
 
+const SQS_URL = `http://sqs.eu-west-2.127.0.0.1:${LOCALSTACK_PORT}/000000000000`;
+
 // eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
   test: {
     globalSetup: "./test/setup.js",
+    setupFiles: ["./test/cleanup.js"],
     sequence: {
       concurrent: false,
     },
     fileParallelism: false,
-    reporters: ["default", "html"],
-    outputFile: {
-      html: "./test/reports/index.html",
-    },
     env: {
       CW_PORT,
       MONGO_PORT,
@@ -29,12 +28,12 @@ export default defineConfig({
       AWS_ENDPOINT_URL: `http://localhost:${LOCALSTACK_PORT}`,
       AWS_ACCESS_KEY_ID: "test",
       AWS_SECRET_ACCESS_KEY: "test",
-      CREATE_NEW_CASE_SQS_URL: `http://sqs.eu-west-2.127.0.0.1:${LOCALSTACK_PORT}/000000000000/cw__sqs__create_new_case`,
+      CW__SQS__CREATE_NEW_CASE_URL: `${SQS_URL}/cw__sqs__create_new_case`,
       OIDC_JWKS_URI: `http://localhost:${ENTRA_PORT}/jwks`,
       OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",
       OIDC_SIGN_TOKEN_ENDPOINT: `http://localhost:${ENTRA_PORT}/sign`,
     },
-    hookTimeout: 120000,
+    hookTimeout: 30000,
   },
 });
