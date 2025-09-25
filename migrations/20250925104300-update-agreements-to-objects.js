@@ -1,6 +1,6 @@
 export const up = async (db) => {
   db.collection("workflows").updateMany(
-    { workflowCode: { $in: ["pigs-might-fly", "frps-private-beta"] } },
+    { code: { $in: ["pigs-might-fly", "frps-private-beta"] } },
     [
       {
         $set: {
