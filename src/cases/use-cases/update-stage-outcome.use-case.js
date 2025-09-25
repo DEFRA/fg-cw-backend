@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
+import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -24,7 +24,6 @@ export const updateStageOutcomeUseCase = async ({
     comment,
   });
 
-  const previousStage = kase.currentStage;
   kase.updateStageOutcome({
     actionId,
     comment,
@@ -33,9 +32,11 @@ export const updateStageOutcomeUseCase = async ({
 
   await update(kase);
 
-  await publishCaseStageUpdated({
+  // TODO: publish correct currentStatus based on state machine transitions
+  await publishCaseStatusUpdated({
     caseRef: kase.caseRef,
-    previousStage,
-    currentStage: kase.currentStage,
+    workflowCode: kase.workflowCode,
+    previousStatus: "not-implemented",
+    currentStatus: actionId === "approve" ? "APPROVED" : "not-implemented",
   });
 };
