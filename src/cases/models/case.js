@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { Agreement, toAgreements } from "./agreement.js";
+import { toAgreements } from "./agreement.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { toTasks } from "./task.js";
@@ -131,31 +131,17 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  addDataToStage(stageData) {
-    const { stage, targetNode, data } = stageData;
-    this.stages
-      .find((s) => {
-        return s.id === stage;
-      })
-      [targetNode].push(data);
+  getAgreement(agreementRef) {
+    return this.supplementaryData.agreements[agreementRef];
   }
 
-  addAgreementData({ agreementData, newStatus }) {
-    this.updateStatus(newStatus, null);
-    const agreements = this.supplementaryData.agreements;
-    const { agreementStatus, createdAt, agreementRef } = agreementData.data;
-
-    if (agreements[agreementRef]) {
-      const agreement = agreements[agreementRef];
-      agreement.addHistoryEntry({ agreementStatus, createdAt });
-    } else {
-      const agreement = Agreement.new({
-        agreementRef,
-        agreementStatus,
-        date: createdAt,
-      });
-      agreements[agreementRef] = agreement;
+  addAgreement(agreement) {
+    if (this.supplementaryData.agreements[agreement.agreementRef]) {
+      throw Boom.conflict(
+        `Agreement "${agreement.agreementRef}" already exists on case "${this.caseRef}"`,
+      );
     }
+    this.supplementaryData.agreements[agreement.agreementRef] = agreement;
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {

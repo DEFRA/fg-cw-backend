@@ -337,79 +337,21 @@ describe("Case", () => {
     });
   });
 
-  describe("addAgreementData", () => {
+  describe("addAgreement", () => {
     it("should add a new agreement to supplementaryData", () => {
       const createdAt = new Date().toISOString();
       const kase = Case.createMock();
-      const agreementData = {
-        data: {
-          agreementStatus: "OFFERED",
-          agreementRef: "ref-1",
-          createdAt,
-        },
-      };
-      kase.addAgreementData({ agreementData, newStatus: "OFFERED" });
-      expect(kase.status).toBe("OFFERED");
+      const agreement = Agreement.new({
+        agreementStatus: "OFFERED",
+        agreementRef: "ref-1",
+        date: createdAt,
+      });
+      kase.addAgreement(agreement);
       expect(kase.supplementaryData.agreements["ref-1"]).toBeInstanceOf(
         Agreement,
       );
       expect(kase.supplementaryData.agreements["ref-1"].history).toHaveLength(
         1,
-      );
-    });
-
-    it("should add history to an existing agreement", () => {
-      const createdAt = new Date().toISOString();
-      const kase = Case.createMock({
-        supplementaryData: {
-          agreements: {
-            "ref-1": Agreement.new({
-              agreementRef: "ref-1",
-              date: new Date().toISOString(),
-            }),
-          },
-        },
-      });
-
-      const agreementData = {
-        data: {
-          agreementStatus: "ACCEPTED",
-          agreementRef: "ref-1",
-          createdAt,
-        },
-      };
-      kase.addAgreementData({ agreementData, newStatus: "ACCEPTED" });
-      expect(kase.status).toBe("ACCEPTED");
-      expect(kase.supplementaryData.agreements["ref-1"].history).toHaveLength(
-        2,
-      );
-      expect(kase.supplementaryData.agreements["ref-1"].latestStatus).toBe(
-        "ACCEPTED",
-      );
-    });
-  });
-
-  describe("addDataToStage", () => {
-    it("should set stage data", () => {
-      const data = {
-        phase: "PRE_AWARD",
-        stage: "award",
-        targetNode: "agreements",
-        data: {
-          agreementRef: "AGREEMENT-REF-123",
-          createdAt: "2023-10-01T12:00:00Z",
-          agreementStatus: "OFFERED",
-        },
-      };
-
-      const kase = Case.createMock();
-      kase.stages.push({
-        id: "award",
-        agreements: [],
-      });
-      kase.addDataToStage(data);
-      expect(kase.stages.find((s) => s.id === "award").agreements[0]).toEqual(
-        data.data,
       );
     });
   });
