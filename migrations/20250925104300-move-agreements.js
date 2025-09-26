@@ -34,9 +34,7 @@ export const up = async (db) => {
     { workflowCode: { $in: ["pigs-might-fly", "frps-private-beta"] } },
     {
       $set: {
-        supplementaryData: {
-          agreements: {},
-        },
+        supplementaryData: {},
       },
     },
   );
@@ -71,27 +69,8 @@ export const up = async (db) => {
                             0,
                           ],
                         },
-                        {
-                          $arrayToObject: {
-                            $map: {
-                              input: { $ifNull: ["$$award.agreements", []] },
-                              as: "a",
-                              in: {
-                                k: "$$a.agreementRef",
-                                v: {
-                                  $arrayToObject: {
-                                    $filter: {
-                                      input: { $objectToArray: "$$a" },
-                                      as: "kv",
-                                      cond: { $ne: ["$$kv.k", "agreementRef"] },
-                                    },
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                        {},
+                        "$$award.agreements",
+                        null,
                       ],
                     },
                   },
@@ -132,77 +111,31 @@ export const up = async (db) => {
 
 export const down = async (db) => {
   db.collection("cases").updateMany(
-    { workflowCode: { $in: ["pigs-might-fly", "frps-private-beta"] } },
+    { workflowCode: "pigs-might-fly", "stages.id": "award" },
     [
       {
         $set: {
-          _agreementsFromSupp: {
-            $map: {
-              input: {
-                $objectToArray: {
-                  $ifNull: ["$supplementaryData.agreements", {}],
-                },
-              },
-              as: "agr",
-              in: {
-                $mergeObjects: [{ agreementRef: "$$agr.k" }, "$$agr.v"],
-              },
-            },
-          },
-        },
-      },
-      {
-        $set: {
           stages: {
-            $let: {
-              vars: {
-                hasAward: {
-                  $gt: [
-                    {
-                      $size: {
-                        $filter: {
-                          input: "$stages",
-                          as: "stage",
-                          cond: { $eq: ["$$stage.id", "award"] },
-                        },
-                      },
-                    },
-                    0,
-                  ],
-                },
-              },
+            $map: {
+              input: "$stages",
+              as: "stage",
               in: {
                 $cond: [
-                  "$$hasAward",
+                  { $eq: ["$$stage.id", "award"] },
                   {
-                    $map: {
-                      input: "$stages",
-                      as: "stage",
-                      in: {
-                        $cond: [
-                          { $eq: ["$$stage.id", "award"] },
-                          {
-                            $mergeObjects: [
-                              "$$stage",
-                              { agreements: "$_agreementsFromSupp" },
-                            ],
-                          },
-                          "$$stage",
-                        ],
-                      },
-                    },
+                    $mergeObjects: [
+                      "$$stage",
+                      { agreements: "$supplementaryData.agreements" },
+                    ],
                   },
-                  {},
+                  "$$stage",
                 ],
               },
             },
           },
         },
       },
-      {
-        $unset: "supplementaryData",
-      },
-      { $unset: "_agreementsFromSupp" },
+      { $unset: "supplementaryData.agreements" },
     ],
   );
 };
