@@ -69,9 +69,7 @@ export const caseData1 = {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
   },
-  supplementaryData: {
-    agreements: [],
-  },
+  supplementaryData: {},
 };
 
 export const caseData2 = {
@@ -145,9 +143,7 @@ export const caseData2 = {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
   },
-  supplementaryData: {
-    agreements: [],
-  },
+  supplementaryData: {},
 };
 
 export const caseData3Document = {
@@ -216,7 +212,5 @@ export const caseData3Document = {
   ],
   comments: [],
   assignedUserId: null,
-  supplementaryData: {
-    agreements: [],
-  },
+  supplementaryData: {},
 };

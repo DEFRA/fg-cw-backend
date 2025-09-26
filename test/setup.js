@@ -12,6 +12,7 @@ export const setup = async ({ globalConfig }) => {
     composeFilePath,
     "compose.yml",
   )
+    .withBuild()
     .withEnvironment({
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
