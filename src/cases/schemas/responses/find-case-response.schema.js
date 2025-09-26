@@ -38,10 +38,6 @@ export const agreementSchema = Joi.object({
   createdAt: Joi.date().iso(),
 }).label("Agreement");
 
-export const supplementaryDataSchema = Joi.object({
-  agreements: Joi.array().items(agreementSchema),
-});
-
 export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
@@ -64,7 +60,7 @@ export const findCaseResponseSchema = Joi.object({
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
   requiredRoles: requiredRolesSchema.required(),
-  supplementaryData: supplementaryDataSchema,
+  supplementaryData: Joi.object(),
 })
   .options({
     presence: "required",

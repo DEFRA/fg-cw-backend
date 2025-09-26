@@ -28,7 +28,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
-    this.supplementaryData = props.supplementaryData;
+    this.supplementaryData = props.supplementaryData || {};
   }
 
   get objectId() {
@@ -292,6 +292,7 @@ export class Case {
       dateReceived: new Date().toISOString(),
       currentStage: workflow.stages[0].id,
       payload,
+      supplementaryData: {},
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
         taskGroups: stage.taskGroups.map((taskGroup) => ({

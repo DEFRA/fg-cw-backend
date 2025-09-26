@@ -43,7 +43,6 @@ describe("On CreateNewCase event", () => {
             },
           },
         ],
-        supplementaryData: { agreements: {} },
       },
     ];
 
