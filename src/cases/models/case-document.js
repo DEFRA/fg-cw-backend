@@ -53,6 +53,7 @@ export class CaseDocument {
       caseRef: "case-ref",
       status: "NEW",
       dateReceived: "2025-01-01T00:00:00.000Z",
+      supplementaryData: {},
       payload: {},
       currentStage: "stage-1",
       stages: [

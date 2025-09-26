@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { Agreement } from "../models/agreement.js";
 import { Case } from "../models/case.js";
 import {
   findByCaseRefAndWorkflowCode,
@@ -48,45 +47,8 @@ describe("save case agreement use case", () => {
       data.caseRef,
       data.workflowCode,
     );
-    expect(caseAgreements["0987GHYU"].latestStatus).toBe("OFFERED");
-    expect(caseAgreements["0987GHYU"].history).toHaveLength(1);
-    expect(update).toHaveBeenCalledWith(kase);
-    expect(returnvalue).toBe(kase);
-  });
-
-  it("should add agreement data to existing agreement", async () => {
-    const data = {
-      caseRef: "ABCD1234",
-      workflowCode: "workflow-1",
-      newStatus: "OFFER_WITHDRAWN",
-      supplementaryData: {
-        phase: null,
-        stage: null,
-        targetNode: "agreements",
-        data: {
-          agreementRef: "agreement-1",
-          agreementStatus: "WITHDRAWN",
-        },
-      },
-    };
-    const kase = Case.createMock();
-    const agreement = Agreement.new({
-      agreementRef: "agreement-1",
-      agreementStatus: "OFFERED",
-      date: new Date().toISOString(),
-    });
-    kase.supplementaryData.agreements["agreement-1"] = agreement;
-
-    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateAgreementDataUseCase(data);
-
-    const caseAgreements = kase.supplementaryData.agreements;
-    expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
-      data.caseRef,
-      data.workflowCode,
-    );
-    expect(caseAgreements["agreement-1"].latestStatus).toBe("WITHDRAWN");
-    expect(caseAgreements["agreement-1"].history).toHaveLength(2);
+    expect(caseAgreements[0].agreementStatus).toBe("OFFERED");
+    expect(caseAgreements[0].agreementRef).toBe("0987GHYU");
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnvalue).toBe(kase);
   });

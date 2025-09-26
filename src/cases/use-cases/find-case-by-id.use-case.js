@@ -22,22 +22,6 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-export const processAgreementsAsArray = (agreements) => {
-  const agreementsArray = Object.keys(agreements).reduce((a, agreementRef) => {
-    const agreement = agreements[agreementRef];
-    a = a.concat(
-      agreement.history.map((item) => ({
-        ...item,
-        agreementRef,
-      })),
-    );
-
-    return a;
-  }, []);
-
-  return agreementsArray;
-};
-
 export const findCaseByIdUseCase = async (caseId) => {
   const kase = await findById(caseId);
 
@@ -92,9 +76,6 @@ export const findCaseByIdUseCase = async (caseId) => {
     tl.description = formatTimelineItemDescription(tl, workflow);
     return tl;
   });
-
-  const agreements = kase.supplementaryData.agreements;
-  kase.supplementaryData.agreements = processAgreementsAsArray(agreements);
 
   return kase;
 };

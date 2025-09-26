@@ -9,42 +9,12 @@ import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
-  processAgreementsAsArray,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
-
-describe("processAgreementsAsArray", () => {
-  it("should return empty array if no agreements are set", () => {
-    expect(processAgreementsAsArray({})).toHaveLength(0);
-  });
-
-  it("should return agreemnts as an array", () => {
-    const agreements = {
-      "agreement-ref-1": {
-        latestStatus: "ACCEPTED",
-        updatedAt: new Date().toISOString(),
-        history: [
-          {
-            createdAt: new Date().toISOString(),
-            agreementStatus: "OFFERED",
-          },
-          {
-            createdAt: new Date().toISOString(),
-            agreementStatus: "ACCEPTED",
-          },
-        ],
-      },
-    };
-    const results = processAgreementsAsArray(agreements);
-    expect(results).toHaveLength(2);
-    expect(results[0].agreementStatus).toBe("OFFERED");
-    expect(results[1].agreementStatus).toBe("ACCEPTED");
-  });
-});
 
 describe("formatTimelineItemDescription", () => {
   it("formats task completed", () => {

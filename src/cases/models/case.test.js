@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Agreement } from "./agreement.js";
 import { Case } from "./case.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
@@ -337,22 +336,17 @@ describe("Case", () => {
     });
   });
 
-  describe("addAgreement", () => {
+  describe("addSupplementaryData", () => {
     it("should add a new agreement to supplementaryData", () => {
       const createdAt = new Date().toISOString();
       const kase = Case.createMock();
-      const agreement = Agreement.new({
+      const agreement = {
         agreementStatus: "OFFERED",
         agreementRef: "ref-1",
-        date: createdAt,
-      });
-      kase.addAgreement(agreement);
-      expect(kase.supplementaryData.agreements["ref-1"]).toBeInstanceOf(
-        Agreement,
-      );
-      expect(kase.supplementaryData.agreements["ref-1"].history).toHaveLength(
-        1,
-      );
+        createdAt,
+      };
+      kase.addSupplementaryData("agreements", agreement);
+      expect(kase.supplementaryData.agreements[0]).toBe(agreement);
     });
   });
 

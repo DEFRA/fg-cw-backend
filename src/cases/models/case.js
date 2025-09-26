@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { toAgreements } from "./agreement.js";
 import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { toTasks } from "./task.js";
@@ -9,11 +8,6 @@ import {
   TimelineEvent,
   toTimelineEvents,
 } from "./timeline-event.js";
-
-const processSupplementaryData = (data) => ({
-  ...data,
-  agreements: toAgreements(data?.agreements || {}),
-});
 
 export class Case {
   constructor(props) {
@@ -34,7 +28,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
-    this.supplementaryData = processSupplementaryData(props.supplementaryData);
+    this.supplementaryData = props.supplementaryData;
   }
 
   get objectId() {
@@ -131,17 +125,20 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  getAgreement(agreementRef) {
-    return this.supplementaryData.agreements[agreementRef];
-  }
-
-  addAgreement(agreement) {
-    if (this.supplementaryData.agreements[agreement.agreementRef]) {
-      throw Boom.conflict(
-        `Agreement "${agreement.agreementRef}" already exists on case "${this.caseRef}"`,
-      );
+  /*
+    if we don't know what the data is... how do we set it on supplementaryData
+    if agreements is an array - if we want to push to it, we need to know it's an array
+  */
+  addSupplementaryData(key, data) {
+    if (key === "agreements") {
+      if (this.supplementaryData.agreements) {
+        this.supplementaryData.agreements.push(data);
+      } else {
+        this.supplementaryData.agreements = [data];
+      }
+    } else {
+      this.supplementaryData[key] = data;
     }
-    this.supplementaryData.agreements[agreement.agreementRef] = agreement;
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
@@ -326,9 +323,7 @@ export class Case {
       dateReceived: "2025-01-01T00:00:00.000Z",
       currentStage: "stage-1",
       payload: {},
-      supplementaryData: {
-        agreements: {},
-      },
+      supplementaryData: {},
       stages: [
         {
           id: "stage-1",

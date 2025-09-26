@@ -1,7 +1,6 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
-import { processAgreementsAsArray } from "./find-case-by-id.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
@@ -80,10 +79,6 @@ export const findCasesUseCase = async () => {
         kase.assignedUser.name = assignedUser.name;
       }
       kase.timeline = mapTimeline(kase.timeline);
-
-      kase.supplementaryData.agreements = processAgreementsAsArray(
-        kase.supplementaryData.agreements,
-      );
 
       acc.push(kase);
     }

@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { Agreement } from "../models/agreement.js";
 import {
   findByCaseRefAndWorkflowCode,
   update,
@@ -21,20 +20,8 @@ export const updateAgreementDataUseCase = async ({
 
   kase.updateStatus(newStatus, null);
 
-  const { agreementRef, agreementStatus, createdAt } = supplementaryData.data;
-
-  const agreement = kase.getAgreement(agreementRef);
-
-  if (agreement) {
-    agreement.addHistoryEntry({ agreementStatus, createdAt });
-  } else {
-    const newAgreement = Agreement.new({
-      agreementRef,
-      agreementStatus,
-      date: createdAt,
-    });
-    kase.addAgreement(newAgreement);
-  }
+  const { targetNode, data } = supplementaryData;
+  kase.addSupplementaryData(targetNode, data);
 
   await update(kase);
 
