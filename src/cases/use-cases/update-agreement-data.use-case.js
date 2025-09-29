@@ -21,7 +21,9 @@ export const updateAgreementDataUseCase = async ({
   kase.updateStatus(newStatus, null);
 
   const { targetNode, data } = supplementaryData;
-  kase.addSupplementaryData(targetNode, data);
+  const agreements = kase.supplementaryData.agreements || [];
+  agreements.push(data);
+  kase.addSupplementaryData(targetNode, agreements);
 
   await update(kase);
 

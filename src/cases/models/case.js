@@ -125,20 +125,8 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  /*
-    if we don't know what the data is... how do we set it on supplementaryData
-    if agreements is an array - if we want to push to it, we need to know it's an array
-  */
   addSupplementaryData(key, data) {
-    if (key === "agreements") {
-      if (this.supplementaryData.agreements) {
-        this.supplementaryData.agreements.push(data);
-      } else {
-        this.supplementaryData.agreements = [data];
-      }
-    } else {
-      this.supplementaryData[key] = data;
-    }
+    this.supplementaryData[key] = data;
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {

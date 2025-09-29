@@ -345,7 +345,7 @@ describe("Case", () => {
         agreementRef: "ref-1",
         createdAt,
       };
-      kase.addSupplementaryData("agreements", agreement);
+      kase.addSupplementaryData("agreements", [agreement]);
       expect(kase.supplementaryData.agreements[0]).toBe(agreement);
     });
   });

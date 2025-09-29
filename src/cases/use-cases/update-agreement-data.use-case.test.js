@@ -52,4 +52,43 @@ describe("save case agreement use case", () => {
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnvalue).toBe(kase);
   });
+
+  it("should push agreement data to case and call update", async () => {
+    const data = {
+      caseRef: "ABCD1234",
+      workflowCode: "workflow-1",
+      newStatus: "REVIEW",
+      supplementaryData: {
+        phase: null,
+        stage: null,
+        targetNode: "agreements",
+        data: {
+          agreementRef: "0987GHYU",
+          agreementStatus: "ACCEPTED",
+        },
+      },
+    };
+    const kase = Case.createMock();
+    kase.supplementaryData = {
+      agreements: [
+        {
+          agreementRef: "agreement-1",
+          agreementStatus: "OFFERED",
+        },
+      ],
+    };
+
+    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    const returnvalue = await updateAgreementDataUseCase(data);
+
+    const caseAgreements = kase.supplementaryData.agreements;
+    expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
+      data.caseRef,
+      data.workflowCode,
+    );
+    expect(caseAgreements[1].agreementStatus).toBe("ACCEPTED");
+    expect(caseAgreements[1].agreementRef).toBe("0987GHYU");
+    expect(update).toHaveBeenCalledWith(kase);
+    expect(returnvalue).toBe(kase);
+  });
 });
