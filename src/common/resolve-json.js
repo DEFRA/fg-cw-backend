@@ -18,48 +18,18 @@ export const resolveJSONPath = ({ root, path, row }) => {
   return path;
 };
 
-// eslint-disable-next-line complexity
 const resolveJSONString = ({ path, root, row }) => {
-  if (isLiteralRef(path) && !isRef(path)) {
-    return path.replace(/\\(\$\.|@\.)/g, "$1");
+  if (isLiteralRef(path)) {
+    return path.slice(1);
   }
   if (isRef(path)) {
-    if (isRootRef(path) || isRowRef(path)) {
-      return jp({ root, path, row });
-    }
-    return path.replace(
-      /(\\?)(\$\.[a-zA-Z_][a-zA-Z0-9_.[\]]*|@\.[a-zA-Z_][a-zA-Z0-9_.[\]]*)/g,
-      (match, escape, jsonPath) => {
-        if (escape) {
-          return jsonPath;
-        }
-        const resolved = jp({ root, path: jsonPath, row });
-        return resolved || match;
-      },
-    );
+    return jp({ root, path, row });
   }
   return path;
 };
 
-const resolveJSONArray = ({ path, root, row }) => {
-  const resolved = path.map((item) =>
-    resolveJSONPath({ root, path: item, row }),
-  );
-
-  // Recursively flatten nested arrays from repeatable components
-  const flattenDeep = (arr) => {
-    return arr.reduce((acc, val) => {
-      if (Array.isArray(val)) {
-        acc.push(...flattenDeep(val));
-      } else {
-        acc.push(val);
-      }
-      return acc;
-    }, []);
-  };
-
-  return flattenDeep(resolved);
-};
+const resolveJSONArray = ({ path, root, row }) =>
+  path.map((item) => resolveJSONPath({ root, path: item, row }));
 
 const resolveJSONObject = ({ path, root, row }) => {
   const specialCase = handleSpecialCases({ path, root, row });
@@ -71,13 +41,9 @@ const resolveJSONObject = ({ path, root, row }) => {
   return applyFormatsRecursively(resolved);
 };
 
-// eslint-disable-next-line complexity
 const handleSpecialCases = ({ path, root, row }) => {
   if (path.rowsRef && path.rows) {
     return resolveTableSection({ path, root, row });
-  }
-  if (path.rowsRef && path.items) {
-    return resolveRepeatableSection({ path, root, row });
   }
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
@@ -148,46 +114,16 @@ const resolveTableSection = ({ path, root, row }) => {
   return resolvedSection;
 };
 
-const resolveRepeatableSection = ({ path, root, row }) => {
-  const { rowsRef, items } = path;
-
-  let dataRows;
-  if (rowsRef.startsWith("@.")) {
-    // Handle row references - use current row context
-    if (!row) {
-      return []; // No row context = return empty array
-    }
-    const jsonPath = "$." + rowsRef.slice(2); // Convert @.actions[*] to $.actions[*]
-    dataRows = JSONPath({ json: row, path: jsonPath });
-  } else {
-    // Handle root references
-    dataRows = JSONPath({ json: root, path: rowsRef });
-  }
-
-  // Return flattened array of resolved items
-  return dataRows.flatMap((rowItem) => {
-    return items.map((item) =>
-      resolveJSONPath({ root, path: item, row: rowItem }),
-    );
-  });
-};
-
-const isRef = (path) => {
-  if (typeof path !== "string") return false;
-  return /(?<!\\)(\$\.|@\.)/.test(path);
-};
-
+const isRef = (path) => isRootRef(path) || isRowRef(path);
 const isRootRef = (path) => typeof path === "string" && path.startsWith("$.");
 const isRowRef = (path) => typeof path === "string" && path.startsWith("@.");
-
-const isLiteralRef = (path) => {
-  if (typeof path !== "string") return false;
-  return /\\(\$\.|@\.)/.test(path);
-};
+const isLiteralRef = (path) =>
+  typeof path === "string" &&
+  (path.startsWith("\\$.") || path.startsWith("\\@."));
 
 // Return a single value for a JSONPath (first match or empty string).
 export const jp = ({ root, path, row }) => {
-  const out = evalPath({ root, path, row }) || [];
+  const out = evalPath({ root, path, row });
   return out.length ? out[0] : "";
 };
 

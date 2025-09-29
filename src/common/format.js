@@ -17,12 +17,6 @@ export const formatFunctions = {
     (typeof value === "string" && value.toLowerCase() === "true")
       ? "Yes"
       : "No",
-  boolean: (value, trueLabel = "Yes", falseLabel = "No") => {
-    const truthy =
-      value === true ||
-      (typeof value === "string" && value.toLowerCase() === "true");
-    return truthy ? trueLabel : falseLabel;
-  },
 };
 
 export const parseFormatString = (formatString) => {
