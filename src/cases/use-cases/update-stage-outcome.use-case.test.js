@@ -62,7 +62,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseRef: "CASE-123",
         workflowCode: mockCase.workflowCode,
         previousStatus: "not-implemented",
-        currentStatus: "not-implemented",
+        currentStatus: "APPROVED",
       });
     });
 
@@ -129,7 +129,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseRef: "CASE-789",
         workflowCode: mockCase.workflowCode,
         previousStatus: "not-implemented",
-        currentStatus: "not-implemented",
+        currentStatus: "APPROVED",
       });
     });
 

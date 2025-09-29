@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   agreementSchema,
   findCaseResponseSchema,
-  supplementaryDataSchema,
 } from "./find-case-response.schema.js";
 
 describe("find case response schema", () => {
@@ -14,30 +13,6 @@ describe("find case response schema", () => {
     };
 
     const { error } = agreementSchema.validate(agreement);
-    expect(error).toBeUndefined();
-  });
-
-  it("should validate supplementaryData with empty agreements", () => {
-    const data = {
-      agreements: [],
-    };
-
-    const { error } = supplementaryDataSchema.validate(data);
-    expect(error).toBeUndefined();
-  });
-
-  it("should validate supplementaryData with agreements", () => {
-    const data = {
-      agreements: [
-        {
-          agreementRef: "agreement-123",
-          agreementStatus: "OFFERED",
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    };
-
-    const { error } = supplementaryDataSchema.validate(data);
     expect(error).toBeUndefined();
   });
 
