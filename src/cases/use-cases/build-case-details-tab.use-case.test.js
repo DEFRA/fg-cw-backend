@@ -455,7 +455,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       (comp) => comp.id === "answers",
     );
     expect(answersComponent).toBeDefined();
-    expect(answersComponent.component).toBe("list");
+    expect(answersComponent.component).toBe("summary-list");
     expect(answersComponent.title).toBe("Answers");
     expect(answersComponent.type).toBe("object");
     expect(Array.isArray(answersComponent.rows)).toBe(true);
