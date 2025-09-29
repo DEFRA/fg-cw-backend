@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAuthenticatedUser } from "../../common/auth.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
-import { publishCaseStageUpdated } from "../publishers/case-event.publisher.js";
+import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { updateStageOutcomeUseCase } from "./update-stage-outcome.use-case.js";
@@ -42,7 +42,6 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 
@@ -59,10 +58,11 @@ describe("updateStageOutcomeUseCase", () => {
         createdBy: authenticatedUser.id,
       });
       expect(update).toHaveBeenCalledWith(mockCase);
-      expect(publishCaseStageUpdated).toHaveBeenCalledWith({
+      expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-123",
-        previousStage: "stage-1",
-        currentStage: mockCase.currentStage,
+        workflowCode: mockCase.workflowCode,
+        previousStatus: "not-implemented",
+        currentStatus: "not-implemented",
       });
     });
 
@@ -84,7 +84,6 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 
@@ -120,18 +119,17 @@ describe("updateStageOutcomeUseCase", () => {
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn(() => {
-        // Simulate stage progression
         mockCase.currentStage = newStage;
       });
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 
-      expect(publishCaseStageUpdated).toHaveBeenCalledWith({
+      expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
         caseRef: "CASE-789",
-        previousStage,
-        currentStage: newStage,
+        workflowCode: mockCase.workflowCode,
+        previousStatus: "not-implemented",
+        currentStatus: "not-implemented",
       });
     });
 
@@ -153,7 +151,6 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 
@@ -182,7 +179,7 @@ describe("updateStageOutcomeUseCase", () => {
       expect(findById).toHaveBeenCalledWith("non-existent-case-id");
       expect(findByCode).not.toHaveBeenCalled();
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStageUpdated).not.toHaveBeenCalled();
+      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
 
     it("throws error when workflow validation fails", async () => {
@@ -215,7 +212,7 @@ describe("updateStageOutcomeUseCase", () => {
         comment: "",
       });
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStageUpdated).not.toHaveBeenCalled();
+      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
 
     it("throws error when case update fails", async () => {
@@ -241,7 +238,7 @@ describe("updateStageOutcomeUseCase", () => {
       );
 
       expect(update).toHaveBeenCalledWith(mockCase);
-      expect(publishCaseStageUpdated).not.toHaveBeenCalled();
+      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
 
     it("throws error when publishing fails", async () => {
@@ -261,13 +258,13 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockRejectedValue(publishError);
+      publishCaseStatusUpdated.mockRejectedValue(publishError);
 
       await expect(updateStageOutcomeUseCase(command)).rejects.toThrow(
         publishError,
       );
 
-      expect(publishCaseStageUpdated).toHaveBeenCalled();
+      expect(publishCaseStatusUpdated).toHaveBeenCalled();
     });
 
     it("throws error when updateStageOutcome on case fails", async () => {
@@ -295,7 +292,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockCase.updateStageOutcome).toHaveBeenCalled();
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStageUpdated).not.toHaveBeenCalled();
+      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
   });
 
@@ -317,7 +314,6 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 
@@ -345,7 +341,6 @@ describe("updateStageOutcomeUseCase", () => {
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStageUpdated.mockResolvedValue();
 
       await updateStageOutcomeUseCase(command);
 

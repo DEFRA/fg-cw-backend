@@ -1,15 +1,7 @@
 import { MongoClient } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 let client;
 let db;
@@ -20,7 +12,6 @@ beforeAll(async () => {
   db = client.db();
   users = db.collection("users");
   cases = db.collection("cases");
-  // workflows = db.collection('workflows') // Unused in current tests
 });
 
 afterAll(async () => {
@@ -28,18 +19,6 @@ afterAll(async () => {
 });
 
 describe("Service Layer Integration Tests", () => {
-  beforeEach(async () => {
-    // Clean collections before each test
-    await users.deleteMany({ email: { $regex: "^test-service-" } });
-    await cases.deleteMany({ reference: { $regex: "^SVC-TEST-" } });
-  });
-
-  afterEach(async () => {
-    // Clean up after each test
-    await users.deleteMany({ email: { $regex: "^test-service-" } });
-    await cases.deleteMany({ reference: { $regex: "^SVC-TEST-" } });
-  });
-
   describe("User Service Integration", () => {
     it("should create user and persist to database correctly", async () => {
       // Test direct service integration, not HTTP
