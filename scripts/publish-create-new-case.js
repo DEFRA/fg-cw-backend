@@ -1,4 +1,5 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { randomUUID } from "node:crypto";
 
 /**
  *  call npm run publish:case:new to create a case for frps-private-beta
@@ -24,6 +25,7 @@ const message = {
   specversion: "1.0",
   type: "cloud.defra.development.fg-gas-backend.case.create",
   datacontenttype: "application/json",
+  traceparent: randomUUID(),
   data: {
     caseRef: Math.random().toString(30).substring(2, 9),
     workflowCode: "frps-private-beta",

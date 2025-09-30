@@ -8,6 +8,8 @@ export default defineConfig({
       OIDC_VERIFY_ISS: "https://sts.windows.net/common/",
       OIDC_VERIFY_AUD: "api://common",
       TZ: "Europe/London",
+      AWS_ACCESS_KEY_ID: "test",
+      AWS_SECRET_ACCESS_KEY: "test",
     },
     coverage: {
       reporter: ["text", "lcov", "html"],
