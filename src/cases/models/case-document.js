@@ -16,7 +16,6 @@ const mapTasksToStages = (kaseStages, tasks) => {
     return {
       id: s.id,
       outcome: s.outcome || null,
-      agreements: s.agreements || [],
       taskGroups: s.taskGroups.map((tg) => {
         return {
           id: tg.id,
@@ -54,6 +53,7 @@ export class CaseDocument {
       caseRef: "case-ref",
       status: "NEW",
       dateReceived: "2025-01-01T00:00:00.000Z",
+      supplementaryData: {},
       payload: {},
       currentStage: "stage-1",
       stages: [

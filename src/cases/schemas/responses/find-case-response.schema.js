@@ -30,15 +30,29 @@ export const CaseStage = Joi.object({
   })
     .optional()
     .allow(null),
-  agreements: Joi.array().optional().allow(null),
 }).label("CaseStage");
+
+export const agreementSchema = Joi.object({
+  agreementRef: Joi.string().pattern(/^[a-zA-Z0-9-]+$/),
+  agreementStatus: Joi.string().pattern(/^[A-Z_]+$/),
+  createdAt: Joi.date().iso(),
+}).label("Agreement");
 
 export const findCaseResponseSchema = Joi.object({
   _id: Joi.string().hex().length(24).required(),
   workflowCode: Joi.string().required(),
   caseRef: Joi.string().required(),
   status: Joi.string()
-    .valid("NEW", "IN PROGRESS", "APPROVED", "COMPLETED", "REVIEW")
+    .valid(
+      "NEW",
+      "IN PROGRESS",
+      "APPROVED",
+      "COMPLETED",
+      "REVIEW",
+      "OFFER_WITHDRAWN",
+      "OFFERED",
+      "OFFER_ACCEPTED",
+    )
     .required(),
   dateReceived: Joi.date().iso().required(),
   payload: Joi.object().required(),
@@ -46,6 +60,7 @@ export const findCaseResponseSchema = Joi.object({
   stages: Joi.array().items(CaseStage).required(),
   assignedUser: assignedUserSchema.allow(null),
   requiredRoles: requiredRolesSchema.required(),
+  supplementaryData: Joi.object(),
 })
   .options({
     presence: "required",

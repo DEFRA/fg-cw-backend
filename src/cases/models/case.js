@@ -28,7 +28,7 @@ export class Case {
     this.requiredRoles = props.requiredRoles;
 
     this.tasks = toTasks(this.stages);
-    this.supplementaryData = props.supplementaryData;
+    this.supplementaryData = props.supplementaryData || {};
   }
 
   get objectId() {
@@ -125,13 +125,8 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  addDataToStage(stageData) {
-    const { stage, targetNode, data } = stageData;
-    this.stages
-      .find((s) => {
-        return s.id === stage;
-      })
-      [targetNode].push(data);
+  addSupplementaryData(key, data) {
+    this.supplementaryData[key] = data;
   }
 
   updateStageOutcome({ actionId, comment, createdBy }) {
@@ -285,9 +280,9 @@ export class Case {
       dateReceived: new Date().toISOString(),
       currentStage: workflow.stages[0].id,
       payload,
+      supplementaryData: {},
       stages: workflow.stages.map((stage) => ({
         id: stage.id,
-        agreements: stage.agreements || null,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({
@@ -317,6 +312,7 @@ export class Case {
       dateReceived: "2025-01-01T00:00:00.000Z",
       currentStage: "stage-1",
       payload: {},
+      supplementaryData: {},
       stages: [
         {
           id: "stage-1",

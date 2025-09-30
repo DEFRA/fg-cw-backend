@@ -23,6 +23,7 @@ describe("findCaseByIdRoute", () => {
     const caseId = "60b8d295f1d2c916c8f0e6b7";
 
     const caseMock = Case.createMock();
+    caseMock.supplementaryData.agreements = [];
 
     findCaseByIdUseCase.mockResolvedValueOnce(caseMock);
 

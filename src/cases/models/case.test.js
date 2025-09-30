@@ -336,28 +336,17 @@ describe("Case", () => {
     });
   });
 
-  describe("addDataToStage", () => {
-    it("should set stage data", () => {
-      const data = {
-        phase: "PRE_AWARD",
-        stage: "award",
-        targetNode: "agreements",
-        data: {
-          agreementRef: "AGREEMENT-REF-123",
-          createdAt: "2023-10-01T12:00:00Z",
-          agreementStatus: "OFFERED",
-        },
-      };
-
+  describe("addSupplementaryData", () => {
+    it("should add a new agreement to supplementaryData", () => {
+      const createdAt = new Date().toISOString();
       const kase = Case.createMock();
-      kase.stages.push({
-        id: "award",
-        agreements: [],
-      });
-      kase.addDataToStage(data);
-      expect(kase.stages.find((s) => s.id === "award").agreements[0]).toEqual(
-        data.data,
-      );
+      const agreement = {
+        agreementStatus: "OFFERED",
+        agreementRef: "ref-1",
+        createdAt,
+      };
+      kase.addSupplementaryData("agreements", [agreement]);
+      expect(kase.supplementaryData.agreements[0]).toBe(agreement);
     });
   });
 

@@ -1,11 +1,10 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
 
-export const updateCaseStatusWithDataUseCase = async ({
+export const updateAgreementDataUseCase = async ({
   caseRef,
   workflowCode,
   newStatus,
@@ -18,10 +17,13 @@ export const updateCaseStatusWithDataUseCase = async ({
       `Case with caseRef "${caseRef}" and workflowCode "${workflowCode}" not found`,
     );
   }
-  const createdBy = getAuthenticatedUser().id;
 
-  kase.updateStatus(newStatus, createdBy);
-  kase.addDataToStage(supplementaryData);
+  kase.updateStatus(newStatus, null);
+
+  const { targetNode, data } = supplementaryData;
+  const agreements = kase.supplementaryData.agreements || [];
+  agreements.push(data);
+  kase.addSupplementaryData(targetNode, agreements);
 
   await update(kase);
 
