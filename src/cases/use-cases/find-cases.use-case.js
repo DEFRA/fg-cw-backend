@@ -79,6 +79,7 @@ export const findCasesUseCase = async () => {
         kase.assignedUser.name = assignedUser.name;
       }
       kase.timeline = mapTimeline(kase.timeline);
+
       acc.push(kase);
     }
     return acc;

@@ -31,6 +31,7 @@ describe("GET /cases", () => {
           anyOf: ["ROLE_3"],
         },
         dateReceived: new Date(caseData1.dateReceived),
+        supplementaryData: {},
       },
       {
         ...caseData2,
@@ -39,6 +40,7 @@ describe("GET /cases", () => {
           anyOf: ["ROLE_3"],
         },
         dateReceived: new Date(caseData2.dateReceived),
+        supplementaryData: {},
       },
     ]);
 
