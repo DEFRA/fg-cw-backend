@@ -18,7 +18,7 @@ export const createListComponent = ({ id, obj }) => {
 
   return {
     id,
-    component: "list",
+    component: "summary-list",
     title: camelCaseToTitleCase(id),
     type: "object",
     rows,
@@ -104,9 +104,9 @@ export const camelCaseToTitleCase = (str = "") => {
   return (
     str
       // insert a space before any uppercase letter
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replaceAll(/([a-z])([A-Z])/g, "$1 $2")
       // uppercase the first character of each word
-      .replace(/\b\w/g, (char) => char.toUpperCase())
+      .replaceAll(/\b\w/g, (char) => char.toUpperCase())
       .trim()
   );
 };

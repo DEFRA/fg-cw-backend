@@ -33,7 +33,7 @@
               {
                 "title": "Applicant Details",
                 "type": "object",
-                "component": "list",
+                "component": "summary-list",
                 "rows": [
                   {
                     "text": "$.payload.answers.isPigFarmer",
@@ -46,7 +46,7 @@
               {
                 "title": "Pig Stock Details",
                 "type": "object",
-                "component": "list",
+                "component": "summary-list",
                 "rows": [
                   {
                     "text": "$.payload.answers.totalPigs",

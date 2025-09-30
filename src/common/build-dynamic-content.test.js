@@ -201,7 +201,9 @@ describe("buildDynamicContent", () => {
 
     const result = buildDynamicContent(payload);
 
-    const listComponent = result.find((comp) => comp.component === "list");
+    const listComponent = result.find(
+      (comp) => comp.component === "summary-list",
+    );
     expect(listComponent).toBeDefined();
     expect(listComponent.id).toBe("user");
     expect(listComponent.title).toBe("User");
@@ -223,7 +225,9 @@ describe("buildDynamicContent", () => {
     const result = buildDynamicContent(payload);
 
     // Should create list component for simple props (name, age)
-    const listComponent = result.find((comp) => comp.component === "list");
+    const listComponent = result.find(
+      (comp) => comp.component === "summary-list",
+    );
     expect(listComponent).toBeDefined();
     expect(listComponent.rows).toHaveLength(2); // name, age
 
@@ -303,7 +307,7 @@ describe("buildDynamicContent", () => {
 
     // Should handle nested structures
     const hasTable = result.some((comp) => comp.component === "table");
-    const hasList = result.some((comp) => comp.component === "list");
+    const hasList = result.some((comp) => comp.component === "summary-list");
     expect(hasTable).toBe(true);
     expect(hasList).toBe(true);
 
@@ -355,7 +359,9 @@ describe("buildDynamicContent", () => {
 
     const result = buildDynamicContent(payload);
 
-    const listComponent = result.find((comp) => comp.component === "list");
+    const listComponent = result.find(
+      (comp) => comp.component === "summary-list",
+    );
     expect(listComponent).toBeDefined();
     // Note: null/undefined filtering only happens at top level, nested objects include all properties
     expect(listComponent.rows).toHaveLength(4);

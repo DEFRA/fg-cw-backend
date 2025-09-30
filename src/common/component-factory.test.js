@@ -123,7 +123,7 @@ describe("component-factory", () => {
 
       expect(result).toEqual({
         id: "userInfo",
-        component: "list",
+        component: "summary-list",
         title: "User Info",
         type: "object",
         rows: [
