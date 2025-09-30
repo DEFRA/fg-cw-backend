@@ -1,9 +1,6 @@
-import {
-  DeleteMessageCommand,
-  ReceiveMessageCommand,
-  SQSClient,
-} from "@aws-sdk/client-sqs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
+import http from "node:http";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "./logger.js";
 import { SqsSubscriber } from "./sqs-subscriber.js";
 
@@ -14,193 +11,169 @@ vi.mock("./logger.js", () => ({
   },
 }));
 
-vi.mock("@aws-sdk/client-sqs");
 vi.mock("./config.js", () => ({
   config: {
     get: vi.fn(
       (key) =>
         ({
-          "aws.endpointUrl": "http://localhost:4566",
+          "aws.endpointUrl": "http://localhost:3366",
           "aws.region": "eu-west-2",
         })[key],
     ),
   },
 }));
 
-let consumer;
-let onMessage;
+const createMd5 = (str) => createHash("md5").update(str).digest("hex");
 
-beforeEach(async () => {
-  onMessage = vi.fn().mockResolvedValue();
-
-  consumer = new SqsSubscriber({
-    queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
-    onMessage,
-  });
-});
-
-describe("constructor", () => {
-  it("instantiates with options", () => {
-    expect(consumer.queueUrl).toBe(
-      "https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue",
-    );
-    expect(consumer.onMessage).toBe(onMessage);
-    expect(consumer.isRunning).toBe(false);
-    expect(SQSClient).toHaveBeenCalledWith({
-      endpoint: "http://localhost:4566",
-      region: "eu-west-2",
-    });
-  });
-});
-
-describe("start", () => {
-  it("sets isRunning to true and starts polling", async () => {
-    consumer.poll = vi.fn().mockResolvedValue();
-
-    await consumer.start();
-
-    expect(consumer.isRunning).toBe(true);
-    expect(consumer.poll).toHaveBeenCalled();
-  });
-});
-
-describe("stop", () => {
-  it("sets isRunning to false", async () => {
-    consumer.isRunning = true;
-
-    await consumer.stop();
-
-    expect(consumer.isRunning).toBe(false);
-  });
-});
-
-describe("message processing", () => {
-  it("processes and deletes messages correctly", async () => {
-    const mockMessages = [
-      {
-        MessageId: "msg-1",
-        Body: "Test message 1",
-        ReceiptHandle: "receipt-1",
+const mockSqs = () => {
+  let messages = [
+    {
+      MessageId: "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      ReceiptHandle: "AQEBwJnK_mock_receipt_handle_123",
+      Body: JSON.stringify({
+        orderId: "12345",
+        status: "pending",
+        timestamp: "2025-09-29T14:00:00Z",
+      }),
+      Attributes: {
+        SenderId: "123456789012",
+        ApproximateFirstReceiveTimestamp: "1695993600001",
+        ApproximateReceiveCount: "1",
+        SentTimestamp: "1695993600000",
       },
-    ];
-
-    consumer.sqsClient.send.mockImplementation(async (command) => {
-      if (command instanceof ReceiveMessageCommand) {
-        return { Messages: mockMessages };
-      }
-      if (command instanceof DeleteMessageCommand) {
-        return {};
-      }
-      return {};
-    });
-
-    const processOneMessage = async () => {
-      const receiveParams = {
-        QueueUrl: consumer.queueUrl,
-        MaxNumberOfMessages: 10,
-        WaitTimeSeconds: 20,
-        AttributeNames: ["All"],
-        MessageAttributeNames: ["All"],
-      };
-
-      const command = new ReceiveMessageCommand(receiveParams);
-      const response = await consumer.sqsClient.send(command);
-
-      if (response.Messages && response.Messages.length > 0) {
-        for (const message of response.Messages) {
-          await consumer.onMessage(message);
-          await consumer.deleteMessage(message);
-        }
-      }
-    };
-
-    await processOneMessage();
-
-    expect(ReceiveMessageCommand).toHaveBeenCalledWith({
-      QueueUrl: consumer.queueUrl,
-      MaxNumberOfMessages: 10,
-      WaitTimeSeconds: 20,
-      AttributeNames: ["All"],
-      MessageAttributeNames: ["All"],
-    });
-
-    expect(onMessage).toHaveBeenCalledWith(mockMessages[0]);
-
-    expect(DeleteMessageCommand).toHaveBeenCalledWith({
-      QueueUrl: consumer.queueUrl,
-      ReceiptHandle: "receipt-1",
-    });
-  });
-
-  it("handles errors", async () => {
-    const mockMessages = [
-      {
-        MessageId: "msg-1",
-        Body: "Test message 1",
-        ReceiptHandle: "receipt-1",
+      MessageAttributes: {
+        Priority: {
+          DataType: "String",
+          StringValue: "High",
+        },
       },
-    ];
+    },
+    {
+      MessageId: "29dd0b57-b21e-4ac1-bd88-01bbb068cb79",
+      ReceiptHandle: "AQEBwJnK_mock_receipt_handle_124",
+      Body: JSON.stringify({
+        orderId: "67890",
+        status: "shipped",
+        timestamp: "2025-09-29T15:00:00Z",
+      }),
+      Attributes: {
+        SenderId: "123456789012",
+        ApproximateFirstReceiveTimestamp: "1695997200001",
+        ApproximateReceiveCount: "1",
+        SentTimestamp: "1695997200000",
+      },
+      MessageAttributes: {
+        Priority: {
+          DataType: "String",
+          StringValue: "Low",
+        },
+      },
+    },
+  ].map((msg) => ({
+    ...msg,
+    MD5OfBody: createMd5(msg.Body),
+    visible: true,
+  }));
 
-    consumer.sqsClient.send.mockImplementation(async (command) => {
-      if (command instanceof ReceiveMessageCommand) {
-        return { Messages: mockMessages };
+  const server = http.createServer((req, res) => {
+    let body = "";
+
+    req.on("data", (chunk) => (body += chunk));
+
+    req.on("end", () => {
+      const payload = JSON.parse(body);
+
+      if (payload.MaxNumberOfMessages) {
+        const visibleMessages = messages.filter((m) => m.visible);
+        visibleMessages.forEach((m) => (m.visible = false));
+
+        res.writeCode = 200;
+        res.end(
+          JSON.stringify({
+            Messages: visibleMessages,
+          }),
+        );
+        return;
       }
-      return {};
-    });
 
-    onMessage.mockRejectedValueOnce(new Error("Test error"));
+      if (payload.ReceiptHandle) {
+        messages = messages.filter(
+          (m) => m.ReceiptHandle !== payload.ReceiptHandle,
+        );
 
-    const processOneMessage = async () => {
-      const receiveParams = {
-        QueueUrl: consumer.queueUrl,
-        MaxNumberOfMessages: 10,
-        WaitTimeSeconds: 20,
-        AttributeNames: ["All"],
-        MessageAttributeNames: ["All"],
-      };
-
-      const command = new ReceiveMessageCommand(receiveParams);
-      const response = await consumer.sqsClient.send(command);
-
-      if (response.Messages.length) {
-        for (const message of response.Messages) {
-          try {
-            await consumer.onMessage(message);
-            await consumer.deleteMessage(message);
-          } catch (err) {
-            logger.error({
-              error: err.message,
-              message: "Failed to process SQS message",
-              messageId: message.MessageId,
-            });
-          }
-        }
+        res.writeCode = 200;
+        res.end(JSON.stringify({}));
+        return;
       }
-    };
 
-    await processOneMessage();
-
-    expect(logger.error).toHaveBeenCalledWith({
-      error: "Test error",
-      message: "Failed to process SQS message",
-      messageId: "msg-1",
+      res.writeCode = 400;
+      res.end();
     });
   });
-});
 
-describe("deleteMessage", () => {
-  it("deletes a message", async () => {
-    const mockMessage = {
-      MessageId: "msg-1",
-      ReceiptHandle: "receipt-1",
-    };
+  server.listen(3366);
 
-    await consumer.deleteMessage(mockMessage);
+  return server;
+};
 
-    expect(DeleteMessageCommand).toHaveBeenCalledWith({
-      QueueUrl: consumer.queueUrl,
-      ReceiptHandle: "receipt-1",
+describe("SqsSubscriber", () => {
+  let sqs;
+
+  beforeEach(() => {
+    sqs = mockSqs();
+  });
+
+  afterEach(() => {
+    sqs.close();
+  });
+
+  it("polls and processes messages", async () => {
+    const messages = [];
+
+    const subscriber = new SqsSubscriber({
+      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      async onMessage(msg) {
+        messages.push(msg);
+      },
     });
-    expect(consumer.sqsClient.send).toHaveBeenCalled();
+
+    subscriber.start();
+
+    await subscriber.stop();
+
+    await expect
+      .poll(() => messages)
+      .toEqual([
+        {
+          orderId: "12345",
+          status: "pending",
+          timestamp: "2025-09-29T14:00:00Z",
+        },
+        {
+          orderId: "67890",
+          status: "shipped",
+          timestamp: "2025-09-29T15:00:00Z",
+        },
+      ]);
+  });
+
+  it("logs errors and continues polling", async () => {
+    const subscriber = new SqsSubscriber({
+      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      async onMessage() {
+        throw new Error("Processing error");
+      },
+    });
+
+    subscriber.start();
+
+    await subscriber.stop();
+
+    await expect
+      .poll(() => logger.error)
+      .toHaveBeenCalledWith(
+        { err: new Error("Processing error") },
+        "Error processing SQS message 19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      );
   });
 });

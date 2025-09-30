@@ -32,13 +32,11 @@ export const updateStageOutcomeUseCase = async ({
 
   await update(kase);
 
-  // TODO: publish correct statuses based on state machine transitions
+  // TODO: publish correct currentStatus based on state machine transitions
   await publishCaseStatusUpdated({
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
     previousStatus: "not-implemented",
-    currentStatus: kase.currentStage.startsWith("contract")
-      ? "APPROVED"
-      : "not-implemented",
+    currentStatus: actionId === "approve" ? "APPROVED" : "not-implemented",
   });
 };

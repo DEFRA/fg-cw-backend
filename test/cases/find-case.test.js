@@ -124,7 +124,7 @@ describe("GET /cases/{caseId}", () => {
           text: "Timeline",
         },
       ],
-      supplementaryData: { agreements: [] },
+      supplementaryData: {},
     });
   });
 });
