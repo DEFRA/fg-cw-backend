@@ -5,7 +5,6 @@ import { db, mongoClient } from "../common/mongo-client.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
-import { config } from "../common/config.js";
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
@@ -22,13 +21,7 @@ export const cases = {
   async register(server) {
     logger.info("Running migrations");
 
-    const environment = config.get("cdpEnvironment");
-
-    const context = {
-      environment,
-    };
-
-    const migrated = await up(db, mongoClient, context);
+    const migrated = await up(db, mongoClient);
 
     migrated.forEach((fileName) => logger.info(`Migrated: ${fileName}`));
     logger.info("Finished running migrations");
