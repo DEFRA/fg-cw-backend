@@ -19,7 +19,6 @@ export const createCase = async (cases, payload = {}) => {
         defraId: "DEFRA0001",
       },
       answers: {
-        agreementName: "Test application name",
         scheme: "SFI",
         year: 2025,
         hasCheckedLandIsUpToDate: true,

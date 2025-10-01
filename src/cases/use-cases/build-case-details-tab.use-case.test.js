@@ -235,7 +235,6 @@ describe("buildCaseDetailsTabUseCase", () => {
           frn: "FIRM0001",
         },
         answers: {
-          agreementName: "Test SFI Agreement",
           scheme: "SFI",
           year: 2025,
           actionApplications: [

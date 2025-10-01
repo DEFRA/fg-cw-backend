@@ -91,11 +91,6 @@ export const workflowData1 = {
                     label: "Has checked land is up to date?",
                     format: "yesNo",
                   },
-                  {
-                    text: "$.payload.answers.agreementName",
-                    type: "string",
-                    label: "Agreement Name",
-                  },
                 ],
               },
               {
@@ -167,20 +162,6 @@ export const workflowData1 = {
                 text: "Check the grant funding agreement system to see the final terms of the agreement.",
                 level: 3,
                 classes: "govuk-inset-text",
-              },
-              {
-                id: "agreementName",
-                component: "container",
-                classes: "govuk-body",
-                items: [
-                  {
-                    text: "Agreement name:",
-                    classes: "govuk-!-font-weight-bold",
-                  },
-                  {
-                    text: "[agreement name]",
-                  },
-                ],
               },
               {
                 type: "array",
