@@ -15,7 +15,7 @@ export const up = async (db) => {
   );
 
   logger.info(
-    `Migrated: 20251001120000-fix-agreements-service-urls - Updated agreements service URLs for environment "${environment}" ${JSON.stringify(definitions, null, 2)}`,
+    `Migration: 20251001120000-fix-agreements-service-urls - Updated agreements service URLs for environment "${environment}" ${JSON.stringify(definitions, null, 2)}`,
   );
 };
 
