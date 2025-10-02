@@ -68,7 +68,7 @@ describe("update supplementary data use case", () => {
     const kase = Case.createMock();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe("update supplementary data use case", () => {
     expect(caseAgreements[0].agreementStatus).toBe("OFFERED");
     expect(caseAgreements[0].agreementRef).toBe("agreement-1");
     expect(update).toHaveBeenCalledWith(kase);
-    expect(returnvalue).toBe(kase);
+    expect(returnValue).toBe(kase);
   });
 
   it("should replace existing agreements with new complete array", async () => {
@@ -95,7 +95,7 @@ describe("update supplementary data use case", () => {
     kase.addSupplementaryData("agreements", [testAgreement1]);
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
@@ -108,7 +108,7 @@ describe("update supplementary data use case", () => {
     expect(caseAgreements[1].agreementRef).toBe("agreement-3");
     expect(caseAgreements[1].agreementStatus).toBe("OFFERED");
     expect(update).toHaveBeenCalledWith(kase);
-    expect(returnvalue).toBe(kase);
+    expect(returnValue).toBe(kase);
   });
 
   it("should work with any targetNode, not just agreements", async () => {
@@ -125,13 +125,13 @@ describe("update supplementary data use case", () => {
     const kase = Case.createMock();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await updateSupplementaryDataUseCase(data);
 
     expect(kase.supplementaryData.customData).toEqual({
       customField: "customValue",
     });
     expect(update).toHaveBeenCalledWith(kase);
-    expect(returnvalue).toBe(kase);
+    expect(returnValue).toBe(kase);
   });
 
   it("should handle empty arrays", async () => {
@@ -140,11 +140,11 @@ describe("update supplementary data use case", () => {
     kase.addSupplementaryData("agreements", [testAgreement1]);
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnvalue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(caseAgreements).toHaveLength(0);
     expect(update).toHaveBeenCalledWith(kase);
-    expect(returnvalue).toBe(kase);
+    expect(returnValue).toBe(kase);
   });
 });
