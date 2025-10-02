@@ -41,7 +41,6 @@ const message = {
       },
       answers: {
         scheme: "SFI",
-        agreementName: "Test application name",
         year: 2025,
         hasCheckedLandIsUpToDate: true,
         actionApplications: [
