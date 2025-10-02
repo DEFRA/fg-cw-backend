@@ -8,7 +8,11 @@ import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscribe
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
 vi.mock("migrate-mongo");
-vi.mock("../common/logger.js");
+vi.mock("../common/logger.js", () => ({
+  logger: {
+    info: vi.fn(),
+  },
+}));
 vi.mock("../common/mongo-client.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
 vi.mock("./subscribers/update-case-status-agreement.subscriber.js");
