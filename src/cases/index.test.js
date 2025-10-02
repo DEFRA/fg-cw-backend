@@ -25,7 +25,7 @@ describe("cases", () => {
     await server.register(cases);
     await server.initialize();
 
-    expect(up).toHaveBeenCalledWith(db, mongoClient, { environment: "local" });
+    expect(up).toHaveBeenCalledWith(db, mongoClient);
   });
 
   it("logs applied migrations", async () => {
