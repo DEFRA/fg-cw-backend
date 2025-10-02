@@ -29,7 +29,7 @@
         },
         "tabs": {
           "case-details": {
-            "sections": [
+            "content": [
               {
                 "title": "Applicant Details",
                 "type": "object",
