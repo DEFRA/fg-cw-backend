@@ -12,7 +12,7 @@
     "test": "npm run test:unit -- --run && npm run test:integration -- --run",
     "test:unit": "vitest --config vitest.config.js --dir src",
     "test:integration": "vitest --config test/vitest.config.js --dir test",
-    "dev": "nodemon --env-file .env --watch src/main.js",
+    "dev": "nodemon --env-file .env src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
     "publish:case:status:update": "node scripts/publish-case-status.js",
