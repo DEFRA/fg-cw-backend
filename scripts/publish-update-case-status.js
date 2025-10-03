@@ -27,17 +27,20 @@ const message = {
   datacontenttype: "application/json",
   data: {
     caseRef: "APPLICATION-PMF-001",
-    workflowCode: "pigs-might-fly",
+    workflowCode: "frps-private-beta",
     newStatus: "OFFERED",
     supplementaryData: {
       phase: null,
       stage: null,
       targetNode: "agreements",
-      data: {
-        agreementRef: "AGREEMENT-REF-123",
-        createdAt: "2023-10-01T12:00:00Z",
-        agreementStatus: "OFFERED",
-      },
+      data: [
+        {
+          agreementRef: "AGREEMENT-REF-123",
+          createdAt: "2023-10-01T12:00:00Z",
+          updatedAt: "2023-10-01T12:00:00Z",
+          agreementStatus: "OFFERED",
+        },
+      ],
     },
   },
 };
@@ -56,7 +59,7 @@ if (process.argv.length === 5) {
   const status = process.argv[4];
   console.log("Setting status to " + status);
   message.data.newStatus = status;
-  message.data.supplementaryData.data.agreementStatus = status;
+  message.data.supplementaryData.data[0].agreementStatus = status;
 }
 
 await sqs.send(

@@ -15,7 +15,7 @@
     "dev": "nodemon --env-file .env src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
-    "publish:case:status:update": "node scripts/publish-case-status.js",
+    "publish:case:status:update": "node scripts/publish-update-case-status.js",
     "postinstall": "npm run setup:husky && npm run setup:env",
     "setup:env": "cp --update=none .env.example .env || true",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
