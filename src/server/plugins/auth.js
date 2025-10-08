@@ -55,6 +55,8 @@ export const createAuthPlugin = (overrides = {}) => {
           };
         },
       });
+
+      server.auth.default("entra");
     },
   };
 };
