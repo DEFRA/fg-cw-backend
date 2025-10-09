@@ -8,6 +8,9 @@ describe("server", () => {
     server.route({
       method: "GET",
       path: "/path",
+      options: {
+        auth: false,
+      },
       handler: () => "Hello, World!",
     });
 
