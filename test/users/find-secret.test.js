@@ -1,21 +1,9 @@
-import { env } from "node:process";
 import { describe, expect, it } from "vitest";
 import { wreck } from "../helpers/wreck.js";
 
 describe("GET /secret", () => {
   it("finds secrets", async () => {
-    const tokenResponse = await wreck.post(env.OIDC_SIGN_TOKEN_ENDPOINT, {
-      payload: {
-        clientId: "client1",
-        username: "admin@t.gov.uk",
-      },
-    });
-
-    const response = await wreck.get("/secret", {
-      headers: {
-        Authorization: `Bearer ${tokenResponse.payload.access_token}`,
-      },
-    });
+    const response = await wreck.get("/secret");
 
     expect(response).toEqual({
       res: expect.objectContaining({
