@@ -6,7 +6,7 @@ import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 export const assignUserToCaseUseCase = async (command) => {
-  const { assignedUserId, caseId, notes } = command;
+  const { assignedUserId, caseId, notes, user: authenticatedUser } = command;
 
   const kase = await findById(caseId);
 
@@ -17,7 +17,7 @@ export const assignUserToCaseUseCase = async (command) => {
   if (assignedUserId === null) {
     kase.unassignUser({
       text: notes,
-      createdBy: getAuthenticatedUser().id,
+      createdBy: getAuthenticatedUser(authenticatedUser).id,
     });
     return update(kase);
   }

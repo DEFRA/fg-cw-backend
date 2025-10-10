@@ -6,6 +6,22 @@ import { EventEnums } from "../models/event-enums.js";
 import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+// eslint-disable-next-line complexity
+const mapUserIdToName = (userId, userMap) => {
+  if (userId === "System") return "System";
+  if (!userId) return null;
+  return userMap.get(userId)?.name ?? null;
+};
+
+const mapUserIdToUser = (userId, userMap) => {
+  if (userId === "System")
+    return {
+      id: "System",
+      name: "System",
+    };
+  return userMap.get(userId);
+};
+
 // we format the description on fetching data incase the stage/task changes.
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
@@ -22,14 +38,14 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-export const findCaseByIdUseCase = async (caseId) => {
+export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
 
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  const userMap = await createUserMap(kase.getUserIds());
+  const userMap = await createUserMap(kase.getUserIds(), user);
 
   kase.assignedUser = userMap.get(kase.assignedUser?.id) || null;
 
@@ -42,7 +58,7 @@ export const findCaseByIdUseCase = async (caseId) => {
   kase.comments = kase.comments.map((comment) => ({
     ...comment,
     title: comment.title,
-    createdBy: userMap.get(comment.createdBy).name,
+    createdBy: mapUserIdToName(comment.createdBy, userMap),
   }));
 
   kase.stages = kase.stages.map((stage) => {
@@ -53,7 +69,7 @@ export const findCaseByIdUseCase = async (caseId) => {
         tasks: taskGroup.tasks.map((task) => {
           return {
             ...task,
-            updatedBy: task.updatedBy ? userMap.get(task.updatedBy).name : null,
+            updatedBy: mapUserIdToName(task.updatedBy, userMap),
           };
         }),
       })),
@@ -67,9 +83,9 @@ export const findCaseByIdUseCase = async (caseId) => {
   });
 
   kase.timeline = kase.timeline.map((tl) => {
-    tl.createdBy = userMap.get(tl.createdBy);
+    tl.createdBy = mapUserIdToUser(tl.createdBy, userMap);
     if (tl.data?.assignedTo) {
-      tl.data.assignedTo = userMap.get(tl.data.assignedTo);
+      tl.data.assignedTo = mapUserIdToUser(tl.data.assignedTo, userMap);
     }
     tl.commentRef = mapComment(tl.comment);
     tl.comment = undefined;
@@ -80,19 +96,15 @@ export const findCaseByIdUseCase = async (caseId) => {
   return kase;
 };
 
-const createUserMap = async (userIds) => {
+const createUserMap = async (userIds, user) => {
   const ids = userIds.filter((id) => id !== "System" && id !== null);
   const users = await findAll({ ids });
   const userMap = new Map(users.map((user) => [user.id, user]));
 
-  const authenticatedUser = getAuthenticatedUser();
+  const authenticatedUser = getAuthenticatedUser(user);
   userMap.set(authenticatedUser.id, authenticatedUser);
 
   return userMap;
-};
-
-export const findUserAssignedToCase = () => {
-  return "System"; // TODO: get user who has completed the task from auth
 };
 
 const mapComment = (comment) => {

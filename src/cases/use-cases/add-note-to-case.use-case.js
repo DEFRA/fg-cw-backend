@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from "../../common/auth.js";
 import { findById, update } from "../repositories/case.repository.js";
 
 export const addNoteToCaseUseCase = async (command) => {
-  const { caseId, text } = command;
+  const { caseId, text, user } = command;
 
   const kase = await findById(caseId);
 
@@ -13,7 +13,7 @@ export const addNoteToCaseUseCase = async (command) => {
 
   const note = kase.addNote({
     text,
-    createdBy: getAuthenticatedUser().id,
+    createdBy: getAuthenticatedUser(user).id,
   });
 
   await update(kase);

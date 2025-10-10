@@ -9,6 +9,7 @@ export const updateStageOutcomeUseCase = async ({
   caseId,
   actionId,
   comment,
+  user,
 }) => {
   const kase = await findById(caseId);
 
@@ -27,7 +28,7 @@ export const updateStageOutcomeUseCase = async ({
   kase.updateStageOutcome({
     actionId,
     comment,
-    createdBy: getAuthenticatedUser().id,
+    createdBy: getAuthenticatedUser(user).id,
   });
 
   await update(kase);
