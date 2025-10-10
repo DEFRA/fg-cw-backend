@@ -12,6 +12,16 @@ vi.mock("../repositories/case.repository.js");
 describe("addNoteToCaseUseCase", () => {
   const validUserId = new ObjectId().toHexString();
   const authenticatedUser = { id: validUserId };
+  const mockUser = {
+    id: validUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
   it("adds note to case successfully", async () => {
     const mockCase = Case.createMock();
@@ -19,6 +29,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -47,6 +58,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "Task has been completed",
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -64,6 +76,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: "non-existent-case-id",
       text: "This is a test note",
+      user: mockUser,
     };
 
     findById.mockResolvedValue(null);
@@ -87,6 +100,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -107,6 +121,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "", // Invalid text - empty string
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -127,6 +142,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
+      user: mockUser,
     };
 
     const updateError = new Error("Database update failed");
@@ -158,6 +174,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "New comment",
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);

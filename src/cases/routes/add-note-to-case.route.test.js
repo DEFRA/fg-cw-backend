@@ -12,10 +12,31 @@ describe("addNoteToCaseRoute", () => {
   const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
   const payload = { text: "This is a test note" };
 
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   let server;
 
   beforeAll(async () => {
     server = hapi.server();
+    server.auth.scheme("custom", () => {
+      return {
+        authenticate: (request, h) => {
+          return h.authenticated({ credentials: { user: mockAuthUser } });
+        },
+      };
+    });
+    server.auth.strategy("default", "custom");
+    server.auth.default("default");
     server.route(addNoteToCaseRoute);
     await server.initialize();
   });
@@ -40,6 +61,7 @@ describe("addNoteToCaseRoute", () => {
     expect(addNoteToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       text: payload.text,
+      user: mockAuthUser,
     });
   });
 
@@ -139,6 +161,7 @@ describe("addNoteToCaseRoute", () => {
     expect(addNoteToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       text: payload.text,
+      user: mockAuthUser,
     });
   });
 

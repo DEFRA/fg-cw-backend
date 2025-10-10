@@ -39,17 +39,13 @@ describe("auth - getAuthenticatedUser", () => {
   });
 
   it("should return user from auth credentials when provided", () => {
-    const auth = {
-      credentials: {
-        user: {
-          id: "user-123",
-          name: "Test User",
-          email: "test@example.com",
-        },
-      },
+    const user = {
+      id: "user-123",
+      name: "Test User",
+      email: "test@example.com",
     };
 
-    expect(getAuthenticatedUser(auth)).toEqual({
+    expect(getAuthenticatedUser(user)).toEqual({
       id: "user-123",
       name: "Test User",
       email: "test@example.com",

@@ -8,10 +8,31 @@ import { assignUserToCaseRoute } from "./assign-user-to-case.route.js";
 vi.mock("../use-cases/assign-user-to-case.use-case.js");
 
 describe("assignUserRoute", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   let server;
 
   beforeAll(async () => {
     server = hapi.server();
+    server.auth.scheme("custom", () => {
+      return {
+        authenticate: (request, h) => {
+          return h.authenticated({ credentials: { user: mockAuthUser } });
+        },
+      };
+    });
+    server.auth.strategy("default", "custom");
+    server.auth.default("default");
     server.route(assignUserToCaseRoute);
     await server.initialize();
   });
@@ -39,6 +60,7 @@ describe("assignUserRoute", () => {
     expect(assignUserToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       assignedUserId,
+      user: mockAuthUser,
     });
   });
 

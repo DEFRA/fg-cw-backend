@@ -39,7 +39,7 @@ export const assignUserToCaseUseCase = async (command) => {
 
   kase.assignUser({
     assignedUserId,
-    createdBy: getAuthenticatedUser().id,
+    createdBy: getAuthenticatedUser(authenticatedUser).id,
     text: notes,
   });
 
