@@ -209,7 +209,7 @@
   },
   "stages": [
     {
-      "id": "application-receipt",
+      "code": "application-receipt",
       "title": "Application Receipt",
       "taskGroups": [
         {
@@ -238,7 +238,7 @@
       ]
     },
     {
-      "id": "contract",
+      "code": "contract",
       "title": "Stage for contract management",
       "taskGroups": [],
       "actions": []

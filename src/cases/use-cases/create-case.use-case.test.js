@@ -25,7 +25,7 @@ describe("createCaseUseCase", () => {
         code: "wf-001",
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [
               {
                 id: "task-group-1",
@@ -74,7 +74,7 @@ describe("createCaseUseCase", () => {
       currentStage: "stage-1",
       stages: [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
               id: "task-group-1",
