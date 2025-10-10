@@ -8,17 +8,22 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 // eslint-disable-next-line complexity
 const mapUserIdToName = (userId, userMap) => {
-  if (userId === "System") return "System";
-  if (!userId) return null;
+  if (userId === "System") {
+    return "System";
+  }
+  if (!userId) {
+    return null;
+  }
   return userMap.get(userId)?.name ?? null;
 };
 
 const mapUserIdToUser = (userId, userMap) => {
-  if (userId === "System")
+  if (userId === "System") {
     return {
       id: "System",
       name: "System",
     };
+  }
   return userMap.get(userId);
 };
 
@@ -99,7 +104,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
 const createUserMap = async (userIds, user) => {
   const ids = userIds.filter((id) => id !== "System" && id !== null);
   const users = await findAll({ ids });
-  const userMap = new Map(users.map((user) => [user.id, user]));
+  const userMap = new Map(users.map((u) => [u.id, u]));
 
   const authenticatedUser = getAuthenticatedUser(user);
   userMap.set(authenticatedUser.id, authenticatedUser);
