@@ -296,7 +296,7 @@ describe("TimelineEvent", () => {
     it("creates a stage complete event", () => {
       const props = {
         data: {
-          stageId: "64c88faac1f56f71e1b99999",
+          stageCode: "64c88faac1f56f71e1b99999",
           actionId: "approve",
         },
         text: "Stage complete",
@@ -308,7 +308,7 @@ describe("TimelineEvent", () => {
         EventEnums.eventTypes.STAGE_COMPLETED,
       );
       expect(timelineEvent.comment.text).toBe("Stage complete");
-      expect(timelineEvent.data.stageId).toBe("64c88faac1f56f71e1b99999");
+      expect(timelineEvent.data.stageCode).toBe("64c88faac1f56f71e1b99999");
       expect(timelineEvent.data.actionId).toBe("approve");
     });
   });

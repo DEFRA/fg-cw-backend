@@ -49,7 +49,7 @@ describe("updateStageOutcomeUseCase", () => {
       expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionId: "approve",
-        stageId: "stage-1",
+        stageCode: "stage-1",
         comment: "Application approved with conditions",
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
@@ -89,7 +89,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionId: "reject",
-        stageId: "stage-2",
+        stageCode: "stage-2",
         comment: null,
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
@@ -208,7 +208,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionId: "approve",
-        stageId: mockCase.currentStage,
+        stageCode: mockCase.currentStage,
         comment: "",
       });
       expect(update).not.toHaveBeenCalled();
@@ -319,7 +319,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionId: "specific-action",
-        stageId: "specific-stage-id",
+        stageCode: "specific-stage-id",
         comment: "specific comment text",
       });
     });

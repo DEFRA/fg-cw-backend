@@ -14,7 +14,7 @@ const mapTasksToStages = (kaseStages, tasks) => {
 
   const stages = kaseStages.map((s) => {
     return {
-      id: s.id,
+      code: s.code,
       outcome: s.outcome || null,
       taskGroups: s.taskGroups.map((tg) => {
         return {
@@ -58,7 +58,7 @@ export class CaseDocument {
       currentStage: "stage-1",
       stages: [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
               id: "stage-1-tasks",
@@ -72,7 +72,7 @@ export class CaseDocument {
           ],
         },
         {
-          id: "stage-2",
+          code: "stage-2",
           taskGroups: [],
         },
       ],

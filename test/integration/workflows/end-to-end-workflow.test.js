@@ -242,9 +242,9 @@ describe("End-to-End Workflow Integration Tests", () => {
       let completedTasks = 0;
 
       try {
-        // Try to complete the simple-review task in the initial-review stage
+        // Try to complete the simple-review task in the application-receipt stage
         const taskResponse = await wreck.patch(
-          `/cases/${testData.caseId}/stages/initial-review/task-groups/initial-review-tasks/tasks/eligibility-check/status`,
+          `/cases/${testData.caseId}/stages/application-receipt/task-groups/application-receipt-tasks/tasks/simple-review/status`,
           {
             payload: { status: "complete" },
           },
@@ -256,7 +256,10 @@ describe("End-to-End Workflow Integration Tests", () => {
         // console.log('⚠️ Task completion API failed:', error.message)
         // Simulate task completion in database
         await cases.updateOne(
-          { _id: new ObjectId(testData.caseId), "stages.id": "initial-review" },
+          {
+            _id: new ObjectId(testData.caseId),
+            "stages.code": "application-receipt",
+          },
           {
             $set: {
               "stages.$.taskGroups.0.tasks.0.status": "complete",
@@ -351,7 +354,7 @@ describe("End-to-End Workflow Integration Tests", () => {
 
       // Verify task completion
       const initialStage = finalDbCase.stages.find(
-        (stage) => stage.id === "initial-review",
+        (stage) => stage.code === "application-receipt",
       );
       expect(initialStage.taskGroups[0].tasks[0].status).toBe("complete");
 
@@ -480,7 +483,7 @@ describe("End-to-End Workflow Integration Tests", () => {
 
     // Verify first stage has tasks
     const firstStage = testWorkflow.stages.find(
-      (stage) => stage.id === "application-receipt",
+      (stage) => stage.code === "application-receipt",
     );
     expect(firstStage).toBeTruthy();
     expect(firstStage.taskGroups).toBeDefined();
@@ -550,16 +553,16 @@ const createCaseFromSnSEvent = async (eventData) => {
       applicant,
       answers: application,
     },
-    currentStage: "initial-review",
+    currentStage: "application-receipt",
     stages: [
       {
-        id: "initial-review",
+        code: "application-receipt",
         taskGroups: [
           {
-            id: "initial-review-tasks",
+            id: "application-receipt-tasks",
             tasks: [
               {
-                id: "eligibility-check",
+                id: "simple-review",
                 status: "pending",
               },
             ],
