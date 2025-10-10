@@ -25,7 +25,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Task Completed",
       createdBy: "System",
       data: {
-        stageId: "stage-1",
+        stageCode: "stage-1",
         taskGroupId: "stage-1-tasks",
         taskId: "task-1",
       },
@@ -44,7 +44,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Stage Completed",
       createdBy: "System",
       data: {
-        stageId: "stage-1",
+        stageCode: "stage-1",
         actionId: "reject",
       },
     };

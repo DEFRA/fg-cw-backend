@@ -17,7 +17,7 @@ describe("Case", () => {
     currentStage: "stage-1",
     assignedUser: { id: validUserId, name: "Test User" },
     payload: { data: "test" },
-    stages: [{ id: "stage-1", taskGroups: [] }],
+    stages: [{ code: "stage-1", taskGroups: [] }],
     comments: [],
     timeline: [],
     requiredRoles: { allOf: ["ROLE_1"] },
@@ -42,7 +42,9 @@ describe("Case", () => {
         name: "Test User",
       });
       expect(caseInstance.payload).toEqual({ data: "test" });
-      expect(caseInstance.stages).toEqual([{ id: "stage-1", taskGroups: [] }]);
+      expect(caseInstance.stages).toEqual([
+        { code: "stage-1", taskGroups: [] },
+      ]);
       expect(caseInstance.comments).toEqual([]);
       expect(caseInstance.timeline).toEqual([]);
       expect(caseInstance.requiredRoles).toEqual({ allOf: ["ROLE_1"] });
@@ -323,7 +325,7 @@ describe("Case", () => {
       expect(task1.commentRef).toBeUndefined();
 
       kase.setTaskStatus({
-        stageId: "stage-1",
+        stageCode: "stage-1",
         taskGroupId: "stage-1-tasks",
         taskId: "task-1",
         status: "complete",
@@ -390,7 +392,7 @@ describe("Case", () => {
     it("throws 404 if stage not found", () => {
       const kase = Case.createMock();
       expect(() => kase.findStage("stage-100")).toThrow(
-        "Can not find Stage with id stage-100",
+        "Can not find Stage with code stage-100",
       );
     });
   });
@@ -454,7 +456,7 @@ describe("Case", () => {
       const props = createValidProps();
       props.stages = [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
               id: "task-group-1",
@@ -463,7 +465,7 @@ describe("Case", () => {
           ],
         },
         {
-          id: "stage-2",
+          code: "stage-2",
           taskGroups: [],
         },
       ];
@@ -487,7 +489,7 @@ describe("Case", () => {
       expect(caseInstance.timeline).toHaveLength(1);
       expect(caseInstance.timeline[0].eventType).toBe("STAGE_COMPLETED");
       expect(caseInstance.timeline[0].data.actionId).toBe("approve");
-      expect(caseInstance.timeline[0].data.stageId).toBe("stage-1");
+      expect(caseInstance.timeline[0].data.stageCode).toBe("stage-1");
 
       expect(caseInstance.comments).toHaveLength(1);
       expect(caseInstance.comments[0].text).toBe(
@@ -552,7 +554,7 @@ describe("Case", () => {
       const props = createValidProps();
       props.stages = [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
               id: "task-group-1",
@@ -560,7 +562,7 @@ describe("Case", () => {
             },
           ],
         },
-        { id: "stage-2", taskGroups: [] },
+        { code: "stage-2", taskGroups: [] },
       ];
       const caseWithIncompleteTasks = createTestCase(props);
 

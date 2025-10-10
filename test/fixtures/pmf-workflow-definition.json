@@ -83,7 +83,7 @@
   },
   "stages": [
     {
-      "id": "application-received",
+      "code": "application-received",
       "title": "Application Received",
       "taskGroups": [
         {
@@ -125,7 +125,7 @@
       ]
     },
     {
-      "id": "assessment",
+      "code": "assessment",
       "title": "Assessment",
       "taskGroups": [
         {
@@ -178,7 +178,7 @@
       ]
     },
     {
-      "id": "contracted",
+      "code": "contracted",
       "title": "Contracted",
       "taskGroups": [],
       "actions": []
