@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
@@ -13,6 +14,18 @@ vi.mock("./find-case-by-id.use-case.js");
 vi.mock("../repositories/workflow.repository.js");
 
 describe("updateTaskStatusUseCase", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   it("throws if comment payload is not provided but required", () => {
     expect(() => validatePayloadComment(undefined, true)).toThrowError();
   });
@@ -38,6 +51,7 @@ describe("updateTaskStatusUseCase", () => {
         taskId: "task-1",
         status: "complete",
         comment: "This is a note/comment",
+        user: mockAuthUser,
       }),
     ).rejects.toThrow('Case with id "0909990909099990aaee9878" not found');
   });
@@ -57,6 +71,7 @@ describe("updateTaskStatusUseCase", () => {
       taskId: "task-1",
       status: "complete",
       comment: "This is a note/comment",
+      user: mockAuthUser,
     });
 
     const task = kase.findTask("task-1");

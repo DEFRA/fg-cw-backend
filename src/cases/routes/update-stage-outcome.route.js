@@ -25,11 +25,13 @@ export const updateStageOutcomeRoute = {
   async handler(request, h) {
     const { caseId } = request.params;
     const { actionId, comment } = request.payload;
+    const { user } = request.auth.credentials;
 
     await updateStageOutcomeUseCase({
       caseId,
       actionId,
       comment,
+      user,
     });
 
     return h.response().code(HttpCodes.NoContent);

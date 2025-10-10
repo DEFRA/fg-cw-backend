@@ -23,12 +23,14 @@ export const assignUserToCaseRoute = {
   },
   async handler(request, h) {
     const { caseId } = request.params;
+    const { user } = request.auth.credentials;
     const { assignedUserId, notes } = request.payload;
 
     await assignUserToCaseUseCase({
       caseId,
       assignedUserId,
       notes,
+      user,
     });
 
     return h.response().code(204);
