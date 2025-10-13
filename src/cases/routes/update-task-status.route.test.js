@@ -43,13 +43,13 @@ describe("updateTaskStatusRoute", () => {
 
   it("sets the status of a task", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
-    const stageId = "application-receipt";
+    const stageCode = "application-receipt";
     const taskGroupId = "application-receipt-tasks";
     const taskId = "simple-review";
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/stages/${stageId}/task-groups/${taskGroupId}/tasks/${taskId}/status`,
+      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupId}/tasks/${taskId}/status`,
       payload: {
         status: "complete",
       },
@@ -61,7 +61,7 @@ describe("updateTaskStatusRoute", () => {
 
     expect(updateTaskStatusUseCase).toHaveBeenCalledWith({
       caseId,
-      stageId,
+      stageCode,
       taskGroupId,
       taskId,
       status: "complete",
@@ -77,13 +77,13 @@ describe("updateTaskStatusRoute", () => {
 
   it("returns 400 when payload does not match schema", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
-    const stageId = "application-receipt";
+    const stageCode = "application-receipt";
     const taskGroupId = "application-receipt-tasks";
     const taskId = "simple-review";
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/stages/${stageId}/task-groups/${taskGroupId}/tasks/${taskId}/status`,
+      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupId}/tasks/${taskId}/status`,
       payload: {
         status: "bang",
       },

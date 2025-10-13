@@ -21,7 +21,7 @@ export const updateStageOutcomeUseCase = async ({
 
   workflow.validateStageActionComment({
     actionId,
-    stageId: kase.currentStage,
+    stageCode: kase.currentStage,
     comment,
   });
 
