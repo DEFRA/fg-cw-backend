@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { findById, update } from "../repositories/case.repository.js";
@@ -33,13 +32,11 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalled();
 
     expect(result).toBeInstanceOf(Comment);
     expect(result.type).toBe("NOTE_ADDED");
@@ -62,7 +59,6 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
@@ -104,14 +100,12 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       "Failed to add note",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -125,14 +119,12 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       "Note text is required and cannot be empty",
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -147,7 +139,6 @@ describe("addNoteToCaseUseCase", () => {
 
     const updateError = new Error("Database update failed");
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockRejectedValue(updateError);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
@@ -155,7 +146,6 @@ describe("addNoteToCaseUseCase", () => {
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalled();
     expect(update).toHaveBeenCalledWith(mockCase);
   });
 
@@ -178,7 +168,6 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);

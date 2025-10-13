@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -25,7 +24,7 @@ export const updateTaskStatusUseCase = async (command) => {
 
   validatePayloadComment(comment, task.comment?.type === "REQUIRED");
 
-  const updatedBy = getAuthenticatedUser(user).id;
+  const updatedBy = user.id;
   kase.setTaskStatus({
     stageId,
     taskGroupId,

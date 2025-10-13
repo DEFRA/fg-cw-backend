@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
@@ -66,7 +65,6 @@ describe("assignUserToCaseUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
@@ -80,7 +78,6 @@ describe("assignUserToCaseUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
       mockCase.workflowCode,
     );
-    expect(getAuthenticatedUser).toHaveBeenCalledWith(mockAuthUser);
     expect(mockCase.assignUser).toHaveBeenCalledWith({
       assignedUserId: mockUser.id,
       text: "This is a test comment",
@@ -193,7 +190,6 @@ describe("assignUserToCaseUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
     update.mockRejectedValue(repositoryError);
 
     await expect(
@@ -227,7 +223,6 @@ describe("assignUserToCaseUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findUserByIdUseCase.mockResolvedValue(mockUser);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await expect(
       assignUserToCaseUseCase({
@@ -252,7 +247,6 @@ describe("assignUserToCaseUseCase", () => {
     mockCase.unassignUser = vi.fn();
 
     findById.mockResolvedValue(mockCase);
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
 
     await assignUserToCaseUseCase({
       caseId: mockCase._id,
@@ -262,7 +256,6 @@ describe("assignUserToCaseUseCase", () => {
     });
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(getAuthenticatedUser).toHaveBeenCalledWith(mockAuthUser);
     expect(mockCase.unassignUser).toHaveBeenCalledWith({
       text: "Unassigning user",
       createdBy: authenticatedUser.id,

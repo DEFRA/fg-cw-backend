@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Permissions } from "../models/permissions.js";
 import { findById, update } from "../repositories/case.repository.js";
@@ -17,7 +16,7 @@ export const assignUserToCaseUseCase = async (command) => {
   if (assignedUserId === null) {
     kase.unassignUser({
       text: notes,
-      createdBy: getAuthenticatedUser(authenticatedUser).id,
+      createdBy: authenticatedUser.id,
     });
     return update(kase);
   }
@@ -39,7 +38,7 @@ export const assignUserToCaseUseCase = async (command) => {
 
   kase.assignUser({
     assignedUserId,
-    createdBy: getAuthenticatedUser(authenticatedUser).id,
+    createdBy: authenticatedUser.id,
     text: notes,
   });
 

@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { findById, update } from "../repositories/case.repository.js";
 
 export const addNoteToCaseUseCase = async (command) => {
@@ -13,7 +12,7 @@ export const addNoteToCaseUseCase = async (command) => {
 
   const note = kase.addNote({
     text,
-    createdBy: getAuthenticatedUser(user).id,
+    createdBy: user.id,
   });
 
   await update(kase);
