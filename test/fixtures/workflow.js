@@ -234,7 +234,7 @@ export const workflowData1 = {
 
   stages: [
     {
-      id: "application-receipt",
+      code: "application-receipt",
       title: "Application Receipt",
       taskGroups: [
         {
@@ -257,7 +257,7 @@ export const workflowData1 = {
       ],
     },
     {
-      id: "contract",
+      code: "contract",
       title: "Stage for contract management",
       taskGroups: [],
       actions: [],
@@ -313,13 +313,13 @@ export const workflowData2 = {
   },
   stages: [
     {
-      id: "review",
+      code: "review",
       title: "Review",
       taskGroups: [],
       actions: [],
     },
     {
-      id: "decision",
+      code: "decision",
       title: "Decision",
       taskGroups: [],
       actions: [],
