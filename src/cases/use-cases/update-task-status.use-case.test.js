@@ -33,7 +33,7 @@ describe("updateTaskStatusUseCase", () => {
     await expect(() =>
       updateTaskStatusUseCase({
         caseId: "0909990909099990aaee9878",
-        stageId: "stage-1",
+        stageCode: "stage-1",
         taskGroupId: "stage-1-tasks",
         taskId: "task-1",
         status: "complete",
@@ -52,7 +52,7 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
-      stageId: "stage-1",
+      stageCode: "stage-1",
       taskGroupId: "stage-1-tasks",
       taskId: "task-1",
       status: "complete",
