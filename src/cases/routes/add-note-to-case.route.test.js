@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
-import hapi from "@hapi/hapi";
 import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { createServer } from "../../server/index.js";
 import { addNoteToCaseRequestSchema } from "../schemas/requests/add-note-to-case-request.schema.js";
 import { addNoteToCaseUseCase } from "../use-cases/add-note-to-case.use-case.js";
 import { addNoteToCaseRoute } from "./add-note-to-case.route.js";
@@ -12,31 +12,10 @@ describe("addNoteToCaseRoute", () => {
   const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
   const payload = { text: "This is a test note" };
 
-  const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
-    id: authenticatedUserId,
-    idpId: new ObjectId().toHexString(),
-    name: "Test User",
-    email: "test.user@example.com",
-    idpRoles: ["user"],
-    appRoles: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
   let server;
 
   beforeAll(async () => {
-    server = hapi.server();
-    server.auth.scheme("custom", () => {
-      return {
-        authenticate: (request, h) => {
-          return h.authenticated({ credentials: { user: mockAuthUser } });
-        },
-      };
-    });
-    server.auth.strategy("default", "custom");
-    server.auth.default("default");
+    server = await createServer();
     server.route(addNoteToCaseRoute);
     await server.initialize();
   });
@@ -53,6 +32,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -61,7 +48,9 @@ describe("addNoteToCaseRoute", () => {
     expect(addNoteToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       text: payload.text,
-      user: mockAuthUser,
+      user: {
+        id: "user-123",
+      },
     });
   });
 
@@ -77,6 +66,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${invalidCaseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -87,6 +84,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: "/cases//notes",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -101,6 +106,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -113,6 +126,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -123,6 +144,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload: {},
     });
 
@@ -135,6 +164,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -153,6 +190,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -161,7 +206,9 @@ describe("addNoteToCaseRoute", () => {
     expect(addNoteToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       text: payload.text,
-      user: mockAuthUser,
+      user: {
+        id: "user-123",
+      },
     });
   });
 
@@ -173,6 +220,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
@@ -187,6 +242,14 @@ describe("addNoteToCaseRoute", () => {
     const { statusCode } = await server.inject({
       method: "POST",
       url: `/cases/${caseId}/notes`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload,
     });
 
