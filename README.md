@@ -1,5 +1,32 @@
 # fg-cw-backend
 
+## Coding standards
+
+### System architecture
+
+The code is well organised in to layers of:
+
+Input adaptors (can reference use-cases)
+
+- Subscribers
+- Router
+
+Domain classes
+
+- Domain models (retrieved/persisted by repositories)
+- Use cases (Can reference repositories and manipulate domain models)
+
+Output adaptors (referenced by use cases)
+
+- Repositories (retrieve/persist domain models)
+
+All code should honour these rules and they are enforced by ESLint (see eslint.config.js zones section)
+
+### Code structure
+
+We cannot use TypeScript due to RPA coding standards, but we can (and should) type our code when it makes sense for
+robustness via Node JS type stripping. See /docs/ADR/0002_use_js_with_node_type_stripping.md for more details.
+
 ## AWS
 
 #### Get a topics attributes (fg-gas-backend DEV)

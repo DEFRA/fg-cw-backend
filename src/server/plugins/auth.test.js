@@ -12,6 +12,7 @@ describe("auth validate function", () => {
     server = {
       register: vi.fn(),
       auth: {
+        default: vi.fn(),
         strategy: vi.fn(),
       },
     };
@@ -146,5 +147,21 @@ describe("auth validate function", () => {
     const result = await validateFn(artifacts);
 
     expect(result.isValid).toBe(false);
+  });
+
+  it("should apply to all routes by default", async () => {
+    const artifacts = {
+      decoded: {
+        payload: {
+          oid: "user-id-123",
+          name: "Test User",
+          roles: ["FCP.Casework.Admin"],
+        },
+      },
+    };
+
+    await validateFn(artifacts);
+
+    expect(server.auth.default).toHaveBeenCalledWith("entra");
   });
 });

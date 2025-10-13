@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
 import { wreck } from "./helpers/wreck.js";
 
@@ -19,10 +19,6 @@ describe("Workflows", () => {
   });
 
   describe("POST /workflows", () => {
-    beforeEach(async () => {
-      await workflows.deleteMany({});
-    });
-
     it("adds a workflow", async () => {
       const payload = { ...workflowData1 };
       const response = await wreck.post("/workflows", {
@@ -55,10 +51,6 @@ describe("Workflows", () => {
   });
 
   describe("GET /workflows", () => {
-    beforeEach(async () => {
-      await workflows.deleteMany({});
-    });
-
     it("finds workflows", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 
@@ -79,10 +71,6 @@ describe("Workflows", () => {
   });
 
   describe("GET /workflows/{code}", () => {
-    beforeEach(async () => {
-      await workflows.deleteMany({});
-    });
-
     it("finds a workflow by code", async () => {
       await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
 

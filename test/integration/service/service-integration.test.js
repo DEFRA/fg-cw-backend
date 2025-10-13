@@ -144,7 +144,7 @@ describe("Service Layer Integration Tests", () => {
 
       // Verify case was created with correct data transformation
       const dbCase = await cases.findOne({ reference: eventData.clientRef });
-      expect(dbCase).toBeTruthy();
+      expect(dbCase).toBeDefined();
       expect(dbCase.workflowCode).toBe("pigs-might-fly");
       expect(dbCase.data.isPigFarmer).toBe(true);
       expect(dbCase.applicant.name).toBe("Test Pig Farmer");
