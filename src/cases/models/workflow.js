@@ -12,32 +12,32 @@ export class Workflow {
     this.definitions = props.definitions;
   }
 
-  findTask(stageId, taskGroupId, taskId) {
-    const stage = this.findStage(stageId);
+  findTask(stageCode, taskGroupId, taskId) {
+    const stage = this.findStage(stageCode);
     const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
     const task = taskGroup?.tasks.find((t) => t.id === taskId);
 
     if (!task) {
       throw Boom.notFound(
-        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
+        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageCode}`,
       );
     }
 
     return task;
   }
 
-  validateStageActionComment({ stageId, actionId, comment }) {
-    const stage = this.findStage(stageId);
+  validateStageActionComment({ stageCode, actionId, comment }) {
+    const stage = this.findStage(stageCode);
     const action = this.findAction(stage, actionId);
-    this.validateComment({ stageId, actionId, action, comment });
+    this.validateComment({ stageCode, actionId, action, comment });
 
     return true;
   }
 
-  findStage(stageId) {
-    const stage = this.stages.find((s) => s.id === stageId);
+  findStage(stageCode) {
+    const stage = this.stages.find((s) => s.code === stageCode);
     if (!stage) {
-      throw Boom.badRequest(`Stage with id "${stageId}" not found`);
+      throw Boom.badRequest(`Stage with code "${stageCode}" not found`);
     }
     return stage;
   }
@@ -46,16 +46,16 @@ export class Workflow {
     const action = stage.actions.find((a) => a.id === actionId);
     if (!action) {
       throw Boom.badRequest(
-        `Stage "${stage.id}" does not contain action with id "${actionId}"`,
+        `Stage "${stage.code}" does not contain action with id "${actionId}"`,
       );
     }
     return action;
   }
 
-  validateComment({ stageId, actionId, action, comment }) {
+  validateComment({ stageCode, actionId, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(
-        `Stage "${stageId}", Action "${actionId}" requires a comment`,
+        `Stage "${stageCode}", Action "${actionId}" requires a comment`,
       );
     }
   }

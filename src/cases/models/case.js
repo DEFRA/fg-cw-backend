@@ -58,10 +58,10 @@ export class Case {
     return task;
   }
 
-  findStage(stageId) {
-    const stage = this.stages.find((s) => s.id === stageId);
+  findStage(stageCode) {
+    const stage = this.stages.find((s) => s.code === stageCode);
     if (!stage) {
-      throw Boom.notFound(`Can not find Stage with id ${stageId}`);
+      throw Boom.notFound(`Can not find Stage with code ${stageCode}`);
     }
 
     return stage;
@@ -71,7 +71,14 @@ export class Case {
     return this.comments.find((c) => c.ref === commentRef);
   }
 
-  setTaskStatus({ stageId, taskGroupId, taskId, status, comment, updatedBy }) {
+  setTaskStatus({
+    stageCode,
+    taskGroupId,
+    taskId,
+    status,
+    comment,
+    updatedBy,
+  }) {
     const caseTask = this.findTask(taskId);
 
     caseTask.updateStatus(status, updatedBy);
@@ -82,7 +89,7 @@ export class Case {
         text: comment,
         data: {
           caseId: this._id,
-          stageId,
+          stageCode,
           taskGroupId,
           taskId,
         },
@@ -133,7 +140,7 @@ export class Case {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
         actionId,
-        stageId: this.currentStage,
+        stageCode: this.currentStage,
       },
       text: comment,
       createdBy,
@@ -231,7 +238,7 @@ export class Case {
 
   #moveToNextStage() {
     const nextStage = this.#getNextStage();
-    this.currentStage = nextStage.id;
+    this.currentStage = nextStage.code;
     return nextStage;
   }
 
@@ -260,7 +267,7 @@ export class Case {
 
   #getCurrentStageIndex() {
     const currentStageIndex = this.stages.findIndex(
-      (stage) => stage.id === this.currentStage,
+      (stage) => stage.code === this.currentStage,
     );
 
     if (currentStageIndex === -1) {
@@ -278,11 +285,11 @@ export class Case {
       workflowCode: workflow.code,
       status: "NEW",
       dateReceived: new Date().toISOString(),
-      currentStage: workflow.stages[0].id,
+      currentStage: workflow.stages[0].code,
       payload,
       supplementaryData: {},
       stages: workflow.stages.map((stage) => ({
-        id: stage.id,
+        code: stage.code,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           id: taskGroup.id,
           tasks: taskGroup.tasks.map((task) => ({
@@ -315,7 +322,7 @@ export class Case {
       supplementaryData: {},
       stages: [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
               id: "stage-1-tasks",
@@ -329,7 +336,7 @@ export class Case {
           ],
         },
         {
-          id: "stage-2",
+          code: "stage-2",
           taskGroups: [],
         },
       ],

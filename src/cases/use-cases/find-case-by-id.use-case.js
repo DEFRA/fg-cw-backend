@@ -10,11 +10,11 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
-      const { stageId, taskGroupId, taskId } = tl.data;
-      return `Task '${workflow.findTask(stageId, taskGroupId, taskId).title}' completed`;
+      const { stageCode, taskGroupId, taskId } = tl.data;
+      return `Task '${workflow.findTask(stageCode, taskGroupId, taskId).title}' completed`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
-      const stage = workflow.findStage(tl.data.stageId);
+      const stage = workflow.findStage(tl.data.stageCode);
       return `Stage '${stage.title}' outcome (${tl.data.actionId})`;
     }
     default:
