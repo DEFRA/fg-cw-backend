@@ -24,15 +24,6 @@ describe("findCaseByIdRoute", () => {
 
   beforeAll(async () => {
     server = hapi.server();
-    server.auth.scheme("custom", () => {
-      return {
-        authenticate: (request, h) => {
-          return h.authenticated({ credentials: { user: mockAuthUser } });
-        },
-      };
-    });
-    server.auth.strategy("default", "custom");
-    server.auth.default("default");
     server.route(findCaseByIdRoute);
     await server.initialize();
   });
@@ -52,6 +43,12 @@ describe("findCaseByIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(200);

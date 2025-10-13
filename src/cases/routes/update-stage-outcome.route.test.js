@@ -23,15 +23,6 @@ describe("updateStageOutcomeUseCase", () => {
 
   beforeAll(async () => {
     server = hapi.server();
-    server.auth.scheme("custom", () => {
-      return {
-        authenticate: (request, h) => {
-          return h.authenticated({ credentials: { user: mockAuthUser } });
-        },
-      };
-    });
-    server.auth.strategy("default", "custom");
-    server.auth.default("default");
     server.route(updateStageOutcomeRoute);
     await server.initialize();
   });
@@ -49,6 +40,12 @@ describe("updateStageOutcomeUseCase", () => {
       payload: {
         actionId: "approve",
         comment: "This is a test comment",
+      },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
       },
     });
 

@@ -4,12 +4,8 @@ import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js"
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
-export const updateStageOutcomeUseCase = async ({
-  caseId,
-  actionId,
-  comment,
-  user,
-}) => {
+export const updateStageOutcomeUseCase = async (command) => {
+  const { caseId, actionId, comment, user } = command;
   const kase = await findById(caseId);
 
   if (!kase) {

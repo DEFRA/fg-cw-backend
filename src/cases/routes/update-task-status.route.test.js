@@ -24,15 +24,6 @@ describe("updateTaskStatusRoute", () => {
 
   beforeAll(async () => {
     server = hapi.server();
-    server.auth.scheme("custom", () => {
-      return {
-        authenticate: (request, h) => {
-          return h.authenticated({ credentials: { user: mockAuthUser } });
-        },
-      };
-    });
-    server.auth.strategy("default", "custom");
-    server.auth.default("default");
     server.route(updateTaskStatusRoute);
     await server.initialize();
   });
@@ -52,6 +43,12 @@ describe("updateTaskStatusRoute", () => {
       url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupId}/tasks/${taskId}/status`,
       payload: {
         status: "complete",
+      },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
       },
     });
 

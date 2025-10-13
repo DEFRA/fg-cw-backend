@@ -24,15 +24,6 @@ describe("assignUserRoute", () => {
 
   beforeAll(async () => {
     server = hapi.server();
-    server.auth.scheme("custom", () => {
-      return {
-        authenticate: (request, h) => {
-          return h.authenticated({ credentials: { user: mockAuthUser } });
-        },
-      };
-    });
-    server.auth.strategy("default", "custom");
-    server.auth.default("default");
     server.route(assignUserToCaseRoute);
     await server.initialize();
   });
@@ -50,6 +41,12 @@ describe("assignUserRoute", () => {
       url: `/cases/${caseId}/assigned-user`,
       payload: {
         assignedUserId,
+      },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
       },
     });
 
