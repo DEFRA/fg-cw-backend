@@ -33,7 +33,7 @@ export const caseData1 = {
   currentStage: "application-receipt",
   stages: [
     {
-      id: "application-receipt",
+      code: "application-receipt",
       taskGroups: [
         {
           id: "application-receipt-tasks",
@@ -47,7 +47,7 @@ export const caseData1 = {
       ],
     },
     {
-      id: "contract",
+      code: "contract",
       taskGroups: [],
     },
   ],
@@ -106,7 +106,7 @@ export const caseData2 = {
   currentStage: "application-receipt",
   stages: [
     {
-      id: "application-receipt",
+      code: "application-receipt",
       taskGroups: [
         {
           id: "application-receipt-tasks",
@@ -120,7 +120,7 @@ export const caseData2 = {
       ],
     },
     {
-      id: "contract",
+      code: "contract",
       taskGroups: [],
     },
   ],
@@ -178,7 +178,7 @@ export const caseData3Document = {
   currentStage: "application-receipt",
   stages: [
     {
-      id: "application-receipt",
+      code: "application-receipt",
       taskGroups: [
         {
           id: "application-receipt-tasks",
@@ -192,7 +192,7 @@ export const caseData3Document = {
       ],
     },
     {
-      id: "contract",
+      code: "contract",
       taskGroups: [],
     },
   ],

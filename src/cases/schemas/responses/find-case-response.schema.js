@@ -5,7 +5,7 @@ import { requiredRolesSchema } from "../requiredRoles.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
 
 export const CaseStage = Joi.object({
-  id: UrlSafeId.required(),
+  code: UrlSafeId.required(),
   taskGroups: Joi.array()
     .items(
       Joi.object({
