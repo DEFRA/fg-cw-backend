@@ -9,7 +9,7 @@ export const CaseStage = Joi.object({
   taskGroups: Joi.array()
     .items(
       Joi.object({
-        id: UrlSafeId.required(),
+        code: UrlSafeId.required(),
         tasks: Joi.array()
           .items(
             Joi.object({
