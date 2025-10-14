@@ -70,7 +70,6 @@ describe("GET /cases/{caseId}", () => {
           createdBy: {
             id: "System",
             name: "System",
-            email: "system@example.com",
           },
         },
       ],

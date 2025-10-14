@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
@@ -85,6 +86,18 @@ describe("formatTimelineItemDescription", () => {
 });
 
 describe("findCaseByIdUseCase", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   it("finds case by id", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
@@ -94,7 +107,7 @@ describe("findCaseByIdUseCase", () => {
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findById.mockResolvedValue(kase);
 
-    const result = await findCaseByIdUseCase("test-case-id");
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
@@ -105,9 +118,9 @@ describe("findCaseByIdUseCase", () => {
   it("throws when case not found", async () => {
     findById.mockResolvedValue(null);
 
-    await expect(findCaseByIdUseCase("non-existent-case-id")).rejects.toThrow(
-      'Case with id "non-existent-case-id" not found',
-    );
+    await expect(
+      findCaseByIdUseCase("non-existent-case-id", mockAuthUser),
+    ).rejects.toThrow('Case with id "non-existent-case-id" not found');
 
     expect(findById).toHaveBeenCalledWith("non-existent-case-id");
   });
@@ -139,7 +152,7 @@ describe("findCaseByIdUseCase", () => {
     findAll.mockResolvedValue([mockUser, mockUserAssigned]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
-    const result = await findCaseByIdUseCase(mockCase._id);
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findAll).toHaveBeenCalledWith({
@@ -166,9 +179,9 @@ describe("findCaseByIdUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findAll.mockRejectedValue(userError);
 
-    await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
-      "User not found",
-    );
+    await expect(
+      findCaseByIdUseCase(mockCase._id, mockAuthUser),
+    ).rejects.toThrow("User not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
@@ -187,7 +200,7 @@ describe("findCaseByIdUseCase", () => {
     findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
-    const result = await findCaseByIdUseCase(mockCase._id);
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("TEST_WORKFLOW");
@@ -209,7 +222,7 @@ describe("findCaseByIdUseCase", () => {
     findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
-    const result = await findCaseByIdUseCase(mockCase._id);
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findAll).toHaveBeenCalledWith({ ids: [mockUser.id] });
@@ -230,9 +243,9 @@ describe("findCaseByIdUseCase", () => {
     findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
 
-    await expect(findCaseByIdUseCase(mockCase._id)).rejects.toThrow(
-      "Workflow not found",
-    );
+    await expect(
+      findCaseByIdUseCase(mockCase._id, mockAuthUser),
+    ).rejects.toThrow("Workflow not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("INVALID_WORKFLOW");
@@ -249,7 +262,7 @@ describe("findCaseByIdUseCase", () => {
     findAll.mockResolvedValue([mockUser]);
     findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
 
-    const result = await findCaseByIdUseCase(mockCase._id);
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(result.assignedUser.name).toBe(mockUser.name);
@@ -292,7 +305,7 @@ describe("findCaseByIdUseCase", () => {
       findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
       findById.mockResolvedValue(mockCase);
 
-      const result = await findCaseByIdUseCase(mockCase._id);
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
         actionId: "approve",
@@ -325,7 +338,7 @@ describe("findCaseByIdUseCase", () => {
       findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
       findById.mockResolvedValue(mockCase);
 
-      const result = await findCaseByIdUseCase(mockCase._id);
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
         actionId: "approve",
@@ -359,7 +372,7 @@ describe("findCaseByIdUseCase", () => {
       findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
       findById.mockResolvedValue(mockCase);
 
-      const result = await findCaseByIdUseCase(mockCase._id);
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
         actionId: "approve",
@@ -387,7 +400,7 @@ describe("findCaseByIdUseCase", () => {
       findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
       findById.mockResolvedValue(mockCase);
 
-      const result = await findCaseByIdUseCase(mockCase._id);
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toBeUndefined();
     });
@@ -448,7 +461,7 @@ describe("findCaseByIdUseCase", () => {
       findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
       findById.mockResolvedValue(mockCase);
 
-      const result = await findCaseByIdUseCase(mockCase._id);
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome.comment).toBe("First stage approved");
       expect(result.stages[1].outcome).toBeUndefined();
