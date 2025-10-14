@@ -27,7 +27,7 @@ describe("formatTimelineItemDescription", () => {
       createdBy: "System",
       data: {
         stageCode: "stage-1",
-        taskGroupId: "stage-1-tasks",
+        taskGroupCode: "stage-1-tasks",
         taskId: "task-1",
       },
     };

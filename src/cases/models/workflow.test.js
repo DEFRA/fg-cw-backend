@@ -12,7 +12,7 @@ describe("Workflow", () => {
           name: "Initial Review",
           taskGroups: [
             {
-              id: "task-group-1",
+              code: "task-group-1",
               tasks: [{ id: "task-1", title: "Review application" }],
             },
           ],

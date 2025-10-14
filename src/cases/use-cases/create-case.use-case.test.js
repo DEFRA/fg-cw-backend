@@ -28,7 +28,7 @@ describe("createCaseUseCase", () => {
             code: "stage-1",
             taskGroups: [
               {
-                id: "task-group-1",
+                code: "task-group-1",
                 tasks: [
                   {
                     id: "task-1",
@@ -77,7 +77,7 @@ describe("createCaseUseCase", () => {
           code: "stage-1",
           taskGroups: [
             {
-              id: "task-group-1",
+              code: "task-group-1",
               tasks: [
                 {
                   id: "task-1",

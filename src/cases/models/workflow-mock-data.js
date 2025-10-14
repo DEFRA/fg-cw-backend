@@ -52,7 +52,7 @@ const createStages = () => [
     name: "Stage 1",
     taskGroups: [
       {
-        id: "stage-1-tasks",
+        code: "stage-1-tasks",
         title: "Stage 1 Tasks",
         tasks: [
           {

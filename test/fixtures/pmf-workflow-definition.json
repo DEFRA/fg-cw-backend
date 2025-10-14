@@ -87,7 +87,7 @@
       "name": "Application Received",
       "taskGroups": [
         {
-          "id": "review-automated-checks",
+          "code": "review-automated-checks",
           "title": "Review Automated Checks",
           "tasks": [
             {

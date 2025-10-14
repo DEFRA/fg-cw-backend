@@ -12,14 +12,14 @@ export class Workflow {
     this.definitions = props.definitions;
   }
 
-  findTask(stageCode, taskGroupId, taskId) {
+  findTask(stageCode, taskGroupCode, taskId) {
     const stage = this.findStage(stageCode);
-    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
+    const taskGroup = stage?.taskGroups.find((tg) => tg.code === taskGroupCode);
     const task = taskGroup?.tasks.find((t) => t.id === taskId);
 
     if (!task) {
       throw Boom.notFound(
-        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageCode}`,
+        `Can not find Task with id ${taskId} from taskGroup ${taskGroupCode} in stage ${stageCode}`,
       );
     }
 

@@ -73,7 +73,7 @@ export class Case {
 
   setTaskStatus({
     stageCode,
-    taskGroupId,
+    taskGroupCode,
     taskId,
     status,
     comment,
@@ -90,7 +90,7 @@ export class Case {
         data: {
           caseId: this._id,
           stageCode,
-          taskGroupId,
+          taskGroupCode,
           taskId,
         },
       });
@@ -291,7 +291,7 @@ export class Case {
       stages: workflow.stages.map((stage) => ({
         code: stage.code,
         taskGroups: stage.taskGroups.map((taskGroup) => ({
-          id: taskGroup.id,
+          code: taskGroup.code,
           tasks: taskGroup.tasks.map((task) => ({
             id: task.id,
             status: "pending",
@@ -325,7 +325,7 @@ export class Case {
           code: "stage-1",
           taskGroups: [
             {
-              id: "stage-1-tasks",
+              code: "stage-1-tasks",
               tasks: [
                 {
                   id: "task-1",

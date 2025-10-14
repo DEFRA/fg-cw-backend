@@ -9,7 +9,8 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const { caseId, stageCode, taskGroupId, taskId, status, comment, user } = command;
+  const { caseId, stageCode, taskGroupCode, taskId, status, comment, user } =
+    command;
 
   const kase = await findById(caseId);
 
@@ -19,14 +20,14 @@ export const updateTaskStatusUseCase = async (command) => {
 
   // get workflow->task to validate comment
   const workflow = await findByCode(kase.workflowCode);
-  const task = workflow.findTask(stageCode, taskGroupId, taskId);
+  const task = workflow.findTask(stageCode, taskGroupCode, taskId);
 
   validatePayloadComment(comment, task.comment?.type === "REQUIRED");
 
   const updatedBy = user.id;
   kase.setTaskStatus({
     stageCode,
-    taskGroupId,
+    taskGroupCode,
     taskId,
     status,
     comment,

@@ -18,7 +18,7 @@ const mapTasksToStages = (kaseStages, tasks) => {
       outcome: s.outcome || null,
       taskGroups: s.taskGroups.map((tg) => {
         return {
-          id: tg.id,
+          code: tg.code,
           tasks: tg.tasks.map((t) => processTask(t, tasks)),
         };
       }),
@@ -61,7 +61,7 @@ export class CaseDocument {
           code: "stage-1",
           taskGroups: [
             {
-              id: "stage-1-tasks",
+              code: "stage-1-tasks",
               tasks: [
                 {
                   id: "task-1",
