@@ -1,15 +1,13 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { wreck } from "../helpers/wreck.js";
 
-let roles;
 let client;
 
 beforeAll(async () => {
   client = new MongoClient(env.MONGO_URI);
   await client.connect();
-  roles = client.db().collection("roles");
 });
 
 afterAll(async () => {
@@ -17,10 +15,6 @@ afterAll(async () => {
 });
 
 describe("POST /roles", () => {
-  beforeEach(async () => {
-    await roles.deleteMany({});
-  });
-
   it("creates a role", async () => {
     const createRoleResponse = await wreck.post("/roles", {
       payload: {
