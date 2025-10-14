@@ -1,15 +1,11 @@
 import Boom from "@hapi/boom";
 
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
-export const updateStageOutcomeUseCase = async ({
-  caseId,
-  actionId,
-  comment,
-}) => {
+export const updateStageOutcomeUseCase = async (command) => {
+  const { caseId, actionId, comment, user } = command;
   const kase = await findById(caseId);
 
   if (!kase) {
@@ -27,7 +23,7 @@ export const updateStageOutcomeUseCase = async ({
   kase.updateStageOutcome({
     actionId,
     comment,
-    createdBy: getAuthenticatedUser().id,
+    createdBy: user.id,
   });
 
   await update(kase);

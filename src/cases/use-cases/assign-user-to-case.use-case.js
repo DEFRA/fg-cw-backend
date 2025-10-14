@@ -1,12 +1,11 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Permissions } from "../models/permissions.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 export const assignUserToCaseUseCase = async (command) => {
-  const { assignedUserId, caseId, notes } = command;
+  const { assignedUserId, caseId, notes, user } = command;
 
   const kase = await findById(caseId);
 
@@ -17,12 +16,12 @@ export const assignUserToCaseUseCase = async (command) => {
   if (assignedUserId === null) {
     kase.unassignUser({
       text: notes,
-      createdBy: getAuthenticatedUser().id,
+      createdBy: user.id,
     });
     return update(kase);
   }
 
-  const [user, workflow] = await Promise.all([
+  const [userToAssign, workflow] = await Promise.all([
     findUserByIdUseCase(assignedUserId),
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
@@ -31,15 +30,15 @@ export const assignUserToCaseUseCase = async (command) => {
   // TODO: This permission check should live inside Case once Case and Workflow are merged
   const permissions = new Permissions(workflow.requiredRoles);
 
-  if (!permissions.isAuthorised(user.appRoles)) {
+  if (!permissions.isAuthorised(userToAssign.appRoles)) {
     throw Boom.unauthorized(
-      `User with id "${user.id}" does not have the required permissions to be assigned to this case.`,
+      `User with id "${userToAssign.id}" does not have the required permissions to be assigned to this case.`,
     );
   }
 
   kase.assignUser({
     assignedUserId,
-    createdBy: getAuthenticatedUser().id,
+    createdBy: user.id,
     text: notes,
   });
 

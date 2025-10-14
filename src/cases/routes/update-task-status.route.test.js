@@ -1,4 +1,5 @@
 import hapi from "@hapi/hapi";
+import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { updateTaskStatusRequestSchema } from "../schemas/requests/update-task-status-request.schema.js";
 import { updateTaskStatusUseCase } from "../use-cases/update-task-status.use-case.js";
@@ -7,6 +8,18 @@ import { updateTaskStatusRoute } from "./update-task-status.route.js";
 vi.mock("../use-cases/update-task-status.use-case.js");
 
 describe("updateTaskStatusRoute", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   let server;
 
   beforeAll(async () => {
@@ -31,6 +44,12 @@ describe("updateTaskStatusRoute", () => {
       payload: {
         status: "complete",
       },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(204);
@@ -43,6 +62,7 @@ describe("updateTaskStatusRoute", () => {
       taskGroupId,
       taskId,
       status: "complete",
+      user: mockAuthUser,
     });
   });
 

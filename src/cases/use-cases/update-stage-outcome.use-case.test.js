@@ -1,7 +1,5 @@
 import Boom from "@hapi/boom";
-import { ObjectId } from "mongodb";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAuthenticatedUser } from "../../common/auth.js";
+import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
@@ -15,14 +13,6 @@ vi.mock("../repositories/workflow.repository.js");
 vi.mock("../publishers/case-event.publisher.js");
 
 describe("updateStageOutcomeUseCase", () => {
-  const validUserId = new ObjectId().toHexString();
-  const authenticatedUser = { id: validUserId };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
-  });
-
   describe("successful stage outcome update", () => {
     it("updates stage outcome with comment", async () => {
       const mockCase = Case.createMock();
@@ -35,6 +25,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Application approved with conditions",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -55,7 +48,7 @@ describe("updateStageOutcomeUseCase", () => {
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
         actionId: "approve",
         comment: "Application approved with conditions",
-        createdBy: authenticatedUser.id,
+        createdBy: "user-123",
       });
       expect(update).toHaveBeenCalledWith(mockCase);
       expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
@@ -77,6 +70,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "reject",
         comment: null,
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -95,7 +91,7 @@ describe("updateStageOutcomeUseCase", () => {
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
         actionId: "reject",
         comment: null,
-        createdBy: authenticatedUser.id,
+        createdBy: "user-123",
       });
     });
 
@@ -113,6 +109,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Moving to next stage",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -134,9 +133,6 @@ describe("updateStageOutcomeUseCase", () => {
     });
 
     it("uses authenticated user in stage outcome", async () => {
-      const specificUserId = "user-specific-123";
-      getAuthenticatedUser.mockReturnValue({ id: specificUserId });
-
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -144,6 +140,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -157,7 +156,7 @@ describe("updateStageOutcomeUseCase", () => {
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
         actionId: "approve",
         comment: "Test comment",
-        createdBy: specificUserId,
+        createdBy: "user-123",
       });
     });
   });
@@ -168,6 +167,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: "non-existent-case-id",
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(null);
@@ -223,6 +225,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       const updateError = new Error("Database update failed");
@@ -249,6 +254,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       const publishError = new Error("Publishing failed");
@@ -275,6 +283,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       const caseError = Boom.badRequest("Cannot progress from this stage");
@@ -307,6 +318,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "specific-action",
         comment: "specific comment text",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -334,6 +348,9 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionId: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
