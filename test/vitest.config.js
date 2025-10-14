@@ -33,6 +33,7 @@ export default defineConfig({
       OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",
       OIDC_SIGN_TOKEN_ENDPOINT: `http://localhost:${ENTRA_PORT}/sign`,
+      PRINT_LOGS: process.env.PRINT_LOGS,
     },
     hookTimeout: 30000,
   },
