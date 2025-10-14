@@ -49,7 +49,7 @@ const createPages = () => ({
 const createStages = () => [
   {
     code: "stage-1",
-    title: "Stage 1",
+    name: "Stage 1",
     taskGroups: [
       {
         id: "stage-1-tasks",
@@ -72,7 +72,7 @@ const createStages = () => [
   },
   {
     code: "stage-2",
-    title: "Stage 2",
+    name: "Stage 2",
     taskGroups: [],
     actions: [],
   },

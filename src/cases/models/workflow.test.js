@@ -9,7 +9,7 @@ describe("Workflow", () => {
       stages: [
         {
           code: "stage-1",
-          title: "Initial Review",
+          name: "Initial Review",
           taskGroups: [
             {
               id: "task-group-1",
@@ -49,7 +49,7 @@ describe("Workflow", () => {
         },
         {
           code: "stage-2",
-          title: "Final Decision",
+          name: "Final Decision",
           taskGroups: [],
           actions: [
             {
@@ -70,7 +70,7 @@ describe("Workflow", () => {
 
       expect(stage).toBeDefined();
       expect(stage.code).toBe("stage-1");
-      expect(stage.title).toBe("Initial Review");
+      expect(stage.name).toBe("Initial Review");
     });
 
     it("finds different stages", () => {
@@ -80,7 +80,7 @@ describe("Workflow", () => {
 
       expect(stage2).toBeDefined();
       expect(stage2.code).toBe("stage-2");
-      expect(stage2.title).toBe("Final Decision");
+      expect(stage2.name).toBe("Final Decision");
     });
 
     it("throws error when stage not found", () => {
