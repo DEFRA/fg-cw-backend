@@ -30,10 +30,12 @@ export const addNoteToCaseRoute = {
   async handler(request, h) {
     const { caseId } = request.params;
     const { text } = request.payload;
+    const { user } = request.auth.credentials;
 
     const note = await addNoteToCaseUseCase({
       caseId,
       text,
+      user,
     });
 
     return h
