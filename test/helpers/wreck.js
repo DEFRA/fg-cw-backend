@@ -2,7 +2,7 @@ import Wreck from "@hapi/wreck";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
 
-const wreckInstance = Wreck.defaults({
+const _wreck = Wreck.defaults({
   events: true,
   timeout: 3000,
   baseUrl: env.API_URL,
@@ -21,31 +21,46 @@ const getToken = async () => {
   return tokenResponse.payload.access_token;
 };
 
-export const wreck = new Proxy(wreckInstance, {
-  get(target, prop) {
-    if (typeof target[prop] === "function") {
-      // eslint-disable-next-line complexity
-      return async (...args) => {
-        if (["get", "post", "put", "delete", "patch"].includes(prop)) {
-          const options = {
-            headers: {},
-            ...args[1],
-          };
+// eslint-disable-next-line complexity
+const createOptions = async (options = {}) => {
+  const _options = structuredClone({
+    headers: {},
+    ...options,
+  });
 
-          const { headers } = options;
+  const { headers } = _options;
 
-          headers.authorization ??=
-            headers.Authorization || `Bearer ${await getToken()}`;
+  headers.authorization ??=
+    headers.Authorization || `Bearer ${await getToken()}`;
 
-          headers["x-cdp-request-id"] ??= randomUUID().replaceAll("-", "");
+  headers["x-cdp-request-id"] ??= randomUUID().replaceAll("-", "");
 
-          args[1] = options;
-        }
+  return _options;
+};
 
-        return target[prop].apply(target, args);
-      };
-    }
-
-    return target[prop];
+export const wreck = {
+  async get(uri, options) {
+    const _options = await createOptions(options);
+    return _wreck.get(uri, _options);
   },
-});
+
+  async post(uri, options) {
+    const __options = await createOptions(options);
+    return _wreck.post(uri, __options);
+  },
+
+  async put(uri, options) {
+    const opts = await createOptions(options);
+    return _wreck.put(uri, opts);
+  },
+
+  async patch(uri, options) {
+    const opts = await createOptions(options);
+    return _wreck.patch(uri, opts);
+  },
+
+  async delete(uri, options) {
+    const opts = await createOptions(options);
+    return _wreck.delete(uri, opts);
+  },
+};
