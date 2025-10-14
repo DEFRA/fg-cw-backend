@@ -84,7 +84,7 @@
   "stages": [
     {
       "code": "application-received",
-      "title": "Application Received",
+      "name": "Application Received",
       "taskGroups": [
         {
           "id": "review-automated-checks",
@@ -126,7 +126,7 @@
     },
     {
       "code": "assessment",
-      "title": "Assessment",
+      "name": "Assessment",
       "taskGroups": [
         {
           "id": "check-application",
@@ -179,7 +179,7 @@
     },
     {
       "code": "contracted",
-      "title": "Contracted",
+      "name": "Contracted",
       "taskGroups": [],
       "actions": []
     }
