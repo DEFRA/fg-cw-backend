@@ -1,14 +1,6 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
   assignUserToCase,
@@ -20,8 +12,6 @@ import { createWorkflow } from "../helpers/workflows.js";
 
 describe("PATCH /cases/{caseId}/assigned-user", () => {
   let cases;
-  let workflows;
-  let users;
 
   let client;
 
@@ -29,8 +19,6 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection("cases");
-    workflows = client.db().collection("workflows");
-    users = client.db().collection("users");
   });
 
   afterAll(async () => {
@@ -38,16 +26,7 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
   });
 
   beforeEach(async () => {
-    await cases.deleteMany({});
-    await workflows.deleteMany({});
-    await users.deleteMany({});
     await createWorkflow();
-  });
-
-  afterEach(async () => {
-    await cases.deleteMany({});
-    await workflows.deleteMany({});
-    await users.deleteMany({});
   });
 
   it("assigns a user to a case", async () => {
