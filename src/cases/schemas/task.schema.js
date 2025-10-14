@@ -10,7 +10,7 @@ export const Task = Joi.object({
 }).label("Task");
 
 const TaskGroup = Joi.object({
-  id: UrlSafeId.required(),
+  code: UrlSafeId.required(),
   title: Joi.string().required(),
   tasks: Joi.array().items(Task).min(1).required(),
 }).label("TaskGroup");
