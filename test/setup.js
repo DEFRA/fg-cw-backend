@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { styleText } from "node:util";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
 
 let environment;
@@ -25,6 +26,15 @@ export const setup = async ({ globalConfig }) => {
     .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()
     .up();
+
+  if (env.PRINT_LOGS) {
+    const backendContainer = environment.getContainer("fg-cw-backend-1");
+    const logStream = await backendContainer.logs();
+
+    logStream.on("data", (line) =>
+      process.stdout.write(styleText("gray", line)),
+    );
+  }
 };
 
 export const teardown = async () => {
