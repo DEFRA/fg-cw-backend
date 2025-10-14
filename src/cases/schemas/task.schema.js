@@ -23,7 +23,7 @@ const Action = Joi.object({
 
 export const Stage = Joi.object({
   code: Joi.string().required(),
-  title: Joi.string().required(),
+  name: Joi.string().required(),
   taskGroups: Joi.array().items(TaskGroup).required(),
   actionsTitle: Joi.string().optional(),
   actions: Joi.array().items(Action).required(),
