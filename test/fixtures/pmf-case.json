@@ -24,7 +24,7 @@
       "id": "application-received",
       "taskGroups": [
         {
-          "id": "review-automated-checks",
+          "code": "review-automated-checks",
           "tasks": [
             {
               "id": "review-application-data",
@@ -38,7 +38,7 @@
       "id": "assessment",
       "taskGroups": [
         {
-          "id": "check-application",
+          "code": "check-application",
           "tasks": [
             {
               "id": "check-application-and-documents",
@@ -55,7 +55,7 @@
           ]
         },
         {
-          "id": "registration-checks",
+          "code": "registration-checks",
           "tasks": [
             {
               "id": "confirm-farm-has-cph",

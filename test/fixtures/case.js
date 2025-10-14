@@ -36,7 +36,7 @@ export const caseData1 = {
       code: "application-receipt",
       taskGroups: [
         {
-          id: "application-receipt-tasks",
+          code: "application-receipt-tasks",
           tasks: [
             {
               id: "simple-review",
@@ -109,7 +109,7 @@ export const caseData2 = {
       code: "application-receipt",
       taskGroups: [
         {
-          id: "application-receipt-tasks",
+          code: "application-receipt-tasks",
           tasks: [
             {
               id: "simple-review",
@@ -181,7 +181,7 @@ export const caseData3Document = {
       code: "application-receipt",
       taskGroups: [
         {
-          id: "application-receipt-tasks",
+          code: "application-receipt-tasks",
           tasks: [
             {
               id: "simple-review",
