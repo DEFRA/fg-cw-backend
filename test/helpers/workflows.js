@@ -238,7 +238,7 @@ export const createWorkflow = async (payload = {}) => {
       stages: [
         {
           code: "application-receipt",
-          title: "Application Receipt",
+          name: "Application Receipt",
           taskGroups: [
             {
               id: "application-receipt-tasks",
@@ -261,7 +261,7 @@ export const createWorkflow = async (payload = {}) => {
         },
         {
           code: "contract",
-          title: "Stage for contract management",
+          name: "Stage for contract management",
           taskGroups: [],
           actions: [],
         },
