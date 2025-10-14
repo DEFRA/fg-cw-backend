@@ -27,6 +27,14 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
   beforeEach(async () => {
     await createWorkflow();
+
+    // Create the authenticated user that matches the JWT token
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
   });
 
   it("assigns a user to a case", async () => {

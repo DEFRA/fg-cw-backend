@@ -1,4 +1,5 @@
 import hapi from "@hapi/hapi";
+import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { updateStageOutcomeUseCase } from "../use-cases/update-stage-outcome.use-case.js";
 import { updateStageOutcomeRoute } from "./update-stage-outcome.route.js";
@@ -7,6 +8,18 @@ vi.mock("../use-cases/update-stage-outcome.use-case.js");
 
 describe("updateStageOutcomeUseCase", () => {
   let server;
+
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
   beforeAll(async () => {
     server = hapi.server();
@@ -28,6 +41,12 @@ describe("updateStageOutcomeUseCase", () => {
         actionId: "approve",
         comment: "This is a test comment",
       },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(204);
@@ -38,6 +57,7 @@ describe("updateStageOutcomeUseCase", () => {
       caseId,
       actionId: "approve",
       comment: "This is a test comment",
+      user: mockAuthUser,
     });
   });
 });

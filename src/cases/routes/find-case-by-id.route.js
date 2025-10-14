@@ -19,8 +19,9 @@ export const findCaseByIdRoute = {
   },
   async handler(request) {
     const { caseId } = request.params;
+    const { user } = request.auth.credentials;
 
-    const result = await findCaseByIdUseCase(caseId);
+    const result = await findCaseByIdUseCase(caseId, user);
 
     return result;
   },

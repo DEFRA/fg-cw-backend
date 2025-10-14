@@ -1,4 +1,5 @@
 import hapi from "@hapi/hapi";
+import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
@@ -7,6 +8,18 @@ import { findCaseByIdRoute } from "./find-case-by-id.route.js";
 vi.mock("../use-cases/find-case-by-id.use-case.js");
 
 describe("findCaseByIdRoute", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   let server;
 
   beforeAll(async () => {
@@ -30,11 +43,17 @@ describe("findCaseByIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(200);
     expect(result).toEqual(caseMock);
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId);
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser);
   });
 
   it("returns 400 when caseId param is invalid", async () => {
