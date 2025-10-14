@@ -39,7 +39,7 @@ export const caseData1 = {
           code: "application-receipt-tasks",
           tasks: [
             {
-              id: "simple-review",
+              code: "simple-review",
               status: "pending",
             },
           ],
@@ -112,7 +112,7 @@ export const caseData2 = {
           code: "application-receipt-tasks",
           tasks: [
             {
-              id: "simple-review",
+              code: "simple-review",
               status: "pending",
             },
           ],
@@ -184,7 +184,7 @@ export const caseData3Document = {
           code: "application-receipt-tasks",
           tasks: [
             {
-              id: "simple-review",
+              code: "simple-review",
               status: "pending",
             },
           ],

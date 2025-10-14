@@ -242,7 +242,7 @@ export const workflowData1 = {
           title: "Application Receipt tasks",
           tasks: [
             {
-              id: "simple-review",
+              code: "simple-review",
               title: "Simple Review",
               type: "boolean",
             },

@@ -45,14 +45,14 @@ export class Case {
 
   /**
    *
-   * @param {string} taskId
-   * @returns task with given taskId or throws if task not found
+   * @param {string} taskCode
+   * @returns task with given taskCode or throws if task not found
    */
-  findTask(taskId) {
-    const task = this.tasks.get(taskId);
+  findTask(taskCode) {
+    const task = this.tasks.get(taskCode);
 
     if (!task) {
-      throw Boom.notFound(`Can not find Task with id ${taskId}!`);
+      throw Boom.notFound(`Can not find Task with code ${taskCode}!`);
     }
 
     return task;
@@ -74,12 +74,12 @@ export class Case {
   setTaskStatus({
     stageCode,
     taskGroupCode,
-    taskId,
+    taskCode,
     status,
     comment,
     updatedBy,
   }) {
-    const caseTask = this.findTask(taskId);
+    const caseTask = this.findTask(taskCode);
 
     caseTask.updateStatus(status, updatedBy);
 
@@ -91,7 +91,7 @@ export class Case {
           caseId: this._id,
           stageCode,
           taskGroupCode,
-          taskId,
+          taskCode,
         },
       });
 
@@ -293,7 +293,7 @@ export class Case {
         taskGroups: stage.taskGroups.map((taskGroup) => ({
           code: taskGroup.code,
           tasks: taskGroup.tasks.map((task) => ({
-            id: task.id,
+            code: task.code,
             status: "pending",
           })),
         })),
@@ -328,7 +328,7 @@ export class Case {
               code: "stage-1-tasks",
               tasks: [
                 {
-                  id: "task-1",
+                  code: "task-1",
                   status: "pending",
                 },
               ],

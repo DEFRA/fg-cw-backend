@@ -75,7 +75,7 @@ describe("TimelineEvent", () => {
         eventType: EventEnums.eventTypes.TASK_COMPLETED,
         createdBy,
         data: {
-          taskId: "task-456",
+          taskCode: "task-456",
           otherProperty: "value",
         },
       });
@@ -317,7 +317,7 @@ describe("TimelineEvent", () => {
     it("creates a task complete event", () => {
       const props = {
         data: {
-          taskId: "64c88faac1f56f71e1b99999",
+          taskCode: "64c88faac1f56f71e1b99999",
         },
         text: "Task complete",
         createdBy: "64c88faac1f56f71e1b89a33",
@@ -328,7 +328,7 @@ describe("TimelineEvent", () => {
         EventEnums.eventTypes.TASK_COMPLETED,
       );
       expect(timelineEvent.comment.text).toBe("Task complete");
-      expect(timelineEvent.data.taskId).toBe("64c88faac1f56f71e1b99999");
+      expect(timelineEvent.data.taskCode).toBe("64c88faac1f56f71e1b99999");
     });
   });
 
