@@ -39,13 +39,13 @@ export const createCase = async (cases, payload = {}) => {
     timeline: [],
     stages: [
       {
-        id: "application-receipt",
+        code: "application-receipt",
         taskGroups: [
           {
             code: "application-receipt-tasks",
             tasks: [
               {
-                id: "simple-review",
+                code: "simple-review",
                 status: "pending",
               },
             ],
@@ -53,7 +53,7 @@ export const createCase = async (cases, payload = {}) => {
         ],
       },
       {
-        id: "contract",
+        code: "contract",
         taskGroups: [],
       },
     ],
