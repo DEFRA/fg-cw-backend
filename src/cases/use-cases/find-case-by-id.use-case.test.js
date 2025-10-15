@@ -280,7 +280,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock({
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [],
             outcome: {
               actionId: "approve",
@@ -323,7 +323,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock({
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [],
             outcome: {
               actionId: "approve",
@@ -355,7 +355,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock({
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [],
             outcome: {
               actionId: "approve",
@@ -390,7 +390,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock({
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [],
           },
         ],
@@ -415,7 +415,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock({
         stages: [
           {
-            id: "stage-1",
+            code: "stage-1",
             taskGroups: [],
             outcome: {
               actionId: "approve",
@@ -425,11 +425,11 @@ describe("findCaseByIdUseCase", () => {
             },
           },
           {
-            id: "stage-2",
+            code: "stage-2",
             taskGroups: [],
           },
           {
-            id: "stage-3",
+            code: "stage-3",
             taskGroups: [],
             outcome: {
               actionId: "reject",
