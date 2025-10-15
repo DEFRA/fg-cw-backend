@@ -36,11 +36,11 @@ describe("updateTaskStatusRoute", () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
     const stageCode = "application-receipt";
     const taskGroupCode = "application-receipt-tasks";
-    const taskId = "simple-review";
+    const taskCode = "simple-review";
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskId}/status`,
+      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
         status: "complete",
       },
@@ -60,7 +60,7 @@ describe("updateTaskStatusRoute", () => {
       caseId,
       stageCode,
       taskGroupCode,
-      taskId,
+      taskCode,
       status: "complete",
       user: mockAuthUser,
     });
@@ -76,11 +76,11 @@ describe("updateTaskStatusRoute", () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
     const stageCode = "application-receipt";
     const taskGroupCode = "application-receipt-tasks";
-    const taskId = "simple-review";
+    const taskCode = "simple-review";
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskId}/status`,
+      url: `/cases/${caseId}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
         status: "bang",
       },

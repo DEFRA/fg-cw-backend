@@ -2,8 +2,8 @@ import { ObjectId } from "mongodb";
 import { TaskDocument } from "./task-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
 
-const processTask = ({ id }, tasks) => {
-  const task = tasks.get(id);
+const processTask = ({ code }, tasks) => {
+  const task = tasks.get(code);
   return new TaskDocument(task);
 };
 
@@ -64,7 +64,7 @@ export class CaseDocument {
               code: "stage-1-tasks",
               tasks: [
                 {
-                  id: "task-1",
+                  code: "task-1",
                   status: "pending",
                 },
               ],
