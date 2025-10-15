@@ -4,22 +4,22 @@ import { Task, toTask, toTasks } from "./task.js";
 describe("Task", () => {
   it("should create a basic task", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
 
-    expect(task.id).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
+    expect(task.code).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
     expect(task.status).toBe("pending");
   });
 
   it("should create a task with optional fields", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
       updatedAt: "2025-01-01T00:00:00.000Z",
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
-    expect(task.id).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
+    expect(task.code).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
     expect(task.status).toBe("pending");
     expect(task.updatedAt).toBe("2025-01-01T00:00:00.000Z");
     expect(task.updatedBy).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
@@ -29,21 +29,21 @@ describe("Task", () => {
     expect(
       () =>
         new Task({
-          id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+          code: "k0a7-9xv4f2h1n3q8c5w2z1y",
           status: "invalid_status",
         }),
     ).toThrow('Invalid Task: "status" must be one of [complete, pending]');
   });
 
-  it("should not create a task with an invalid id", () => {
+  it("should not create a task with an invalid code", () => {
     expect(
       () =>
         new Task({
-          id: "invalid_id",
+          code: "invalid_code",
           status: "pending",
         }),
     ).toThrow(
-      'Invalid Task: "id" with value "invalid_id" fails to match the required pattern: /^[a-z0-9-]+$/',
+      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[a-z0-9-]+$/',
     );
   });
 
@@ -51,7 +51,7 @@ describe("Task", () => {
     expect(
       () =>
         new Task({
-          id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+          code: "k0a7-9xv4f2h1n3q8c5w2z1y",
           status: "pending",
           commentRef: "invalid_id",
         }),
@@ -60,21 +60,45 @@ describe("Task", () => {
     );
   });
 
-  it("should not create a task with an invalid id", () => {
+  it("should not create a task with an invalid code", () => {
     expect(
       () =>
         new Task({
-          id: "invalid_id",
+          code: "invalid_code",
           status: "pending",
         }),
     ).toThrow(
-      'Invalid Task: "id" with value "invalid_id" fails to match the required pattern: /^[a-z0-9-]+$/',
+      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[a-z0-9-]+$/',
+    );
+  });
+
+  it("should not create a task with an invalid code", () => {
+    expect(
+      () =>
+        new Task({
+          code: "invalid_code",
+          status: "pending",
+        }),
+    ).toThrow(
+      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[a-z0-9-]+$/',
+    );
+  });
+
+  it("should not create a task with an invalid code", () => {
+    expect(
+      () =>
+        new Task({
+          code: "invalid_code",
+          status: "pending",
+        }),
+    ).toThrow(
+      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[a-z0-9-]+$/',
     );
   });
 
   it("should update the status of a task", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
     task.updateStatus("complete", "k0a7-9xv4f2h1n3q8c5w2z1y");
@@ -83,7 +107,7 @@ describe("Task", () => {
 
   it("should update the comment ref of a task", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
     task.updateCommentRef("k0a7-9xv4f2h1n3q8c5w2999");
@@ -92,7 +116,7 @@ describe("Task", () => {
 
   it("should update the updated at of a task", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2999",
+      code: "k0a7-9xv4f2h1n3q8c5w2999",
       status: "pending",
     });
     task.updateStatus("complete", "1k0a7-9xv4f2h1n3q8c5w2999");
@@ -101,7 +125,7 @@ describe("Task", () => {
 
   it("should throw an error if the status is invalid", () => {
     const task = new Task({
-      id: "k0a7-9xv4f2h1n3q8c5w2999",
+      code: "k0a7-9xv4f2h1n3q8c5w2999",
       status: "pending",
     });
     expect(() =>
@@ -115,10 +139,10 @@ describe("Task", () => {
 describe("toTask", () => {
   it("should convert a task document to a task", () => {
     const task = toTask({
-      id: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
-    expect(task.id).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
+    expect(task.code).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
     expect(task.status).toBe("pending");
   });
 });
@@ -127,21 +151,21 @@ describe("toTasks", () => {
   it("should convert a tasks document to a tasks", () => {
     const tasks = toTasks([
       {
-        id: "ssss-9xv4f2h1n3q8c5w2111",
+        code: "ssss-9xv4f2h1n3q8c5w2111",
         taskGroups: [
           {
-            id: "tgtg-9xv4f2h1n3q8c5w2000",
+            code: "tgtg-9xv4f2h1n3q8c5w2000",
             tasks: [
               {
-                id: "k01a-9xv4f2h1n3q8c5w2z1y",
+                code: "k01a-9xv4f2h1n3q8c5w2z1y",
                 status: "complete",
               },
               {
-                id: "k02a-9xv4f2h1n3q8c5w2z1o",
+                code: "k02a-9xv4f2h1n3q8c5w2z1o",
                 status: "pending",
               },
               {
-                id: "k03a-9xv4f2h1n3q8c5w2z00",
+                code: "k03a-9xv4f2h1n3q8c5w2z00",
                 status: "pending",
               },
             ],

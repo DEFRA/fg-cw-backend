@@ -6,7 +6,7 @@ export const TaskStatus = Joi.string().valid("complete", "pending");
 
 export class Task {
   static validationSchema = Joi.object({
-    id: UrlSafeId.required().label("id"),
+    code: UrlSafeId.required().label("code"),
     status: TaskStatus.required(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
@@ -25,7 +25,7 @@ export class Task {
       );
     }
 
-    this.id = value.id;
+    this.code = value.code;
     this.status = value.status;
     this.commentRef = value.commentRef;
     this.updatedAt = value.updatedAt;
@@ -63,7 +63,7 @@ export const toTasks = (stages) => {
   const tasks = new Map();
   stages.forEach((s) =>
     s.taskGroups.forEach((tg) =>
-      tg?.tasks.forEach((t) => tasks.set(t.id, toTask(t))),
+      tg?.tasks.forEach((t) => tasks.set(t.code, toTask(t))),
     ),
   );
   return tasks;

@@ -4,7 +4,7 @@ import { Task } from "./task.schema.js";
 describe("Task Schema", () => {
   it("should allow missing optional comment", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
+      code: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
     };
@@ -16,7 +16,7 @@ describe("Task Schema", () => {
 
   it("should have label if comment is provided", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
+      code: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
       comment: {
@@ -32,7 +32,7 @@ describe("Task Schema", () => {
 
   it("should have helpText if comment is provided", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
+      code: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
       comment: {
@@ -49,7 +49,7 @@ describe("Task Schema", () => {
   it("should validate allowed types", () => {
     const types = ["CONDITIONAL", "REQUIRED", "OPTIONAL"];
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
+      code: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
       comment: {
@@ -68,7 +68,7 @@ describe("Task Schema", () => {
 
   it("should error with unknown comment type", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
+      code: "abcd-0987-hjyg-8765-6542",
       title: "Test task",
       type: "boolean",
       comment: {

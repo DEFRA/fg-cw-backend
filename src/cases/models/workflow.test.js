@@ -13,7 +13,7 @@ describe("Workflow", () => {
           taskGroups: [
             {
               code: "task-group-1",
-              tasks: [{ id: "task-1", title: "Review application" }],
+              tasks: [{ code: "task-1", title: "Review application" }],
             },
           ],
           actions: [
@@ -446,7 +446,7 @@ describe("Workflow", () => {
       const task = workflow.findTask("stage-1", "task-group-1", "task-1");
 
       expect(task).toBeDefined();
-      expect(task.id).toBe("task-1");
+      expect(task.code).toBe("task-1");
     });
 
     it("throws error from findStage when stage not found in findTask", () => {

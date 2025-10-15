@@ -306,7 +306,7 @@ describe("Case", () => {
     it("should find task", () => {
       const kase = Case.createMock();
       expect(kase.findTask("task-1")).toEqual({
-        id: "task-1",
+        code: "task-1",
         status: "pending",
       });
     });
@@ -314,7 +314,7 @@ describe("Case", () => {
     it("should throw an error if task not found", () => {
       const kase = Case.createMock();
       expect(() => kase.findTask("uknown-task-id")).toThrow(
-        "Can not find Task with id uknown-task-id",
+        "Can not find Task with code uknown-task-id",
       );
     });
 
@@ -327,7 +327,7 @@ describe("Case", () => {
       kase.setTaskStatus({
         stageCode: "stage-1",
         taskGroupCode: "stage-1-tasks",
-        taskId: "task-1",
+        taskCode: "task-1",
         status: "complete",
         comment: "This is a note",
         updatedBy: "099999999999999999999999",
@@ -459,8 +459,8 @@ describe("Case", () => {
           code: "stage-1",
           taskGroups: [
             {
-              id: "task-group-1",
-              tasks: [{ id: "task-1", status: "complete" }],
+              code: "task-group-1",
+              tasks: [{ code: "task-1", status: "complete" }],
             },
           ],
         },
@@ -557,8 +557,8 @@ describe("Case", () => {
           code: "stage-1",
           taskGroups: [
             {
-              id: "task-group-1",
-              tasks: [{ id: "task-1", status: "pending" }],
+              code: "task-group-1",
+              tasks: [{ code: "task-1", status: "pending" }],
             },
           ],
         },

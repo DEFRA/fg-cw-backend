@@ -3,7 +3,7 @@ import { comment } from "./comment.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const Task = Joi.object({
-  id: UrlSafeId.required(),
+  code: UrlSafeId.required(),
   title: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
   comment: comment.optional(),

@@ -133,17 +133,17 @@
           "title": "Check Application",
           "tasks": [
             {
-              "id": "check-application-and-documents",
+              "code": "check-application-and-documents",
               "title": "Check application and documents",
               "type": "boolean"
             },
             {
-              "id": "check-find-farm-and-land-payment-data",
+              "code": "check-find-farm-and-land-payment-data",
               "title": "Check on Find farm and land payment data",
               "type": "boolean"
             },
             {
-              "id": "check-rps-dual-funding",
+              "code": "check-rps-dual-funding",
               "title": "Check on RPS (Dual Funding)",
               "type": "boolean"
             }
@@ -154,12 +154,12 @@
           "title": "Registration checks",
           "tasks": [
             {
-              "id": "confirm-farm-has-cph",
+              "code": "confirm-farm-has-cph",
               "title": "Confirm farm has a CPH",
               "type": "boolean"
             },
             {
-              "id": "confirm-apha-registration",
+              "code": "confirm-apha-registration",
               "title": "Confirm APHA registration",
               "type": "boolean"
             }

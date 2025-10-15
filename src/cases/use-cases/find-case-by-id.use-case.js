@@ -31,8 +31,8 @@ const mapUserIdToUser = (userId, userMap) => {
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
-      const { stageCode, taskGroupCode, taskId } = tl.data;
-      return `Task '${workflow.findTask(stageCode, taskGroupCode, taskId).title}' completed`;
+      const { stageCode, taskGroupCode, taskCode } = tl.data;
+      return `Task '${workflow.findTask(stageCode, taskGroupCode, taskCode).title}' completed`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
       const stage = workflow.findStage(tl.data.stageCode);
