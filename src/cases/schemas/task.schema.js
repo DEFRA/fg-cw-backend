@@ -4,7 +4,7 @@ import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const Task = Joi.object({
   code: UrlSafeId.required(),
-  title: Joi.string().required(),
+  name: Joi.string().required(),
   type: Joi.string().valid("boolean").required(),
   comment: comment.optional(),
 }).label("Task");
