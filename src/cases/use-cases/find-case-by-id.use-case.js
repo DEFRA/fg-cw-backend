@@ -67,8 +67,11 @@ export const findCaseByIdUseCase = async (caseId, user) => {
   }));
 
   kase.stages = kase.stages.map((stage) => {
+    const workflowStage = workflow.findStage(stage.code);
     return {
       ...stage,
+      name: workflowStage.name,
+      description: workflowStage.description,
       taskGroups: stage.taskGroups.map((taskGroup) => ({
         ...taskGroup,
         tasks: taskGroup.tasks.map((task) => {
