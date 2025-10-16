@@ -6,6 +6,8 @@ import { UrlSafeId } from "../url-safe-id.schema.js";
 
 export const CaseStage = Joi.object({
   code: UrlSafeId.required(),
+  name: Joi.string().required(),
+  description: Joi.string().required(),
   taskGroups: Joi.array()
     .items(
       Joi.object({

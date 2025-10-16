@@ -23,6 +23,12 @@ describe("findCasesRoute", () => {
     const cases = [Case.createMock(), Case.createMock()];
     cases[0].supplementaryData.agreements = [];
     cases[1].supplementaryData.agreements = [];
+    cases.forEach((c) => {
+      c.stages[0].name = "Stage 1";
+      c.stages[0].description = "Stage 1 description";
+      c.stages[1].name = "Stage 2";
+      c.stages[1].description = "Stage 2 description";
+    });
 
     findCasesUseCase.mockResolvedValue(cases);
 

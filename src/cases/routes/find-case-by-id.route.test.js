@@ -37,6 +37,10 @@ describe("findCaseByIdRoute", () => {
 
     const caseMock = Case.createMock();
     caseMock.supplementaryData.agreements = [];
+    caseMock.stages[0].name = "Stage 1";
+    caseMock.stages[0].description = "Stage 1 description";
+    caseMock.stages[1].name = "Stage 2";
+    caseMock.stages[1].description = "Stage 2 description";
 
     findCaseByIdUseCase.mockResolvedValueOnce(caseMock);
 

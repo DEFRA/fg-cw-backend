@@ -211,6 +211,7 @@
     {
       "code": "application-receipt",
       "name": "Application Receipt",
+      "description": "Application received",
       "taskGroups": [
         {
           "code": "application-receipt-tasks",
@@ -240,6 +241,7 @@
     {
       "code": "contract",
       "name": "Stage for contract management",
+      "description": "Awaiting agreement",
       "taskGroups": [],
       "actions": []
     }

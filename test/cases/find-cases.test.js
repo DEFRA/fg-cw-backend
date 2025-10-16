@@ -54,12 +54,36 @@ describe("GET /cases", () => {
         tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData1.dateReceived).toISOString(),
+        stages: [
+          {
+            ...caseData1.stages[0],
+            name: "Application Receipt",
+            description: "Application received",
+          },
+          {
+            ...caseData1.stages[1],
+            name: "Stage for contract management",
+            description: "Awaiting agreement",
+          },
+        ],
       },
       {
         ...caseData2,
         tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        stages: [
+          {
+            ...caseData2.stages[0],
+            name: "Application Receipt",
+            description: "Application received",
+          },
+          {
+            ...caseData2.stages[1],
+            name: "Stage for contract management",
+            description: "Awaiting agreement",
+          },
+        ],
       },
     ]);
   });
