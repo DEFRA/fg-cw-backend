@@ -85,6 +85,7 @@
     {
       "code": "application-received",
       "name": "Application Received",
+      "description": "Application received",
       "taskGroups": [
         {
           "code": "review-automated-checks",
@@ -127,6 +128,7 @@
     {
       "code": "assessment",
       "name": "Assessment",
+      "description": "Application assessment",
       "taskGroups": [
         {
           "id": "check-application",
@@ -180,6 +182,7 @@
     {
       "code": "contracted",
       "name": "Contracted",
+      "description": "Awaiting agreement",
       "taskGroups": [],
       "actions": []
     }
