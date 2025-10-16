@@ -58,7 +58,7 @@ const createStages = () => [
         tasks: [
           {
             code: "task-1",
-            title: "Task 1",
+            name: "Task 1",
             type: "boolean",
           },
         ],
