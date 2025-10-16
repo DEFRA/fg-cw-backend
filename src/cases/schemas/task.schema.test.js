@@ -5,7 +5,7 @@ describe("Task Schema", () => {
   it("should allow missing optional comment", () => {
     const task = {
       code: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      name: "Test task",
       type: "boolean",
     };
 
@@ -17,7 +17,7 @@ describe("Task Schema", () => {
   it("should have label if comment is provided", () => {
     const task = {
       code: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      name: "Test task",
       type: "boolean",
       comment: {
         type: "CONDITIONAL",
@@ -33,7 +33,7 @@ describe("Task Schema", () => {
   it("should have helpText if comment is provided", () => {
     const task = {
       code: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      name: "Test task",
       type: "boolean",
       comment: {
         type: "CONDITIONAL",
@@ -50,7 +50,7 @@ describe("Task Schema", () => {
     const types = ["CONDITIONAL", "REQUIRED", "OPTIONAL"];
     const task = {
       code: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      name: "Test task",
       type: "boolean",
       comment: {
         type: "CONDITIONAL",
@@ -69,7 +69,7 @@ describe("Task Schema", () => {
   it("should error with unknown comment type", () => {
     const task = {
       code: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      name: "Test task",
       type: "boolean",
       comment: {
         type: "NOT_ALLOWED_TYPE",

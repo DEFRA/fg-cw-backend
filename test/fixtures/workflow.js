@@ -244,7 +244,7 @@ export const workflowData1 = {
           tasks: [
             {
               code: "simple-review",
-              title: "Simple Review",
+              name: "Simple Review",
               type: "boolean",
             },
           ],
