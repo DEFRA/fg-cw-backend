@@ -218,12 +218,16 @@ describe("findCasesUseCase", () => {
   });
 
   it("finds workflows and assigns requiredRoles to cases", async () => {
-    const workflow1 = {
-      code: "WORKFLOW_1",
-      requiredRoles: ["ROLE_1", "ROLE_2"],
-    };
-    const workflow2 = { code: "WORKFLOW_2", requiredRoles: ["ROLE_3"] };
-    const workflows = [workflow1, workflow2];
+    const workflows = [
+      Workflow.createMock({
+        code: "WORKFLOW_1",
+        requiredRoles: ["ROLE_1", "ROLE_2"],
+      }),
+      Workflow.createMock({
+        code: "WORKFLOW_2",
+        requiredRoles: ["ROLE_3"],
+      }),
+    ];
 
     const casesWithWorkflows = [
       Case.createMock({ workflowCode: "WORKFLOW_1", assignedUser: null }),
@@ -245,16 +249,20 @@ describe("findCasesUseCase", () => {
   });
 
   it("finds cases with different workflow codes and sets the correct requiredRoles", async () => {
-    const workflow1 = {
-      code: "EDITOR_WORKFLOW",
-      requiredRoles: ["PMF_OFFICER", "SUPERVISOR"],
-    };
-    const workflow2 = { code: "ADMIN_WORKFLOW", requiredRoles: ["ADMIN"] };
-    const workflow3 = {
-      code: "USER_WORKFLOW",
-      requiredRoles: ["USER", "VIEWER"],
-    };
-    const workflows = [workflow1, workflow2, workflow3];
+    const workflows = [
+      Workflow.createMock({
+        code: "EDITOR_WORKFLOW",
+        requiredRoles: ["PMF_OFFICER", "SUPERVISOR"],
+      }),
+      Workflow.createMock({
+        code: "ADMIN_WORKFLOW",
+        requiredRoles: ["ADMIN"],
+      }),
+      Workflow.createMock({
+        code: "USER_WORKFLOW",
+        requiredRoles: ["USER", "VIEWER"],
+      }),
+    ];
 
     const casesWithDifferentWorkflows = [
       Case.createMock({ workflowCode: "EDITOR_WORKFLOW", assignedUser: null }),
@@ -309,8 +317,16 @@ describe("findCasesUseCase", () => {
   it("calls both findUsersUseCase and findWorkflowsUseCase with correct parameters", async () => {
     const user1 = User.createMock({ id: "user-1" });
     const user2 = User.createMock({ id: "user-2" });
-    const workflow1 = { code: "WORKFLOW_A", requiredRoles: ["ROLE_1"] };
-    const workflow2 = { code: "WORKFLOW_B", requiredRoles: ["ROLE_2"] };
+
+    const workflow1 = Workflow.createMock({
+      code: "WORKFLOW_A",
+      requiredRoles: ["ROLE_1"],
+    });
+
+    const workflow2 = Workflow.createMock({
+      code: "WORKFLOW_B",
+      requiredRoles: ["ROLE_2"],
+    });
 
     const cases = [
       Case.createMock({
@@ -398,11 +414,16 @@ describe("findCasesUseCase", () => {
     const user2 = User.createMock({ id: "user-2", name: "Bob Jones" });
     const users = [user1, user2];
 
-    const workflow1 = {
+    const workflow1 = Workflow.createMock({
       code: "COMPLEX_WORKFLOW",
       requiredRoles: ["ADMIN", "REVIEWER"],
-    };
-    const workflow2 = { code: "SIMPLE_WORKFLOW", requiredRoles: ["USER"] };
+    });
+
+    const workflow2 = Workflow.createMock({
+      code: "SIMPLE_WORKFLOW",
+      requiredRoles: ["USER"],
+    });
+
     const workflows = [workflow1, workflow2];
 
     const cases = [
@@ -437,5 +458,84 @@ describe("findCasesUseCase", () => {
     expect(result[0].requiredRoles).toEqual(["ADMIN", "REVIEWER"]);
     expect(result[1].assignedUser.name).toBe("Bob Jones");
     expect(result[1].requiredRoles).toEqual(["USER"]);
+  });
+
+  it("adds stage descriptions to cases", async () => {
+    const user1 = User.createMock({ id: "user-1", name: "Alice Smith" });
+    const user2 = User.createMock({ id: "user-2", name: "Bob Jones" });
+    const users = [user1, user2];
+
+    const workflow1 = Workflow.createMock({
+      code: "COMPLEX_WORKFLOW",
+      requiredRoles: ["ADMIN", "REVIEWER"],
+      stages: [
+        {
+          code: "stage-1",
+          name: "Stage 1",
+          description: "Stage 1 description",
+        },
+        {
+          code: "stage-2",
+          name: "Stage 2",
+          description: "Stage 2 description",
+        },
+      ],
+    });
+
+    const workflow2 = Workflow.createMock({
+      code: "SIMPLE_WORKFLOW",
+      requiredRoles: ["USER"],
+      stages: [
+        {
+          code: "stage-1",
+          name: "Stage 1",
+          description: "Stage 1 description",
+        },
+        {
+          code: "stage-2",
+          name: "Stage 2",
+          description: "Stage 2 description",
+        },
+      ],
+    });
+
+    const workflows = [workflow1, workflow2];
+
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "COMPLEX_WORKFLOW",
+      }),
+      Case.createMock({
+        assignedUser: { id: user2.id },
+        workflowCode: "SIMPLE_WORKFLOW",
+      }),
+    ];
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(result[0].stages[0].name).toEqual(workflow1.stages[0].name);
+    expect(result[0].stages[0].description).toEqual(
+      workflow1.stages[0].description,
+    );
+
+    expect(result[0].stages[1].name).toEqual(workflow1.stages[1].name);
+    expect(result[0].stages[1].description).toEqual(
+      workflow1.stages[1].description,
+    );
+
+    expect(result[1].stages[0].name).toEqual(workflow2.stages[0].name);
+    expect(result[1].stages[0].description).toEqual(
+      workflow2.stages[0].description,
+    );
+
+    expect(result[1].stages[1].name).toEqual(workflow2.stages[1].name);
+    expect(result[1].stages[1].description).toEqual(
+      workflow2.stages[1].description,
+    );
   });
 });

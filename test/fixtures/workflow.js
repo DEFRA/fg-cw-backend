@@ -236,6 +236,7 @@ export const workflowData1 = {
     {
       code: "application-receipt",
       name: "Application Receipt",
+      description: "Application received",
       taskGroups: [
         {
           code: "application-receipt-tasks",
@@ -259,6 +260,7 @@ export const workflowData1 = {
     {
       code: "contract",
       name: "Stage for contract management",
+      description: "Awaiting agreement",
       taskGroups: [],
       actions: [],
     },
@@ -315,12 +317,14 @@ export const workflowData2 = {
     {
       code: "review",
       name: "Review",
+      description: "Review description",
       taskGroups: [],
       actions: [],
     },
     {
       code: "decision",
       name: "Decision",
+      description: "Decision description",
       taskGroups: [],
       actions: [],
     },

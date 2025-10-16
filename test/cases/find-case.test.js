@@ -48,6 +48,8 @@ describe("GET /cases/{caseId}", () => {
       stages: [
         {
           ...caseData2.stages[0],
+          name: "Application Receipt",
+          description: "Application received",
           taskGroups: [
             {
               ...caseData2.stages[0].taskGroups[0],
@@ -62,6 +64,8 @@ describe("GET /cases/{caseId}", () => {
         },
         {
           ...caseData2.stages[1],
+          name: "Stage for contract management",
+          description: "Awaiting agreement",
         },
       ],
       timeline: [
