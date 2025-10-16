@@ -53,6 +53,8 @@ describe("GET /cases/{caseId}", () => {
           taskGroups: [
             {
               ...caseData2.stages[0].taskGroups[0],
+              name: "Application Receipt tasks",
+              description: "Task group description",
               tasks: [
                 {
                   ...caseData2.stages[0].taskGroups[0].tasks[0],

@@ -27,7 +27,7 @@ describe("formatTimelineItemDescription", () => {
       createdBy: "System",
       data: {
         stageCode: "stage-1",
-        taskGroupCode: "stage-1-tasks",
+        taskGroupCode: "task-group-1",
         taskCode: "task-1",
       },
     };
@@ -112,6 +112,10 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
+    expect(result.stages[0].taskGroups[0].name).toEqual("Stage 1 Tasks");
+    expect(result.stages[0].taskGroups[0].description).toEqual(
+      "Task group description",
+    );
     expect(result).toBe(kase);
   });
 
