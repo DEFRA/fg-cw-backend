@@ -54,7 +54,7 @@ const createStages = () => [
     taskGroups: [
       {
         code: "stage-1-tasks",
-        title: "Stage 1 Tasks",
+        name: "Stage 1 Tasks",
         tasks: [
           {
             code: "task-1",

@@ -89,7 +89,7 @@
       "taskGroups": [
         {
           "code": "review-automated-checks",
-          "title": "Review Automated Checks",
+          "name": "Review Automated Checks",
           "tasks": [
             {
               "id": "review-application-data",
@@ -132,7 +132,7 @@
       "taskGroups": [
         {
           "id": "check-application",
-          "title": "Check Application",
+          "name": "Check Application",
           "tasks": [
             {
               "code": "check-application-and-documents",
@@ -153,7 +153,7 @@
         },
         {
           "id": "registration-checks",
-          "title": "Registration checks",
+          "name": "Registration checks",
           "tasks": [
             {
               "code": "confirm-farm-has-cph",
