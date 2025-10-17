@@ -68,6 +68,8 @@ describe("GET /cases", () => {
                   {
                     code: "simple-review",
                     status: "pending",
+                    name: "Simple Review",
+                    description: "Simple review task",
                   },
                 ],
               },
@@ -100,6 +102,8 @@ describe("GET /cases", () => {
                   {
                     code: "simple-review",
                     status: "pending",
+                    name: "Simple Review",
+                    description: "Simple review task",
                   },
                 ],
               },

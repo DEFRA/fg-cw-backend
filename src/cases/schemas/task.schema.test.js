@@ -7,6 +7,7 @@ describe("Task Schema", () => {
       code: "abcd-0987-hjyg-8765-6542",
       name: "Test task",
       type: "boolean",
+      description: null,
     };
 
     const { error } = Task.validate(task);
@@ -19,6 +20,7 @@ describe("Task Schema", () => {
       code: "abcd-0987-hjyg-8765-6542",
       name: "Test task",
       type: "boolean",
+      description: null,
       comment: {
         type: "CONDITIONAL",
         helpText: "Please provide a note",
@@ -35,6 +37,7 @@ describe("Task Schema", () => {
       code: "abcd-0987-hjyg-8765-6542",
       name: "Test task",
       type: "boolean",
+      description: null,
       comment: {
         type: "CONDITIONAL",
         label: "Note",
@@ -52,6 +55,7 @@ describe("Task Schema", () => {
       code: "abcd-0987-hjyg-8765-6542",
       name: "Test task",
       type: "boolean",
+      description: null,
       comment: {
         type: "CONDITIONAL",
         label: "Note",
@@ -71,6 +75,7 @@ describe("Task Schema", () => {
       code: "abcd-0987-hjyg-8765-6542",
       name: "Test task",
       type: "boolean",
+      description: null,
       comment: {
         type: "NOT_ALLOWED_TYPE",
         label: "Note",

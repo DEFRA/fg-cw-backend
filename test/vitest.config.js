@@ -1,4 +1,3 @@
-// eslint-disable-next-line import-x/no-unresolved
 import { defineConfig } from "vitest/config";
 
 const CW_PORT = 3002;

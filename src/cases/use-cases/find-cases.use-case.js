@@ -46,6 +46,18 @@ const mapTimeline = (timeline) => {
   );
 };
 
+const mapTasks = (tasks, workflowTaskGroup) =>
+  tasks.map((task) => {
+    const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
+      (wtgt) => wtgt.code === task.code,
+    );
+    return {
+      ...task,
+      name: workflowTaskGroupTask.name,
+      description: workflowTaskGroupTask.description,
+    };
+  });
+
 const mapStages = (stages, workflow) =>
   stages.map((stage) => {
     const workflowStage = workflow.stages.find((s) => s.code === stage.code);
@@ -61,6 +73,7 @@ const mapStages = (stages, workflow) =>
           ...taskGroup,
           name: workflowTaskGroup.name,
           description: workflowTaskGroup.description,
+          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup),
         };
       }),
     };
