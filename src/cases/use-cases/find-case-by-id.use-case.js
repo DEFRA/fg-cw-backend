@@ -72,15 +72,22 @@ export const findCaseByIdUseCase = async (caseId, user) => {
       ...stage,
       name: workflowStage.name,
       description: workflowStage.description,
-      taskGroups: stage.taskGroups.map((taskGroup) => ({
-        ...taskGroup,
-        tasks: taskGroup.tasks.map((task) => {
-          return {
-            ...task,
-            updatedBy: mapUserIdToName(task.updatedBy, userMap),
-          };
-        }),
-      })),
+      taskGroups: stage.taskGroups.map((taskGroup) => {
+        const workflowTaskGroup = workflowStage.taskGroups.find(
+          (tg) => tg.code === taskGroup.code,
+        );
+        return {
+          ...taskGroup,
+          name: workflowTaskGroup.name,
+          description: workflowTaskGroup.description,
+          tasks: taskGroup.tasks.map((task) => {
+            return {
+              ...task,
+              updatedBy: mapUserIdToName(task.updatedBy, userMap),
+            };
+          }),
+        };
+      }),
       outcome: stage.outcome
         ? {
             ...stage.outcome,

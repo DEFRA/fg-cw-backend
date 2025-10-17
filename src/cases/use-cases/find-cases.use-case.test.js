@@ -460,7 +460,7 @@ describe("findCasesUseCase", () => {
     expect(result[1].requiredRoles).toEqual(["USER"]);
   });
 
-  it("adds stage descriptions to cases", async () => {
+  it("adds stage descriptions", async () => {
     const user1 = User.createMock({ id: "user-1", name: "Alice Smith" });
     const user2 = User.createMock({ id: "user-2", name: "Bob Jones" });
     const users = [user1, user2];
@@ -473,42 +473,30 @@ describe("findCasesUseCase", () => {
           code: "stage-1",
           name: "Stage 1",
           description: "Stage 1 description",
+          taskGroups: [
+            {
+              code: "task-group-1",
+              name: "Task Group 1",
+              description: "Task Group 1 description",
+              tasks: [],
+            },
+          ],
         },
         {
           code: "stage-2",
           name: "Stage 2",
           description: "Stage 2 description",
+          taskGroups: [],
         },
       ],
     });
 
-    const workflow2 = Workflow.createMock({
-      code: "SIMPLE_WORKFLOW",
-      requiredRoles: ["USER"],
-      stages: [
-        {
-          code: "stage-1",
-          name: "Stage 1",
-          description: "Stage 1 description",
-        },
-        {
-          code: "stage-2",
-          name: "Stage 2",
-          description: "Stage 2 description",
-        },
-      ],
-    });
-
-    const workflows = [workflow1, workflow2];
+    const workflows = [workflow1];
 
     const cases = [
       Case.createMock({
         assignedUser: { id: user1.id },
         workflowCode: "COMPLEX_WORKFLOW",
-      }),
-      Case.createMock({
-        assignedUser: { id: user2.id },
-        workflowCode: "SIMPLE_WORKFLOW",
       }),
     ];
 
@@ -527,15 +515,73 @@ describe("findCasesUseCase", () => {
     expect(result[0].stages[1].description).toEqual(
       workflow1.stages[1].description,
     );
+  });
 
-    expect(result[1].stages[0].name).toEqual(workflow2.stages[0].name);
-    expect(result[1].stages[0].description).toEqual(
-      workflow2.stages[0].description,
+  it("adds task group descriptions", async () => {
+    const user1 = User.createMock({ id: "user-1", name: "Alice Smith" });
+    const users = [user1];
+
+    const workflow1 = Workflow.createMock({
+      code: "COMPLEX_WORKFLOW",
+      requiredRoles: ["ADMIN", "REVIEWER"],
+      stages: [
+        {
+          code: "stage-1",
+          name: "Stage 1",
+          description: "Stage 1 description",
+          taskGroups: [
+            {
+              code: "task-group-1",
+              name: "Task Group 1",
+              description: "Task Group 1 description",
+              tasks: [],
+            },
+          ],
+        },
+        {
+          code: "stage-2",
+          name: "Stage 2",
+          description: "Stage 2 description",
+          taskGroups: [],
+        },
+      ],
+    });
+
+    const workflows = [workflow1];
+
+    const cases = [
+      Case.createMock({
+        assignedUser: { id: user1.id },
+        workflowCode: "COMPLEX_WORKFLOW",
+        stages: [
+          {
+            code: "stage-1",
+            taskGroups: [
+              {
+                code: "task-group-1",
+                tasks: [],
+              },
+            ],
+          },
+          {
+            code: "stage-2",
+            taskGroups: [],
+          },
+        ],
+      }),
+    ];
+
+    findAll.mockResolvedValue(cases);
+    findUsersUseCase.mockResolvedValue(users);
+    findWorkflowsUseCase.mockResolvedValue(workflows);
+
+    const result = await findCasesUseCase();
+
+    expect(result[0].stages[0].taskGroups[0].name).toEqual(
+      workflow1.stages[0].taskGroups[0].name,
     );
-
-    expect(result[1].stages[1].name).toEqual(workflow2.stages[1].name);
-    expect(result[1].stages[1].description).toEqual(
-      workflow2.stages[1].description,
+    expect(result[0].stages[0].taskGroups[0].description).toEqual(
+      workflow1.stages[0].taskGroups[0].description,
     );
   });
 });

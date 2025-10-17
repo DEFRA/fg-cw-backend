@@ -241,6 +241,7 @@ export const workflowData1 = {
         {
           code: "application-receipt-tasks",
           name: "Application Receipt tasks",
+          description: "Task group description",
           tasks: [
             {
               code: "simple-review",
