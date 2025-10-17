@@ -12,6 +12,8 @@ export const CaseStage = Joi.object({
     .items(
       Joi.object({
         code: UrlSafeId.required(),
+        name: Joi.string().optional(),
+        description: Joi.string().optional(),
         tasks: Joi.array()
           .items(
             Joi.object({

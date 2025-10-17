@@ -12,6 +12,7 @@ export const Task = Joi.object({
 const TaskGroup = Joi.object({
   code: UrlSafeId.required(),
   name: Joi.string().required(),
+  description: Joi.string().allow("").optional(),
   tasks: Joi.array().items(Task).min(1).required(),
 }).label("TaskGroup");
 
