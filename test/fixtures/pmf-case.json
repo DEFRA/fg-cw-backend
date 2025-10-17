@@ -21,13 +21,13 @@
   "currentStage": "application-received",
   "stages": [
     {
-      "id": "application-received",
+      "code": "application-received",
       "taskGroups": [
         {
           "code": "review-automated-checks",
           "tasks": [
             {
-              "id": "review-application-data",
+              "code": "review-application-data",
               "status": "pending"
             }
           ]
@@ -35,21 +35,21 @@
       ]
     },
     {
-      "id": "assessment",
+      "code": "assessment",
       "taskGroups": [
         {
           "code": "check-application",
           "tasks": [
             {
-              "id": "check-application-and-documents",
+              "code": "check-application-and-documents",
               "status": "pending"
             },
             {
-              "id": "check-find-farm-and-land-payment-data",
+              "code": "check-find-farm-and-land-payment-data",
               "status": "pending"
             },
             {
-              "id": "check-rps-dual-funding",
+              "code": "check-rps-dual-funding",
               "status": "pending"
             }
           ]
@@ -58,11 +58,11 @@
           "code": "registration-checks",
           "tasks": [
             {
-              "id": "confirm-farm-has-cph",
+              "code": "confirm-farm-has-cph",
               "status": "pending"
             },
             {
-              "id": "confirm-apha-registration",
+              "code": "confirm-apha-registration",
               "status": "pending"
             }
           ]
@@ -70,7 +70,7 @@
       ]
     },
     {
-      "id": "contracted",
+      "code": "contracted",
       "taskGroups": []
     }
   ],

@@ -43,6 +43,19 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
+const mapTasks = (tasks, workflowTaskGroup, userMap) =>
+  tasks.map((task) => {
+    const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
+      (wtgt) => wtgt.code === task.code,
+    );
+    return {
+      ...task,
+      name: workflowTaskGroupTask.name,
+      description: workflowTaskGroupTask.description,
+      updatedBy: mapUserIdToName(task.updatedBy, userMap),
+    };
+  });
+
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
 
@@ -80,12 +93,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
           ...taskGroup,
           name: workflowTaskGroup.name,
           description: workflowTaskGroup.description,
-          tasks: taskGroup.tasks.map((task) => {
-            return {
-              ...task,
-              updatedBy: mapUserIdToName(task.updatedBy, userMap),
-            };
-          }),
+          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup, userMap),
         };
       }),
       outcome: stage.outcome

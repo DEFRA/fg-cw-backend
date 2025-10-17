@@ -32,13 +32,13 @@
   "currentStage": "application-receipt",
   "stages": [
     {
-      "id": "application-receipt",
+      "code": "application-receipt",
       "taskGroups": [
         {
           "code": "application-receipt-tasks",
           "tasks": [
             {
-              "id": "simple-review",
+              "code": "simple-review",
               "status": "pending"
             }
           ]
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "id": "contract",
+      "code": "contract",
       "taskGroups": []
     }
   ],

@@ -478,7 +478,13 @@ describe("findCasesUseCase", () => {
               code: "task-group-1",
               name: "Task Group 1",
               description: "Task Group 1 description",
-              tasks: [],
+              tasks: [
+                {
+                  code: "task-1",
+                  name: "Task 1",
+                  description: "Task 1 description",
+                },
+              ],
             },
           ],
         },
