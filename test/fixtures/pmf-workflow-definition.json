@@ -93,9 +93,10 @@
           "description": "Task group description",
           "tasks": [
             {
-              "id": "review-application-data",
-              "title": "Review application data",
-              "type": "boolean"
+              "code": "review-application-data",
+              "type": "boolean",
+              "name": "Review application data",
+              "description": null
             }
           ]
         }
@@ -132,41 +133,46 @@
       "description": "Application assessment",
       "taskGroups": [
         {
-          "id": "check-application",
+          "code": "check-application",
           "name": "Check Application",
           "description": "Task group description",
           "tasks": [
             {
               "code": "check-application-and-documents",
-              "title": "Check application and documents",
-              "type": "boolean"
+              "type": "boolean",
+              "name": "Check application and documents",
+              "description": null
             },
             {
               "code": "check-find-farm-and-land-payment-data",
-              "title": "Check on Find farm and land payment data",
-              "type": "boolean"
+              "type": "boolean",
+              "name": "Check on Find farm and land payment data",
+              "description": null
             },
             {
               "code": "check-rps-dual-funding",
-              "title": "Check on RPS (Dual Funding)",
-              "type": "boolean"
+              "type": "boolean",
+              "name": "Check on RPS (Dual Funding)",
+              "description": null
             }
           ]
         },
         {
-          "id": "registration-checks",
+          "code": "registration-checks",
           "name": "Registration checks",
           "description": "Task group description",
           "tasks": [
             {
               "code": "confirm-farm-has-cph",
-              "title": "Confirm farm has a CPH",
-              "type": "boolean"
+              "name": "Confirm farm has a CPH",
+              "type": "boolean",
+              "description": null
             },
             {
               "code": "confirm-apha-registration",
-              "title": "Confirm APHA registration",
-              "type": "boolean"
+              "name": "Confirm APHA registration",
+              "type": "boolean",
+              "description": null
             }
           ]
         }
