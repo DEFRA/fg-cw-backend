@@ -46,6 +46,26 @@ const mapTimeline = (timeline) => {
   );
 };
 
+const mapStages = (stages, workflow) =>
+  stages.map((stage) => {
+    const workflowStage = workflow.stages.find((s) => s.code === stage.code);
+    return {
+      ...stage,
+      name: workflowStage.name,
+      description: workflowStage.description,
+      taskGroups: stage.taskGroups.map((taskGroup) => {
+        const workflowTaskGroup = workflowStage.taskGroups.find(
+          (tg) => tg.code === taskGroup.code,
+        );
+        return {
+          ...taskGroup,
+          name: workflowTaskGroup.name,
+          description: workflowTaskGroup.description,
+        };
+      }),
+    };
+  });
+
 export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
@@ -83,15 +103,7 @@ export const findCasesUseCase = async () => {
       kase.assignedUser.name = assignedUser.name;
     }
 
-    kase.stages = kase.stages.map((stage) => {
-      const workflowStage = workflow.stages.find((s) => s.code === stage.code);
-      return {
-        ...stage,
-        name: workflowStage.name,
-        description: workflowStage.description,
-      };
-    });
-
+    kase.stages = mapStages(kase.stages, workflow);
     kase.timeline = mapTimeline(kase.timeline);
 
     acc.push(kase);
