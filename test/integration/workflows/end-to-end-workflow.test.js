@@ -487,6 +487,8 @@ describe("End-to-End Workflow Integration Tests", () => {
     );
     expect(firstStage).toBeTruthy();
     expect(firstStage.taskGroups).toBeDefined();
+    expect(firstStage.taskGroups[0].name).toBe("Application Receipt tasks");
+    expect(firstStage.taskGroups[0].description).toBe("Task group description");
     expect(firstStage.taskGroups[0].tasks).toBeDefined();
     expect(firstStage.taskGroups[0].tasks[0].code).toBe("simple-review");
   });

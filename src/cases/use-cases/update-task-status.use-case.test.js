@@ -47,7 +47,7 @@ describe("updateTaskStatusUseCase", () => {
       updateTaskStatusUseCase({
         caseId: "0909990909099990aaee9878",
         stageCode: "stage-1",
-        taskGroupCode: "stage-1-tasks",
+        taskGroupCode: "task-group-1",
         taskCode: "task-1",
         status: "complete",
         comment: "This is a note/comment",
@@ -67,7 +67,7 @@ describe("updateTaskStatusUseCase", () => {
     await updateTaskStatusUseCase({
       caseId: kase._id,
       stageCode: "stage-1",
-      taskGroupCode: "stage-1-tasks",
+      taskGroupCode: "task-group-1",
       taskCode: "task-1",
       status: "complete",
       comment: "This is a note/comment",

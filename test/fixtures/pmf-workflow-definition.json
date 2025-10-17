@@ -90,6 +90,7 @@
         {
           "code": "review-automated-checks",
           "name": "Review Automated Checks",
+          "description": "Task group description",
           "tasks": [
             {
               "id": "review-application-data",
@@ -133,6 +134,7 @@
         {
           "id": "check-application",
           "name": "Check Application",
+          "description": "Task group description",
           "tasks": [
             {
               "code": "check-application-and-documents",
@@ -154,6 +156,7 @@
         {
           "id": "registration-checks",
           "name": "Registration checks",
+          "description": "Task group description",
           "tasks": [
             {
               "code": "confirm-farm-has-cph",

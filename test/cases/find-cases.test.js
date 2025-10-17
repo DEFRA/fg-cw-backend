@@ -59,11 +59,25 @@ describe("GET /cases", () => {
             ...caseData1.stages[0],
             name: "Application Receipt",
             description: "Application received",
+            taskGroups: [
+              {
+                code: "application-receipt-tasks",
+                name: "Application Receipt tasks",
+                description: "Task group description",
+                tasks: [
+                  {
+                    code: "simple-review",
+                    status: "pending",
+                  },
+                ],
+              },
+            ],
           },
           {
             ...caseData1.stages[1],
             name: "Stage for contract management",
             description: "Awaiting agreement",
+            taskGroups: [],
           },
         ],
       },
@@ -77,6 +91,19 @@ describe("GET /cases", () => {
             ...caseData2.stages[0],
             name: "Application Receipt",
             description: "Application received",
+            taskGroups: [
+              {
+                code: "application-receipt-tasks",
+                name: "Application Receipt tasks",
+                description: "Task group description",
+                tasks: [
+                  {
+                    code: "simple-review",
+                    status: "pending",
+                  },
+                ],
+              },
+            ],
           },
           {
             ...caseData2.stages[1],

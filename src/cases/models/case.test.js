@@ -326,7 +326,7 @@ describe("Case", () => {
 
       kase.setTaskStatus({
         stageCode: "stage-1",
-        taskGroupCode: "stage-1-tasks",
+        taskGroupCode: "task-group-1",
         taskCode: "task-1",
         status: "complete",
         comment: "This is a note",

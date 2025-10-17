@@ -244,6 +244,7 @@ export const createWorkflow = async (payload = {}) => {
             {
               code: "application-receipt-tasks",
               name: "Application Receipt tasks",
+              description: "Task group description",
               tasks: [
                 {
                   code: "simple-review",

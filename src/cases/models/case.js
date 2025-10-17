@@ -325,7 +325,7 @@ export class Case {
           code: "stage-1",
           taskGroups: [
             {
-              code: "stage-1-tasks",
+              code: "task-group-1",
               tasks: [
                 {
                   code: "task-1",
