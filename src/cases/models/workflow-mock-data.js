@@ -54,13 +54,14 @@ const createStages = () => [
     taskGroups: [
       {
         code: "task-group-1",
-        name: "Stage 1 Tasks",
+        name: "Task group 1",
         description: "Task group description",
         tasks: [
           {
             code: "task-1",
             name: "Task 1",
             type: "boolean",
+            description: "Task 1 description",
           },
         ],
       },

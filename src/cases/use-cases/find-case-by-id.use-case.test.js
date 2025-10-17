@@ -112,10 +112,22 @@ describe("findCaseByIdUseCase", () => {
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
-    expect(result.stages[0].taskGroups[0].name).toEqual("Stage 1 Tasks");
-    expect(result.stages[0].taskGroups[0].description).toEqual(
-      "Task group description",
-    );
+
+    const [stage] = result.stages;
+
+    expect(stage.name).toEqual("Stage 1");
+    expect(stage.description).toEqual("Stage 1 description");
+
+    const [taskGroup] = stage.taskGroups;
+
+    expect(taskGroup.name).toEqual("Task group 1");
+    expect(taskGroup.description).toEqual("Task group description");
+
+    const [task] = taskGroup.tasks;
+
+    expect(task.name).toEqual("Task 1");
+    expect(task.description).toEqual("Task 1 description");
+
     expect(result).toBe(kase);
   });
 
