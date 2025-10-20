@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 export const updateStageOutcomeRequestSchema = Joi.object({
-  actionId: Joi.string().required(),
+  actionCode: Joi.string().required(),
   comment: Joi.string().allow("", null).optional(),
 })
   .options({

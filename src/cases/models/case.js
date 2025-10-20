@@ -136,10 +136,10 @@ export class Case {
     this.supplementaryData[key] = data;
   }
 
-  updateStageOutcome({ actionId, comment, createdBy }) {
+  updateStageOutcome({ actionCode, comment, createdBy }) {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
-        actionId,
+        actionCode,
         stageCode: this.currentStage,
       },
       text: comment,
@@ -149,7 +149,7 @@ export class Case {
     const currentStage = this.#getCurrentStage();
 
     currentStage.outcome = {
-      actionId,
+      actionCode,
       createdBy,
       createdAt: new Date().toISOString(),
     };
@@ -160,7 +160,7 @@ export class Case {
 
     this.#addTimelineEvent(timelineEvent);
 
-    if (actionId === "approve") {
+    if (actionCode === "approve") {
       this.#moveToNextStage();
     }
   }

@@ -3,9 +3,9 @@ import { updateStageOutcomeRequestSchema } from "./update-stage-outcome-request.
 
 describe("updateStageOutcomeRequestSchema", () => {
   describe("valid requests", () => {
-    it("validates valid request with actionId and comment", () => {
+    it("validates valid request with actionCode and comment", () => {
       const validRequest = {
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Application approved with conditions",
       };
 
@@ -16,9 +16,9 @@ describe("updateStageOutcomeRequestSchema", () => {
       expect(value).toEqual(validRequest);
     });
 
-    it("validates valid request with actionId only", () => {
+    it("validates valid request with actionCode only", () => {
       const validRequest = {
-        actionId: "reject",
+        actionCode: "reject",
       };
 
       const { error, value } =
@@ -30,7 +30,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("allows empty string comment", () => {
       const validRequest = {
-        actionId: "approve",
+        actionCode: "approve",
         comment: "",
       };
 
@@ -43,7 +43,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("allows null comment", () => {
       const validRequest = {
-        actionId: "approve",
+        actionCode: "approve",
         comment: null,
       };
 
@@ -58,7 +58,7 @@ describe("updateStageOutcomeRequestSchema", () => {
   describe("strips unknown properties", () => {
     it("removes unknown properties from request", () => {
       const requestWithUnknown = {
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
         unknownProperty: "should be stripped",
         extraField: 123,
@@ -70,7 +70,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
       expect(error).toBeUndefined();
       expect(value).toEqual({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
       });
       expect(value.unknownProperty).toBeUndefined();
@@ -80,7 +80,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("preserves valid properties while stripping unknown ones", () => {
       const requestWithMixed = {
-        actionId: "reject",
+        actionCode: "reject",
         comment: "Reason for rejection",
         invalid: "removed",
         alsoInvalid: true,
@@ -91,14 +91,14 @@ describe("updateStageOutcomeRequestSchema", () => {
 
       expect(error).toBeUndefined();
       expect(value).toEqual({
-        actionId: "reject",
+        actionCode: "reject",
         comment: "Reason for rejection",
       });
     });
   });
 
   describe("validation errors", () => {
-    it("requires actionId", () => {
+    it("requires actionCode", () => {
       const invalidRequest = {
         comment: "Test comment",
       };
@@ -107,7 +107,7 @@ describe("updateStageOutcomeRequestSchema", () => {
         updateStageOutcomeRequestSchema.validate(invalidRequest);
 
       expect(error).toBeDefined();
-      expect(error.message).toContain('"actionId" is required');
+      expect(error.message).toContain('"actionCode" is required');
     });
 
     it("rejects empty object", () => {
@@ -117,42 +117,44 @@ describe("updateStageOutcomeRequestSchema", () => {
         updateStageOutcomeRequestSchema.validate(invalidRequest);
 
       expect(error).toBeDefined();
-      expect(error.message).toContain('"actionId" is required');
+      expect(error.message).toContain('"actionCode" is required');
     });
 
-    it("rejects non-string actionId", () => {
+    it("rejects non-string actionCode", () => {
       const invalidRequests = [
-        { actionId: 123 },
-        { actionId: true },
-        { actionId: [] },
-        { actionId: {} },
+        { actionCode: 123 },
+        { actionCode: true },
+        { actionCode: [] },
+        { actionCode: {} },
       ];
 
       invalidRequests.forEach((request) => {
         const { error } = updateStageOutcomeRequestSchema.validate(request);
         expect(error).toBeDefined();
-        expect(error.message).toContain('"actionId" must be a string');
+        expect(error.message).toContain('"actionCode" must be a string');
       });
     });
 
-    it("rejects empty string actionId", () => {
+    it("rejects empty string actionCode", () => {
       const invalidRequest = {
-        actionId: "",
+        actionCode: "",
       };
 
       const { error } =
         updateStageOutcomeRequestSchema.validate(invalidRequest);
 
       expect(error).toBeDefined();
-      expect(error.message).toContain('"actionId" is not allowed to be empty');
+      expect(error.message).toContain(
+        '"actionCode" is not allowed to be empty',
+      );
     });
 
     it("rejects non-string comment when provided", () => {
       const invalidRequests = [
-        { actionId: "approve", comment: 123 },
-        { actionId: "approve", comment: true },
-        { actionId: "approve", comment: [] },
-        { actionId: "approve", comment: {} },
+        { actionCode: "approve", comment: 123 },
+        { actionCode: "approve", comment: true },
+        { actionCode: "approve", comment: [] },
+        { actionCode: "approve", comment: {} },
       ];
 
       invalidRequests.forEach((request) => {

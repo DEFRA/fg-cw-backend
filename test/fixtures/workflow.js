@@ -254,7 +254,7 @@ export const workflowData1 = {
       ],
       actions: [
         {
-          id: "approve",
+          code: "approve",
           label: "Approve",
         },
       ],

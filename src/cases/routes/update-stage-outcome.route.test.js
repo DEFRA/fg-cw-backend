@@ -38,7 +38,7 @@ describe("updateStageOutcomeUseCase", () => {
       method: "PATCH",
       url: `/cases/${caseId}/stage/outcome`,
       payload: {
-        actionId: "approve",
+        actionCode: "approve",
         comment: "This is a test comment",
       },
       auth: {
@@ -55,7 +55,7 @@ describe("updateStageOutcomeUseCase", () => {
 
     expect(updateStageOutcomeUseCase).toHaveBeenCalledWith({
       caseId,
-      actionId: "approve",
+      actionCode: "approve",
       comment: "This is a test comment",
       user: mockAuthUser,
     });
