@@ -104,7 +104,7 @@
       "actionsTitle": "Decision",
       "actions": [
         {
-          "id": "approve",
+          "code": "approve",
           "label": "Approve",
           "comment": {
             "label": "Approval reason note",
@@ -113,7 +113,7 @@
           }
         },
         {
-          "id": "on-hold",
+          "code": "on-hold",
           "label": "Put on hold",
           "comment": {
             "label": "Note (optional)",
@@ -122,7 +122,7 @@
           }
         },
         {
-          "id": "reject",
+          "code": "reject",
           "label": "Reject"
         }
       ]
@@ -179,11 +179,11 @@
       ],
       "actions": [
         {
-          "id": "approve",
+          "code": "approve",
           "label": "Confirm Approval"
         },
         {
-          "id": "confirm-rejection",
+          "code": "confirm-rejection",
           "label": "Confirm Rejection"
         }
       ]

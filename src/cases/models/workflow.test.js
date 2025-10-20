@@ -20,7 +20,7 @@ describe("Workflow", () => {
           ],
           actions: [
             {
-              id: "approve",
+              code: "approve",
               label: "Approve",
               comment: {
                 label: "Approval reason",
@@ -28,7 +28,7 @@ describe("Workflow", () => {
               },
             },
             {
-              id: "reject",
+              code: "reject",
               label: "Reject",
               comment: {
                 label: "Rejection reason",
@@ -36,7 +36,7 @@ describe("Workflow", () => {
               },
             },
             {
-              id: "on-hold",
+              code: "on-hold",
               label: "Put on hold",
               comment: {
                 label: "Note (optional)",
@@ -44,7 +44,7 @@ describe("Workflow", () => {
               },
             },
             {
-              id: "no-comment-action",
+              code: "no-comment-action",
               label: "Action without comment",
             },
           ],
@@ -55,7 +55,7 @@ describe("Workflow", () => {
           taskGroups: [],
           actions: [
             {
-              id: "final-approve",
+              code: "final-approve",
               label: "Final Approval",
             },
           ],
@@ -118,7 +118,7 @@ describe("Workflow", () => {
       const action = workflow.findAction(stage, "approve");
 
       expect(action).toBeDefined();
-      expect(action.id).toBe("approve");
+      expect(action.code).toBe("approve");
       expect(action.label).toBe("Approve");
     });
 
@@ -129,8 +129,8 @@ describe("Workflow", () => {
       const rejectAction = workflow.findAction(stage, "reject");
       const holdAction = workflow.findAction(stage, "on-hold");
 
-      expect(rejectAction.id).toBe("reject");
-      expect(holdAction.id).toBe("on-hold");
+      expect(rejectAction.code).toBe("reject");
+      expect(holdAction.code).toBe("on-hold");
     });
 
     it("finds action in different stage", () => {
@@ -140,7 +140,7 @@ describe("Workflow", () => {
       const action = workflow.findAction(stage2, "final-approve");
 
       expect(action).toBeDefined();
-      expect(action.id).toBe("final-approve");
+      expect(action.code).toBe("final-approve");
     });
 
     it("throws error when action not found", () => {
@@ -148,7 +148,7 @@ describe("Workflow", () => {
       const stage = workflow.findStage("stage-1");
 
       expect(() => workflow.findAction(stage, "non-existent")).toThrowError(
-        'Stage "stage-1" does not contain action with id "non-existent"',
+        'Stage "stage-1" does not contain action with code "non-existent"',
       );
     });
 
@@ -157,7 +157,7 @@ describe("Workflow", () => {
       const stage = workflow.findStage("stage-1");
 
       expect(() => workflow.findAction(stage, null)).toThrowError(
-        'Stage "stage-1" does not contain action with id "null"',
+        'Stage "stage-1" does not contain action with code "null"',
       );
     });
   });
@@ -247,7 +247,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           action,
           comment: "Valid comment",
         });
@@ -261,7 +261,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "on-hold",
+          actionCode: "on-hold",
           action,
           comment: null,
         });
@@ -275,7 +275,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "no-comment",
+          actionCode: "no-comment",
           action,
           comment: null,
         });
@@ -289,7 +289,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           action,
           comment: null,
         });
@@ -303,7 +303,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           action,
           comment: "",
         });
@@ -317,7 +317,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           action,
           comment: "   \t   ",
         });
@@ -331,7 +331,7 @@ describe("Workflow", () => {
 
       const result = workflow.validateStageActionComment({
         stageCode: "stage-1",
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Valid approval comment",
       });
 
@@ -343,7 +343,7 @@ describe("Workflow", () => {
 
       const result = workflow.validateStageActionComment({
         stageCode: "stage-1",
-        actionId: "on-hold",
+        actionCode: "on-hold",
         comment: null,
       });
 
@@ -355,7 +355,7 @@ describe("Workflow", () => {
 
       const result = workflow.validateStageActionComment({
         stageCode: "stage-1",
-        actionId: "no-comment-action",
+        actionCode: "no-comment-action",
         comment: null,
       });
 
@@ -368,7 +368,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateStageActionComment({
           stageCode: "non-existent-stage",
-          actionId: "approve",
+          actionCode: "approve",
           comment: "Comment",
         });
       }).toThrowError('Stage with code "non-existent-stage" not found');
@@ -380,11 +380,11 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "non-existent-action",
+          actionCode: "non-existent-action",
           comment: "Comment",
         });
       }).toThrowError(
-        'Stage "stage-1" does not contain action with id "non-existent-action"',
+        'Stage "stage-1" does not contain action with code "non-existent-action"',
       );
     });
 
@@ -394,7 +394,7 @@ describe("Workflow", () => {
       expect(() => {
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           comment: null,
         });
       }).toThrowError('Stage "stage-1", Action "approve" requires a comment');
@@ -407,7 +407,7 @@ describe("Workflow", () => {
       expect(
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "approve",
+          actionCode: "approve",
           comment: "Approved because criteria met",
         }),
       ).toBe(true);
@@ -416,7 +416,7 @@ describe("Workflow", () => {
       expect(
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "on-hold",
+          actionCode: "on-hold",
           comment: null,
         }),
       ).toBe(true);
@@ -425,7 +425,7 @@ describe("Workflow", () => {
       expect(
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "on-hold",
+          actionCode: "on-hold",
           comment: "Waiting for more information",
         }),
       ).toBe(true);
@@ -434,7 +434,7 @@ describe("Workflow", () => {
       expect(
         workflow.validateStageActionComment({
           stageCode: "stage-1",
-          actionId: "no-comment-action",
+          actionCode: "no-comment-action",
           comment: null,
         }),
       ).toBe(true);
