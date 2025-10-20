@@ -36,7 +36,7 @@ export const formatTimelineItemDescription = (tl, workflow) => {
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
       const stage = workflow.findStage(tl.data.stageCode);
-      return `Stage '${stage.name}' outcome (${tl.data.actionId})`;
+      return `Stage '${stage.name}' outcome (${tl.data.actionCode})`;
     }
     default:
       return tl.description || EventEnums.eventDescriptions[tl.eventType];

@@ -26,10 +26,10 @@ export class Workflow {
     return task;
   }
 
-  validateStageActionComment({ stageCode, actionId, comment }) {
+  validateStageActionComment({ stageCode, actionCode, comment }) {
     const stage = this.findStage(stageCode);
-    const action = this.findAction(stage, actionId);
-    this.validateComment({ stageCode, actionId, action, comment });
+    const action = this.findAction(stage, actionCode);
+    this.validateComment({ stageCode, actionCode, action, comment });
 
     return true;
   }
@@ -42,20 +42,20 @@ export class Workflow {
     return stage;
   }
 
-  findAction(stage, actionId) {
-    const action = stage.actions.find((a) => a.id === actionId);
+  findAction(stage, actionCode) {
+    const action = stage.actions.find((a) => a.code === actionCode);
     if (!action) {
       throw Boom.badRequest(
-        `Stage "${stage.code}" does not contain action with id "${actionId}"`,
+        `Stage "${stage.code}" does not contain action with code "${actionCode}"`,
       );
     }
     return action;
   }
 
-  validateComment({ stageCode, actionId, action, comment }) {
+  validateComment({ stageCode, actionCode, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(
-        `Stage "${stageCode}", Action "${actionId}" requires a comment`,
+        `Stage "${stageCode}", Action "${actionCode}" requires a comment`,
       );
     }
   }
