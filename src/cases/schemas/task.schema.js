@@ -18,7 +18,7 @@ const TaskGroup = Joi.object({
 }).label("TaskGroup");
 
 const Action = Joi.object({
-  id: UrlSafeId.required(),
+  code: UrlSafeId.required(),
   label: Joi.string().required(),
   comment: comment.optional(),
 }).label("Action");

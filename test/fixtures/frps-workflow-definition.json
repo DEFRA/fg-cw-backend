@@ -230,7 +230,7 @@
       "actionsTitle": "Decision",
       "actions": [
         {
-          "id": "approve",
+          "code": "approve",
           "label": "Approve",
           "comment": {
             "label": "Approval reason note",

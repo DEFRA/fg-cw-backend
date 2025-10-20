@@ -474,21 +474,21 @@ describe("Case", () => {
 
     it("updates stage outcome with comment and creates timeline event", () => {
       caseInstance.updateStageOutcome({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Application approved successfully",
         createdBy: validUserId,
       });
 
       const currentStage = caseInstance.stages[0];
       expect(currentStage.outcome).toBeDefined();
-      expect(currentStage.outcome.actionId).toBe("approve");
+      expect(currentStage.outcome.actionCode).toBe("approve");
       expect(currentStage.outcome.createdBy).toBe(validUserId);
       expect(currentStage.outcome.createdAt).toBeDefined();
       expect(currentStage.outcome.commentRef).toBeDefined();
 
       expect(caseInstance.timeline).toHaveLength(1);
       expect(caseInstance.timeline[0].eventType).toBe("STAGE_COMPLETED");
-      expect(caseInstance.timeline[0].data.actionId).toBe("approve");
+      expect(caseInstance.timeline[0].data.actionCode).toBe("approve");
       expect(caseInstance.timeline[0].data.stageCode).toBe("stage-1");
 
       expect(caseInstance.comments).toHaveLength(1);
@@ -499,14 +499,14 @@ describe("Case", () => {
 
     it("updates stage outcome without comment", () => {
       caseInstance.updateStageOutcome({
-        actionId: "reject",
+        actionCode: "reject",
         comment: null,
         createdBy: validUserId,
       });
 
       const currentStage = caseInstance.stages[0];
       expect(currentStage.outcome).toBeDefined();
-      expect(currentStage.outcome.actionId).toBe("reject");
+      expect(currentStage.outcome.actionCode).toBe("reject");
       expect(currentStage.outcome.commentRef).toBeUndefined();
 
       expect(caseInstance.timeline).toHaveLength(1);
@@ -518,7 +518,7 @@ describe("Case", () => {
       expect(caseInstance.currentStage).toBe("stage-1");
 
       caseInstance.updateStageOutcome({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Moving to next stage",
         createdBy: validUserId,
       });
@@ -530,7 +530,7 @@ describe("Case", () => {
       expect(caseInstance.currentStage).toBe("stage-1");
 
       caseInstance.updateStageOutcome({
-        actionId: "on-hold",
+        actionCode: "on-hold",
         comment: "Application on hold",
         createdBy: validUserId,
       });
@@ -543,7 +543,7 @@ describe("Case", () => {
 
       expect(() => {
         caseInstance.updateStageOutcome({
-          actionId: "approve",
+          actionCode: "approve",
           comment: "Cannot progress further",
           createdBy: validUserId,
         });
@@ -568,7 +568,7 @@ describe("Case", () => {
 
       expect(() => {
         caseWithIncompleteTasks.updateStageOutcome({
-          actionId: "approve",
+          actionCode: "approve",
           comment: "Trying to progress with incomplete tasks",
           createdBy: validUserId,
         });
@@ -580,7 +580,7 @@ describe("Case", () => {
 
       expect(() => {
         caseInstance.updateStageOutcome({
-          actionId: "approve",
+          actionCode: "approve",
           comment: "Invalid stage",
           createdBy: validUserId,
         });
@@ -591,7 +591,7 @@ describe("Case", () => {
       const beforeUpdate = new Date();
 
       caseInstance.updateStageOutcome({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test timestamp",
         createdBy: validUserId,
       });
@@ -608,7 +608,7 @@ describe("Case", () => {
 
     it("links comment correctly when comment is provided", () => {
       caseInstance.updateStageOutcome({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment linking",
         createdBy: validUserId,
       });

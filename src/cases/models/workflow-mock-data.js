@@ -68,7 +68,7 @@ const createStages = () => [
     ],
     actions: [
       {
-        id: "action-1",
+        code: "action-1",
         label: "Action 1",
       },
     ],

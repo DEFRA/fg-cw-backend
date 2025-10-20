@@ -5,7 +5,7 @@ import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
-  const { caseId, actionId, comment, user } = command;
+  const { caseId, actionCode, comment, user } = command;
   const kase = await findById(caseId);
 
   if (!kase) {
@@ -15,13 +15,13 @@ export const updateStageOutcomeUseCase = async (command) => {
   const workflow = await findByCode(kase.workflowCode);
 
   workflow.validateStageActionComment({
-    actionId,
+    actionCode,
     stageCode: kase.currentStage,
     comment,
   });
 
   kase.updateStageOutcome({
-    actionId,
+    actionCode,
     comment,
     createdBy: user.id,
   });
@@ -33,6 +33,6 @@ export const updateStageOutcomeUseCase = async (command) => {
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
     previousStatus: "not-implemented",
-    currentStatus: actionId === "approve" ? "APPROVED" : "not-implemented",
+    currentStatus: actionCode === "approve" ? "APPROVED" : "not-implemented",
   });
 };

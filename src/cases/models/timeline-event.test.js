@@ -297,7 +297,7 @@ describe("TimelineEvent", () => {
       const props = {
         data: {
           stageCode: "64c88faac1f56f71e1b99999",
-          actionId: "approve",
+          actionCode: "approve",
         },
         text: "Stage complete",
         createdBy: "64c88faac1f56f71e1b89a33",
@@ -309,7 +309,7 @@ describe("TimelineEvent", () => {
       );
       expect(timelineEvent.comment.text).toBe("Stage complete");
       expect(timelineEvent.data.stageCode).toBe("64c88faac1f56f71e1b99999");
-      expect(timelineEvent.data.actionId).toBe("approve");
+      expect(timelineEvent.data.actionCode).toBe("approve");
     });
   });
 
