@@ -46,7 +46,7 @@ describe("formatTimelineItemDescription", () => {
       createdBy: "System",
       data: {
         stageCode: "stage-1",
-        actionId: "reject",
+        actionCode: "reject",
       },
     };
 
@@ -299,7 +299,7 @@ describe("findCaseByIdUseCase", () => {
             code: "stage-1",
             taskGroups: [],
             outcome: {
-              actionId: "approve",
+              actionCode: "approve",
               commentRef,
               createdBy: mockUser.id,
               createdAt: "2025-01-01T12:00:00.000Z",
@@ -324,7 +324,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
-        actionId: "approve",
+        actionCode: "approve",
         commentRef,
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
@@ -342,7 +342,7 @@ describe("findCaseByIdUseCase", () => {
             code: "stage-1",
             taskGroups: [],
             outcome: {
-              actionId: "approve",
+              actionCode: "approve",
               createdBy: mockUser.id,
               createdAt: "2025-01-01T12:00:00.000Z",
             },
@@ -357,7 +357,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
-        actionId: "approve",
+        actionCode: "approve",
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
         comment: undefined,
@@ -374,7 +374,7 @@ describe("findCaseByIdUseCase", () => {
             code: "stage-1",
             taskGroups: [],
             outcome: {
-              actionId: "approve",
+              actionCode: "approve",
               commentRef: "64c88faac1f56f71e1b89a34",
               createdBy: mockUser.id,
               createdAt: "2025-01-01T12:00:00.000Z",
@@ -391,7 +391,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       expect(result.stages[0].outcome).toEqual({
-        actionId: "approve",
+        actionCode: "approve",
         commentRef: "64c88faac1f56f71e1b89a34",
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
@@ -434,7 +434,7 @@ describe("findCaseByIdUseCase", () => {
             code: "stage-1",
             taskGroups: [],
             outcome: {
-              actionId: "approve",
+              actionCode: "approve",
               commentRef: commentRef1,
               createdBy: mockUser.id,
               createdAt: "2025-01-01T12:00:00.000Z",
@@ -448,7 +448,7 @@ describe("findCaseByIdUseCase", () => {
             code: "stage-3",
             taskGroups: [],
             outcome: {
-              actionId: "reject",
+              actionCode: "reject",
               commentRef: commentRef2,
               createdBy: mockUser.id,
               createdAt: "2025-01-01T13:00:00.000Z",

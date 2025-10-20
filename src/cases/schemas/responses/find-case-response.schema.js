@@ -7,17 +7,18 @@ import { UrlSafeId } from "../url-safe-id.schema.js";
 export const CaseStage = Joi.object({
   code: UrlSafeId.required(),
   name: Joi.string().required(),
-  description: Joi.string().required(),
+  description: Joi.string().allow(null).required(),
   taskGroups: Joi.array()
     .items(
       Joi.object({
         code: UrlSafeId.required(),
         name: Joi.string().optional(),
-        description: Joi.string().optional(),
+        description: Joi.string().allow(null).required(),
         tasks: Joi.array()
           .items(
             Joi.object({
               code: UrlSafeId.required(),
+              description: Joi.string().allow(null).required(),
               status: statusSchema.required(),
               commentRef: UrlSafeId.allow(null).optional(),
             }),
@@ -28,7 +29,7 @@ export const CaseStage = Joi.object({
     )
     .required(),
   outcome: Joi.object({
-    actionId: UrlSafeId.required(),
+    actionCode: UrlSafeId.required(),
     comment: Joi.string().optional(),
     commentRef: Joi.string().optional(),
   })
