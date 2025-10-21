@@ -105,7 +105,7 @@
       "actions": [
         {
           "code": "approve",
-          "label": "Approve",
+          "name": "Approve",
           "comment": {
             "label": "Approval reason note",
             "helpText": "All notes will be saved for auditing purposes",
@@ -114,7 +114,7 @@
         },
         {
           "code": "on-hold",
-          "label": "Put on hold",
+          "name": "Put on hold",
           "comment": {
             "label": "Note (optional)",
             "helpText": "All notes will be saved for auditing purposes",
@@ -123,7 +123,7 @@
         },
         {
           "code": "reject",
-          "label": "Reject"
+          "name": "Reject"
         }
       ]
     },
@@ -180,11 +180,11 @@
       "actions": [
         {
           "code": "approve",
-          "label": "Confirm Approval"
+          "name": "Confirm Approval"
         },
         {
           "code": "confirm-rejection",
-          "label": "Confirm Rejection"
+          "name": "Confirm Rejection"
         }
       ]
     },
