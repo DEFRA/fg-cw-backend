@@ -60,6 +60,7 @@ describe("GET /cases/{caseId}", () => {
                   ...caseData2.stages[0].taskGroups[0].tasks[0],
                   name: "Simple Review",
                   description: "Simple review task",
+                  statusOptions: [],
                   updatedBy: null,
                 },
               ],

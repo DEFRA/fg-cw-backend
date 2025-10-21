@@ -52,6 +52,7 @@ const mapTasks = (tasks, workflowTaskGroup, userMap) =>
       ...task,
       name: workflowTaskGroupTask.name,
       description: workflowTaskGroupTask.description,
+      statusOptions: workflowTaskGroupTask.statusOptions,
       updatedBy: mapUserIdToName(task.updatedBy, userMap),
     };
   });

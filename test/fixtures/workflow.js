@@ -249,6 +249,7 @@ export const workflowData1 = {
               name: "Simple Review",
               type: "boolean",
               description: null,
+              statusOptions: [],
             },
           ],
         },

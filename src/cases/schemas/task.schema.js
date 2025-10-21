@@ -8,11 +8,18 @@ export const Status = Joi.object({
   description: Joi.string().allow(null).required(),
 }).label("Status");
 
+export const StatusOption = Joi.object({
+  code: Joi.string().required(),
+  name: Joi.string().required(),
+  completes: Joi.boolean().required(),
+}).label("StatusOption");
+
 export const Task = Joi.object({
   code: UrlSafeId.required(),
   type: Joi.string().valid("boolean").required(),
   name: Joi.string().required(),
   description: Joi.string().allow(null).required(),
+  statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional(),
 }).label("Task");
 

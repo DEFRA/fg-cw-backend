@@ -63,6 +63,7 @@ const createStages = () => [
             name: "Task 1",
             type: "boolean",
             description: "Task 1 description",
+            statusOptions: [],
           },
         ],
       },

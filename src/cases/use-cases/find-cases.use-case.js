@@ -55,6 +55,7 @@ const mapTasks = (tasks, workflowTaskGroup) =>
       ...task,
       name: workflowTaskGroupTask.name,
       description: workflowTaskGroupTask.description,
+      statusOptions: workflowTaskGroupTask.statusOptions,
     };
   });
 

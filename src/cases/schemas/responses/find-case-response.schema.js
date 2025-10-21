@@ -2,6 +2,7 @@ import Joi from "joi";
 import { assignedUserSchema } from "../cases/assigned-user.schema.js";
 import { statusSchema } from "../cases/stages/tasks/status.schema.js";
 import { requiredRolesSchema } from "../requiredRoles.schema.js";
+import { StatusOption } from "../task.schema.js";
 import { UrlSafeId } from "../url-safe-id.schema.js";
 
 export const CaseStage = Joi.object({
@@ -18,7 +19,9 @@ export const CaseStage = Joi.object({
           .items(
             Joi.object({
               code: UrlSafeId.required(),
+              name: Joi.string().required(),
               description: Joi.string().allow(null).required(),
+              statusOptions: Joi.array().items(StatusOption).required(),
               status: statusSchema.required(),
               commentRef: UrlSafeId.allow(null).optional(),
             }),

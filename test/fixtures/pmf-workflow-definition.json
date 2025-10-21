@@ -97,7 +97,8 @@
               "code": "review-application-data",
               "type": "boolean",
               "name": "Review application data",
-              "description": null
+              "description": null,
+              "statusOptions": []
             }
           ]
         }
@@ -143,19 +144,22 @@
               "code": "check-application-and-documents",
               "type": "boolean",
               "name": "Check application and documents",
-              "description": null
+              "description": null,
+              "statusOptions": []
             },
             {
               "code": "check-find-farm-and-land-payment-data",
               "type": "boolean",
               "name": "Check on Find farm and land payment data",
-              "description": null
+              "description": null,
+              "statusOptions": []
             },
             {
               "code": "check-rps-dual-funding",
               "type": "boolean",
               "name": "Check on RPS (Dual Funding)",
-              "description": null
+              "description": null,
+              "statusOptions": []
             }
           ]
         },
@@ -168,13 +172,15 @@
               "code": "confirm-farm-has-cph",
               "name": "Confirm farm has a CPH",
               "type": "boolean",
-              "description": null
+              "description": null,
+              "statusOptions": []
             },
             {
               "code": "confirm-apha-registration",
               "name": "Confirm APHA registration",
               "type": "boolean",
-              "description": null
+              "description": null,
+              "statusOptions": []
             }
           ]
         }
