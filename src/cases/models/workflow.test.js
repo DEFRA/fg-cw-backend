@@ -21,7 +21,7 @@ describe("Workflow", () => {
           actions: [
             {
               code: "approve",
-              label: "Approve",
+              name: "Approve",
               comment: {
                 label: "Approval reason",
                 type: "REQUIRED",
@@ -29,7 +29,7 @@ describe("Workflow", () => {
             },
             {
               code: "reject",
-              label: "Reject",
+              name: "Reject",
               comment: {
                 label: "Rejection reason",
                 type: "REQUIRED",
@@ -37,7 +37,7 @@ describe("Workflow", () => {
             },
             {
               code: "on-hold",
-              label: "Put on hold",
+              name: "Put on hold",
               comment: {
                 label: "Note (optional)",
                 type: "OPTIONAL",
@@ -45,7 +45,7 @@ describe("Workflow", () => {
             },
             {
               code: "no-comment-action",
-              label: "Action without comment",
+              name: "Action without comment",
             },
           ],
         },
@@ -119,7 +119,7 @@ describe("Workflow", () => {
 
       expect(action).toBeDefined();
       expect(action.code).toBe("approve");
-      expect(action.label).toBe("Approve");
+      expect(action.name).toBe("Approve");
     });
 
     it("finds different actions in same stage", () => {

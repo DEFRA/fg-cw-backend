@@ -231,7 +231,7 @@
       "actions": [
         {
           "code": "approve",
-          "label": "Approve",
+          "name": "Approve",
           "comment": {
             "label": "Approval reason note",
             "helpText": "All notes will be saved for auditing purposes",
