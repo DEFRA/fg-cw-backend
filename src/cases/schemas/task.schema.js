@@ -2,6 +2,12 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
+export const Status = Joi.object({
+  code: UrlSafeId.required(),
+  name: Joi.string().required(),
+  description: Joi.string().allow(null).required(),
+}).label("Status");
+
 export const Task = Joi.object({
   code: UrlSafeId.required(),
   type: Joi.string().valid("boolean").required(),
@@ -30,5 +36,6 @@ export const Stage = Joi.object({
   taskGroups: Joi.array().items(TaskGroup).required(),
   actionsTitle: Joi.string().optional(),
   actions: Joi.array().items(Action).required(),
+  statuses: Joi.array().items(Status).required(),
   agreements: Joi.array().optional().allow(null),
 }).label("Stage");

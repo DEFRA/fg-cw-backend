@@ -240,6 +240,7 @@ export const createWorkflow = async (payload = {}) => {
           code: "application-receipt",
           name: "Application Receipt",
           description: "Application received",
+          statuses: [],
           taskGroups: [
             {
               code: "application-receipt-tasks",
@@ -266,6 +267,7 @@ export const createWorkflow = async (payload = {}) => {
           code: "contract",
           name: "Stage for contract management",
           description: "Awaiting agreement",
+          statuses: [],
           taskGroups: [],
           actions: [],
         },
