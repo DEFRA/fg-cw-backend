@@ -223,7 +223,8 @@
               "code": "simple-review",
               "type": "boolean",
               "name": "Simple Review",
-              "description": null
+              "description": null,
+              "statusOptions": []
             }
           ]
         }

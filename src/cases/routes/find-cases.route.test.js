@@ -29,7 +29,9 @@ describe("findCasesRoute", () => {
       c.stages[1].name = "Stage 2";
       c.stages[1].description = "Stage 2 description";
       c.stages[0].taskGroups[0].description = "Task group description";
+      c.stages[0].taskGroups[0].tasks[0].name = "Task 1";
       c.stages[0].taskGroups[0].tasks[0].description = "Task description";
+      c.stages[0].taskGroups[0].tasks[0].statusOptions = [];
     });
 
     findCasesUseCase.mockResolvedValue(cases);
