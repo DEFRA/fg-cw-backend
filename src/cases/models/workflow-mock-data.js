@@ -51,6 +51,7 @@ const createStages = () => [
     code: "stage-1",
     name: "Stage 1",
     description: "Stage 1 description",
+    statuses: [],
     taskGroups: [
       {
         code: "task-group-1",
@@ -77,6 +78,7 @@ const createStages = () => [
     code: "stage-2",
     name: "Stage 2",
     description: "Stage 2 description",
+    statuses: [],
     taskGroups: [],
     actions: [],
   },
@@ -84,6 +86,7 @@ const createStages = () => [
     code: "stage-3",
     name: "Stage 3",
     description: "Stage 3 description",
+    statuses: [],
     taskGroups: [],
     actions: [],
   },
