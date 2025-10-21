@@ -8,6 +8,7 @@ describe("Task Schema", () => {
       name: "Test task",
       type: "boolean",
       description: null,
+      statusOptions: [],
     };
 
     const { error } = Task.validate(task);
@@ -21,6 +22,7 @@ describe("Task Schema", () => {
       name: "Test task",
       type: "boolean",
       description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         helpText: "Please provide a note",
@@ -38,6 +40,7 @@ describe("Task Schema", () => {
       name: "Test task",
       type: "boolean",
       description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         label: "Note",
@@ -56,6 +59,7 @@ describe("Task Schema", () => {
       name: "Test task",
       type: "boolean",
       description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         label: "Note",
@@ -76,6 +80,7 @@ describe("Task Schema", () => {
       name: "Test task",
       type: "boolean",
       description: null,
+      statusOptions: [],
       comment: {
         type: "NOT_ALLOWED_TYPE",
         label: "Note",
