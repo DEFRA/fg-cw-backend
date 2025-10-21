@@ -258,7 +258,7 @@ export const createWorkflow = async (payload = {}) => {
           actions: [
             {
               code: "approve",
-              label: "Approve",
+              name: "Approve",
             },
           ],
         },
