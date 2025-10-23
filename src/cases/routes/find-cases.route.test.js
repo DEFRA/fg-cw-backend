@@ -30,7 +30,9 @@ describe("findCasesRoute", () => {
       c.stages[1].description = "Stage 2 description";
       c.stages[0].taskGroups[0].description = "Task group description";
       c.stages[0].taskGroups[0].tasks[0].name = "Task 1";
-      c.stages[0].taskGroups[0].tasks[0].description = "Task description";
+      c.stages[0].taskGroups[0].tasks[0].description = [
+        { component: "heading", level: 2, text: "Task description" },
+      ];
       c.stages[0].taskGroups[0].tasks[0].statusOptions = [];
     });
 
