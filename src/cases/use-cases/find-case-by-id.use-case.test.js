@@ -10,6 +10,7 @@ import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
+  mapDescription,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -85,6 +86,45 @@ describe("formatTimelineItemDescription", () => {
   });
 });
 
+describe("mapDescription", () => {
+  it("converts string to heading component array", () => {
+    const result = mapDescription("Simple review task");
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Simple review task" },
+    ]);
+  });
+
+  it("converts empty string to heading component with empty text", () => {
+    const result = mapDescription("");
+    expect(result).toEqual([{ component: "heading", level: 2, text: "" }]);
+  });
+
+  it("returns array as-is when already an array", () => {
+    const input = [
+      { component: "heading", level: 2, text: "Title" },
+      { component: "paragraph", text: "Description" },
+    ];
+    const result = mapDescription(input);
+    expect(result).toEqual(input);
+  });
+
+  it("returns empty array for null", () => {
+    expect(mapDescription(null)).toEqual([]);
+  });
+
+  it("returns empty array for undefined", () => {
+    expect(mapDescription(undefined)).toEqual([]);
+  });
+
+  it("returns empty array for object", () => {
+    expect(mapDescription({ foo: "bar" })).toEqual([]);
+  });
+
+  it("returns empty array for number", () => {
+    expect(mapDescription(123)).toEqual([]);
+  });
+});
+
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
   const mockAuthUser = {
@@ -126,7 +166,9 @@ describe("findCaseByIdUseCase", () => {
     const [task] = taskGroup.tasks;
 
     expect(task.name).toEqual("Task 1");
-    expect(task.description).toEqual("Task 1 description");
+    expect(task.description).toEqual([
+      { component: "heading", level: 2, text: "Task 1 description" },
+    ]);
 
     expect(result).toBe(kase);
   });

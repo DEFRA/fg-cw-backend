@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   agreementSchema,
+  CaseStage,
   findCaseResponseSchema,
 } from "./find-case-response.schema.js";
 
@@ -38,5 +39,125 @@ describe("find case response schema", () => {
 
     const { error } = findCaseResponseSchema.validate(kase);
     expect(error).toBeUndefined();
+  });
+
+  describe("CaseStage task schema validation", () => {
+    it("validates task with name, description array, and statusOptions", () => {
+      const validStage = {
+        code: "stage-1",
+        name: "Application Receipt",
+        description: "Stage description",
+        taskGroups: [
+          {
+            code: "task-group-1",
+            name: "Task Group",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "task-1",
+                name: "Review Application",
+                description: [
+                  { component: "heading", level: 2, text: "Review" },
+                ],
+                statusOptions: [
+                  { code: "approved", name: "Approved", completes: true },
+                ],
+                status: "pending",
+                commentRef: null,
+              },
+            ],
+          },
+        ],
+        outcome: null,
+      };
+
+      const { error } = CaseStage.validate(validStage);
+      expect(error).toBeUndefined();
+    });
+
+    it("rejects task missing name field", () => {
+      const invalidStage = {
+        code: "stage-1",
+        name: "Application Receipt",
+        description: "Stage description",
+        taskGroups: [
+          {
+            code: "task-group-1",
+            name: "Task Group",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "task-1",
+                description: [
+                  { component: "heading", level: 2, text: "Review" },
+                ],
+                statusOptions: [],
+                status: "pending",
+              },
+            ],
+          },
+        ],
+      };
+
+      const { error } = CaseStage.validate(invalidStage);
+      expect(error).toBeDefined();
+      expect(error.message).toContain("name");
+    });
+
+    it("rejects task missing description field", () => {
+      const invalidStage = {
+        code: "stage-1",
+        name: "Application Receipt",
+        description: "Stage description",
+        taskGroups: [
+          {
+            code: "task-group-1",
+            name: "Task Group",
+            description: "Task group description",
+            tasks: [
+              {
+                name: "Task 1",
+                code: "task-1",
+                statusOptions: [],
+                status: "pending",
+              },
+            ],
+          },
+        ],
+      };
+
+      const { error } = CaseStage.validate(invalidStage);
+      expect(error).toBeDefined();
+      expect(error.message).toContain("description");
+    });
+
+    it("rejects task missing statusOptions field", () => {
+      const invalidStage = {
+        code: "stage-1",
+        name: "Application Receipt",
+        description: "Stage description",
+        taskGroups: [
+          {
+            code: "task-group-1",
+            name: "Task Group",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "task-1",
+                name: "Review Application",
+                description: [
+                  { component: "heading", level: 2, text: "Review" },
+                ],
+                status: "pending",
+              },
+            ],
+          },
+        ],
+      };
+
+      const { error } = CaseStage.validate(invalidStage);
+      expect(error).toBeDefined();
+      expect(error.message).toContain("statusOptions");
+    });
   });
 });

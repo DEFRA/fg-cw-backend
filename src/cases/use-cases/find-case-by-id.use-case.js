@@ -43,6 +43,37 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
+const mapStages = (kase, workflow, userMap) =>
+  kase.stages.map((stage) => {
+    const workflowStage = workflow.findStage(stage.code);
+    return {
+      ...stage,
+      name: workflowStage.name,
+      description: workflowStage.description,
+      actions: workflowStage.actions,
+      taskGroups: mapTaskGroups(stage, workflowStage, userMap),
+      outcome: stage.outcome
+        ? {
+            ...stage.outcome,
+            comment: kase.findComment(stage.outcome?.commentRef)?.text,
+          }
+        : undefined,
+    };
+  });
+
+const mapTaskGroups = (stage, workflowStage, userMap) =>
+  stage.taskGroups.map((taskGroup) => {
+    const workflowTaskGroup = workflowStage.taskGroups.find(
+      (tg) => tg.code === taskGroup.code,
+    );
+    return {
+      ...taskGroup,
+      name: workflowTaskGroup.name,
+      description: workflowTaskGroup.description,
+      tasks: mapTasks(taskGroup.tasks, workflowTaskGroup, userMap),
+    };
+  });
+
 const mapTasks = (tasks, workflowTaskGroup, userMap) =>
   tasks.map((task) => {
     const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
@@ -51,11 +82,25 @@ const mapTasks = (tasks, workflowTaskGroup, userMap) =>
     return {
       ...task,
       name: workflowTaskGroupTask.name,
-      description: workflowTaskGroupTask.description,
+      type: workflowTaskGroupTask.type,
+      comment: workflowTaskGroupTask.comment,
+      description: mapDescription(workflowTaskGroupTask.description),
       statusOptions: workflowTaskGroupTask.statusOptions,
       updatedBy: mapUserIdToName(task.updatedBy, userMap),
     };
   });
+
+export const mapDescription = (description) => {
+  if (typeof description === "string") {
+    return [{ component: "heading", level: 2, text: description }];
+  }
+
+  if (Array.isArray(description)) {
+    return description;
+  }
+
+  return [];
+};
 
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
@@ -80,31 +125,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
     createdBy: mapUserIdToName(comment.createdBy, userMap),
   }));
 
-  kase.stages = kase.stages.map((stage) => {
-    const workflowStage = workflow.findStage(stage.code);
-    return {
-      ...stage,
-      name: workflowStage.name,
-      description: workflowStage.description,
-      taskGroups: stage.taskGroups.map((taskGroup) => {
-        const workflowTaskGroup = workflowStage.taskGroups.find(
-          (tg) => tg.code === taskGroup.code,
-        );
-        return {
-          ...taskGroup,
-          name: workflowTaskGroup.name,
-          description: workflowTaskGroup.description,
-          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup, userMap),
-        };
-      }),
-      outcome: stage.outcome
-        ? {
-            ...stage.outcome,
-            comment: kase.findComment(stage.outcome?.commentRef)?.text,
-          }
-        : undefined,
-    };
-  });
+  kase.stages = mapStages(kase, workflow, userMap);
 
   kase.timeline = kase.timeline.map((tl) => {
     tl.createdBy = mapUserIdToUser(tl.createdBy, userMap);
