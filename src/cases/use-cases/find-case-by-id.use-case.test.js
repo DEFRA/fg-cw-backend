@@ -87,41 +87,106 @@ describe("formatTimelineItemDescription", () => {
 });
 
 describe("mapDescription", () => {
-  it("converts string to heading component array", () => {
-    const result = mapDescription("Simple review task");
+  it("converts string description to heading component array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "Simple review task",
+    });
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Simple review task" },
     ]);
   });
 
-  it("converts empty string to heading component with empty text", () => {
-    const result = mapDescription("");
-    expect(result).toEqual([{ component: "heading", level: 2, text: "" }]);
+  it("falls back to task name for empty string", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
   });
 
-  it("returns array as-is when already an array", () => {
+  it("returns array description as-is when already an array", () => {
     const input = [
       { component: "heading", level: 2, text: "Title" },
       { component: "paragraph", text: "Description" },
     ];
-    const result = mapDescription(input);
+    const result = mapDescription({
+      name: "Review Task",
+      description: input,
+    });
     expect(result).toEqual(input);
   });
 
-  it("returns empty array for null", () => {
-    expect(mapDescription(null)).toEqual([]);
+  it("returns heading with task name for null description", () => {
+    const result = mapDescription({
+      name: "Review Application",
+      description: null,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Application" },
+    ]);
   });
 
-  it("returns empty array for undefined", () => {
-    expect(mapDescription(undefined)).toEqual([]);
+  it("returns heading with task name for undefined description", () => {
+    const result = mapDescription({
+      name: "Check Details",
+      description: undefined,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Check Details" },
+    ]);
   });
 
-  it("returns empty array for object", () => {
-    expect(mapDescription({ foo: "bar" })).toEqual([]);
+  it("uses default name 'Task' when name not provided and description is null", () => {
+    const result = mapDescription({ description: null });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
   });
 
-  it("returns empty array for number", () => {
-    expect(mapDescription(123)).toEqual([]);
+  it("uses default name 'Task' when name not provided and description is undefined", () => {
+    const result = mapDescription({ description: undefined });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
+  });
+
+  it("returns heading with task name for object description", () => {
+    const result = mapDescription({
+      name: "Verify Data",
+      description: { foo: "bar" },
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Verify Data" },
+    ]);
+  });
+
+  it("returns heading with task name for number description", () => {
+    const result = mapDescription({
+      name: "Process Item",
+      description: 123,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Item" },
+    ]);
+  });
+
+  it("falls back to task name for empty array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: [],
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
+  });
+
+  it("falls back to task name for whitespace-only string", () => {
+    const result = mapDescription({
+      name: "Process Data",
+      description: "   ",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Data" },
+    ]);
   });
 });
 

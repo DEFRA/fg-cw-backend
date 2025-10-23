@@ -84,22 +84,28 @@ const mapTasks = (tasks, workflowTaskGroup, userMap) =>
       name: workflowTaskGroupTask.name,
       type: workflowTaskGroupTask.type,
       comment: workflowTaskGroupTask.comment,
-      description: mapDescription(workflowTaskGroupTask.description),
+      description: mapDescription(workflowTaskGroupTask),
       statusOptions: workflowTaskGroupTask.statusOptions,
       updatedBy: mapUserIdToName(task.updatedBy, userMap),
     };
   });
 
-export const mapDescription = (description) => {
-  if (typeof description === "string") {
-    return [{ component: "heading", level: 2, text: description }];
-  }
+const isValidArray = (description) =>
+  Array.isArray(description) && description.length > 0;
 
-  if (Array.isArray(description)) {
+const isValidString = (description) =>
+  typeof description === "string" && description.trim() !== "";
+
+export const mapDescription = ({ name = "Task", description }) => {
+  if (isValidArray(description)) {
     return description;
   }
 
-  return [];
+  if (isValidString(description)) {
+    return [{ component: "heading", level: 2, text: description }];
+  }
+
+  return [{ component: "heading", level: 2, text: name }];
 };
 
 export const findCaseByIdUseCase = async (caseId, user) => {
