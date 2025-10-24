@@ -59,11 +59,24 @@ describe("GET /cases/{caseId}", () => {
                 {
                   ...caseData2.stages[0].taskGroups[0].tasks[0],
                   name: "Simple Review",
-                  description: "Simple review task",
+                  description: [
+                    {
+                      component: "heading",
+                      level: 2,
+                      text: "Simple review task",
+                    },
+                  ],
                   statusOptions: [],
                   updatedBy: null,
+                  type: "boolean",
                 },
               ],
+            },
+          ],
+          actions: [
+            {
+              code: "approve",
+              name: "Approve",
             },
           ],
         },
@@ -71,6 +84,7 @@ describe("GET /cases/{caseId}", () => {
           ...caseData2.stages[1],
           name: "Stage for contract management",
           description: "Awaiting agreement",
+          actions: [],
         },
       ],
       timeline: [
