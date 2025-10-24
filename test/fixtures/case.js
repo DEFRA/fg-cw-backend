@@ -34,12 +34,14 @@ export const caseData1 = {
   stages: [
     {
       code: "application-receipt",
+      description: "Application receipt",
       taskGroups: [
         {
           code: "application-receipt-tasks",
           tasks: [
             {
               code: "simple-review",
+              description: "Simple Review",
               status: "pending",
             },
           ],
@@ -48,6 +50,7 @@ export const caseData1 = {
     },
     {
       code: "contract",
+      description: "Contract",
       taskGroups: [],
     },
   ],
@@ -107,12 +110,14 @@ export const caseData2 = {
   stages: [
     {
       code: "application-receipt",
+      description: "Application receipt",
       taskGroups: [
         {
           code: "application-receipt-tasks",
           tasks: [
             {
               code: "simple-review",
+              description: "Simple Review",
               status: "pending",
             },
           ],
@@ -121,6 +126,7 @@ export const caseData2 = {
     },
     {
       code: "contract",
+      description: "Contract",
       taskGroups: [],
     },
   ],
@@ -179,12 +185,14 @@ export const caseData3Document = {
   stages: [
     {
       code: "application-receipt",
+      description: "Application receipt",
       taskGroups: [
         {
           code: "application-receipt-tasks",
           tasks: [
             {
               code: "simple-review",
+              description: "Simple Review",
               status: "pending",
             },
           ],
@@ -193,6 +201,7 @@ export const caseData3Document = {
     },
     {
       code: "contract",
+      description: "Contract",
       taskGroups: [],
     },
   ],

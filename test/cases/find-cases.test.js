@@ -69,7 +69,13 @@ describe("GET /cases", () => {
                     code: "simple-review",
                     status: "pending",
                     name: "Simple Review",
-                    description: "Simple review task",
+                    description: [
+                      {
+                        component: "heading",
+                        level: 2,
+                        text: "Simple review task",
+                      },
+                    ],
                     statusOptions: [],
                   },
                 ],
@@ -104,7 +110,13 @@ describe("GET /cases", () => {
                     code: "simple-review",
                     status: "pending",
                     name: "Simple Review",
-                    description: "Simple review task",
+                    description: [
+                      {
+                        component: "heading",
+                        level: 2,
+                        text: "Simple review task",
+                      },
+                    ],
                     statusOptions: [],
                   },
                 ],

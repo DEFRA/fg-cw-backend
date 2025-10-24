@@ -1,6 +1,7 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
+import { mapDescription } from "./find-case-by-id.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
@@ -54,7 +55,7 @@ const mapTasks = (tasks, workflowTaskGroup) =>
     return {
       ...task,
       name: workflowTaskGroupTask.name,
-      description: workflowTaskGroupTask.description,
+      description: mapDescription(workflowTaskGroupTask),
       statusOptions: workflowTaskGroupTask.statusOptions,
     };
   });
