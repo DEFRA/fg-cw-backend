@@ -303,11 +303,797 @@ describe("resolveJSONPath", () => {
     });
   });
 
+  describe("accordion section resolution", () => {
+    const mockRootWithSections = {
+      ...mockRoot,
+      sections: [
+        { title: "Section 1", description: "First section" },
+        { title: "Section 2", description: "Second section" },
+      ],
+    };
+
+    it("should resolve accordion sections with itemsRef and items", () => {
+      const path = {
+        component: "accordion",
+        id: "test-accordion",
+        itemsRef: "$.sections[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.title",
+            },
+          ],
+          content: [
+            {
+              component: "text",
+              text: "@.description",
+            },
+          ],
+        },
+      };
+      const result = resolveJSONPath({ root: mockRootWithSections, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "test-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Section 1",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "First section",
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Section 2",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Second section",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("should resolve accordion with summary sections", () => {
+      const mockRootWithSummaries = {
+        ...mockRoot,
+        checks: [
+          {
+            name: "Area Check",
+            summary: "Failed",
+            details: "Area exceeds limit",
+          },
+          {
+            name: "Eligibility Check",
+            summary: "Passed",
+            details: "All criteria met",
+          },
+        ],
+      };
+
+      const path = {
+        component: "accordion",
+        id: "checks-accordion",
+        itemsRef: "$.checks[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.name",
+            },
+          ],
+          summary: [
+            {
+              component: "text",
+              text: "@.summary",
+            },
+          ],
+          content: [
+            {
+              component: "text",
+              text: "@.details",
+            },
+          ],
+        },
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithSummaries, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "checks-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Area Check",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: "Failed",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Area exceeds limit",
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Eligibility Check",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: "Passed",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "All criteria met",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("should resolve accordion with expanded state", () => {
+      const mockRootWithItems = {
+        ...mockRoot,
+        faqs: [
+          { question: "Q1", answer: "A1" },
+          { question: "Q2", answer: "A2" },
+        ],
+      };
+
+      const path = {
+        component: "accordion",
+        id: "faq-accordion",
+        itemsRef: "$.faqs[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.question",
+            },
+          ],
+          content: [
+            {
+              component: "text",
+              text: "@.answer",
+            },
+          ],
+          expanded: false,
+        },
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithItems, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "faq-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Q1",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "A1",
+              },
+            ],
+            expanded: false,
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Q2",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "A2",
+              },
+            ],
+            expanded: false,
+          },
+        ],
+      });
+    });
+
+    it("should resolve accordion with nested components", () => {
+      const mockRootWithComplex = {
+        ...mockRoot,
+        breeds: [
+          {
+            name: "White Pigs",
+            count: 10,
+            housing: "Indoor",
+          },
+          {
+            name: "Landrace Pigs",
+            count: 15,
+            housing: "Outdoor",
+          },
+        ],
+      };
+
+      const path = {
+        component: "accordion",
+        id: "breeds-accordion",
+        itemsRef: "$.breeds[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.name",
+            },
+          ],
+          summary: [
+            {
+              component: "text",
+              text: "@.count",
+            },
+          ],
+          content: [
+            {
+              component: "heading",
+              text: "Breed Details",
+              level: 3,
+            },
+            {
+              component: "summary-list",
+              rows: [
+                {
+                  label: "Count",
+                  text: "@.count",
+                  type: "number",
+                },
+                {
+                  label: "Housing",
+                  text: "@.housing",
+                  type: "string",
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithComplex, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "breeds-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "White Pigs",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: 10,
+              },
+            ],
+            content: [
+              {
+                component: "heading",
+                text: "Breed Details",
+                level: 3,
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Count",
+                    text: 10,
+                    type: "number",
+                  },
+                  {
+                    label: "Housing",
+                    text: "Indoor",
+                    type: "string",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Landrace Pigs",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: 15,
+              },
+            ],
+            content: [
+              {
+                component: "heading",
+                text: "Breed Details",
+                level: 3,
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Count",
+                    text: 15,
+                    type: "number",
+                  },
+                  {
+                    label: "Housing",
+                    text: "Outdoor",
+                    type: "string",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("should resolve accordion with format application", () => {
+      const mockRootWithDates = {
+        ...mockRoot,
+        events: [
+          {
+            title: "Application Submitted",
+            date: "2025-03-28T11:30:52.000Z",
+            isCompleted: true,
+          },
+          {
+            title: "Review Started",
+            date: "2025-03-29T09:00:00.000Z",
+            isCompleted: false,
+          },
+        ],
+      };
+
+      const path = {
+        component: "accordion",
+        id: "events-accordion",
+        itemsRef: "$.events[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.title",
+            },
+          ],
+          content: [
+            {
+              component: "summary-list",
+              rows: [
+                {
+                  label: "Date",
+                  text: "@.date",
+                  format: "formatDate",
+                },
+                {
+                  label: "Completed",
+                  text: "@.isCompleted",
+                  format: "yesNo",
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithDates, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "events-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Application Submitted",
+              },
+            ],
+            content: [
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Date",
+                    text: "28 Mar 2025",
+                  },
+                  {
+                    label: "Completed",
+                    text: "Yes",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Review Started",
+              },
+            ],
+            content: [
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Date",
+                    text: "29 Mar 2025",
+                  },
+                  {
+                    label: "Completed",
+                    text: "No",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("should handle static accordion items (no itemsRef)", () => {
+      const path = {
+        component: "accordion",
+        id: "static-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Static Section 1",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Static content 1",
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Static Section 2",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: "Summary text",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Static content 2",
+              },
+            ],
+            expanded: true,
+          },
+        ],
+      };
+
+      const result = resolveJSONPath({ root: mockRoot, path });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "static-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Static Section 1",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Static content 1",
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Static Section 2",
+              },
+            ],
+            summary: [
+              {
+                component: "text",
+                text: "Summary text",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Static content 2",
+              },
+            ],
+            expanded: true,
+          },
+        ],
+      });
+    });
+  });
+
   describe("primitive values", () => {
     it("should return primitive values as-is", () => {
       expect(resolveJSONPath({ root: mockRoot, path: 42 })).toBe(42);
       expect(resolveJSONPath({ root: mockRoot, path: true })).toBe(true);
       expect(resolveJSONPath({ root: mockRoot, path: false })).toBe(false);
+    });
+  });
+
+  describe("details component (generic object handling)", () => {
+    const mockRootWithChecks = {
+      ...mockRoot,
+      checkName: "Available area check",
+      checkStatus: "Failed",
+      resultText: "The total area applied for exceeds the available area.",
+    };
+
+    it("should resolve static details component without special handling", () => {
+      const path = {
+        component: "details",
+        id: "static-details",
+        summaryItems: [
+          {
+            text: "Available area check",
+            classes: "govuk-details__summary-text",
+          },
+          {
+            component: "status",
+            text: "Failed",
+            colour: "red",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Result",
+            level: 3,
+          },
+          {
+            component: "paragraph",
+            text: "Detailed explanation here",
+          },
+        ],
+        open: false,
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithChecks, path });
+
+      expect(result).toEqual({
+        component: "details",
+        id: "static-details",
+        summaryItems: [
+          {
+            text: "Available area check",
+            classes: "govuk-details__summary-text",
+          },
+          {
+            component: "status",
+            text: "Failed",
+            colour: "red",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Result",
+            level: 3,
+          },
+          {
+            component: "paragraph",
+            text: "Detailed explanation here",
+          },
+        ],
+        open: false,
+      });
+    });
+
+    it("should resolve details component with dynamic data from JSONPath", () => {
+      const path = {
+        component: "details",
+        id: "dynamic-details",
+        summaryItems: [
+          {
+            text: "$.checkName",
+            classes: "govuk-details__summary-text",
+          },
+          {
+            component: "status",
+            text: "$.checkStatus",
+            colour: "red",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Result",
+            level: 3,
+          },
+          {
+            component: "text",
+            text: "$.resultText",
+          },
+        ],
+        open: false,
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithChecks, path });
+
+      expect(result).toEqual({
+        component: "details",
+        id: "dynamic-details",
+        summaryItems: [
+          {
+            text: "Available area check",
+            classes: "govuk-details__summary-text",
+          },
+          {
+            component: "status",
+            text: "Failed",
+            colour: "red",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Result",
+            level: 3,
+          },
+          {
+            component: "text",
+            text: "The total area applied for exceeds the available area.",
+          },
+        ],
+        open: false,
+      });
+    });
+
+    it("should resolve details component with nested components", () => {
+      const mockRootWithMetrics = {
+        ...mockRoot,
+        check: {
+          name: "Eligibility Check",
+          status: "Passed",
+        },
+        metrics: {
+          score: 95.5,
+          isValid: true,
+        },
+      };
+
+      const path = {
+        component: "details",
+        id: "nested-details",
+        summaryItems: [
+          {
+            text: "$.check.name",
+          },
+          {
+            component: "tag",
+            text: "$.check.status",
+            colour: "green",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Metrics",
+            level: 3,
+          },
+          {
+            component: "summary-list",
+            rows: [
+              {
+                label: "Score",
+                text: "$.metrics.score",
+                type: "number",
+              },
+              {
+                label: "Valid",
+                text: "$.metrics.isValid",
+                type: "boolean",
+                format: "yesNo",
+              },
+            ],
+          },
+        ],
+        open: true,
+      };
+
+      const result = resolveJSONPath({ root: mockRootWithMetrics, path });
+
+      expect(result).toEqual({
+        component: "details",
+        id: "nested-details",
+        summaryItems: [
+          {
+            text: "Eligibility Check",
+          },
+          {
+            component: "tag",
+            text: "Passed",
+            colour: "green",
+          },
+        ],
+        items: [
+          {
+            component: "heading",
+            text: "Metrics",
+            level: 3,
+          },
+          {
+            component: "summary-list",
+            rows: [
+              {
+                label: "Score",
+                text: 95.5,
+                type: "number",
+              },
+              {
+                label: "Valid",
+                text: "Yes",
+                type: "boolean",
+              },
+            ],
+          },
+        ],
+        open: true,
+      });
     });
   });
 });
