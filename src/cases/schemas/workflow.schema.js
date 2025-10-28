@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
-import { Stage } from "./task.schema.js";
+import { Phase } from "./task.schema.js";
 
 export const componentSchema = Joi.object({
   id: Joi.string().optional(),
@@ -55,7 +55,7 @@ const WorkflowData = Joi.object({
       details: caseSchema.required(),
     }),
   }),
-  stages: Joi.array().items(Stage).min(2).required(),
+  phases: Joi.array().items(Phase).min(1).required(),
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
 }).unknown(true);
