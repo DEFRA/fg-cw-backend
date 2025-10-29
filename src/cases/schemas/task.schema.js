@@ -22,7 +22,7 @@ export const Task = Joi.object({
   description: Joi.string().allow(null).required(),
   statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional(),
-  requiredRoles: requiredRolesSchema.required(),
+  requiredRoles: requiredRolesSchema.optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({
