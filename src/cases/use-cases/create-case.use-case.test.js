@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
+import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseUseCase } from "./create-case.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+vi.mock("../publishers/case-event.publisher.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
@@ -20,6 +22,7 @@ describe("createCaseUseCase", () => {
   });
 
   it("creates a case", async () => {
+    publishCaseStatusUpdated.mockResolvedValue(true);
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
         code: "wf-001",
@@ -58,6 +61,8 @@ describe("createCaseUseCase", () => {
     });
 
     expect(save).toHaveBeenCalledWith(kase);
+
+    expect(publishCaseStatusUpdated).toHaveBeenCalled();
 
     const expectedCase = new Case({
       _id: expect.any(String),
