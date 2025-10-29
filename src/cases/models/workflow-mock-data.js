@@ -64,6 +64,7 @@ const createStages = () => [
             type: "boolean",
             description: "Task 1 description",
             statusOptions: [],
+            requiredRoles: createRequiredRoles(),
           },
         ],
       },

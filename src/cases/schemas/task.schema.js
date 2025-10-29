@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { comment } from "./comment.schema.js";
+import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { UrlSafeId } from "./url-safe-id.schema.js";
 
 export const Status = Joi.object({
@@ -21,6 +22,7 @@ export const Task = Joi.object({
   description: Joi.string().allow(null).required(),
   statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional(),
+  requiredRoles: requiredRolesSchema.optional(),
 }).label("Task");
 
 const TaskGroup = Joi.object({

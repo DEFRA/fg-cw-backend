@@ -9,6 +9,10 @@ describe("Task Schema", () => {
       type: "boolean",
       description: null,
       statusOptions: [],
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
     };
 
     const { error } = Task.validate(task);
@@ -64,6 +68,10 @@ describe("Task Schema", () => {
         type: "CONDITIONAL",
         label: "Note",
         helpText: "Please provide a note",
+      },
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
       },
     };
 

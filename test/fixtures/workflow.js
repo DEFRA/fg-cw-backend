@@ -250,6 +250,10 @@ export const workflowData1 = {
               type: "boolean",
               description: null,
               statusOptions: [],
+              requiredRoles: {
+                allOf: ["ROLE_1", "ROLE_2"],
+                anyOf: ["ROLE_3"],
+              },
             },
           ],
         },
