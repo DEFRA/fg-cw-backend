@@ -674,6 +674,82 @@ describe("resolveJSONPath", () => {
       });
     });
 
+    it("should resolve accordion when itemsRef is row-relative", () => {
+      const mockRow = {
+        subSections: [
+          {
+            title: "Row Section 1",
+            description: "Row first section",
+          },
+          {
+            title: "Row Section 2",
+            description: "Row second section",
+          },
+        ],
+      };
+
+      const path = {
+        component: "accordion",
+        id: "nested-row-accordion",
+        itemsRef: "@.subSections[*]",
+        items: {
+          heading: [
+            {
+              component: "text",
+              text: "@.title",
+            },
+          ],
+          content: [
+            {
+              component: "text",
+              text: "@.description",
+            },
+          ],
+        },
+      };
+
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path,
+        row: mockRow,
+      });
+
+      expect(result).toEqual({
+        component: "accordion",
+        id: "nested-row-accordion",
+        items: [
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Row Section 1",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Row first section",
+              },
+            ],
+          },
+          {
+            heading: [
+              {
+                component: "text",
+                text: "Row Section 2",
+              },
+            ],
+            content: [
+              {
+                component: "text",
+                text: "Row second section",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
     it("should resolve accordion with format application", () => {
       const mockRootWithDates = {
         ...mockRoot,

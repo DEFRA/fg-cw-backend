@@ -122,7 +122,7 @@ const resolveTableSection = ({ path, root, row }) => {
 
 const resolveAccordionSection = ({ path, root, row }) => {
   const { itemsRef, items, ...resolvable } = path;
-  const dataItems = JSONPath({ json: root, path: itemsRef });
+  const dataItems = evalPath({ root, path: itemsRef, row });
 
   const accordionItems = dataItems.map((itemData) => {
     return resolveJSONPath({ root, path: items, row: itemData });
