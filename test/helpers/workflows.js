@@ -253,6 +253,10 @@ export const createWorkflow = async (payload = {}) => {
                   type: "boolean",
                   description: "Simple review task",
                   statusOptions: [],
+                  requiredRoles: {
+                    allOf: ["ROLE_1", "ROLE_2"],
+                    anyOf: ["ROLE_3"],
+                  },
                 },
               ],
             },
