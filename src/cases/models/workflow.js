@@ -62,9 +62,7 @@ export class Workflow {
   }
 
   isMissingRequiredComment(action, comment) {
-    return (
-      action.comment && action.comment.type === "REQUIRED" && !comment?.trim()
-    );
+    return action.comment?.type === "REQUIRED" && !comment?.trim();
   }
 
   static createMock(props) {
