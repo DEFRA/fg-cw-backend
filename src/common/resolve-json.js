@@ -42,14 +42,20 @@ const resolveJSONObject = ({ path, root, row }) => {
 };
 
 const handleSpecialCases = ({ path, root, row }) => {
-  if (path.rowsRef && path.rows) {
+  if (isTable(path)) {
     return resolveTableSection({ path, root, row });
+  }
+  if (isAccordion(path)) {
+    return resolveAccordionSection({ path, root, row });
   }
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
   return null;
 };
+
+const isTable = (path) => path.rowsRef && path.rows;
+const isAccordion = (path) => path.itemsRef && path.items;
 
 const resolveGenericObject = ({ path, root, row }) => {
   const resolved = {};
@@ -110,6 +116,20 @@ const resolveTableSection = ({ path, root, row }) => {
 
   const resolvedSection = resolveJSONPath({ root, path: resolvable, row });
   resolvedSection.rows = tableRows;
+
+  return resolvedSection;
+};
+
+const resolveAccordionSection = ({ path, root, row }) => {
+  const { itemsRef, items, ...resolvable } = path;
+  const dataItems = evalPath({ root, path: itemsRef, row });
+
+  const accordionItems = dataItems.map((itemData) => {
+    return resolveJSONPath({ root, path: items, row: itemData });
+  });
+
+  const resolvedSection = resolveJSONPath({ root, path: resolvable, row });
+  resolvedSection.items = accordionItems;
 
   return resolvedSection;
 };
