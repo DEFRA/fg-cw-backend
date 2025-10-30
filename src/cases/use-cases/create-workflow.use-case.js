@@ -8,6 +8,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
     stages: createWorkflowCommand.stages,
     requiredRoles: createWorkflowCommand.requiredRoles,
     definitions: createWorkflowCommand.definitions,
+    externalActions: createWorkflowCommand.externalActions,
   });
 
   await save(workflow);
