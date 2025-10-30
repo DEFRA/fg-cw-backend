@@ -10,6 +10,7 @@ export class Workflow {
     this.stages = props.stages;
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
+    this.externalActions = props.externalActions;
   }
 
   findTask(stageCode, taskGroupCode, taskCode) {

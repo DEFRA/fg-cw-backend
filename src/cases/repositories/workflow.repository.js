@@ -13,6 +13,7 @@ const toWorkflow = (doc) =>
     stages: doc.stages,
     requiredRoles: doc.requiredRoles,
     definitions: doc.definitions,
+    externalActions: doc.externalActions,
   });
 
 export const save = async (workflow) => {
