@@ -22,7 +22,7 @@ export default defineConfig({
       LOCALSTACK_PORT,
       ENTRA_PORT,
       API_URL: `http://localhost:${CW_PORT}`,
-      MONGO_URI: `mongodb://localhost:${MONGO_PORT}/fg-cw-backend`,
+      MONGO_URI: `mongodb://localhost:${MONGO_PORT}/fg-cw-backend?directConnection=true`,
       AWS_REGION: "eu-west-2",
       AWS_ENDPOINT_URL: `http://localhost:${LOCALSTACK_PORT}`,
       AWS_ACCESS_KEY_ID: "test",
