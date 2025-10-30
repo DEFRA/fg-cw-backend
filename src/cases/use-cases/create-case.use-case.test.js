@@ -3,7 +3,6 @@ import { withTransaction } from "../../common/with-transaction.js";
 import { Case } from "../models/case.js";
 import { Outbox } from "../models/outbox.js";
 import { Workflow } from "../models/workflow.js";
-import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { save } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
 import { createCaseUseCase } from "./create-case.use-case.js";
@@ -29,7 +28,6 @@ describe("createCaseUseCase", () => {
     const mockSession = {};
     withTransaction.mockImplementation(async (cb) => cb(mockSession));
 
-    publishCaseStatusUpdated.mockResolvedValue(true);
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
         code: "wf-001",
