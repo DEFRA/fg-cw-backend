@@ -28,13 +28,15 @@ const toCase = (doc) => {
   });
 };
 
-export const save = async (kase) => {
+export const save = async (kase, session) => {
   const caseDocument = new CaseDocument(kase);
 
   let result;
 
   try {
-    result = await db.collection(collection).insertOne(caseDocument);
+    result = await db
+      .collection(collection)
+      .insertOne(caseDocument, { session });
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(
