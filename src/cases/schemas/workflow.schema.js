@@ -46,6 +46,19 @@ const caseSchema = Joi.object({
     .required(),
 }).unknown(true);
 
+const ExternalActionTarget = Joi.object({
+  node: Joi.string().required(),
+  nodeType: Joi.string().valid("array").required(),
+  position: Joi.string().valid("append").required(),
+}).label("ExternalActionTarget");
+
+const ExternalAction = Joi.object({
+  code: Joi.string().required(),
+  name: Joi.string().required(),
+  endpoint: Joi.string().required(),
+  target: ExternalActionTarget.required(),
+}).label("ExternalAction");
+
 const WorkflowData = Joi.object({
   code: Joi.string()
     .pattern(/^[a-zA-Z0-9-]+$/)
@@ -58,6 +71,7 @@ const WorkflowData = Joi.object({
   stages: Joi.array().items(Stage).min(2).required(),
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
+  externalActions: Joi.array().items(ExternalAction).optional(),
 }).unknown(true);
 
 const Workflow = WorkflowData.keys({

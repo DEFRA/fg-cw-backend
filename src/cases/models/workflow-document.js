@@ -12,6 +12,7 @@ export class WorkflowDocument {
     this.stages = props.stages;
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
+    this.externalActions = props.externalActions;
   }
 
   static createMock(props) {

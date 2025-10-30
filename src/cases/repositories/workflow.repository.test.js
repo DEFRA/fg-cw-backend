@@ -79,7 +79,20 @@ describe("save", () => {
 describe("findAll", () => {
   it("returns a list of workflows", async () => {
     const workflows = [
-      WorkflowDocument.createMock(),
+      WorkflowDocument.createMock({
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              node: "rulesHistory",
+              nodeType: "array",
+              position: "append",
+            },
+          },
+        ],
+      }),
       WorkflowDocument.createMock(),
     ];
 
@@ -96,6 +109,7 @@ describe("findAll", () => {
     expect(result).toEqual([
       Workflow.createMock({
         _id: workflows[0]._id.toString(),
+        externalActions: workflows[0].externalActions,
       }),
       Workflow.createMock({
         _id: workflows[1]._id.toString(),
@@ -237,7 +251,20 @@ describe("findAll", () => {
 
 describe("findByCode", () => {
   it("returns workflows by code", async () => {
-    const workflowDocument = WorkflowDocument.createMock();
+    const workflowDocument = WorkflowDocument.createMock({
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            node: "rulesHistory",
+            nodeType: "array",
+            position: "append",
+          },
+        },
+      ],
+    });
 
     const findOne = vi.fn().mockResolvedValue(workflowDocument);
 
@@ -253,6 +280,7 @@ describe("findByCode", () => {
     expect(result).toEqual(
       Workflow.createMock({
         _id: workflowDocument._id.toString(),
+        externalActions: workflowDocument.externalActions,
       }),
     );
   });

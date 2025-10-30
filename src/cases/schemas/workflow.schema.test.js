@@ -14,6 +14,44 @@ describe("workflowSchema", () => {
       expect(error).toBeUndefined();
     });
 
+    it("accepts valid externalActions", () => {
+      const data = structuredClone(workflowData1);
+      data.externalActions = [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            node: "rulesHistory",
+            nodeType: "array",
+            position: "append",
+          },
+        },
+      ];
+
+      const { error } = WorkflowData.validate(data);
+      expect(error).toBeUndefined();
+    });
+
+    it("rejects invalid externalActions target", () => {
+      const data = structuredClone(workflowData1);
+      data.externalActions = [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            node: "rulesHistory",
+            nodeType: "object", // invalid
+            position: "append",
+          },
+        },
+      ];
+
+      const { error } = WorkflowData.validate(data);
+      expect(error?.name).toEqual("ValidationError");
+    });
+
     it("requires tabs to exist in pages.cases.details", () => {
       const data = structuredClone(workflowData1);
       delete data.pages.cases.details.tabs;
