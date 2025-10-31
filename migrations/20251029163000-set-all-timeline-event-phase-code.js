@@ -1,16 +1,23 @@
 export const up = async (db) => {
   await db.collection("cases").updateMany(
+    {},
     {
-      "timeline.data.stageCode": {
-        $exists: true,
-      },
+      $set: { "timeline.$[item].data.phaseCode": "default" },
     },
-    { $set: { "timeline.data.phaseCode": "default" } },
+    {
+      arrayFilters: [{ "item.data.stageCode": { $exists: true } }],
+    },
   );
 };
 
 export const down = async (db) => {
-  await db
-    .collection("cases")
-    .updateMany({}, { $unset: { "timeline.data.phaseCode": "" } });
+  await db.collection("cases").updateMany(
+    {},
+    {
+      $unset: { "timeline.$[item].data.phaseCode": "" },
+    },
+    {
+      arrayFilters: [{ "item.data.stageCode": { $exists: true } }],
+    },
+  );
 };
