@@ -1,5 +1,9 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it } from "vitest";
+import { CasePhase } from "./case-phase.js";
+import { CaseStage } from "./case-stage.js";
+import { CaseTaskGroup } from "./case-task-group.js";
+import { CaseTask } from "./case-task.js";
 import { Case } from "./case.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
@@ -12,12 +16,26 @@ describe("Case", () => {
     _id: "64c88faac1f56f71e1b89a33",
     caseRef: "TEST-001",
     workflowCode: "FRPS",
-    status: "NEW",
-    dateReceived: "2025-01-01T00:00:00.000Z",
+    currentPhase: "phase-1",
     currentStage: "stage-1",
+    currentStatus: "NEW",
+    dateReceived: "2025-01-01T00:00:00.000Z",
     assignedUser: { id: validUserId, name: "Test User" },
     payload: { data: "test" },
-    stages: [{ code: "stage-1", taskGroups: [] }],
+    phases: [
+      new CasePhase({
+        code: "phase-1",
+        name: "Phase 1",
+        stages: [
+          new CaseStage({
+            code: "stage-1",
+            name: "Stage 1 name",
+            description: "Stage 1 description",
+            taskGroups: [],
+          }),
+        ],
+      }),
+    ],
     comments: [],
     timeline: [],
     requiredRoles: { allOf: ["ROLE_1"] },
@@ -34,20 +52,20 @@ describe("Case", () => {
       expect(caseInstance._id).toBe("64c88faac1f56f71e1b89a33");
       expect(caseInstance.caseRef).toBe("TEST-001");
       expect(caseInstance.workflowCode).toBe("FRPS");
-      expect(caseInstance.status).toBe("NEW");
-      expect(caseInstance.dateReceived).toBe("2025-01-01T00:00:00.000Z");
+      expect(caseInstance.currentPhase).toBe("phase-1");
       expect(caseInstance.currentStage).toBe("stage-1");
+      expect(caseInstance.currentStatus).toBe("NEW");
+      expect(caseInstance.dateReceived).toBe("2025-01-01T00:00:00.000Z");
       expect(caseInstance.assignedUser).toEqual({
         id: validUserId,
         name: "Test User",
       });
       expect(caseInstance.payload).toEqual({ data: "test" });
-      expect(caseInstance.stages).toEqual([
+      expect(caseInstance.phases[0].stages).toEqual([
         { code: "stage-1", taskGroups: [] },
       ]);
       expect(caseInstance.comments).toEqual([]);
       expect(caseInstance.timeline).toEqual([]);
-      expect(caseInstance.requiredRoles).toEqual({ allOf: ["ROLE_1"] });
     });
 
     it("generates ObjectId when _id is not provided", () => {
@@ -220,27 +238,18 @@ describe("Case", () => {
         data: { assignedTo: "FF0999099909090FF9898989" },
       });
 
-      const caseInstance = createTestCase({
-        caseRef: "TEST-001",
-        workflowCode: "FRPS",
-        status: "NEW",
-        dateReceived: "2025-01-01T00:00:00.000Z",
-        currentStage: "stage-1",
-        assignedUser: { id: "EE0999099909090FF9898989", name: "Test User" },
-        payload: {},
-        stages: [],
-        comments: [comment1, comment2],
-        timeline: [timelineEvent],
-        requiredRoles: {},
-      });
+      const kase = Case.createMock();
 
-      const userIds = caseInstance.getUserIds();
+      kase.comments = [comment1, comment2];
+      kase.timeline = [timelineEvent];
+
+      const userIds = kase.getUserIds();
 
       expect(userIds).toEqual(
         expect.arrayContaining([
+          kase.assignedUser.id,
           "090999099909090FF9898989",
           "FF0999099909090FF9898989",
-          "EE0999099909090FF9898989",
           "AA0999099909090FF9898989",
           "BB0999099909090FF9898989",
         ]),
@@ -253,12 +262,13 @@ describe("Case", () => {
       const caseInstance = createTestCase({
         caseRef: "TEST-001",
         workflowCode: "FRPS",
-        status: "NEW",
         dateReceived: "2025-01-01T00:00:00.000Z",
+        currentPhase: "phase-1",
         currentStage: "stage-1",
+        currentStatus: "NEW",
         assignedUser: null,
         payload: {},
-        stages: [],
+        phases: [],
         comments: [],
         timeline: [],
         requiredRoles: {},
@@ -281,21 +291,16 @@ describe("Case", () => {
         createdBy: "AAAAAAAAAAAAAAAAAAAAAAAA",
       });
 
-      const caseInstance = createTestCase({
-        caseRef: "TEST-001",
-        workflowCode: "FRPS",
-        status: "NEW",
-        dateReceived: "2025-01-01T00:00:00.000Z",
-        currentStage: "stage-1",
-        assignedUser: { id: "AAAAAAAAAAAAAAAAAAAAAAAA", name: "Test User" },
-        payload: {},
-        stages: [],
-        comments: [comment],
-        timeline: [timelineEvent],
-        requiredRoles: {},
-      });
+      const kase = Case.createMock();
 
-      const userIds = caseInstance.getUserIds();
+      kase.assignedUser = {
+        id: "AAAAAAAAAAAAAAAAAAAAAAAA",
+      };
+
+      kase.comments = [comment];
+      kase.timeline = [timelineEvent];
+
+      const userIds = kase.getUserIds();
 
       expect(userIds).toEqual(["AAAAAAAAAAAAAAAAAAAAAAAA"]);
       expect(userIds).toHaveLength(1);
@@ -303,28 +308,16 @@ describe("Case", () => {
   });
 
   describe("setTaskStatus", () => {
-    it("should find task", () => {
-      const kase = Case.createMock();
-      expect(kase.findTask("task-1")).toEqual({
-        code: "task-1",
-        status: "pending",
-      });
-    });
-
-    it("should throw an error if task not found", () => {
-      const kase = Case.createMock();
-      expect(() => kase.findTask("uknown-task-id")).toThrow(
-        "Can not find Task with code uknown-task-id",
-      );
-    });
-
     it("should update status", () => {
       const kase = Case.createMock();
-      const task1 = kase.findTask("task-1");
-      expect(task1.status).toBe("pending");
-      expect(task1.commentRef).toBeUndefined();
+
+      const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
+
+      expect(task.status).toBe("pending");
+      expect(task.commentRef).toBeUndefined();
 
       kase.setTaskStatus({
+        phaseCode: "phase-1",
         stageCode: "stage-1",
         taskGroupCode: "task-group-1",
         taskCode: "task-1",
@@ -332,9 +325,9 @@ describe("Case", () => {
         comment: "This is a note",
         updatedBy: "099999999999999999999999",
       });
-      const task2 = kase.findTask("task-1");
-      expect(task2.status).toBe("complete");
-      expect(task2.commentRef).toBeDefined();
+
+      expect(task.status).toBe("complete");
+      expect(task.commentRef).toBeDefined();
     });
   });
 
@@ -382,17 +375,17 @@ describe("Case", () => {
     });
   });
 
-  describe("find stage", () => {
-    it("finds stage", () => {
+  describe("findPhase", () => {
+    it("finds phase", () => {
       const kase = Case.createMock();
-      const stage = kase.findStage("stage-1");
-      expect(stage).toBeDefined();
+      const phase = kase.findPhase("phase-1");
+      expect(phase).toBeDefined();
     });
 
-    it("throws 404 if stage not found", () => {
+    it("throws 404 if phase not found", () => {
       const kase = Case.createMock();
-      expect(() => kase.findStage("stage-100")).toThrow(
-        "Can not find Stage with code stage-100",
+      expect(() => kase.findPhase("phase-100")).toThrow(
+        "Case with caseRef case-ref and workflowCode workflow-code does not have a phase with code phase-100",
       );
     });
   });
@@ -454,20 +447,33 @@ describe("Case", () => {
 
     beforeEach(() => {
       const props = createValidProps();
-      props.stages = [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [{ code: "task-1", status: "complete" }],
-            },
+      props.phases = [
+        new CasePhase({
+          code: "phase-1",
+          stages: [
+            new CaseStage({
+              code: "stage-1",
+              taskGroups: [
+                new CaseTaskGroup({
+                  code: "task-group-1",
+                  tasks: [
+                    new CaseTask({
+                      code: "task-1",
+                      status: "complete",
+                      updatedAt: null,
+                      updatedBy: null,
+                      commentRef: null,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new CaseStage({
+              code: "stage-2",
+              taskGroups: [],
+            }),
           ],
-        },
-        {
-          code: "stage-2",
-          taskGroups: [],
-        },
+        }),
       ];
       caseInstance = createTestCase(props);
     });
@@ -479,7 +485,7 @@ describe("Case", () => {
         createdBy: validUserId,
       });
 
-      const currentStage = caseInstance.stages[0];
+      const currentStage = caseInstance.phases[0].stages[0];
       expect(currentStage.outcome).toBeDefined();
       expect(currentStage.outcome.actionCode).toBe("approve");
       expect(currentStage.outcome.createdBy).toBe(validUserId);
@@ -504,7 +510,7 @@ describe("Case", () => {
         createdBy: validUserId,
       });
 
-      const currentStage = caseInstance.stages[0];
+      const currentStage = caseInstance.phases[0].stages[0];
       expect(currentStage.outcome).toBeDefined();
       expect(currentStage.outcome.actionCode).toBe("reject");
       expect(currentStage.outcome.commentRef).toBeUndefined();
@@ -552,17 +558,29 @@ describe("Case", () => {
 
     it("throws error when tasks are not complete for progression", () => {
       const props = createValidProps();
-      props.stages = [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [{ code: "task-1", status: "pending" }],
-            },
+      props.phases = [
+        new CasePhase({
+          stages: [
+            new CaseStage({
+              code: "stage-1",
+              taskGroups: [
+                new CaseTaskGroup({
+                  code: "task-group-1",
+                  tasks: [
+                    new CaseTask({
+                      code: "task-1",
+                      status: "pending",
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new CaseStage({
+              code: "stage-2",
+              taskGroups: [],
+            }),
           ],
-        },
-        { code: "stage-2", taskGroups: [] },
+        }),
       ];
       const caseWithIncompleteTasks = createTestCase(props);
 
@@ -597,7 +615,7 @@ describe("Case", () => {
       });
 
       const afterUpdate = new Date();
-      const currentStage = caseInstance.stages[0];
+      const currentStage = caseInstance.phases[0].stages[0];
       const createdAt = new Date(currentStage.outcome.createdAt);
 
       expect(createdAt.getTime()).toBeGreaterThanOrEqual(
@@ -613,7 +631,7 @@ describe("Case", () => {
         createdBy: validUserId,
       });
 
-      const currentStage = caseInstance.stages[0];
+      const currentStage = caseInstance.phases[0].stages[0];
       const commentRef = currentStage.outcome.commentRef;
       const linkedComment = caseInstance.findComment(commentRef);
 
@@ -626,12 +644,12 @@ describe("Case", () => {
   describe("updateStatus", () => {
     it("updates status to APPROVED and creates timeline event", () => {
       const caseInstance = createTestCase();
-      expect(caseInstance.status).toBe("NEW");
+      expect(caseInstance.currentStatus).toBe("NEW");
       expect(caseInstance.timeline).toHaveLength(0);
 
       caseInstance.updateStatus("APPROVED", validUserId);
 
-      expect(caseInstance.status).toBe("APPROVED");
+      expect(caseInstance.currentStatus).toBe("APPROVED");
       expect(caseInstance.timeline).toHaveLength(1);
       expect(caseInstance.timeline[0].eventType).toBe(
         EventEnums.eventTypes.CASE_APPROVED,

@@ -1,7 +1,9 @@
 export const caseData1 = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-1",
-  status: "NEW",
+  currentPhase: "default",
+  currentStage: "application-receipt",
+  currentStatus: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
     clientRef: "APPLICATION-REF-1",
@@ -30,25 +32,29 @@ export const caseData1 = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "default",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "application-receipt",
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "application-receipt-tasks",
+              tasks: [
+                {
+                  code: "simple-review",
+                  status: "pending",
+                },
+              ],
             },
           ],
         },
+        {
+          code: "contract",
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -60,6 +66,7 @@ export const caseData1 = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],
@@ -74,7 +81,9 @@ export const caseData1 = {
 export const caseData2 = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-2",
-  status: "NEW",
+  currentPhase: "default",
+  currentStage: "application-receipt",
+  currentStatus: "NEW",
   dateReceived: "2025-03-27T11:34:52Z",
   payload: {
     clientRef: "APPLICATION-REF-2",
@@ -103,25 +112,29 @@ export const caseData2 = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "default",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "application-receipt",
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "application-receipt-tasks",
+              tasks: [
+                {
+                  code: "simple-review",
+                  status: "pending",
+                },
+              ],
             },
           ],
         },
+        {
+          code: "contract",
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -133,6 +146,7 @@ export const caseData2 = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],
@@ -147,7 +161,9 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
-  status: "NEW",
+  currentPhase: "default",
+  currentStage: "application-receipt",
+  currentStatus: "NEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
     createdAt: "2025-03-27T10:34:52.000Z",
@@ -175,25 +191,29 @@ export const caseData3Document = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "default",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "application-receipt",
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "application-receipt-tasks",
+              tasks: [
+                {
+                  code: "simple-review",
+                  status: "pending",
+                },
+              ],
             },
           ],
         },
+        {
+          code: "contract",
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -205,6 +225,7 @@ export const caseData3Document = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],

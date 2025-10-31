@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { Task, toTask, toTasks } from "./task.js";
+import { CaseTask } from "./case-task.js";
 
-describe("Task", () => {
+describe("CaseTask", () => {
   it("should create a basic task", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
@@ -13,7 +13,7 @@ describe("Task", () => {
   });
 
   it("should create a task with optional fields", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
       updatedAt: "2025-01-01T00:00:00.000Z",
@@ -28,7 +28,7 @@ describe("Task", () => {
   it("should not create a task with an invalid status", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "k0a7-9xv4f2h1n3q8c5w2z1y",
           status: "invalid_status",
         }),
@@ -38,7 +38,7 @@ describe("Task", () => {
   it("should not create a task with an invalid code", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "invalid_code",
           status: "pending",
         }),
@@ -50,7 +50,7 @@ describe("Task", () => {
   it("should not create a task with an invalid commentRef", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "k0a7-9xv4f2h1n3q8c5w2z1y",
           status: "pending",
           commentRef: "invalid_id",
@@ -63,7 +63,7 @@ describe("Task", () => {
   it("should not create a task with an invalid code", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "invalid_code",
           status: "pending",
         }),
@@ -75,7 +75,7 @@ describe("Task", () => {
   it("should not create a task with an invalid code", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "invalid_code",
           status: "pending",
         }),
@@ -87,7 +87,7 @@ describe("Task", () => {
   it("should not create a task with an invalid code", () => {
     expect(
       () =>
-        new Task({
+        new CaseTask({
           code: "invalid_code",
           status: "pending",
         }),
@@ -97,7 +97,7 @@ describe("Task", () => {
   });
 
   it("should update the status of a task", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
@@ -106,7 +106,7 @@ describe("Task", () => {
   });
 
   it("should update the comment ref of a task", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
@@ -115,7 +115,7 @@ describe("Task", () => {
   });
 
   it("should update the updated at of a task", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2999",
       status: "pending",
     });
@@ -124,7 +124,7 @@ describe("Task", () => {
   });
 
   it("should throw an error if the status is invalid", () => {
-    const task = new Task({
+    const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2999",
       status: "pending",
     });
@@ -133,49 +133,5 @@ describe("Task", () => {
     ).toThrow(
       'Invalid Task Status: "value" must be one of [complete, pending]',
     );
-  });
-});
-
-describe("toTask", () => {
-  it("should convert a task document to a task", () => {
-    const task = toTask({
-      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
-      status: "pending",
-    });
-    expect(task.code).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
-    expect(task.status).toBe("pending");
-  });
-});
-
-describe("toTasks", () => {
-  it("should convert a tasks document to a tasks", () => {
-    const tasks = toTasks([
-      {
-        code: "ssss-9xv4f2h1n3q8c5w2111",
-        taskGroups: [
-          {
-            code: "tgtg-9xv4f2h1n3q8c5w2000",
-            tasks: [
-              {
-                code: "k01a-9xv4f2h1n3q8c5w2z1y",
-                status: "complete",
-              },
-              {
-                code: "k02a-9xv4f2h1n3q8c5w2z1o",
-                status: "pending",
-              },
-              {
-                code: "k03a-9xv4f2h1n3q8c5w2z00",
-                status: "pending",
-              },
-            ],
-          },
-        ],
-      },
-    ]);
-    expect(tasks.size).toBe(3);
-    expect(tasks.get("k01a-9xv4f2h1n3q8c5w2z1y")).toBeInstanceOf(Task);
-    expect(tasks.get("k02a-9xv4f2h1n3q8c5w2z1o")).toBeInstanceOf(Task);
-    expect(tasks.get("k03a-9xv4f2h1n3q8c5w2z00")).toBeInstanceOf(Task);
   });
 });

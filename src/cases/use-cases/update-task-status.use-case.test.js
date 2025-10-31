@@ -66,6 +66,7 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
+      phaseCode: "phase-1",
       stageCode: "stage-1",
       taskGroupCode: "task-group-1",
       taskCode: "task-1",
@@ -74,7 +75,7 @@ describe("updateTaskStatusUseCase", () => {
       user: mockAuthUser,
     });
 
-    const task = kase.findTask("task-1");
+    const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.status).toBe("complete");
     expect(task.commentRef).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);

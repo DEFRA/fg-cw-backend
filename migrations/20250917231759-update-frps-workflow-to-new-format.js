@@ -264,10 +264,6 @@ export const up = async (db, _client, context) => {
       },
     },
   );
-
-  console.log(
-    `Added definitions for environment "${environment}" ${JSON.stringify(definitions, null, 2)}`,
-  );
 };
 
 export const down = async (db) => {

@@ -1,7 +1,3 @@
-/**
- * TaskDocument
- * for converting Task objects for DB insertion/updates
- */
 export class TaskDocument {
   constructor(props) {
     this.code = props.code;
