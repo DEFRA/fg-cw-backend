@@ -235,42 +235,53 @@ export const createWorkflow = async (payload = {}) => {
           },
         },
       },
-      stages: [
+      phases: [
         {
-          code: "application-receipt",
-          name: "Application Receipt",
-          description: "Application received",
-          statuses: [],
-          taskGroups: [
+          code: "default",
+          name: "Default Phase",
+          stages: [
             {
-              code: "application-receipt-tasks",
-              name: "Application Receipt tasks",
-              description: "Task group description",
-              tasks: [
+              code: "application-receipt",
+              name: "Application Receipt",
+              description: "Application received",
+              statuses: [],
+              taskGroups: [
                 {
-                  code: "simple-review",
-                  name: "Simple Review",
-                  type: "boolean",
-                  description: "Simple review task",
-                  statusOptions: [],
+                  code: "application-receipt-tasks",
+                  name: "Application Receipt tasks",
+                  description: "Task group description",
+                  tasks: [
+                    {
+                      code: "simple-review",
+                      name: "Simple Review",
+                      type: "boolean",
+                      description: "Simple review task",
+                      statusOptions: [],
+                      requiredRoles: {
+                        allOf: ["ROLE_1", "ROLE_2"],
+                        anyOf: ["ROLE_3"],
+                      },
+                    },
+                  ],
+                },
+              ],
+              actions: [
+                {
+                  code: "approve",
+                  name: "Approve",
+                  comment: null,
                 },
               ],
             },
-          ],
-          actions: [
             {
-              code: "approve",
-              name: "Approve",
+              code: "contract",
+              name: "Stage for contract management",
+              description: "Awaiting agreement",
+              statuses: [],
+              taskGroups: [],
+              actions: [],
             },
           ],
-        },
-        {
-          code: "contract",
-          name: "Stage for contract management",
-          description: "Awaiting agreement",
-          statuses: [],
-          taskGroups: [],
-          actions: [],
         },
       ],
       requiredRoles: {

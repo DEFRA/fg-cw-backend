@@ -51,84 +51,14 @@ describe("GET /cases", () => {
     expect(response.payload).toEqual([
       {
         ...caseData1,
-        tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData1.dateReceived).toISOString(),
-        stages: [
-          {
-            ...caseData1.stages[0],
-            name: "Application Receipt",
-            description: "Application received",
-            taskGroups: [
-              {
-                code: "application-receipt-tasks",
-                name: "Application Receipt tasks",
-                description: "Task group description",
-                tasks: [
-                  {
-                    code: "simple-review",
-                    status: "pending",
-                    name: "Simple Review",
-                    description: [
-                      {
-                        component: "heading",
-                        level: 2,
-                        text: "Simple review task",
-                      },
-                    ],
-                    statusOptions: [],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            ...caseData1.stages[1],
-            name: "Stage for contract management",
-            description: "Awaiting agreement",
-            taskGroups: [],
-          },
-        ],
+        phases: caseData1.phases,
       },
       {
         ...caseData2,
-        tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
-        stages: [
-          {
-            ...caseData2.stages[0],
-            name: "Application Receipt",
-            description: "Application received",
-            taskGroups: [
-              {
-                code: "application-receipt-tasks",
-                name: "Application Receipt tasks",
-                description: "Task group description",
-                tasks: [
-                  {
-                    code: "simple-review",
-                    status: "pending",
-                    name: "Simple Review",
-                    description: [
-                      {
-                        component: "heading",
-                        level: 2,
-                        text: "Simple review task",
-                      },
-                    ],
-                    statusOptions: [],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            ...caseData2.stages[1],
-            name: "Stage for contract management",
-            description: "Awaiting agreement",
-          },
-        ],
       },
     ]);
   });

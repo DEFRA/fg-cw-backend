@@ -2,6 +2,8 @@ import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
+import { CasePhase } from "../models/case-phase.js";
+import { CaseStage } from "../models/case-stage.js";
 import { Case } from "../models/case.js";
 import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
@@ -27,6 +29,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Task Completed",
       createdBy: "System",
       data: {
+        phaseCode: "phase-1",
         stageCode: "stage-1",
         taskGroupCode: "task-group-1",
         taskCode: "task-1",
@@ -46,6 +49,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Stage Completed",
       createdBy: "System",
       data: {
+        phaseCode: "phase-1",
         stageCode: "stage-1",
         actionCode: "reject",
       },
@@ -218,7 +222,7 @@ describe("findCaseByIdUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
 
-    const [stage] = result.stages;
+    const [stage] = result.phases[0].stages;
 
     expect(stage.name).toEqual("Stage 1");
     expect(stage.description).toEqual("Stage 1 description");
@@ -401,17 +405,22 @@ describe("findCaseByIdUseCase", () => {
       // Create a case with stage outcome that references a comment
       const commentRef = "64c88faac1f56f71e1b89a33";
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [
           {
@@ -430,7 +439,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         commentRef,
         createdBy: mockUser.id,
@@ -444,16 +453,21 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
       });
 
@@ -463,7 +477,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
@@ -476,17 +490,22 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef: "64c88faac1f56f71e1b89a34",
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef: "64c88faac1f56f71e1b89a34",
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [],
       });
@@ -497,7 +516,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         commentRef: "64c88faac1f56f71e1b89a34",
         createdBy: mockUser.id,
@@ -511,11 +530,16 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+              }),
+            ],
+          }),
         ],
       });
 
@@ -525,7 +549,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toBeUndefined();
+      expect(result.phases[0].stages[0].outcome).toBeUndefined();
     });
 
     it("handles multiple stages with different outcome scenarios", async () => {
@@ -536,31 +560,36 @@ describe("findCaseByIdUseCase", () => {
       const commentRef2 = "64c88faac1f56f71e1b89a36";
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef: commentRef1,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
-          {
-            code: "stage-2",
-            taskGroups: [],
-          },
-          {
-            code: "stage-3",
-            taskGroups: [],
-            outcome: {
-              actionCode: "reject",
-              commentRef: commentRef2,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T13:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef: commentRef1,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+              new CaseStage({
+                code: "stage-2",
+                taskGroups: [],
+              }),
+              new CaseStage({
+                code: "stage-3",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "reject",
+                  commentRef: commentRef2,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T13:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [
           {
@@ -586,9 +615,11 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome.comment).toBe("First stage approved");
-      expect(result.stages[1].outcome).toBeUndefined();
-      expect(result.stages[2].outcome.comment).toBe(
+      expect(result.phases[0].stages[0].outcome.comment).toBe(
+        "First stage approved",
+      );
+      expect(result.phases[0].stages[1].outcome).toBeUndefined();
+      expect(result.phases[0].stages[2].outcome.comment).toBe(
         "Application rejected due to incomplete information",
       );
     });

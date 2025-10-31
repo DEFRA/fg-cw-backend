@@ -232,42 +232,53 @@ export const workflowData1 = {
     },
   },
 
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      name: "Application Receipt",
-      description: "Application received",
-      statuses: [],
-      taskGroups: [
+      code: "default",
+      name: "Default Phase",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          name: "Application Receipt tasks",
-          description: "Task group description",
-          tasks: [
+          code: "application-receipt",
+          name: "Application Receipt",
+          description: "Application received",
+          statuses: [],
+          taskGroups: [
             {
-              code: "simple-review",
-              name: "Simple Review",
-              type: "boolean",
-              description: null,
-              statusOptions: [],
+              code: "application-receipt-tasks",
+              name: "Application Receipt tasks",
+              description: "Task group description",
+              tasks: [
+                {
+                  code: "simple-review",
+                  name: "Simple Review",
+                  type: "boolean",
+                  description: null,
+                  statusOptions: [],
+                  requiredRoles: {
+                    allOf: ["ROLE_1", "ROLE_2"],
+                    anyOf: ["ROLE_3"],
+                  },
+                },
+              ],
+            },
+          ],
+          actions: [
+            {
+              code: "approve",
+              name: "Approve",
+              comment: null,
             },
           ],
         },
-      ],
-      actions: [
         {
-          code: "approve",
-          name: "Approve",
+          code: "contract",
+          name: "Stage for contract management",
+          description: "Awaiting agreement",
+          statuses: [],
+          taskGroups: [],
+          actions: [],
         },
       ],
-    },
-    {
-      code: "contract",
-      name: "Stage for contract management",
-      description: "Awaiting agreement",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
     },
   ],
   requiredRoles: {
@@ -318,22 +329,28 @@ export const workflowData2 = {
       },
     },
   },
-  stages: [
+  phases: [
     {
-      code: "review",
-      name: "Review",
-      description: "Review description",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
-    },
-    {
-      code: "decision",
-      name: "Decision",
-      description: "Decision description",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
+      code: "default",
+      name: "Default Phase",
+      stages: [
+        {
+          code: "review",
+          name: "Review",
+          description: "Review description",
+          statuses: [],
+          taskGroups: [],
+          actions: [],
+        },
+        {
+          code: "decision",
+          name: "Decision",
+          description: "Decision description",
+          statuses: [],
+          taskGroups: [],
+          actions: [],
+        },
+      ],
     },
   ],
   requiredRoles: {

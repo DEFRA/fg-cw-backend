@@ -1,7 +1,6 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
-import { mapDescription } from "./find-case-by-id.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
@@ -36,50 +35,6 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
     },
   };
 };
-
-const mapTimeline = (timeline) => {
-  return (
-    timeline?.map((tl) => ({
-      ...tl,
-      commentRef: tl.comment ? tl.comment.ref : undefined,
-      comment: undefined,
-    })) || []
-  );
-};
-
-const mapTasks = (tasks, workflowTaskGroup) =>
-  tasks.map((task) => {
-    const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
-      (wtgt) => wtgt.code === task.code,
-    );
-    return {
-      ...task,
-      name: workflowTaskGroupTask.name,
-      description: mapDescription(workflowTaskGroupTask),
-      statusOptions: workflowTaskGroupTask.statusOptions,
-    };
-  });
-
-const mapStages = (stages, workflow) =>
-  stages.map((stage) => {
-    const workflowStage = workflow.stages.find((s) => s.code === stage.code);
-    return {
-      ...stage,
-      name: workflowStage.name,
-      description: workflowStage.description,
-      taskGroups: stage.taskGroups.map((taskGroup) => {
-        const workflowTaskGroup = workflowStage.taskGroups.find(
-          (tg) => tg.code === taskGroup.code,
-        );
-        return {
-          ...taskGroup,
-          name: workflowTaskGroup.name,
-          description: workflowTaskGroup.description,
-          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup),
-        };
-      }),
-    };
-  });
 
 export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
@@ -117,9 +72,6 @@ export const findCasesUseCase = async () => {
     if (assignedUser) {
       kase.assignedUser.name = assignedUser.name;
     }
-
-    kase.stages = mapStages(kase.stages, workflow);
-    kase.timeline = mapTimeline(kase.timeline);
 
     acc.push(kase);
     return acc;

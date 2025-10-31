@@ -44,47 +44,57 @@ describe("GET /cases/{caseId}", () => {
       ...caseData2,
       _id: caseId,
       dateReceived: new Date(caseData2.dateReceived).toISOString(),
-      tasks: {},
-      stages: [
+      phases: [
         {
-          ...caseData2.stages[0],
-          name: "Application Receipt",
-          description: "Application received",
-          taskGroups: [
+          code: "default",
+          name: "Default Phase",
+          stages: [
             {
-              ...caseData2.stages[0].taskGroups[0],
-              name: "Application Receipt tasks",
-              description: "Task group description",
-              tasks: [
+              code: "application-receipt",
+              name: "Application Receipt",
+              description: "Application received",
+              statuses: [],
+              actions: [
                 {
-                  ...caseData2.stages[0].taskGroups[0].tasks[0],
-                  name: "Simple Review",
-                  description: [
+                  code: "approve",
+                  name: "Approve",
+                  comment: null,
+                },
+              ],
+              taskGroups: [
+                {
+                  code: "application-receipt-tasks",
+                  name: "Application Receipt tasks",
+                  description: "Task group description",
+                  tasks: [
                     {
-                      component: "heading",
-                      level: 2,
-                      text: "Simple review task",
+                      code: "simple-review",
+                      name: "Simple Review",
+                      description: [
+                        {
+                          component: "heading",
+                          level: 2,
+                          text: "Simple review task",
+                        },
+                      ],
+                      status: "pending",
+                      type: "boolean",
+                      statusOptions: [],
+                      updatedBy: null,
                     },
                   ],
-                  statusOptions: [],
-                  updatedBy: null,
-                  type: "boolean",
                 },
               ],
             },
-          ],
-          actions: [
             {
-              code: "approve",
-              name: "Approve",
+              code: "contract",
+              name: "Stage for contract management",
+              description: "Awaiting agreement",
+              statuses: [],
+              actions: [],
+              taskGroups: [],
             },
           ],
-        },
-        {
-          ...caseData2.stages[1],
-          name: "Stage for contract management",
-          description: "Awaiting agreement",
-          actions: [],
         },
       ],
       timeline: [

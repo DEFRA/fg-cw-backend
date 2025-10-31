@@ -36,18 +36,27 @@ describe("findCaseByIdRoute", () => {
     const caseId = "60b8d295f1d2c916c8f0e6b7";
 
     const caseMock = Case.createMock();
+    caseMock.assignedUser.name = "Test User";
     caseMock.supplementaryData.agreements = [];
-    caseMock.stages[0].name = "Stage 1";
-    caseMock.stages[0].description = "Stage 1 description";
-    caseMock.stages[0].taskGroups[0].description = "Task group description";
-    caseMock.stages[0].taskGroups[0].tasks[0].name = "Task 1";
-    caseMock.stages[0].taskGroups[0].tasks[0].description = [
+    caseMock.phases[0].code = "phase-1";
+    caseMock.phases[0].name = "Phase 1";
+    caseMock.phases[0].stages[0].name = "Stage 1";
+    caseMock.phases[0].stages[0].description = "Stage 1 description";
+    caseMock.phases[0].stages[0].taskGroups[0].description =
+      "Task group description";
+    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].name = "Task 1";
+    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].description = [
       { component: "heading", level: 2, text: "Task description" },
     ];
-    caseMock.stages[0].taskGroups[0].tasks[0].statusOptions = [];
+    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [];
 
-    caseMock.stages[1].name = "Stage 2";
-    caseMock.stages[1].description = "Stage 2 description";
+    caseMock.phases[0].stages[1].name = "Stage 2";
+    caseMock.phases[0].stages[1].description = "Stage 2 description";
+
+    caseMock.requiredRoles = {
+      allOf: [],
+      anyOf: [],
+    };
 
     findCaseByIdUseCase.mockResolvedValueOnce(caseMock);
 
