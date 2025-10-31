@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CasePhase } from "../models/case-phase.js";
+import { CaseStage } from "../models/case-stage.js";
+import { CaseTaskGroup } from "../models/case-task-group.js";
+import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
+import { Permissions } from "../models/permissions.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
@@ -22,35 +27,10 @@ describe("createCaseUseCase", () => {
   });
 
   it("creates a case", async () => {
-    publishCaseStatusUpdated.mockResolvedValue(true);
-    findWorkflowByCodeUseCase.mockResolvedValue(
-      new Workflow({
-        code: "wf-001",
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [
-              {
-                code: "task-group-1",
-                tasks: [
-                  {
-                    code: "task-1",
-                    type: "task-type-1",
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        requiredRoles: {
-          allOf: ["ROLE_1", "ROLE_2"],
-          anyOf: ["ROLE_3"],
-        },
-      }),
-    );
+    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
 
     const kase = await createCaseUseCase({
-      workflowCode: "wf-001",
+      workflowCode: "workflow-code",
       caseRef: "TEST-001",
       payload: {
         createdAt: "2025-01-01T00:00:00.000Z",
@@ -60,58 +40,80 @@ describe("createCaseUseCase", () => {
       },
     });
 
+    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("workflow-code");
+    expect(publishCaseStatusUpdated).toHaveBeenCalled({
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      previousStatus: "NEW",
+      currentStatus: "IN_PROGRESS",
+    });
     expect(save).toHaveBeenCalledWith(kase);
 
-    expect(publishCaseStatusUpdated).toHaveBeenCalled();
-
-    const expectedCase = new Case({
-      _id: expect.any(String),
-      caseRef: "TEST-001",
-      workflowCode: "wf-001",
-      status: "NEW",
-      dateReceived: "2025-01-01T00:00:00.000Z",
-      payload: {
-        createdAt: "2025-01-01T00:00:00.000Z",
-        submittedAt: "2025-01-01T00:00:00.000Z",
-        identifiers: {},
-        answers: {},
-      },
-      currentStage: "stage-1",
-      stages: [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [
-                {
-                  code: "task-1",
-                  status: "pending",
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      timeline: [
-        TimelineEvent.create({
-          eventType: "CASE_CREATED",
+    expect(kase).toStrictEqual(
+      new Case({
+        _id: expect.any(String),
+        caseRef: "TEST-001",
+        workflowCode: "workflow-code",
+        currentPhase: "phase-1",
+        currentStage: "stage-1",
+        currentStatus: "NEW",
+        dateReceived: "2025-01-01T00:00:00.000Z",
+        payload: {
           createdAt: "2025-01-01T00:00:00.000Z",
-          description: "Case received",
-          createdBy: "System",
-          data: {
-            caseRef: "TEST-001",
-          },
+          submittedAt: "2025-01-01T00:00:00.000Z",
+          identifiers: {},
+          answers: {},
+        },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [
+                  new CaseTaskGroup({
+                    code: "task-group-1",
+                    tasks: [
+                      new CaseTask({
+                        code: "task-1",
+                        status: "pending",
+                        commentRef: null,
+                        updatedAt: null,
+                        updatedBy: null,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new CaseStage({
+                code: "stage-2",
+                taskGroups: [],
+              }),
+              new CaseStage({
+                code: "stage-3",
+                taskGroups: [],
+              }),
+            ],
+          }),
+        ],
+        timeline: [
+          TimelineEvent.create({
+            eventType: "CASE_CREATED",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            description: "Case received",
+            createdBy: "System",
+            data: {
+              caseRef: "TEST-001",
+            },
+          }),
+        ],
+        comments: [],
+        assignedUser: null,
+        requiredRoles: new Permissions({
+          allOf: ["ROLE_1", "ROLE_2"],
+          anyOf: ["ROLE_3"],
         }),
-      ],
-      comments: [],
-      assignedUser: null,
-      requiredRoles: {
-        allOf: ["ROLE_1", "ROLE_2"],
-        anyOf: ["ROLE_3"],
-      },
-    });
-
-    expect(kase).toEqual(expectedCase);
+      }),
+    );
   });
 });
