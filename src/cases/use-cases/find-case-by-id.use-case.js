@@ -52,7 +52,7 @@ const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
     return {
       code: caseTaskGroupTask.code,
       name: workflowTaskGroupTask.name,
-      description: workflowTaskGroupTask.description,
+      description: mapDescription(workflowTaskGroupTask),
       type: workflowTaskGroupTask.type,
       statusOptions: workflowTaskGroupTask.statusOptions,
       status: caseTaskGroupTask.status,
@@ -106,6 +106,24 @@ const mapPhases = (kase, workflow, userMap) =>
       stages: mapStages(casePhase, workflowPhase, kase, userMap),
     };
   });
+
+const isValidArray = (description) =>
+  Array.isArray(description) && description.length > 0;
+
+const isValidString = (description) =>
+  typeof description === "string" && description.trim() !== "";
+
+export const mapDescription = ({ name = "Task", description }) => {
+  if (isValidArray(description)) {
+    return description;
+  }
+
+  if (isValidString(description)) {
+    return [{ component: "heading", level: 2, text: description }];
+  }
+
+  return [{ component: "heading", level: 2, text: name }];
+};
 
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);

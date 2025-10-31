@@ -45,8 +45,9 @@ describe("findCaseByIdRoute", () => {
     caseMock.phases[0].stages[0].taskGroups[0].description =
       "Task group description";
     caseMock.phases[0].stages[0].taskGroups[0].tasks[0].name = "Task 1";
-    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].description =
-      "Task description";
+    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].description = [
+      { component: "heading", level: 2, text: "Task description" },
+    ];
     caseMock.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [];
 
     caseMock.phases[0].stages[1].name = "Stage 2";

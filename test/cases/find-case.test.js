@@ -70,7 +70,13 @@ describe("GET /cases/{caseId}", () => {
                     {
                       code: "simple-review",
                       name: "Simple Review",
-                      description: "Simple review task",
+                      description: [
+                        {
+                          component: "heading",
+                          level: 2,
+                          text: "Simple review task",
+                        },
+                      ],
                       status: "pending",
                       type: "boolean",
                       statusOptions: [],
