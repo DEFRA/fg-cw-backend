@@ -12,6 +12,7 @@ import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
+  mapDescription,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -89,6 +90,110 @@ describe("formatTimelineItemDescription", () => {
   });
 });
 
+describe("mapDescription", () => {
+  it("converts string description to heading component array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "Simple review task",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Simple review task" },
+    ]);
+  });
+
+  it("falls back to task name for empty string", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
+  });
+
+  it("returns array description as-is when already an array", () => {
+    const input = [
+      { component: "heading", level: 2, text: "Title" },
+      { component: "paragraph", text: "Description" },
+    ];
+    const result = mapDescription({
+      name: "Review Task",
+      description: input,
+    });
+    expect(result).toEqual(input);
+  });
+
+  it("returns heading with task name for null description", () => {
+    const result = mapDescription({
+      name: "Review Application",
+      description: null,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Application" },
+    ]);
+  });
+
+  it("returns heading with task name for undefined description", () => {
+    const result = mapDescription({
+      name: "Check Details",
+      description: undefined,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Check Details" },
+    ]);
+  });
+
+  it("uses default name 'Task' when name not provided and description is null", () => {
+    const result = mapDescription({ description: null });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
+  });
+
+  it("uses default name 'Task' when name not provided and description is undefined", () => {
+    const result = mapDescription({ description: undefined });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
+  });
+
+  it("returns heading with task name for object description", () => {
+    const result = mapDescription({
+      name: "Verify Data",
+      description: { foo: "bar" },
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Verify Data" },
+    ]);
+  });
+
+  it("returns heading with task name for number description", () => {
+    const result = mapDescription({
+      name: "Process Item",
+      description: 123,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Item" },
+    ]);
+  });
+
+  it("falls back to task name for empty array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: [],
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
+  });
+
+  it("falls back to task name for whitespace-only string", () => {
+    const result = mapDescription({
+      name: "Process Data",
+      description: "   ",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Data" },
+    ]);
+  });
+});
+
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
   const mockAuthUser = {
@@ -130,7 +235,9 @@ describe("findCaseByIdUseCase", () => {
     const [task] = taskGroup.tasks;
 
     expect(task.name).toEqual("Task 1");
-    expect(task.description).toEqual("Task 1 description");
+    expect(task.description).toEqual([
+      { component: "heading", level: 2, text: "Task 1 description" },
+    ]);
 
     expect(result).toBe(kase);
   });
