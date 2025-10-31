@@ -99,7 +99,7 @@ describe("cases", () => {
       },
       {
         method: "patch",
-        path: "/cases/{caseId}/stages/{stageCode}/task-groups/{taskGroupCode}/tasks/{taskCode}/status",
+        path: "/cases/{caseId}/phases/{phaseCode}/stages/{stageCode}/task-groups/{taskGroupCode}/tasks/{taskCode}/status",
       },
       { method: "post", path: "/workflows" },
       { method: "post", path: "/cases/{caseId}/notes" },

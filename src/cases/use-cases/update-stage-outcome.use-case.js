@@ -20,6 +20,7 @@ export const updateStageOutcomeUseCase = async (command) => {
 
     workflow.validateStageActionComment({
       actionCode,
+      phaseCode: kase.currentPhase,
       stageCode: kase.currentStage,
       comment,
     });

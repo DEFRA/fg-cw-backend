@@ -54,8 +54,10 @@ describe("createCaseUseCase", () => {
       }),
     );
 
+    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+
     await createCaseUseCase({
-      workflowCode: "wf-001",
+      workflowCode: "workflow-code",
       caseRef: "TEST-001",
       payload: {
         createdAt: "2025-01-01T00:00:00.000Z",

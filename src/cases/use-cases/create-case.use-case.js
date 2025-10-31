@@ -1,6 +1,10 @@
 import { config } from "../../common/config.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
+import { CasePhase } from "../models/case-phase.js";
+import { CaseStage } from "../models/case-stage.js";
+import { CaseTaskGroup } from "../models/case-task-group.js";
+import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Outbox } from "../models/outbox.js";
 import { save } from "../repositories/case.repository.js";
@@ -12,14 +16,42 @@ const caseStatus = {
   IN_PROGRESS: "IN_PROGRESS",
 };
 
+const createCaseTask = (task) =>
+  new CaseTask({
+    code: task.code,
+    status: "pending",
+    commentRef: null,
+    updatedAt: null,
+    updatedBy: null,
+  });
+
+const createCaseTaskGroup = (taskGroup) =>
+  new CaseTaskGroup({
+    code: taskGroup.code,
+    tasks: taskGroup.tasks.map(createCaseTask),
+  });
+
+const createCaseStage = (stage) =>
+  new CaseStage({
+    code: stage.code,
+    taskGroups: stage.taskGroups.map(createCaseTaskGroup),
+  });
+
+const createCasePhase = (phase) =>
+  new CasePhase({
+    code: phase.code,
+    stages: phase.stages.map(createCaseStage),
+  });
+
 export const createCaseUseCase = async ({ caseRef, workflowCode, payload }) => {
   return await withTransaction(async (session) => {
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
 
     const kase = Case.new({
       caseRef,
+      workflowCode,
       payload,
-      workflow,
+      phases: workflow.phases.map(createCasePhase),
     });
 
     await save(kase, session);
