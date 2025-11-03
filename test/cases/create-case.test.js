@@ -10,10 +10,12 @@ import { createWorkflow } from "../helpers/workflows.js";
 let cases;
 
 let client;
+let inbox;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
+  inbox = client.db().collection("inbox");
 });
 
 afterAll(async () => {
@@ -54,8 +56,15 @@ describe("On CreateNewCase event", () => {
 
     await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, createCaseEvent3);
 
-    const documents = await waitForDocuments(cases);
+    const documents = await waitForDocuments(inbox, 3, {
+      target: env.CW__SQS__CREATE_NEW_CASE_URL,
+    });
 
-    expect(documents).toEqual(expected);
+    expect(documents).toHaveLength(1);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const caseDocs = await waitForDocuments(cases);
+    expect(caseDocs).toEqual(expected);
   });
 });

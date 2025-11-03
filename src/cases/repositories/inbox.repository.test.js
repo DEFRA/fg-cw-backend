@@ -79,7 +79,11 @@ describe("inbox.repository", () => {
     await updateDeadEvents();
 
     expect(updateMany).toHaveBeenCalledWith(
-      { completionAttempts: { $gte: config.get("inbox.inboxMaxRetries") } },
+      {
+        completionAttempts: {
+          $gte: parseInt(config.get("inbox.inboxMaxRetries")),
+        },
+      },
       {
         $set: {
           status: InboxStatus.DEAD,

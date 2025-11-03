@@ -6,12 +6,16 @@ vi.mock("./update-supplementary-data.use-case.js");
 
 describe("handleAgreementStatusUpdateUseCase", () => {
   it("should call updateSupplementaryDataUseCase", async () => {
-    const data = {
-      supplementaryData: {
-        foo: "barr",
+    const message = {
+      event: {
+        data: {
+          supplementaryData: {
+            foo: "barr",
+          },
+        },
       },
     };
-    await handleAgreementStatusUpdateUseCase(data);
+    await handleAgreementStatusUpdateUseCase(message);
     expect(updateSupplementaryDataUseCase).toHaveBeenCalled();
   });
 });

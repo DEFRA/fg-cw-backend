@@ -11,14 +11,17 @@ import { config } from "../../common/config.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import { Inbox } from "../models/inbox.js";
 import { claimEvents } from "../repositories/inbox.repository.js";
+import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleAgreementStatusUpdateUseCase } from "../use-cases/handle-agreement-status-update.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
+vi.mock("../use-cases/create-case.use-case.js");
 vi.mock("../../common/trace-parent.js");
 vi.mock("../use-cases/approve-application.use-case.js");
 vi.mock("../repositories/inbox.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
 vi.mock("../use-cases/handle-agreement-status-update.use-case.js");
+vi.mock("../../common/logger.js");
 
 describe("inbox.subscriber", () => {
   beforeAll(() => {
@@ -61,15 +64,15 @@ describe("inbox.subscriber", () => {
   });
 
   describe("processEvents", () => {
-    it("should use use-cases if not updating status", async () => {
+    it("should use use-cases if mapped", async () => {
       const mockEventData = {
         foo: "barr",
       };
-      handleAgreementStatusUpdateUseCase.mockResolvedValue(true);
+      createCaseUseCase.mockResolvedValue(true);
 
       withTraceParent.mockImplementation((_, fn) => fn());
       const mockEvent = {
-        type: "cloud.defra.local.fg-gas-backend.application.created",
+        type: "cloud.defra.test.fg-gas-backend.application.created",
         traceparent: "1234-abcd",
         event: {
           data: mockEventData,
@@ -132,7 +135,7 @@ describe("inbox.subscriber", () => {
 
       withTraceParent.mockImplementationOnce((_, fn) => fn());
       const mockEvent = {
-        type: "cloud.defra.local.fg-gas-backend.application.created",
+        type: "cloud.defra.test.fg-gas-backend.application.created",
         traceparent: "1234-abcd",
         event: {
           data: mockEventData,
