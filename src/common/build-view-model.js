@@ -5,6 +5,9 @@ import { resolveJSONPath } from "./resolve-json.js";
 export const createRootContext = (kase, workflow) => ({
   ...kase,
   definitions: { ...workflow.definitions },
+  ...(workflow.externalActions && {
+    externalActions: workflow.externalActions,
+  }),
 });
 
 export const assertPathExists = (root, path) => {
@@ -83,6 +86,30 @@ const idToText = (segment) => {
     .join(" "); // join back with spaces
 };
 
+// eslint-disable-next-line complexity
+const addCallToActionToBanner = (banner, externalActions) => {
+  if (!banner) {
+    return;
+  }
+
+  if (!externalActions) {
+    return;
+  }
+
+  const externalActionsArray = Array.isArray(externalActions)
+    ? externalActions
+    : Object.values(externalActions);
+
+  if (externalActionsArray.length === 0) {
+    return;
+  }
+
+  banner.callToAction = externalActionsArray.map((action) => ({
+    code: action.code,
+    name: action.name,
+  }));
+};
+
 export const buildBanner = (kase, workflow) => {
   const [bannerJson] = JSONPath({
     json: workflow,
@@ -90,5 +117,9 @@ export const buildBanner = (kase, workflow) => {
   });
 
   const root = createRootContext(kase, workflow);
-  return resolveJSONPath({ root, path: bannerJson });
+  const banner = resolveJSONPath({ root, path: bannerJson });
+
+  addCallToActionToBanner(banner, root.externalActions);
+
+  return banner;
 };
