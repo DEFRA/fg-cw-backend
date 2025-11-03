@@ -19,6 +19,13 @@ const isProduction = process.env.NODE_ENV === "production";
 const isTest = process.env.NODE_ENV === "test";
 
 export const config = convict({
+  env: {
+    doc: "The node environment",
+    format: String,
+    nullable: false,
+    default: null,
+    env: "NODE_ENV",
+  },
   serviceVersion: {
     doc: "The service version, this variable is injected into your docker container in CDP environments",
     format: String,

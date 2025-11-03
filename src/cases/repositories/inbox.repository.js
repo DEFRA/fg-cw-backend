@@ -3,9 +3,9 @@ import { db } from "../../common/mongo-client.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 
 const collection = "inbox";
-const MAX_RETRIES = config.get("inbox.inboxMaxRetries");
-const NUMBER_OF_RECORDS = config.get("inbox.inboxClaimMaxRecords");
-const EXPIRES_IN_MS = config.get("inbox.inboxExpiresMs");
+const MAX_RETRIES = parseInt(config.get("inbox.inboxMaxRetries"));
+const NUMBER_OF_RECORDS = parseInt(config.get("inbox.inboxClaimMaxRecords"));
+const EXPIRES_IN_MS = parseInt(config.get("inbox.inboxExpiresMs"));
 
 export const claimEvents = async (claimedBy) => {
   const promises = [];

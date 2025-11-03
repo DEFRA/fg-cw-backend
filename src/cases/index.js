@@ -15,6 +15,7 @@ import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 import { updateStageOutcomeRoute } from "./routes/update-stage-outcome.route.js";
 import { updateTaskStatusRoute } from "./routes/update-task-status.route.js";
+import { InboxSubscriber } from "./subscribers/inbox.subscriber.js";
 import { OutboxSubscriber } from "./subscribers/outbox.subscriber.js";
 
 export const cases = {
@@ -27,17 +28,20 @@ export const cases = {
     logger.info("Finished running migrations");
 
     const outboxSubscriber = new OutboxSubscriber();
+    const inboxSubscriber = new InboxSubscriber();
 
     server.events.on("start", async () => {
       createNewCaseSubscriber.start();
       createUpdateStatusAgreementConsumer.start();
       outboxSubscriber.start();
+      inboxSubscriber.start();
     });
 
     server.events.on("stop", async () => {
       createNewCaseSubscriber.stop();
       createUpdateStatusAgreementConsumer.stop();
       outboxSubscriber.stop();
+      inboxSubscriber.stop();
     });
 
     server.route([

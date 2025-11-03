@@ -15,8 +15,8 @@ import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleAgreementStatusUpdateUseCase } from "../use-cases/handle-agreement-status-update.use-case.js";
 
 export const useCaseMap = {
-  "cloud.defra.local.fg-gas-backend.case.create": createCaseUseCase,
-  "cloud.defra.local.fg-gas-backend.application.created":
+  "cloud.defra.ENV.fg-gas-backend.case.create": createCaseUseCase,
+  "cloud.defra.ENV.fg-gas-backend.case.update.status":
     handleAgreementStatusUpdateUseCase,
 };
 
@@ -28,7 +28,7 @@ export class InboxSubscriber {
 
   async poll() {
     while (this.running) {
-      logger.trace("polling inbox");
+      logger.trace("Polling inbox");
       const claimToken = randomUUID();
       const events = await claimEvents(claimToken);
       await this.processEvents(events);
@@ -76,8 +76,8 @@ export class InboxSubscriber {
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
     try {
-      const handler = useCaseMap[type];
-
+      const handlerString = type.replace(config.get("env"), "ENV");
+      const handler = useCaseMap[handlerString];
       if (handler) {
         await withTraceParent(traceparent, async () => handler(msg));
       } else {
@@ -99,7 +99,7 @@ export class InboxSubscriber {
   }
 
   start() {
-    logger.info("starting inbox subscriber");
+    logger.info("Starting inbox subscriber");
     this.running = true;
     this.poll();
   }

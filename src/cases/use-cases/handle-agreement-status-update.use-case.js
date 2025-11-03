@@ -1,7 +1,10 @@
 import { logger } from "../../common/logger.js";
 import { updateSupplementaryDataUseCase } from "./update-supplementary-data.use-case.js";
 
-export const handleAgreementStatusUpdateUseCase = async (data) => {
+export const handleAgreementStatusUpdateUseCase = async (message) => {
+  const {
+    event: { data },
+  } = message;
   if (data?.supplementaryData) {
     await updateSupplementaryDataUseCase(data);
     logger.info(
