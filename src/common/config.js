@@ -230,7 +230,7 @@ export const config = convict({
       env: "INBOX_MAX_RETRIES",
     },
     inboxExpiresMs: {
-      doc: "Number in Milliseconds before outbox process expires and will be cleaned up",
+      doc: "Number in Milliseconds before inbox process expires and will be cleaned up",
       format: String,
       default: null,
       env: "INBOX_EXPIRES_MS",
