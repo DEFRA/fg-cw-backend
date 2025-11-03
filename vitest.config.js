@@ -10,6 +10,10 @@ export default defineConfig({
       TZ: "Europe/London",
       AWS_ACCESS_KEY_ID: "test",
       AWS_SECRET_ACCESS_KEY: "test",
+      OUTBOX_MAX_RETRIES: 5,
+      OUTBOX_CLAIM_MAX_RECORDS: 2,
+      OUTBOX_EXPIRES_MS: 5000,
+      OUTBOX_POLL_MS: 250,
     },
     coverage: {
       reporter: ["text", "lcov", "html"],

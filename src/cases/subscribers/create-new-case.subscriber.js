@@ -8,10 +8,10 @@ export const createNewCaseSubscriber = new SqsSubscriber({
   async onMessage(message) {
     const { data } = message;
 
-    const kase = await createCaseUseCase(data);
+    await createCaseUseCase(data);
 
     logger.info(
-      `Created case with id "${kase._id}", caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}"`,
+      `Created case with caseRef "${data.caseRef}" and workflowCode "${data.workflowCode}"`,
     );
   },
 });

@@ -30,24 +30,30 @@
     }
   },
   "currentStage": "application-receipt",
-  "stages": [
+  "phases": [
     {
-      "code": "application-receipt",
-      "taskGroups": [
+      "code": "default",
+      "name": "Default Phase",
+      "stages": [
         {
-          "code": "application-receipt-tasks",
-          "tasks": [
+          "code": "application-receipt",
+          "taskGroups": [
             {
-              "code": "simple-review",
-              "status": "pending"
+              "code": "application-receipt-tasks",
+              "tasks": [
+                {
+                  "code": "simple-review",
+                  "status": "pending"
+                }
+              ]
             }
           ]
+        },
+        {
+          "code": "contract",
+          "taskGroups": []
         }
       ]
-    },
-    {
-      "code": "contract",
-      "taskGroups": []
     }
   ],
   "timeline": [

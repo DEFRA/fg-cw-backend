@@ -19,7 +19,7 @@ const queueUrl =
   "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
 
 const message = {
-  id: "event-id-3",
+  id: randomUUID(),
   time: "2025-03-28T11:30:52.000Z",
   source: "fg-gas-backend",
   specversion: "1.0",
