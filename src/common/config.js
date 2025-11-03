@@ -215,6 +215,32 @@ export const config = convict({
       env: "OUTBOX_POLL_MS",
     },
   },
+  inbox: {
+    inboxMaxRetries: {
+      doc: "Maximum number of retries before setting to DEAD_LETTER",
+      format: String,
+      default: null,
+      env: "INBOX_MAX_RETRIES",
+    },
+    inboxExpiresMs: {
+      doc: "Number in Milliseconds before outbox process expires and will be cleaned up",
+      format: String,
+      default: null,
+      env: "INBOX_EXPIRES_MS",
+    },
+    inboxClaimMaxRecords: {
+      doc: "Maximum number of db records to claim in a single loop",
+      format: String,
+      default: null,
+      env: "INBOX_CLAIM_MAX_RECORDS",
+    },
+    inboxPollMs: {
+      doc: "Number of milliseconds outbox should wait before repolling db",
+      format: String,
+      default: null,
+      env: "INBOX_POLL_MS",
+    },
+  },
 });
 
 config.validate({ allowed: "strict" });
