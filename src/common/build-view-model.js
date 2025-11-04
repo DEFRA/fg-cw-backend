@@ -86,25 +86,12 @@ const idToText = (segment) => {
     .join(" "); // join back with spaces
 };
 
-// eslint-disable-next-line complexity
 const addCallToActionToBanner = (banner, externalActions) => {
-  if (!banner) {
+  if (!banner || !externalActions || externalActions.length === 0) {
     return;
   }
 
-  if (!externalActions) {
-    return;
-  }
-
-  const externalActionsArray = Array.isArray(externalActions)
-    ? externalActions
-    : Object.values(externalActions);
-
-  if (externalActionsArray.length === 0) {
-    return;
-  }
-
-  banner.callToAction = externalActionsArray.map((action) => ({
+  banner.callToAction = externalActions.map((action) => ({
     code: action.code,
     name: action.name,
   }));

@@ -497,37 +497,6 @@ describe("buildViewModel", () => {
       ]);
     });
 
-    it("should handle externalActions as object and convert to array", () => {
-      const workflowWithExternalActionsObject = {
-        ...mockWorkflow,
-        externalActions: {
-          action1: {
-            code: "ACTION_1",
-            name: "Action One",
-            endpoint: "endpoint1",
-          },
-          action2: {
-            code: "ACTION_2",
-            name: "Action Two",
-            endpoint: "endpoint2",
-          },
-        },
-      };
-
-      const result = buildBanner(mockCase, workflowWithExternalActionsObject);
-
-      expect(result.callToAction).toEqual([
-        {
-          code: "ACTION_1",
-          name: "Action One",
-        },
-        {
-          code: "ACTION_2",
-          name: "Action Two",
-        },
-      ]);
-    });
-
     it("should handle banner with complex nested structure", () => {
       const complexWorkflow = {
         ...mockWorkflow,
