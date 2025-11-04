@@ -5,6 +5,7 @@ import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
+import { InboxSubscriber } from "./subscribers/inbox.subscriber.js";
 import { OutboxSubscriber } from "./subscribers/outbox.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
@@ -12,6 +13,7 @@ vi.mock("migrate-mongo");
 vi.mock("../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
+    trace: vi.fn(),
   },
 }));
 vi.mock("../common/mongo-client.js");
@@ -50,6 +52,8 @@ describe("cases", () => {
   it("starts subscribers on startup", async () => {
     const outboxStart = vi.fn();
     OutboxSubscriber.prototype.start = outboxStart;
+    const inboxStart = vi.fn();
+    InboxSubscriber.prototype.start = inboxStart;
 
     await server.register(cases);
     await server.initialize();
@@ -59,11 +63,14 @@ describe("cases", () => {
     expect(createNewCaseSubscriber.start).toHaveBeenCalled();
     expect(createUpdateStatusAgreementConsumer.start).toHaveBeenCalled();
     expect(outboxStart).toHaveBeenCalled();
+    expect(inboxStart).toHaveBeenCalled();
   });
 
   it("stops subscribers on shutdown", async () => {
     const outboxStop = vi.fn();
     OutboxSubscriber.prototype.stop = outboxStop;
+    const inboxStop = vi.fn();
+    InboxSubscriber.prototype.stop = inboxStop;
     await server.register(cases);
     await server.initialize();
 
@@ -72,6 +79,7 @@ describe("cases", () => {
     expect(createNewCaseSubscriber.stop).toHaveBeenCalled();
     expect(createUpdateStatusAgreementConsumer.stop).toHaveBeenCalled();
     expect(outboxStop).toHaveBeenCalled();
+    expect(inboxStop).toHaveBeenCalled();
   });
 
   it("registers routes", async () => {
