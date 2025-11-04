@@ -65,5 +65,273 @@ describe("workflowSchema", () => {
         expect(error).toBeUndefined();
       });
     });
+
+    describe("externalActions validation", () => {
+      it("accepts valid externalActions array", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            description: "Rerun the business rules validation",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+              place: "append",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+
+      it("accepts workflow without externalActions (optional field)", () => {
+        const data = structuredClone(workflowData1);
+        // externalActions is not defined
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+
+      it("accepts externalActions without optional description field", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+
+      it("requires code field in externalAction", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].code" is required',
+        );
+      });
+
+      it("requires name field in externalAction", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].name" is required',
+        );
+      });
+
+      it("requires endpoint field in externalAction", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].endpoint" is required',
+        );
+      });
+
+      it("requires target field in externalAction", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"ExternalActionTarget" is required',
+        );
+      });
+
+      it("requires node field in target", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.node" is required',
+        );
+      });
+
+      it("requires nodeType field in target", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.nodeType" is required',
+        );
+      });
+
+      it("validates nodeType must be 'array'", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "object",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.nodeType" must be [array]',
+        );
+      });
+
+      it("requires position field in target", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.position" is required',
+        );
+      });
+
+      it("validates place must be 'append' if provided", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+              place: "prepend",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.place" must be [append]',
+        );
+      });
+
+      it("accepts multiple externalActions", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+              place: "append",
+            },
+          },
+          {
+            code: "ANOTHER_ACTION",
+            name: "Another Action",
+            endpoint: "anotherEndpoint",
+            target: {
+              position: "POST_AWARD:FINAL_REVIEW:COMPLETED",
+              node: "anotherNode",
+              nodeType: "array",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+    });
   });
 });

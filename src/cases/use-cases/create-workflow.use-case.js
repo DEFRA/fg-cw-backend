@@ -85,6 +85,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
       anyOf: createWorkflowCommand.requiredRoles.anyOf,
     }),
     definitions: createWorkflowCommand.definitions,
+    externalActions: createWorkflowCommand.externalActions,
   });
 
   await save(workflow);
