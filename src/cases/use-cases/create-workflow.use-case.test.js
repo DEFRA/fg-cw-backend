@@ -26,6 +26,20 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
     });
 
     expect(save).toHaveBeenCalledWith(workflow);
@@ -49,6 +63,20 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
     });
 
     expect(workflow).toStrictEqual(expectedWorkflow);
