@@ -2,7 +2,7 @@ export class Inbox {
   // eslint-disable-next-line complexity
   constructor(props) {
     this._id = props._id;
-    this.publicationDate = new Date().toISOString();
+    this.publicationDate = props.publicationDate || new Date().toISOString();
     this.traceparent = props.traceparent;
     this.source = props.source;
     this.type = props.type;

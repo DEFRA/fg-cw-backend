@@ -6,6 +6,7 @@ import { logger } from "../../common/logger.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import {
   claimEvents,
+  processExpiredEvents,
   update,
   updateDeadEvents,
   updateFailedEvents,
@@ -36,9 +37,16 @@ export class InboxSubscriber {
       await this.processResubmittedEvents();
       await this.processFailedEvents();
       await this.processDeadEvents();
+      await this.processExpiredEvents();
 
       await setTimeout(this.interval);
     }
+  }
+
+  async processExpiredEvents() {
+    const results = await processExpiredEvents();
+    results?.modifiedCount &&
+      logger.info(`Updated ${results?.modifiedCount} expired inbox events`);
   }
 
   async processDeadEvents() {
@@ -62,7 +70,7 @@ export class InboxSubscriber {
   async markEventFailed(inboxEvent) {
     inboxEvent.markAsFailed();
     await update(inboxEvent);
-    logger.info(`Marked inbox event unsent ${inboxEvent.messageId}`);
+    logger.info(`Marked inbox event failed ${inboxEvent.messageId}`);
   }
 
   async markEventComplete(inboxEvent) {

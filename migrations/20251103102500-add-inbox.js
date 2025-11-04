@@ -8,6 +8,10 @@ export const up = async (db) => {
   });
 
   await db.collection("inbox").createIndex({
+    messageId: 1,
+  });
+
+  await db.collection("inbox").createIndex({
     claimExpiresAt: 1,
   });
 
