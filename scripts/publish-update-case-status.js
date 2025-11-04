@@ -1,5 +1,4 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
-
 /**
  *  call npm run publish:case:status:update to update status of a case
  *  you can add your own caseRef npm run publish:case:status:update <CASE_REF> <WORKFLOW_CODE>
@@ -23,7 +22,7 @@ const message = {
   time: "2025-03-28T11:30:52.000Z",
   source: "fg-gas-backend",
   specversion: "1.0",
-  type: "cloud.defra.development.fg-gas-backend.case.update.status",
+  type: "cloud.defra.local.fg-gas-backend.case.update.status",
   datacontenttype: "application/json",
   data: {
     caseRef: "APPLICATION-PMF-001",

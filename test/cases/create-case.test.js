@@ -61,7 +61,10 @@ describe("On CreateNewCase event", () => {
     expected[0].phases[0].stages[1].outcome = null;
 
     const messageId = randomUUID();
+    const type = createCaseEvent3.type;
+
     createCaseEvent3.id = messageId;
+    createCaseEvent3.type = type.replace("development", env.ENVIRONMENT);
     await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, createCaseEvent3);
 
     const documents = await waitForDocuments(inbox, 3, {

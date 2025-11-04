@@ -24,8 +24,10 @@ vi.mock("../use-cases/handle-agreement-status-update.use-case.js");
 vi.mock("../../common/logger.js");
 
 describe("inbox.subscriber", () => {
+  let cdpEnv;
   beforeAll(() => {
     vi.useFakeTimers();
+    cdpEnv = config.get("cdpEnvironment");
   });
 
   afterEach(() => {
@@ -72,7 +74,7 @@ describe("inbox.subscriber", () => {
 
       withTraceParent.mockImplementation((_, fn) => fn());
       const mockEvent = {
-        type: "cloud.defra.test.fg-gas-backend.application.created",
+        type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
         traceparent: "1234-abcd",
         event: {
           data: mockEventData,
@@ -82,6 +84,7 @@ describe("inbox.subscriber", () => {
       const inbox = new InboxSubscriber();
       await inbox.processEvents([mockEvent]);
       expect(withTraceParent).toHaveBeenCalled();
+      expect(createCaseUseCase).toHaveBeenCalled();
       expect(withTraceParent.mock.calls[0][0]).toBe("1234-abcd");
       expect(mockEvent.markAsComplete).toHaveBeenCalled();
     });
@@ -135,7 +138,7 @@ describe("inbox.subscriber", () => {
 
       withTraceParent.mockImplementationOnce((_, fn) => fn());
       const mockEvent = {
-        type: "cloud.defra.test.fg-gas-backend.application.created",
+        type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
         traceparent: "1234-abcd",
         event: {
           data: mockEventData,
