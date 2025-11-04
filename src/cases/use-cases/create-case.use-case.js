@@ -43,8 +43,13 @@ const createCasePhase = (phase) =>
     stages: phase.stages.map(createCaseStage),
   });
 
-export const createCaseUseCase = async ({ caseRef, workflowCode, payload }) => {
+export const createCaseUseCase = async (message) => {
   return await withTransaction(async (session) => {
+    const {
+      event: { data },
+    } = message;
+    const { caseRef, workflowCode, payload } = data;
+
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
 
     const kase = Case.new({
