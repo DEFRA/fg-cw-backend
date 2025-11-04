@@ -85,7 +85,7 @@ export class InboxSubscriber {
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
     try {
-      const handlerString = type.replace(config.get("env"), "ENV");
+      const handlerString = type.replace(config.get("cdpEnvironment"), "ENV");
       const handler = useCaseMap[handlerString];
 
       if (handler) {
