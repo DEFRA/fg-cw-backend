@@ -139,7 +139,6 @@ export const findCaseByIdUseCase = async (caseId, user) => {
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
 
-  // console.log("workflow", JSON.stringify(workflow.phases[0].stages));
   kase.banner = buildBanner(kase, workflow);
   kase.requiredRoles = workflow.requiredRoles;
   kase.links = buildLinks(kase, workflow);
