@@ -12,11 +12,13 @@ let cases;
 
 let client;
 let inbox;
+let workflow;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
   inbox = client.db().collection("inbox");
+  workflow = client.db().collection("workflow");
 });
 
 afterAll(async () => {
@@ -26,6 +28,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await cases.deleteMany({});
   await inbox.deleteMany({});
+  await workflow.deleteMany({});
 });
 
 describe("On CreateNewCase event", () => {

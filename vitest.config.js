@@ -21,6 +21,13 @@ export default defineConfig({
     },
     coverage: {
       reporter: ["text", "lcov", "html"],
+      include: ["src/**/*.js"],
+      exclude: [
+        "**/migrations/**",
+        "**/src/main.js",
+        "**/test/**",
+        "**/scripts/**",
+      ],
     },
     mockReset: true,
     testTimeout: 40000,
