@@ -24,6 +24,7 @@ export const CaseStage = Joi.object({
               statusOptions: Joi.array().items(StatusOption).required(),
               status: statusSchema.required(),
               commentRef: UrlSafeId.allow(null).optional(),
+              requiredRoles: requiredRolesSchema.optional(),
             }),
           )
           .min(1)

@@ -59,6 +59,7 @@ const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
       commentRef: caseTaskGroupTask.commentRef,
       updatedAt: caseTaskGroupTask.updatedAt,
       updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
+      requiredRoles: workflowTaskGroupTask.requiredRoles,
     };
   });
 
