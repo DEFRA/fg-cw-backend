@@ -12,6 +12,7 @@ export class Workflow {
     this.phases = props.phases;
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
+    this.externalActions = props.externalActions;
   }
 
   findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
@@ -75,6 +76,20 @@ export class Workflow {
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
       ...props,
     });
   }

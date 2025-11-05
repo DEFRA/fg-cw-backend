@@ -291,5 +291,19 @@
       "internalUrl": "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
     }
-  }
+  },
+  "externalActions": [
+    {
+      "code": "RERUN_RULES",
+      "name": "Rerun Rules",
+      "description": "Rerun the business rules validation",
+      "endpoint": "landGrantsRulesRerun",
+      "target": {
+        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+        "node": "landGrantsRulesRun",
+        "nodeType": "array",
+        "place": "append"
+      }
+    }
+  ]
 }

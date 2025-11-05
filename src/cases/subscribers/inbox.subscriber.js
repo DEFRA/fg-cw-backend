@@ -16,7 +16,6 @@ import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleAgreementStatusUpdateUseCase } from "../use-cases/handle-agreement-status-update.use-case.js";
 
 export const useCaseMap = {
-  "cloud.defra.ENV.fg-gas-backend.application.created": createCaseUseCase,
   "cloud.defra.ENV.fg-gas-backend.case.create": createCaseUseCase,
   "cloud.defra.ENV.fg-gas-backend.case.update.status":
     handleAgreementStatusUpdateUseCase,
@@ -85,7 +84,7 @@ export class InboxSubscriber {
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
     try {
-      const handlerString = type.replace(config.get("env"), "ENV");
+      const handlerString = type.replace(config.get("cdpEnvironment"), "ENV");
       const handler = useCaseMap[handlerString];
 
       if (handler) {

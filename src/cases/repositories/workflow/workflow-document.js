@@ -14,6 +14,11 @@ export class WorkflowDocument {
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.requiredRoles = new RequiredRolesDocument(props.requiredRoles);
     this.definitions = props.definitions;
+
+    // Only include externalActions if it's defined and not null
+    if (props.externalActions !== null && props.externalActions !== undefined) {
+      this.externalActions = props.externalActions;
+    }
   }
 
   static createMock(props) {
@@ -28,6 +33,20 @@ export class WorkflowDocument {
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
       ...props,
     });
   }
