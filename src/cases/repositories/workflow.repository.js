@@ -92,6 +92,7 @@ const toWorkflow = (doc) =>
       anyOf: doc.requiredRoles.anyOf,
     }),
     definitions: doc.definitions,
+    externalActions: doc.externalActions,
   });
 
 export const save = async (workflow) => {
