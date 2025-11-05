@@ -50,15 +50,22 @@ describe("GET /cases", () => {
 
     expect(response.payload).toEqual([
       {
-        ...caseData1,
         _id: expect.any(String),
+        caseRef: caseData1.caseRef,
+        workflowCode: caseData1.workflowCode,
         dateReceived: new Date(caseData1.dateReceived).toISOString(),
-        phases: caseData1.phases,
+        currentStatus: "Awaiting Review",
+        assignedUser: null,
+        payload: caseData1.payload,
       },
       {
-        ...caseData2,
         _id: expect.any(String),
+        caseRef: caseData2.caseRef,
+        workflowCode: caseData2.workflowCode,
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        currentStatus: "Awaiting Review",
+        assignedUser: null,
+        payload: caseData2.payload,
       },
     ]);
   });

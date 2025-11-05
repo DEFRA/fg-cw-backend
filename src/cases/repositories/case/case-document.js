@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { Position } from "../../models/position.js";
 import { PhaseDocument } from "./phase-document.js";
 import { StageDocument } from "./stage-document.js";
 import { TaskDocument } from "./task-document.js";
@@ -12,9 +13,9 @@ export class CaseDocument {
       : new ObjectId();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.currentPhase = props.currentPhase;
-    this.currentStage = props.currentStage;
-    this.currentStatus = props.currentStatus;
+    this.currentPhase = props.position.phaseCode;
+    this.currentStage = props.position.stageCode;
+    this.currentStatus = props.position.statusCode;
     this.dateReceived = new Date(props.dateReceived);
     this.payload = props.payload;
     this.assignedUserId = props.assignedUser?.id || null;
@@ -30,25 +31,27 @@ export class CaseDocument {
     return new CaseDocument({
       workflowCode: "workflow-code",
       caseRef: "case-ref",
-      currentPhase: "phase-1",
-      currentStage: "stage-1",
-      currentStatus: "NEW",
+      position: new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
+      }),
       dateReceived: "2025-01-01T00:00:00.000Z",
       supplementaryData: {},
       payload: {},
       phases: [
         new PhaseDocument({
-          code: "phase-1",
+          code: "PHASE_1",
           stages: [
             new StageDocument({
-              code: "stage-1",
+              code: "STAGE_1",
               taskGroups: [
                 new TaskGroupDocument({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   tasks: [
                     new TaskDocument({
-                      code: "task-1",
-                      status: "pending",
+                      code: "TASK_1",
+                      status: "PENDING",
                       completed: false,
                     }),
                   ],
@@ -56,7 +59,7 @@ export class CaseDocument {
               ],
             }),
             new StageDocument({
-              code: "stage-2",
+              code: "STAGE_2",
               taskGroups: [],
             }),
           ],
