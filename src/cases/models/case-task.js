@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
+import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 
 export const TaskStatus = Joi.string().valid("complete", "pending");
@@ -11,6 +12,7 @@ export class CaseTask {
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
     commentRef: UrlSafeId.optional().allow(null, "").label("commentRef"),
+    requiredRoles: requiredRolesSchema.optional(),
   });
 
   constructor(props) {
@@ -30,6 +32,7 @@ export class CaseTask {
     this.commentRef = value.commentRef;
     this.updatedAt = value.updatedAt;
     this.updatedBy = value.updatedBy;
+    this.requiredRoles = value.requiredRoles;
   }
 
   updateStatus(status, updatedBy) {
