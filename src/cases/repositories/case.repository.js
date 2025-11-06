@@ -17,6 +17,7 @@ const toCaseTask = (t) =>
     commentRef: t.commentRef,
     updatedAt: t.updatedAt,
     updatedBy: t.updatedBy,
+    requiredRoles: t.requiredRoles,
   });
 
 const toCaseTaskGroup = (tg) =>

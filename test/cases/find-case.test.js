@@ -81,6 +81,10 @@ describe("GET /cases/{caseId}", () => {
                       type: "boolean",
                       statusOptions: [],
                       updatedBy: null,
+                      requiredRoles: {
+                        allOf: ["ROLE_1", "ROLE_2"],
+                        anyOf: ["ROLE_3"],
+                      },
                     },
                   ],
                 },
