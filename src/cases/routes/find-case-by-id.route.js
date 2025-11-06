@@ -22,6 +22,7 @@ export const findCaseByIdRoute = {
     const { user } = request.auth.credentials;
 
     const result = await findCaseByIdUseCase(caseId, user);
+
     return result;
   },
 };
