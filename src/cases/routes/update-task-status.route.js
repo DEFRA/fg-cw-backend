@@ -32,8 +32,6 @@ export const updateTaskStatusRoute = {
     const { status, completed, comment } = request.payload;
     const { user } = request.auth.credentials;
 
-    console.log("updateTaskStatusUseCase");
-
     await updateTaskStatusUseCase({
       caseId,
       phaseCode,

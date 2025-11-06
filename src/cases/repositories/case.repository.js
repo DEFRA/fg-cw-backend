@@ -88,14 +88,7 @@ export const save = async (kase, session) => {
 };
 
 export const update = async (kase) => {
-  console.log(">>>kase.phases", JSON.stringify(kase.phases, null, 2));
-
   const caseDocument = new CaseDocument(kase);
-
-  console.log(
-    ">>>caseDocument.phases",
-    JSON.stringify(caseDocument.phases, null, 2),
-  );
 
   const result = await db
     .collection(collection)
