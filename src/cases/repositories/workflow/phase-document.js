@@ -48,7 +48,6 @@ export class PhaseDocument {
                       completes: true,
                     }),
                   ],
-                  commentRef: null,
                   requiredRoles: new RequiredRolesDocument({
                     allOf: ["ROLE_1"],
                     anyOf: ["ROLE_2"],
