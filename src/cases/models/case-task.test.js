@@ -144,4 +144,64 @@ describe("CaseTask", () => {
       }),
     ).toThrow('Invalid Task Status: "value" must be a string');
   });
+
+  it("should create a task with completed field", () => {
+    const task = new CaseTask({
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      status: "complete",
+      completed: true,
+    });
+
+    expect(task.code).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
+    expect(task.status).toBe("complete");
+    expect(task.completed).toBe(true);
+  });
+
+  it("should update the completed flag when updating status", () => {
+    const task = new CaseTask({
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      status: "pending",
+      completed: false,
+    });
+
+    task.updateStatus({
+      status: "complete",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+    });
+
+    expect(task.status).toBe("complete");
+    expect(task.completed).toBe(true);
+    expect(task.updatedBy).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
+  });
+
+  it("should return array with updatedBy from getUserIds", () => {
+    const task = new CaseTask({
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      status: "pending",
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2999",
+    });
+
+    expect(task.getUserIds()).toEqual(["k0a7-9xv4f2h1n3q8c5w2999"]);
+  });
+
+  it("should set commentRef to null when updateCommentRef is called with undefined", () => {
+    const task = new CaseTask({
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      status: "pending",
+      commentRef: "k0a7-9xv4f2h1n3q8c5w2888",
+    });
+
+    task.updateCommentRef(undefined);
+    expect(task.commentRef).toBe(null);
+  });
+
+  it("should accept null as status", () => {
+    const task = new CaseTask({
+      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      status: null,
+    });
+
+    expect(task.status).toBe(null);
+  });
 });

@@ -13,6 +13,7 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
+  mapWorkflowComment,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -642,6 +643,117 @@ describe("findCaseByIdUseCase", () => {
       expect(result.phases[0].stages[2].outcome.comment).toBe(
         "Application rejected due to incomplete information",
       );
+    });
+  });
+});
+
+describe("mapWorkflowComment", () => {
+  it("returns default comment when workflowTask has no comment", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+    };
+
+    const result = mapWorkflowComment(workflowTask);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("merges workflow task comment with default values", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Approval Note",
+        helpText: "Provide reason for approval",
+        mandatory: true,
+      },
+    };
+
+    const result = mapWorkflowComment(workflowTask);
+
+    expect(result).toEqual({
+      label: "Approval Note",
+      helpText: "Provide reason for approval",
+      mandatory: true,
+    });
+  });
+
+  it("returns default comment when workflowTask is null", () => {
+    const result = mapWorkflowComment(null);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("returns default comment when workflowTask is undefined", () => {
+    const result = mapWorkflowComment(undefined);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("merges partial workflow task comment with defaults", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Custom Label",
+      },
+    };
+
+    const result = mapWorkflowComment(workflowTask);
+
+    expect(result).toEqual({
+      label: "Custom Label",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("preserves all fields from workflow task comment", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Rejection Reason",
+        helpText: "Explain why this was rejected",
+        mandatory: true,
+      },
+    };
+
+    const result = mapWorkflowComment(workflowTask);
+
+    expect(result).toEqual({
+      label: "Rejection Reason",
+      helpText: "Explain why this was rejected",
+      mandatory: true,
+    });
+  });
+
+  it("handles workflowTask with empty comment object", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {},
+    };
+
+    const result = mapWorkflowComment(workflowTask);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
     });
   });
 });

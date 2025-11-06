@@ -138,7 +138,6 @@ export const mapWorkflowComment = (workflowTask) => {
     label: "Note",
     helpText: "All notes will be saved for auditing purposes",
     mandatory: false,
-    type: "OPTIONAL",
   };
 
   return workflowTask?.comment
