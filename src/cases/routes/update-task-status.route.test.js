@@ -84,7 +84,7 @@ describe("updateTaskStatusRoute", () => {
       method: "PATCH",
       url: `/cases/${caseId}/phases/phase-1/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
-        status: "bang",
+        status: 999,
       },
     });
 

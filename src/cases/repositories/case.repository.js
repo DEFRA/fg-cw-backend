@@ -14,6 +14,7 @@ const toCaseTask = (t) =>
   new CaseTask({
     code: t.code,
     status: t.status,
+    completed: t.completed,
     commentRef: t.commentRef,
     updatedAt: t.updatedAt,
     updatedBy: t.updatedBy,
@@ -87,7 +88,14 @@ export const save = async (kase, session) => {
 };
 
 export const update = async (kase) => {
+  console.log(">>>kase.phases", JSON.stringify(kase.phases, null, 2));
+
   const caseDocument = new CaseDocument(kase);
+
+  console.log(
+    ">>>caseDocument.phases",
+    JSON.stringify(caseDocument.phases, null, 2),
+  );
 
   const result = await db
     .collection(collection)

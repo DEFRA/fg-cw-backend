@@ -6,5 +6,6 @@ export class WorkflowTask {
     this.type = props.type;
     this.statusOptions = props.statusOptions;
     this.requiredRoles = props.requiredRoles;
+    this.comment = props.comment;
   }
 }

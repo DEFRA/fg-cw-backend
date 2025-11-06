@@ -66,6 +66,7 @@ export class Case {
     taskGroupCode,
     taskCode,
     status,
+    completed,
     comment,
     updatedBy,
   }) {
@@ -74,9 +75,9 @@ export class Case {
       .findTaskGroup(taskGroupCode)
       .findTask(taskCode);
 
-    task.updateStatus(status, updatedBy);
+    task.updateStatus({ status, completed, updatedBy });
 
-    if (status === "complete") {
+    if (completed) {
       const timelineEvent = TimelineEvent.createTaskCompleted({
         createdBy: updatedBy,
         text: comment,

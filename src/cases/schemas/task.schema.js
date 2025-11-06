@@ -25,7 +25,24 @@ export const Task = Joi.object({
   statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional(),
   requiredRoles: requiredRolesSchema.optional().allow(null),
-}).label("Task");
+})
+  .custom((value, helpers) => {
+    // If statusOptions are defined and not empty, validate that at least one has completes: true
+    if (value.statusOptions && value.statusOptions.length > 0) {
+      const hasCompletingOption = value.statusOptions.some(
+        (option) => option.completes === true,
+      );
+      if (!hasCompletingOption) {
+        return helpers.error("task.statusOptions.noCompletingOption");
+      }
+    }
+    return value;
+  })
+  .messages({
+    "task.statusOptions.noCompletingOption":
+      "At least one status option must have completes set to true",
+  })
+  .label("Task");
 
 const TaskGroup = Joi.object({
   code: UrlSafeId.required(),

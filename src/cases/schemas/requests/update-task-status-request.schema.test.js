@@ -11,12 +11,10 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("does not allow invalid status", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "invalid_status",
+      status: 999,
     });
     expect(error.name).toEqual("ValidationError");
-    expect(error.details[0].message).toContain(
-      '"status" must be one of [pending, in_progress, complete]',
-    );
+    expect(error.details[0].message).toContain('"status" must be a string');
   });
 
   it("requires status", () => {

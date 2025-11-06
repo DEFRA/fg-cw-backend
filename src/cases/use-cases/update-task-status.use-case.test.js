@@ -70,13 +70,14 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "stage-1",
       taskGroupCode: "task-group-1",
       taskCode: "task-1",
-      status: "complete",
+      status: "status-option-1",
+      completed: true,
       comment: "This is a note/comment",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("complete");
+    expect(task.status).toBe("status-option-1");
     expect(task.commentRef).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);
   });
