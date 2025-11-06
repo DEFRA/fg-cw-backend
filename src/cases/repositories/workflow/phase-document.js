@@ -45,9 +45,10 @@ export class PhaseDocument {
                     new StatusOptionDocument({
                       code: "status-option-1",
                       name: "Status option 1",
-                      completes: false,
+                      completes: true,
                     }),
                   ],
+                  commentRef: null,
                   requiredRoles: new RequiredRolesDocument({
                     allOf: ["ROLE_1"],
                     anyOf: ["ROLE_2"],

@@ -23,7 +23,7 @@ export const Task = Joi.object({
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
   statusOptions: Joi.array().items(StatusOption).required(),
-  comment: comment.optional(),
+  comment: comment.optional().allow(null),
   requiredRoles: requiredRolesSchema.optional().allow(null),
 })
   .custom((value, helpers) => {

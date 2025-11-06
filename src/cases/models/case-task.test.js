@@ -30,9 +30,9 @@ describe("CaseTask", () => {
       () =>
         new CaseTask({
           code: "k0a7-9xv4f2h1n3q8c5w2z1y",
-          status: "invalid_status",
+          status: 999,
         }),
-    ).toThrow('Invalid Task: "status" must be one of [complete, pending]');
+    ).toThrow('Invalid Task: "status" must be a string');
   });
 
   it("should not create a task with an invalid code", () => {
@@ -101,7 +101,11 @@ describe("CaseTask", () => {
       code: "k0a7-9xv4f2h1n3q8c5w2z1y",
       status: "pending",
     });
-    task.updateStatus("complete", "k0a7-9xv4f2h1n3q8c5w2z1y");
+    task.updateStatus({
+      status: "complete",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+    });
     expect(task.status).toBe("complete");
   });
 
@@ -119,7 +123,11 @@ describe("CaseTask", () => {
       code: "k0a7-9xv4f2h1n3q8c5w2999",
       status: "pending",
     });
-    task.updateStatus("complete", "1k0a7-9xv4f2h1n3q8c5w2999");
+    task.updateStatus({
+      status: "complete",
+      completed: true,
+      updatedBy: "1k0a7-9xv4f2h1n3q8c5w2999",
+    });
     expect(task.updatedAt).toBeDefined();
   });
 
@@ -129,9 +137,11 @@ describe("CaseTask", () => {
       status: "pending",
     });
     expect(() =>
-      task.updateStatus("invalid_status", "k0a7-9xv4f2h1n3q8c5w2999"),
-    ).toThrow(
-      'Invalid Task Status: "value" must be one of [complete, pending]',
-    );
+      task.updateStatus({
+        status: 999,
+        completed: false,
+        updatedBy: "k0a7-9xv4f2h1n3q8c5w2999",
+      }),
+    ).toThrow('Invalid Task Status: "value" must be a string');
   });
 });

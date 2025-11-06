@@ -322,6 +322,7 @@ describe("Case", () => {
         taskGroupCode: "task-group-1",
         taskCode: "task-1",
         status: "complete",
+        completed: true,
         comment: "This is a note",
         updatedBy: "099999999999999999999999",
       });
