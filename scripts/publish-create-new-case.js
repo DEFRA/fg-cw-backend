@@ -1,6 +1,5 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { randomUUID } from "node:crypto";
-
 /**
  *  call npm run publish:case:new to create a case for frps-private-beta
  *  call npm run publish:case:pmf to create a case for pigs-might-fly
@@ -19,11 +18,11 @@ const queueUrl =
   "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
 
 const message = {
-  id: "event-id-3",
+  id: randomUUID(),
   time: "2025-03-28T11:30:52.000Z",
   source: "fg-gas-backend",
   specversion: "1.0",
-  type: "cloud.defra.development.fg-gas-backend.case.create",
+  type: "cloud.defra.local.fg-gas-backend.case.create",
   datacontenttype: "application/json",
   traceparent: randomUUID(),
   data: {

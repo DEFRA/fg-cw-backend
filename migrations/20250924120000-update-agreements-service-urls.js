@@ -10,10 +10,6 @@ export const up = async (db, _client, context) => {
       },
     },
   );
-
-  console.log(
-    `Updated agreements service URLs for environment "${environment}" ${JSON.stringify(definitions, null, 2)}`,
-  );
 };
 
 export const down = async (db, _client, context) => {

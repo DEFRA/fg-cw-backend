@@ -207,48 +207,79 @@
       }
     }
   },
-  "stages": [
+  "phases": [
     {
-      "code": "application-receipt",
-      "name": "Application Receipt",
-      "description": "Application received",
-      "statuses": [],
-      "taskGroups": [
+      "code": "default",
+      "name": "Default Phase",
+      "stages": [
         {
-          "code": "application-receipt-tasks",
-          "name": "Application Receipt tasks",
-          "description": "Task group description",
-          "tasks": [
+          "code": "application-receipt",
+          "name": "Application Receipt",
+          "description": "Application received",
+          "statuses": [],
+          "taskGroups": [
             {
-              "code": "simple-review",
-              "type": "boolean",
-              "name": "Simple Review",
-              "description": null,
-              "statusOptions": []
+              "code": "application-receipt-tasks",
+              "name": "Application Receipt tasks",
+              "description": "Task group description",
+              "tasks": [
+                {
+                  "code": "simple-review",
+                  "type": "boolean",
+                  "name": "Simple Review",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Customer details review",
+                      "level": 1
+                    },
+                    {
+                      "component": "ordered-list",
+                      "items": [
+                        {
+                          "text": "Go to Application to view submitted customer details."
+                        },
+                        {
+                          "text": "Check the submitted details match the details and permissions on the Rural Payments service (RPS)."
+                        },
+                        {
+                          "text": "Come back to this page and confirm if the details match."
+                        }
+                      ]
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Customer detail review outcome",
+                      "level": 2
+                    }
+                  ],
+                  "statusOptions": []
+                }
+              ]
+            }
+          ],
+          "actionsTitle": "Decision",
+          "actions": [
+            {
+              "code": "approve",
+              "name": "Approve",
+              "comment": {
+                "label": "Approval reason note",
+                "helpText": "All notes will be saved for auditing purposes",
+                "type": "REQUIRED"
+              }
             }
           ]
-        }
-      ],
-      "actionsTitle": "Decision",
-      "actions": [
+        },
         {
-          "code": "approve",
-          "name": "Approve",
-          "comment": {
-            "label": "Approval reason note",
-            "helpText": "All notes will be saved for auditing purposes",
-            "type": "REQUIRED"
-          }
+          "code": "contract",
+          "name": "Stage for contract management",
+          "description": "Awaiting agreement",
+          "statuses": [],
+          "taskGroups": [],
+          "actions": []
         }
       ]
-    },
-    {
-      "code": "contract",
-      "name": "Stage for contract management",
-      "description": "Awaiting agreement",
-      "statuses": [],
-      "taskGroups": [],
-      "actions": []
     }
   ],
   "requiredRoles": {
@@ -260,5 +291,19 @@
       "internalUrl": "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
       "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
     }
-  }
+  },
+  "externalActions": [
+    {
+      "code": "RERUN_RULES",
+      "name": "Rerun Rules",
+      "description": "Rerun the business rules validation",
+      "endpoint": "landGrantsRulesRerun",
+      "target": {
+        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+        "node": "landGrantsRulesRun",
+        "nodeType": "array",
+        "place": "append"
+      }
+    }
+  ]
 }

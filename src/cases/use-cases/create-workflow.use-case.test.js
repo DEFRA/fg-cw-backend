@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { Permissions } from "../models/permissions.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/workflow.repository.js";
 import { createWorkflowUseCase } from "./create-workflow.use-case.js";
@@ -17,7 +18,7 @@ describe("createWorkflowUseCase", () => {
           },
         },
       },
-      stages: [],
+      phases: [],
       requiredRoles: {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
@@ -25,6 +26,20 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
     });
 
     expect(save).toHaveBeenCalledWith(workflow);
@@ -40,14 +55,28 @@ describe("createWorkflowUseCase", () => {
           },
         },
       },
-      stages: [],
-      requiredRoles: {
+      phases: [],
+      requiredRoles: new Permissions({
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
-      },
+      }),
       definitions: {
         key1: "value1",
       },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
     });
 
     expect(workflow).toStrictEqual(expectedWorkflow);

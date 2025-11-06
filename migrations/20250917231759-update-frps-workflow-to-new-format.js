@@ -264,10 +264,6 @@ export const up = async (db, _client, context) => {
       },
     },
   );
-
-  console.log(
-    `Added definitions for environment "${environment}" ${JSON.stringify(definitions, null, 2)}`,
-  );
 };
 
 export const down = async (db) => {
@@ -380,8 +376,7 @@ export const down = async (db) => {
 const definitionsLookup = {
   local: {
     agreementsService: {
-      internalUrl:
-        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+      internalUrl: "http://localhost:3000/agreement/{agreementRef}",
       externalUrl:
         "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
@@ -389,7 +384,7 @@ const definitionsLookup = {
   dev: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+        "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}",
       externalUrl:
         "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
@@ -397,7 +392,7 @@ const definitionsLookup = {
   test: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+        "https://fg-cw-frontend.test.cdp-int.defra.cloud/agreement/{agreementRef}",
       externalUrl:
         "https://grants-ui.test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
@@ -405,7 +400,7 @@ const definitionsLookup = {
   "perf-test": {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.perf-test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+        "https://fg-cw-frontend.perf-test.cdp-int.defra.cloud/agreement/{agreementRef}",
       externalUrl:
         "https://grants-ui.perf-test.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },
@@ -413,7 +408,7 @@ const definitionsLookup = {
   prod: {
     agreementsService: {
       internalUrl:
-        "https://farming-grants-agreements-api.prod.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
+        "https://fg-cw-frontend.prod.cdp-int.defra.cloud/agreement/{agreementRef}",
       externalUrl:
         "https://grants-ui.prod.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}",
     },

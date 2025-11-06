@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
-import { Stage } from "./task.schema.js";
+import { Phase } from "./task.schema.js";
 
 export const componentSchema = Joi.object({
   id: Joi.string().optional(),
@@ -46,6 +46,21 @@ const caseSchema = Joi.object({
     .required(),
 }).unknown(true);
 
+const ExternalActionTarget = Joi.object({
+  node: Joi.string().required(),
+  nodeType: Joi.string().valid("array").required(),
+  position: Joi.string().required(),
+  place: Joi.string().valid("append").optional(),
+}).label("ExternalActionTarget");
+
+const ExternalAction = Joi.object({
+  code: Joi.string().required(),
+  name: Joi.string().required(),
+  description: Joi.string().optional(),
+  endpoint: Joi.string().required(),
+  target: ExternalActionTarget.required(),
+}).label("ExternalAction");
+
 const WorkflowData = Joi.object({
   code: Joi.string()
     .pattern(/^[a-zA-Z0-9-]+$/)
@@ -55,9 +70,10 @@ const WorkflowData = Joi.object({
       details: caseSchema.required(),
     }),
   }),
-  stages: Joi.array().items(Stage).min(2).required(),
+  phases: Joi.array().items(Phase).min(1).required(),
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
+  externalActions: Joi.array().items(ExternalAction).optional(),
 }).unknown(true);
 
 const Workflow = WorkflowData.keys({

@@ -1,18 +1,98 @@
 import Boom from "@hapi/boom";
 import { db } from "../../common/mongo-client.js";
-import { WorkflowDocument } from "../models/workflow-document.js";
+import { Permissions } from "../models/permissions.js";
+import { WorkflowActionComment } from "../models/workflow-action-comment.js";
+import { WorkflowAction } from "../models/workflow-action.js";
+import { WorkflowPhase } from "../models/workflow-phase.js";
+import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
+import { WorkflowStage } from "../models/workflow-stage.js";
+import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
+import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
+import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 const collection = "workflows";
+
+const toWorkflowAction = (a) =>
+  new WorkflowAction({
+    code: a.code,
+    name: a.name,
+    comment: a.comment
+      ? new WorkflowActionComment({
+          type: a.comment.type,
+          label: a.comment.label,
+          helpText: a.comment.helpText,
+        })
+      : null,
+  });
+
+const toWorkflowStageStatus = (s) =>
+  new WorkflowStageStatus({
+    code: s.code,
+    name: s.name,
+    description: s.description,
+  });
+
+const toWorkflowTaskStatusOption = (so) =>
+  new WorkflowTaskStatusOption({
+    code: so.code,
+    name: so.name,
+    completes: so.completes,
+  });
+
+const toWorkflowTask = (t) =>
+  new WorkflowTask({
+    code: t.code,
+    name: t.name,
+    description: t.description,
+    type: t.type,
+    requiredRoles: t.requiredRoles
+      ? new Permissions({
+          allOf: t.requiredRoles.allOf,
+          anyOf: t.requiredRoles.anyOf,
+        })
+      : null,
+    statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
+  });
+
+const toWorkflowTaskGroup = (tg) =>
+  new WorkflowTaskGroup({
+    code: tg.code,
+    name: tg.name,
+    description: tg.description,
+    tasks: tg.tasks.map(toWorkflowTask),
+  });
+
+const toWorkflowStage = (s) =>
+  new WorkflowStage({
+    code: s.code,
+    name: s.name,
+    description: s.description,
+    actions: s.actions.map(toWorkflowAction),
+    statuses: s.statuses.map(toWorkflowStageStatus),
+    taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
+  });
+
+const toWorkflowPhase = (p) =>
+  new WorkflowPhase({
+    code: p.code,
+    name: p.name,
+    stages: p.stages.map(toWorkflowStage),
+  });
 
 const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
     pages: doc.pages,
-    stages: doc.stages,
-    requiredRoles: doc.requiredRoles,
+    phases: doc.phases.map(toWorkflowPhase),
+    requiredRoles: new Permissions({
+      allOf: doc.requiredRoles.allOf,
+      anyOf: doc.requiredRoles.anyOf,
+    }),
     definitions: doc.definitions,
+    externalActions: doc.externalActions,
   });
 
 export const save = async (workflow) => {
