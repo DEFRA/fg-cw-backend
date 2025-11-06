@@ -24,7 +24,9 @@ export const Task = Joi.object({
     .required(),
   statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional().allow(null),
-  requiredRoles: requiredRolesSchema.optional().allow(null),
+  requiredRoles: Joi.alternatives()
+    .try(requiredRolesSchema, Joi.valid({}))
+    .optional(),
 })
   .custom((value, helpers) => {
     // If statusOptions are defined and not empty, validate that at least one has completes: true
