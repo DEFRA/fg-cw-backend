@@ -203,7 +203,8 @@ export const caseData3Document = {
               tasks: [
                 {
                   code: "simple-review",
-                  status: "pending",
+                  status: null,
+                  completed: false,
                 },
               ],
             },

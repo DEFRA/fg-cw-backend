@@ -10,7 +10,7 @@ export class TaskDocument {
     this.statusOptions = props.statusOptions.map(
       (option) => new StatusOptionDocument(option),
     );
-    this.commentRef = props?.comment?.ref;
+    this.comment = props?.comment;
     this.requiredRoles = props.requiredRoles
       ? new RequiredRolesDocument(props.requiredRoles)
       : null;

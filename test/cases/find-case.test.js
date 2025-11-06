@@ -80,6 +80,12 @@ describe("GET /cases/{caseId}", () => {
                       status: "pending",
                       type: "boolean",
                       statusOptions: [],
+                      commentInputDef: {
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        label: "Note",
+                        mandatory: false,
+                      },
                       updatedBy: null,
                       requiredRoles: {
                         allOf: ["ROLE_1", "ROLE_2"],
