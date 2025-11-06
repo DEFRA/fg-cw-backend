@@ -77,22 +77,17 @@ export class Case {
 
     task.updateStatus({ status, completed, updatedBy });
 
-    if (completed) {
-      const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: updatedBy,
-        text: comment,
-        data: {
-          caseId: this._id,
-          phaseCode,
-          stageCode,
-          taskGroupCode,
-          taskCode,
-        },
-      });
+    const timelineEvent = TimelineEvent.createTaskEvent({
+      task,
+      phaseCode,
+      stageCode,
+      taskGroupCode,
+      caseId: this._id,
+      text: comment,
+    });
 
-      this.#addTimelineEvent(timelineEvent);
-      task.updateCommentRef(timelineEvent.comment?.ref);
-    }
+    this.#addTimelineEvent(timelineEvent);
+    task.updateCommentRef(timelineEvent.comment?.ref);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {

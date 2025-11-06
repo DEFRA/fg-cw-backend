@@ -56,7 +56,7 @@ export class CaseTask {
   }
 
   updateCommentRef(commentRef) {
-    this.commentRef = commentRef;
+    this.commentRef = commentRef ?? null;
   }
 
   getUserIds() {

@@ -41,6 +41,26 @@ describe("formatTimelineItemDescription", () => {
     );
   });
 
+  it("formats task updated", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_UPDATED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "Task Updated",
+      createdBy: "System",
+      data: {
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Task 'Task 1' updated",
+    );
+  });
+
   it("formats stage completed", () => {
     const wf = Workflow.createMock();
     const timelineItem = {

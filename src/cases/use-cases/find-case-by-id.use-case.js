@@ -27,11 +27,16 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+// eslint-disable-next-line complexity
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
       const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
       return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' completed`;
+    }
+    case EventEnums.eventTypes.TASK_UPDATED: {
+      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
+      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' updated`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
       const phase = workflow.findPhase(tl.data.phaseCode);
