@@ -13,7 +13,7 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
-  mapWorkflowComment,
+  mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -647,14 +647,14 @@ describe("findCaseByIdUseCase", () => {
   });
 });
 
-describe("mapWorkflowComment", () => {
+describe("mapWorkflowCommentDef", () => {
   it("returns default comment when workflowTask has no comment", () => {
     const workflowTask = {
       code: "task-1",
       name: "Review Task",
     };
 
-    const result = mapWorkflowComment(workflowTask);
+    const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
       label: "Note",
@@ -674,7 +674,7 @@ describe("mapWorkflowComment", () => {
       },
     };
 
-    const result = mapWorkflowComment(workflowTask);
+    const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
       label: "Approval Note",
@@ -684,7 +684,7 @@ describe("mapWorkflowComment", () => {
   });
 
   it("returns default comment when workflowTask is null", () => {
-    const result = mapWorkflowComment(null);
+    const result = mapWorkflowCommentDef(null);
 
     expect(result).toEqual({
       label: "Note",
@@ -694,7 +694,7 @@ describe("mapWorkflowComment", () => {
   });
 
   it("returns default comment when workflowTask is undefined", () => {
-    const result = mapWorkflowComment(undefined);
+    const result = mapWorkflowCommentDef(undefined);
 
     expect(result).toEqual({
       label: "Note",
@@ -712,7 +712,7 @@ describe("mapWorkflowComment", () => {
       },
     };
 
-    const result = mapWorkflowComment(workflowTask);
+    const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
       label: "Custom Label",
@@ -732,7 +732,7 @@ describe("mapWorkflowComment", () => {
       },
     };
 
-    const result = mapWorkflowComment(workflowTask);
+    const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
       label: "Rejection Reason",
@@ -748,7 +748,7 @@ describe("mapWorkflowComment", () => {
       comment: {},
     };
 
-    const result = mapWorkflowComment(workflowTask);
+    const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
       label: "Note",

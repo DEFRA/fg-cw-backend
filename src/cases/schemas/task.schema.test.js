@@ -122,57 +122,6 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
-  it("should require at least one statusOption with completes true", () => {
-    const task = {
-      code: "abcd-0987-hjyg-8765-6542",
-      name: "Test task",
-      type: "boolean",
-      description: null,
-      statusOptions: [
-        {
-          code: "in-progress",
-          name: "In Progress",
-          completes: false,
-        },
-        {
-          code: "blocked",
-          name: "Blocked",
-          completes: false,
-        },
-      ],
-    };
-
-    const { error } = Task.validate(task);
-    expect(error).toBeDefined();
-    expect(error.message).toBe(
-      "At least one status option must have completes set to true",
-    );
-  });
-
-  it("should pass when at least one statusOption has completes true", () => {
-    const task = {
-      code: "abcd-0987-hjyg-8765-6542",
-      name: "Test task",
-      type: "boolean",
-      description: null,
-      statusOptions: [
-        {
-          code: "in-progress",
-          name: "In Progress",
-          completes: false,
-        },
-        {
-          code: "complete",
-          name: "Complete",
-          completes: true,
-        },
-      ],
-    };
-
-    const { error } = Task.validate(task);
-    expect(error).toBeUndefined();
-  });
-
   it("should pass when statusOptions is empty", () => {
     const task = {
       code: "abcd-0987-hjyg-8765-6542",

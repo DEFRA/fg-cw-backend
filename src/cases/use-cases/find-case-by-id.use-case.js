@@ -62,7 +62,7 @@ const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
       statusOptions: workflowTaskGroupTask.statusOptions,
       status: caseTaskGroupTask.status,
       completed: caseTaskGroupTask.completed,
-      commentInputDef: mapWorkflowComment(workflowTaskGroupTask),
+      commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
       commentRef: caseTaskGroupTask.commentRef,
       updatedAt: caseTaskGroupTask.updatedAt,
       updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
@@ -133,7 +133,7 @@ export const mapDescription = ({ name = "Task", description }) => {
   return [{ component: "heading", level: 2, text: name }];
 };
 
-export const mapWorkflowComment = (workflowTask) => {
+export const mapWorkflowCommentDef = (workflowTask) => {
   const DEFAULT_COMMENT = {
     label: "Note",
     helpText: "All notes will be saved for auditing purposes",
