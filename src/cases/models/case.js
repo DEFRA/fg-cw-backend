@@ -317,6 +317,7 @@ export class Case {
                     new CaseTask({
                       code: "task-1",
                       status: "pending",
+                      completed: false,
                       // this should be refactored to use null
                       commentRef: undefined,
                       updatedAt: undefined,

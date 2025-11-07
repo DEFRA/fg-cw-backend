@@ -44,6 +44,7 @@ describe("updateTaskStatusRoute", () => {
       url: `/cases/${caseId}/phases/${phaseCode}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
         status: "complete",
+        completed: true,
       },
       auth: {
         strategy: "entra",
@@ -64,6 +65,7 @@ describe("updateTaskStatusRoute", () => {
       taskGroupCode,
       taskCode,
       status: "complete",
+      completed: true,
       user: mockAuthUser,
     });
   });
