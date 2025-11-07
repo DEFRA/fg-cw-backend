@@ -78,6 +78,7 @@ describe("GET /cases/{caseId}", () => {
                         },
                       ],
                       status: "pending",
+                      completed: false,
                       type: "boolean",
                       statusOptions: [],
                       commentInputDef: {
