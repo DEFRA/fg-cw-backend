@@ -9,7 +9,7 @@ export class CaseTask {
   static validationSchema = Joi.object({
     code: UrlSafeId.required().label("code"),
     status: TaskStatus.required(),
-    completed: Joi.boolean().optional(),
+    completed: Joi.boolean(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
     commentRef: UrlSafeId.optional().allow(null, "").label("commentRef"),
