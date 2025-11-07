@@ -5,6 +5,7 @@ describe("updateTaskStatusRequestSchema", () => {
   it("allows task statuses", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
       status: "complete",
+      completed: true,
     });
     expect(error).toBeUndefined();
   });
@@ -26,6 +27,7 @@ describe("updateTaskStatusRequestSchema", () => {
   it("allows comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
       status: "complete",
+      completed: true,
       comment: "This is a comment",
     });
     expect(error).toBeUndefined();
@@ -34,6 +36,7 @@ describe("updateTaskStatusRequestSchema", () => {
   it("allows null comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
       status: "complete",
+      completed: true,
       comment: null,
     });
     expect(error).toBeUndefined();
@@ -42,9 +45,10 @@ describe("updateTaskStatusRequestSchema", () => {
   it("removes other fields", () => {
     const { value, error } = updateTaskStatusRequestSchema.validate({
       status: "complete",
+      completed: true,
       extraField: "should be removed",
     });
     expect(error).toBeUndefined();
-    expect(value).toEqual({ status: "complete" });
+    expect(value).toEqual({ status: "complete", completed: true });
   });
 });
