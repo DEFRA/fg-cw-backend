@@ -70,6 +70,33 @@ describe("formatFunctions", () => {
       expect(formatFunctions.yesNo(undefined)).toBe("No");
     });
   });
+
+  describe("penniesToPounds", () => {
+    it("should convert pennies to pounds with proper formatting", () => {
+      const result = formatFunctions.penniesToPounds(35150);
+      expect(result).toBe("£351.50");
+    });
+
+    it("should handle zero", () => {
+      const result = formatFunctions.penniesToPounds(0);
+      expect(result).toBe("£0.00");
+    });
+
+    it("should handle small amounts", () => {
+      const result = formatFunctions.penniesToPounds(50);
+      expect(result).toBe("£0.50");
+    });
+
+    it("should handle large amounts", () => {
+      const result = formatFunctions.penniesToPounds(123456789);
+      expect(result).toBe("£1234567.89");
+    });
+
+    it("should always show two decimal places", () => {
+      const result = formatFunctions.penniesToPounds(100);
+      expect(result).toBe("£1.00");
+    });
+  });
 });
 
 describe("parseFormatString", () => {
