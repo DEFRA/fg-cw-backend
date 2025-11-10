@@ -109,15 +109,6 @@ describe("CaseTask", () => {
     expect(task.status).toBe("complete");
   });
 
-  it("should update the comment ref of a task", () => {
-    const task = new CaseTask({
-      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
-      status: "pending",
-    });
-    task.updateCommentRef("k0a7-9xv4f2h1n3q8c5w2999");
-    expect(task.commentRef).toBe("k0a7-9xv4f2h1n3q8c5w2999");
-  });
-
   it("should update the updated at of a task", () => {
     const task = new CaseTask({
       code: "k0a7-9xv4f2h1n3q8c5w2999",
@@ -183,17 +174,6 @@ describe("CaseTask", () => {
     });
 
     expect(task.getUserIds()).toEqual(["k0a7-9xv4f2h1n3q8c5w2999"]);
-  });
-
-  it("should set commentRef to null when updateCommentRef is called with undefined", () => {
-    const task = new CaseTask({
-      code: "k0a7-9xv4f2h1n3q8c5w2z1y",
-      status: "pending",
-      commentRef: "k0a7-9xv4f2h1n3q8c5w2888",
-    });
-
-    task.updateCommentRef(undefined);
-    expect(task.commentRef).toBe(null);
   });
 
   it("should accept null as status", () => {
