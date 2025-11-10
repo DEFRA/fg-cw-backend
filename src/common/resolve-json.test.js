@@ -85,6 +85,22 @@ describe("resolveJSONPath", () => {
       });
       expect(result).toBe("plain string");
     });
+
+    it("should resolve multiple space-separated JSON path references", () => {
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path: "$.caseRef $.payload.businessName",
+      });
+      expect(result).toBe("REF-001 Test Business");
+    });
+
+    it("should resolve multiple space-separated JSON path references with null values filtered", () => {
+      const result = resolveJSONPath({
+        root: mockRoot,
+        path: "$.caseRef $.nonExistent $.payload.businessName",
+      });
+      expect(result).toBe("REF-001 Test Business");
+    });
   });
 
   describe("array path resolution", () => {

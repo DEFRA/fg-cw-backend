@@ -22,6 +22,10 @@ const resolveJSONString = ({ path, root, row }) => {
   if (isLiteralRef(path)) {
     return path.slice(1);
   }
+  // Check for multiple space-separated JSONPath references (before single ref check)
+  if (hasMultipleRefs(path)) {
+    return resolveMultipleRefs({ path, root, row });
+  }
   if (isRef(path)) {
     return jp({ root, path, row });
   }
@@ -161,6 +165,25 @@ const resolveRepeatComponent = ({ path, root, row }) => {
   });
 
   return repeatedItems;
+};
+
+const hasMultipleRefs = (path) => {
+  // Check if string contains multiple space-separated JSONPath references
+  const parts = path.split(" ");
+  return parts.length > 1 && parts.some((part) => isRef(part));
+};
+
+const resolveMultipleRefs = ({ path, root, row }) => {
+  // Split by spaces, resolve each part, and join back with spaces
+  const parts = path.split(" ");
+  const resolved = parts.map((part) => {
+    if (isRef(part)) {
+      return jp({ root, path: part, row });
+    }
+    return part;
+  });
+  // Filter out empty strings and join with spaces
+  return resolved.filter((val) => val !== "").join(" ");
 };
 
 const isRef = (path) => isRootRef(path) || isRowRef(path);
