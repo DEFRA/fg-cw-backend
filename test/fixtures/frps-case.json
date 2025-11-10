@@ -13,20 +13,95 @@
       "defraId": "DEFRA0001"
     },
     "answers": {
+      "applicationValidationRunId": "123",
       "scheme": "SFI",
-      "year": 2025,
-      "hasCheckedLandIsUpToDate": true,
-      "actionApplications": [
-        {
-          "parcelId": "0118",
-          "sheetId": "AA0109",
-          "code": "CSAM1",
-          "appliedFor": {
-            "unit": "ha",
-            "quantity": 20.23
+      "applicant": {
+        "business": {
+          "reference": "9000000402",
+          "email": { "address": "farmer@example.test" },
+          "phone": { "mobile": "01632 960020" },
+          "name": "Example Meadows Business Ltd",
+          "address": {
+            "line1": "9 Example Lane",
+            "line2": "10 Example Lane",
+            "line3": "Example Village",
+            "line4": null,
+            "line5": null,
+            "street": "Example Street",
+            "city": "Exampleton",
+            "postalCode": "ZZ99 8ZZ"
+          }
+        },
+        "customer": {
+          "name": {
+            "title": "Mrs",
+            "first": "Casey",
+            "middle": null,
+            "last": "Example"
           }
         }
-      ]
+      },
+      "confirmEligible": true,
+      "digitalMapsCorrectDetails": true,
+      "parcels": [
+        {
+          "sheetId": "AB1234",
+          "parcelId": "10001",
+          "area": {
+            "unit": "ha",
+            "quantity": 10.0
+          },
+          "actions": [
+            {
+              "code": "CMOR1",
+              "description": "Assess moorland and produce a written record",
+              "durationYears": 3,
+              "eligible": {
+                "unit": "ha",
+                "quantity": 7.5
+              },
+              "appliedFor": {
+                "unit": "ha",
+                "quantity": 7.5
+              },
+              "paymentRates": {
+                "ratePerUnitPence": 1060,
+                "agreementLevelAmountPence": 27200
+              },
+              "annualPaymentPence": 35150
+            }
+          ]
+        },
+        {
+          "sheetId": "DX1234",
+          "parcelId": "10002",
+          "area": {
+            "unit": "ha",
+            "quantity": 10.0
+          },
+          "actions": [
+            {
+              "code": "UPL1",
+              "description": "Assess moorland and produce a written record",
+              "durationYears": 3,
+              "eligible": {
+                "unit": "ha",
+                "quantity": 7.5
+              },
+              "appliedFor": {
+                "unit": "ha",
+                "quantity": 7.5
+              },
+              "paymentRates": {
+                "ratePerUnitPence": 1060,
+                "agreementLevelAmountPence": 27200
+              },
+              "annualPaymentPence": 35150
+            }
+          ]
+        }
+      ],
+      "totalAnnualPaymentPence": 35150
     }
   },
   "currentStage": "application-receipt",
