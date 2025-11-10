@@ -40,7 +40,7 @@ WorkflowTask.validationSchema = Joi.object({
     .required(),
   comment: comment.optional().allow(null),
   requiredRoles: Joi.alternatives()
-    .try(requiredRolesSchema, Joi.valid({}))
+    .try(requiredRolesSchema, Joi.valid(null))
     .optional(),
 })
   .custom((value, helpers) => {
