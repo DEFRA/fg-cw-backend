@@ -1082,4 +1082,125 @@ describe("edge cases and error handling", () => {
     });
     expect(result).toBe("second");
   });
+
+  it("should resolve repeat components in summary lists", () => {
+    const mockRootWithActions = {
+      payload: {
+        answers: {
+          parcels: [
+            {
+              sheetId: "AB1234",
+              parcelId: "10001",
+              actions: [
+                {
+                  code: "CMOR1",
+                  description: "Assess moorland",
+                  annualPaymentPence: 35150,
+                },
+                {
+                  code: "XXX",
+                  description: "Second action",
+                  annualPaymentPence: 42000,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const path = {
+      component: "accordion",
+      id: "land-parcels",
+      itemsRef: "$.payload.answers.parcels[*]",
+      items: {
+        heading: [
+          {
+            text: "@.parcelId",
+          },
+        ],
+        content: [
+          {
+            component: "summary-list",
+            rows: [
+              {
+                label: "Land parcel",
+                text: "@.parcelId",
+              },
+              {
+                component: "repeat",
+                itemsRef: "@.actions[*]",
+                items: [
+                  {
+                    label: "Action",
+                    text: "@.description",
+                  },
+                  {
+                    label: "Action code",
+                    text: "@.code",
+                  },
+                  {
+                    label: "Yearly payment",
+                    text: "@.annualPaymentPence",
+                    format: "penniesToPounds",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = resolveJSONPath({ root: mockRootWithActions, path });
+
+    expect(result).toEqual({
+      component: "accordion",
+      id: "land-parcels",
+      items: [
+        {
+          heading: [
+            {
+              text: "10001",
+            },
+          ],
+          content: [
+            {
+              component: "summary-list",
+              rows: [
+                {
+                  label: "Land parcel",
+                  text: "10001",
+                },
+                {
+                  label: "Action",
+                  text: "Assess moorland",
+                },
+                {
+                  label: "Action code",
+                  text: "CMOR1",
+                },
+                {
+                  label: "Yearly payment",
+                  text: "£351.50",
+                },
+                {
+                  label: "Action",
+                  text: "Second action",
+                },
+                {
+                  label: "Action code",
+                  text: "XXX",
+                },
+                {
+                  label: "Yearly payment",
+                  text: "£420.00",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
 });

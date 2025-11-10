@@ -28,8 +28,15 @@ const resolveJSONString = ({ path, root, row }) => {
   return path;
 };
 
-const resolveJSONArray = ({ path, root, row }) =>
-  path.map((item) => resolveJSONPath({ root, path: item, row }));
+const resolveJSONArray = ({ path, root, row }) => {
+  return path.flatMap((item) => {
+    const resolved = resolveJSONPath({ root, path: item, row });
+    if (Array.isArray(resolved) && isRepeat(item)) {
+      return resolved;
+    }
+    return [resolved];
+  });
+};
 
 const resolveJSONObject = ({ path, root, row }) => {
   const specialCase = handleSpecialCases({ path, root, row });
@@ -48,6 +55,13 @@ const handleSpecialCases = ({ path, root, row }) => {
   if (isAccordion(path)) {
     return resolveAccordionSection({ path, root, row });
   }
+  if (isRepeat(path)) {
+    return resolveRepeatComponent({ path, root, row });
+  }
+  return handleUrlTemplate({ path, root, row });
+};
+
+const handleUrlTemplate = ({ path, root, row }) => {
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
@@ -55,7 +69,10 @@ const handleSpecialCases = ({ path, root, row }) => {
 };
 
 const isTable = (path) => path.rowsRef && path.rows;
-const isAccordion = (path) => path.itemsRef && path.items;
+const isAccordion = (path) =>
+  path.component === "accordion" && path.itemsRef && path.items;
+const isRepeat = (path) =>
+  path.component === "repeat" && path.itemsRef && path.items;
 
 const resolveGenericObject = ({ path, root, row }) => {
   const resolved = {};
@@ -132,6 +149,18 @@ const resolveAccordionSection = ({ path, root, row }) => {
   resolvedSection.items = accordionItems;
 
   return resolvedSection;
+};
+
+const resolveRepeatComponent = ({ path, root, row }) => {
+  const { itemsRef, items } = path;
+  const dataItems = evalPath({ root, path: itemsRef, row });
+
+  const repeatedItems = dataItems.flatMap((itemData) => {
+    const resolved = resolveJSONPath({ root, path: items, row: itemData });
+    return Array.isArray(resolved) ? resolved : [resolved];
+  });
+
+  return repeatedItems;
 };
 
 const isRef = (path) => isRootRef(path) || isRowRef(path);
