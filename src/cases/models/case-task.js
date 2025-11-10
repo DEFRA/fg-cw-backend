@@ -37,7 +37,7 @@ export class CaseTask {
     this.requiredRoles = value.requiredRoles;
   }
 
-  updateStatus({ status, completed, updatedBy }) {
+  updateStatus({ status, completed, updatedBy, comment }) {
     const { error, value } = TaskStatus.validate(status, {
       stripUnknown: true,
       abortEarly: false,
@@ -53,10 +53,7 @@ export class CaseTask {
     this.completed = completed;
     this.updatedBy = updatedBy;
     this.updatedAt = new Date().toISOString();
-  }
-
-  updateCommentRef(commentRef) {
-    this.commentRef = commentRef ?? null;
+    this.commentRef = comment?.ref ?? null;
   }
 
   getUserIds() {

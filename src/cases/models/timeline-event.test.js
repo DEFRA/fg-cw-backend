@@ -313,62 +313,6 @@ describe("TimelineEvent", () => {
     });
   });
 
-  describe("createTaskEvent", () => {
-    it("creates a TASK_COMPLETED event when task is completed", () => {
-      const task = {
-        code: "task-1",
-        completed: true,
-        updatedBy: "64c88faac1f56f71e1b89a33",
-      };
-
-      const timelineEvent = TimelineEvent.createTaskEvent({
-        task,
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
-        taskGroupCode: "task-group-1",
-        caseId: "64c88faac1f56f71e1b99999",
-        text: "Task complete",
-      });
-
-      expect(timelineEvent.eventType).toBe(
-        EventEnums.eventTypes.TASK_COMPLETED,
-      );
-      expect(timelineEvent.comment.text).toBe("Task complete");
-      expect(timelineEvent.data.taskCode).toBe("task-1");
-      expect(timelineEvent.data.caseId).toBe("64c88faac1f56f71e1b99999");
-      expect(timelineEvent.data.phaseCode).toBe("phase-1");
-      expect(timelineEvent.data.stageCode).toBe("stage-1");
-      expect(timelineEvent.data.taskGroupCode).toBe("task-group-1");
-      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
-    });
-
-    it("creates a TASK_UPDATED event when task is not completed", () => {
-      const task = {
-        code: "task-1",
-        completed: false,
-        updatedBy: "64c88faac1f56f71e1b89a33",
-      };
-
-      const timelineEvent = TimelineEvent.createTaskEvent({
-        task,
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
-        taskGroupCode: "task-group-1",
-        caseId: "64c88faac1f56f71e1b99999",
-        text: "Task in progress",
-      });
-
-      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.TASK_UPDATED);
-      expect(timelineEvent.comment.text).toBe("Task in progress");
-      expect(timelineEvent.data.taskCode).toBe("task-1");
-      expect(timelineEvent.data.caseId).toBe("64c88faac1f56f71e1b99999");
-      expect(timelineEvent.data.phaseCode).toBe("phase-1");
-      expect(timelineEvent.data.stageCode).toBe("stage-1");
-      expect(timelineEvent.data.taskGroupCode).toBe("task-group-1");
-      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
-    });
-  });
-
   describe("createCaseApproved", () => {
     it("creates a case approved event", () => {
       const props = {

@@ -106,32 +106,6 @@ export class TimelineEvent {
     });
   }
 
-  static createTaskEvent({
-    task,
-    phaseCode,
-    stageCode,
-    taskGroupCode,
-    caseId,
-    text,
-  }) {
-    const eventType = task.completed
-      ? EventEnums.eventTypes.TASK_COMPLETED
-      : EventEnums.eventTypes.TASK_UPDATED;
-
-    return TimelineEvent.create({
-      eventType,
-      data: {
-        caseId,
-        phaseCode,
-        stageCode,
-        taskGroupCode,
-        taskCode: task.code,
-      },
-      text,
-      createdBy: task.updatedBy,
-    });
-  }
-
   static createCaseApproved({ data, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.CASE_APPROVED,

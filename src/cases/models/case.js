@@ -4,7 +4,7 @@ import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
-import { assertIsComment, toComments } from "./comment.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
   assertIsTimelineEvent,
@@ -75,19 +75,37 @@ export class Case {
       .findTaskGroup(taskGroupCode)
       .findTask(taskCode);
 
-    task.updateStatus({ status, completed, updatedBy });
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
 
-    const timelineEvent = TimelineEvent.createTaskEvent({
-      task,
-      phaseCode,
-      stageCode,
-      taskGroupCode,
-      caseId: this._id,
+    const optionalComment = Comment.createOptionalComment({
+      type: eventType,
       text: comment,
+      createdBy: updatedBy,
+    });
+
+    const timelineEvent = new TimelineEvent({
+      eventType,
+      data: {
+        caseId: this._id,
+        phaseCode,
+        stageCode,
+        taskGroupCode,
+        taskCode: task.code,
+      },
+      comment: optionalComment,
+      createdBy: updatedBy,
+    });
+
+    task.updateStatus({
+      status,
+      completed,
+      updatedBy,
+      comment: optionalComment,
     });
 
     this.#addTimelineEvent(timelineEvent);
-    task.updateCommentRef(timelineEvent.comment?.ref);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {
