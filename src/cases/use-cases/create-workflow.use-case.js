@@ -28,6 +28,7 @@ const createWorkflowTask = (task) =>
       anyOf: task.requiredRoles.anyOf,
     }),
     statusOptions: task.statusOptions.map(createWorkflowTaskStatusOption),
+    comment: task.comment,
   });
 
 const createWorkflowTaskGroup = (taskGroup) =>

@@ -27,11 +27,16 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+// eslint-disable-next-line complexity
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
       const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
       return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' completed`;
+    }
+    case EventEnums.eventTypes.TASK_UPDATED: {
+      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
+      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' updated`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
       const phase = workflow.findPhase(tl.data.phaseCode);
@@ -56,6 +61,8 @@ const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
       type: workflowTaskGroupTask.type,
       statusOptions: workflowTaskGroupTask.statusOptions,
       status: caseTaskGroupTask.status,
+      completed: caseTaskGroupTask.completed,
+      commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
       commentRef: caseTaskGroupTask.commentRef,
       updatedAt: caseTaskGroupTask.updatedAt,
       updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
@@ -126,6 +133,18 @@ export const mapDescription = ({ name = "Task", description }) => {
   return [{ component: "heading", level: 2, text: name }];
 };
 
+export const mapWorkflowCommentDef = (workflowTask) => {
+  const DEFAULT_COMMENT = {
+    label: "Note",
+    helpText: "All notes will be saved for auditing purposes",
+    mandatory: false,
+  };
+
+  return workflowTask?.comment
+    ? { ...DEFAULT_COMMENT, ...workflowTask.comment }
+    : DEFAULT_COMMENT;
+};
+
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
 
@@ -156,7 +175,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
     if (tl.data?.assignedTo) {
       tl.data.assignedTo = mapUserIdToUser(tl.data.assignedTo, userMap);
     }
-    tl.commentRef = mapComment(tl.comment);
+    tl.commentRef = mapCommentRef(tl.comment);
     tl.comment = null;
     tl.description = formatTimelineItemDescription(tl, workflow);
     return tl;
@@ -176,6 +195,6 @@ const createUserMap = async (userIds, user) => {
   return userMap;
 };
 
-const mapComment = (comment) => {
+const mapCommentRef = (comment) => {
   return comment?.ref || undefined;
 };

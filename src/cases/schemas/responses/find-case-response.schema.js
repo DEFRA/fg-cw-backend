@@ -23,6 +23,7 @@ export const CaseStage = Joi.object({
               description: Joi.array().required(),
               statusOptions: Joi.array().items(StatusOption).required(),
               status: statusSchema.required(),
+              completed: Joi.boolean().required(),
               commentRef: UrlSafeId.allow(null).optional(),
               requiredRoles: Joi.alternatives()
                 .try(requiredRolesSchema, Joi.valid(null))

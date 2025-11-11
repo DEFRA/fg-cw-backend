@@ -3,6 +3,7 @@ import { WorkflowAction } from "./workflow-action.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 import { WorkflowStage } from "./workflow-stage.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
+import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 import { Workflow } from "./workflow.js";
 
@@ -27,6 +28,15 @@ describe("Workflow", () => {
                     new WorkflowTask({
                       code: "task-1",
                       name: "Review application",
+                      type: "boolean",
+                      description: "Review the application",
+                      statusOptions: [
+                        new WorkflowTaskStatusOption({
+                          code: "complete",
+                          name: "Complete",
+                          completes: true,
+                        }),
+                      ],
                     }),
                   ],
                 }),

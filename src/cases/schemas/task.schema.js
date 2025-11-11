@@ -23,11 +23,11 @@ export const Task = Joi.object({
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
   statusOptions: Joi.array().items(StatusOption).required(),
-  comment: comment.optional(),
+  comment: comment.optional().allow(null),
   requiredRoles: Joi.alternatives()
     .try(requiredRolesSchema, Joi.valid({}))
     .optional(),
-}).label("Task");
+});
 
 const TaskGroup = Joi.object({
   code: UrlSafeId.required(),

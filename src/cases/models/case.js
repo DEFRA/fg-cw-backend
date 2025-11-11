@@ -4,7 +4,7 @@ import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
-import { assertIsComment, toComments } from "./comment.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
   assertIsTimelineEvent,
@@ -66,6 +66,7 @@ export class Case {
     taskGroupCode,
     taskCode,
     status,
+    completed,
     comment,
     updatedBy,
   }) {
@@ -74,24 +75,37 @@ export class Case {
       .findTaskGroup(taskGroupCode)
       .findTask(taskCode);
 
-    task.updateStatus(status, updatedBy);
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
 
-    if (status === "complete") {
-      const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: updatedBy,
-        text: comment,
-        data: {
-          caseId: this._id,
-          phaseCode,
-          stageCode,
-          taskGroupCode,
-          taskCode,
-        },
-      });
+    const optionalComment = Comment.createOptionalComment({
+      type: eventType,
+      text: comment,
+      createdBy: updatedBy,
+    });
 
-      this.#addTimelineEvent(timelineEvent);
-      task.updateCommentRef(timelineEvent.comment?.ref);
-    }
+    const timelineEvent = new TimelineEvent({
+      eventType,
+      data: {
+        caseId: this._id,
+        phaseCode,
+        stageCode,
+        taskGroupCode,
+        taskCode: task.code,
+      },
+      comment: optionalComment,
+      createdBy: updatedBy,
+    });
+
+    task.updateStatus({
+      status,
+      completed,
+      updatedBy,
+      comment: optionalComment,
+    });
+
+    this.#addTimelineEvent(timelineEvent);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {
@@ -321,6 +335,7 @@ export class Case {
                     new CaseTask({
                       code: "task-1",
                       status: "pending",
+                      completed: false,
                       // this should be refactored to use null
                       commentRef: undefined,
                       updatedAt: undefined,

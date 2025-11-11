@@ -106,15 +106,6 @@ export class TimelineEvent {
     });
   }
 
-  static createTaskCompleted({ data, text, createdBy }) {
-    return TimelineEvent.create({
-      eventType: EventEnums.eventTypes.TASK_COMPLETED,
-      data,
-      text,
-      createdBy,
-    });
-  }
-
   static createCaseApproved({ data, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.CASE_APPROVED,

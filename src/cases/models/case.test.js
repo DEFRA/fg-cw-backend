@@ -322,12 +322,89 @@ describe("Case", () => {
         taskGroupCode: "task-group-1",
         taskCode: "task-1",
         status: "complete",
+        completed: true,
         comment: "This is a note",
         updatedBy: "099999999999999999999999",
       });
 
       expect(task.status).toBe("complete");
       expect(task.commentRef).toBeDefined();
+    });
+
+    it("should create TASK_UPDATED timeline event when task is not completed", () => {
+      const kase = Case.createMock();
+      const initialTimelineLength = kase.timeline.length;
+
+      kase.setTaskStatus({
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+        status: "in-progress",
+        completed: false,
+        comment: "Starting work on this task",
+        updatedBy: "099999999999999999999999",
+      });
+
+      expect(kase.timeline).toHaveLength(initialTimelineLength + 1);
+      const newEvent = kase.timeline[0];
+      expect(newEvent.eventType).toBe(EventEnums.eventTypes.TASK_UPDATED);
+      expect(newEvent.data).toEqual({
+        caseId: kase._id,
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+      });
+      expect(newEvent.comment.text).toBe("Starting work on this task");
+    });
+
+    it("should create TASK_COMPLETED timeline event when task is completed", () => {
+      const kase = Case.createMock();
+      const initialTimelineLength = kase.timeline.length;
+
+      kase.setTaskStatus({
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+        status: "complete",
+        completed: true,
+        comment: "Task finished",
+        updatedBy: "099999999999999999999999",
+      });
+
+      expect(kase.timeline).toHaveLength(initialTimelineLength + 1);
+      const newEvent = kase.timeline[0];
+      expect(newEvent.eventType).toBe(EventEnums.eventTypes.TASK_COMPLETED);
+      expect(newEvent.data).toEqual({
+        caseId: kase._id,
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+      });
+      expect(newEvent.comment.text).toBe("Task finished");
+    });
+
+    it("should create timeline event without comment when comment is not provided", () => {
+      const kase = Case.createMock();
+      const initialTimelineLength = kase.timeline.length;
+
+      kase.setTaskStatus({
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+        status: "in-progress",
+        completed: false,
+        updatedBy: "099999999999999999999999",
+      });
+
+      expect(kase.timeline).toHaveLength(initialTimelineLength + 1);
+      const newEvent = kase.timeline[0];
+      expect(newEvent.eventType).toBe(EventEnums.eventTypes.TASK_UPDATED);
+      expect(newEvent.comment).toBeNull();
     });
   });
 
