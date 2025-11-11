@@ -1,22 +1,27 @@
 export const up = async (db) => {
-  await db.collection("users").updateMany({}, [
+  await db.collection("users").updateMany(
     {
-      $set: {
-        appRoles: {
-          $arrayToObject: {
-            $map: {
-              input: "$appRoles",
-              as: "role",
-              in: {
-                k: "$$role",
-                v: {},
+      $expr: { $isArray: "$appRoles" },
+    },
+    [
+      {
+        $set: {
+          appRoles: {
+            $arrayToObject: {
+              $map: {
+                input: "$appRoles",
+                as: "role",
+                in: {
+                  k: "$$role",
+                  v: {},
+                },
               },
             },
           },
         },
       },
-    },
-  ]);
+    ],
+  );
 };
 
 export const down = async (db) => {
