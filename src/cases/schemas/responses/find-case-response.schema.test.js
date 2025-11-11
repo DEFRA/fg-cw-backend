@@ -83,6 +83,7 @@ describe("find case response schema", () => {
                   { code: "approved", name: "Approved", completes: true },
                 ],
                 status: "pending",
+                completed: false,
                 commentRef: null,
               },
             ],
@@ -178,6 +179,40 @@ describe("find case response schema", () => {
       const { error } = CaseStage.validate(invalidStage);
       expect(error).toBeDefined();
       expect(error.message).toContain("statusOptions");
+    });
+
+    it("rejects task missing completed field", () => {
+      const invalidStage = {
+        code: "stage-1",
+        name: "Application Receipt",
+        description: "Stage description",
+        taskGroups: [
+          {
+            code: "task-group-1",
+            name: "Task Group",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "task-1",
+                name: "Review Application",
+                description: [
+                  { component: "heading", level: 2, text: "Review" },
+                ],
+                statusOptions: [
+                  { code: "approved", name: "Approved", completes: true },
+                ],
+                status: "pending",
+                commentRef: null,
+              },
+            ],
+          },
+        ],
+        outcome: null,
+      };
+
+      const { error } = CaseStage.validate(invalidStage);
+      expect(error).toBeDefined();
+      expect(error.message).toContain("completed");
     });
   });
 });

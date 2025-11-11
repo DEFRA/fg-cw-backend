@@ -101,4 +101,61 @@ describe("Task Schema", () => {
       '"comment.type" must be one of [CONDITIONAL, REQUIRED, OPTIONAL]',
     );
   });
+
+  it("should allow null comment", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [
+        {
+          code: "complete",
+          name: "Complete",
+          completes: true,
+        },
+      ],
+      comment: null,
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should pass when statusOptions is empty", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should pass when multiple statusOptions have completes true", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [
+        {
+          code: "complete",
+          name: "Complete",
+          completes: true,
+        },
+        {
+          code: "complete-with-notes",
+          name: "Complete with Notes",
+          completes: true,
+        },
+      ],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
 });

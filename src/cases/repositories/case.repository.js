@@ -14,6 +14,7 @@ const toCaseTask = (t) =>
   new CaseTask({
     code: t.code,
     status: t.status,
+    completed: t.completed,
     commentRef: t.commentRef,
     updatedAt: t.updatedAt,
     updatedBy: t.updatedBy,

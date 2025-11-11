@@ -56,9 +56,10 @@ export class WorkflowPhase {
                     new WorkflowTaskStatusOption({
                       code: "status-option-1",
                       name: "Status option 1",
-                      completes: false,
+                      completes: true,
                     }),
                   ],
+                  comment: null,
                   requiredRoles: new Permissions({
                     allOf: ["ROLE_1"],
                     anyOf: ["ROLE_2"],

@@ -19,7 +19,8 @@ const caseStatus = {
 const createCaseTask = (task) =>
   new CaseTask({
     code: task.code,
-    status: "pending",
+    status: null,
+    completed: false,
     commentRef: null,
     updatedAt: null,
     updatedBy: null,

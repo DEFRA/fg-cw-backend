@@ -6,6 +6,7 @@ import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
+import { WorkflowTaskComment } from "../models/workflow-task-comment.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
 import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
@@ -20,9 +21,9 @@ const toWorkflowAction = (a) =>
     name: a.name,
     comment: a.comment
       ? new WorkflowActionComment({
-          type: a.comment.type,
           label: a.comment.label,
           helpText: a.comment.helpText,
+          type: a.comment.type,
         })
       : null,
   });
@@ -41,6 +42,15 @@ const toWorkflowTaskStatusOption = (so) =>
     completes: so.completes,
   });
 
+const toWorkflowTaskComment = (tc) =>
+  tc
+    ? new WorkflowTaskComment({
+        label: tc.label,
+        helpText: tc.helpText,
+        mandatory: tc.mandatory,
+      })
+    : null;
+
 const toWorkflowTask = (t) =>
   new WorkflowTask({
     code: t.code,
@@ -54,6 +64,7 @@ const toWorkflowTask = (t) =>
         })
       : null,
     statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
+    comment: toWorkflowTaskComment(t.comment),
   });
 
 const toWorkflowTaskGroup = (tg) =>

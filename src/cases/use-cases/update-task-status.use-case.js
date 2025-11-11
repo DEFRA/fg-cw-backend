@@ -16,6 +16,7 @@ export const updateTaskStatusUseCase = async (command) => {
     taskGroupCode,
     taskCode,
     status,
+    completed,
     comment,
     user,
   } = command;
@@ -33,8 +34,9 @@ export const updateTaskStatusUseCase = async (command) => {
     taskGroupCode,
     taskCode,
   });
+  validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  validatePayloadComment(comment, task.comment?.type === "REQUIRED");
+  const taskCompleted = mapCompleted({ task, status, completed });
 
   kase.setTaskStatus({
     phaseCode,
@@ -42,9 +44,31 @@ export const updateTaskStatusUseCase = async (command) => {
     taskGroupCode,
     taskCode,
     status,
+    completed: taskCompleted,
     comment,
     updatedBy: user.id,
   });
 
   return update(kase);
 };
+
+const mapCompleted = ({ task, status, completed }) => {
+  if (hasStatusOptions(task)) {
+    const selectedOption = task.statusOptions.find(
+      (option) => option.code === status,
+    );
+
+    if (!selectedOption) {
+      throw Boom.badRequest(
+        `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
+      );
+    }
+
+    return selectedOption.completes;
+  } else {
+    return completed;
+  }
+};
+
+const hasStatusOptions = (task) =>
+  task?.statusOptions && task?.statusOptions.length > 0;

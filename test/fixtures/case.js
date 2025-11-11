@@ -45,6 +45,7 @@ export const caseData1 = {
                 {
                   code: "simple-review",
                   status: "pending",
+                  completed: false,
                 },
               ],
             },
@@ -125,6 +126,7 @@ export const caseData2 = {
                 {
                   code: "simple-review",
                   status: "pending",
+                  completed: false,
                 },
               ],
             },
@@ -203,7 +205,8 @@ export const caseData3Document = {
               tasks: [
                 {
                   code: "simple-review",
-                  status: "pending",
+                  status: null,
+                  completed: false,
                 },
               ],
             },
