@@ -537,6 +537,7 @@ describe("Case", () => {
                     new CaseTask({
                       code: "task-1",
                       status: "complete",
+                      completed: true,
                       updatedAt: null,
                       updatedBy: null,
                       commentRef: null,
