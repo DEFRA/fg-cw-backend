@@ -257,7 +257,7 @@ export class Case {
 
     const allTasksComplete = currentStage.taskGroups
       .flatMap((group) => group.tasks)
-      .every((task) => task.status === "complete");
+      .every((task) => task.completed);
 
     if (!allTasksComplete) {
       throw Boom.badRequest(
