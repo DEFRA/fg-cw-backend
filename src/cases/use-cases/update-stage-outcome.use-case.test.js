@@ -1,11 +1,10 @@
 import Boom from "@hapi/boom";
-import { ObjectId } from "mongodb";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAuthenticatedUser } from "../../common/auth.js";
+import { describe, expect, it, vi } from "vitest";
+import { withTransaction } from "../../common/with-transaction.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
-import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
 import { findById, update } from "../repositories/case.repository.js";
+import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { updateStageOutcomeUseCase } from "./update-stage-outcome.use-case.js";
 
@@ -13,18 +12,14 @@ vi.mock("../../common/auth.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
 vi.mock("../publishers/case-event.publisher.js");
+vi.mock("../repositories/outbox.repository.js");
+vi.mock("../../common/with-transaction.js");
 
 describe("updateStageOutcomeUseCase", () => {
-  const validUserId = new ObjectId().toHexString();
-  const authenticatedUser = { id: validUserId };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getAuthenticatedUser.mockReturnValue(authenticatedUser);
-  });
-
   describe("successful stage outcome update", () => {
     it("updates stage outcome with comment", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -33,8 +28,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Application approved with conditions",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -48,25 +46,22 @@ describe("updateStageOutcomeUseCase", () => {
       expect(findById).toHaveBeenCalledWith(mockCase._id);
       expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionId: "approve",
-        stageId: "stage-1",
+        actionCode: "approve",
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
         comment: "Application approved with conditions",
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Application approved with conditions",
-        createdBy: authenticatedUser.id,
+        createdBy: "user-123",
       });
-      expect(update).toHaveBeenCalledWith(mockCase);
-      expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
-        caseRef: "CASE-123",
-        workflowCode: mockCase.workflowCode,
-        previousStatus: "not-implemented",
-        currentStatus: "APPROVED",
-      });
+      expect(update).toHaveBeenCalledWith(mockCase, session);
     });
 
     it("updates stage outcome without comment", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -75,8 +70,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionId: "reject",
+        actionCode: "reject",
         comment: null,
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -88,18 +86,21 @@ describe("updateStageOutcomeUseCase", () => {
       await updateStageOutcomeUseCase(command);
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionId: "reject",
-        stageId: "stage-2",
+        actionCode: "reject",
+        phaseCode: "phase-1",
+        stageCode: "stage-2",
         comment: null,
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionId: "reject",
+        actionCode: "reject",
         comment: null,
-        createdBy: authenticatedUser.id,
+        createdBy: "user-123",
       });
     });
 
     it("handles stage progression correctly", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -111,8 +112,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Moving to next stage",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -124,26 +128,22 @@ describe("updateStageOutcomeUseCase", () => {
       update.mockResolvedValue(mockCase);
 
       await updateStageOutcomeUseCase(command);
-
-      expect(publishCaseStatusUpdated).toHaveBeenCalledWith({
-        caseRef: "CASE-789",
-        workflowCode: mockCase.workflowCode,
-        previousStatus: "not-implemented",
-        currentStatus: "APPROVED",
-      });
+      expect(insertMany).toHaveBeenCalled();
     });
 
     it("uses authenticated user in stage outcome", async () => {
-      const specificUserId = "user-specific-123";
-      getAuthenticatedUser.mockReturnValue({ id: specificUserId });
-
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -155,19 +155,24 @@ describe("updateStageOutcomeUseCase", () => {
       await updateStageOutcomeUseCase(command);
 
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
-        createdBy: specificUserId,
+        createdBy: "user-123",
       });
     });
   });
 
   describe("error handling", () => {
     it("throws NotFound error when case is not found", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const command = {
         caseId: "non-existent-case-id",
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(null);
@@ -179,16 +184,17 @@ describe("updateStageOutcomeUseCase", () => {
       expect(findById).toHaveBeenCalledWith("non-existent-case-id");
       expect(findByCode).not.toHaveBeenCalled();
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
 
     it("throws error when workflow validation fails", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "",
       };
 
@@ -207,22 +213,27 @@ describe("updateStageOutcomeUseCase", () => {
       );
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionId: "approve",
-        stageId: mockCase.currentStage,
+        actionCode: "approve",
+        phaseCode: mockCase.currentPhase,
+        stageCode: mockCase.currentStage,
         comment: "",
       });
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
 
     it("throws error when case update fails", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       const updateError = new Error("Database update failed");
@@ -233,48 +244,51 @@ describe("updateStageOutcomeUseCase", () => {
       mockCase.updateStageOutcome = vi.fn();
       update.mockRejectedValue(updateError);
 
-      await expect(updateStageOutcomeUseCase(command)).rejects.toThrow(
+      await expect(() => updateStageOutcomeUseCase(command)).rejects.toThrow(
         updateError,
       );
 
-      expect(update).toHaveBeenCalledWith(mockCase);
-      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
+      expect(update).toHaveBeenCalledWith(mockCase, session);
     });
 
     it("throws error when publishing fails", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
+      insertMany.mockRejectedValue(false);
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
-
-      const publishError = new Error("Publishing failed");
 
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
-      publishCaseStatusUpdated.mockRejectedValue(publishError);
 
-      await expect(updateStageOutcomeUseCase(command)).rejects.toThrow(
-        publishError,
-      );
-
-      expect(publishCaseStatusUpdated).toHaveBeenCalled();
+      await expect(() => updateStageOutcomeUseCase(command)).rejects.toThrow();
     });
 
     it("throws error when updateStageOutcome on case fails", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       const caseError = Boom.badRequest("Cannot progress from this stage");
@@ -292,12 +306,13 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockCase.updateStageOutcome).toHaveBeenCalled();
       expect(update).not.toHaveBeenCalled();
-      expect(publishCaseStatusUpdated).not.toHaveBeenCalled();
     });
   });
 
   describe("workflow integration", () => {
     it("validates stage action comment with correct parameters", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -305,8 +320,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionId: "specific-action",
+        actionCode: "specific-action",
         comment: "specific comment text",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);
@@ -318,13 +336,16 @@ describe("updateStageOutcomeUseCase", () => {
       await updateStageOutcomeUseCase(command);
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionId: "specific-action",
-        stageId: "specific-stage-id",
+        actionCode: "specific-action",
+        phaseCode: "phase-1",
+        stageCode: "specific-stage-id",
         comment: "specific comment text",
       });
     });
 
     it("finds workflow by case workflow code", async () => {
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
@@ -332,8 +353,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionId: "approve",
+        actionCode: "approve",
         comment: "Test comment",
+        user: {
+          id: "user-123",
+        },
       };
 
       findById.mockResolvedValue(mockCase);

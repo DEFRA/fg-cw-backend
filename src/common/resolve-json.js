@@ -22,14 +22,25 @@ const resolveJSONString = ({ path, root, row }) => {
   if (isLiteralRef(path)) {
     return path.slice(1);
   }
+  // Check for multiple space-separated JSONPath references (before single ref check)
+  if (hasMultipleRefs(path)) {
+    return resolveMultipleRefs({ path, root, row });
+  }
   if (isRef(path)) {
     return jp({ root, path, row });
   }
   return path;
 };
 
-const resolveJSONArray = ({ path, root, row }) =>
-  path.map((item) => resolveJSONPath({ root, path: item, row }));
+const resolveJSONArray = ({ path, root, row }) => {
+  return path.flatMap((item) => {
+    const resolved = resolveJSONPath({ root, path: item, row });
+    if (Array.isArray(resolved) && isRepeat(item)) {
+      return resolved;
+    }
+    return [resolved];
+  });
+};
 
 const resolveJSONObject = ({ path, root, row }) => {
   const specialCase = handleSpecialCases({ path, root, row });
@@ -42,14 +53,30 @@ const resolveJSONObject = ({ path, root, row }) => {
 };
 
 const handleSpecialCases = ({ path, root, row }) => {
-  if (path.rowsRef && path.rows) {
+  if (isTable(path)) {
     return resolveTableSection({ path, root, row });
   }
+  if (isAccordion(path)) {
+    return resolveAccordionSection({ path, root, row });
+  }
+  if (isRepeat(path)) {
+    return resolveRepeatComponent({ path, root, row });
+  }
+  return handleUrlTemplate({ path, root, row });
+};
+
+const handleUrlTemplate = ({ path, root, row }) => {
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
   return null;
 };
+
+const isTable = (path) => path.rowsRef && path.rows;
+const isAccordion = (path) =>
+  path.component === "accordion" && path.itemsRef && path.items;
+const isRepeat = (path) =>
+  path.component === "repeat" && path.itemsRef && path.items;
 
 const resolveGenericObject = ({ path, root, row }) => {
   const resolved = {};
@@ -112,6 +139,51 @@ const resolveTableSection = ({ path, root, row }) => {
   resolvedSection.rows = tableRows;
 
   return resolvedSection;
+};
+
+const resolveAccordionSection = ({ path, root, row }) => {
+  const { itemsRef, items, ...resolvable } = path;
+  const dataItems = evalPath({ root, path: itemsRef, row });
+
+  const accordionItems = dataItems.map((itemData) => {
+    return resolveJSONPath({ root, path: items, row: itemData });
+  });
+
+  const resolvedSection = resolveJSONPath({ root, path: resolvable, row });
+  resolvedSection.items = accordionItems;
+
+  return resolvedSection;
+};
+
+const resolveRepeatComponent = ({ path, root, row }) => {
+  const { itemsRef, items } = path;
+  const dataItems = evalPath({ root, path: itemsRef, row });
+
+  const repeatedItems = dataItems.flatMap((itemData) => {
+    const resolved = resolveJSONPath({ root, path: items, row: itemData });
+    return Array.isArray(resolved) ? resolved : [resolved];
+  });
+
+  return repeatedItems;
+};
+
+const hasMultipleRefs = (path) => {
+  // Check if string contains multiple space-separated JSONPath references
+  const parts = path.split(" ");
+  return parts.length > 1 && parts.some((part) => isRef(part));
+};
+
+const resolveMultipleRefs = ({ path, root, row }) => {
+  // Split by spaces, resolve each part, and join back with spaces
+  const parts = path.split(" ");
+  const resolved = parts.map((part) => {
+    if (isRef(part)) {
+      return jp({ root, path: part, row });
+    }
+    return part;
+  });
+  // Filter out empty strings and join with spaces
+  return resolved.filter((val) => val !== "").join(" ");
 };
 
 const isRef = (path) => isRootRef(path) || isRowRef(path);

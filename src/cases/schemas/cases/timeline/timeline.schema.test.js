@@ -30,7 +30,7 @@ describe("timeline schema", () => {
       timelineSchema.validate({ ...rest, eventType: "INVALID_VALUE" }).error
         .message,
     ).toBe(
-      '"eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
+      '"eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, TASK_UPDATED, STAGE_COMPLETED, NOTE_ADDED]',
     );
   });
 

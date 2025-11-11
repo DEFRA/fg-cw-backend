@@ -8,6 +8,18 @@ import { assignUserToCaseRoute } from "./assign-user-to-case.route.js";
 vi.mock("../use-cases/assign-user-to-case.use-case.js");
 
 describe("assignUserRoute", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   let server;
 
   beforeAll(async () => {
@@ -30,6 +42,12 @@ describe("assignUserRoute", () => {
       payload: {
         assignedUserId,
       },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(204);
@@ -39,6 +57,7 @@ describe("assignUserRoute", () => {
     expect(assignUserToCaseUseCase).toHaveBeenCalledWith({
       caseId,
       assignedUserId,
+      user: mockAuthUser,
     });
   });
 

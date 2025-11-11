@@ -1,4 +1,3 @@
-// eslint-disable-next-line import-x/no-unresolved
 import { defineConfig } from "vitest/config";
 
 const CW_PORT = 3002;
@@ -23,7 +22,7 @@ export default defineConfig({
       LOCALSTACK_PORT,
       ENTRA_PORT,
       API_URL: `http://localhost:${CW_PORT}`,
-      MONGO_URI: `mongodb://localhost:${MONGO_PORT}/fg-cw-backend`,
+      MONGO_URI: `mongodb://localhost:${MONGO_PORT}/fg-cw-backend?directConnection=true`,
       AWS_REGION: "eu-west-2",
       AWS_ENDPOINT_URL: `http://localhost:${LOCALSTACK_PORT}`,
       AWS_ACCESS_KEY_ID: "test",
@@ -33,6 +32,16 @@ export default defineConfig({
       OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",
       OIDC_SIGN_TOKEN_ENDPOINT: `http://localhost:${ENTRA_PORT}/sign`,
+      PRINT_LOGS: process.env.PRINT_LOGS,
+      OUTBOX_MAX_RETRIES: 5,
+      OUTBOX_CLAIM_MAX_RECORDS: 2,
+      OUTBOX_EXPIRES_MS: 5000,
+      OUTBOX_POLL_MS: 250,
+      INBOX_MAX_RETRIES: 5,
+      INBOX_CLAIM_MAX_RECORDS: 2,
+      INBOX_EXPIRES_MS: 5000,
+      INBOX_POLL_MS: 250,
+      ENVIRONMENT: "test",
     },
     hookTimeout: 30000,
   },

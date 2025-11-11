@@ -1,10 +1,43 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
-import { CaseDocument } from "../models/case-document.js";
+import { CasePhase } from "../models/case-phase.js";
+import { CaseStage } from "../models/case-stage.js";
+import { CaseTaskGroup } from "../models/case-task-group.js";
+import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
+import { CaseDocument } from "./case/case-document.js";
 
 const collection = "cases";
+
+const toCaseTask = (t) =>
+  new CaseTask({
+    code: t.code,
+    status: t.status,
+    completed: t.completed,
+    commentRef: t.commentRef,
+    updatedAt: t.updatedAt,
+    updatedBy: t.updatedBy,
+    requiredRoles: t.requiredRoles,
+  });
+
+const toCaseTaskGroup = (tg) =>
+  new CaseTaskGroup({
+    code: tg.code,
+    tasks: tg.tasks.map(toCaseTask),
+  });
+
+const toCaseStage = (s) =>
+  new CaseStage({
+    code: s.code,
+    taskGroups: s.taskGroups.map(toCaseTaskGroup),
+  });
+
+const toCasePhase = (p) =>
+  new CasePhase({
+    code: p.code,
+    stages: p.stages.map(toCaseStage),
+  });
 
 const toCase = (doc) => {
   return new Case({
@@ -12,11 +45,12 @@ const toCase = (doc) => {
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
     payload: doc.payload,
-    status: doc.status,
+    currentPhase: doc.currentPhase,
     currentStage: doc.currentStage,
+    currentStatus: doc.currentStatus,
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
-    stages: doc.stages,
+    phases: doc.phases.map(toCasePhase),
     comments: doc.comments,
     timeline: doc.timeline,
     assignedUser: doc.assignedUserId
@@ -28,13 +62,15 @@ const toCase = (doc) => {
   });
 };
 
-export const save = async (kase) => {
+export const save = async (kase, session) => {
   const caseDocument = new CaseDocument(kase);
 
   let result;
 
   try {
-    result = await db.collection(collection).insertOne(caseDocument);
+    result = await db
+      .collection(collection)
+      .insertOne(caseDocument, { session });
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(

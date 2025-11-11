@@ -9,8 +9,12 @@ beforeEach(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   const db = client.db();
 
-  db.collection("cases").deleteMany({});
-  db.collection("workflows").deleteMany({});
+  await Promise.all([
+    db.collection("cases").deleteMany({}),
+    db.collection("workflows").deleteMany({}),
+    db.collection("users").deleteMany({}),
+    db.collection("roles").deleteMany({}),
+  ]);
 
   await purgeQueue(env.CW__SQS__CREATE_NEW_CASE_URL);
 });

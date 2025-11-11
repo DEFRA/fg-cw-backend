@@ -19,13 +19,13 @@ describe("findWorkflowByCodeUseCase", () => {
       },
       stages: [
         {
-          id: "stage-1",
+          code: "stage-1",
           taskGroups: [
             {
-              id: "task-group-1",
+              code: "task-group-1",
               tasks: [
                 {
-                  id: "task-1",
+                  code: "task-1",
                   type: "task-type-1",
                 },
               ],

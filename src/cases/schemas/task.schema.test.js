@@ -4,9 +4,15 @@ import { Task } from "./task.schema.js";
 describe("Task Schema", () => {
   it("should allow missing optional comment", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
       type: "boolean",
+      description: null,
+      statusOptions: [],
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
     };
 
     const { error } = Task.validate(task);
@@ -16,9 +22,11 @@ describe("Task Schema", () => {
 
   it("should have label if comment is provided", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
       type: "boolean",
+      description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         helpText: "Please provide a note",
@@ -32,9 +40,11 @@ describe("Task Schema", () => {
 
   it("should have helpText if comment is provided", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
       type: "boolean",
+      description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         label: "Note",
@@ -49,13 +59,19 @@ describe("Task Schema", () => {
   it("should validate allowed types", () => {
     const types = ["CONDITIONAL", "REQUIRED", "OPTIONAL"];
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
       type: "boolean",
+      description: null,
+      statusOptions: [],
       comment: {
         type: "CONDITIONAL",
         label: "Note",
         helpText: "Please provide a note",
+      },
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
       },
     };
 
@@ -68,9 +84,11 @@ describe("Task Schema", () => {
 
   it("should error with unknown comment type", () => {
     const task = {
-      id: "abcd-0987-hjyg-8765-6542",
-      title: "Test task",
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
       type: "boolean",
+      description: null,
+      statusOptions: [],
       comment: {
         type: "NOT_ALLOWED_TYPE",
         label: "Note",
@@ -82,5 +100,62 @@ describe("Task Schema", () => {
     expect(error.details[0].message).toBe(
       '"comment.type" must be one of [CONDITIONAL, REQUIRED, OPTIONAL]',
     );
+  });
+
+  it("should allow null comment", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [
+        {
+          code: "complete",
+          name: "Complete",
+          completes: true,
+        },
+      ],
+      comment: null,
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should pass when statusOptions is empty", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should pass when multiple statusOptions have completes true", () => {
+    const task = {
+      code: "abcd-0987-hjyg-8765-6542",
+      name: "Test task",
+      type: "boolean",
+      description: null,
+      statusOptions: [
+        {
+          code: "complete",
+          name: "Complete",
+          completes: true,
+        },
+        {
+          code: "complete-with-notes",
+          name: "Complete with Notes",
+          completes: true,
+        },
+      ],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
   });
 });

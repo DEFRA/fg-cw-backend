@@ -2,10 +2,10 @@ import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
-import { WorkflowDocument } from "../models/workflow-document.js";
 import { Workflow } from "../models/workflow.js";
 import { createUserRolesFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
+import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 vi.mock("../../common/mongo-client.js");
 

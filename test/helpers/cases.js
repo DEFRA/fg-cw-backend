@@ -37,24 +37,30 @@ export const createCase = async (cases, payload = {}) => {
     },
     currentStage: "application-receipt",
     timeline: [],
-    stages: [
+    phases: [
       {
-        id: "application-receipt",
-        taskGroups: [
+        code: "default",
+        stages: [
           {
-            id: "application-receipt-tasks",
-            tasks: [
+            code: "application-receipt",
+            taskGroups: [
               {
-                id: "simple-review",
-                status: "pending",
+                code: "application-receipt-tasks",
+                tasks: [
+                  {
+                    code: "simple-review",
+                    status: "pending",
+                    completed: false,
+                  },
+                ],
               },
             ],
           },
+          {
+            code: "contract",
+            taskGroups: [],
+          },
         ],
-      },
-      {
-        id: "contract",
-        taskGroups: [],
       },
     ],
     assignedUser: null,

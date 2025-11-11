@@ -36,16 +36,6 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
   };
 };
 
-const mapTimeline = (timeline) => {
-  return (
-    timeline?.map((tl) => ({
-      ...tl,
-      commentRef: tl.comment ? tl.comment.ref : undefined,
-      comment: undefined,
-    })) || []
-  );
-};
-
 export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
@@ -57,33 +47,35 @@ export const findCasesUseCase = async () => {
     codes: workflowCodes,
   });
 
-  const [users, workflows] = await Promise.all([
+  const [assignedUsers, workflowsUserCanAccess] = await Promise.all([
     findUsersUseCase({
       ids: assignedUserIds,
     }),
     findWorkflowsUseCase(workflowFilter),
   ]);
 
-  // Remove any cases that the user does not have access to
-  const casesFiltered = cases.reduce((acc, kase) => {
-    const workflow = workflows.find((w) => w.code === kase.workflowCode);
+  const casesUserCanAccess = cases.reduce((acc, kase) => {
+    const workflow = workflowsUserCanAccess.find(
+      (w) => w.code === kase.workflowCode,
+    );
 
-    // We only add cases if there's a workflow that was filtered above.
-    if (workflow) {
-      kase.requiredRoles = workflow.requiredRoles;
-
-      // Only then do we look up the assigned user.
-      const assignedUser = users.find((u) => u.id === kase.assignedUser?.id);
-
-      if (assignedUser) {
-        kase.assignedUser.name = assignedUser.name;
-      }
-      kase.timeline = mapTimeline(kase.timeline);
-
-      acc.push(kase);
+    if (!workflow) {
+      return acc;
     }
+
+    kase.requiredRoles = workflow.requiredRoles;
+
+    const assignedUser = assignedUsers.find(
+      (u) => u.id === kase.assignedUser?.id,
+    );
+
+    if (assignedUser) {
+      kase.assignedUser.name = assignedUser.name;
+    }
+
+    acc.push(kase);
     return acc;
   }, []);
 
-  return casesFiltered;
+  return casesUserCanAccess;
 };

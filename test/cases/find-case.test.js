@@ -44,24 +44,68 @@ describe("GET /cases/{caseId}", () => {
       ...caseData2,
       _id: caseId,
       dateReceived: new Date(caseData2.dateReceived).toISOString(),
-      tasks: {},
-      stages: [
+      phases: [
         {
-          ...caseData2.stages[0],
-          taskGroups: [
+          code: "default",
+          name: "Default Phase",
+          stages: [
             {
-              ...caseData2.stages[0].taskGroups[0],
-              tasks: [
+              code: "application-receipt",
+              name: "Application Receipt",
+              description: "Application received",
+              statuses: [],
+              actions: [
                 {
-                  ...caseData2.stages[0].taskGroups[0].tasks[0],
-                  updatedBy: null,
+                  code: "approve",
+                  name: "Approve",
+                  comment: null,
+                },
+              ],
+              taskGroups: [
+                {
+                  code: "application-receipt-tasks",
+                  name: "Application Receipt tasks",
+                  description: "Task group description",
+                  tasks: [
+                    {
+                      code: "simple-review",
+                      name: "Simple Review",
+                      description: [
+                        {
+                          component: "heading",
+                          level: 2,
+                          text: "Simple review task",
+                        },
+                      ],
+                      status: "pending",
+                      completed: false,
+                      type: "boolean",
+                      statusOptions: [],
+                      commentInputDef: {
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        label: "Note",
+                        mandatory: false,
+                      },
+                      updatedBy: null,
+                      requiredRoles: {
+                        allOf: ["ROLE_1", "ROLE_2"],
+                        anyOf: ["ROLE_3"],
+                      },
+                    },
+                  ],
                 },
               ],
             },
+            {
+              code: "contract",
+              name: "Stage for contract management",
+              description: "Awaiting agreement",
+              statuses: [],
+              actions: [],
+              taskGroups: [],
+            },
           ],
-        },
-        {
-          ...caseData2.stages[1],
         },
       ],
       timeline: [
@@ -70,7 +114,6 @@ describe("GET /cases/{caseId}", () => {
           createdBy: {
             id: "System",
             name: "System",
-            email: "system@example.com",
           },
         },
       ],

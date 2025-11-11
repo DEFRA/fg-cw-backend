@@ -1,8 +1,11 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { assertIsComment, toComments } from "./comment.js";
+import { CasePhase } from "./case-phase.js";
+import { CaseStage } from "./case-stage.js";
+import { CaseTaskGroup } from "./case-task-group.js";
+import { CaseTask } from "./case-task.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { toTasks } from "./task.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -17,17 +20,15 @@ export class Case {
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.status = props.status;
     this.dateReceived = props.dateReceived;
+    this.currentPhase = props.currentPhase;
     this.currentStage = props.currentStage;
+    this.currentStatus = props.currentStatus;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
-    this.stages = props.stages;
+    this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.requiredRoles = props.requiredRoles;
-
-    this.tasks = toTasks(this.stages);
     this.supplementaryData = props.supplementaryData || {};
   }
 
@@ -43,54 +44,68 @@ export class Case {
     });
   }
 
-  /**
-   *
-   * @param {string} taskId
-   * @returns task with given taskId or throws if task not found
-   */
-  findTask(taskId) {
-    const task = this.tasks.get(taskId);
+  findPhase(phaseCode) {
+    const phase = this.phases.find((p) => p.code === phaseCode);
 
-    if (!task) {
-      throw Boom.notFound(`Can not find Task with id ${taskId}!`);
+    if (!phase) {
+      throw Boom.notFound(
+        `Case with caseRef ${this.caseRef} and workflowCode ${this.workflowCode} does not have a phase with code ${phaseCode}`,
+      );
     }
 
-    return task;
-  }
-
-  findStage(stageId) {
-    const stage = this.stages.find((s) => s.id === stageId);
-    if (!stage) {
-      throw Boom.notFound(`Can not find Stage with id ${stageId}`);
-    }
-
-    return stage;
+    return phase;
   }
 
   findComment(commentRef) {
     return this.comments.find((c) => c.ref === commentRef);
   }
 
-  setTaskStatus({ stageId, taskGroupId, taskId, status, comment, updatedBy }) {
-    const caseTask = this.findTask(taskId);
+  setTaskStatus({
+    phaseCode,
+    stageCode,
+    taskGroupCode,
+    taskCode,
+    status,
+    completed,
+    comment,
+    updatedBy,
+  }) {
+    const task = this.findPhase(phaseCode)
+      .findStage(stageCode)
+      .findTaskGroup(taskGroupCode)
+      .findTask(taskCode);
 
-    caseTask.updateStatus(status, updatedBy);
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
 
-    if (status === "complete") {
-      const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: updatedBy,
-        text: comment,
-        data: {
-          caseId: this._id,
-          stageId,
-          taskGroupId,
-          taskId,
-        },
-      });
+    const optionalComment = Comment.createOptionalComment({
+      type: eventType,
+      text: comment,
+      createdBy: updatedBy,
+    });
 
-      this.#addTimelineEvent(timelineEvent);
-      caseTask.updateCommentRef(timelineEvent.comment?.ref);
-    }
+    const timelineEvent = new TimelineEvent({
+      eventType,
+      data: {
+        caseId: this._id,
+        phaseCode,
+        stageCode,
+        taskGroupCode,
+        taskCode: task.code,
+      },
+      comment: optionalComment,
+      createdBy: updatedBy,
+    });
+
+    task.updateStatus({
+      status,
+      completed,
+      updatedBy,
+      comment: optionalComment,
+    });
+
+    this.#addTimelineEvent(timelineEvent);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {
@@ -129,11 +144,12 @@ export class Case {
     this.supplementaryData[key] = data;
   }
 
-  updateStageOutcome({ actionId, comment, createdBy }) {
+  updateStageOutcome({ actionCode, comment, createdBy }) {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
-        actionId,
-        stageId: this.currentStage,
+        actionCode,
+        phaseCode: this.currentPhase,
+        stageCode: this.currentStage,
       },
       text: comment,
       createdBy,
@@ -142,7 +158,7 @@ export class Case {
     const currentStage = this.#getCurrentStage();
 
     currentStage.outcome = {
-      actionId,
+      actionCode,
       createdBy,
       createdAt: new Date().toISOString(),
     };
@@ -153,13 +169,13 @@ export class Case {
 
     this.#addTimelineEvent(timelineEvent);
 
-    if (actionId === "approve") {
+    if (actionCode === "approve") {
       this.#moveToNextStage();
     }
   }
 
   updateStatus(status, createdBy) {
-    this.status = status;
+    this.currentStatus = status;
 
     if (status === "APPROVED") {
       const timelineEvent = TimelineEvent.createCaseApproved({
@@ -184,13 +200,7 @@ export class Case {
       comment.getUserIds(),
     );
 
-    const taskUserIds = this.stages
-      .flatMap((stage) =>
-        stage.taskGroups.flatMap((taskGroup) =>
-          taskGroup.tasks.flatMap((t) => t.updatedBy),
-        ),
-      )
-      .filter((id) => id !== undefined);
+    const taskUserIds = this.phases.flatMap((phase) => phase.getUserIds());
 
     const allUserIds = [
       ...caseUserIds,
@@ -226,12 +236,12 @@ export class Case {
 
   #getCurrentStage() {
     const currentStageIndex = this.#getCurrentStageIndex();
-    return this.stages[currentStageIndex];
+    return this.phases[0].stages[currentStageIndex];
   }
 
   #moveToNextStage() {
     const nextStage = this.#getNextStage();
-    this.currentStage = nextStage.id;
+    this.currentStage = nextStage.code;
     return nextStage;
   }
 
@@ -239,7 +249,7 @@ export class Case {
     const currentStageIndex = this.#getCurrentStageIndex();
     const currentStage = this.#getCurrentStage();
 
-    if (currentStageIndex === this.stages.length - 1) {
+    if (currentStageIndex === this.phases[0].stages.length - 1) {
       throw Boom.notFound(
         `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
       );
@@ -255,12 +265,12 @@ export class Case {
       );
     }
 
-    return this.stages[currentStageIndex + 1];
+    return this.phases[0].stages[currentStageIndex + 1];
   }
 
   #getCurrentStageIndex() {
-    const currentStageIndex = this.stages.findIndex(
-      (stage) => stage.id === this.currentStage,
+    const currentStageIndex = this.phases[0].stages.findIndex(
+      (stage) => stage.code === this.currentStage,
     );
 
     if (currentStageIndex === -1) {
@@ -272,35 +282,33 @@ export class Case {
     return currentStageIndex;
   }
 
-  static new({ caseRef, payload, workflow }) {
+  static new({ caseRef, workflowCode, payload, phases }) {
+    const initialPhase = phases[0];
+    const initialStage = initialPhase.stages[0];
+    // TODO: when transitions are set up use initialStage.statuses[0];
+    const initialStatus = {
+      code: "NEW",
+    };
+
     return new Case({
       caseRef,
-      workflowCode: workflow.code,
-      status: "NEW",
+      workflowCode,
+      currentPhase: initialPhase.code,
+      currentStage: initialStage.code,
+      currentStatus: initialStatus.code,
       dateReceived: new Date().toISOString(),
-      currentStage: workflow.stages[0].id,
       payload,
       supplementaryData: {},
-      stages: workflow.stages.map((stage) => ({
-        id: stage.id,
-        taskGroups: stage.taskGroups.map((taskGroup) => ({
-          id: taskGroup.id,
-          tasks: taskGroup.tasks.map((task) => ({
-            id: task.id,
-            status: "pending",
-          })),
-        })),
-      })),
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
-          createdBy: "System", // To specify that the case was created by an external system
+          createdBy: "System",
           data: {
             caseRef,
           },
-        },
+        }),
       ],
-      requiredRoles: workflow.requiredRoles,
+      phases,
     });
   }
 
@@ -308,33 +316,44 @@ export class Case {
     return new Case({
       caseRef: "case-ref",
       workflowCode: "workflow-code",
-      status: "NEW",
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      currentPhase: "phase-1",
       currentStage: "stage-1",
+      currentStatus: "NEW",
+      dateReceived: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
-      stages: [
-        {
-          id: "stage-1",
-          taskGroups: [
-            {
-              id: "stage-1-tasks",
-              tasks: [
-                {
-                  id: "task-1",
-                  status: "pending",
-                },
+      phases: [
+        new CasePhase({
+          code: "phase-1",
+          stages: [
+            new CaseStage({
+              code: "stage-1",
+              taskGroups: [
+                new CaseTaskGroup({
+                  code: "task-group-1",
+                  tasks: [
+                    new CaseTask({
+                      code: "task-1",
+                      status: "pending",
+                      completed: false,
+                      // this should be refactored to use null
+                      commentRef: undefined,
+                      updatedAt: undefined,
+                      updatedBy: undefined,
+                    }),
+                  ],
+                }),
               ],
-            },
+            }),
+            new CaseStage({
+              code: "stage-2",
+              taskGroups: [],
+            }),
           ],
-        },
-        {
-          id: "stage-2",
-          taskGroups: [],
-        },
+        }),
       ],
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -343,16 +362,11 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        },
+        }),
       ],
       comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
-        name: "Test Name",
-      },
-      requiredRoles: {
-        allOf: ["ROLE_1", "ROLE_2"],
-        anyOf: ["ROLE_3"],
       },
       ...props,
     });

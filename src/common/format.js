@@ -17,6 +17,11 @@ export const formatFunctions = {
     (typeof value === "string" && value.toLowerCase() === "true")
       ? "Yes"
       : "No",
+
+  penniesToPounds: (value) => {
+    const pounds = Number(value) / 100;
+    return `£${pounds.toFixed(2)}`;
+  },
 };
 
 export const parseFormatString = (formatString) => {

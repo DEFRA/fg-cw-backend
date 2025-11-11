@@ -1,15 +1,7 @@
 import { MongoClient } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 let client;
 let db;
@@ -26,28 +18,6 @@ afterAll(async () => {
 });
 
 describe("Event-Driven Integration Tests", () => {
-  beforeEach(async () => {
-    // Clean collections before each test - more comprehensive cleanup
-    await cases.deleteMany({
-      $or: [
-        { reference: { $regex: "^EVENT-TEST-" } },
-        { workflowCode: "pigs-might-fly" },
-        { caseRef: { $regex: "^EVENT-TEST-" } },
-      ],
-    });
-  });
-
-  afterEach(async () => {
-    // Clean up after each test - more comprehensive cleanup
-    await cases.deleteMany({
-      $or: [
-        { reference: { $regex: "^EVENT-TEST-" } },
-        { workflowCode: "pigs-might-fly" },
-        { caseRef: { $regex: "^EVENT-TEST-" } },
-      ],
-    });
-  });
-
   describe("SNS Event Processing", () => {
     it("should process grant application submitted event", async () => {
       // This tests the core integration: fg-gas-backend sends SNS → fg-cw-backend processes

@@ -51,13 +51,12 @@ describe("GET /cases", () => {
     expect(response.payload).toEqual([
       {
         ...caseData1,
-        tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData1.dateReceived).toISOString(),
+        phases: caseData1.phases,
       },
       {
         ...caseData2,
-        tasks: {},
         _id: expect.any(String),
         dateReceived: new Date(caseData2.dateReceived).toISOString(),
       },

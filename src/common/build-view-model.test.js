@@ -69,6 +69,35 @@ describe("buildViewModel", () => {
         definitions: {},
       });
     });
+
+    it("should include externalActions from workflow", () => {
+      const kase = { _id: "case-123" };
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+          },
+        ],
+      };
+
+      const result = createRootContext(kase, workflow);
+
+      expect(result).toEqual({
+        _id: "case-123",
+        definitions: {},
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+          },
+        ],
+      });
+    });
   });
 
   describe("pathExists", () => {
@@ -430,6 +459,44 @@ describe("buildViewModel", () => {
       expect(result).toBeUndefined();
     });
 
+    it("should include callToAction from externalActions", () => {
+      const workflowWithExternalActions = {
+        ...mockWorkflow,
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            description: "Rerun the business rules validation",
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              node: "landGrantsRulesRun",
+              nodeType: "array",
+              place: "append",
+            },
+          },
+          {
+            code: "ANOTHER_ACTION",
+            name: "Another Action",
+            endpoint: "anotherEndpoint",
+          },
+        ],
+      };
+
+      const result = buildBanner(mockCase, workflowWithExternalActions);
+
+      expect(result.callToAction).toEqual([
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+        },
+        {
+          code: "ANOTHER_ACTION",
+          name: "Another Action",
+        },
+      ]);
+    });
+
     it("should handle banner with complex nested structure", () => {
       const complexWorkflow = {
         ...mockWorkflow,
@@ -468,6 +535,7 @@ describe("buildViewModel", () => {
 
       const result = buildBanner(mockCase, complexWorkflow);
 
+      expect(result.callToAction).toBeUndefined();
       expect(result.summary.nested.deep.value).toEqual({
         label: "Deep Value",
         text: "SBI001",

@@ -1,74 +1,95 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { createWorkflowMockData } from "./workflow-mock-data.js";
+import { createPagesMock } from "./create-pages-mock.js";
+import { Permissions } from "./permissions.js";
+import { WorkflowPhase } from "./workflow-phase.js";
 
 export class Workflow {
   constructor(props) {
     this._id = props._id || new ObjectId().toHexString();
     this.code = props.code;
     this.pages = props.pages;
-    this.stages = props.stages;
+    this.phases = props.phases;
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
+    this.externalActions = props.externalActions;
   }
 
-  findTask(stageId, taskGroupId, taskId) {
-    const stage = this.findStage(stageId);
-    const taskGroup = stage?.taskGroups.find((tg) => tg.id === taskGroupId);
-    const task = taskGroup?.tasks.find((t) => t.id === taskId);
-
-    if (!task) {
-      throw Boom.notFound(
-        `Can not find Task with id ${taskId} from taskGroup ${taskGroupId} in stage ${stageId}`,
-      );
-    }
+  findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
+    const task = this.findPhase(phaseCode)
+      .findStage(stageCode)
+      .findTaskGroup(taskGroupCode)
+      .findTask(taskCode);
 
     return task;
   }
 
-  validateStageActionComment({ stageId, actionId, comment }) {
-    const stage = this.findStage(stageId);
-    const action = this.findAction(stage, actionId);
-    this.validateComment({ stageId, actionId, action, comment });
+  validateStageActionComment({ phaseCode, stageCode, actionCode, comment }) {
+    const stage = this.findPhase(phaseCode).findStage(stageCode);
+    const action = this.findAction(stage, actionCode);
+    this.validateComment({ phaseCode, stageCode, actionCode, action, comment });
 
     return true;
   }
 
-  findStage(stageId) {
-    const stage = this.stages.find((s) => s.id === stageId);
-    if (!stage) {
-      throw Boom.badRequest(`Stage with id "${stageId}" not found`);
+  findPhase(phaseCode) {
+    const phase = this.phases.find((p) => p.code === phaseCode);
+
+    if (!phase) {
+      throw Boom.badRequest(`Phase with code "${phaseCode}" not found`);
     }
-    return stage;
+
+    return phase;
   }
 
-  findAction(stage, actionId) {
-    const action = stage.actions.find((a) => a.id === actionId);
+  findAction(stage, actionCode) {
+    const action = stage.actions.find((a) => a.code === actionCode);
     if (!action) {
       throw Boom.badRequest(
-        `Stage "${stage.id}" does not contain action with id "${actionId}"`,
+        `Stage "${stage.code}" does not contain action with code "${actionCode}"`,
       );
     }
     return action;
   }
 
-  validateComment({ stageId, actionId, action, comment }) {
+  validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(
-        `Stage "${stageId}", Action "${actionId}" requires a comment`,
+        `Phase "${phaseCode}", Stage "${stageCode}", Action "${actionCode}" requires a comment`,
       );
     }
   }
 
   isMissingRequiredComment(action, comment) {
-    return (
-      action.comment && action.comment.type === "REQUIRED" && !comment?.trim()
-    );
+    return action.comment?.type === "REQUIRED" && !comment?.trim();
   }
 
   static createMock(props) {
     return new Workflow({
-      ...createWorkflowMockData(),
+      code: "workflow-code",
+      pages: createPagesMock(),
+      phases: [WorkflowPhase.createMock()],
+      requiredRoles: new Permissions({
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      }),
+      definitions: {
+        key1: "value1",
+      },
+      externalActions: [
+        {
+          code: "RERUN_RULES",
+          name: "Rerun Rules",
+          description: "Rerun the business rules validation",
+          endpoint: "landGrantsRulesRerun",
+          target: {
+            position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+            node: "landGrantsRulesRun",
+            nodeType: "array",
+            place: "append",
+          },
+        },
+      ],
       ...props,
     });
   }

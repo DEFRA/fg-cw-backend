@@ -12,6 +12,7 @@
     "test": "npm run test:unit -- --run && npm run test:integration -- --run",
     "test:unit": "vitest --config vitest.config.js --dir src",
     "test:integration": "vitest --config test/vitest.config.js --dir test",
+    "test:integration:verbose": "PRINT_LOGS=1 npm run test:integration",
     "dev": "nodemon --env-file .env src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
@@ -33,7 +34,7 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
-    "@aws-sdk/client-sns": "3.901.0",
+    "@aws-sdk/client-sns": "3.917.0",
     "@aws-sdk/client-sqs": "3.901.0",
     "@defra/hapi-tracing": "1.28.0",
     "@elastic/ecs-pino-format": "1.5.0",

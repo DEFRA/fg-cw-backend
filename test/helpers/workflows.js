@@ -235,35 +235,53 @@ export const createWorkflow = async (payload = {}) => {
           },
         },
       },
-      stages: [
+      phases: [
         {
-          id: "application-receipt",
-          title: "Application Receipt",
-          taskGroups: [
+          code: "default",
+          name: "Default Phase",
+          stages: [
             {
-              id: "application-receipt-tasks",
-              title: "Application Receipt tasks",
-              tasks: [
+              code: "application-receipt",
+              name: "Application Receipt",
+              description: "Application received",
+              statuses: [],
+              taskGroups: [
                 {
-                  id: "simple-review",
-                  title: "Simple Review",
-                  type: "boolean",
+                  code: "application-receipt-tasks",
+                  name: "Application Receipt tasks",
+                  description: "Task group description",
+                  tasks: [
+                    {
+                      code: "simple-review",
+                      name: "Simple Review",
+                      type: "boolean",
+                      description: "Simple review task",
+                      statusOptions: [],
+                      requiredRoles: {
+                        allOf: ["ROLE_1", "ROLE_2"],
+                        anyOf: ["ROLE_3"],
+                      },
+                    },
+                  ],
+                },
+              ],
+              actions: [
+                {
+                  code: "approve",
+                  name: "Approve",
+                  comment: null,
                 },
               ],
             },
-          ],
-          actions: [
             {
-              id: "approve",
-              label: "Approve",
+              code: "contract",
+              name: "Stage for contract management",
+              description: "Awaiting agreement",
+              statuses: [],
+              taskGroups: [],
+              actions: [],
             },
           ],
-        },
-        {
-          id: "contract",
-          title: "Stage for contract management",
-          taskGroups: [],
-          actions: [],
         },
       ],
       requiredRoles: {

@@ -1,15 +1,13 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { wreck } from "../helpers/wreck.js";
 
-let users;
 let client;
 
 beforeAll(async () => {
   client = new MongoClient(env.MONGO_URI);
   await client.connect();
-  users = client.db().collection("users");
 });
 
 afterAll(async () => {
@@ -17,10 +15,6 @@ afterAll(async () => {
 });
 
 describe("GET /users/{userId}", () => {
-  beforeEach(async () => {
-    await users.deleteMany({});
-  });
-
   it("finds a user by id", async () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
