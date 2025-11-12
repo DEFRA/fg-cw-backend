@@ -72,6 +72,7 @@ services:
       - "localstack:localstack"
       - "mongo-ready:mongo-ready"
       - "mongodb:mongodb"
+      - "mongo-ready:mongo-ready"
       - "entra:entra"
     depends_on:
       localstack:
