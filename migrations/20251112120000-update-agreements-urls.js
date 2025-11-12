@@ -15,8 +15,7 @@ export const up = async (db, _client, context) => {
 const definitionsLookup = {
   local: {
     agreementsService: {
-      internalUrl:
-        "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}",
+      internalUrl: "http://localhost:3000/agreement/{agreementRef}",
     },
   },
   dev: {
