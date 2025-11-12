@@ -2,6 +2,8 @@ import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
+import { CasePhase } from "../models/case-phase.js";
+import { CaseStage } from "../models/case-stage.js";
 import { Case } from "../models/case.js";
 import { EventEnums } from "../models/event-enums.js";
 import { TimelineEvent } from "../models/timeline-event.js";
@@ -10,6 +12,8 @@ import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
+  mapDescription,
+  mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -26,6 +30,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Task Completed",
       createdBy: "System",
       data: {
+        phaseCode: "phase-1",
         stageCode: "stage-1",
         taskGroupCode: "task-group-1",
         taskCode: "task-1",
@@ -37,6 +42,26 @@ describe("formatTimelineItemDescription", () => {
     );
   });
 
+  it("formats task updated", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_UPDATED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "Task Updated",
+      createdBy: "System",
+      data: {
+        phaseCode: "phase-1",
+        stageCode: "stage-1",
+        taskGroupCode: "task-group-1",
+        taskCode: "task-1",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Task 'Task 1' updated",
+    );
+  });
+
   it("formats stage completed", () => {
     const wf = Workflow.createMock();
     const timelineItem = {
@@ -45,6 +70,7 @@ describe("formatTimelineItemDescription", () => {
       description: "Stage Completed",
       createdBy: "System",
       data: {
+        phaseCode: "phase-1",
         stageCode: "stage-1",
         actionCode: "reject",
       },
@@ -85,6 +111,110 @@ describe("formatTimelineItemDescription", () => {
   });
 });
 
+describe("mapDescription", () => {
+  it("converts string description to heading component array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "Simple review task",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Simple review task" },
+    ]);
+  });
+
+  it("falls back to task name for empty string", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: "",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
+  });
+
+  it("returns array description as-is when already an array", () => {
+    const input = [
+      { component: "heading", level: 2, text: "Title" },
+      { component: "paragraph", text: "Description" },
+    ];
+    const result = mapDescription({
+      name: "Review Task",
+      description: input,
+    });
+    expect(result).toEqual(input);
+  });
+
+  it("returns heading with task name for null description", () => {
+    const result = mapDescription({
+      name: "Review Application",
+      description: null,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Application" },
+    ]);
+  });
+
+  it("returns heading with task name for undefined description", () => {
+    const result = mapDescription({
+      name: "Check Details",
+      description: undefined,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Check Details" },
+    ]);
+  });
+
+  it("uses default name 'Task' when name not provided and description is null", () => {
+    const result = mapDescription({ description: null });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
+  });
+
+  it("uses default name 'Task' when name not provided and description is undefined", () => {
+    const result = mapDescription({ description: undefined });
+    expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
+  });
+
+  it("returns heading with task name for object description", () => {
+    const result = mapDescription({
+      name: "Verify Data",
+      description: { foo: "bar" },
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Verify Data" },
+    ]);
+  });
+
+  it("returns heading with task name for number description", () => {
+    const result = mapDescription({
+      name: "Process Item",
+      description: 123,
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Item" },
+    ]);
+  });
+
+  it("falls back to task name for empty array", () => {
+    const result = mapDescription({
+      name: "Review Task",
+      description: [],
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Review Task" },
+    ]);
+  });
+
+  it("falls back to task name for whitespace-only string", () => {
+    const result = mapDescription({
+      name: "Process Data",
+      description: "   ",
+    });
+    expect(result).toEqual([
+      { component: "heading", level: 2, text: "Process Data" },
+    ]);
+  });
+});
+
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
   const mockAuthUser = {
@@ -113,7 +243,7 @@ describe("findCaseByIdUseCase", () => {
     expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
 
-    const [stage] = result.stages;
+    const [stage] = result.phases[0].stages;
 
     expect(stage.name).toEqual("Stage 1");
     expect(stage.description).toEqual("Stage 1 description");
@@ -126,7 +256,9 @@ describe("findCaseByIdUseCase", () => {
     const [task] = taskGroup.tasks;
 
     expect(task.name).toEqual("Task 1");
-    expect(task.description).toEqual("Task 1 description");
+    expect(task.description).toEqual([
+      { component: "heading", level: 2, text: "Task 1 description" },
+    ]);
 
     expect(result).toBe(kase);
   });
@@ -294,17 +426,22 @@ describe("findCaseByIdUseCase", () => {
       // Create a case with stage outcome that references a comment
       const commentRef = "64c88faac1f56f71e1b89a33";
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [
           {
@@ -323,7 +460,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         commentRef,
         createdBy: mockUser.id,
@@ -337,16 +474,21 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
       });
 
@@ -356,7 +498,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         createdBy: mockUser.id,
         createdAt: "2025-01-01T12:00:00.000Z",
@@ -369,17 +511,22 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef: "64c88faac1f56f71e1b89a34",
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef: "64c88faac1f56f71e1b89a34",
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [],
       });
@@ -390,7 +537,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toEqual({
+      expect(result.phases[0].stages[0].outcome).toEqual({
         actionCode: "approve",
         commentRef: "64c88faac1f56f71e1b89a34",
         createdBy: mockUser.id,
@@ -404,11 +551,16 @@ describe("findCaseByIdUseCase", () => {
       const mockWorkflow = Workflow.createMock();
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+              }),
+            ],
+          }),
         ],
       });
 
@@ -418,7 +570,7 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome).toBeUndefined();
+      expect(result.phases[0].stages[0].outcome).toBeUndefined();
     });
 
     it("handles multiple stages with different outcome scenarios", async () => {
@@ -429,31 +581,36 @@ describe("findCaseByIdUseCase", () => {
       const commentRef2 = "64c88faac1f56f71e1b89a36";
 
       const mockCase = Case.createMock({
-        stages: [
-          {
-            code: "stage-1",
-            taskGroups: [],
-            outcome: {
-              actionCode: "approve",
-              commentRef: commentRef1,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T12:00:00.000Z",
-            },
-          },
-          {
-            code: "stage-2",
-            taskGroups: [],
-          },
-          {
-            code: "stage-3",
-            taskGroups: [],
-            outcome: {
-              actionCode: "reject",
-              commentRef: commentRef2,
-              createdBy: mockUser.id,
-              createdAt: "2025-01-01T13:00:00.000Z",
-            },
-          },
+        phases: [
+          new CasePhase({
+            code: "phase-1",
+            stages: [
+              new CaseStage({
+                code: "stage-1",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "approve",
+                  commentRef: commentRef1,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T12:00:00.000Z",
+                },
+              }),
+              new CaseStage({
+                code: "stage-2",
+                taskGroups: [],
+              }),
+              new CaseStage({
+                code: "stage-3",
+                taskGroups: [],
+                outcome: {
+                  actionCode: "reject",
+                  commentRef: commentRef2,
+                  createdBy: mockUser.id,
+                  createdAt: "2025-01-01T13:00:00.000Z",
+                },
+              }),
+            ],
+          }),
         ],
         comments: [
           {
@@ -479,11 +636,124 @@ describe("findCaseByIdUseCase", () => {
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
-      expect(result.stages[0].outcome.comment).toBe("First stage approved");
-      expect(result.stages[1].outcome).toBeUndefined();
-      expect(result.stages[2].outcome.comment).toBe(
+      expect(result.phases[0].stages[0].outcome.comment).toBe(
+        "First stage approved",
+      );
+      expect(result.phases[0].stages[1].outcome).toBeUndefined();
+      expect(result.phases[0].stages[2].outcome.comment).toBe(
         "Application rejected due to incomplete information",
       );
+    });
+  });
+});
+
+describe("mapWorkflowCommentDef", () => {
+  it("returns default comment when workflowTask has no comment", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+    };
+
+    const result = mapWorkflowCommentDef(workflowTask);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("merges workflow task comment with default values", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Approval Note",
+        helpText: "Provide reason for approval",
+        mandatory: true,
+      },
+    };
+
+    const result = mapWorkflowCommentDef(workflowTask);
+
+    expect(result).toEqual({
+      label: "Approval Note",
+      helpText: "Provide reason for approval",
+      mandatory: true,
+    });
+  });
+
+  it("returns default comment when workflowTask is null", () => {
+    const result = mapWorkflowCommentDef(null);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("returns default comment when workflowTask is undefined", () => {
+    const result = mapWorkflowCommentDef(undefined);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("merges partial workflow task comment with defaults", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Custom Label",
+      },
+    };
+
+    const result = mapWorkflowCommentDef(workflowTask);
+
+    expect(result).toEqual({
+      label: "Custom Label",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
+    });
+  });
+
+  it("preserves all fields from workflow task comment", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {
+        label: "Rejection Reason",
+        helpText: "Explain why this was rejected",
+        mandatory: true,
+      },
+    };
+
+    const result = mapWorkflowCommentDef(workflowTask);
+
+    expect(result).toEqual({
+      label: "Rejection Reason",
+      helpText: "Explain why this was rejected",
+      mandatory: true,
+    });
+  });
+
+  it("handles workflowTask with empty comment object", () => {
+    const workflowTask = {
+      code: "task-1",
+      name: "Review Task",
+      comment: {},
+    };
+
+    const result = mapWorkflowCommentDef(workflowTask);
+
+    expect(result).toEqual({
+      label: "Note",
+      helpText: "All notes will be saved for auditing purposes",
+      mandatory: false,
     });
   });
 });

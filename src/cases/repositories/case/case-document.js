@@ -1,31 +1,9 @@
 import { ObjectId } from "mongodb";
+import { PhaseDocument } from "./phase-document.js";
+import { StageDocument } from "./stage-document.js";
 import { TaskDocument } from "./task-document.js";
+import { TaskGroupDocument } from "./task-group-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
-
-const processTask = ({ code }, tasks) => {
-  const task = tasks.get(code);
-  return new TaskDocument(task);
-};
-
-const mapTasksToStages = (kaseStages, tasks) => {
-  if (!tasks) {
-    return kaseStages;
-  }
-
-  const stages = kaseStages.map((s) => {
-    return {
-      code: s.code,
-      outcome: s.outcome || null,
-      taskGroups: s.taskGroups.map((tg) => {
-        return {
-          code: tg.code,
-          tasks: tg.tasks.map((t) => processTask(t, tasks)),
-        };
-      }),
-    };
-  });
-  return stages;
-};
 
 export class CaseDocument {
   constructor(props) {
@@ -34,12 +12,13 @@ export class CaseDocument {
       : new ObjectId();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.status = props.status;
+    this.currentPhase = props.currentPhase;
+    this.currentStage = props.currentStage;
+    this.currentStatus = props.currentStatus;
     this.dateReceived = new Date(props.dateReceived);
     this.payload = props.payload;
     this.assignedUserId = props.assignedUser?.id || null;
-    this.currentStage = props.currentStage;
-    this.stages = mapTasksToStages(props.stages, props.tasks);
+    this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.comments = props.comments;
     this.timeline = props.timeline.map(
       (timelineProps) => new TimelineEventDocument(timelineProps),
@@ -51,30 +30,37 @@ export class CaseDocument {
     return new CaseDocument({
       workflowCode: "workflow-code",
       caseRef: "case-ref",
-      status: "NEW",
+      currentPhase: "phase-1",
+      currentStage: "stage-1",
+      currentStatus: "NEW",
       dateReceived: "2025-01-01T00:00:00.000Z",
       supplementaryData: {},
       payload: {},
-      currentStage: "stage-1",
-      stages: [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [
-                {
-                  code: "task-1",
-                  status: "pending",
-                },
+      phases: [
+        new PhaseDocument({
+          code: "phase-1",
+          stages: [
+            new StageDocument({
+              code: "stage-1",
+              taskGroups: [
+                new TaskGroupDocument({
+                  code: "task-group-1",
+                  tasks: [
+                    new TaskDocument({
+                      code: "task-1",
+                      status: "pending",
+                      completed: false,
+                    }),
+                  ],
+                }),
               ],
-            },
+            }),
+            new StageDocument({
+              code: "stage-2",
+              taskGroups: [],
+            }),
           ],
-        },
-        {
-          code: "stage-2",
-          taskGroups: [],
-        },
+        }),
       ],
       timeline: [
         {
@@ -91,7 +77,6 @@ export class CaseDocument {
       comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
-        name: "User Name",
       },
       ...props,
     });

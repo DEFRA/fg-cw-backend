@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { SqsSubscriber } from "../../common/sqs-subscriber.js";
-import { Case } from "../models/case.js";
-import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
+import { saveInboxMessageUseCase } from "../use-cases/save-inbox-message.use-case.js";
 import { createNewCaseSubscriber } from "./create-new-case.subscriber.js";
 
 vi.mock("../use-cases/create-case.use-case.js");
+vi.mock("../use-cases/save-inbox-message.use-case.js");
 
 describe("createNewCaseSubscriber", () => {
   it("is an instance of SqsSubscriber", () => {
@@ -25,19 +25,10 @@ describe("createNewCaseSubscriber", () => {
       },
     };
 
-    createCaseUseCase.mockResolvedValue(
-      Case.createMock({
-        _id: "case-id-123",
-        caseRef: "TEST-001",
-        workflowCode: "wf-001",
-        status: "NEW",
-        dateReceived: new Date().toISOString(),
-        payload: message.data.payload,
-      }),
-    );
+    saveInboxMessageUseCase.mockResolvedValue(true);
 
     await createNewCaseSubscriber.onMessage(message);
 
-    expect(createCaseUseCase).toHaveBeenCalledWith(message.data);
+    expect(saveInboxMessageUseCase).toHaveBeenCalledWith(message, "GAS");
   });
 });

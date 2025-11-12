@@ -1,8 +1,11 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { assertIsComment, toComments } from "./comment.js";
+import { CasePhase } from "./case-phase.js";
+import { CaseStage } from "./case-stage.js";
+import { CaseTaskGroup } from "./case-task-group.js";
+import { CaseTask } from "./case-task.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { toTasks } from "./task.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -17,17 +20,15 @@ export class Case {
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.status = props.status;
     this.dateReceived = props.dateReceived;
+    this.currentPhase = props.currentPhase;
     this.currentStage = props.currentStage;
+    this.currentStatus = props.currentStatus;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
-    this.stages = props.stages;
+    this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.requiredRoles = props.requiredRoles;
-
-    this.tasks = toTasks(this.stages);
     this.supplementaryData = props.supplementaryData || {};
   }
 
@@ -43,28 +44,16 @@ export class Case {
     });
   }
 
-  /**
-   *
-   * @param {string} taskCode
-   * @returns task with given taskCode or throws if task not found
-   */
-  findTask(taskCode) {
-    const task = this.tasks.get(taskCode);
+  findPhase(phaseCode) {
+    const phase = this.phases.find((p) => p.code === phaseCode);
 
-    if (!task) {
-      throw Boom.notFound(`Can not find Task with code ${taskCode}!`);
+    if (!phase) {
+      throw Boom.notFound(
+        `Case with caseRef ${this.caseRef} and workflowCode ${this.workflowCode} does not have a phase with code ${phaseCode}`,
+      );
     }
 
-    return task;
-  }
-
-  findStage(stageCode) {
-    const stage = this.stages.find((s) => s.code === stageCode);
-    if (!stage) {
-      throw Boom.notFound(`Can not find Stage with code ${stageCode}`);
-    }
-
-    return stage;
+    return phase;
   }
 
   findComment(commentRef) {
@@ -72,32 +61,51 @@ export class Case {
   }
 
   setTaskStatus({
+    phaseCode,
     stageCode,
     taskGroupCode,
     taskCode,
     status,
+    completed,
     comment,
     updatedBy,
   }) {
-    const caseTask = this.findTask(taskCode);
+    const task = this.findPhase(phaseCode)
+      .findStage(stageCode)
+      .findTaskGroup(taskGroupCode)
+      .findTask(taskCode);
 
-    caseTask.updateStatus(status, updatedBy);
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
 
-    if (status === "complete") {
-      const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: updatedBy,
-        text: comment,
-        data: {
-          caseId: this._id,
-          stageCode,
-          taskGroupCode,
-          taskCode,
-        },
-      });
+    const optionalComment = Comment.createOptionalComment({
+      type: eventType,
+      text: comment,
+      createdBy: updatedBy,
+    });
 
-      this.#addTimelineEvent(timelineEvent);
-      caseTask.updateCommentRef(timelineEvent.comment?.ref);
-    }
+    const timelineEvent = new TimelineEvent({
+      eventType,
+      data: {
+        caseId: this._id,
+        phaseCode,
+        stageCode,
+        taskGroupCode,
+        taskCode: task.code,
+      },
+      comment: optionalComment,
+      createdBy: updatedBy,
+    });
+
+    task.updateStatus({
+      status,
+      completed,
+      updatedBy,
+      comment: optionalComment,
+    });
+
+    this.#addTimelineEvent(timelineEvent);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {
@@ -140,6 +148,7 @@ export class Case {
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
         actionCode,
+        phaseCode: this.currentPhase,
         stageCode: this.currentStage,
       },
       text: comment,
@@ -166,7 +175,7 @@ export class Case {
   }
 
   updateStatus(status, createdBy) {
-    this.status = status;
+    this.currentStatus = status;
 
     if (status === "APPROVED") {
       const timelineEvent = TimelineEvent.createCaseApproved({
@@ -191,13 +200,7 @@ export class Case {
       comment.getUserIds(),
     );
 
-    const taskUserIds = this.stages
-      .flatMap((stage) =>
-        stage.taskGroups.flatMap((taskGroup) =>
-          taskGroup.tasks.flatMap((t) => t.updatedBy),
-        ),
-      )
-      .filter((id) => id !== undefined);
+    const taskUserIds = this.phases.flatMap((phase) => phase.getUserIds());
 
     const allUserIds = [
       ...caseUserIds,
@@ -233,7 +236,7 @@ export class Case {
 
   #getCurrentStage() {
     const currentStageIndex = this.#getCurrentStageIndex();
-    return this.stages[currentStageIndex];
+    return this.phases[0].stages[currentStageIndex];
   }
 
   #moveToNextStage() {
@@ -246,7 +249,7 @@ export class Case {
     const currentStageIndex = this.#getCurrentStageIndex();
     const currentStage = this.#getCurrentStage();
 
-    if (currentStageIndex === this.stages.length - 1) {
+    if (currentStageIndex === this.phases[0].stages.length - 1) {
       throw Boom.notFound(
         `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
       );
@@ -254,7 +257,7 @@ export class Case {
 
     const allTasksComplete = currentStage.taskGroups
       .flatMap((group) => group.tasks)
-      .every((task) => task.status === "complete");
+      .every((task) => task.completed);
 
     if (!allTasksComplete) {
       throw Boom.badRequest(
@@ -262,11 +265,11 @@ export class Case {
       );
     }
 
-    return this.stages[currentStageIndex + 1];
+    return this.phases[0].stages[currentStageIndex + 1];
   }
 
   #getCurrentStageIndex() {
-    const currentStageIndex = this.stages.findIndex(
+    const currentStageIndex = this.phases[0].stages.findIndex(
       (stage) => stage.code === this.currentStage,
     );
 
@@ -279,35 +282,33 @@ export class Case {
     return currentStageIndex;
   }
 
-  static new({ caseRef, payload, workflow }) {
+  static new({ caseRef, workflowCode, payload, phases }) {
+    const initialPhase = phases[0];
+    const initialStage = initialPhase.stages[0];
+    // TODO: when transitions are set up use initialStage.statuses[0];
+    const initialStatus = {
+      code: "NEW",
+    };
+
     return new Case({
       caseRef,
-      workflowCode: workflow.code,
-      status: "NEW",
+      workflowCode,
+      currentPhase: initialPhase.code,
+      currentStage: initialStage.code,
+      currentStatus: initialStatus.code,
       dateReceived: new Date().toISOString(),
-      currentStage: workflow.stages[0].code,
       payload,
       supplementaryData: {},
-      stages: workflow.stages.map((stage) => ({
-        code: stage.code,
-        taskGroups: stage.taskGroups.map((taskGroup) => ({
-          code: taskGroup.code,
-          tasks: taskGroup.tasks.map((task) => ({
-            code: task.code,
-            status: "pending",
-          })),
-        })),
-      })),
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
-          createdBy: "System", // To specify that the case was created by an external system
+          createdBy: "System",
           data: {
             caseRef,
           },
-        },
+        }),
       ],
-      requiredRoles: workflow.requiredRoles,
+      phases,
     });
   }
 
@@ -315,33 +316,44 @@ export class Case {
     return new Case({
       caseRef: "case-ref",
       workflowCode: "workflow-code",
-      status: "NEW",
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      currentPhase: "phase-1",
       currentStage: "stage-1",
+      currentStatus: "NEW",
+      dateReceived: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
-      stages: [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [
-                {
-                  code: "task-1",
-                  status: "pending",
-                },
+      phases: [
+        new CasePhase({
+          code: "phase-1",
+          stages: [
+            new CaseStage({
+              code: "stage-1",
+              taskGroups: [
+                new CaseTaskGroup({
+                  code: "task-group-1",
+                  tasks: [
+                    new CaseTask({
+                      code: "task-1",
+                      status: "pending",
+                      completed: false,
+                      // this should be refactored to use null
+                      commentRef: undefined,
+                      updatedAt: undefined,
+                      updatedBy: undefined,
+                    }),
+                  ],
+                }),
               ],
-            },
+            }),
+            new CaseStage({
+              code: "stage-2",
+              taskGroups: [],
+            }),
           ],
-        },
-        {
-          code: "stage-2",
-          taskGroups: [],
-        },
+        }),
       ],
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -350,16 +362,11 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        },
+        }),
       ],
       comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
-        name: "Test Name",
-      },
-      requiredRoles: {
-        allOf: ["ROLE_1", "ROLE_2"],
-        anyOf: ["ROLE_3"],
       },
       ...props,
     });

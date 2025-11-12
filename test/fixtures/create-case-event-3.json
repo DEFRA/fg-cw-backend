@@ -3,7 +3,7 @@
   "time": "2025-03-28T11:30:52.000Z",
   "source": "fg-gas-backend",
   "specversion": "1.0",
-  "type": "cloud.defra.development.fg-gas-backend.application.created",
+  "type": "cloud.defra.development.fg-gas-backend.case.create",
   "datacontenttype": "application/json",
   "data": {
     "caseRef": "CASE-REF-3",

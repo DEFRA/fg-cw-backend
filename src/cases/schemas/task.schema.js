@@ -19,11 +19,15 @@ export const Task = Joi.object({
   code: UrlSafeId.required(),
   type: Joi.string().valid("boolean").required(),
   name: Joi.string().required(),
-  description: Joi.string().allow(null).required(),
+  description: Joi.alternatives()
+    .try(Joi.string(), Joi.array(), Joi.valid(null))
+    .required(),
   statusOptions: Joi.array().items(StatusOption).required(),
-  comment: comment.optional(),
-  requiredRoles: requiredRolesSchema.optional(),
-}).label("Task");
+  comment: comment.optional().allow(null),
+  requiredRoles: Joi.alternatives()
+    .try(requiredRolesSchema, Joi.valid(null))
+    .optional(),
+});
 
 const TaskGroup = Joi.object({
   code: UrlSafeId.required(),
@@ -35,7 +39,7 @@ const TaskGroup = Joi.object({
 const Action = Joi.object({
   code: UrlSafeId.required(),
   name: Joi.string().required(),
-  comment: comment.optional(),
+  comment: comment.allow(null).required(),
 }).label("Action");
 
 export const Stage = Joi.object({
@@ -48,3 +52,9 @@ export const Stage = Joi.object({
   statuses: Joi.array().items(Status).required(),
   agreements: Joi.array().optional().allow(null),
 }).label("Stage");
+
+export const Phase = Joi.object({
+  code: UrlSafeId.required(),
+  name: Joi.string().required(),
+  stages: Joi.array().items(Stage).min(2).required(),
+}).label("Phase");

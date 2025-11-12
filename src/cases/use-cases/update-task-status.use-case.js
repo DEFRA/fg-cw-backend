@@ -9,8 +9,17 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const { caseId, stageCode, taskGroupCode, taskCode, status, comment, user } =
-    command;
+  const {
+    caseId,
+    phaseCode,
+    stageCode,
+    taskGroupCode,
+    taskCode,
+    status,
+    completed,
+    comment,
+    user,
+  } = command;
 
   const kase = await findById(caseId);
 
@@ -18,21 +27,48 @@ export const updateTaskStatusUseCase = async (command) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  // get workflow->task to validate comment
   const workflow = await findByCode(kase.workflowCode);
-  const task = workflow.findTask(stageCode, taskGroupCode, taskCode);
+  const task = workflow.findTask({
+    phaseCode,
+    stageCode,
+    taskGroupCode,
+    taskCode,
+  });
+  validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  validatePayloadComment(comment, task.comment?.type === "REQUIRED");
+  const taskCompleted = mapCompleted({ task, status, completed });
 
-  const updatedBy = user.id;
   kase.setTaskStatus({
+    phaseCode,
     stageCode,
     taskGroupCode,
     taskCode,
     status,
+    completed: taskCompleted,
     comment,
-    updatedBy,
+    updatedBy: user.id,
   });
 
   return update(kase);
 };
+
+const mapCompleted = ({ task, status, completed }) => {
+  if (hasStatusOptions(task)) {
+    const selectedOption = task.statusOptions.find(
+      (option) => option.code === status,
+    );
+
+    if (!selectedOption) {
+      throw Boom.badRequest(
+        `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
+      );
+    }
+
+    return selectedOption.completes;
+  } else {
+    return completed;
+  }
+};
+
+const hasStatusOptions = (task) =>
+  task?.statusOptions && task?.statusOptions.length > 0;

@@ -1,20 +1,23 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
+import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 
-export const TaskStatus = Joi.string().valid("complete", "pending");
+export const TaskStatus = Joi.string().allow(null);
 
-export class Task {
+export class CaseTask {
   static validationSchema = Joi.object({
     code: UrlSafeId.required().label("code"),
     status: TaskStatus.required(),
+    completed: Joi.boolean(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
     commentRef: UrlSafeId.optional().allow(null, "").label("commentRef"),
+    requiredRoles: requiredRolesSchema.optional(),
   });
 
   constructor(props) {
-    const { error, value } = Task.validationSchema.validate(props, {
+    const { error, value } = CaseTask.validationSchema.validate(props, {
       stripUnknown: true,
       abortEarly: false,
     });
@@ -27,12 +30,14 @@ export class Task {
 
     this.code = value.code;
     this.status = value.status;
+    this.completed = value.completed;
     this.commentRef = value.commentRef;
     this.updatedAt = value.updatedAt;
     this.updatedBy = value.updatedBy;
+    this.requiredRoles = value.requiredRoles;
   }
 
-  updateStatus(status, updatedBy) {
+  updateStatus({ status, completed, updatedBy, comment }) {
     const { error, value } = TaskStatus.validate(status, {
       stripUnknown: true,
       abortEarly: false,
@@ -45,30 +50,13 @@ export class Task {
     }
 
     this.status = value;
+    this.completed = completed;
     this.updatedBy = updatedBy;
     this.updatedAt = new Date().toISOString();
+    this.commentRef = comment?.ref ?? null;
   }
 
-  updateCommentRef(commentRef) {
-    this.commentRef = commentRef;
+  getUserIds() {
+    return this.updatedBy ? [this.updatedBy] : [];
   }
 }
-
-/**
- *
- * @param {stagesObject} stages
- * @returns a new Map of tasks by task Id
- */
-export const toTasks = (stages) => {
-  const tasks = new Map();
-  stages.forEach((s) =>
-    s.taskGroups.forEach((tg) =>
-      tg?.tasks.forEach((t) => tasks.set(t.code, toTask(t))),
-    ),
-  );
-  return tasks;
-};
-
-export const toTask = (caseTask) => {
-  return new Task(caseTask);
-};

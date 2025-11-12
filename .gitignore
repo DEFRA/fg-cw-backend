@@ -12,5 +12,6 @@ coverage
 # Test reports
 test/reports/
 test/logs/
+tmp
 
 .env

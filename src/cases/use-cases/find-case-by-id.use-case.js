@@ -27,15 +27,20 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
-// we format the description on fetching data incase the stage/task changes.
+// eslint-disable-next-line complexity
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
     case EventEnums.eventTypes.TASK_COMPLETED: {
-      const { stageCode, taskGroupCode, taskCode } = tl.data;
-      return `Task '${workflow.findTask(stageCode, taskGroupCode, taskCode).name}' completed`;
+      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
+      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' completed`;
+    }
+    case EventEnums.eventTypes.TASK_UPDATED: {
+      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
+      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' updated`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
-      const stage = workflow.findStage(tl.data.stageCode);
+      const phase = workflow.findPhase(tl.data.phaseCode);
+      const stage = phase.findStage(tl.data.stageCode);
       return `Stage '${stage.name}' outcome (${tl.data.actionCode})`;
     }
     default:
@@ -43,19 +48,102 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-const mapTasks = (tasks, workflowTaskGroup, userMap) =>
-  tasks.map((task) => {
+const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
+  caseTaskGroup.tasks.map((caseTaskGroupTask) => {
     const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
-      (wtgt) => wtgt.code === task.code,
+      (wtgt) => wtgt.code === caseTaskGroupTask.code,
     );
+
     return {
-      ...task,
+      code: caseTaskGroupTask.code,
       name: workflowTaskGroupTask.name,
-      description: workflowTaskGroupTask.description,
+      description: mapDescription(workflowTaskGroupTask),
+      type: workflowTaskGroupTask.type,
       statusOptions: workflowTaskGroupTask.statusOptions,
-      updatedBy: mapUserIdToName(task.updatedBy, userMap),
+      status: caseTaskGroupTask.status,
+      completed: caseTaskGroupTask.completed,
+      commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
+      commentRef: caseTaskGroupTask.commentRef,
+      updatedAt: caseTaskGroupTask.updatedAt,
+      updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
+      requiredRoles: workflowTaskGroupTask.requiredRoles,
     };
   });
+
+const mapTaskGroups = (caseStage, workflowStage, userMap) =>
+  caseStage.taskGroups.map((caseTaskGroup) => {
+    const workflowTaskGroup = workflowStage.taskGroups.find(
+      (wtg) => wtg.code === caseTaskGroup.code,
+    );
+
+    return {
+      code: caseTaskGroup.code,
+      name: workflowTaskGroup.name,
+      description: workflowTaskGroup.description,
+      tasks: mapTasks(caseTaskGroup, workflowTaskGroup, userMap),
+    };
+  });
+
+const mapStages = (casePhase, workflowPhase, kase, userMap) =>
+  casePhase.stages.map((caseStage) => {
+    const workflowStage = workflowPhase.findStage(caseStage.code);
+
+    return {
+      code: caseStage.code,
+      name: workflowStage.name,
+      description: workflowStage.description,
+      taskGroups: mapTaskGroups(caseStage, workflowStage, userMap),
+      statuses: workflowStage.statuses,
+      actions: workflowStage.actions,
+      outcome: caseStage.outcome
+        ? {
+            ...caseStage.outcome,
+            comment: kase.findComment(caseStage.outcome?.commentRef)?.text,
+          }
+        : undefined,
+    };
+  });
+
+const mapPhases = (kase, workflow, userMap) =>
+  kase.phases.map((casePhase) => {
+    const workflowPhase = workflow.findPhase(casePhase.code);
+
+    return {
+      code: casePhase.code,
+      name: workflowPhase.name,
+      stages: mapStages(casePhase, workflowPhase, kase, userMap),
+    };
+  });
+
+const isValidArray = (description) =>
+  Array.isArray(description) && description.length > 0;
+
+const isValidString = (description) =>
+  typeof description === "string" && description.trim() !== "";
+
+export const mapDescription = ({ name = "Task", description }) => {
+  if (isValidArray(description)) {
+    return description;
+  }
+
+  if (isValidString(description)) {
+    return [{ component: "heading", level: 2, text: description }];
+  }
+
+  return [{ component: "heading", level: 2, text: name }];
+};
+
+export const mapWorkflowCommentDef = (workflowTask) => {
+  const DEFAULT_COMMENT = {
+    label: "Note",
+    helpText: "All notes will be saved for auditing purposes",
+    mandatory: false,
+  };
+
+  return workflowTask?.comment
+    ? { ...DEFAULT_COMMENT, ...workflowTask.comment }
+    : DEFAULT_COMMENT;
+};
 
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
@@ -69,9 +157,9 @@ export const findCaseByIdUseCase = async (caseId, user) => {
   kase.assignedUser = userMap.get(kase.assignedUser?.id) || null;
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+
   kase.banner = buildBanner(kase, workflow);
   kase.requiredRoles = workflow.requiredRoles;
-
   kase.links = buildLinks(kase, workflow);
 
   kase.comments = kase.comments.map((comment) => ({
@@ -80,39 +168,15 @@ export const findCaseByIdUseCase = async (caseId, user) => {
     createdBy: mapUserIdToName(comment.createdBy, userMap),
   }));
 
-  kase.stages = kase.stages.map((stage) => {
-    const workflowStage = workflow.findStage(stage.code);
-    return {
-      ...stage,
-      name: workflowStage.name,
-      description: workflowStage.description,
-      taskGroups: stage.taskGroups.map((taskGroup) => {
-        const workflowTaskGroup = workflowStage.taskGroups.find(
-          (tg) => tg.code === taskGroup.code,
-        );
-        return {
-          ...taskGroup,
-          name: workflowTaskGroup.name,
-          description: workflowTaskGroup.description,
-          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup, userMap),
-        };
-      }),
-      outcome: stage.outcome
-        ? {
-            ...stage.outcome,
-            comment: kase.findComment(stage.outcome?.commentRef)?.text,
-          }
-        : undefined,
-    };
-  });
+  kase.phases = mapPhases(kase, workflow, userMap);
 
   kase.timeline = kase.timeline.map((tl) => {
     tl.createdBy = mapUserIdToUser(tl.createdBy, userMap);
     if (tl.data?.assignedTo) {
       tl.data.assignedTo = mapUserIdToUser(tl.data.assignedTo, userMap);
     }
-    tl.commentRef = mapComment(tl.comment);
-    tl.comment = undefined;
+    tl.commentRef = mapCommentRef(tl.comment);
+    tl.comment = null;
     tl.description = formatTimelineItemDescription(tl, workflow);
     return tl;
   });
@@ -131,6 +195,6 @@ const createUserMap = async (userIds, user) => {
   return userMap;
 };
 
-const mapComment = (comment) => {
+const mapCommentRef = (comment) => {
   return comment?.ref || undefined;
 };

@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
+        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, TASK_UPDATED, STAGE_COMPLETED, NOTE_ADDED]',
       );
     });
   });
@@ -310,25 +310,6 @@ describe("TimelineEvent", () => {
       expect(timelineEvent.comment.text).toBe("Stage complete");
       expect(timelineEvent.data.stageCode).toBe("64c88faac1f56f71e1b99999");
       expect(timelineEvent.data.actionCode).toBe("approve");
-    });
-  });
-
-  describe("createTaskCompleted", () => {
-    it("creates a task complete event", () => {
-      const props = {
-        data: {
-          taskCode: "64c88faac1f56f71e1b99999",
-        },
-        text: "Task complete",
-        createdBy: "64c88faac1f56f71e1b89a33",
-      };
-
-      const timelineEvent = TimelineEvent.createTaskCompleted(props);
-      expect(timelineEvent.eventType).toBe(
-        EventEnums.eventTypes.TASK_COMPLETED,
-      );
-      expect(timelineEvent.comment.text).toBe("Task complete");
-      expect(timelineEvent.data.taskCode).toBe("64c88faac1f56f71e1b99999");
     });
   });
 

@@ -11,7 +11,7 @@ services:
       SERVICES: sqs,sns
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
-      - ${TMPDIR:-/tmp}/localstack:/var/lib/localstack
+      - ./tmp/localstack:/var/lib/localstack
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     networks:
       - cdp-tenant
@@ -32,8 +32,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    command:
-      ["mongod", "--replSet", "mongoRepl", "--bind_ip", "localhost,mongodb"]
+    command: ["mongod", "--replSet", "mongoRepl", "--bind_ip", "0.0.0.0"]
     volumes:
       - mongodb-data:/data
     restart: always
@@ -71,6 +70,7 @@ services:
       - "${CW_PORT:-3001}:3001"
     links:
       - "localstack:localstack"
+      - "mongo-ready:mongo-ready"
       - "mongodb:mongodb"
       - "mongo-ready:mongo-ready"
       - "entra:entra"
@@ -86,6 +86,7 @@ services:
     env_file:
       - ".env"
     environment:
+      ENVIRONMENT: "${ENVIRONMENT}"
       OUTBOX_POLL_MS: "${OUTBOX_POLL_MS}"
       MONGO_URI: mongodb://mongodb:27017/?replicaSet=mongoRepl
     networks:
