@@ -177,7 +177,7 @@
                         "rows": [
                           {
                             "label": "Digital maps show correct land details",
-                            "text": "$.payload.answers.hasCheckedLandIsUpToDate",
+                            "text": "$.payload.answers.digitalMapsCorrectDetails",
                             "type": "boolean",
                             "format": "yesNo"
                           }
