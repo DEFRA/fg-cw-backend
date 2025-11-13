@@ -108,8 +108,6 @@ const messageFrps = {
             },
           },
         },
-        confirmEligible: true,
-        digitalMapsCorrectDetails: true,
         parcels: [
           {
             sheetId: "AB1234",

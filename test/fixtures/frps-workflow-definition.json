@@ -146,46 +146,6 @@
                     ]
                   },
                   {
-                    "heading": [
-                      {
-                        "text": "Confirm eligibility"
-                      }
-                    ],
-                    "content": [
-                      {
-                        "component": "summary-list",
-                        "rows": [
-                          {
-                            "label": "Confirm you will be eligible",
-                            "text": "$.payload.answers.confirmEligible",
-                            "type": "boolean",
-                            "format": "yesNo"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "heading": [
-                      {
-                        "text": "Land Details"
-                      }
-                    ],
-                    "content": [
-                      {
-                        "component": "summary-list",
-                        "rows": [
-                          {
-                            "label": "Digital maps show correct land details",
-                            "text": "$.payload.answers.hasCheckedLandIsUpToDate",
-                            "type": "boolean",
-                            "format": "yesNo"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
                     "component": "repeat",
                     "id": "land-parcels",
                     "itemsRef": "$.payload.answers.parcels[*]",
