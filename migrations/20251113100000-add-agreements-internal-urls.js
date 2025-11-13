@@ -1,5 +1,7 @@
-export const up = async (db, _client, context) => {
-  const environment = context?.environment || "local";
+import { config } from "../src/common/config.js";
+
+export const up = async (db, _client) => {
+  const environment = config.get("cdpEnvironment");
   const definitions = definitionsLookup[environment] || {};
 
   await db.collection("workflows").updateOne(
