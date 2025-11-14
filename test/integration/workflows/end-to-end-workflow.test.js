@@ -242,11 +242,11 @@ describe("End-to-End Workflow Integration Tests", () => {
       let completedTasks = 0;
 
       try {
-        // Try to complete the simple-review task in the application-receipt stage
+        // Try to complete the SIMPLE_REVIEW task in the APPLICATION_RECEIPT stage
         const taskResponse = await wreck.patch(
-          `/cases/${testData.caseId}/phases/default/stages/application-receipt/task-groups/application-receipt-tasks/tasks/simple-review/status`,
+          `/cases/${testData.caseId}/task-groups/APPLICATION_RECEIPT_TASKS/tasks/SIMPLE_REVIEW/status`,
           {
-            payload: { status: "complete" },
+            payload: { status: "COMPLETE" },
           },
         );
         expect(taskResponse.res.statusCode).toBe(200);
@@ -258,11 +258,11 @@ describe("End-to-End Workflow Integration Tests", () => {
         await cases.updateOne(
           {
             _id: new ObjectId(testData.caseId),
-            "phases.stages.code": "application-receipt",
+            "phases.stages.code": "APPLICATION_RECEIPT",
           },
           {
             $set: {
-              "phases.0.stages.0.taskGroups.0.tasks.0.status": "complete",
+              "phases.0.stages.0.taskGroups.0.tasks.0.status": "COMPLETE",
               "phases.0.stages.0.taskGroups.0.tasks.0.completedAt":
                 new Date().toISOString(),
               "phases.0.stages.0.taskGroups.0.tasks.0.completedBy":
@@ -351,9 +351,9 @@ describe("End-to-End Workflow Integration Tests", () => {
 
       // Verify task completion
       const initialStage = finalDbCase.phases[0].stages.find(
-        (stage) => stage.code === "application-receipt",
+        (stage) => stage.code === "APPLICATION_RECEIPT",
       );
-      expect(initialStage.taskGroups[0].tasks[0].status).toBe("complete");
+      expect(initialStage.taskGroups[0].tasks[0].status).toBe("COMPLETE");
 
       // Verify note was added
       expect(finalDbCase.comments).toBeDefined();
@@ -477,14 +477,14 @@ describe("End-to-End Workflow Integration Tests", () => {
 
     // Verify first stage has tasks
     const firstStage = testWorkflow.phases[0].stages.find(
-      (stage) => stage.code === "application-receipt",
+      (stage) => stage.code === "APPLICATION_RECEIPT",
     );
     expect(firstStage).toBeTruthy();
     expect(firstStage.taskGroups).toBeDefined();
     expect(firstStage.taskGroups[0].name).toBe("Application Receipt tasks");
     expect(firstStage.taskGroups[0].description).toBe("Task group description");
     expect(firstStage.taskGroups[0].tasks).toBeDefined();
-    expect(firstStage.taskGroups[0].tasks[0].code).toBe("simple-review");
+    expect(firstStage.taskGroups[0].tasks[0].code).toBe("SIMPLE_REVIEW");
   });
 });
 
@@ -548,22 +548,22 @@ const createCaseFromSnSEvent = async (eventData) => {
       applicant,
       answers: application,
     },
-    currentPhase: "default",
-    currentStage: "application-receipt",
+    currentPhase: "DEFAULT",
+    currentStage: "APPLICATION_RECEIPT",
     currentStatus: "NEW",
     phases: [
       {
-        code: "default",
+        code: "DEFAULT",
         stages: [
           {
-            code: "application-receipt",
+            code: "APPLICATION_RECEIPT",
             taskGroups: [
               {
-                code: "application-receipt-tasks",
+                code: "APPLICATION_RECEIPT_TASKS",
                 tasks: [
                   {
-                    code: "simple-review",
-                    status: "pending",
+                    code: "SIMPLE_REVIEW",
+                    status: "PENDING",
                   },
                 ],
               },

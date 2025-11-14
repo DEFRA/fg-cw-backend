@@ -25,9 +25,9 @@ const message = {
   type: "cloud.defra.local.fg-gas-backend.case.update.status",
   datacontenttype: "application/json",
   data: {
-    caseRef: "APPLICATION-PMF-001",
+    caseRef: "APPLICATION-FRPS-001",
     workflowCode: "frps-private-beta",
-    newStatus: "OFFERED",
+    newStatus: "PRE_AWARD:REVIEW_OFFER:OFFERED",
     supplementaryData: {
       phase: null,
       stage: null,
