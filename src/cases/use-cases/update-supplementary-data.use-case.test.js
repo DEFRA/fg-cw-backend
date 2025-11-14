@@ -22,13 +22,6 @@ const testAgreement2 = {
   updatedAt: "2024-01-02T14:00:00Z",
 };
 
-const testAgreement3 = {
-  agreementRef: "agreement-3",
-  agreementStatus: "OFFERED",
-  createdAt: "2024-01-03T12:00:00Z",
-  updatedAt: "2024-01-03T12:00:00Z",
-};
-
 const createTestMessage = (overrides = {}) => ({
   caseRef: "ABCD1234",
   workflowCode: "workflow-1",
@@ -50,6 +43,8 @@ describe("update supplementary data use case", () => {
       updateSupplementaryDataUseCase({
         caseRef: "ABCD1234",
         workflowCode: "workflow-1",
+        newStatus: "foo",
+        supplementaryData: {},
       }),
     ).rejects.toThrow(
       'Case with caseRef "ABCD1234" and workflowCode "workflow-1" not found',
@@ -62,7 +57,8 @@ describe("update supplementary data use case", () => {
         phase: null,
         stage: null,
         targetNode: "agreements",
-        data: [testAgreement1],
+        dataType: "ARRAY",
+        data: testAgreement1,
       },
     });
     const kase = Case.createMock();
@@ -82,13 +78,18 @@ describe("update supplementary data use case", () => {
     expect(returnValue).toBe(kase);
   });
 
-  it("should replace existing agreements with new complete array", async () => {
+  it("should replace existing agreements", async () => {
     const data = createTestMessage({
       supplementaryData: {
         phase: null,
         stage: null,
         targetNode: "agreements",
-        data: [testAgreement2, testAgreement3],
+        dataType: "ARRAY",
+        key: "agreementRef",
+        data: {
+          ...testAgreement2,
+          agreementRef: "agreement-1",
+        },
       },
     });
     const kase = Case.createMock();
@@ -102,11 +103,9 @@ describe("update supplementary data use case", () => {
       data.caseRef,
       data.workflowCode,
     );
-    expect(caseAgreements).toHaveLength(2);
-    expect(caseAgreements[0].agreementRef).toBe("agreement-2");
+    expect(caseAgreements).toHaveLength(1);
+    expect(caseAgreements[0].agreementRef).toBe("agreement-1");
     expect(caseAgreements[0].agreementStatus).toBe("ACCEPTED");
-    expect(caseAgreements[1].agreementRef).toBe("agreement-3");
-    expect(caseAgreements[1].agreementStatus).toBe("OFFERED");
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);
   });
@@ -117,6 +116,8 @@ describe("update supplementary data use case", () => {
         phase: null,
         stage: null,
         targetNode: "customData",
+        dataType: "OBJECT",
+        key: "customField",
         data: {
           customField: "customValue",
         },
@@ -128,22 +129,10 @@ describe("update supplementary data use case", () => {
     const returnValue = await updateSupplementaryDataUseCase(data);
 
     expect(kase.supplementaryData.customData).toEqual({
-      customField: "customValue",
+      customValue: {
+        customField: "customValue",
+      },
     });
-    expect(update).toHaveBeenCalledWith(kase);
-    expect(returnValue).toBe(kase);
-  });
-
-  it("should handle empty arrays", async () => {
-    const data = createTestMessage();
-    const kase = Case.createMock();
-    kase.addSupplementaryData("agreements", [testAgreement1]);
-
-    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    const returnValue = await updateSupplementaryDataUseCase(data);
-
-    const caseAgreements = kase.supplementaryData.agreements;
-    expect(caseAgreements).toHaveLength(0);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);
   });

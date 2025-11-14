@@ -18,11 +18,14 @@ export const updateSupplementaryDataUseCase = async ({
     );
   }
 
-  kase.updateStatus(newStatus, null);
+  const { targetNode, data, key, dataType } = supplementaryData;
 
-  const { targetNode, data } = supplementaryData;
-
-  kase.addSupplementaryData(targetNode, data);
+  kase.updateSupplementaryData({
+    targetNode,
+    data,
+    dataType,
+    key,
+  });
 
   await update(kase);
 

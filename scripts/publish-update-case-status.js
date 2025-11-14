@@ -32,14 +32,14 @@ const message = {
       phase: null,
       stage: null,
       targetNode: "agreements",
-      data: [
-        {
-          agreementRef: "AGREEMENT-REF-123",
-          createdAt: "2023-10-01T12:00:00Z",
-          updatedAt: "2023-10-01T12:00:00Z",
-          agreementStatus: "OFFERED",
-        },
-      ],
+      key: "agreementRef",
+      dataType: "ARRAY",
+      data: {
+        agreementRef: "AGREEMENT-REF-123",
+        createdAt: "2023-10-01T12:00:00Z",
+        updatedAt: "2023-10-01T12:00:00Z",
+        agreementStatus: "OFFERED",
+      },
     },
   },
 };

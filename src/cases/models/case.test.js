@@ -108,6 +108,76 @@ describe("Case", () => {
     });
   });
 
+  describe("updateSupplementaryDataObject", () => {
+    it("should throw if no key is provided", () => {
+      const caseInstance = createTestCase();
+      try {
+        caseInstance.updateSupplementaryDataObject({
+          targetData: {},
+          targetNode: "Foo",
+          data: {
+            someData: "barr",
+          },
+        });
+      } catch (e) {
+        expect(e.message).toBe(
+          'Can not update supplementaryData "Foo" as an object without a key',
+        );
+      }
+    });
+
+    it("should add data at key within object", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryDataObject({
+        targetData: {},
+        key: "dataRef",
+        targetNode: "Foo",
+        data: {
+          dataRef: "REF-1234-5678",
+          someData: "barr",
+        },
+      });
+      expect(result["REF-1234-5678"]).toBeDefined();
+      expect(result["REF-1234-5678"].someData).toBe("barr");
+    });
+  });
+
+  describe("updateSupplementaryDataArray", () => {
+    it("should add element to array if does not exist", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryDataArray({
+        targetData: [],
+        key: undefined,
+        data: { agreementRef: "1234" },
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0].agreementRef).toBe("1234");
+    });
+
+    it("should add new element to existing", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryDataArray({
+        targetData: [{ agreementRef: "1234", foo: "foo" }],
+        key: "agreementRef",
+        data: { agreementRef: "5678", foo: "barr" },
+      });
+      expect(result).toHaveLength(2);
+      expect(result[0].foo).toBe("foo");
+      expect(result[1].agreementRef).toBe("5678");
+    });
+
+    it("should update existing ref", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryDataArray({
+        targetData: [{ agreementRef: "1234", foo: "foo" }],
+        key: "agreementRef",
+        data: { agreementRef: "1234", foo: "barr" },
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0].foo).toBe("barr");
+    });
+  });
+
   describe("objectId getter", () => {
     it("returns ObjectId instance from hex string", () => {
       const hexId = "64c88faac1f56f71e1b89a33";
