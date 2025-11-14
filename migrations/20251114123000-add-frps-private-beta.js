@@ -1,0 +1,451 @@
+import { config } from "../src/common/config.js";
+
+export const up = async (db) => {
+  const environment = config.get("cdpEnvironment");
+
+  const definitions = {
+    local: {
+      agreementsService: {
+        internalUrl: "http://localhost:3000/agreement/{agreementRef}",
+      },
+    },
+    dev: {
+      agreementsService: {
+        internalUrl:
+          "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}",
+      },
+    },
+    test: {
+      agreementsService: {
+        internalUrl:
+          "https://fg-cw-frontend.test.cdp-int.defra.cloud/agreement/{agreementRef}",
+      },
+    },
+    "perf-test": {
+      agreementsService: {
+        internalUrl:
+          "https://fg-cw-frontend.perf-test.cdp-int.defra.cloud/agreement/{agreementRef}",
+      },
+    },
+    prod: {
+      agreementsService: {
+        internalUrl:
+          "https://fg-cw-frontend.prod.cdp-int.defra.cloud/agreement/{agreementRef}",
+      },
+    },
+  }[environment];
+
+  const workflow = {
+    code: "frps-private-beta",
+    requiredRoles: { allOf: [], anyOf: [] },
+    definitions,
+    externalActions: [
+      {
+        code: "RERUN_RULES",
+        name: "Rerun Rules",
+        description: "Rerun the business rules validation",
+        endpoint: "landGrantsRulesRerun",
+        target: {
+          position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+          node: "landGrantsRulesRun",
+          nodeType: "array",
+          place: "append",
+        },
+      },
+    ],
+    pages: {
+      cases: {
+        details: {
+          banner: {
+            title: { text: "$.payload.businessName", type: "string" },
+            summary: {
+              sbi: {
+                label: "SBI",
+                text: "$.payload.identifiers.sbi",
+                type: "string",
+              },
+              reference: {
+                label: "Reference",
+                text: "$.caseRef",
+                type: "string",
+              },
+              scheme: {
+                label: "Scheme",
+                text: "$.payload.answers.scheme",
+                type: "string",
+              },
+              createdAt: {
+                label: "Created At",
+                text: "$.payload.createdAt",
+                type: "date",
+                format: "formatDate",
+              },
+            },
+          },
+          tabs: {
+            "case-details": {
+              content: [
+                {
+                  id: "title",
+                  component: "heading",
+                  text: "Application",
+                  level: 2,
+                  classes: "govuk-!-margin-top-6 govuk-!-margin-bottom-1",
+                },
+                {
+                  id: "submittedDate",
+                  component: "container",
+                  classes: "govuk-body",
+                  items: [
+                    {
+                      text: "Application submitted:",
+                      classes: "govuk-!-font-weight-regular",
+                    },
+                    {
+                      text: "$.payload.submittedAt",
+                      classes: "govuk-!-font-weight-bold",
+                      format: "formatDate",
+                    },
+                  ],
+                },
+                {
+                  component: "accordion",
+                  id: "case-events",
+                  items: [
+                    {
+                      heading: [{ text: "Customer details" }],
+                      content: [
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              label: "Name",
+                              text: "$.payload.answers.applicant.customer.name.title $.payload.answers.applicant.customer.name.first  $.payload.answers.applicant.customer.name.middle $.payload.answers.applicant.customer.name.last",
+                            },
+                            {
+                              label: "Business name",
+                              text: "$.payload.answers.applicant.business.name",
+                            },
+                            {
+                              label: "Address",
+                              text: [
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.line1",
+                                },
+                                { component: "line-break" },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.line2",
+                                },
+                                { component: "line-break" },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.line3",
+                                },
+                                { component: "line-break" },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.street",
+                                },
+                                { component: "line-break" },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.city",
+                                },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.postalCode",
+                                },
+                              ],
+                            },
+                            {
+                              label: "SBI number",
+                              text: "$.payload.identifiers.sbi",
+                            },
+                            {
+                              label: "Contact details",
+                              text: [
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.email.address",
+                                },
+                                { component: "line-break" },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.phone.mobile",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      component: "repeat",
+                      id: "land-parcels",
+                      itemsRef: "$.payload.answers.parcels[*]",
+                      items: {
+                        heading: [
+                          {
+                            text: "Land parcel selected : @.sheetId @.parcelId",
+                          },
+                        ],
+                        content: [
+                          {
+                            component: "summary-list",
+                            rows: [
+                              {
+                                label: "Land parcel",
+                                text: [
+                                  {
+                                    component: "container",
+                                    items: [
+                                      { text: "@.sheetId" },
+                                      { text: "@.parcelId" },
+                                    ],
+                                  },
+                                ],
+                              },
+                              {
+                                component: "repeat",
+                                itemsRef: "@.actions[*]",
+                                items: [
+                                  {
+                                    label: "Action",
+                                    text: [
+                                      {
+                                        component: "container",
+                                        items: [
+                                          { text: "@.description" },
+                                          { text: "-" },
+                                          { text: "@.code" },
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  {
+                                    label: "Quantity (ha)",
+                                    text: [
+                                      {
+                                        component: "container",
+                                        items: [
+                                          {
+                                            text: "@.appliedFor.quantity",
+                                          },
+                                          { text: "@.appliedFor.unit" },
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  {
+                                    label: "Payment rate per year",
+                                    text: [
+                                      {
+                                        component: "container",
+                                        items: [
+                                          {
+                                            text: "@.paymentRates.ratePerUnitPence",
+                                            format: "penniesToPounds",
+                                          },
+                                          { text: "@.appliedFor.unit" },
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  {
+                                    label: "Yearly payment",
+                                    text: [
+                                      {
+                                        text: "@.annualPaymentPence",
+                                        format: "penniesToPounds",
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      heading: [{ text: "Total yearly payment" }],
+                      content: [
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              label: "Total yearly payment",
+                              text: "$.payload.answers.totalAnnualPaymentPence",
+                              format: "penniesToPounds",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            agreements: {
+              renderIf: "$.supplementaryData.agreements[0]",
+              content: [
+                {
+                  id: "title",
+                  component: "heading",
+                  text: "Case grant funding agreement",
+                  level: 2,
+                  classes: "govuk-!-margin-top-6",
+                },
+                {
+                  id: "subtitle",
+                  component: "heading",
+                  text: "Check the grant funding agreement system to see the final terms of the agreement.",
+                  level: 3,
+                  classes: "govuk-inset-text",
+                },
+                {
+                  type: "array",
+                  component: "table",
+                  rowsRef: "$.supplementaryData.agreements[*]",
+                  rows: [
+                    { label: "Reference", text: "@.agreementRef" },
+                    {
+                      label: "Date",
+                      text: "@.createdAt",
+                      type: "date",
+                      format: "formatDate",
+                    },
+                    {
+                      id: "internal",
+                      component: "container",
+                      label: "View",
+                      items: [
+                        {
+                          label: "Internal",
+                          component: "url",
+                          text: "Internal",
+                          href: {
+                            urlTemplate:
+                              "$.definitions.agreementsService.internalUrl",
+                            params: { agreementRef: "@.agreementRef" },
+                          },
+                          target: "_blank",
+                          rel: "noopener",
+                          classes: "govuk-!-margin-right-6",
+                        },
+                      ],
+                    },
+                    {
+                      label: "Status",
+                      component: "status",
+                      text: "@.agreementStatus",
+                      classesMap: {
+                        OFFERED: "govuk-tag--yellow",
+                        ACCEPTED: "govuk-tag--blue",
+                        WITHDRAWN: "govuk-tag--grey",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    phases: [
+      {
+        code: "default",
+        name: "Default Phase",
+        stages: [
+          {
+            code: "application-receipt",
+            name: "Application Receipt",
+            taskGroups: [
+              {
+                code: "application-receipt-tasks",
+                tasks: [
+                  {
+                    code: "simple-review",
+                    name: "Simple Review",
+                    type: "boolean",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Customer details review",
+                        level: 1,
+                      },
+                      {
+                        component: "ordered-list",
+                        items: [
+                          {
+                            text: "Go to Application to view submitted customer details.",
+                          },
+                          {
+                            text: "Check the submitted details match the details and permissions on the Rural Payments service (RPS).",
+                          },
+                          {
+                            text: "Come back to this page and confirm if the details match.",
+                          },
+                        ],
+                      },
+                      {
+                        component: "heading",
+                        text: "Customer detail review outcome",
+                        level: 2,
+                      },
+                    ],
+                    statusOptions: [],
+                  },
+                  {
+                    code: "detail-review",
+                    name: "Detail Review",
+                    type: "boolean",
+                    description: null,
+                    statusOptions: [],
+                  },
+                ],
+                name: "Application Receipt tasks",
+                description: "Task group description",
+              },
+            ],
+            actionsTitle: "Decision",
+            actions: [
+              {
+                code: "approve",
+                name: "Approve",
+                comment: {
+                  label: "Approval reason note",
+                  helpText: "All notes will be saved for auditing purposes",
+                  type: "REQUIRED",
+                },
+              },
+            ],
+            statuses: [],
+            description: null,
+          },
+          {
+            code: "contract",
+            name: "Stage for contract management",
+            taskGroups: [],
+            actions: [],
+            statuses: [],
+            description: null,
+          },
+          {
+            code: "award",
+            name: "Award",
+            taskGroups: [],
+            actions: [],
+            statuses: [],
+            description: null,
+          },
+        ],
+      },
+    ],
+  };
+
+  await db.collection("workflows").insertOne(workflow);
+};

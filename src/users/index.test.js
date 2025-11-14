@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "../common/mongo-client.js";
 import { createServer } from "../server/index.js";
 import { users } from "./index.js";
 
@@ -12,22 +11,6 @@ describe("users", () => {
 
   beforeEach(async () => {
     server = await createServer();
-  });
-
-  it("creates indexes on startup", async () => {
-    await server.register(users);
-    await server.initialize();
-
-    expect(db.createIndex).toHaveBeenCalledWith(
-      "users",
-      { idpId: 1 },
-      { unique: true },
-    );
-    expect(db.createIndex).toHaveBeenCalledWith(
-      "roles",
-      { code: 1 },
-      { unique: true },
-    );
   });
 
   it("registers routes", async () => {

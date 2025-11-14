@@ -189,7 +189,7 @@ export const workflowData1 = {
                         text: "Internal",
                         href: {
                           urlTemplate:
-                            "$.definitions.agreementsService.internalUrlTemplate",
+                            "$.definitions.agreementsService.internalUrl",
                           params: {
                             agreementRef: "@.agreementRef",
                           },
@@ -197,19 +197,6 @@ export const workflowData1 = {
                         target: "_blank",
                         rel: "noopener",
                         classes: "govuk-!-margin-right-6",
-                      },
-                      {
-                        label: "External",
-                        component: "copyToClipboard",
-                        text: {
-                          urlTemplate:
-                            "$.definitions.agreementsService.externalUrlTemplate",
-                          params: {
-                            agreementRef: "@.agreementRef",
-                          },
-                        },
-                        buttonText: "Copy external",
-                        feedbackText: "Copied to clipboard",
                       },
                     ],
                   },
