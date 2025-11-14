@@ -176,7 +176,7 @@ const resolveRepeatComponent = ({ path, root, row }) => {
   return repeatedItems;
 };
 
-const resolveComponentContainer = ({ path, root, row }) => {
+const resolveComponentContainer = ({ path, root }) => {
   const { contentRef } = path;
   const content = JSONPath({ json: root, path: contentRef });
   return content[0] || [];

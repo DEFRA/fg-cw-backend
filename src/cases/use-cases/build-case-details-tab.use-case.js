@@ -98,5 +98,5 @@ const getActionContext = async (tabDefinition) => {
 
 const callAPIAndFetchData = async () => {
   // TODO: This is temporary until we are calling the Rules Engine API to fetch this data!
-  return Promise.resolve(rulesEngineOutput);
+  return rulesEngineOutput;
 };
