@@ -152,10 +152,11 @@ export class Case {
   updateSupplementaryData({ targetNode, key, dataType, data }) {
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
-    if (!targetData)
+    if (!targetData) {
       throw new Error(
         `Error attempting to update supplementaryData. Could not get the targetNode ${targetNode}`,
       );
+    }
 
     if (dataType === "ARRAY") {
       const updated = this.updateSupplementaryDataArray({
@@ -173,14 +174,17 @@ export class Case {
         data,
       });
       return this.addSupplementaryData(targetNode, updated);
+    } else {
+      return null;
     }
   }
 
   updateSupplementaryDataObject({ targetData, key, data, targetNode }) {
-    if (!key)
+    if (!key) {
       throw new Error(
         `Can not update supplementaryData "${targetNode}" as an object without a key`,
       );
+    }
     targetData[data[key]] = data;
     return targetData;
   }
