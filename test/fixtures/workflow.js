@@ -189,7 +189,7 @@ export const workflowData1 = {
                         text: "Internal",
                         href: {
                           urlTemplate:
-                            "$.definitions.agreementsService.internalUrlTemplate",
+                            "$.definitions.agreementsService.internalUrl",
                           params: {
                             agreementRef: "@.agreementRef",
                           },
