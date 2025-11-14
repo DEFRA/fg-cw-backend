@@ -198,19 +198,6 @@ export const workflowData1 = {
                         rel: "noopener",
                         classes: "govuk-!-margin-right-6",
                       },
-                      {
-                        label: "External",
-                        component: "copyToClipboard",
-                        text: {
-                          urlTemplate:
-                            "$.definitions.agreementsService.externalUrlTemplate",
-                          params: {
-                            agreementRef: "@.agreementRef",
-                          },
-                        },
-                        buttonText: "Copy external",
-                        feedbackText: "Copied to clipboard",
-                      },
                     ],
                   },
                   {
