@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { db } from "../../common/mongo-client.js";
 import { Permissions } from "../models/permissions.js";
+import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
@@ -10,6 +11,7 @@ import { WorkflowTaskComment } from "../models/workflow-task-comment.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
 import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
+import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
@@ -19,13 +21,20 @@ const toWorkflowAction = (a) =>
   new WorkflowAction({
     code: a.code,
     name: a.name,
+    checkTasks: a.checkTasks,
     comment: a.comment
       ? new WorkflowActionComment({
           label: a.comment.label,
           helpText: a.comment.helpText,
-          type: a.comment.type,
+          mandatory: a.comment.mandatory,
         })
       : null,
+  });
+
+const toWorkflowTransition = (t) =>
+  new WorkflowTransition({
+    targetPosition: Position.from(t.targetPosition),
+    action: t.action ? toWorkflowAction(t.action) : null,
   });
 
 const toWorkflowStageStatus = (s) =>
@@ -33,6 +42,7 @@ const toWorkflowStageStatus = (s) =>
     code: s.code,
     name: s.name,
     description: s.description,
+    transitions: s.transitions.map(toWorkflowTransition),
   });
 
 const toWorkflowTaskStatusOption = (so) =>
@@ -55,8 +65,8 @@ const toWorkflowTask = (t) =>
   new WorkflowTask({
     code: t.code,
     name: t.name,
+    mandatory: t.mandatory,
     description: t.description,
-    type: t.type,
     requiredRoles: t.requiredRoles
       ? new Permissions({
           allOf: t.requiredRoles.allOf,
@@ -80,7 +90,6 @@ const toWorkflowStage = (s) =>
     code: s.code,
     name: s.name,
     description: s.description,
-    actions: s.actions.map(toWorkflowAction),
     statuses: s.statuses.map(toWorkflowStageStatus),
     taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
   });

@@ -1,8 +1,10 @@
 import Boom from "@hapi/boom";
+import { Position } from "../models/position.js";
 import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
+import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 export const updateSupplementaryDataUseCase = async ({
   caseRef,
@@ -18,7 +20,13 @@ export const updateSupplementaryDataUseCase = async ({
     );
   }
 
-  kase.updateStatus(newStatus, null);
+  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+
+  kase.progressTo({
+    position: Position.from(newStatus),
+    workflow,
+    createdBy: "System",
+  });
 
   const { targetNode, data } = supplementaryData;
 
