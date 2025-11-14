@@ -108,6 +108,50 @@ describe("Case", () => {
     });
   });
 
+  describe("getSupplementaryDataNode", () => {
+    it("should get data node if it exists", () => {
+      const agreements = {};
+      const caseInstance = createTestCase();
+      caseInstance.supplementaryData = {
+        agreements,
+      };
+
+      expect(caseInstance.getSupplementaryDataNode("agreements")).toEqual(
+        agreements,
+      );
+    });
+  });
+
+  describe("updateSupplementaryData", () => {
+    it("should add data when it deosn't exists", () => {
+      const caseInstance = createTestCase();
+      const data = {
+        targetNode: "foo",
+        dataType: "ARRAY",
+        data: {
+          someKey: "someValue",
+        },
+      };
+      caseInstance.updateSupplementaryData(data);
+      expect(caseInstance.supplementaryData.foo).toBeDefined();
+      expect(caseInstance.supplementaryData.foo).toHaveLength(1);
+    });
+
+    it("should add data as object when it doesn't exist", () => {
+      const caseInstance = createTestCase();
+      const data = {
+        targetNode: "foo",
+        dataType: "OBJECT",
+        key: "someKey",
+        data: {
+          someKey: "someValue",
+        },
+      };
+      caseInstance.updateSupplementaryData(data);
+      expect(caseInstance.supplementaryData.foo).toBeDefined();
+    });
+  });
+
   describe("updateSupplementaryDataObject", () => {
     it("should throw if no key is provided", () => {
       const caseInstance = createTestCase();
@@ -169,12 +213,15 @@ describe("Case", () => {
     it("should update existing ref", () => {
       const caseInstance = createTestCase();
       const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [{ agreementRef: "1234", foo: "foo" }],
+        targetData: [
+          { agreementRef: "5678" },
+          { agreementRef: "1234", foo: "foo" },
+        ],
         key: "agreementRef",
         data: { agreementRef: "1234", foo: "barr" },
       });
-      expect(result).toHaveLength(1);
-      expect(result[0].foo).toBe("barr");
+      expect(result).toHaveLength(2);
+      expect(result[1].foo).toBe("barr");
     });
   });
 

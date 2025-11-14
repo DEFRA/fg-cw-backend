@@ -152,12 +152,6 @@ export class Case {
   updateSupplementaryData({ targetNode, key, dataType, data }) {
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
-    if (!targetData) {
-      throw new Error(
-        `Error attempting to update supplementaryData. Could not get the targetNode ${targetNode}`,
-      );
-    }
-
     if (dataType === "ARRAY") {
       const updated = this.updateSupplementaryDataArray({
         targetData,
