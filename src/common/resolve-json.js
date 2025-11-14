@@ -35,7 +35,10 @@ const resolveJSONString = ({ path, root, row }) => {
 const resolveJSONArray = ({ path, root, row }) => {
   return path.flatMap((item) => {
     const resolved = resolveJSONPath({ root, path: item, row });
-    if (Array.isArray(resolved) && isRepeat(item)) {
+    if (
+      Array.isArray(resolved) &&
+      (isRepeat(item) || isComponentContainer(item))
+    ) {
       return resolved;
     }
     return [resolved];
@@ -52,6 +55,7 @@ const resolveJSONObject = ({ path, root, row }) => {
   return applyFormatsRecursively(resolved);
 };
 
+// eslint-disable-next-line complexity
 const handleSpecialCases = ({ path, root, row }) => {
   if (isTable(path)) {
     return resolveTableSection({ path, root, row });
@@ -61,6 +65,9 @@ const handleSpecialCases = ({ path, root, row }) => {
   }
   if (isRepeat(path)) {
     return resolveRepeatComponent({ path, root, row });
+  }
+  if (isComponentContainer(path)) {
+    return resolveComponentContainer({ path, root, row });
   }
   return handleUrlTemplate({ path, root, row });
 };
@@ -77,6 +84,8 @@ const isAccordion = (path) =>
   path.component === "accordion" && path.itemsRef && path.items;
 const isRepeat = (path) =>
   path.component === "repeat" && path.itemsRef && path.items;
+const isComponentContainer = (path) =>
+  path.component === "component-container" && path.contentRef;
 
 const resolveGenericObject = ({ path, root, row }) => {
   const resolved = {};
@@ -165,6 +174,12 @@ const resolveRepeatComponent = ({ path, root, row }) => {
   });
 
   return repeatedItems;
+};
+
+const resolveComponentContainer = ({ path, root }) => {
+  const { contentRef } = path;
+  const content = JSONPath({ json: root, path: contentRef });
+  return content[0] || [];
 };
 
 const hasMultipleRefs = (path) => {

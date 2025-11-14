@@ -483,4 +483,122 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(tableComponent.type).toBe("array");
     expect(Array.isArray(tableComponent.rows)).toBe(true);
   });
+
+  describe("action context integration", () => {
+    it("should add actionData to root context when tab has action definition", async () => {
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "frps-private-beta",
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "land-grants": {
+                  action: {
+                    landGrants: "rules-engine-endpoint",
+                  },
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Land Grants",
+                      level: 2,
+                    },
+                    {
+                      component: "component-container",
+                      contentRef: "$.actionData.landGrants.response",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase(
+        "test-case-id",
+        "land-grants",
+      );
+
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.caseRef).toBe("case-ref");
+      expect(result.tabId).toBe("land-grants");
+      expect(result.content).toBeDefined();
+      expect(Array.isArray(result.content)).toBe(true);
+
+      // Verify that content includes both static heading and dynamic content from actionData
+      expect(result.content.length).toBeGreaterThan(1);
+      expect(result.content[0]).toEqual({
+        component: "heading",
+        text: "Land Grants",
+        level: 2,
+      });
+
+      // Verify the component-container is resolved to actual components from temp-rules-engine-output.json
+      // The rest of the content should be the flattened response from the rules engine
+      const dynamicContent = result.content.slice(1);
+      expect(dynamicContent.length).toBeGreaterThan(0);
+      expect(dynamicContent[0]).toHaveProperty("component");
+    });
+
+    it("should not add actionData when tab has no action definition", async () => {
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "frps-private-beta",
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "simple-tab": {
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Simple Tab",
+                      level: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase(
+        "test-case-id",
+        "simple-tab",
+      );
+
+      // Should still work without action definition
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.caseRef).toBe("case-ref");
+      expect(result.tabId).toBe("simple-tab");
+      expect(result.content).toBeDefined();
+      expect(result.content).toEqual([
+        {
+          component: "heading",
+          text: "Simple Tab",
+          level: 2,
+        },
+      ]);
+    });
+  });
 });

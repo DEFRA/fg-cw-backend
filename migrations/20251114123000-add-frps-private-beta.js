@@ -288,6 +288,17 @@ export const up = async (db) => {
                 },
               ],
             },
+            calculations: {
+              action: {
+                rulesData: "rules-engine-output.json",
+              },
+              content: [
+                {
+                  component: "component-container",
+                  contentRef: "$.actionData.rulesData.response",
+                },
+              ],
+            },
             agreements: {
               renderIf: "$.supplementaryData.agreements[0]",
               content: [
