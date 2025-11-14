@@ -7,7 +7,6 @@ import {
 export const updateSupplementaryDataUseCase = async ({
   caseRef,
   workflowCode,
-  newStatus,
   supplementaryData,
 }) => {
   const kase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
