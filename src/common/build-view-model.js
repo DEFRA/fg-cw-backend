@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { resolveJSONPath } from "./resolve-json.js";
 
-export const createRootContext = (kase, workflow) => ({
+export const createCaseWorkflowContext = (kase, workflow) => ({
   ...kase,
   definitions: { ...workflow.definitions },
   ...(workflow.externalActions && {
@@ -63,7 +63,7 @@ export const buildLinks = (kase, workflow) => {
     }))
     .filter((tab) => !knownLinkIds.includes(tab.key));
 
-  const root = createRootContext(kase, workflow);
+  const root = createCaseWorkflowContext(kase, workflow);
   tabs.forEach((tab) => {
     if (!pathExists(root, tab.renderIf)) {
       return;
@@ -103,7 +103,7 @@ export const buildBanner = (kase, workflow) => {
     path: "$.pages.cases.details.banner",
   });
 
-  const root = createRootContext(kase, workflow);
+  const root = createCaseWorkflowContext(kase, workflow);
   const banner = resolveJSONPath({ root, path: bannerJson });
 
   addCallToActionToBanner(banner, root.externalActions);
