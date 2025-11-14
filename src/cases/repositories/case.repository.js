@@ -6,6 +6,7 @@ import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
 import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
+import { Position } from "../models/position.js";
 import { CaseDocument } from "./case/case-document.js";
 
 const collection = "cases";
@@ -45,9 +46,11 @@ const toCase = (doc) => {
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
     payload: doc.payload,
-    currentPhase: doc.currentPhase,
-    currentStage: doc.currentStage,
-    currentStatus: doc.currentStatus,
+    position: new Position({
+      phaseCode: doc.currentPhase,
+      stageCode: doc.currentStage,
+      statusCode: doc.currentStatus,
+    }),
     dateReceived: doc.dateReceived.toISOString(),
     createdAt: doc.createdAt,
     phases: doc.phases.map(toCasePhase),

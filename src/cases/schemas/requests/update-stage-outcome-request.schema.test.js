@@ -5,7 +5,7 @@ describe("updateStageOutcomeRequestSchema", () => {
   describe("valid requests", () => {
     it("validates valid request with actionCode and comment", () => {
       const validRequest = {
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Application approved with conditions",
       };
 
@@ -18,7 +18,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("validates valid request with actionCode only", () => {
       const validRequest = {
-        actionCode: "reject",
+        actionCode: "REJECT",
       };
 
       const { error, value } =
@@ -30,7 +30,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("allows empty string comment", () => {
       const validRequest = {
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "",
       };
 
@@ -43,7 +43,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("allows null comment", () => {
       const validRequest = {
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: null,
       };
 
@@ -58,7 +58,7 @@ describe("updateStageOutcomeRequestSchema", () => {
   describe("strips unknown properties", () => {
     it("removes unknown properties from request", () => {
       const requestWithUnknown = {
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         unknownProperty: "should be stripped",
         extraField: 123,
@@ -70,7 +70,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
       expect(error).toBeUndefined();
       expect(value).toEqual({
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
       });
       expect(value.unknownProperty).toBeUndefined();
@@ -80,7 +80,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("preserves valid properties while stripping unknown ones", () => {
       const requestWithMixed = {
-        actionCode: "reject",
+        actionCode: "REJECT",
         comment: "Reason for rejection",
         invalid: "removed",
         alsoInvalid: true,
@@ -91,7 +91,7 @@ describe("updateStageOutcomeRequestSchema", () => {
 
       expect(error).toBeUndefined();
       expect(value).toEqual({
-        actionCode: "reject",
+        actionCode: "REJECT",
         comment: "Reason for rejection",
       });
     });
@@ -151,10 +151,10 @@ describe("updateStageOutcomeRequestSchema", () => {
 
     it("rejects non-string comment when provided", () => {
       const invalidRequests = [
-        { actionCode: "approve", comment: 123 },
-        { actionCode: "approve", comment: true },
-        { actionCode: "approve", comment: [] },
-        { actionCode: "approve", comment: {} },
+        { actionCode: "APPROVE", comment: 123 },
+        { actionCode: "APPROVE", comment: true },
+        { actionCode: "APPROVE", comment: [] },
+        { actionCode: "APPROVE", comment: {} },
       ];
 
       invalidRequests.forEach((request) => {

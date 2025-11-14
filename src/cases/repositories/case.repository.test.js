@@ -243,14 +243,14 @@ describe("updateStage", () => {
       updateOne,
     });
 
-    await updateStage(caseId, "application-receipt", timelineEvent);
+    await updateStage(caseId, "APPLICATION_RECEIPT", timelineEvent);
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
       { _id: ObjectId.createFromHexString(caseId) },
       {
-        $set: { currentStage: "application-receipt" },
+        $set: { currentStage: "APPLICATION_RECEIPT" },
         $push: {
           timeline: {
             $each: [timelineEvent],
@@ -271,7 +271,7 @@ describe("updateStage", () => {
       }),
     });
 
-    await expect(updateStage(caseId, "application-receipt")).rejects.toThrow(
+    await expect(updateStage(caseId, "APPLICATION_RECEIPT")).rejects.toThrow(
       Boom.notFound(`Case with id "${caseId}" not found`),
     );
   });

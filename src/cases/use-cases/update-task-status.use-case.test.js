@@ -51,10 +51,10 @@ describe("updateTaskStatusUseCase", () => {
     await expect(() =>
       updateTaskStatusUseCase({
         caseId: "0909990909099990aaee9878",
-        stageCode: "stage-1",
-        taskGroupCode: "task-group-1",
-        taskCode: "task-1",
-        status: "complete",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        status: "COMPLETE",
         comment: "This is a note/comment",
         user: mockAuthUser,
       }),
@@ -71,18 +71,18 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
-      phaseCode: "phase-1",
-      stageCode: "stage-1",
-      taskGroupCode: "task-group-1",
-      taskCode: "task-1",
-      status: "status-option-1",
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+      status: "STATUS_OPTION_1",
       completed: true,
       comment: "This is a note/comment",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("status-option-1");
+    expect(task.status).toBe("STATUS_OPTION_1");
     expect(task.commentRef).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);
   });
@@ -92,34 +92,34 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock({
       phases: [
         new WorkflowPhase({
-          code: "phase-1",
+          code: "PHASE_1",
           name: "Phase 1",
           stages: [
             new WorkflowStage({
-              code: "stage-1",
+              code: "STAGE_1",
               name: "Stage 1",
               description: "Stage description",
               actions: [],
               statuses: [],
               taskGroups: [
                 new WorkflowTaskGroup({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   name: "Task Group 1",
                   description: "Task group description",
                   tasks: [
                     new WorkflowTask({
-                      code: "task-1",
+                      code: "TASK_1",
                       name: "Task 1",
-                      type: "boolean",
+                      mandatory: true,
                       description: "Task description",
                       statusOptions: [
                         new WorkflowTaskStatusOption({
-                          code: "in-progress",
+                          code: "IN_PROGRESS",
                           name: "In Progress",
                           completes: false,
                         }),
                         new WorkflowTaskStatusOption({
-                          code: "complete",
+                          code: "COMPLETE",
                           name: "Complete",
                           completes: true,
                         }),
@@ -140,18 +140,18 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
-      phaseCode: "phase-1",
-      stageCode: "stage-1",
-      taskGroupCode: "task-group-1",
-      taskCode: "task-1",
-      status: "complete",
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+      status: "COMPLETE",
       completed: false,
       comment: "Task completed",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("complete");
+    expect(task.status).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
@@ -161,34 +161,34 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock({
       phases: [
         new WorkflowPhase({
-          code: "phase-1",
+          code: "PHASE_1",
           name: "Phase 1",
           stages: [
             new WorkflowStage({
-              code: "stage-1",
+              code: "STAGE_1",
               name: "Stage 1",
               description: "Stage description",
               actions: [],
               statuses: [],
               taskGroups: [
                 new WorkflowTaskGroup({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   name: "Task Group 1",
                   description: "Task group description",
                   tasks: [
                     new WorkflowTask({
-                      code: "task-1",
+                      code: "TASK_1",
                       name: "Task 1",
-                      type: "boolean",
+                      mandatory: true,
                       description: "Task description",
                       statusOptions: [
                         new WorkflowTaskStatusOption({
-                          code: "in-progress",
+                          code: "IN_PROGRESS",
                           name: "In Progress",
                           completes: false,
                         }),
                         new WorkflowTaskStatusOption({
-                          code: "complete",
+                          code: "COMPLETE",
                           name: "Complete",
                           completes: true,
                         }),
@@ -209,18 +209,18 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
-      phaseCode: "phase-1",
-      stageCode: "stage-1",
-      taskGroupCode: "task-group-1",
-      taskCode: "task-1",
-      status: "in-progress",
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+      status: "IN_PROGRESS",
       completed: true,
       comment: "Task in progress",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("in-progress");
+    expect(task.status).toBe("IN_PROGRESS");
     expect(task.completed).toBe(false);
     expect(update).toHaveBeenCalledWith(kase);
   });
@@ -230,34 +230,34 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock({
       phases: [
         new WorkflowPhase({
-          code: "phase-1",
+          code: "PHASE_1",
           name: "Phase 1",
           stages: [
             new WorkflowStage({
-              code: "stage-1",
+              code: "STAGE_1",
               name: "Stage 1",
               description: "Stage description",
               actions: [],
               statuses: [],
               taskGroups: [
                 new WorkflowTaskGroup({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   name: "Task Group 1",
                   description: "Task group description",
                   tasks: [
                     new WorkflowTask({
-                      code: "task-1",
+                      code: "TASK_1",
                       name: "Task 1",
-                      type: "boolean",
+                      mandatory: true,
                       description: "Task description",
                       statusOptions: [
                         new WorkflowTaskStatusOption({
-                          code: "in-progress",
+                          code: "IN_PROGRESS",
                           name: "In Progress",
                           completes: false,
                         }),
                         new WorkflowTaskStatusOption({
-                          code: "complete",
+                          code: "COMPLETE",
                           name: "Complete",
                           completes: true,
                         }),
@@ -279,17 +279,17 @@ describe("updateTaskStatusUseCase", () => {
     await expect(() =>
       updateTaskStatusUseCase({
         caseId: kase._id,
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
-        taskGroupCode: "task-group-1",
-        taskCode: "task-1",
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
         status: "invalid-status",
         completed: true,
         comment: "Task completed",
         user: mockAuthUser,
       }),
     ).rejects.toThrow(
-      'Invalid status option "invalid-status" for task "task-1". Valid options are: in-progress, complete',
+      'Invalid status option "invalid-status" for task "TASK_1". Valid options are: IN_PROGRESS, COMPLETE',
     );
   });
 
@@ -298,25 +298,25 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock({
       phases: [
         new WorkflowPhase({
-          code: "phase-1",
+          code: "PHASE_1",
           name: "Phase 1",
           stages: [
             new WorkflowStage({
-              code: "stage-1",
+              code: "STAGE_1",
               name: "Stage 1",
               description: "Stage description",
               actions: [],
               statuses: [],
               taskGroups: [
                 new WorkflowTaskGroup({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   name: "Task Group 1",
                   description: "Task group description",
                   tasks: [
                     new WorkflowTask({
-                      code: "task-1",
+                      code: "TASK_1",
                       name: "Task 1",
-                      type: "boolean",
+                      mandatory: true,
                       description: "Task description",
                       statusOptions: [],
                     }),
@@ -335,10 +335,10 @@ describe("updateTaskStatusUseCase", () => {
 
     await updateTaskStatusUseCase({
       caseId: kase._id,
-      phaseCode: "phase-1",
-      stageCode: "stage-1",
-      taskGroupCode: "task-group-1",
-      taskCode: "task-1",
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
       status: null,
       completed: true,
       comment: "Task completed",
