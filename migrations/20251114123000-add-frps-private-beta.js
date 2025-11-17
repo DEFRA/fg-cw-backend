@@ -382,7 +382,7 @@ export const up = async (db) => {
                 description: "Application received and pending review",
                 transitions: [
                   {
-                    targetPosition: "::IN_REVIEW",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
                       code: "START_REVIEW",
                       name: "Start Review",
@@ -398,7 +398,8 @@ export const up = async (db) => {
                 description: "Application is being reviewed",
                 transitions: [
                   {
-                    targetPosition: "::AGREEMENT_GENERATING",
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
                     action: {
                       code: "APPROVE_APPLICATION",
                       name: "Approve",
@@ -412,7 +413,8 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "::APPLICATION_REJECTED",
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
                     action: {
                       code: "REJECT_APPLICATION",
                       name: "Reject",
@@ -426,7 +428,7 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "::PUT_ON_HOLD",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:PUT_ON_HOLD",
                     action: {
                       code: "PUT_ON_HOLD",
                       name: "Put on Hold",
@@ -448,7 +450,7 @@ export const up = async (db) => {
                   "Application has been approved and agreement is being generated",
                 transitions: [
                   {
-                    targetPosition: ":REVIEW_OFFER:",
+                    targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
                     action: null,
                   },
                 ],
@@ -459,7 +461,7 @@ export const up = async (db) => {
                 description: "Application has been rejected",
                 transitions: [
                   {
-                    targetPosition: "::IN_REVIEW",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
@@ -480,7 +482,7 @@ export const up = async (db) => {
                 description: "Application is on hold pending more information",
                 transitions: [
                   {
-                    targetPosition: "::IN_REVIEW",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
                       code: "REMOVE_ON_HOLD",
                       name: "Remove On Hold",
@@ -494,7 +496,8 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "::APPLICATION_REJECTED",
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
                     action: {
                       code: "REJECT_APPLICATION",
                       name: "Reject",
@@ -690,7 +693,8 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "::APPLICATION_REJECTED",
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_OFFER:APPLICATION_REJECTED",
                     action: {
                       code: "REJECT_APPLICATION",
                       name: "Reject Application",
@@ -706,7 +710,7 @@ export const up = async (db) => {
                 description: "Application has been rejected",
                 transitions: [
                   {
-                    targetPosition: "::AGREEMENT_DRAFTED",
+                    targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
                     action: {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
@@ -782,7 +786,8 @@ export const up = async (db) => {
                     action: null,
                   },
                   {
-                    targetPosition: "::APPLICATION_REJECTED",
+                    targetPosition:
+                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_REJECTED",
                     action: {
                       code: "REJECT_APPLICATION",
                       name: "Reject",
@@ -798,7 +803,8 @@ export const up = async (db) => {
                 description: "Application has been rejected",
                 transitions: [
                   {
-                    targetPosition: "::AGREEMENT_OFFERED",
+                    targetPosition:
+                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
                     action: {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
@@ -828,7 +834,8 @@ export const up = async (db) => {
                 description: "Agreement is active and being monitored",
                 transitions: [
                   {
-                    targetPosition: "::COMPLETE_AGREEMENT",
+                    targetPosition:
+                      "POST_AGREEMENT_MONITORING:MONITORING:COMPLETE_AGREEMENT",
                     action: {
                       code: "COMPLETE_AGREEMENT",
                       name: "Complete Agreement",
