@@ -143,8 +143,69 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  addSupplementaryData(key, data) {
-    this.supplementaryData[key] = data;
+  getSupplementaryDataNode(targetNode, dataType) {
+    if (this.supplementaryData[targetNode]) {
+      return this.supplementaryData[targetNode];
+    }
+
+    this.supplementaryData[targetNode] = dataType === "ARRAY" ? [] : {};
+    return this.supplementaryData[targetNode];
+  }
+
+  updateSupplementaryData({ targetNode, key, dataType, data }) {
+    const targetData = this.getSupplementaryDataNode(targetNode, dataType);
+
+    if (dataType === "ARRAY") {
+      const updated = this.updateSupplementaryDataArray({
+        targetData,
+        key,
+        data,
+      });
+
+      return this.addSupplementaryData(targetNode, updated);
+    } else if (dataType === "OBJECT") {
+      const updated = this.updateSupplementaryDataObject({
+        targetNode,
+        targetData,
+        key,
+        data,
+      });
+      return this.addSupplementaryData(targetNode, updated);
+    } else {
+      return null;
+    }
+  }
+
+  updateSupplementaryDataObject({ targetData, key, data, targetNode }) {
+    if (!key) {
+      throw new Error(
+        `Can not update supplementaryData "${targetNode}" as an object without a key`,
+      );
+    }
+    targetData[data[key]] = data;
+    return targetData;
+  }
+
+  updateSupplementaryDataArray({ targetData, key, data }) {
+    const inArray = !!key && !!targetData.find((d) => d[key] === data[key]);
+
+    if (inArray) {
+      return targetData.reduce((acc, c) => {
+        if (c[key] === data[key]) {
+          acc.push(data);
+        } else {
+          acc.push(c);
+        }
+        return acc;
+      }, []);
+    } else {
+      targetData.push(data);
+      return targetData;
+    }
+  }
+
+  addSupplementaryData(targetNode, data) {
+    this.supplementaryData[targetNode] = data;
   }
 
   updateStageOutcome({ workflow, actionCode, comment, createdBy }) {

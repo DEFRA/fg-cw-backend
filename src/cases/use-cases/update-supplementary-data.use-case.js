@@ -20,6 +20,7 @@ export const updateSupplementaryDataUseCase = async ({
     );
   }
 
+  const { targetNode, data, key, dataType } = supplementaryData;
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
 
   kase.progressTo({
@@ -28,9 +29,12 @@ export const updateSupplementaryDataUseCase = async ({
     createdBy: "System",
   });
 
-  const { targetNode, data } = supplementaryData;
-
-  kase.addSupplementaryData(targetNode, data);
+  kase.updateSupplementaryData({
+    targetNode,
+    data,
+    dataType,
+    key,
+  });
 
   await update(kase);
 
