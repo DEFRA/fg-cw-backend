@@ -1220,3 +1220,199 @@ describe("edge cases and error handling", () => {
     });
   });
 });
+
+describe("component-container resolution", () => {
+  const mockRoot = {
+    _id: "case-id-123",
+    caseRef: "REF-001",
+    actionData: {
+      landGrants: {
+        message: "Application validation run retrieved successfully",
+        response: [
+          {
+            component: "heading",
+            text: "Land parcel rules checks",
+            level: 2,
+            id: "title",
+          },
+          {
+            component: "heading",
+            text: "Parcel ID: SD6351 8781 checks",
+            level: 3,
+          },
+          {
+            component: "details",
+            summaryItems: [
+              {
+                text: "CMOR1",
+                classes: "govuk-details__summary-text",
+              },
+              {
+                classes: "govuk-!-margin-left-8",
+                component: "status",
+                text: "Failed",
+                colour: "red",
+              },
+            ],
+            items: [
+              {
+                component: "paragraph",
+                text: "Available area calculation explanation",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  };
+
+  it("should resolve component-container with contentRef", () => {
+    const path = {
+      component: "component-container",
+      contentRef: "$.actionData.landGrants.response",
+    };
+
+    const result = resolveJSONPath({ root: mockRoot, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Land parcel rules checks",
+        level: 2,
+        id: "title",
+      },
+      {
+        component: "heading",
+        text: "Parcel ID: SD6351 8781 checks",
+        level: 3,
+      },
+      {
+        component: "details",
+        summaryItems: [
+          {
+            text: "CMOR1",
+            classes: "govuk-details__summary-text",
+          },
+          {
+            classes: "govuk-!-margin-left-8",
+            component: "status",
+            text: "Failed",
+            colour: "red",
+          },
+        ],
+        items: [
+          {
+            component: "paragraph",
+            text: "Available area calculation explanation",
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should return empty array for non-existent contentRef", () => {
+    const path = {
+      component: "component-container",
+      contentRef: "$.actionData.nonExistent",
+    };
+
+    const result = resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual([]);
+  });
+
+  it("should flatten component-container in arrays", () => {
+    const mockRootWithSections = {
+      actionData: {
+        sections: [
+          { component: "text", text: "Section 1" },
+          { component: "text", text: "Section 2" },
+        ],
+      },
+    };
+
+    const path = [
+      { component: "heading", text: "Title" },
+      {
+        component: "component-container",
+        contentRef: "$.actionData.sections",
+      },
+    ];
+
+    const result = resolveJSONPath({ root: mockRootWithSections, path });
+
+    expect(result).toEqual([
+      { component: "heading", text: "Title" },
+      { component: "text", text: "Section 1" },
+      { component: "text", text: "Section 2" },
+    ]);
+  });
+
+  it("should handle component-container with nested components", () => {
+    const mockRootWithNested = {
+      actionData: {
+        complexContent: [
+          {
+            component: "accordion",
+            id: "test-accordion",
+            items: [
+              {
+                heading: [{ component: "text", text: "Section 1" }],
+                content: [{ component: "paragraph", text: "Content 1" }],
+              },
+            ],
+          },
+          {
+            component: "summary-list",
+            rows: [
+              { label: "Label 1", text: "Value 1" },
+              { label: "Label 2", text: "Value 2" },
+            ],
+          },
+        ],
+      },
+    };
+
+    const path = {
+      component: "component-container",
+      contentRef: "$.actionData.complexContent",
+    };
+
+    const result = resolveJSONPath({ root: mockRootWithNested, path });
+
+    expect(result).toEqual([
+      {
+        component: "accordion",
+        id: "test-accordion",
+        items: [
+          {
+            heading: [{ component: "text", text: "Section 1" }],
+            content: [{ component: "paragraph", text: "Content 1" }],
+          },
+        ],
+      },
+      {
+        component: "summary-list",
+        rows: [
+          { label: "Label 1", text: "Value 1" },
+          { label: "Label 2", text: "Value 2" },
+        ],
+      },
+    ]);
+  });
+
+  it("should handle empty component-container", () => {
+    const mockRootWithEmpty = {
+      actionData: {
+        emptyContent: [],
+      },
+    };
+
+    const path = {
+      component: "component-container",
+      contentRef: "$.actionData.emptyContent",
+    };
+
+    const result = resolveJSONPath({ root: mockRootWithEmpty, path });
+    expect(result).toEqual([]);
+  });
+});

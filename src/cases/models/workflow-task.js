@@ -2,7 +2,7 @@ import Joi from "joi";
 import { validateProps } from "../../common/validation.js";
 import { comment } from "../schemas/comment.schema.js";
 import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
-import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
+import { Code } from "../schemas/task.schema.js";
 
 export class WorkflowTask {
   constructor(props) {
@@ -15,7 +15,7 @@ export class WorkflowTask {
     this.code = value.code;
     this.name = value.name;
     this.description = value.description;
-    this.type = value.type;
+    this.mandatory = value.mandatory;
     this.statusOptions = value.statusOptions;
     this.requiredRoles = value.requiredRoles;
     this.comment = value.comment;
@@ -23,8 +23,8 @@ export class WorkflowTask {
 }
 
 WorkflowTask.validationSchema = Joi.object({
-  code: UrlSafeId.required(),
-  type: Joi.string().valid("boolean").required(),
+  code: Code.required(),
+  mandatory: Joi.boolean().required(),
   name: Joi.string().required(),
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))

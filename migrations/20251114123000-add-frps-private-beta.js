@@ -46,7 +46,7 @@ export const up = async (db) => {
         description: "Rerun the business rules validation",
         endpoint: "landGrantsRulesRerun",
         target: {
-          position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+          position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
           node: "landGrantsRulesRun",
           nodeType: "array",
           place: "append",
@@ -288,6 +288,17 @@ export const up = async (db) => {
                 },
               ],
             },
+            calculations: {
+              action: {
+                rulesData: "rules-engine-output.json",
+              },
+              content: [
+                {
+                  component: "component-container",
+                  contentRef: "$.actionData.rulesData.response",
+                },
+              ],
+            },
             agreements: {
               renderIf: "$.supplementaryData.agreements[0]",
               content: [
@@ -357,90 +368,484 @@ export const up = async (db) => {
     },
     phases: [
       {
-        code: "default",
-        name: "Default Phase",
+        code: "PRE_AWARD",
+        name: "Pre-award",
         stages: [
           {
-            code: "application-receipt",
-            name: "Application Receipt",
-            taskGroups: [
+            code: "REVIEW_APPLICATION",
+            name: "Review Application",
+            description: "Review the application for eligibility",
+            statuses: [
               {
-                code: "application-receipt-tasks",
-                tasks: [
+                code: "APPLICATION_RECEIVED",
+                name: "Application Received",
+                description: "Application received and pending review",
+                transitions: [
                   {
-                    code: "simple-review",
-                    name: "Simple Review",
-                    type: "boolean",
-                    description: [
-                      {
-                        component: "heading",
-                        text: "Customer details review",
-                        level: 1,
-                      },
-                      {
-                        component: "ordered-list",
-                        items: [
-                          {
-                            text: "Go to Application to view submitted customer details.",
-                          },
-                          {
-                            text: "Check the submitted details match the details and permissions on the Rural Payments service (RPS).",
-                          },
-                          {
-                            text: "Come back to this page and confirm if the details match.",
-                          },
-                        ],
-                      },
-                      {
-                        component: "heading",
-                        text: "Customer detail review outcome",
-                        level: 2,
-                      },
-                    ],
-                    statusOptions: [],
-                  },
-                  {
-                    code: "detail-review",
-                    name: "Detail Review",
-                    type: "boolean",
-                    description: null,
-                    statusOptions: [],
+                    targetPosition: "::IN_REVIEW",
+                    action: {
+                      code: "START_REVIEW",
+                      name: "Start Review",
+                      checkTasks: false,
+                      comment: null,
+                    },
                   },
                 ],
-                name: "Application Receipt tasks",
-                description: "Task group description",
               },
-            ],
-            actionsTitle: "Decision",
-            actions: [
               {
-                code: "approve",
-                name: "Approve",
-                comment: {
-                  label: "Approval reason note",
-                  helpText: "All notes will be saved for auditing purposes",
-                  type: "REQUIRED",
-                },
+                code: "IN_REVIEW",
+                name: "In Review",
+                description: "Application is being reviewed",
+                transitions: [
+                  {
+                    targetPosition: "::AGREEMENT_GENERATING",
+                    action: {
+                      code: "APPROVE_APPLICATION",
+                      name: "Approve",
+                      checkTasks: true,
+                      comment: {
+                        label: "Note",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
+                    targetPosition: "::APPLICATION_REJECTED",
+                    action: {
+                      code: "REJECT_APPLICATION",
+                      name: "Reject",
+                      checkTasks: false,
+                      comment: {
+                        label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
+                    targetPosition: "::PUT_ON_HOLD",
+                    action: {
+                      code: "PUT_ON_HOLD",
+                      name: "Put on Hold",
+                      checkTasks: false,
+                      comment: {
+                        label: "Details of information required",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                code: "AGREEMENT_GENERATING",
+                name: "Agreement Generating",
+                description:
+                  "Application has been approved and agreement is being generated",
+                transitions: [
+                  {
+                    targetPosition: ":REVIEW_OFFER:",
+                    action: null,
+                  },
+                ],
+              },
+              {
+                code: "APPLICATION_REJECTED",
+                name: "Rejected",
+                description: "Application has been rejected",
+                transitions: [
+                  {
+                    targetPosition: "::IN_REVIEW",
+                    action: {
+                      code: "REINSTATE_APPLICATION",
+                      name: "Reinstate Application",
+                      checkTasks: false,
+                      comment: {
+                        label: "Note",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                code: "PUT_ON_HOLD",
+                name: "On Hold",
+                description: "Application is on hold pending more information",
+                transitions: [
+                  {
+                    targetPosition: "::IN_REVIEW",
+                    action: {
+                      code: "REMOVE_ON_HOLD",
+                      name: "Remove On Hold",
+                      checkTasks: false,
+                      comment: {
+                        label: "Note",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
+                    targetPosition: "::APPLICATION_REJECTED",
+                    action: {
+                      code: "REJECT_APPLICATION",
+                      name: "Reject",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
               },
             ],
-            statuses: [],
-            description: null,
+            taskGroups: [
+              {
+                code: "MANUAL_REVIEW_TASKS",
+                name: "Manual Review Tasks",
+                description:
+                  "Tasks to be completed during the initial review of the application",
+                tasks: [
+                  {
+                    code: "CHECK_CUSTOMER_DETAILS",
+                    name: "Check Customer Details",
+                    mandatory: true,
+                    description: "Verify the customer's details for accuracy",
+                    statusOptions: [
+                      {
+                        code: "ACCEPTED",
+                        name: "Accept",
+                        completes: true,
+                      },
+                      {
+                        code: "RFI",
+                        name: "ReRequest information from customer",
+                        completes: false,
+                      },
+                      {
+                        code: "INTERNAL_INVESTIGATION",
+                        name: "Pause for internal investigation",
+                        completes: false,
+                      },
+                      {
+                        code: "CANNOT_COMPLETE",
+                        name: "Cannot complete",
+                        completes: false,
+                      },
+                    ],
+                  },
+                  {
+                    code: "REVIEW_LAND_RULES",
+                    name: "Land parcel rules checks",
+                    mandatory: true,
+                    description: "Review land parcels against scheme rules",
+                    statusOptions: [
+                      {
+                        code: "ACCEPTED",
+                        name: "Accept",
+                        completes: true,
+                      },
+                      {
+                        code: "RFI",
+                        name: "ReRequest information from customer",
+                        completes: false,
+                      },
+                      {
+                        code: "INTERNAL_INVESTIGATION",
+                        name: "Pause for internal investigation",
+                        completes: false,
+                      },
+                      {
+                        code: "CANNOT_COMPLETE",
+                        name: "Cannot complete",
+                        completes: false,
+                      },
+                    ],
+                  },
+                  {
+                    code: "SSSI_CONSENT_REQUESTED",
+                    name: "Check if SSSI consent has been requested",
+                    mandatory: true,
+                    description:
+                      "Verify if SSSI consent is required and has been requested",
+                    statusOptions: [
+                      {
+                        code: "ACCEPTED",
+                        name: "Accept",
+                        completes: true,
+                      },
+                      {
+                        code: "RFI",
+                        name: "ReRequest information from customer",
+                        completes: false,
+                      },
+                      {
+                        code: "NOT_REQUIRED",
+                        name: "Not Required",
+                        completes: true,
+                      },
+                      {
+                        code: "INTERNAL_INVESTIGATION",
+                        name: "Pause for internal investigation",
+                        completes: false,
+                      },
+                      {
+                        code: "CANNOT_COMPLETE",
+                        name: "Cannot complete",
+                        completes: false,
+                      },
+                    ],
+                  },
+                  {
+                    code: "PAYMENT_AMOUNT_CHECK",
+                    name: "Check Payment Amount",
+                    mandatory: true,
+                    description:
+                      "Verify the calculated payment amount against scheme limits",
+                    statusOptions: [
+                      {
+                        code: "ACCEPTED",
+                        name: "Accept",
+                        completes: true,
+                      },
+                      {
+                        code: "RFI",
+                        name: "ReRequest information from customer",
+                        completes: false,
+                      },
+                      {
+                        code: "INTERNAL_INVESTIGATION",
+                        name: "Pause for internal investigation",
+                        completes: false,
+                      },
+                      {
+                        code: "CANNOT_COMPLETE",
+                        name: "Cannot complete",
+                        completes: false,
+                      },
+                    ],
+                  },
+                  {
+                    code: "REVIEW_SCHEME_BUDGET",
+                    name: "Review Scheme Budget",
+                    mandatory: true,
+                    description:
+                      "Review that the budeget is available for the payment",
+                    requiredRoles: {
+                      allOf: ["ROLE_SFI_REFORM", "ROLE_RPA_FINANCE"],
+                      anyOf: [],
+                    },
+                    statusOptions: [
+                      {
+                        code: "ACCEPTED",
+                        name: "Accept",
+                        completes: true,
+                      },
+                      {
+                        code: "RFI",
+                        name: "ReRequest information from customer",
+                        completes: false,
+                      },
+                      {
+                        code: "INTERNAL_INVESTIGATION",
+                        name: "Pause for internal investigation",
+                        completes: false,
+                      },
+                      {
+                        code: "CANNOT_COMPLETE",
+                        name: "Cannot complete",
+                        completes: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
           {
-            code: "contract",
-            name: "Stage for contract management",
-            taskGroups: [],
-            actions: [],
-            statuses: [],
-            description: null,
+            code: "REVIEW_OFFER",
+            name: "Review Offer",
+            description:
+              "Draft agreement is live and can be accepted by the customer.",
+            statuses: [
+              {
+                code: "AGREEMENT_DRAFTED",
+                name: "Review Offer",
+                description: "Offer is under review",
+                transitions: [
+                  {
+                    targetPosition:
+                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                    action: {
+                      code: "AGREEMENT_SENT",
+                      name: "Agreement sent",
+                      checkTasks: true,
+                      comment: null,
+                    },
+                  },
+                  {
+                    targetPosition: "::APPLICATION_REJECTED",
+                    action: {
+                      code: "REJECT_APPLICATION",
+                      name: "Reject Application",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+              {
+                code: "APPLICATION_REJECTED",
+                name: "Rejected",
+                description: "Application has been rejected",
+                transitions: [
+                  {
+                    targetPosition: "::AGREEMENT_DRAFTED",
+                    action: {
+                      code: "REINSTATE_APPLICATION",
+                      name: "Reinstate Application",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+            ],
+            taskGroups: [
+              {
+                code: "DRAFT_AGREEMENT_REVIEW_TASKS",
+                name: "Draft agreement review tasks",
+                description:
+                  "Tasks to be completed during the review of the agreement offer",
+                tasks: [
+                  {
+                    code: "REVIEW_OFFER_DOCUMENT",
+                    name: "Check draft funding agreement",
+                    mandatory: true,
+                    description:
+                      "Ensure the offer document is accurate and complete",
+                    statusOptions: [
+                      {
+                        code: "CONFIRM",
+                        name: "Confirm",
+                        completes: true,
+                      },
+                      {
+                        code: "PROBLEM_FOUND",
+                        name: "There's a problem",
+                        completes: false,
+                      },
+                    ],
+                  },
+                  {
+                    code: "OFFER_AGREEMENT",
+                    name: "Notify customer that draft agreement is ready",
+                    mandatory: true,
+                    description:
+                      "Send the offer document to the applicant for review and acceptance",
+                    statusOptions: [
+                      {
+                        code: "CONFIRM",
+                        name: "Confirm",
+                        completes: true,
+                      },
+                      {
+                        code: "PROBLEM_FOUND",
+                        name: "There's a problem",
+                        completes: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
           {
-            code: "award",
-            name: "Award",
+            code: "CUSTOMER_AGREEMENT_REVIEW",
+            name: "Customer Agreement Review",
+            description: "Customer reviews the agreement offer",
+            statuses: [
+              {
+                code: "AGREEMENT_OFFERED",
+                name: "Agreement Offer Made",
+                description: "Offer has been made to the applicant",
+                transitions: [
+                  {
+                    targetPosition:
+                      "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
+                    action: null,
+                  },
+                  {
+                    targetPosition: "::APPLICATION_REJECTED",
+                    action: {
+                      code: "REJECT_APPLICATION",
+                      name: "Reject",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+              {
+                code: "APPLICATION_REJECTED",
+                name: "Rejected",
+                description: "Application has been rejected",
+                transitions: [
+                  {
+                    targetPosition: "::AGREEMENT_OFFERED",
+                    action: {
+                      code: "REINSTATE_APPLICATION",
+                      name: "Reinstate Application",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+            ],
             taskGroups: [],
-            actions: [],
-            statuses: [],
-            description: null,
+          },
+        ],
+      },
+      {
+        code: "POST_AGREEMENT_MONITORING",
+        name: "Post Agreement Monitoring and Compliance",
+        stages: [
+          {
+            code: "MONITORING",
+            name: "Monitoring",
+            description: "Monitor the agreement and compliance",
+            statuses: [
+              {
+                code: "AGREEMENT_ACCEPTED",
+                name: "Agreement accepted",
+                description: "Agreement is active and being monitored",
+                transitions: [
+                  {
+                    targetPosition: "::COMPLETE_AGREEMENT",
+                    action: {
+                      code: "COMPLETE_AGREEMENT",
+                      name: "Complete Agreement",
+                      checkTasks: true,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+              {
+                code: "COMPLETE_AGREEMENT",
+                name: "Complete Agreement",
+                description: "Agreement has been completed",
+                transitions: [],
+              },
+            ],
+            taskGroups: [],
           },
         ],
       },

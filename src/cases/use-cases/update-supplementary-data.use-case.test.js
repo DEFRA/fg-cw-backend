@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
+import { Workflow } from "../models/workflow.js";
 import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
+import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { updateSupplementaryDataUseCase } from "./update-supplementary-data.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
+vi.mock("./find-workflow-by-code.use-case.js");
 
 const testAgreement1 = {
   agreementRef: "agreement-1",
@@ -25,7 +28,7 @@ const testAgreement2 = {
 const createTestMessage = (overrides = {}) => ({
   caseRef: "ABCD1234",
   workflowCode: "workflow-1",
-  newStatus: "REVIEW",
+  newStatus: "::REVIEW",
   supplementaryData: {
     phase: null,
     stage: null,
@@ -62,8 +65,12 @@ describe("update supplementary data use case", () => {
       },
     });
     const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    vi.spyOn(kase, "progressTo").mockResolvedValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+
     const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
@@ -71,6 +78,15 @@ describe("update supplementary data use case", () => {
       data.caseRef,
       data.workflowCode,
     );
+    expect(kase.progressTo).toHaveBeenCalledWith({
+      position: expect.objectContaining({
+        phaseCode: "",
+        stageCode: "",
+        statusCode: "REVIEW",
+      }),
+      workflow,
+      createdBy: "System",
+    });
     expect(caseAgreements).toHaveLength(1);
     expect(caseAgreements[0].agreementStatus).toBe("OFFERED");
     expect(caseAgreements[0].agreementRef).toBe("agreement-1");
@@ -93,9 +109,13 @@ describe("update supplementary data use case", () => {
       },
     });
     const kase = Case.createMock();
+    const workflow = Workflow.createMock();
     kase.addSupplementaryData("agreements", [testAgreement1]);
+    vi.spyOn(kase, "progressTo").mockReturnValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+
     const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
@@ -124,8 +144,12 @@ describe("update supplementary data use case", () => {
       },
     });
     const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    vi.spyOn(kase, "progressTo").mockReturnValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+
     const returnValue = await updateSupplementaryDataUseCase(data);
 
     expect(kase.supplementaryData.customData).toEqual({
@@ -133,6 +157,24 @@ describe("update supplementary data use case", () => {
         customField: "customValue",
       },
     });
+    expect(update).toHaveBeenCalledWith(kase);
+    expect(returnValue).toBe(kase);
+  });
+
+  it("should handle empty arrays", async () => {
+    const data = createTestMessage();
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    kase.addSupplementaryData("agreements", [testAgreement1]);
+    vi.spyOn(kase, "progressTo").mockReturnValue();
+
+    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+
+    const returnValue = await updateSupplementaryDataUseCase(data);
+
+    const caseAgreements = kase.supplementaryData.agreements;
+    expect(caseAgreements).toHaveLength(0);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);
   });
