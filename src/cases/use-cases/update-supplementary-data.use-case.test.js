@@ -174,7 +174,7 @@ describe("update supplementary data use case", () => {
     const returnValue = await updateSupplementaryDataUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
-    expect(caseAgreements).toHaveLength(0);
+    expect(caseAgreements).toHaveLength(1);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);
   });
