@@ -299,9 +299,7 @@ describe("createWorkflowUseCase", () => {
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
-      ).rejects.toThrow(
-        "Stage 'STAGE_X' not found in phase 'PHASE_A'",
-      );
+      ).rejects.toThrow("Stage 'STAGE_X' not found in phase 'PHASE_A'");
     });
 
     it("throws error for non-existent status", async () => {
@@ -312,9 +310,7 @@ describe("createWorkflowUseCase", () => {
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
-      ).rejects.toThrow(
-        "Status 'STATUS_X' not found in stage 'STAGE_1'",
-      );
+      ).rejects.toThrow("Status 'STATUS_X' not found in stage 'STAGE_1'");
     });
   });
 });

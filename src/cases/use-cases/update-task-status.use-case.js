@@ -9,7 +9,8 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const { caseId, taskGroupCode, taskCode, status, completed, comment, user } = command;
+  const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
+    command;
 
   const kase = await findById(caseId);
 
