@@ -19,6 +19,15 @@ export const updateTaskStatusUseCase = async (command) => {
   }
 
   const workflow = await findByCode(kase.workflowCode);
+
+  // Check if the current status is interactive
+  const currentStatus = workflow.getStatus(kase.position);
+  if (currentStatus.interactive === false) {
+    throw Boom.badRequest(
+      `Cannot update task status. The current stage status "${currentStatus.name}" is not interactive.`,
+    );
+  }
+
   const task = workflow.findTask({
     phaseCode: kase.position.phaseCode,
     stageCode: kase.position.stageCode,
