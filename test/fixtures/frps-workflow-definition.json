@@ -329,22 +329,32 @@
                         }
                       },
                       {
-                        "component": "url",
-                        "text": "View this version",
-                        "href": {
-                          "urlTemplate": "/cases/{caseId}/calculations?runId={runId}",
-                          "params": {
-                            "caseId": "$._id",
-                            "runId": "@.id"
-                          }
+                        "component": "conditional",
+                        "condition": "jsonata:$number($.request.query.runId) = @.id",
+                        "whenTrue": {
+                          "component": "text",
+                          "text": "Currently showing",
+                          "classes": "govuk-body"
                         },
-                        "target": "_self",
-                        "classes": "govuk-link"
+                        "whenFalse": {
+                          "component": "url",
+                          "text": "View this version",
+                          "href": {
+                            "urlTemplate": "/cases/{caseId}/calculations?runId={runId}",
+                            "params": {
+                              "caseId": "$._id",
+                              "runId": "@.id"
+                            }
+                          },
+                          "target": "_self",
+                          "classes": "govuk-link"
+                        }
                       }
                     ],
                     "firstCellIsHeader": true
                   }
-                ]
+                ],
+                "open": "$.request.query.runId"
               },
               {
                 "component": "component-container",

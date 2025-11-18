@@ -27,10 +27,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "case-details" },
+      query: {},
+    });
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findByCode).toHaveBeenCalledWith("frps-private-beta");
@@ -50,7 +50,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(null);
 
     await expect(
-      buildCaseDetailsTabUseCase("non-existent-id", "case-details"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "non-existent-id", tabId: "case-details" },
+        query: {},
+      }),
     ).rejects.toThrow();
 
     expect(findById).toHaveBeenCalledWith("non-existent-id");
@@ -65,7 +68,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(null);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "case-details" },
+        query: {},
+      }),
     ).rejects.toThrow();
   });
 
@@ -93,7 +99,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "non-existent-tab"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "non-existent-tab" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "non-existent-tab" not found in workflow "test-workflow"',
     );
@@ -126,7 +135,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       "Path does not exist, $.supplementaryData.agreements[0] resolves to falsy value",
     );
@@ -168,10 +180,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "agreements",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "agreements" },
+      query: {},
+    });
 
     expect(result.caseId).toBe("test-case-id");
     expect(result.caseRef).toBe("TEST-REF-001");
@@ -194,7 +206,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "agreements" not found in workflow "minimal-workflow"',
     );
@@ -216,7 +231,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "agreements" not found in workflow "minimal-workflow"',
     );
@@ -314,10 +332,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "64c88faac1f56f71e1b89a77",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "64c88faac1f56f71e1b89a77", tabId: "case-details" },
+      query: {},
+    });
 
     // Verify the structure
     expect(result.caseId).toBe("64c88faac1f56f71e1b89a77");
@@ -413,10 +431,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "case-details" },
+      query: {},
+    });
 
     // Verify basic structure
     expect(result.caseId).toBe("test-case-id");
@@ -524,10 +542,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
 
-      const result = await buildCaseDetailsTabUseCase(
-        "test-case-id",
-        "land-grants",
-      );
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "land-grants" },
+        query: {},
+      });
 
       expect(result.caseId).toBe("test-case-id");
       expect(result.caseRef).toBe("case-ref");
@@ -582,10 +600,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
 
-      const result = await buildCaseDetailsTabUseCase(
-        "test-case-id",
-        "simple-tab",
-      );
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "simple-tab" },
+        query: {},
+      });
 
       // Should still work without action definition
       expect(result.caseId).toBe("test-case-id");

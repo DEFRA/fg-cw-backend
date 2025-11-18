@@ -75,7 +75,10 @@ describe("findCaseByIdTabIdRoute", () => {
 
     expect(statusCode).toEqual(200);
     expect(result).toEqual(mockTabData);
-    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith(caseId, tabId, {});
+    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
+      params: { caseId, tabId },
+      query: {},
+    });
   });
 
   it("returns 400 when caseId param is invalid", async () => {
@@ -126,7 +129,10 @@ describe("findCaseByIdTabIdRoute", () => {
       error: "Not Found",
       message: 'Case with id "60b8d295f1d2c916c8f0e6b7" not found',
     });
-    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith(caseId, tabId, {});
+    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
+      params: { caseId, tabId },
+      query: {},
+    });
   });
 
   it("returns 404 when tab is not found in workflow", async () => {
@@ -150,7 +156,10 @@ describe("findCaseByIdTabIdRoute", () => {
       error: "Not Found",
       message: 'Tab "non-existent-tab" not found in workflow "test-workflow"',
     });
-    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith(caseId, tabId, {});
+    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
+      params: { caseId, tabId },
+      query: {},
+    });
   });
 
   it("returns 500 when use case throws unexpected error", async () => {
@@ -172,6 +181,9 @@ describe("findCaseByIdTabIdRoute", () => {
       error: "Internal Server Error",
       message: "An internal server error occurred",
     });
-    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith(caseId, tabId, {});
+    expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
+      params: { caseId, tabId },
+      query: {},
+    });
   });
 });

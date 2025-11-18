@@ -69,6 +69,9 @@ const resolveJSONObject = async ({ path, root, row }) => {
 
 // eslint-disable-next-line complexity
 const handleSpecialCases = async ({ path, root, row }) => {
+  if (isConditional(path)) {
+    return resolveConditionalComponent({ path, root, row });
+  }
   if (isTable(path)) {
     return resolveTableSection({ path, root, row });
   }
@@ -98,6 +101,11 @@ const isRepeat = (path) =>
   path.component === "repeat" && path.itemsRef && path.items;
 const isComponentContainer = (path) =>
   path.component === "component-container" && path.contentRef;
+const isConditional = (path) =>
+  path.component === "conditional" &&
+  path.condition &&
+  path.whenTrue &&
+  path.whenFalse;
 
 // eslint-disable-next-line complexity
 const resolveGenericObject = async ({ path, root, row }) => {
@@ -214,6 +222,36 @@ const resolveComponentContainer = ({ path, root }) => {
   const { contentRef } = path;
   const content = JSONPath({ json: root, path: contentRef });
   return content[0] || [];
+};
+
+const evaluateConditionalWithRow = async ({ condition, root, row }) => {
+  const expression = condition.replace("jsonata:", "").replace(/@\./g, "$row.");
+  const compiledExpression = jsonata(expression);
+  compiledExpression.assign("row", row);
+  return compiledExpression.evaluate(root);
+};
+
+const evaluateConditionResult = (conditionResult) => {
+  if (Array.isArray(conditionResult)) {
+    return conditionResult.length > 0 && Boolean(conditionResult[0]);
+  }
+  return Boolean(conditionResult);
+};
+
+const hasRowReference = ({ row, condition }) => {
+  return row && isJSONataExpression(condition) && condition.includes("@.");
+};
+
+const resolveConditionalComponent = async ({ path, root, row }) => {
+  const { condition, whenTrue, whenFalse } = path;
+
+  const conditionResult = hasRowReference({ row, condition })
+    ? await evaluateConditionalWithRow({ condition, root, row })
+    : await resolveDataRef({ root, path: condition, row });
+
+  const isTrue = evaluateConditionResult(conditionResult);
+  const selectedComponent = isTrue ? whenTrue : whenFalse;
+  return resolveJSONPath({ root, path: selectedComponent, row });
 };
 
 const hasMultipleRefs = (path) => {

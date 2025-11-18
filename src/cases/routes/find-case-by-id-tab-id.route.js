@@ -13,6 +13,7 @@ export const findCaseByIdTabIdRoute = {
         caseId: Joi.string().hex().length(24),
         tabId: Joi.string(),
       }),
+      query: Joi.object().unknown(true).options({ stripUnknown: false }),
     },
     response: {
       schema: findCaseByIdTabIdResponseSchema,

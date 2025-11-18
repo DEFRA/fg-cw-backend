@@ -1427,3 +1427,549 @@ describe("component-container resolution", () => {
     expect(result).toEqual([]);
   });
 });
+
+describe("conditional component resolution", () => {
+  const mockRoot = {
+    _id: "case-id-123",
+    caseRef: "REF-001",
+    request: {
+      query: {
+        runId: "run-123",
+      },
+    },
+    payload: {
+      isActive: true,
+      status: "approved",
+    },
+  };
+
+  it("should render whenTrue component when condition is true", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = true",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Inactive",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Active",
+    });
+  });
+
+  it("should render whenFalse component when condition is false", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = false",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Inactive",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Inactive",
+    });
+  });
+
+  it("should work with row context in table", async () => {
+    const row = {
+      id: "run-123",
+      date: "2025-03-28T11:30:52.000Z",
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.request.query.runId = @.id",
+      whenTrue: {
+        component: "text",
+        text: "Currently showing",
+        classes: "govuk-body",
+      },
+      whenFalse: {
+        component: "url",
+        text: "View this version",
+        href: {
+          urlTemplate: "/cases/{caseId}/calculations?runId={runId}",
+          params: {
+            caseId: "$._id",
+            runId: "@.id",
+          },
+        },
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path, row });
+    expect(result).toEqual({
+      component: "text",
+      text: "Currently showing",
+      classes: "govuk-body",
+    });
+  });
+
+  it("should render url when runId does not match", async () => {
+    const row = {
+      id: "run-456",
+      date: "2025-03-28T11:30:52.000Z",
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.request.query.runId = @.id",
+      whenTrue: {
+        component: "text",
+        text: "Currently showing",
+        classes: "govuk-body",
+      },
+      whenFalse: {
+        component: "url",
+        text: "View this version",
+        href: {
+          urlTemplate: "/cases/{caseId}/calculations?runId={runId}",
+          params: {
+            caseId: "$._id",
+            runId: "@.id",
+          },
+        },
+        target: "_self",
+        classes: "govuk-link",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path, row });
+    expect(result).toEqual({
+      component: "url",
+      text: "View this version",
+      href: "/cases/case-id-123/calculations?runId=run-456",
+      target: "_self",
+      classes: "govuk-link",
+    });
+  });
+
+  it("should handle conditional with string comparison", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.status = 'approved'",
+      whenTrue: {
+        component: "status",
+        text: "Approved",
+        classes: "govuk-tag--green",
+      },
+      whenFalse: {
+        component: "status",
+        text: "Pending",
+        classes: "govuk-tag--yellow",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "status",
+      text: "Approved",
+      classes: "govuk-tag--green",
+    });
+  });
+
+  it("should handle conditional with complex JSONata expressions", async () => {
+    const mockRootWithData = {
+      ...mockRoot,
+      payload: {
+        amount: 1500,
+        threshold: 1000,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.amount > $.payload.threshold",
+      whenTrue: {
+        component: "text",
+        text: "Above threshold",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Below threshold",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithData, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Above threshold",
+    });
+  });
+
+  it("should handle nested conditionals", async () => {
+    const mockRootWithNested = {
+      ...mockRoot,
+      payload: {
+        level: 2,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.level > 1",
+      whenTrue: {
+        component: "conditional",
+        condition: "jsonata:$.payload.level > 2",
+        whenTrue: {
+          component: "text",
+          text: "Level 3+",
+        },
+        whenFalse: {
+          component: "text",
+          text: "Level 2",
+        },
+      },
+      whenFalse: {
+        component: "text",
+        text: "Level 1",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithNested, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Level 2",
+    });
+  });
+
+  it("should resolve references in conditional branches", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = true",
+      whenTrue: {
+        component: "text",
+        text: "$.caseRef",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No reference",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "REF-001",
+    });
+  });
+
+  it("should handle conditional with missing query parameters", async () => {
+    const mockRootWithoutQuery = {
+      _id: "case-id-123",
+      request: {
+        query: {},
+      },
+    };
+
+    const row = {
+      id: "run-123",
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.request.query.runId = @.id",
+      whenTrue: {
+        component: "text",
+        text: "Currently showing",
+      },
+      whenFalse: {
+        component: "text",
+        text: "View version",
+      },
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithoutQuery,
+      path,
+      row,
+    });
+    expect(result).toEqual({
+      component: "text",
+      text: "View version",
+    });
+  });
+
+  it("should handle conditional without row context", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.request.query.runId = 'run-123'",
+      whenTrue: {
+        component: "text",
+        text: "Match found",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No match",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Match found",
+    });
+  });
+
+  it("should evaluate truthy JSONPath condition (like renderIf)", async () => {
+    const mockRootWithData = {
+      ...mockRoot,
+      supplementaryData: {
+        agreements: [{ id: 1 }, { id: 2 }],
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.supplementaryData.agreements[0]",
+      whenTrue: {
+        component: "text",
+        text: "Has agreements",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No agreements",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithData, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Has agreements",
+    });
+  });
+
+  it("should evaluate falsy JSONPath condition with empty array", async () => {
+    const mockRootWithEmpty = {
+      ...mockRoot,
+      supplementaryData: {
+        agreements: [],
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.supplementaryData.agreements[0]",
+      whenTrue: {
+        component: "text",
+        text: "Has agreements",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No agreements",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithEmpty, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "No agreements",
+    });
+  });
+
+  it("should evaluate falsy JSONPath condition with undefined", async () => {
+    const path = {
+      component: "conditional",
+      condition: "$.nonExistent.path",
+      whenTrue: {
+        component: "text",
+        text: "Exists",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Does not exist",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Does not exist",
+    });
+  });
+
+  it("should evaluate truthy JSONPath condition with string", async () => {
+    const mockRootWithString = {
+      ...mockRoot,
+      payload: {
+        ...mockRoot.payload,
+        message: "Hello World",
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.message",
+      whenTrue: {
+        component: "text",
+        text: "Has message",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No message",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithString, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Has message",
+    });
+  });
+
+  it("should evaluate falsy JSONPath condition with empty string", async () => {
+    const mockRootWithEmpty = {
+      ...mockRoot,
+      payload: {
+        ...mockRoot.payload,
+        message: "",
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.message",
+      whenTrue: {
+        component: "text",
+        text: "Has message",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No message",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithEmpty, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "No message",
+    });
+  });
+
+  it("should evaluate truthy condition with number", async () => {
+    const mockRootWithNumber = {
+      ...mockRoot,
+      payload: {
+        count: 5,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.count",
+      whenTrue: {
+        component: "text",
+        text: "Has count",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No count",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithNumber, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Has count",
+    });
+  });
+
+  it("should evaluate falsy condition with zero", async () => {
+    const mockRootWithZero = {
+      ...mockRoot,
+      payload: {
+        count: 0,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.count",
+      whenTrue: {
+        component: "text",
+        text: "Has count",
+      },
+      whenFalse: {
+        component: "text",
+        text: "No count",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithZero, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "No count",
+    });
+  });
+
+  it("should evaluate truthy condition with boolean true", async () => {
+    const mockRootWithBool = {
+      ...mockRoot,
+      payload: {
+        isActive: true,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.isActive",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Inactive",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithBool, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Active",
+    });
+  });
+
+  it("should evaluate falsy condition with boolean false", async () => {
+    const mockRootWithBool = {
+      ...mockRoot,
+      payload: {
+        isActive: false,
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "$.payload.isActive",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Inactive",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRootWithBool, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Inactive",
+    });
+  });
+});

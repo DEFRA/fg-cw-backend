@@ -43,6 +43,7 @@ describe("buildViewModel", () => {
           apiUrl: "https://api.example.com",
           testKey: "testValue",
         },
+        request: {},
       });
     });
 
@@ -55,6 +56,7 @@ describe("buildViewModel", () => {
       expect(result).toEqual({
         _id: "case-123",
         definitions: {},
+        request: {},
       });
     });
 
@@ -67,6 +69,7 @@ describe("buildViewModel", () => {
       expect(result).toEqual({
         _id: "case-123",
         definitions: {},
+        request: {},
       });
     });
 
@@ -89,6 +92,7 @@ describe("buildViewModel", () => {
       expect(result).toEqual({
         _id: "case-123",
         definitions: {},
+        request: {},
         externalActions: [
           {
             code: "RERUN_RULES",
