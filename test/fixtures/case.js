@@ -38,6 +38,7 @@ export const caseData1 = {
       stages: [
         {
           code: "APPLICATION_RECEIPT",
+          interactive: true,
           taskGroups: [
             {
               code: "APPLICATION_RECEIPT_TASKS",
@@ -56,6 +57,7 @@ export const caseData1 = {
         },
         {
           code: "CONTRACT",
+          interactive: true,
           taskGroups: [],
         },
       ],
@@ -122,6 +124,7 @@ export const caseData2 = {
       stages: [
         {
           code: "APPLICATION_RECEIPT",
+          interactive: true,
           taskGroups: [
             {
               code: "APPLICATION_RECEIPT_TASKS",
@@ -140,6 +143,7 @@ export const caseData2 = {
         },
         {
           code: "CONTRACT",
+          interactive: true,
           taskGroups: [],
         },
       ],

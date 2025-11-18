@@ -53,6 +53,10 @@ export class Workflow {
     return this.findPhase(position.phaseCode).findStage(position.stageCode);
   }
 
+  getStatus(position) {
+    return this.getStage(position).getStatus(position.statusCode);
+  }
+
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(

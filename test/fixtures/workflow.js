@@ -233,6 +233,7 @@ export const workflowData1 = {
               code: "STATUS_1",
               name: "Status 1",
               description: "Status 1 dscription",
+              interactive: true,
               transitions: [
                 {
                   targetPosition: ":CONTRACT:",
@@ -277,6 +278,7 @@ export const workflowData1 = {
               code: "AWAITING_AGREEMENT",
               name: "Awaiting Agreement",
               description: "Awaiting agreement signature",
+              interactive: true,
               transitions: [],
             },
           ],

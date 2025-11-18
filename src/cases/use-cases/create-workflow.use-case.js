@@ -166,6 +166,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
     code: status.code,
     name: status.name,
     description: status.description,
+    interactive: status.interactive,
     transitions: status.transitions.map((transition) =>
       createWorkflowTransition(
         transition,

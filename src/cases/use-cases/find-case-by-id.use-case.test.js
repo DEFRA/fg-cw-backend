@@ -301,6 +301,7 @@ describe("findCaseByIdUseCase", () => {
         code: "STAGE_1",
         description: "Stage 1 description",
         name: "Stage 1",
+        interactive: true,
         outcome: undefined,
         actionsDisabled: true,
         actions: [

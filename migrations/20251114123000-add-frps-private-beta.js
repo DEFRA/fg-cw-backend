@@ -380,6 +380,7 @@ export const up = async (db) => {
                 code: "APPLICATION_RECEIVED",
                 name: "Application Received",
                 description: "Application received and pending review",
+                interactive: false,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -396,6 +397,7 @@ export const up = async (db) => {
                 code: "IN_REVIEW",
                 name: "In Review",
                 description: "Application is being reviewed",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition:
@@ -448,6 +450,7 @@ export const up = async (db) => {
                 name: "Agreement Generating",
                 description:
                   "Application has been approved and agreement is being generated",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
@@ -459,6 +462,7 @@ export const up = async (db) => {
                 code: "APPLICATION_REJECTED",
                 name: "Rejected",
                 description: "Application has been rejected",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -480,6 +484,7 @@ export const up = async (db) => {
                 code: "PUT_ON_HOLD",
                 name: "On Hold",
                 description: "Application is on hold pending more information",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -681,6 +686,7 @@ export const up = async (db) => {
                 code: "AGREEMENT_DRAFTED",
                 name: "Review Offer",
                 description: "Offer is under review",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition:
@@ -708,6 +714,7 @@ export const up = async (db) => {
                 code: "APPLICATION_REJECTED",
                 name: "Rejected",
                 description: "Application has been rejected",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
@@ -779,6 +786,7 @@ export const up = async (db) => {
                 code: "AGREEMENT_OFFERED",
                 name: "Agreement Offer Made",
                 description: "Offer has been made to the applicant",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition:
@@ -801,6 +809,7 @@ export const up = async (db) => {
                 code: "APPLICATION_REJECTED",
                 name: "Rejected",
                 description: "Application has been rejected",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition:
@@ -832,6 +841,7 @@ export const up = async (db) => {
                 code: "AGREEMENT_ACCEPTED",
                 name: "Agreement accepted",
                 description: "Agreement is active and being monitored",
+                interactive: true,
                 transitions: [
                   {
                     targetPosition:
@@ -849,6 +859,7 @@ export const up = async (db) => {
                 code: "COMPLETE_AGREEMENT",
                 name: "Complete Agreement",
                 description: "Agreement has been completed",
+                interactive: false,
                 transitions: [],
               },
             ],

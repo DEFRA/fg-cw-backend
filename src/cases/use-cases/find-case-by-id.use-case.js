@@ -128,6 +128,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
   const userMap = await createUserMap(kase.getUserIds(), user);
 
   const workflowStage = workflow.getStage(kase.position);
+  const currentStatus = workflow.getStatus(kase.position);
   const caseStage = kase.getStage();
 
   const assignedUser = userMap.get(kase.assignedUser?.id);
@@ -141,6 +142,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
       code: workflowStage.code,
       name: workflowStage.name,
       description: workflowStage.description,
+      interactive: currentStatus.interactive,
       taskGroups: caseStage.taskGroups.map((caseTaskGroup) => {
         const workflowTaskGroup = workflowStage.findTaskGroup(
           caseTaskGroup.code,

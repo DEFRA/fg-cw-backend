@@ -27,6 +27,7 @@ export class PhaseDocument {
               code: "STATUS_1",
               name: "Stage status 1",
               description: "Stage status 1 description",
+              interactive: true,
               transitions: [
                 new TransitionDocument({
                   targetPosition: Position.from("PHASE_1:STAGE_1:STATUS_2"),
@@ -47,6 +48,7 @@ export class PhaseDocument {
               code: "STATUS_2",
               name: "Stage status 2",
               description: "Stage status 2 description",
+              interactive: true,
               transitions: [],
             }),
           ],

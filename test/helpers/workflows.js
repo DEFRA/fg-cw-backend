@@ -236,6 +236,7 @@ export const createWorkflow = async (payload = {}) => {
                   code: "AWAITING_REVIEW",
                   name: "Awaiting Review",
                   description: null,
+                  interactive: true,
                   transitions: [
                     {
                       targetPosition: "DEFAULT:CONTRACT:",
@@ -279,6 +280,7 @@ export const createWorkflow = async (payload = {}) => {
                   code: "AWAITING_AGREEMENT",
                   name: "Awaiting Agreement",
                   description: "Awaiting agreement signature",
+                  interactive: true,
                   transitions: [],
                 },
               ],
