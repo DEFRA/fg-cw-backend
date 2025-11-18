@@ -19,50 +19,53 @@ describe("resolveJSONPath", () => {
   };
 
   describe("null and undefined handling", () => {
-    it("should return null for null path", () => {
-      const result = resolveJSONPath({ root: mockRoot, path: null });
+    it("should return null for null path", async () => {
+      const result = await resolveJSONPath({ root: mockRoot, path: null });
       expect(result).toBe(null);
     });
 
-    it("should return undefined for undefined path", () => {
-      const result = resolveJSONPath({ root: mockRoot, path: undefined });
+    it("should return undefined for undefined path", async () => {
+      const result = await resolveJSONPath({ root: mockRoot, path: undefined });
       expect(result).toBe(undefined);
     });
   });
 
   describe("string path resolution", () => {
-    it("should resolve root JSON path references", () => {
-      const result = resolveJSONPath({ root: mockRoot, path: "$.caseRef" });
+    it("should resolve root JSON path references", async () => {
+      const result = await resolveJSONPath({
+        root: mockRoot,
+        path: "$.caseRef",
+      });
       expect(result).toBe("REF-001");
     });
 
-    it("should resolve nested JSON path references", () => {
-      const result = resolveJSONPath({
+    it("should resolve nested JSON path references", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "$.payload.businessName",
       });
       expect(result).toBe("Test Business");
     });
 
-    it("should resolve deep nested JSON path references", () => {
-      const result = resolveJSONPath({
+    it("should resolve deep nested JSON path references", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "$.payload.answers.scheme",
       });
       expect(result).toBe("SFI");
     });
 
-    it("should return empty string for non-existent paths", () => {
-      const result = resolveJSONPath({
+    it("should return empty string for non-existent paths", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "$.nonExistent.path",
       });
       expect(result).toBe("");
     });
 
-    it("should resolve row references when row is provided", () => {
+    it("should resolve row references when row is provided", async () => {
       const row = { id: "row-1", name: "Row Name" };
-      const result = resolveJSONPath({
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "@.name",
         row,
@@ -70,32 +73,32 @@ describe("resolveJSONPath", () => {
       expect(result).toBe("Row Name");
     });
 
-    it("should handle literal references by removing escape character", () => {
-      const result = resolveJSONPath({
+    it("should handle literal references by removing escape character", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "\\$.literalPath",
       });
       expect(result).toBe("$.literalPath");
     });
 
-    it("should return string as-is for non-reference strings", () => {
-      const result = resolveJSONPath({
+    it("should return string as-is for non-reference strings", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "plain string",
       });
       expect(result).toBe("plain string");
     });
 
-    it("should resolve multiple space-separated JSON path references", () => {
-      const result = resolveJSONPath({
+    it("should resolve multiple space-separated JSON path references", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "$.caseRef $.payload.businessName",
       });
       expect(result).toBe("REF-001 Test Business");
     });
 
-    it("should resolve multiple space-separated JSON path references with null values filtered", () => {
-      const result = resolveJSONPath({
+    it("should resolve multiple space-separated JSON path references with null values filtered", async () => {
+      const result = await resolveJSONPath({
         root: mockRoot,
         path: "$.caseRef $.nonExistent $.payload.businessName",
       });
@@ -104,28 +107,28 @@ describe("resolveJSONPath", () => {
   });
 
   describe("array path resolution", () => {
-    it("should resolve each item in array recursively", () => {
+    it("should resolve each item in array recursively", async () => {
       const path = ["$.caseRef", "$.payload.businessName", "plain text"];
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual(["REF-001", "Test Business", "plain text"]);
     });
 
-    it("should handle nested arrays", () => {
+    it("should handle nested arrays", async () => {
       const path = [["$.caseRef", "$.payload.answers.scheme"], "plain text"];
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual([["REF-001", "SFI"], "plain text"]);
     });
   });
 
   describe("object path resolution", () => {
-    it("should resolve object properties recursively", () => {
+    it("should resolve object properties recursively", async () => {
       const path = {
         id: "$.id",
         ref: "$.caseRef",
         business: "$.payload.businessName",
         literal: "static text",
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual({
         id: "",
         ref: "REF-001",
@@ -134,54 +137,54 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should skip undefined values in resolved objects", () => {
+    it("should skip undefined values in resolved objects", async () => {
       const path = {
         defined: "$.caseRef",
         undefined,
         null: null,
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual({
         defined: "REF-001",
         null: null,
       });
     });
 
-    it("should not add default component if already specified", () => {
+    it("should not add default component if already specified", async () => {
       const path = {
         component: "heading",
         text: "$.caseRef",
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual({
         component: "heading",
         text: "REF-001",
       });
     });
 
-    it("should handle format application with fixed formatter", () => {
+    it("should handle format application with fixed formatter", async () => {
       const path = {
         text: "$.payload.answers.year",
         format: "fixed(2)",
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual({
         text: "2025.00",
       });
     });
 
-    it("should handle format application with yesNo formatter", () => {
+    it("should handle format application with yesNo formatter", async () => {
       const path = {
         text: "$.payload.answers.isCompleted",
         format: "yesNo",
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual({
         text: "Yes",
       });
     });
 
-    it("should handle format application with formatDate formatter", () => {
+    it("should handle format application with formatDate formatter", async () => {
       const mockRootWithDate = {
         ...mockRoot,
         submittedAt: "2025-03-28T11:30:52.000Z",
@@ -191,13 +194,13 @@ describe("resolveJSONPath", () => {
         text: "$.submittedAt",
         format: "formatDate",
       };
-      const result = resolveJSONPath({ root: mockRootWithDate, path });
+      const result = await resolveJSONPath({ root: mockRootWithDate, path });
       expect(result).toEqual({
         text: "28 Mar 2025",
       });
     });
 
-    it("should handle nested objects with format application", () => {
+    it("should handle nested objects with format application", async () => {
       const mockRootWithNumbers = {
         ...mockRoot,
         metrics: {
@@ -228,7 +231,7 @@ describe("resolveJSONPath", () => {
         ],
       };
 
-      const result = resolveJSONPath({ root: mockRootWithNumbers, path });
+      const result = await resolveJSONPath({ root: mockRootWithNumbers, path });
       expect(result).toEqual({
         component: "container",
         items: [
@@ -250,33 +253,33 @@ describe("resolveJSONPath", () => {
   });
 
   describe("URL template resolution", () => {
-    it("should resolve URL templates with parameters", () => {
+    it("should resolve URL templates with parameters", async () => {
       const path = {
         urlTemplate: "/cases/{caseId}",
         params: {
           caseId: "$._id",
         },
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toBe("/cases/case-id-123");
     });
 
-    it("should handle missing parameters", () => {
+    it("should handle missing parameters", async () => {
       const path = {
         urlTemplate: "/cases/{caseId}/{tabId}",
         params: {
           caseId: "$._id",
         },
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toBe("/cases/case-id-123/");
     });
 
-    it("should handle URL templates without params", () => {
+    it("should handle URL templates without params", async () => {
       const path = {
         urlTemplate: "/static/url",
       };
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toBe("/static/url");
     });
   });
@@ -290,7 +293,7 @@ describe("resolveJSONPath", () => {
       ],
     };
 
-    it("should resolve table sections with rowsRef and rows", () => {
+    it("should resolve table sections with rowsRef and rows", async () => {
       const path = {
         component: "table",
         title: "Items Table",
@@ -300,7 +303,7 @@ describe("resolveJSONPath", () => {
           { text: "@.name", label: "Name" },
         ],
       };
-      const result = resolveJSONPath({ root: mockRootWithArray, path });
+      const result = await resolveJSONPath({ root: mockRootWithArray, path });
 
       expect(result).toEqual({
         component: "table",
@@ -328,7 +331,7 @@ describe("resolveJSONPath", () => {
       ],
     };
 
-    it("should resolve accordion sections with itemsRef and items", () => {
+    it("should resolve accordion sections with itemsRef and items", async () => {
       const path = {
         component: "accordion",
         id: "test-accordion",
@@ -348,7 +351,10 @@ describe("resolveJSONPath", () => {
           ],
         },
       };
-      const result = resolveJSONPath({ root: mockRootWithSections, path });
+      const result = await resolveJSONPath({
+        root: mockRootWithSections,
+        path,
+      });
 
       expect(result).toEqual({
         component: "accordion",
@@ -386,7 +392,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should resolve accordion with summary sections", () => {
+    it("should resolve accordion with summary sections", async () => {
       const mockRootWithSummaries = {
         ...mockRoot,
         checks: [
@@ -429,7 +435,10 @@ describe("resolveJSONPath", () => {
         },
       };
 
-      const result = resolveJSONPath({ root: mockRootWithSummaries, path });
+      const result = await resolveJSONPath({
+        root: mockRootWithSummaries,
+        path,
+      });
 
       expect(result).toEqual({
         component: "accordion",
@@ -479,7 +488,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should resolve accordion with expanded state", () => {
+    it("should resolve accordion with expanded state", async () => {
       const mockRootWithItems = {
         ...mockRoot,
         faqs: [
@@ -509,7 +518,7 @@ describe("resolveJSONPath", () => {
         },
       };
 
-      const result = resolveJSONPath({ root: mockRootWithItems, path });
+      const result = await resolveJSONPath({ root: mockRootWithItems, path });
 
       expect(result).toEqual({
         component: "accordion",
@@ -549,7 +558,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should resolve accordion with nested components", () => {
+    it("should resolve accordion with nested components", async () => {
       const mockRootWithComplex = {
         ...mockRoot,
         breeds: [
@@ -608,7 +617,7 @@ describe("resolveJSONPath", () => {
         },
       };
 
-      const result = resolveJSONPath({ root: mockRootWithComplex, path });
+      const result = await resolveJSONPath({ root: mockRootWithComplex, path });
 
       expect(result).toEqual({
         component: "accordion",
@@ -690,7 +699,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should resolve accordion when itemsRef is row-relative", () => {
+    it("should resolve accordion when itemsRef is row-relative", async () => {
       const mockRow = {
         subSections: [
           {
@@ -724,7 +733,7 @@ describe("resolveJSONPath", () => {
         },
       };
 
-      const result = resolveJSONPath({
+      const result = await resolveJSONPath({
         root: mockRoot,
         path,
         row: mockRow,
@@ -766,7 +775,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should resolve accordion with format application", () => {
+    it("should resolve accordion with format application", async () => {
       const mockRootWithDates = {
         ...mockRoot,
         events: [
@@ -814,7 +823,7 @@ describe("resolveJSONPath", () => {
         },
       };
 
-      const result = resolveJSONPath({ root: mockRootWithDates, path });
+      const result = await resolveJSONPath({ root: mockRootWithDates, path });
 
       expect(result).toEqual({
         component: "accordion",
@@ -870,7 +879,7 @@ describe("resolveJSONPath", () => {
       });
     });
 
-    it("should handle static accordion items (no itemsRef)", () => {
+    it("should handle static accordion items (no itemsRef)", async () => {
       const path = {
         component: "accordion",
         id: "static-accordion",
@@ -913,7 +922,7 @@ describe("resolveJSONPath", () => {
         ],
       };
 
-      const result = resolveJSONPath({ root: mockRoot, path });
+      const result = await resolveJSONPath({ root: mockRoot, path });
 
       expect(result).toEqual({
         component: "accordion",
@@ -960,10 +969,12 @@ describe("resolveJSONPath", () => {
   });
 
   describe("primitive values", () => {
-    it("should return primitive values as-is", () => {
-      expect(resolveJSONPath({ root: mockRoot, path: 42 })).toBe(42);
-      expect(resolveJSONPath({ root: mockRoot, path: true })).toBe(true);
-      expect(resolveJSONPath({ root: mockRoot, path: false })).toBe(false);
+    it("should return primitive values as-is", async () => {
+      expect(await resolveJSONPath({ root: mockRoot, path: 42 })).toBe(42);
+      expect(await resolveJSONPath({ root: mockRoot, path: true })).toBe(true);
+      expect(await resolveJSONPath({ root: mockRoot, path: false })).toBe(
+        false,
+      );
     });
   });
 });
@@ -976,40 +987,40 @@ describe("jp function", () => {
     },
   };
 
-  it("should return first match for valid path", () => {
+  it("should return first match for valid path", async () => {
     const result = jp({ root: mockRoot, path: "$.items[0]" });
     expect(result).toBe("first");
   });
 
-  it("should return empty string for non-existent path", () => {
+  it("should return empty string for non-existent path", async () => {
     const result = jp({ root: mockRoot, path: "$.nonExistent" });
     expect(result).toBe("");
   });
 
-  it("should return empty string for non-string paths", () => {
+  it("should return empty string for non-string paths", async () => {
     const result = jp({ root: mockRoot, path: 123 });
     expect(result).toBe("");
   });
 
-  it("should handle row references", () => {
+  it("should handle row references", async () => {
     const row = { prop: "row value" };
     const result = jp({ root: mockRoot, path: "@.prop", row });
     expect(result).toBe("row value");
   });
 
-  it("should return empty array for literal references", () => {
+  it("should return empty array for literal references", async () => {
     const result = jp({ root: mockRoot, path: "\\$.literal" });
     expect(result).toBe("");
   });
 });
 
 describe("populateUrlTemplate", () => {
-  it("should replace single parameter", () => {
+  it("should replace single parameter", async () => {
     const result = populateUrlTemplate("/cases/{caseId}", { caseId: "123" });
     expect(result).toBe("/cases/123");
   });
 
-  it("should replace multiple parameters", () => {
+  it("should replace multiple parameters", async () => {
     const result = populateUrlTemplate("/cases/{caseId}/tabs/{tabId}", {
       caseId: "123",
       tabId: "details",
@@ -1017,21 +1028,21 @@ describe("populateUrlTemplate", () => {
     expect(result).toBe("/cases/123/tabs/details");
   });
 
-  it("should URL encode parameter values", () => {
+  it("should URL encode parameter values", async () => {
     const result = populateUrlTemplate("/search?q={query}", {
       query: "test & special chars",
     });
     expect(result).toBe("/search?q=test%20%26%20special%20chars");
   });
 
-  it("should handle missing parameters with empty string", () => {
+  it("should handle missing parameters with empty string", async () => {
     const result = populateUrlTemplate("/cases/{caseId}/{missing}", {
       caseId: "123",
     });
     expect(result).toBe("/cases/123/");
   });
 
-  it("should handle null and undefined parameters", () => {
+  it("should handle null and undefined parameters", async () => {
     const result = populateUrlTemplate("/cases/{nullParam}/{undefinedParam}", {
       nullParam: null,
       undefinedParam: undefined,
@@ -1039,12 +1050,12 @@ describe("populateUrlTemplate", () => {
     expect(result).toBe("/cases//");
   });
 
-  it("should handle template without parameters", () => {
+  it("should handle template without parameters", async () => {
     const result = populateUrlTemplate("/static/url", {});
     expect(result).toBe("/static/url");
   });
 
-  it("should handle very long parameter names (security test)", () => {
+  it("should handle very long parameter names (security test)", async () => {
     const longKey = "a".repeat(150);
     const template = `/{${longKey}}`;
     const result = populateUrlTemplate(template, { [longKey]: "value" });
@@ -1053,18 +1064,18 @@ describe("populateUrlTemplate", () => {
 });
 
 describe("edge cases and error handling", () => {
-  it("should handle circular references gracefully", () => {
+  it("should handle circular references gracefully", async () => {
     const circularRoot = { self: null };
     circularRoot.self = circularRoot;
 
-    const result = resolveJSONPath({
+    const result = await resolveJSONPath({
       root: circularRoot,
       path: "$.nonExistent",
     });
     expect(result).toBe("");
   });
 
-  it("should handle very deep nesting", () => {
+  it("should handle very deep nesting", async () => {
     const deepRoot = {
       level1: {
         level2: {
@@ -1077,14 +1088,14 @@ describe("edge cases and error handling", () => {
       },
     };
 
-    const result = resolveJSONPath({
+    const result = await resolveJSONPath({
       root: deepRoot,
       path: "$.level1.level2.level3.level4.level5",
     });
     expect(result).toBe("deep value");
   });
 
-  it("should handle arrays in JSON paths", () => {
+  it("should handle arrays in JSON paths", async () => {
     const arrayRoot = {
       items: [
         { id: 1, name: "first" },
@@ -1092,14 +1103,14 @@ describe("edge cases and error handling", () => {
       ],
     };
 
-    const result = resolveJSONPath({
+    const result = await resolveJSONPath({
       root: arrayRoot,
       path: "$.items[1].name",
     });
     expect(result).toBe("second");
   });
 
-  it("should resolve repeat components in summary lists", () => {
+  it("should resolve repeat components in summary lists", async () => {
     const mockRootWithActions = {
       payload: {
         answers: {
@@ -1168,7 +1179,7 @@ describe("edge cases and error handling", () => {
       },
     };
 
-    const result = resolveJSONPath({ root: mockRootWithActions, path });
+    const result = await resolveJSONPath({ root: mockRootWithActions, path });
 
     expect(result).toEqual({
       component: "accordion",
@@ -1266,13 +1277,13 @@ describe("component-container resolution", () => {
     },
   };
 
-  it("should resolve component-container with contentRef", () => {
+  it("should resolve component-container with contentRef", async () => {
     const path = {
       component: "component-container",
       contentRef: "$.actionData.landGrants.response",
     };
 
-    const result = resolveJSONPath({ root: mockRoot, path });
+    const result = await resolveJSONPath({ root: mockRoot, path });
 
     expect(result).toEqual([
       {
@@ -1310,17 +1321,17 @@ describe("component-container resolution", () => {
     ]);
   });
 
-  it("should return empty array for non-existent contentRef", () => {
+  it("should return empty array for non-existent contentRef", async () => {
     const path = {
       component: "component-container",
       contentRef: "$.actionData.nonExistent",
     };
 
-    const result = resolveJSONPath({ root: mockRoot, path });
+    const result = await resolveJSONPath({ root: mockRoot, path });
     expect(result).toEqual([]);
   });
 
-  it("should flatten component-container in arrays", () => {
+  it("should flatten component-container in arrays", async () => {
     const mockRootWithSections = {
       actionData: {
         sections: [
@@ -1338,7 +1349,7 @@ describe("component-container resolution", () => {
       },
     ];
 
-    const result = resolveJSONPath({ root: mockRootWithSections, path });
+    const result = await resolveJSONPath({ root: mockRootWithSections, path });
 
     expect(result).toEqual([
       { component: "heading", text: "Title" },
@@ -1347,7 +1358,7 @@ describe("component-container resolution", () => {
     ]);
   });
 
-  it("should handle component-container with nested components", () => {
+  it("should handle component-container with nested components", async () => {
     const mockRootWithNested = {
       actionData: {
         complexContent: [
@@ -1377,7 +1388,7 @@ describe("component-container resolution", () => {
       contentRef: "$.actionData.complexContent",
     };
 
-    const result = resolveJSONPath({ root: mockRootWithNested, path });
+    const result = await resolveJSONPath({ root: mockRootWithNested, path });
 
     expect(result).toEqual([
       {
@@ -1400,7 +1411,7 @@ describe("component-container resolution", () => {
     ]);
   });
 
-  it("should handle empty component-container", () => {
+  it("should handle empty component-container", async () => {
     const mockRootWithEmpty = {
       actionData: {
         emptyContent: [],
@@ -1412,7 +1423,7 @@ describe("component-container resolution", () => {
       contentRef: "$.actionData.emptyContent",
     };
 
-    const result = resolveJSONPath({ root: mockRootWithEmpty, path });
+    const result = await resolveJSONPath({ root: mockRootWithEmpty, path });
     expect(result).toEqual([]);
   });
 });

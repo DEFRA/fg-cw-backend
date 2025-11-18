@@ -172,12 +172,12 @@ export const findCaseByIdUseCase = async (caseId, user) => {
           name: assignedUser.name,
         }
       : null,
-    banner: buildBanner(kase, workflow),
+    banner: await buildBanner(kase, workflow),
     requiredRoles: {
       allOf: workflow.requiredRoles.allOf,
       anyOf: workflow.requiredRoles.anyOf,
     },
-    links: buildLinks(kase, workflow),
+    links: await buildLinks(kase, workflow),
     comments: kase.comments.map((comment) => ({
       ...comment,
       title: comment.title,
