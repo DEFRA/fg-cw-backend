@@ -330,7 +330,7 @@
                       },
                       {
                         "component": "conditional",
-                        "condition": "jsonata:$number($.request.query.runId) = @.id",
+                        "condition": "jsonata:$.request.query.runId ? $number($.request.query.runId) = @.id : @.id = $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
                         "whenTrue": {
                           "component": "text",
                           "text": "Currently showing",

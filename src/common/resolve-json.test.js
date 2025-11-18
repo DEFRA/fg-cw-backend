@@ -1972,4 +1972,111 @@ describe("conditional component resolution", () => {
       text: "Inactive",
     });
   });
+
+  it("should handle ternary operator in JSONata condition", async () => {
+    const mockRootWithItems = {
+      items: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      request: {
+        query: {
+          selectedId: "2",
+        },
+      },
+    };
+
+    const row = { id: 2 };
+
+    const path = {
+      component: "conditional",
+      condition:
+        "jsonata:$.request.query.selectedId ? $number($.request.query.selectedId) = @.id : @.id = $.items[0].id",
+      whenTrue: {
+        component: "text",
+        text: "Selected",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Not selected",
+      },
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithItems,
+      path,
+      row,
+    });
+    expect(result).toEqual({
+      component: "text",
+      text: "Selected",
+    });
+  });
+
+  it("should use fallback logic when query param is absent (ternary)", async () => {
+    const mockRootWithItems = {
+      items: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      request: {
+        query: {},
+      },
+    };
+
+    const row = { id: 1 };
+
+    const path = {
+      component: "conditional",
+      condition:
+        "jsonata:$.request.query.selectedId ? $number($.request.query.selectedId) = @.id : @.id = $.items[0].id",
+      whenTrue: {
+        component: "text",
+        text: "Selected",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Not selected",
+      },
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithItems,
+      path,
+      row,
+    });
+    expect(result).toEqual({
+      component: "text",
+      text: "Selected",
+    });
+  });
+
+  it("should use fallback logic correctly for non-first row", async () => {
+    const mockRootWithItems = {
+      items: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      request: {
+        query: {},
+      },
+    };
+
+    const row = { id: 2 };
+
+    const path = {
+      component: "conditional",
+      condition:
+        "jsonata:$.request.query.selectedId ? $number($.request.query.selectedId) = @.id : @.id = $.items[0].id",
+      whenTrue: {
+        component: "text",
+        text: "Selected",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Not selected",
+      },
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithItems,
+      path,
+      row,
+    });
+    expect(result).toEqual({
+      component: "text",
+      text: "Not selected",
+    });
+  });
 });
