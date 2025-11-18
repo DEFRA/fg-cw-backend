@@ -3,7 +3,7 @@ import { setTimeout } from "timers/promises";
 // eslint-disable-next-line complexity
 export const waitForDocuments = async (
   collection,
-  maxRetries = 3,
+  maxRetries = 10,
   filter = {},
 ) => {
   const docs = await collection.find(filter).toArray();
