@@ -212,7 +212,7 @@ describe("Event-Driven Integration Tests", () => {
         id: randomUUID(),
         reference: "EVENT-TEST-QUEUE-001",
         workflowCode: "pigs-might-fly",
-        status: "in-progress",
+        status: "IN_PROGRESS",
         workflow: {
           currentStage: "initial-review",
           stages: [],

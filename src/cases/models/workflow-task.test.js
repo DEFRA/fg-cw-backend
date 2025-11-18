@@ -6,20 +6,20 @@ describe("WorkflowTask", () => {
   describe("validation", () => {
     it("should create a valid task with all required fields", () => {
       const task = new WorkflowTask({
-        code: "task-1",
+        code: "TASK_1",
         name: "Test Task",
-        type: "boolean",
+        mandatory: true,
         description: "A test task",
         statusOptions: [
           new WorkflowTaskStatusOption({
-            code: "complete",
+            code: "COMPLETE",
             name: "Complete",
             completes: true,
           }),
         ],
       });
 
-      expect(task.code).toBe("task-1");
+      expect(task.code).toBe("TASK_1");
       expect(task.name).toBe("Test Task");
       expect(task.statusOptions).toHaveLength(1);
     });
@@ -28,13 +28,13 @@ describe("WorkflowTask", () => {
       expect(
         () =>
           new WorkflowTask({
-            code: "task-1",
+            code: "TASK_1",
             name: "Test Task",
-            type: "boolean",
+            mandatory: true,
             description: "A test task",
             statusOptions: [
               new WorkflowTaskStatusOption({
-                code: "in-progress",
+                code: "IN_PROGRESS",
                 name: "In Progress",
                 completes: false,
               }),
@@ -45,18 +45,18 @@ describe("WorkflowTask", () => {
 
     it("should allow multiple status options if at least one completes", () => {
       const task = new WorkflowTask({
-        code: "task-1",
+        code: "TASK_1",
         name: "Test Task",
-        type: "boolean",
+        mandatory: true,
         description: "A test task",
         statusOptions: [
           new WorkflowTaskStatusOption({
-            code: "in-progress",
+            code: "IN_PROGRESS",
             name: "In Progress",
             completes: false,
           }),
           new WorkflowTaskStatusOption({
-            code: "complete",
+            code: "COMPLETE",
             name: "Complete",
             completes: true,
           }),
@@ -70,23 +70,23 @@ describe("WorkflowTask", () => {
       expect(
         () =>
           new WorkflowTask({
-            code: "task-1",
+            code: "TASK_1",
             name: "Test Task",
           }),
       ).toThrow(
-        'Invalid WorkflowTask: "type" is required, "description" is required, "statusOptions" is required',
+        'Invalid WorkflowTask: "mandatory" is required, "description" is required, "statusOptions" is required',
       );
     });
 
     it("should accept null description", () => {
       const task = new WorkflowTask({
-        code: "task-1",
+        code: "TASK_1",
         name: "Test Task",
-        type: "boolean",
+        mandatory: true,
         description: null,
         statusOptions: [
           new WorkflowTaskStatusOption({
-            code: "complete",
+            code: "COMPLETE",
             name: "Complete",
             completes: true,
           }),
@@ -98,13 +98,13 @@ describe("WorkflowTask", () => {
 
     it("should accept array description", () => {
       const task = new WorkflowTask({
-        code: "task-1",
+        code: "TASK_1",
         name: "Test Task",
-        type: "boolean",
+        mandatory: true,
         description: ["Step 1", "Step 2"],
         statusOptions: [
           new WorkflowTaskStatusOption({
-            code: "complete",
+            code: "COMPLETE",
             name: "Complete",
             completes: true,
           }),

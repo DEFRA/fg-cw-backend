@@ -134,7 +134,7 @@ describe("inbox.subscriber", () => {
       const mockEventData = {
         foo: "barr",
       };
-      handleAgreementStatusUpdateUseCase.mockResolvedValue("complete");
+      handleAgreementStatusUpdateUseCase.mockResolvedValue("COMPLETE");
 
       withTraceParent.mockImplementationOnce((_, fn) => fn());
       const mockEvent = {

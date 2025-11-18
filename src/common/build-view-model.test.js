@@ -3,7 +3,7 @@ import {
   assertPathExists,
   buildBanner,
   buildLinks,
-  createRootContext,
+  createCaseWorkflowContext,
   pathExists,
 } from "./build-view-model.js";
 
@@ -33,7 +33,7 @@ describe("buildViewModel", () => {
       },
     };
     it("should merge case and workflow definitions", () => {
-      const result = createRootContext(kase, workflow);
+      const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
@@ -50,7 +50,7 @@ describe("buildViewModel", () => {
       const kase = { _id: "case-123" };
       const workflow = { code: "test-workflow" };
 
-      const result = createRootContext(kase, workflow);
+      const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
@@ -62,7 +62,7 @@ describe("buildViewModel", () => {
       const kase = { _id: "case-123" };
       const workflow = { code: "test-workflow", definitions: {} };
 
-      const result = createRootContext(kase, workflow);
+      const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
@@ -84,7 +84,7 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = createRootContext(kase, workflow);
+      const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",

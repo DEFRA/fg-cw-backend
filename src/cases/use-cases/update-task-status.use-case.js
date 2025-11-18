@@ -9,17 +9,8 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  const {
-    caseId,
-    phaseCode,
-    stageCode,
-    taskGroupCode,
-    taskCode,
-    status,
-    completed,
-    comment,
-    user,
-  } = command;
+  const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
+    command;
 
   const kase = await findById(caseId);
 
@@ -28,9 +19,18 @@ export const updateTaskStatusUseCase = async (command) => {
   }
 
   const workflow = await findByCode(kase.workflowCode);
+
+  // Check if the current status is interactive
+  const currentStatus = workflow.getStatus(kase.position);
+  if (currentStatus.interactive === false) {
+    throw Boom.badRequest(
+      `Cannot update task status. The current stage status "${currentStatus.name}" is not interactive.`,
+    );
+  }
+
   const task = workflow.findTask({
-    phaseCode,
-    stageCode,
+    phaseCode: kase.position.phaseCode,
+    stageCode: kase.position.stageCode,
     taskGroupCode,
     taskCode,
   });
@@ -39,8 +39,6 @@ export const updateTaskStatusUseCase = async (command) => {
   const taskCompleted = mapCompleted({ task, status, completed });
 
   kase.setTaskStatus({
-    phaseCode,
-    stageCode,
     taskGroupCode,
     taskCode,
     status,

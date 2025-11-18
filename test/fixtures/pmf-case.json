@@ -21,7 +21,7 @@
   "currentStage": "application-received",
   "phases": [
     {
-      "code": "default",
+      "code": "DEFAULT",
       "name": "Default Phase",
       "stages": [
         {

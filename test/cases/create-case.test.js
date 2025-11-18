@@ -57,12 +57,6 @@ describe("On CreateNewCase event", () => {
       },
     ];
 
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].commentRef = null;
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].updatedAt = null;
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].updatedBy = null;
-    expected[0].phases[0].stages[0].outcome = null;
-    expected[0].phases[0].stages[1].outcome = null;
-
     const messageId = randomUUID();
     const type = createCaseEvent3.type;
 

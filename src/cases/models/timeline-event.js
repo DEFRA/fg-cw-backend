@@ -97,6 +97,14 @@ export class TimelineEvent {
     });
   }
 
+  static createPhaseCompleted({ data, createdBy }) {
+    return TimelineEvent.create({
+      eventType: EventEnums.eventTypes.PHASE_COMPLETED,
+      data,
+      createdBy,
+    });
+  }
+
   static createStageCompleted({ data, text, createdBy }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
@@ -106,9 +114,9 @@ export class TimelineEvent {
     });
   }
 
-  static createCaseApproved({ data, createdBy }) {
+  static createCaseStatusChanged({ data, createdBy }) {
     return TimelineEvent.create({
-      eventType: EventEnums.eventTypes.CASE_APPROVED,
+      eventType: EventEnums.eventTypes.CASE_STATUS_CHANGED,
       data,
       createdBy,
     });

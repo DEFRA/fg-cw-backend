@@ -63,17 +63,30 @@ export const findCasesUseCase = async () => {
       return acc;
     }
 
-    kase.requiredRoles = workflow.requiredRoles;
-
     const assignedUser = assignedUsers.find(
       (u) => u.id === kase.assignedUser?.id,
     );
 
-    if (assignedUser) {
-      kase.assignedUser.name = assignedUser.name;
-    }
+    const currentStatus = workflow
+      .getStage(kase.position)
+      .getStatus(kase.position.statusCode);
 
-    acc.push(kase);
+    const result = {
+      _id: kase._id,
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      dateReceived: kase.dateReceived,
+      currentStatus: currentStatus.name,
+      assignedUser: assignedUser
+        ? {
+            id: assignedUser.id,
+            name: assignedUser.name,
+          }
+        : null,
+      payload: kase.payload,
+    };
+
+    acc.push(result);
     return acc;
   }, []);
 

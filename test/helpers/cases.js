@@ -35,21 +35,21 @@ export const createCase = async (cases, payload = {}) => {
         ],
       },
     },
-    currentStage: "application-receipt",
+    currentStage: "APPLICATION_RECEIPT",
     timeline: [],
     phases: [
       {
-        code: "default",
+        code: "DEFAULT",
         stages: [
           {
-            code: "application-receipt",
+            code: "APPLICATION_RECEIPT",
             taskGroups: [
               {
-                code: "application-receipt-tasks",
+                code: "APPLICATION_RECEIPT_TASKS",
                 tasks: [
                   {
-                    code: "simple-review",
-                    status: "pending",
+                    code: "SIMPLE_REVIEW",
+                    status: "PENDING",
                     completed: false,
                   },
                 ],

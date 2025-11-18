@@ -20,4 +20,23 @@ export class CaseStage {
   getUserIds() {
     return this.taskGroups.flatMap((tg) => tg.getUserIds());
   }
+
+  isComplete(workflowStage, position) {
+    const actions = workflowStage.getActions(position);
+    const checkTasks = actions.some((action) => action.checkTasks);
+
+    if (!checkTasks) {
+      return true;
+    }
+
+    for (const workflowTaskGroup of workflowStage.taskGroups) {
+      const caseTaskGroup = this.findTaskGroup(workflowTaskGroup.code);
+
+      if (!caseTaskGroup.isComplete(workflowTaskGroup)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

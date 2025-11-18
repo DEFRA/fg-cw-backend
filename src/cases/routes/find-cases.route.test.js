@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createServer } from "../../server/index.js";
-import { Case } from "../models/case.js";
 import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
 import { findCasesRoute } from "./find-cases.route.js";
 
@@ -20,12 +19,7 @@ describe("findCasesRoute", () => {
   });
 
   it("returns cases", async () => {
-    const cases = [Case.createMock(), Case.createMock()];
-    cases[0].supplementaryData.agreements = [];
-    cases[1].supplementaryData.agreements = [];
-
-    cases[0].assignedUser.name = "Test Name 1";
-    cases[1].assignedUser.name = "Test Name 1";
+    const cases = [{}];
 
     findCasesUseCase.mockResolvedValue(cases);
 

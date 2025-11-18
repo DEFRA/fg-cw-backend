@@ -134,7 +134,7 @@ describe("Service Layer Integration Tests", () => {
         id: randomUUID(),
         reference: eventData.clientRef,
         workflowCode: eventData.grantCode,
-        status: "in-progress",
+        status: "IN_PROGRESS",
         data: eventData.applicationData,
         applicant: eventData.applicant,
         createdAt: new Date().toISOString(),
@@ -172,7 +172,7 @@ describe("Service Layer Integration Tests", () => {
         id: randomUUID(),
         reference: "SVC-TEST-002",
         workflowCode: "pigs-might-fly",
-        status: "in-progress",
+        status: "IN_PROGRESS",
         createdAt: new Date().toISOString(),
       };
       await cases.insertOne(testCase);
@@ -224,7 +224,7 @@ describe("Service Layer Integration Tests", () => {
         id: randomUUID(),
         reference: "SVC-TEST-WORKFLOW-001",
         workflowCode: "pigs-might-fly",
-        status: "in-progress",
+        status: "IN_PROGRESS",
         data: {
           isPigFarmer: true,
           totalPigs: 1000,

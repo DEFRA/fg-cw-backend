@@ -102,20 +102,20 @@
       "totalAnnualPaymentPence": 35150
     }
   },
-  "currentStage": "application-receipt",
+  "currentStage": "APPLICATION_RECEIPT",
   "phases": [
     {
-      "code": "default",
+      "code": "DEFAULT",
       "name": "Default Phase",
       "stages": [
         {
-          "code": "application-receipt",
+          "code": "APPLICATION_RECEIPT",
           "taskGroups": [
             {
-              "code": "application-receipt-tasks",
+              "code": "APPLICATION_RECEIPT_TASKS",
               "tasks": [
                 {
-                  "code": "simple-review",
+                  "code": "SIMPLE_REVIEW",
                   "status": "pending"
                 }
               ]
@@ -123,7 +123,7 @@
           ]
         },
         {
-          "code": "contract",
+          "code": "CONTRACT",
           "taskGroups": []
         }
       ]
