@@ -36,15 +36,10 @@ export class WorkflowStage {
     return status.getTransition(actionCode);
   }
 
-  getActionByCode(actionCode) {
-    for (const status of this.statuses) {
-      const action = status.getActions().find((a) => a.code === actionCode);
-
-      if (action) {
-        return action;
-      }
-    }
-    return null;
+  getActionByCode(position, actionCode) {
+    const actions = this.getActions(position);
+    const action = actions.find((a) => a.code === actionCode);
+    return action ?? null;
   }
 
   getActions(position) {
