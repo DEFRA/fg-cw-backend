@@ -49,7 +49,7 @@ describe("GET /cases/{caseId}", () => {
         code: "APPLICATION_RECEIPT",
         name: "Application Receipt",
         description: "Application received",
-        interactive: null,
+        interactive: true,
         taskGroups: [
           {
             code: "APPLICATION_RECEIPT_TASKS",
