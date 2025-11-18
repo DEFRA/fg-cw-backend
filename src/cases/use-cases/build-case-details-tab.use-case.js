@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { readFileSync } from "fs";
-import jsonata from "jsonata";
 import { JSONPath } from "jsonpath-plus";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -114,72 +113,64 @@ const callAPIAndFetchData = async ({
   workflow,
   caseWorkflowContext,
 }) => {
-  const runId = await extractRunIdFromAction({
+  const params = await extractEndpointParameters({
     actionValue,
     workflow,
     caseWorkflowContext,
   });
 
   // TODO: This is temporary until we are calling the Rules Engine API to fetch this data!
-  if (runId) {
-    return await loadRulesRunData(runId);
+  if (params.runId) {
+    return await loadRulesRunData(params.runId);
   }
 
   return await loadDefaultRulesData();
 };
 
+const resolveParameterMap = async ({ paramMap, caseWorkflowContext }) => {
+  const params = {};
+  for (const [paramName, paramExpression] of Object.entries(paramMap)) {
+    params[paramName] = await resolveJSONPath({
+      root: caseWorkflowContext,
+      path: paramExpression,
+    });
+  }
+  return params;
+};
+
 // eslint-disable-next-line complexity
-const extractRunIdFromAction = async ({
+const extractEndpointParameters = async ({
   actionValue,
   workflow,
   caseWorkflowContext,
 }) => {
-  // Check if runId is in query params (user clicked specific version)
-  if (caseWorkflowContext.request?.query?.runId) {
-    return caseWorkflowContext.request.query.runId;
+  const externalAction = findExternalAction(actionValue, workflow);
+
+  if (!externalAction?.endpoint?.endpointParams) {
+    return {};
   }
 
-  // Use workflow definition's JSONata expression
-  const externalAction = findFetchRulesAction(actionValue, workflow);
-  const runIdExpression = getRunIdExpression(externalAction);
+  const allParams = {};
 
-  if (runIdExpression) {
-    return await resolveRunId({ runIdExpression, caseWorkflowContext });
+  for (const [, paramMap] of Object.entries(
+    externalAction.endpoint.endpointParams,
+  )) {
+    const resolvedParams = await resolveParameterMap({
+      paramMap,
+      caseWorkflowContext,
+    });
+    Object.assign(allParams, resolvedParams);
   }
 
-  return null;
+  return allParams;
 };
 
-// eslint-disable-next-line complexity
-const findFetchRulesAction = (actionValue, workflow) => {
+const findExternalAction = (actionValue, workflow) => {
   if (typeof actionValue !== "string" || !workflow.externalActions) {
     return null;
   }
 
-  const externalAction = workflow.externalActions.find(
-    (action) => action.code === "FETCH_RULES",
-  );
-
-  if (!externalAction || typeof externalAction.endpoint !== "object") {
-    return null;
-  }
-
-  return externalAction;
-};
-
-// eslint-disable-next-line complexity
-const getRunIdExpression = (externalAction) => {
-  return externalAction?.endpoint?.endpointParams?.PATH?.runId || null;
-};
-
-const resolveRunId = async ({ runIdExpression, caseWorkflowContext }) => {
-  if (runIdExpression.startsWith("jsonata:")) {
-    const expression = runIdExpression.replace("jsonata:", "");
-    const compiledExpression = jsonata(expression);
-    const result = await compiledExpression.evaluate(caseWorkflowContext);
-    return result;
-  }
-  return runIdExpression;
+  return workflow.externalActions.find((action) => action.code === actionValue);
 };
 
 // TODO: Temporary - will be removed when we start calling the Rules Engine API
