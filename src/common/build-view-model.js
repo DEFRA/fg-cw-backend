@@ -2,12 +2,13 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { resolveJSONPath } from "./resolve-json.js";
 
-export const createCaseWorkflowContext = (kase, workflow) => ({
+export const createCaseWorkflowContext = (kase, workflow, request = {}) => ({
   ...kase,
   definitions: { ...workflow.definitions },
   ...(workflow.externalActions && {
     externalActions: workflow.externalActions,
   }),
+  request: { ...request },
 });
 
 export const assertPathExists = async (root, path) => {

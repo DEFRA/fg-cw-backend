@@ -921,7 +921,7 @@
         "code": "FETCH_RULES_ENDPOINT",
         "endpointParams": {
           "PATH": {
-            "runId": "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id"
+            "runId": "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id"
           }
         }
       },

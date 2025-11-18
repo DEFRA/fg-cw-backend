@@ -15,13 +15,20 @@ import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
-export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
+export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
+
+  const { caseId, tabId } = request.params;
 
   const kase = await findById(caseId);
   const workflow = await findByCode(kase.workflowCode);
 
-  const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
+  const caseWorkflowContext = createCaseWorkflowContext(
+    kase,
+    workflow,
+    request,
+  );
+
   const tabDefinition = await getTabDefinition({
     root: caseWorkflowContext,
     workflow,
@@ -121,11 +128,18 @@ const callAPIAndFetchData = async ({
   return await loadDefaultRulesData();
 };
 
+// eslint-disable-next-line complexity
 const extractRunIdFromAction = async ({
   actionValue,
   workflow,
   caseWorkflowContext,
 }) => {
+  // Check if runId is in query params (user clicked specific version)
+  if (caseWorkflowContext.request?.query?.runId) {
+    return caseWorkflowContext.request.query.runId;
+  }
+
+  // Use workflow definition's JSONata expression
   const externalAction = findFetchRulesAction(actionValue, workflow);
   const runIdExpression = getRunIdExpression(externalAction);
 
