@@ -1,5 +1,6 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { randomUUID } from "node:crypto";
+import { logger } from "../src/common/logger.js";
 /**
  *  call npm run publish:case:new to create a case for frps-private-beta
  *  call npm run publish:case:pmf to create a case for pigs-might-fly
@@ -172,7 +173,10 @@ const messageFrps = {
   },
 };
 
-console.log("Sending message to SQS queue:", queueUrl);
+logger.info(
+  { queueUrl, component: "cli.publish" },
+  "Sending message to SQS queue",
+);
 
 await sqs.send(
   new SendMessageCommand({
@@ -184,4 +188,4 @@ await sqs.send(
   }),
 );
 
-console.log("Message sent");
+logger.info({ component: "cli.publish" }, "Message sent");
