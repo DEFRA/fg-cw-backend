@@ -118,6 +118,42 @@ describe("resolveJSONPath", () => {
       const result = await resolveJSONPath({ root: mockRoot, path });
       expect(result).toEqual([["REF-001", "SFI"], "plain text"]);
     });
+
+    it("should filter out undefined values from arrays to prevent sparse arrays", async () => {
+      const path = [
+        {
+          component: "text",
+          text: "First item",
+        },
+        {
+          component: "conditional",
+          condition: "jsonata:$.payload.isActive = false",
+          whenTrue: {
+            component: "text",
+            text: "Should not render",
+          },
+        },
+        {
+          component: "text",
+          text: "Second item",
+        },
+      ];
+
+      const result = await resolveJSONPath({ root: mockRoot, path });
+      expect(result).toEqual([
+        {
+          component: "text",
+          text: "First item",
+        },
+        {
+          component: "text",
+          text: "Second item",
+        },
+      ]);
+      // Ensure no undefined values in array
+      expect(result).not.toContain(undefined);
+      expect(result.length).toBe(2);
+    });
   });
 
   describe("object path resolution", () => {

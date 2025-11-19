@@ -51,7 +51,7 @@ const resolveJSONArray = async ({ path, root, row }) => {
       (isRepeat(item) || isComponentContainer(item))
     ) {
       results.push(...resolved);
-    } else {
+    } else if (resolved !== undefined) {
       results.push(resolved);
     }
   }
