@@ -43,7 +43,6 @@ const resolveJSONString = async ({ path, root, row }) => {
 const shouldSpreadArray = (item, resolved) =>
   Array.isArray(resolved) && (isRepeat(item) || isComponentContainer(item));
 
-// eslint-disable-next-line complexity
 const resolveJSONArray = async ({ path, root, row }) => {
   const results = [];
 
