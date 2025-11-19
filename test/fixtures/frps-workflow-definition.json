@@ -308,14 +308,27 @@
                     "component": "table",
                     "title": "Dates and amounts",
                     "rowsRef": "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
+                    "head": [
+                      {
+                        "component": "text",
+                        "text": "Date/time"
+                      },
+                      {
+                        "component": "text",
+                        "text": "Result"
+                      },
+                      {
+                        "component": "text",
+                        "text": "Version",
+                        "classes": "govuk-visually-hidden"
+                      }
+                    ],
                     "rows": [
                       {
-                        "label": "Date/time",
                         "text": "@.date",
                         "format": "formatDateTime"
                       },
                       {
-                        "label": "Result",
                         "component": "status",
                         "text": "@.valid",
                         "format": "yesNo",
@@ -324,8 +337,8 @@
                           "No": "govuk-tag--red"
                         },
                         "labelsMap": {
-                          "Yes": "Pass",
-                          "No": "Fail"
+                          "Yes": "Passed",
+                          "No": "Failed"
                         }
                       },
                       {
