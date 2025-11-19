@@ -71,6 +71,7 @@ describe("formatTimelineItemDescription", () => {
       data: {
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
         actionCode: "ACTION_1",
       },
     };

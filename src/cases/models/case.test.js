@@ -942,6 +942,7 @@ describe("Case", () => {
         actionCode: null,
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
       });
       expect(stageCompletedEvent.createdBy).toBe(validUserId);
       expect(stageCompletedEvent.comment).toBeNull();
