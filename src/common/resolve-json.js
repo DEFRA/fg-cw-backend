@@ -2,6 +2,8 @@ import jsonata from "jsonata";
 import { JSONPath } from "jsonpath-plus";
 import { applyFormat } from "./format.js";
 
+const NO_SPECIAL_CASE = Symbol("no-special-case");
+
 // eslint-disable-next-line complexity
 export const resolveJSONPath = async ({ root, path, row }) => {
   if (path === null) {
@@ -59,7 +61,7 @@ const resolveJSONArray = async ({ path, root, row }) => {
 
 const resolveJSONObject = async ({ path, root, row }) => {
   const specialCase = await handleSpecialCases({ path, root, row });
-  if (specialCase) {
+  if (specialCase !== NO_SPECIAL_CASE) {
     return specialCase;
   }
 
@@ -84,14 +86,18 @@ const handleSpecialCases = async ({ path, root, row }) => {
   if (isComponentContainer(path)) {
     return resolveComponentContainer({ path, root, row });
   }
-  return handleUrlTemplate({ path, root, row });
+  const urlTemplateResult = handleUrlTemplate({ path, root, row });
+  if (urlTemplateResult !== undefined) {
+    return urlTemplateResult;
+  }
+  return NO_SPECIAL_CASE;
 };
 
 const handleUrlTemplate = ({ path, root, row }) => {
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
-  return null;
+  return undefined;
 };
 
 const isTable = (path) => path.rowsRef && path.rows;
@@ -101,11 +107,14 @@ const isRepeat = (path) =>
   path.component === "repeat" && path.itemsRef && path.items;
 const isComponentContainer = (path) =>
   path.component === "component-container" && path.contentRef;
+const hasConditionalBranch = (path) =>
+  Object.prototype.hasOwnProperty.call(path, "whenTrue") ||
+  Object.prototype.hasOwnProperty.call(path, "whenFalse");
+
 const isConditional = (path) =>
   path.component === "conditional" &&
   path.condition &&
-  path.whenTrue &&
-  path.whenFalse;
+  hasConditionalBranch(path);
 
 // eslint-disable-next-line complexity
 const resolveGenericObject = async ({ path, root, row }) => {
@@ -251,6 +260,9 @@ const resolveConditionalComponent = async ({ path, root, row }) => {
 
   const isTrue = evaluateConditionResult(conditionResult);
   const selectedComponent = isTrue ? whenTrue : whenFalse;
+  if (selectedComponent === undefined) {
+    return undefined;
+  }
   return resolveJSONPath({ root, path: selectedComponent, row });
 };
 
@@ -305,8 +317,7 @@ const resolveDataRef = async ({ root, path, row }) => {
 const evaluateJSONata = async ({ path, root }) => {
   const expression = path.replace("jsonata:", "");
   const compiledExpression = jsonata(expression);
-  const result = await compiledExpression.evaluate(root);
-  return result;
+  return await compiledExpression.evaluate(root);
 };
 
 // Return a single value for a JSONPath (first match or empty string).

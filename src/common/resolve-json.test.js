@@ -1464,6 +1464,23 @@ describe("conditional component resolution", () => {
     });
   });
 
+  it("should render whenTrue when whenFalse is omitted", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = true",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Active",
+    });
+  });
+
   it("should render whenFalse component when condition is false", async () => {
     const path = {
       component: "conditional",
@@ -1483,6 +1500,37 @@ describe("conditional component resolution", () => {
       component: "text",
       text: "Inactive",
     });
+  });
+
+  it("should render whenFalse when whenTrue is omitted", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = false",
+      whenFalse: {
+        component: "text",
+        text: "Inactive",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Inactive",
+    });
+  });
+
+  it("should return undefined when condition resolves to a missing branch", async () => {
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$.payload.isActive = false",
+      whenTrue: {
+        component: "text",
+        text: "Active",
+      },
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toBeUndefined();
   });
 
   it("should work with row context in table", async () => {
