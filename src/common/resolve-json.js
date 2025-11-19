@@ -2,8 +2,6 @@ import jsonata from "jsonata";
 import { JSONPath } from "jsonpath-plus";
 import { applyFormat } from "./format.js";
 
-const NO_SPECIAL_CASE = Symbol("no-special-case");
-
 // eslint-disable-next-line complexity
 export const resolveJSONPath = async ({ root, path, row }) => {
   if (path === null) {
@@ -65,7 +63,7 @@ const resolveJSONArray = async ({ path, root, row }) => {
 
 const resolveJSONObject = async ({ path, root, row }) => {
   const specialCase = await handleSpecialCases({ path, root, row });
-  if (specialCase !== NO_SPECIAL_CASE) {
+  if (specialCase !== null) {
     return specialCase;
   }
 
@@ -91,17 +89,17 @@ const handleSpecialCases = async ({ path, root, row }) => {
     return resolveComponentContainer({ path, root, row });
   }
   const urlTemplateResult = handleUrlTemplate({ path, root, row });
-  if (urlTemplateResult !== undefined) {
+  if (urlTemplateResult !== null) {
     return urlTemplateResult;
   }
-  return NO_SPECIAL_CASE;
+  return null;
 };
 
 const handleUrlTemplate = ({ path, root, row }) => {
   if ("urlTemplate" in path) {
     return resolveUrlTemplate({ path, root, row });
   }
-  return undefined;
+  return null;
 };
 
 const isTable = (path) => path.rowsRef && path.rows;
