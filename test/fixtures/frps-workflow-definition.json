@@ -343,7 +343,7 @@
                       },
                       {
                         "component": "conditional",
-                        "condition": "jsonata:$.request.query.runId ? $number($.request.query.runId) = @.id : @.id = $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
+                        "condition": "jsonata:$.request.query.runId ? $number($.request.query.runId) = @.id : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
                         "whenTrue": {
                           "component": "text",
                           "text": "Currently showing",
