@@ -26,7 +26,6 @@ const resolveJSONString = async ({ path, root, row }) => {
   if (isLiteralRef(path)) {
     return path.slice(1);
   }
-  // Check for JSONata expression
   if (isJSONataExpression(path)) {
     return await evaluateJSONata({ path, root });
   }
