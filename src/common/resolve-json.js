@@ -40,18 +40,24 @@ const resolveJSONString = async ({ path, root, row }) => {
   return path;
 };
 
+const shouldSpreadArray = (item, resolved) =>
+  Array.isArray(resolved) && (isRepeat(item) || isComponentContainer(item));
+
 // eslint-disable-next-line complexity
 const resolveJSONArray = async ({ path, root, row }) => {
   const results = [];
 
   for (const item of path) {
     const resolved = await resolveJSONPath({ root, path: item, row });
-    if (
-      Array.isArray(resolved) &&
-      (isRepeat(item) || isComponentContainer(item))
-    ) {
+
+    // Skip undefined values to prevent sparse arrays in the output
+    if (resolved === undefined) {
+      continue;
+    }
+
+    if (shouldSpreadArray(item, resolved)) {
       results.push(...resolved);
-    } else if (resolved !== undefined) {
+    } else {
       results.push(resolved);
     }
   }
