@@ -7,6 +7,7 @@ import {
 } from "../../common/build-view-model.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
+import { Position } from "../models/position.js";
 import { findById } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -43,9 +44,13 @@ export const formatTimelineItemDescription = (tl, workflow) => {
       return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' updated`;
     }
     case EventEnums.eventTypes.STAGE_COMPLETED: {
-      const phase = workflow.findPhase(tl.data.phaseCode);
-      const stage = phase.findStage(tl.data.stageCode);
-      const action = stage.getActionByCode(tl.data.actionCode);
+      const position = new Position({
+        phaseCode: tl.data.phaseCode,
+        stageCode: tl.data.stageCode,
+        statusCode: tl.data.statusCode,
+      });
+      const stage = workflow.getStage(position);
+      const action = stage.getActionByCode(position, tl.data.actionCode);
       const info = action ? `outcome (${action.name})` : "completed";
       return `Stage '${stage.name}' ${info}`;
     }
