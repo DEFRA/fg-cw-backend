@@ -10,6 +10,7 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -109,17 +110,28 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
 };
 
 const callAPIAndFetchData = async ({ actionValue, caseWorkflowContext }) => {
-  const params = await extractEndpointParameters({
-    actionValue,
-    caseWorkflowContext,
-  });
+  try {
+    const params = await extractEndpointParameters({
+      actionValue,
+      caseWorkflowContext,
+    });
 
-  // TODO: This is temporary until we are calling the Rules Engine API to fetch this data!
-  if (params.runId) {
-    return await loadRulesRunData(params.runId);
+    // TODO: This is temporary until we are calling the Rules Engine API to fetch this data!
+    if (params.runId) {
+      return await loadRulesRunData(params.runId);
+    }
+
+    return await loadDefaultRulesData();
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        actionValue,
+      },
+      `Failed to fetch data for action ${actionValue}: ${error.message}`,
+    );
+    return [];
   }
-
-  return await loadDefaultRulesData();
 };
 
 const resolveParameterMap = async ({ paramMap, caseWorkflowContext }) => {
