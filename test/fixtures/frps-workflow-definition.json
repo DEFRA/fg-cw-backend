@@ -306,7 +306,8 @@
                 "items": [
                   {
                     "component": "table",
-                    "title": "Dates and amounts",
+                    "caption": "Dates and amounts",
+                    "captionClasses": "govuk-table__caption--m",
                     "rowsRef": "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
                     "head": [
                       {
