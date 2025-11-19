@@ -39,6 +39,7 @@ describe("buildViewModel", () => {
         _id: "case-123",
         caseRef: "REF-001",
         status: "active",
+        workflow,
         definitions: {
           apiUrl: "https://api.example.com",
           testKey: "testValue",
@@ -55,6 +56,7 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
         request: {},
       });
@@ -68,6 +70,7 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
         request: {},
       });
@@ -91,6 +94,7 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
         request: {},
         externalActions: [
@@ -222,7 +226,8 @@ describe("buildViewModel", () => {
     };
 
     it("should build default links plus workflow tab links", async () => {
-      const result = await buildLinks(mockCase, mockWorkflow);
+      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const result = await buildLinks(mockContext);
 
       expect(result).toEqual([
         ...knownLinks,
@@ -244,10 +249,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-
-      expect(await buildLinks(mockCase, workflowWithoutTabs)).toStrictEqual(
-        knownLinks,
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithoutTabs,
       );
+
+      expect(await buildLinks(mockContext)).toStrictEqual(knownLinks);
     });
 
     it("should handle case with agreements that should render", async () => {
@@ -255,8 +262,12 @@ describe("buildViewModel", () => {
         ...mockCase,
         supplementaryData: { agreements: [{ id: "agreement-1" }] },
       };
+      const mockContext = createCaseWorkflowContext(
+        caseWithAgreements,
+        mockWorkflow,
+      );
 
-      const result = await buildLinks(caseWithAgreements, mockWorkflow);
+      const result = await buildLinks(mockContext);
 
       expect(result.find((link) => link.id === "agreements")).toEqual({
         id: "agreements",
@@ -287,8 +298,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithKnownIds,
+      );
 
-      const result = await buildLinks(mockCase, workflowWithKnownIds);
+      const result = await buildLinks(mockContext);
 
       expect(result.find((link) => link.id === "new-tab")).toBeDefined();
       // Should not have duplicate tasks or notes links
@@ -308,8 +323,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithEmptyTabs,
+      );
 
-      const result = await buildLinks(mockCase, workflowWithEmptyTabs);
+      const result = await buildLinks(mockContext);
 
       expect(result).toEqual(knownLinks);
     });
@@ -336,8 +355,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithKebabCaseTab,
+      );
 
-      const result = await buildLinks(mockCase, workflowWithKebabCaseTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "multi-word-tab");
 
       expect(tabLink.text).toBe("Multi Word Tab");
@@ -357,8 +380,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithSingleWordTab,
+      );
 
-      const result = await buildLinks(mockCase, workflowWithSingleWordTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "documents");
 
       expect(tabLink.text).toBe("Documents");
@@ -378,8 +405,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithComplexTab,
+      );
 
-      const result = await buildLinks(mockCase, workflowWithComplexTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find(
         (link) => link.id === "very-long-tab-name-here",
       );
@@ -432,7 +463,8 @@ describe("buildViewModel", () => {
     };
 
     it("should build banner with resolved values", async () => {
-      const result = await buildBanner(mockCase, mockWorkflow);
+      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const result = await buildBanner(mockContext);
 
       expect(result).toEqual({
         title: {
@@ -465,7 +497,12 @@ describe("buildViewModel", () => {
         definitions: {},
       };
 
-      const result = await buildBanner(mockCase, workflowWithoutBanner);
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithoutBanner,
+      );
+
+      const result = await buildBanner(mockContext);
 
       expect(result).toBeUndefined();
     });
@@ -494,7 +531,12 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = await buildBanner(mockCase, workflowWithExternalActions);
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithExternalActions,
+      );
+
+      const result = await buildBanner(mockContext);
 
       expect(result.callToAction).toEqual([
         {
@@ -544,7 +586,9 @@ describe("buildViewModel", () => {
         },
       };
 
-      const result = await buildBanner(mockCase, complexWorkflow);
+      const mockContext = createCaseWorkflowContext(mockCase, complexWorkflow);
+
+      const result = await buildBanner(mockContext);
 
       expect(result.callToAction).toBeUndefined();
       expect(result.summary.nested.deep.value).toEqual({

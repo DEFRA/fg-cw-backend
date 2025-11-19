@@ -436,8 +436,10 @@ describe("findCaseByIdUseCase", () => {
       assignedUser: { id: "unknown-user-id-id000000000" },
     });
     const userError = new Error("User not found");
+    const mockWorkflow = Workflow.createMock();
 
     findById.mockResolvedValue(mockCase);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
     findAll.mockRejectedValue(userError);
 
     await expect(
@@ -445,6 +447,9 @@ describe("findCaseByIdUseCase", () => {
     ).rejects.toThrow("User not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
+      mockCase.workflowCode,
+    );
     expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
   });
 

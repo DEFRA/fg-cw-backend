@@ -22,32 +22,13 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   const kase = await findById(caseId);
   const workflow = await findByCode(kase.workflowCode);
 
-  const caseWorkflowContext = createCaseWorkflowContext(
-    kase,
-    workflow,
-    request,
-  );
+  const root = await createRootContext({ kase, workflow, request, tabId });
 
-  const tabDefinition = await getTabDefinition({
-    root: caseWorkflowContext,
-    workflow,
-    tabId,
-  });
-
-  const actionContext = await getActionContext({
-    tabDefinition,
-    workflow,
-    caseWorkflowContext,
-  });
-
-  const root = { ...caseWorkflowContext, actionData: { ...actionContext } };
-
-  const banner = await buildBanner(kase, workflow);
-  const links = await buildLinks(kase, workflow);
-  const content = await resolveJSONPath({
-    root,
-    path: tabDefinition.content,
-  });
+  const [banner, links, content] = await Promise.all([
+    buildBanner(root),
+    buildLinks(root),
+    buildContent(root),
+  ]);
 
   return {
     caseId,
@@ -59,14 +40,38 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   };
 };
 
-const getTabDefinition = async ({ root, workflow, tabId }) => {
+export const createRootContext = async ({ kase, workflow, request, tabId }) => {
+  const caseWorkflowContext = createCaseWorkflowContext(
+    kase,
+    workflow,
+    request,
+  );
+
+  const tabDefinition = await getTabDefinition({
+    root: caseWorkflowContext,
+    tabId,
+  });
+
+  const actionContext = await getActionContext({
+    tabDefinition,
+    caseWorkflowContext,
+  });
+
+  return {
+    ...caseWorkflowContext,
+    tabDefinition,
+    actionData: actionContext,
+  };
+};
+
+const getTabDefinition = async ({ root, tabId }) => {
   const [tabDefinition] = JSONPath({
-    json: workflow,
+    json: root.workflow,
     path: `$.pages.cases.details.tabs.${tabId}`,
   });
 
   if (!tabDefinition) {
-    return handleMissingTabDefinition({ root, workflow, tabId });
+    return handleMissingTabDefinition({ root, tabId });
   }
 
   if (tabDefinition.renderIf) {
@@ -76,7 +81,7 @@ const getTabDefinition = async ({ root, workflow, tabId }) => {
   return tabDefinition;
 };
 
-const handleMissingTabDefinition = ({ root, workflow, tabId }) => {
+const handleMissingTabDefinition = ({ root, tabId }) => {
   if (tabId === "case-details") {
     return {
       content: buildDynamicContent(root.payload),
@@ -84,15 +89,11 @@ const handleMissingTabDefinition = ({ root, workflow, tabId }) => {
   }
 
   throw Boom.notFound(
-    `Tab "${tabId}" not found in workflow "${workflow.code}"`,
+    `Tab "${tabId}" not found in workflow "${root.workflow.code}"`,
   );
 };
 
-const getActionContext = async ({
-  tabDefinition,
-  workflow,
-  caseWorkflowContext,
-}) => {
+const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
   if (!tabDefinition.action) {
     return {};
   }
@@ -101,21 +102,15 @@ const getActionContext = async ({
     const actionValue = tabDefinition.action[key];
     actionData[key] = await callAPIAndFetchData({
       actionValue,
-      workflow,
       caseWorkflowContext,
     });
   }
   return actionData;
 };
 
-const callAPIAndFetchData = async ({
-  actionValue,
-  workflow,
-  caseWorkflowContext,
-}) => {
+const callAPIAndFetchData = async ({ actionValue, caseWorkflowContext }) => {
   const params = await extractEndpointParameters({
     actionValue,
-    workflow,
     caseWorkflowContext,
   });
 
@@ -141,10 +136,12 @@ const resolveParameterMap = async ({ paramMap, caseWorkflowContext }) => {
 // eslint-disable-next-line complexity
 const extractEndpointParameters = async ({
   actionValue,
-  workflow,
   caseWorkflowContext,
 }) => {
-  const externalAction = findExternalAction(actionValue, workflow);
+  const externalAction = findExternalAction(
+    actionValue,
+    caseWorkflowContext.workflow,
+  );
 
   if (!externalAction?.endpoint?.endpointParams) {
     return {};
@@ -171,6 +168,13 @@ const findExternalAction = (actionValue, workflow) => {
   }
 
   return workflow.externalActions.find((action) => action.code === actionValue);
+};
+
+const buildContent = async (root) => {
+  return await resolveJSONPath({
+    root,
+    path: root.tabDefinition.content,
+  });
 };
 
 // TODO: Temporary - will be removed when we start calling the Rules Engine API

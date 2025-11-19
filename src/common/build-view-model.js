@@ -4,6 +4,7 @@ import { resolveJSONPath } from "./resolve-json.js";
 
 export const createCaseWorkflowContext = (kase, workflow, request = {}) => ({
   ...kase,
+  workflow,
   definitions: { ...workflow.definitions },
   ...(workflow.externalActions && {
     externalActions: workflow.externalActions,
@@ -26,8 +27,8 @@ export const pathExists = async (root, path) => {
 };
 
 // eslint-disable-next-line complexity
-export const buildLinks = async (kase, workflow) => {
-  const caseId = kase._id;
+export const buildLinks = async (root) => {
+  const caseId = root._id;
 
   const links = [
     {
@@ -55,7 +56,7 @@ export const buildLinks = async (kase, workflow) => {
 
   const tabsObject =
     JSONPath({
-      json: workflow,
+      json: root.workflow,
       path: "$.pages.cases.details.tabs",
     })?.[0] ?? {};
 
@@ -66,7 +67,6 @@ export const buildLinks = async (kase, workflow) => {
     }))
     .filter((tab) => !knownLinkIds.includes(tab.key));
 
-  const root = createCaseWorkflowContext(kase, workflow);
   for (const tab of tabs) {
     if (!(await pathExists(root, tab.renderIf))) {
       continue;
@@ -100,13 +100,12 @@ const addCallToActionToBanner = (banner, externalActions) => {
   }));
 };
 
-export const buildBanner = async (kase, workflow) => {
+export const buildBanner = async (root) => {
   const [bannerJson] = JSONPath({
-    json: workflow,
+    json: root.workflow,
     path: "$.pages.cases.details.banner",
   });
 
-  const root = createCaseWorkflowContext(kase, workflow);
   const banner = await resolveJSONPath({ root, path: bannerJson });
 
   addCallToActionToBanner(banner, root.externalActions);
