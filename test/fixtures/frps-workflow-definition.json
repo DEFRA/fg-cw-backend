@@ -370,6 +370,14 @@
                 "open": "$.request.query.runId"
               },
               {
+                "component": "conditional",
+                "condition": "$.actionData.rulesData.response[0]",
+                "whenFalse": {
+                  "component": "warning-text",
+                  "text": "Failed to fetch land parcel calculations"
+                }
+              },
+              {
                 "component": "component-container",
                 "contentRef": "$.actionData.rulesData.response"
               }
