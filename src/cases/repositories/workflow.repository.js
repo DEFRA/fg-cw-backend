@@ -42,6 +42,7 @@ const toWorkflowStageStatus = (s) =>
     code: s.code,
     name: s.name,
     description: s.description,
+    interactive: s.interactive,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
