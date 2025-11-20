@@ -391,8 +391,10 @@ describe("parameter-resolver", () => {
           query: {},
         },
         payload: {
-          rulesCalculation: {
-            id: 789,
+          answers: {
+            rulesCalculations: {
+              id: 789,
+            },
           },
         },
         workflow: {
