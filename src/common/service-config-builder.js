@@ -23,7 +23,7 @@ const uniqueServices = (endpoints = []) => {
  * by reading environment variables using the pattern: {SERVICE}_URL and {SERVICE}_HEADERS
  */
 export const buildServiceConfigMap = (workflow = {}) => {
-  return uniqueServices(workflow.endpoints).reduce(
+  return uniqueServices(workflow.endpoints || []).reduce(
     (serviceConfigMap, service) => {
       serviceConfigMap[service] = createServiceConfig(service);
       return serviceConfigMap;
