@@ -89,7 +89,7 @@ const WorkflowData = Joi.object({
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
   externalActions: Joi.array().items(ExternalAction).optional(),
-  endpoints: Joi.array().items(Endpoint).optional(),
+  endpoints: Joi.array().items(Endpoint).required(),
 }).unknown(true);
 
 const Workflow = WorkflowData.keys({
