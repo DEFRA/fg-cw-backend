@@ -2,6 +2,9 @@ import Wreck from "@hapi/wreck";
 import { resolveEndpoint } from "./endpoint-resolver.js";
 import { logger } from "./logger.js";
 
+const HTTP_SUCCESS_MIN = 200;
+const HTTP_SUCCESS_MAX = 300;
+
 /**
  * Calls an external endpoint defined in the workflow.
  */
@@ -94,7 +97,7 @@ const handleResponse = (endpoint, response, payload) => {
 };
 
 const isSuccessStatus = (statusCode) => {
-  return statusCode >= 200 && statusCode < 300;
+  return statusCode >= HTTP_SUCCESS_MIN && statusCode < HTTP_SUCCESS_MAX;
 };
 
 const logSuccess = (endpoint, statusCode) => {
