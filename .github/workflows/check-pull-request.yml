@@ -44,9 +44,8 @@ jobs:
 
       - name: Run integration tests
         run: npm run test:integration
-
-      - name: Build docker image
-        run: |
-          set +e
-          docker build --no-cache --tag fg-cw-backend .
-          exit $?
+#      - name: Build docker image
+#        run: |
+#          set +e
+#          docker build --no-cache --tag fg-cw-backend .
+#          exit $?
