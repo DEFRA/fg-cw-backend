@@ -392,7 +392,7 @@ describe("parameter-resolver", () => {
         },
         payload: {
           answers: {
-            rulesCalculation: {
+            rulesCalculations: {
               id: 789,
             },
           },
