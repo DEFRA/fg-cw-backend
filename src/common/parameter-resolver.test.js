@@ -391,8 +391,10 @@ describe("parameter-resolver", () => {
           query: {},
         },
         payload: {
-          rulesCalculation: {
-            id: 789,
+          answers: {
+            rulesCalculations: {
+              id: 789,
+            },
           },
         },
         workflow: {
@@ -404,7 +406,7 @@ describe("parameter-resolver", () => {
                 endpointParams: {
                   PATH: {
                     runId:
-                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.rulesCalculation.id",
+                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
                   },
                 },
               },

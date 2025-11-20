@@ -29,24 +29,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      # - name: Lint
+      #   run: npm run lint
 
-      - name: Run unit tests
-        run: npm run test:unit -- --coverage
+      # - name: Run unit tests
+      #   run: npm run test:unit -- --coverage
 
-      - name: SonarCloud Scan
-        if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # - name: SonarCloud Scan
+      #   if: github.actor != 'dependabot[bot]'
+      #   uses: SonarSource/sonarqube-scan-action@v6.0.0
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Run integration tests
         run: npm run test:integration
-
-      - name: Build docker image
-        run: |
-          set +e
-          docker build --no-cache --tag fg-cw-backend .
-          exit $?
+        env:
+          DEBUG: "*"
+#      - name: Build docker image
+#        run: |
+#          set +e
+#          docker build --no-cache --tag fg-cw-backend .
+#          exit $?

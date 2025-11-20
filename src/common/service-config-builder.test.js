@@ -1,27 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildServiceConfigMap } from "./service-config-builder.js";
 
-vi.mock("./config.js", () => ({
-  config: {
-    get: vi.fn(),
-  },
-}));
-
 describe("service-config-builder", () => {
-  const configValues = {
-    "externalServices.rulesEngine.url": "https://rules.example.com",
-    "externalServices.rulesEngine.headers": "x-api-key: rules-key",
-    "externalServices.analytics.url": "https://analytics.example.com",
-    "externalServices.analytics.headers": "Authorization: Bearer abc123",
-  };
+  const originalEnv = process.env;
 
-  beforeEach(async () => {
-    const { config } = await import("./config.js");
-    config.get.mockReset();
-    config.get.mockImplementation((key) => configValues[key]);
+  beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      RULES_ENGINE_URL: "https://rules.example.com",
+      RULES_ENGINE_HEADERS: "x-api-key: rules-key",
+      ANALYTICS_URL: "https://analytics.example.com",
+      ANALYTICS_HEADERS: "Authorization: Bearer abc123",
+    };
   });
 
-  it("builds config entries for unique services using camelCased config keys", async () => {
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("builds config entries for unique services from environment variables", () => {
     const workflow = {
       endpoints: [
         { service: "RULES_ENGINE", code: "FETCH_RULES_ENDPOINT" },
@@ -31,17 +28,7 @@ describe("service-config-builder", () => {
     };
 
     const result = buildServiceConfigMap(workflow);
-    const { config } = await import("./config.js");
 
-    expect(config.get).toHaveBeenCalledTimes(4);
-    expect(config.get).toHaveBeenCalledWith("externalServices.rulesEngine.url");
-    expect(config.get).toHaveBeenCalledWith(
-      "externalServices.rulesEngine.headers",
-    );
-    expect(config.get).toHaveBeenCalledWith("externalServices.analytics.url");
-    expect(config.get).toHaveBeenCalledWith(
-      "externalServices.analytics.headers",
-    );
     expect(result).toEqual({
       RULES_ENGINE: {
         url: "https://rules.example.com",
@@ -50,6 +37,24 @@ describe("service-config-builder", () => {
       ANALYTICS: {
         url: "https://analytics.example.com",
         headers: "Authorization: Bearer abc123",
+      },
+    });
+  });
+
+  it("returns null for url and headers when environment variables are not set", () => {
+    delete process.env.RULES_ENGINE_URL;
+    delete process.env.RULES_ENGINE_HEADERS;
+
+    const workflow = {
+      endpoints: [{ service: "RULES_ENGINE", code: "FETCH_RULES_ENDPOINT" }],
+    };
+
+    const result = buildServiceConfigMap(workflow);
+
+    expect(result).toEqual({
+      RULES_ENGINE: {
+        url: null,
+        headers: null,
       },
     });
   });

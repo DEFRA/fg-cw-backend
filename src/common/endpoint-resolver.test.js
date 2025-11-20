@@ -1,15 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   parseHeaders,
   resolveEndpoint,
   resolveEnvVarReferences,
 } from "./endpoint-resolver.js";
-
-vi.mock("./config.js", () => ({
-  config: {
-    get: vi.fn(),
-  },
-}));
 
 describe("endpoint-resolver", () => {
   describe("parseHeaders", () => {
@@ -99,18 +93,19 @@ describe("endpoint-resolver", () => {
   });
 
   describe("resolveEndpoint", () => {
-    it("should resolve endpoint configuration", async () => {
-      const { config } = await import("./config.js");
+    const originalEnv = process.env;
 
-      config.get.mockImplementation((key) => {
-        if (key === "externalServices.rulesEngine.url") {
-          return "https://api.example.com";
-        }
-        if (key === "externalServices.rulesEngine.headers") {
-          return "x-api-key: test-key";
-        }
-        return null;
-      });
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it("should resolve endpoint configuration", () => {
+      process.env.RULES_ENGINE_URL = "https://api.example.com";
+      process.env.RULES_ENGINE_HEADERS = "x-api-key: test-key";
 
       const endpoint = {
         service: "RULES_ENGINE",
@@ -140,7 +135,7 @@ describe("endpoint-resolver", () => {
       });
     });
 
-    it("should throw error for unknown service", async () => {
+    it("should throw error for unknown service", () => {
       const endpoint = {
         service: "UNKNOWN_SERVICE",
         code: "SOME_ENDPOINT",
@@ -164,18 +159,9 @@ describe("endpoint-resolver", () => {
       );
     });
 
-    it("should throw error if URL is not configured", async () => {
-      const { config } = await import("./config.js");
-
-      config.get.mockImplementation((key) => {
-        if (key === "externalServices.rulesEngine.url") {
-          return null;
-        }
-        if (key === "externalServices.rulesEngine.headers") {
-          return null;
-        }
-        return null;
-      });
+    it("should throw error if URL is not configured", () => {
+      delete process.env.RULES_ENGINE_URL;
+      delete process.env.RULES_ENGINE_HEADERS;
 
       const endpoint = {
         service: "RULES_ENGINE",
@@ -200,18 +186,9 @@ describe("endpoint-resolver", () => {
       );
     });
 
-    it("should handle null headers", async () => {
-      const { config } = await import("./config.js");
-
-      config.get.mockImplementation((key) => {
-        if (key === "externalServices.rulesEngine.url") {
-          return "https://api.example.com";
-        }
-        if (key === "externalServices.rulesEngine.headers") {
-          return null;
-        }
-        return null;
-      });
+    it("should handle null headers", () => {
+      process.env.RULES_ENGINE_URL = "https://api.example.com";
+      delete process.env.RULES_ENGINE_HEADERS;
 
       const endpoint = {
         service: "RULES_ENGINE",
