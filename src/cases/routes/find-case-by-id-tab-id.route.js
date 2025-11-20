@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { findCaseByIdTabIdResponseSchema } from "../schemas/responses/find-case-by-id-tab-id-response.schema.js";
 import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.use-case.js";
 
@@ -21,8 +22,11 @@ export const findCaseByIdTabIdRoute = {
   async handler(request) {
     const { caseId, tabId } = request.params;
 
+    logger.info(`Finding case ${caseId} by tab id ${tabId}`);
+
     const tabData = await buildCaseDetailsTabUseCase(caseId, tabId);
 
+    logger.info(`Found case ${caseId} by tab id ${tabId}`);
     return tabData;
   },
 };

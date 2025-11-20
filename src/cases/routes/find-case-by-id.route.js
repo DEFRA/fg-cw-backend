@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { findCaseResponseSchema } from "../schemas/responses/find-case-response.schema.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 
@@ -21,7 +22,11 @@ export const findCaseByIdRoute = {
     const { caseId } = request.params;
     const { user } = request.auth.credentials;
 
+    logger.info(`Finding case ${caseId}`);
+
     const result = await findCaseByIdUseCase(caseId, user);
+
+    logger.info(`Found case ${caseId}`);
 
     return result;
   },

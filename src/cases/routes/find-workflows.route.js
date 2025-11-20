@@ -1,3 +1,4 @@
+import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { findWorkflowsResponseSchema } from "../schemas/responses/find-workflows-response.schema.js";
 import { findWorkflowsUseCase } from "../use-cases/find-workflows.use-case.js";
@@ -16,7 +17,9 @@ export const findWorkflowsRoute = {
     },
   },
   async handler() {
+    logger.info("Finding workflows");
     const results = await findWorkflowsUseCase();
+    logger.info("Found workflows");
     return results;
   },
 };
