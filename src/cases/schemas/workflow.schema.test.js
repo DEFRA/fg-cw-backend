@@ -333,5 +333,40 @@ describe("workflowSchema", () => {
         expect(error).toBeUndefined();
       });
     });
+
+    describe("endpoints validation", () => {
+      it("accepts valid endpoints array", () => {
+        const data = structuredClone(workflowData1);
+        data.endpoints = [
+          {
+            code: "FETCH_RULES_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/applications/{runId}",
+            method: "GET",
+            request: null,
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+
+      it("requires service when endpoints are provided", () => {
+        const data = structuredClone(workflowData1);
+        data.endpoints = [
+          {
+            code: "FETCH_RULES_ENDPOINT",
+            path: "/applications/{runId}",
+            method: "GET",
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"endpoints[0].service" is required',
+        );
+      });
+    });
   });
 });

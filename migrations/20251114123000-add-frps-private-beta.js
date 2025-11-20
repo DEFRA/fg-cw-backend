@@ -39,6 +39,15 @@ export const up = async (db) => {
     code: "frps-private-beta",
     requiredRoles: { allOf: [], anyOf: [] },
     definitions,
+    endpoints: [
+      {
+        code: "FETCH_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/{runId}",
+        method: "GET",
+        request: null,
+      },
+    ],
     externalActions: [
       {
         code: "RERUN_RULES",

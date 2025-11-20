@@ -943,6 +943,15 @@
       "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
     }
   },
+  "endpoints": [
+    {
+      "code": "FETCH_RULES_ENDPOINT",
+      "service": "RULES_ENGINE",
+      "path": "/case-management-adapter/application/validation-run/{runId}",
+      "method": "GET",
+      "request": null
+    }
+  ],
   "externalActions": [
     {
       "code": "RERUN_RULES",
