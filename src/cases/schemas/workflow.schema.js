@@ -53,12 +53,19 @@ const ExternalActionTarget = Joi.object({
   place: Joi.string().valid("append").optional(),
 }).label("ExternalActionTarget");
 
+const ExternalActionEndpoint = Joi.object({
+  code: Joi.string().required(),
+  endpointParams: Joi.object().optional(),
+}).label("ExternalActionEndpoint");
+
 const ExternalAction = Joi.object({
   code: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
-  endpoint: Joi.string().required(),
-  target: ExternalActionTarget.required(),
+  endpoint: Joi.alternatives()
+    .try(Joi.string(), ExternalActionEndpoint)
+    .required(),
+  target: ExternalActionTarget.allow(null).required(),
 }).label("ExternalAction");
 
 const WorkflowData = Joi.object({

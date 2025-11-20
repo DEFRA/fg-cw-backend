@@ -272,9 +272,112 @@
           },
           "calculations": {
             "action": {
-              "rulesData": "rules-engine-output.json"
+              "rulesData": "FETCH_RULES"
             },
             "content": [
+              {
+                "component": "heading",
+                "text": "Land parcel calculations",
+                "level": 1,
+                "classes": "govuk-heading-l govuk-!-margin-bottom-1"
+              },
+              {
+                "component": "container",
+                "items": [
+                  {
+                    "text": "Rules check last run: ",
+                    "classes": "govuk-body"
+                  },
+                  {
+                    "text": "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
+                    "format": "formatDateTime",
+                    "classes": "govuk-body"
+                  }
+                ]
+              },
+              {
+                "component": "details",
+                "classes": "govuk-!-margin-top-2",
+                "summaryItems": [
+                  {
+                    "text": "Show version history"
+                  }
+                ],
+                "items": [
+                  {
+                    "component": "table",
+                    "caption": "Dates and amounts",
+                    "captionClasses": "govuk-table__caption--m",
+                    "rowsRef": "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
+                    "head": [
+                      {
+                        "component": "text",
+                        "text": "Date/time"
+                      },
+                      {
+                        "component": "text",
+                        "text": "Result"
+                      },
+                      {
+                        "component": "text",
+                        "text": "Version",
+                        "classes": "govuk-visually-hidden"
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "text": "@.date",
+                        "format": "formatDateTime"
+                      },
+                      {
+                        "component": "status",
+                        "text": "@.valid",
+                        "format": "yesNo",
+                        "classesMap": {
+                          "Yes": "govuk-tag--green",
+                          "No": "govuk-tag--red"
+                        },
+                        "labelsMap": {
+                          "Yes": "Passed",
+                          "No": "Failed"
+                        }
+                      },
+                      {
+                        "component": "conditional",
+                        "condition": "jsonata:$.request.query.runId ? $number($.request.query.runId) = @.id : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
+                        "whenTrue": {
+                          "component": "text",
+                          "text": "Currently showing",
+                          "classes": "govuk-body"
+                        },
+                        "whenFalse": {
+                          "component": "url",
+                          "text": "View this version",
+                          "href": {
+                            "urlTemplate": "/cases/{caseId}/calculations?runId={runId}",
+                            "params": {
+                              "caseId": "$._id",
+                              "runId": "@.id"
+                            }
+                          },
+                          "target": "_self",
+                          "classes": "govuk-link"
+                        }
+                      }
+                    ],
+                    "firstCellIsHeader": true
+                  }
+                ],
+                "open": "$.request.query.runId"
+              },
+              {
+                "component": "conditional",
+                "condition": "$.actionData.rulesData.response[0]",
+                "whenFalse": {
+                  "component": "warning-text",
+                  "text": "Failed to fetch land parcel calculations"
+                }
+              },
               {
                 "component": "component-container",
                 "contentRef": "$.actionData.rulesData.response"
@@ -852,6 +955,20 @@
         "nodeType": "array",
         "place": "append"
       }
+    },
+    {
+      "code": "FETCH_RULES",
+      "name": "Fetch Rules",
+      "description": "Fetch a specific rules engine run by ID",
+      "endpoint": {
+        "code": "FETCH_RULES_ENDPOINT",
+        "endpointParams": {
+          "PATH": {
+            "runId": "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id"
+          }
+        }
+      },
+      "target": null
     }
   ]
 }
