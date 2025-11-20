@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as path from "node:path";
 import { styleText } from "node:util";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
@@ -10,32 +11,58 @@ export const setup = async ({ globalConfig }) => {
 
   const composeFilePath = path.resolve(import.meta.dirname, "..");
 
-  environment = await new DockerComposeEnvironment(
-    composeFilePath,
-    "compose.yml",
-  )
-    .withBuild()
-    .withEnvironment({
-      CW_PORT: env.CW_PORT,
-      MONGO_PORT: env.MONGO_PORT,
-      LOCALSTACK_PORT: env.LOCALSTACK_PORT,
-      ENTRA_PORT: env.ENTRA_PORT,
-      OIDC_JWKS_URI: env.OIDC_JWKS_URI,
-      OIDC_VERIFY_ISS: env.OIDC_VERIFY_ISS,
-      OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
-      ENVIRONMENT: env.ENVIRONMENT,
-      OUTBOX_POLL_MS: 250,
-      RULES_ENGINE_URL: env.RULES_ENGINE_URL,
-      RULES_ENGINE_HEADERS: env.RULES_ENGINE_HEADERS,
-    })
-    .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
-    .withNoRecreate()
-    .up();
+  console.log("Starting Docker Compose environment...");
+  console.log("Compose file path:", composeFilePath);
+  console.log("Environment variables:", {
+    CW_PORT: env.CW_PORT,
+    MONGO_PORT: env.MONGO_PORT,
+    LOCALSTACK_PORT: env.LOCALSTACK_PORT,
+    ENTRA_PORT: env.ENTRA_PORT,
+  });
 
-  await ensureQueues([
-    env.CW__SQS__CREATE_NEW_CASE_URL,
-    env.CW__SQS__UPDATE_STATUS_URL,
-  ]);
+  try {
+    environment = await new DockerComposeEnvironment(
+      composeFilePath,
+      "compose.yml",
+    )
+      .withBuild()
+      .withEnvironment({
+        CW_PORT: env.CW_PORT,
+        MONGO_PORT: env.MONGO_PORT,
+        LOCALSTACK_PORT: env.LOCALSTACK_PORT,
+        ENTRA_PORT: env.ENTRA_PORT,
+        OIDC_JWKS_URI: env.OIDC_JWKS_URI,
+        OIDC_VERIFY_ISS: env.OIDC_VERIFY_ISS,
+        OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
+        ENVIRONMENT: env.ENVIRONMENT,
+        OUTBOX_POLL_MS: 250,
+        RULES_ENGINE_URL: env.RULES_ENGINE_URL,
+        RULES_ENGINE_HEADERS: env.RULES_ENGINE_HEADERS,
+      })
+      .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
+      .withNoRecreate()
+      .up();
+
+    console.log("Docker Compose environment is up and running");
+  } catch (error) {
+    console.error("Failed to start Docker Compose environment:", error);
+    throw error;
+  }
+
+  console.log("Ensuring SQS queues exist...");
+  console.log("  - CREATE_NEW_CASE:", env.CW__SQS__CREATE_NEW_CASE_URL);
+  console.log("  - UPDATE_STATUS:", env.CW__SQS__UPDATE_STATUS_URL);
+
+  try {
+    await ensureQueues([
+      env.CW__SQS__CREATE_NEW_CASE_URL,
+      env.CW__SQS__UPDATE_STATUS_URL,
+    ]);
+    console.log("SQS queues verified");
+  } catch (error) {
+    console.error("Failed to ensure queues:", error);
+    throw error;
+  }
 
   if (env.PRINT_LOGS) {
     const backendContainer = environment.getContainer("fg-cw-backend-1");
