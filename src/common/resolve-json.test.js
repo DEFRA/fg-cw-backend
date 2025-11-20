@@ -2163,4 +2163,166 @@ describe("conditional component resolution", () => {
       text: "Not selected",
     });
   });
+
+  it("should handle JSONata $number() errors gracefully with invalid string", async () => {
+    const mockRootWithItems = {
+      items: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      request: {
+        query: {
+          selectedId: "XXX", // Invalid string that cannot be converted to number
+        },
+      },
+    };
+
+    const row = { id: 2 };
+
+    const path = {
+      component: "conditional",
+      condition:
+        "jsonata:$.request.query.selectedId ? $number($.request.query.selectedId) = @.id : @.id = $.items[0].id",
+      whenTrue: {
+        component: "text",
+        text: "Selected",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Not selected",
+      },
+    };
+
+    // Should not throw an error, but return undefined from the condition evaluation
+    // which will evaluate to false, showing the whenFalse component
+    const result = await resolveJSONPath({
+      root: mockRootWithItems,
+      path,
+      row,
+    });
+    expect(result).toEqual({
+      component: "text",
+      text: "Not selected",
+    });
+  });
+
+  it("should handle JSONata $number() errors gracefully without row reference", async () => {
+    const mockRoot = {
+      request: {
+        query: {
+          amount: "invalid", // Invalid string that cannot be converted to number
+        },
+      },
+    };
+
+    const path = {
+      component: "conditional",
+      condition: "jsonata:$number($.request.query.amount) > 100",
+      whenTrue: {
+        component: "text",
+        text: "High amount",
+      },
+      whenFalse: {
+        component: "text",
+        text: "Low amount",
+      },
+    };
+
+    // Should not throw an error, but return undefined from the condition evaluation
+    // which will evaluate to false, showing the whenFalse component
+    const result = await resolveJSONPath({ root: mockRoot, path });
+    expect(result).toEqual({
+      component: "text",
+      text: "Low amount",
+    });
+  });
+
+  it("should spread component-container when inside conditional in array", async () => {
+    const mockRootWithData = {
+      actionData: {
+        rulesData: {
+          response: [
+            {
+              component: "heading",
+              text: "Land parcel calculations",
+              level: 2,
+            },
+            {
+              component: "text",
+              text: "Some calculation data",
+            },
+          ],
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "heading",
+        text: "Page Title",
+        level: 1,
+      },
+      {
+        component: "conditional",
+        condition: "$.actionData.rulesData.response[0]",
+        whenTrue: {
+          component: "component-container",
+          contentRef: "$.actionData.rulesData.response",
+        },
+        whenFalse: {
+          component: "warning-text",
+          text: "Failed to fetch land parcel calculations",
+        },
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithData, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Page Title",
+        level: 1,
+      },
+      {
+        component: "heading",
+        text: "Land parcel calculations",
+        level: 2,
+      },
+      {
+        component: "text",
+        text: "Some calculation data",
+      },
+    ]);
+  });
+
+  it("should not spread when conditional resolves to non-component array", async () => {
+    const mockRootWithData = {
+      items: ["item1", "item2", "item3"],
+    };
+
+    const path = [
+      {
+        component: "heading",
+        text: "Title",
+      },
+      {
+        component: "conditional",
+        condition: "$.items[0]",
+        whenTrue: "$.items",
+        whenFalse: {
+          component: "text",
+          text: "No items",
+        },
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithData, path });
+
+    // The string array should not be spread, it should remain as a single array element
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Title",
+      },
+      ["item1", "item2", "item3"],
+    ]);
+  });
 });

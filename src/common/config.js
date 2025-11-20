@@ -248,6 +248,24 @@ export const config = convict({
       env: "INBOX_POLL_MS",
     },
   },
+  externalServices: {
+    rulesEngine: {
+      url: {
+        doc: "Rules Engine API base URL",
+        format: String,
+        nullable: true,
+        default: null,
+        env: "RULES_ENGINE_URL",
+      },
+      headers: {
+        doc: "Comma-separated HTTP headers for Rules Engine (e.g., 'x-api-key: VALUE,Authorization: Bearer TOKEN')",
+        format: String,
+        nullable: true,
+        default: null,
+        env: "RULES_ENGINE_HEADERS",
+      },
+    },
+  },
 });
 
 config.validate({ allowed: "strict" });

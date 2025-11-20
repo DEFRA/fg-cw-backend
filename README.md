@@ -1,5 +1,9 @@
 # fg-cw-backend
 
+## Documentation
+
+- [External Services Configuration](./docs/EXTERNAL_SERVICES.md) - How to configure and call external APIs
+
 ## Coding standards
 
 ### System architecture

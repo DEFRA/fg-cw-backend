@@ -7,6 +7,9 @@ import { buildCaseDetailsTabUseCase } from "./build-case-details-tab.use-case.js
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../../common/external-endpoint-client.js", () => ({
+  callExternalEndpoint: vi.fn(),
+}));
 
 describe("buildCaseDetailsTabUseCase", () => {
   it("builds case details tab successfully", async () => {
@@ -504,10 +507,41 @@ describe("buildCaseDetailsTabUseCase", () => {
 
   describe("action context integration", () => {
     it("should add actionData to root context when tab has action definition", async () => {
+      const { callExternalEndpoint } = await import(
+        "../../common/external-endpoint-client.js"
+      );
+
+      // Mock external endpoint to return test data
+      callExternalEndpoint.mockResolvedValue({
+        response: [
+          {
+            component: "summary-list",
+            rows: [{ label: "Test", text: "Value" }],
+          },
+        ],
+      });
+
       const mockCase = Case.createMock();
 
       const mockWorkflow = Workflow.createMock({
         code: "frps-private-beta",
+        endpoints: [
+          {
+            code: "RULES_ENGINE_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/api/test",
+            method: "GET",
+          },
+        ],
+        externalActions: [
+          {
+            code: "rules-engine-endpoint",
+            endpoint: {
+              code: "RULES_ENGINE_ENDPOINT",
+              endpointParams: {},
+            },
+          },
+        ],
         pages: {
           cases: {
             details: {
