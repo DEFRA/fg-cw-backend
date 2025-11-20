@@ -1,20 +1,16 @@
-import { config } from "./config.js";
-
 /**
- * Converts SCREAMING_SNAKE_CASE to camelCase
- * Example: RULES_ENGINE -> rulesEngine
+ * Creates service configuration by reading environment variables
+ * based on naming convention: {SERVICE}_URL and {SERVICE}_HEADERS
+ *
+ * Example: RULES_ENGINE -> reads RULES_ENGINE_URL and RULES_ENGINE_HEADERS
  */
-const toCamelCase = (str) => {
-  return str
-    .toLowerCase()
-    .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-};
-
 const createServiceConfig = (service) => {
-  const configKey = toCamelCase(service);
+  const urlKey = `${service}_URL`;
+  const headersKey = `${service}_HEADERS`;
+
   return {
-    url: config.get(`externalServices.${configKey}.url`),
-    headers: config.get(`externalServices.${configKey}.headers`),
+    url: process.env[urlKey] || null,
+    headers: process.env[headersKey] || null,
   };
 };
 
@@ -24,6 +20,7 @@ const uniqueServices = (endpoints = []) => {
 
 /**
  * Dynamically builds service configuration mapping from workflow definitions
+ * by reading environment variables using the pattern: {SERVICE}_URL and {SERVICE}_HEADERS
  */
 export const buildServiceConfigMap = (workflow = {}) => {
   return uniqueServices(workflow.endpoints).reduce(
