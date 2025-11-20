@@ -63,7 +63,7 @@ const Endpoint = Joi.object({
   service: Joi.string().required(),
   path: Joi.string().required(),
   method: Joi.string().required(),
-  request: Joi.object().allow(null).optional(),
+  request: Joi.object().allow(null).required(),
 }).label("Endpoint");
 
 const ExternalAction = Joi.object({
