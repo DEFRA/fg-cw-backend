@@ -13,11 +13,13 @@ export const up = async (db) => {
       code: "ROLE_SFI_REFORM",
       description: "Case working role for SFI Reform",
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       code: "ROLE_RPA_FINANCE",
       description: "Finance approval for RPA",
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ]);
 
