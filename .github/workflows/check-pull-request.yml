@@ -42,8 +42,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Check Docker version
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Check available disk space
+        run: df -h
+
       - name: Run integration tests
         run: npm run test:integration
+        env:
+          DEBUG: "*"
+
+      - name: Show Docker logs on failure
+        if: failure()
+        run: |
+          echo "=== Docker Compose Services ==="
+          docker compose ps || true
+          echo ""
+          echo "=== LocalStack Logs ==="
+          docker compose logs localstack || true
+          echo ""
+          echo "=== MongoDB Logs ==="
+          docker compose logs mongodb || true
+          echo ""
+          echo "=== Mongo-ready Logs ==="
+          docker compose logs mongo-ready || true
+          echo ""
+          echo "=== Backend Logs ==="
+          docker compose logs fg-cw-backend || true
+          echo ""
+          echo "=== Entra Logs ==="
+          docker compose logs entra || true
 
       - name: Build docker image
         run: |
