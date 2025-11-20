@@ -3,8 +3,8 @@ export const up = async (db) => {
     name: "placeholder",
     email: "placeholder@rpa.gov.uk",
     idpRoles: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const roles = db.collection("roles");
@@ -12,14 +12,14 @@ export const up = async (db) => {
     {
       code: "ROLE_SFI_REFORM",
       description: "Case working role for SFI Reform",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       code: "ROLE_RPA_FINANCE",
       description: "Finance approval for RPA",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   ]);
 
