@@ -124,7 +124,7 @@ const toWorkflow = (doc) =>
     }),
     definitions: doc.definitions,
     externalActions: doc.externalActions,
-    endpoints: doc.endpoints.map(toWorkflowEndpoint),
+    endpoints: doc.endpoints?.map(toWorkflowEndpoint),
   });
 
 export const save = async (workflow) => {

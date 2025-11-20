@@ -293,6 +293,15 @@ export const createWorkflow = async (payload = {}) => {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
       },
+      endpoints: [
+        {
+          code: "TEST_ENDPOINT",
+          service: "TEST_SERVICE",
+          path: "/test",
+          method: "GET",
+          request: null,
+        },
+      ],
       definitions: {
         key1: "test",
       },
