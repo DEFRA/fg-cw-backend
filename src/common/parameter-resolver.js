@@ -84,5 +84,10 @@ const assignParamsByType = (params, paramType, resolvedParams) => {
     params.PATH = resolvedParams;
   } else if (paramType === "REQUEST") {
     params.REQUEST = resolvedParams;
+  } else {
+    logger.warn(
+      { paramType },
+      `Unsupported endpoint parameter type: ${paramType}`,
+    );
   }
 };

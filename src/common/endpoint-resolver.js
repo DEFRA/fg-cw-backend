@@ -9,7 +9,7 @@ export const resolveEnvVarReferences = (value) => {
     return value;
   }
 
-  return value.replace(/\$\{([^}]+)\}/g, (match, envVarName) => {
+  return value.replace(/\$\{([^}]+)\}/g, (_match, envVarName) => {
     const envValue = process.env[envVarName];
     if (envValue === undefined) {
       throw new Error(

@@ -1,10 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   extractEndpointParameters,
   resolveParameterMap,
 } from "./parameter-resolver.js";
 
+vi.mock("./logger.js", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
 describe("parameter-resolver", () => {
+  beforeEach(async () => {
+    const { logger } = await import("./logger.js");
+    logger.info.mockClear();
+    logger.warn.mockClear();
+  });
+
   describe("resolveParameterMap", () => {
     it("should resolve simple JSONPath parameters", async () => {
       const caseWorkflowContext = {
@@ -413,7 +426,7 @@ describe("parameter-resolver", () => {
       });
     });
 
-    it("should ignore unknown parameter types", async () => {
+    it("should log and ignore unknown parameter types", async () => {
       const caseWorkflowContext = {
         _id: "case-123",
         workflow: {
@@ -441,12 +454,18 @@ describe("parameter-resolver", () => {
         caseWorkflowContext,
       });
 
+      const { logger } = await import("./logger.js");
+
       expect(result).toEqual({
         PATH: {
           caseId: "case-123",
         },
         REQUEST: {},
       });
+      expect(logger.warn).toHaveBeenCalledWith(
+        { paramType: "UNKNOWN_TYPE" },
+        "Unsupported endpoint parameter type: UNKNOWN_TYPE",
+      );
     });
   });
 });
