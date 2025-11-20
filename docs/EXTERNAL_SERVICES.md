@@ -96,7 +96,7 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
         endpointParams: {
           PATH: {
             // Extract runId from case data using JSONPath
-            runId: "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculation.rulesCalculation.id"
+            runId: "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.rulesCalculation.id"
           }
         }
       }

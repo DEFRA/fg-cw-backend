@@ -70,7 +70,7 @@ export const up = async (db) => {
           endpointParams: {
             PATH: {
               runId:
-                "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
+                "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
             },
           },
         },
@@ -326,7 +326,7 @@ export const up = async (db) => {
                 {
                   component: "conditional",
                   condition:
-                    "jsonata:[$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations)[0]",
+                    "jsonata:[$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations)[0]",
                   whenTrue: {
                     component: "container",
                     items: [
@@ -335,7 +335,7 @@ export const up = async (db) => {
                         classes: "govuk-body",
                       },
                       {
-                        text: "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
+                        text: "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
                         format: "formatDateTime",
                         classes: "govuk-body",
                       },
@@ -353,7 +353,7 @@ export const up = async (db) => {
                             caption: "Dates and amounts",
                             captionClasses: "govuk-table__caption--m",
                             rowsRef:
-                              "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
+                              "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
                             head: [
                               {
                                 component: "text",
@@ -390,7 +390,7 @@ export const up = async (db) => {
                               {
                                 component: "conditional",
                                 condition:
-                                  "jsonata:$.request.query.runId ? $.request.query.runId = $string(@.id) : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
+                                  "jsonata:$.request.query.runId ? $.request.query.runId = $string(@.id) : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
                                 whenTrue: {
                                   component: "text",
                                   text: "Currently showing",

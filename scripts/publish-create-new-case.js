@@ -39,6 +39,12 @@ const messagePmf = {
         defraId: "DEFRA0001",
       },
       answers: {
+        rulesCalculations: {
+          id: 2914,
+          message: "Application validated successfully",
+          valid: true,
+          date: "2025-11-20T16:37:45.088Z",
+        },
         scheme: "SFI",
         year: 2025,
         hasCheckedLandIsUpToDate: true,
@@ -80,6 +86,12 @@ const messageFrps = {
         defraId: "DEFRA0001",
       },
       answers: {
+        rulesCalculations: {
+          id: 2914,
+          message: "Application validated successfully",
+          valid: true,
+          date: "2025-11-20T16:37:45.088Z",
+        },
         applicationValidationRunId: "123",
         scheme: "SFI",
         applicant: {
