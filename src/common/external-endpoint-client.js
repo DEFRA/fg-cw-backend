@@ -7,13 +7,14 @@ import { logger } from "./logger.js";
  */
 export const callExternalEndpoint = async (
   endpoint,
-  params = {},
+  params,
   caseWorkflowContext,
 ) => {
+  const resolvedParams = params ?? {};
   try {
     const { response, payload } = await executeRequest(
       endpoint,
-      params,
+      resolvedParams,
       caseWorkflowContext,
     );
     return handleResponse(endpoint, response, payload);
