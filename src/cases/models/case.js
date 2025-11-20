@@ -1,8 +1,13 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { assertIsComment, toComments } from "./comment.js";
+import { logger } from "../../common/logger.js";
+import { CasePhase } from "./case-phase.js";
+import { CaseStage } from "./case-stage.js";
+import { CaseTaskGroup } from "./case-task-group.js";
+import { CaseTask } from "./case-task.js";
+import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
-import { toTasks } from "./task.js";
+import { Position } from "./position.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -17,17 +22,13 @@ export class Case {
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.status = props.status;
     this.dateReceived = props.dateReceived;
-    this.currentStage = props.currentStage;
+    this.position = props.position;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
-    this.stages = props.stages;
+    this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.requiredRoles = props.requiredRoles;
-
-    this.tasks = toTasks(this.stages);
     this.supplementaryData = props.supplementaryData || {};
   }
 
@@ -43,28 +44,22 @@ export class Case {
     });
   }
 
-  /**
-   *
-   * @param {string} taskCode
-   * @returns task with given taskCode or throws if task not found
-   */
-  findTask(taskCode) {
-    const task = this.tasks.get(taskCode);
+  findPhase(phaseCode) {
+    const phase = this.phases.find((p) => p.code === phaseCode);
 
-    if (!task) {
-      throw Boom.notFound(`Can not find Task with code ${taskCode}!`);
+    if (!phase) {
+      throw Boom.notFound(
+        `Case with caseRef ${this.caseRef} and workflowCode ${this.workflowCode} does not have a phase with code ${phaseCode}`,
+      );
     }
 
-    return task;
+    return phase;
   }
 
-  findStage(stageCode) {
-    const stage = this.stages.find((s) => s.code === stageCode);
-    if (!stage) {
-      throw Boom.notFound(`Can not find Stage with code ${stageCode}`);
-    }
-
-    return stage;
+  getStage() {
+    return this.phases
+      .find((p) => p.code === this.position.phaseCode)
+      .findStage(this.position.stageCode);
   }
 
   findComment(commentRef) {
@@ -72,32 +67,48 @@ export class Case {
   }
 
   setTaskStatus({
-    stageCode,
     taskGroupCode,
     taskCode,
     status,
+    completed,
     comment,
     updatedBy,
   }) {
-    const caseTask = this.findTask(taskCode);
+    const task = this.getStage()
+      .findTaskGroup(taskGroupCode)
+      .findTask(taskCode);
 
-    caseTask.updateStatus(status, updatedBy);
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
 
-    if (status === "complete") {
-      const timelineEvent = TimelineEvent.createTaskCompleted({
-        createdBy: updatedBy,
-        text: comment,
-        data: {
-          caseId: this._id,
-          stageCode,
-          taskGroupCode,
-          taskCode,
-        },
-      });
+    const optionalComment = Comment.createOptionalComment({
+      type: eventType,
+      text: comment,
+      createdBy: updatedBy,
+    });
 
-      this.#addTimelineEvent(timelineEvent);
-      caseTask.updateCommentRef(timelineEvent.comment?.ref);
-    }
+    const timelineEvent = new TimelineEvent({
+      eventType,
+      data: {
+        caseId: this._id,
+        phaseCode: this.position.phaseCode,
+        stageCode: this.position.stageCode,
+        taskGroupCode,
+        taskCode: task.code,
+      },
+      comment: optionalComment,
+      createdBy: updatedBy,
+    });
+
+    task.updateStatus({
+      status,
+      completed,
+      updatedBy,
+      comment: optionalComment,
+    });
+
+    this.#addTimelineEvent(timelineEvent);
   }
 
   assignUser({ assignedUserId, createdBy, text }) {
@@ -132,21 +143,99 @@ export class Case {
     return timelineEvent.comment;
   }
 
-  addSupplementaryData(key, data) {
-    this.supplementaryData[key] = data;
+  getSupplementaryDataNode(targetNode, dataType) {
+    if (this.supplementaryData[targetNode]) {
+      return this.supplementaryData[targetNode];
+    }
+
+    this.supplementaryData[targetNode] = dataType === "ARRAY" ? [] : {};
+    return this.supplementaryData[targetNode];
   }
 
-  updateStageOutcome({ actionCode, comment, createdBy }) {
+  updateSupplementaryData({ targetNode, key, dataType, data }) {
+    const targetData = this.getSupplementaryDataNode(targetNode, dataType);
+
+    if (dataType === "ARRAY") {
+      const updated = this.updateSupplementaryDataArray({
+        targetData,
+        key,
+        data,
+      });
+
+      return this.addSupplementaryData(targetNode, updated);
+    } else if (dataType === "OBJECT") {
+      const updated = this.updateSupplementaryDataObject({
+        targetNode,
+        targetData,
+        key,
+        data,
+      });
+      return this.addSupplementaryData(targetNode, updated);
+    } else {
+      return null;
+    }
+  }
+
+  updateSupplementaryDataObject({ targetData, key, data, targetNode }) {
+    if (!key) {
+      throw new Error(
+        `Can not update supplementaryData "${targetNode}" as an object without a key`,
+      );
+    }
+    targetData[data[key]] = data;
+    return targetData;
+  }
+
+  updateSupplementaryDataArray({ targetData, key, data }) {
+    const inArray = !!key && !!targetData.find((d) => d[key] === data[key]);
+
+    if (inArray) {
+      return targetData.reduce((acc, c) => {
+        if (c[key] === data[key]) {
+          acc.push(data);
+        } else {
+          acc.push(c);
+        }
+        return acc;
+      }, []);
+    } else {
+      targetData.push(data);
+      return targetData;
+    }
+  }
+
+  addSupplementaryData(targetNode, data) {
+    this.supplementaryData[targetNode] = data;
+  }
+
+  updateStageOutcome({ workflow, actionCode, comment, createdBy }) {
+    const position = workflow.getNextPosition(this.position, actionCode);
+
+    if (this.position.equals(position)) {
+      logger.warn(
+        `Case with caseRef ${this.caseRef} and workflowCode ${this.workflowCode} is already at position ${this.position}`,
+      );
+      return;
+    }
+
+    if (!this.isStageComplete(workflow)) {
+      throw Boom.preconditionFailed(
+        `Cannot trigger transition for actionCode ${actionCode}, stage is incomplete`,
+      );
+    }
+
     const timelineEvent = TimelineEvent.createStageCompleted({
       data: {
         actionCode,
-        stageCode: this.currentStage,
+        phaseCode: this.position.phaseCode,
+        stageCode: this.position.stageCode,
+        statusCode: this.position.statusCode,
       },
       text: comment,
       createdBy,
     });
 
-    const currentStage = this.#getCurrentStage();
+    const currentStage = this.getStage();
 
     currentStage.outcome = {
       actionCode,
@@ -160,24 +249,69 @@ export class Case {
 
     this.#addTimelineEvent(timelineEvent);
 
-    if (actionCode === "approve") {
-      this.#moveToNextStage();
-    }
+    this.position = position;
   }
 
-  updateStatus(status, createdBy) {
-    this.status = status;
+  // eslint-disable-next-line complexity
+  progressTo({ position, workflow, createdBy }) {
+    if (this.position.equals(position)) {
+      logger.warn(
+        `Case with caseRef ${this.caseRef} and workflowCode ${this.workflowCode} is already at position ${this.position}`,
+      );
+      return;
+    }
 
-    if (status === "APPROVED") {
-      const timelineEvent = TimelineEvent.createCaseApproved({
+    if (!this.isStageComplete(workflow)) {
+      throw Boom.preconditionFailed(
+        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: stage is incomplete`,
+      );
+    }
+
+    if (!this.position.isSamePhase(position)) {
+      this.#addTimelineEvent(
+        TimelineEvent.createPhaseCompleted({
+          data: {
+            phaseCode: this.position.phaseCode,
+          },
+          createdBy,
+        }),
+      );
+    }
+
+    if (!this.position.isSameStage(position)) {
+      const timelineEvent = TimelineEvent.createStageCompleted({
         data: {
-          status,
+          actionCode: null,
+          phaseCode: this.position.phaseCode,
+          stageCode: this.position.stageCode,
+          statusCode: this.position.statusCode,
         },
+        text: null,
         createdBy,
       });
 
       this.#addTimelineEvent(timelineEvent);
     }
+
+    this.#addTimelineEvent(
+      TimelineEvent.createCaseStatusChanged({
+        data: {
+          phaseCode: position.phaseCode,
+          stageCode: position.stageCode,
+          statusCode: position.statusCode,
+        },
+        createdBy,
+      }),
+    );
+
+    this.position = position;
+  }
+
+  isStageComplete(workflow) {
+    const workflowStage = workflow.getStage(this.position);
+    const caseStage = this.getStage();
+
+    return caseStage.isComplete(workflowStage, this.position);
   }
 
   getUserIds() {
@@ -191,13 +325,7 @@ export class Case {
       comment.getUserIds(),
     );
 
-    const taskUserIds = this.stages
-      .flatMap((stage) =>
-        stage.taskGroups.flatMap((taskGroup) =>
-          taskGroup.tasks.flatMap((t) => t.updatedBy),
-        ),
-      )
-      .filter((id) => id !== undefined);
+    const taskUserIds = this.phases.flatMap((phase) => phase.getUserIds());
 
     const allUserIds = [
       ...caseUserIds,
@@ -231,83 +359,24 @@ export class Case {
     return comment;
   }
 
-  #getCurrentStage() {
-    const currentStageIndex = this.#getCurrentStageIndex();
-    return this.stages[currentStageIndex];
-  }
-
-  #moveToNextStage() {
-    const nextStage = this.#getNextStage();
-    this.currentStage = nextStage.code;
-    return nextStage;
-  }
-
-  #getNextStage() {
-    const currentStageIndex = this.#getCurrentStageIndex();
-    const currentStage = this.#getCurrentStage();
-
-    if (currentStageIndex === this.stages.length - 1) {
-      throw Boom.notFound(
-        `Cannot progress case ${this._id} from stage ${this.currentStage}, no more stages to progress to`,
-      );
-    }
-
-    const allTasksComplete = currentStage.taskGroups
-      .flatMap((group) => group.tasks)
-      .every((task) => task.status === "complete");
-
-    if (!allTasksComplete) {
-      throw Boom.badRequest(
-        `Cannot progress case ${this._id} from stage ${this.currentStage} - some tasks are not complete.`,
-      );
-    }
-
-    return this.stages[currentStageIndex + 1];
-  }
-
-  #getCurrentStageIndex() {
-    const currentStageIndex = this.stages.findIndex(
-      (stage) => stage.code === this.currentStage,
-    );
-
-    if (currentStageIndex === -1) {
-      throw Boom.notFound(
-        `Cannot find current stage index for ${this.currentStage}, case ${this._id}`,
-      );
-    }
-
-    return currentStageIndex;
-  }
-
-  static new({ caseRef, payload, workflow }) {
+  static new({ caseRef, workflowCode, position, payload, phases }) {
     return new Case({
       caseRef,
-      workflowCode: workflow.code,
-      status: "NEW",
+      workflowCode,
+      position,
       dateReceived: new Date().toISOString(),
-      currentStage: workflow.stages[0].code,
       payload,
       supplementaryData: {},
-      stages: workflow.stages.map((stage) => ({
-        code: stage.code,
-        taskGroups: stage.taskGroups.map((taskGroup) => ({
-          code: taskGroup.code,
-          tasks: taskGroup.tasks.map((task) => ({
-            code: task.code,
-            status: "pending",
-          })),
-        })),
-      })),
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
-          createdBy: "System", // To specify that the case was created by an external system
+          createdBy: "System",
           data: {
             caseRef,
           },
-        },
+        }),
       ],
-      requiredRoles: workflow.requiredRoles,
+      phases,
     });
   }
 
@@ -315,33 +384,46 @@ export class Case {
     return new Case({
       caseRef: "case-ref",
       workflowCode: "workflow-code",
-      status: "NEW",
+      position: new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
+      }),
       dateReceived: "2025-01-01T00:00:00.000Z",
-      currentStage: "stage-1",
       payload: {},
       supplementaryData: {},
-      stages: [
-        {
-          code: "stage-1",
-          taskGroups: [
-            {
-              code: "task-group-1",
-              tasks: [
-                {
-                  code: "task-1",
-                  status: "pending",
-                },
+      phases: [
+        new CasePhase({
+          code: "PHASE_1",
+          stages: [
+            new CaseStage({
+              code: "STAGE_1",
+              taskGroups: [
+                new CaseTaskGroup({
+                  code: "TASK_GROUP_1",
+                  tasks: [
+                    new CaseTask({
+                      code: "TASK_1",
+                      status: "PENDING",
+                      completed: false,
+                      // this should be refactored to use null
+                      commentRef: undefined,
+                      updatedAt: undefined,
+                      updatedBy: undefined,
+                    }),
+                  ],
+                }),
               ],
-            },
+            }),
+            new CaseStage({
+              code: "STAGE_2",
+              taskGroups: [],
+            }),
           ],
-        },
-        {
-          code: "stage-2",
-          taskGroups: [],
-        },
+        }),
       ],
       timeline: [
-        {
+        new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
           createdAt: "2025-01-01T00:00:00.000Z",
           description: "Case received",
@@ -350,16 +432,11 @@ export class Case {
           data: {
             caseRef: "case-ref",
           },
-        },
+        }),
       ],
       comments: [],
       assignedUser: {
         id: "64c88faac1f56f71e1b89a33",
-        name: "Test Name",
-      },
-      requiredRoles: {
-        allOf: ["ROLE_1", "ROLE_2"],
-        anyOf: ["ROLE_3"],
       },
       ...props,
     });

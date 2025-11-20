@@ -189,7 +189,7 @@ export const workflowData1 = {
                         text: "Internal",
                         href: {
                           urlTemplate:
-                            "$.definitions.agreementsService.internalUrlTemplate",
+                            "$.definitions.agreementsService.internalUrl",
                           params: {
                             agreementRef: "@.agreementRef",
                           },
@@ -197,19 +197,6 @@ export const workflowData1 = {
                         target: "_blank",
                         rel: "noopener",
                         classes: "govuk-!-margin-right-6",
-                      },
-                      {
-                        label: "External",
-                        component: "copyToClipboard",
-                        text: {
-                          urlTemplate:
-                            "$.definitions.agreementsService.externalUrlTemplate",
-                          params: {
-                            agreementRef: "@.agreementRef",
-                          },
-                        },
-                        buttonText: "Copy external",
-                        feedbackText: "Copied to clipboard",
                       },
                     ],
                   },
@@ -232,46 +219,72 @@ export const workflowData1 = {
     },
   },
 
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      name: "Application Receipt",
-      description: "Application received",
-      statuses: [],
-      taskGroups: [
+      code: "DEFAULT",
+      name: "Default Phase",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          name: "Application Receipt tasks",
-          description: "Task group description",
-          tasks: [
+          code: "APPLICATION_RECEIPT",
+          name: "Application Receipt",
+          description: "Application received",
+          statuses: [
             {
-              code: "simple-review",
-              name: "Simple Review",
-              type: "boolean",
-              description: null,
-              statusOptions: [],
-              requiredRoles: {
-                allOf: ["ROLE_1", "ROLE_2"],
-                anyOf: ["ROLE_3"],
-              },
+              code: "STATUS_1",
+              name: "Status 1",
+              description: "Status 1 dscription",
+              interactive: true,
+              transitions: [
+                {
+                  targetPosition: ":CONTRACT:",
+                  action: {
+                    code: "APPROVE",
+                    name: "Approve",
+                    checkTasks: false,
+                    comment: null,
+                  },
+                },
+              ],
+            },
+          ],
+          taskGroups: [
+            {
+              code: "APPLICATION_RECEIPT_TASKS",
+              name: "Application Receipt tasks",
+              description: "Task group description",
+              tasks: [
+                {
+                  code: "SIMPLE_REVIEW",
+                  name: "Simple Review",
+                  description: null,
+                  comment: null,
+                  mandatory: false,
+                  statusOptions: [],
+                  requiredRoles: {
+                    allOf: ["ROLE_1", "ROLE_2"],
+                    anyOf: ["ROLE_3"],
+                  },
+                },
+              ],
             },
           ],
         },
-      ],
-      actions: [
         {
-          code: "approve",
-          name: "Approve",
+          code: "CONTRACT",
+          name: "Stage for contract management",
+          description: "Awaiting agreement",
+          statuses: [
+            {
+              code: "AWAITING_AGREEMENT",
+              name: "Awaiting Agreement",
+              description: "Awaiting agreement signature",
+              interactive: true,
+              transitions: [],
+            },
+          ],
+          taskGroups: [],
         },
       ],
-    },
-    {
-      code: "contract",
-      name: "Stage for contract management",
-      description: "Awaiting agreement",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
     },
   ],
   requiredRoles: {
@@ -322,22 +335,26 @@ export const workflowData2 = {
       },
     },
   },
-  stages: [
+  phases: [
     {
-      code: "review",
-      name: "Review",
-      description: "Review description",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
-    },
-    {
-      code: "decision",
-      name: "Decision",
-      description: "Decision description",
-      statuses: [],
-      taskGroups: [],
-      actions: [],
+      code: "DEFAULT",
+      name: "Default Phase",
+      stages: [
+        {
+          code: "REVIEW",
+          name: "Review",
+          description: "Review description",
+          statuses: [],
+          taskGroups: [],
+        },
+        {
+          code: "DECISION",
+          name: "Decision",
+          description: "Decision description",
+          statuses: [],
+          taskGroups: [],
+        },
+      ],
     },
   ],
   requiredRoles: {

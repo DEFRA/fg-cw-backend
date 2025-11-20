@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, CASE_APPROVED, TASK_COMPLETED, STAGE_COMPLETED, NOTE_ADDED]',
+        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, TASK_UPDATED, PHASE_COMPLETED, STAGE_COMPLETED, CASE_STATUS_CHANGED, NOTE_ADDED]',
       );
     });
   });
@@ -297,7 +297,7 @@ describe("TimelineEvent", () => {
       const props = {
         data: {
           stageCode: "64c88faac1f56f71e1b99999",
-          actionCode: "approve",
+          actionCode: "APPROVE",
         },
         text: "Stage complete",
         createdBy: "64c88faac1f56f71e1b89a33",
@@ -309,59 +309,32 @@ describe("TimelineEvent", () => {
       );
       expect(timelineEvent.comment.text).toBe("Stage complete");
       expect(timelineEvent.data.stageCode).toBe("64c88faac1f56f71e1b99999");
-      expect(timelineEvent.data.actionCode).toBe("approve");
+      expect(timelineEvent.data.actionCode).toBe("APPROVE");
     });
   });
 
-  describe("createTaskCompleted", () => {
-    it("creates a task complete event", () => {
+  describe("createCaseStatusChanged", () => {
+    it("creates a status changed event", () => {
       const props = {
         data: {
-          taskCode: "64c88faac1f56f71e1b99999",
+          phaseCode: "PC",
+          stageCode: "STC",
+          statusCode: "SC",
         },
-        text: "Task complete",
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createTaskCompleted(props);
+      const timelineEvent = TimelineEvent.createCaseStatusChanged(props);
+
       expect(timelineEvent.eventType).toBe(
-        EventEnums.eventTypes.TASK_COMPLETED,
+        EventEnums.eventTypes.CASE_STATUS_CHANGED,
       );
-      expect(timelineEvent.comment.text).toBe("Task complete");
-      expect(timelineEvent.data.taskCode).toBe("64c88faac1f56f71e1b99999");
-    });
-  });
-
-  describe("createCaseApproved", () => {
-    it("creates a case approved event", () => {
-      const props = {
-        data: {
-          approvalDate: "2024-01-15T10:00:00Z",
-          approvedBy: "64c88faac1f56f71e1b89a34",
-        },
-        createdBy: "64c88faac1f56f71e1b89a33",
-      };
-
-      const timelineEvent = TimelineEvent.createCaseApproved(props);
-
-      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_APPROVED);
       expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
-      expect(timelineEvent.data.approvalDate).toBe("2024-01-15T10:00:00Z");
-      expect(timelineEvent.data.approvedBy).toBe("64c88faac1f56f71e1b89a34");
-      expect(timelineEvent.comment).toBeNull();
-    });
-
-    it("creates a case approved event with minimal data", () => {
-      const props = {
-        data: {},
-        createdBy: "System",
-      };
-
-      const timelineEvent = TimelineEvent.createCaseApproved(props);
-
-      expect(timelineEvent.eventType).toBe(EventEnums.eventTypes.CASE_APPROVED);
-      expect(timelineEvent.createdBy).toBe("System");
-      expect(timelineEvent.data).toEqual({});
+      expect(timelineEvent.data).toEqual({
+        phaseCode: "PC",
+        stageCode: "STC",
+        statusCode: "SC",
+      });
       expect(timelineEvent.comment).toBeNull();
     });
   });

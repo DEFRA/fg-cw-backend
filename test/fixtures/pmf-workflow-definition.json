@@ -81,132 +81,149 @@
       }
     }
   },
-  "stages": [
+  "phases": [
     {
-      "code": "application-received",
-      "name": "Application Received",
-      "description": "Application received",
-      "statuses": [],
-      "taskGroups": [
+      "code": "DEFAULT",
+      "name": "Default Phase",
+      "stages": [
         {
-          "code": "review-automated-checks",
-          "name": "Review Automated Checks",
-          "description": "Task group description",
-          "tasks": [
+          "code": "application-received",
+          "name": "Application Received",
+          "description": "Application received",
+          "statuses": [],
+          "taskGroups": [
             {
-              "code": "review-application-data",
-              "type": "boolean",
-              "name": "Review application data",
-              "description": null,
-              "statusOptions": []
+              "code": "review-automated-checks",
+              "name": "Review Automated Checks",
+              "description": "Task group description",
+              "tasks": [
+                {
+                  "code": "review-application-data",
+                  "name": "Review application data",
+                  "description": null,
+                  "statusOptions": []
+                }
+              ]
+            }
+          ],
+          "actionsTitle": "Decision",
+          "actions": [
+            {
+              "code": "approve",
+              "name": "Approve",
+              "comment": {
+                "label": "Approval reason note",
+                "helpText": "All notes will be saved for auditing purposes",
+                "type": "REQUIRED"
+              }
+            },
+            {
+              "code": "on-hold",
+              "name": "Put on hold",
+              "comment": {
+                "label": "Note (optional)",
+                "helpText": "All notes will be saved for auditing purposes",
+                "type": "OPTIONAL"
+              }
+            },
+            {
+              "code": "reject",
+              "name": "Reject",
+              "comment": null
             }
           ]
-        }
-      ],
-      "actionsTitle": "Decision",
-      "actions": [
-        {
-          "code": "approve",
-          "name": "Approve",
-          "comment": {
-            "label": "Approval reason note",
-            "helpText": "All notes will be saved for auditing purposes",
-            "type": "REQUIRED"
-          }
         },
         {
-          "code": "on-hold",
-          "name": "Put on hold",
-          "comment": {
-            "label": "Note (optional)",
-            "helpText": "All notes will be saved for auditing purposes",
-            "type": "OPTIONAL"
-          }
+          "code": "assessment",
+          "name": "Assessment",
+          "description": "Application assessment",
+          "statuses": [],
+          "taskGroups": [
+            {
+              "code": "check-application",
+              "name": "Check Application",
+              "description": "Task group description",
+              "tasks": [
+                {
+                  "code": "check-application-and-documents",
+                  "name": "Check application and documents",
+                  "description": null,
+                  "statusOptions": []
+                },
+                {
+                  "code": "check-find-farm-and-land-payment-data",
+                  "name": "Check on Find farm and land payment data",
+                  "description": null,
+                  "statusOptions": []
+                },
+                {
+                  "code": "check-rps-dual-funding",
+                  "name": "Check on RPS (Dual Funding)",
+                  "description": null,
+                  "statusOptions": []
+                }
+              ]
+            },
+            {
+              "code": "registration-checks",
+              "name": "Registration checks",
+              "description": "Task group description",
+              "tasks": [
+                {
+                  "code": "confirm-farm-has-cph",
+                  "name": "Confirm farm has a CPH",
+                  "description": null,
+                  "statusOptions": []
+                },
+                {
+                  "code": "confirm-apha-registration",
+                  "name": "Confirm APHA registration",
+                  "description": null,
+                  "statusOptions": []
+                }
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "code": "approve",
+              "name": "Confirm Approval",
+              "comment": null
+            },
+            {
+              "code": "confirm-rejection",
+              "name": "Confirm Rejection",
+              "comment": null
+            }
+          ]
         },
         {
-          "code": "reject",
-          "name": "Reject"
+          "code": "contracted",
+          "name": "Contracted",
+          "description": "Awaiting agreement",
+          "statuses": [],
+          "taskGroups": [],
+          "actions": []
         }
       ]
-    },
-    {
-      "code": "assessment",
-      "name": "Assessment",
-      "description": "Application assessment",
-      "statuses": [],
-      "taskGroups": [
-        {
-          "code": "check-application",
-          "name": "Check Application",
-          "description": "Task group description",
-          "tasks": [
-            {
-              "code": "check-application-and-documents",
-              "type": "boolean",
-              "name": "Check application and documents",
-              "description": null,
-              "statusOptions": []
-            },
-            {
-              "code": "check-find-farm-and-land-payment-data",
-              "type": "boolean",
-              "name": "Check on Find farm and land payment data",
-              "description": null,
-              "statusOptions": []
-            },
-            {
-              "code": "check-rps-dual-funding",
-              "type": "boolean",
-              "name": "Check on RPS (Dual Funding)",
-              "description": null,
-              "statusOptions": []
-            }
-          ]
-        },
-        {
-          "code": "registration-checks",
-          "name": "Registration checks",
-          "description": "Task group description",
-          "tasks": [
-            {
-              "code": "confirm-farm-has-cph",
-              "name": "Confirm farm has a CPH",
-              "type": "boolean",
-              "description": null,
-              "statusOptions": []
-            },
-            {
-              "code": "confirm-apha-registration",
-              "name": "Confirm APHA registration",
-              "type": "boolean",
-              "description": null,
-              "statusOptions": []
-            }
-          ]
-        }
-      ],
-      "actions": [
-        {
-          "code": "approve",
-          "name": "Confirm Approval"
-        },
-        {
-          "code": "confirm-rejection",
-          "name": "Confirm Rejection"
-        }
-      ]
-    },
-    {
-      "code": "contracted",
-      "name": "Contracted",
-      "description": "Awaiting agreement",
-      "statuses": [],
-      "taskGroups": [],
-      "actions": []
     }
   ],
   "requiredRoles": {
     "allOf": ["ROLE_RPA_ADMIN"],
     "anyOf": ["ROLE_RPA_ADMIN"]
-  }
+  },
+  "externalActions": [
+    {
+      "code": "RERUN_RULES",
+      "name": "Rerun Rules",
+      "description": "Rerun the business rules validation",
+      "endpoint": "landGrantsRulesRerun",
+      "target": {
+        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+        "node": "landGrantsRulesRun",
+        "nodeType": "array",
+        "place": "append"
+      }
+    }
+  ]
 }

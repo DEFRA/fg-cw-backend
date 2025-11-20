@@ -36,50 +36,6 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
   };
 };
 
-const mapTimeline = (timeline) => {
-  return (
-    timeline?.map((tl) => ({
-      ...tl,
-      commentRef: tl.comment ? tl.comment.ref : undefined,
-      comment: undefined,
-    })) || []
-  );
-};
-
-const mapTasks = (tasks, workflowTaskGroup) =>
-  tasks.map((task) => {
-    const workflowTaskGroupTask = workflowTaskGroup.tasks.find(
-      (wtgt) => wtgt.code === task.code,
-    );
-    return {
-      ...task,
-      name: workflowTaskGroupTask.name,
-      description: workflowTaskGroupTask.description,
-      statusOptions: workflowTaskGroupTask.statusOptions,
-    };
-  });
-
-const mapStages = (stages, workflow) =>
-  stages.map((stage) => {
-    const workflowStage = workflow.stages.find((s) => s.code === stage.code);
-    return {
-      ...stage,
-      name: workflowStage.name,
-      description: workflowStage.description,
-      taskGroups: stage.taskGroups.map((taskGroup) => {
-        const workflowTaskGroup = workflowStage.taskGroups.find(
-          (tg) => tg.code === taskGroup.code,
-        );
-        return {
-          ...taskGroup,
-          name: workflowTaskGroup.name,
-          description: workflowTaskGroup.description,
-          tasks: mapTasks(taskGroup.tasks, workflowTaskGroup),
-        };
-      }),
-    };
-  });
-
 export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
@@ -107,20 +63,30 @@ export const findCasesUseCase = async () => {
       return acc;
     }
 
-    kase.requiredRoles = workflow.requiredRoles;
-
     const assignedUser = assignedUsers.find(
       (u) => u.id === kase.assignedUser?.id,
     );
 
-    if (assignedUser) {
-      kase.assignedUser.name = assignedUser.name;
-    }
+    const currentStatus = workflow
+      .getStage(kase.position)
+      .getStatus(kase.position.statusCode);
 
-    kase.stages = mapStages(kase.stages, workflow);
-    kase.timeline = mapTimeline(kase.timeline);
+    const result = {
+      _id: kase._id,
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      dateReceived: kase.dateReceived,
+      currentStatus: currentStatus.name,
+      assignedUser: assignedUser
+        ? {
+            id: assignedUser.id,
+            name: assignedUser.name,
+          }
+        : null,
+      payload: kase.payload,
+    };
 
-    acc.push(kase);
+    acc.push(result);
     return acc;
   }, []);
 

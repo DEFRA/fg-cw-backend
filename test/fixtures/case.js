@@ -1,7 +1,9 @@
 export const caseData1 = {
   workflowCode: "frps-private-beta",
   caseRef: "APPLICATION-REF-1",
-  status: "NEW",
+  currentPhase: "DEFAULT",
+  currentStage: "APPLICATION_RECEIPT",
+  currentStatus: "AWAITING_REVIEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
     clientRef: "APPLICATION-REF-1",
@@ -30,25 +32,35 @@ export const caseData1 = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "DEFAULT",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "APPLICATION_RECEIPT",
+          interactive: true,
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "APPLICATION_RECEIPT_TASKS",
+              tasks: [
+                {
+                  code: "SIMPLE_REVIEW",
+                  status: "PENDING",
+                  completed: false,
+                  commentRef: null,
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
             },
           ],
         },
+        {
+          code: "CONTRACT",
+          interactive: true,
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -60,6 +72,7 @@ export const caseData1 = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],
@@ -74,7 +87,9 @@ export const caseData1 = {
 export const caseData2 = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-2",
-  status: "NEW",
+  currentPhase: "DEFAULT",
+  currentStage: "APPLICATION_RECEIPT",
+  currentStatus: "AWAITING_REVIEW",
   dateReceived: "2025-03-27T11:34:52Z",
   payload: {
     clientRef: "APPLICATION-REF-2",
@@ -103,25 +118,35 @@ export const caseData2 = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "DEFAULT",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "APPLICATION_RECEIPT",
+          interactive: true,
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "APPLICATION_RECEIPT_TASKS",
+              tasks: [
+                {
+                  code: "SIMPLE_REVIEW",
+                  status: "PENDING",
+                  completed: false,
+                  commentRef: null,
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
             },
           ],
         },
+        {
+          code: "CONTRACT",
+          interactive: true,
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -133,6 +158,7 @@ export const caseData2 = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],
@@ -147,7 +173,9 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
-  status: "NEW",
+  currentPhase: "DEFAULT",
+  currentStage: "APPLICATION_RECEIPT",
+  currentStatus: "AWAITING_REVIEW",
   dateReceived: "2025-03-27T11:34:52.000Z",
   payload: {
     createdAt: "2025-03-27T10:34:52.000Z",
@@ -175,25 +203,35 @@ export const caseData3Document = {
       ],
     },
   },
-  currentStage: "application-receipt",
-  stages: [
+  phases: [
     {
-      code: "application-receipt",
-      taskGroups: [
+      code: "DEFAULT",
+      stages: [
         {
-          code: "application-receipt-tasks",
-          tasks: [
+          code: "APPLICATION_RECEIPT",
+          outcome: null,
+          taskGroups: [
             {
-              code: "simple-review",
-              status: "pending",
+              code: "APPLICATION_RECEIPT_TASKS",
+              tasks: [
+                {
+                  code: "SIMPLE_REVIEW",
+                  status: null,
+                  completed: false,
+                  commentRef: null,
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
             },
           ],
         },
+        {
+          code: "CONTRACT",
+          outcome: null,
+          taskGroups: [],
+        },
       ],
-    },
-    {
-      code: "contract",
-      taskGroups: [],
     },
   ],
   timeline: [
@@ -205,6 +243,7 @@ export const caseData3Document = {
       },
       description: "Case received",
       eventType: "CASE_CREATED",
+      comment: null,
     },
   ],
   comments: [],

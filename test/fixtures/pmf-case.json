@@ -19,59 +19,65 @@
     }
   },
   "currentStage": "application-received",
-  "stages": [
+  "phases": [
     {
-      "code": "application-received",
-      "taskGroups": [
+      "code": "DEFAULT",
+      "name": "Default Phase",
+      "stages": [
         {
-          "code": "review-automated-checks",
-          "tasks": [
+          "code": "application-received",
+          "taskGroups": [
             {
-              "code": "review-application-data",
-              "status": "pending"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "code": "assessment",
-      "taskGroups": [
-        {
-          "code": "check-application",
-          "tasks": [
-            {
-              "code": "check-application-and-documents",
-              "status": "pending"
-            },
-            {
-              "code": "check-find-farm-and-land-payment-data",
-              "status": "pending"
-            },
-            {
-              "code": "check-rps-dual-funding",
-              "status": "pending"
+              "code": "review-automated-checks",
+              "tasks": [
+                {
+                  "code": "review-application-data",
+                  "status": "pending"
+                }
+              ]
             }
           ]
         },
         {
-          "code": "registration-checks",
-          "tasks": [
+          "code": "assessment",
+          "taskGroups": [
             {
-              "code": "confirm-farm-has-cph",
-              "status": "pending"
+              "code": "check-application",
+              "tasks": [
+                {
+                  "code": "check-application-and-documents",
+                  "status": "pending"
+                },
+                {
+                  "code": "check-find-farm-and-land-payment-data",
+                  "status": "pending"
+                },
+                {
+                  "code": "check-rps-dual-funding",
+                  "status": "pending"
+                }
+              ]
             },
             {
-              "code": "confirm-apha-registration",
-              "status": "pending"
+              "code": "registration-checks",
+              "tasks": [
+                {
+                  "code": "confirm-farm-has-cph",
+                  "status": "pending"
+                },
+                {
+                  "code": "confirm-apha-registration",
+                  "status": "pending"
+                }
+              ]
             }
           ]
+        },
+        {
+          "code": "contracted",
+          "taskGroups": []
         }
       ]
-    },
-    {
-      "code": "contracted",
-      "taskGroups": []
     }
   ],
   "timeline": [

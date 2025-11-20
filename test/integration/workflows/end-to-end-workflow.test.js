@@ -242,11 +242,11 @@ describe("End-to-End Workflow Integration Tests", () => {
       let completedTasks = 0;
 
       try {
-        // Try to complete the simple-review task in the application-receipt stage
+        // Try to complete the SIMPLE_REVIEW task in the APPLICATION_RECEIPT stage
         const taskResponse = await wreck.patch(
-          `/cases/${testData.caseId}/stages/application-receipt/task-groups/application-receipt-tasks/tasks/simple-review/status`,
+          `/cases/${testData.caseId}/task-groups/APPLICATION_RECEIPT_TASKS/tasks/SIMPLE_REVIEW/status`,
           {
-            payload: { status: "complete" },
+            payload: { status: "COMPLETE" },
           },
         );
         expect(taskResponse.res.statusCode).toBe(200);
@@ -258,14 +258,15 @@ describe("End-to-End Workflow Integration Tests", () => {
         await cases.updateOne(
           {
             _id: new ObjectId(testData.caseId),
-            "stages.code": "application-receipt",
+            "phases.stages.code": "APPLICATION_RECEIPT",
           },
           {
             $set: {
-              "stages.$.taskGroups.0.tasks.0.status": "complete",
-              "stages.$.taskGroups.0.tasks.0.completedAt":
+              "phases.0.stages.0.taskGroups.0.tasks.0.status": "COMPLETE",
+              "phases.0.stages.0.taskGroups.0.tasks.0.completedAt":
                 new Date().toISOString(),
-              "stages.$.taskGroups.0.tasks.0.completedBy": testData.user.id,
+              "phases.0.stages.0.taskGroups.0.tasks.0.completedBy":
+                testData.user.id,
             },
           },
         );
@@ -348,15 +349,11 @@ describe("End-to-End Workflow Integration Tests", () => {
       expect(finalDbCase.assignedUserId).toBe(testData.user.id);
       expect(finalDbCase.currentStage).toBe("contract");
 
-      // Verify workflow progression - we created initial-review, contract stage may not be in database
-      expect(finalDbCase.stages).toBeDefined();
-      expect(finalDbCase.stages.length).toBeGreaterThanOrEqual(1); // At least initial-review stage
-
       // Verify task completion
-      const initialStage = finalDbCase.stages.find(
-        (stage) => stage.code === "application-receipt",
+      const initialStage = finalDbCase.phases[0].stages.find(
+        (stage) => stage.code === "APPLICATION_RECEIPT",
       );
-      expect(initialStage.taskGroups[0].tasks[0].status).toBe("complete");
+      expect(initialStage.taskGroups[0].tasks[0].status).toBe("COMPLETE");
 
       // Verify note was added
       expect(finalDbCase.comments).toBeDefined();
@@ -477,20 +474,17 @@ describe("End-to-End Workflow Integration Tests", () => {
   it("should handle workflow task validation and constraints", async () => {
     // Test workflow validation - similar to error handling in original
     const testWorkflow = await workflows.findOne({});
-    expect(testWorkflow).toBeTruthy();
-    expect(testWorkflow.stages).toBeDefined();
-    expect(testWorkflow.stages.length).toBeGreaterThan(0);
 
     // Verify first stage has tasks
-    const firstStage = testWorkflow.stages.find(
-      (stage) => stage.code === "application-receipt",
+    const firstStage = testWorkflow.phases[0].stages.find(
+      (stage) => stage.code === "APPLICATION_RECEIPT",
     );
     expect(firstStage).toBeTruthy();
     expect(firstStage.taskGroups).toBeDefined();
     expect(firstStage.taskGroups[0].name).toBe("Application Receipt tasks");
     expect(firstStage.taskGroups[0].description).toBe("Task group description");
     expect(firstStage.taskGroups[0].tasks).toBeDefined();
-    expect(firstStage.taskGroups[0].tasks[0].code).toBe("simple-review");
+    expect(firstStage.taskGroups[0].tasks[0].code).toBe("SIMPLE_REVIEW");
   });
 });
 
@@ -539,7 +533,6 @@ const createCaseFromSnSEvent = async (eventData) => {
     _id: caseId,
     workflowCode: grantCode,
     caseRef: clientRef,
-    status: "NEW",
     dateReceived: new Date(metadata.submittedAt).toISOString(),
     payload: {
       clientRef,
@@ -555,17 +548,24 @@ const createCaseFromSnSEvent = async (eventData) => {
       applicant,
       answers: application,
     },
-    currentStage: "application-receipt",
-    stages: [
+    currentPhase: "DEFAULT",
+    currentStage: "APPLICATION_RECEIPT",
+    currentStatus: "NEW",
+    phases: [
       {
-        code: "application-receipt",
-        taskGroups: [
+        code: "DEFAULT",
+        stages: [
           {
-            code: "application-receipt-tasks",
-            tasks: [
+            code: "APPLICATION_RECEIPT",
+            taskGroups: [
               {
-                code: "simple-review",
-                status: "pending",
+                code: "APPLICATION_RECEIPT_TASKS",
+                tasks: [
+                  {
+                    code: "SIMPLE_REVIEW",
+                    status: "PENDING",
+                  },
+                ],
               },
             ],
           },

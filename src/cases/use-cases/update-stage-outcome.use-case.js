@@ -1,38 +1,55 @@
 import Boom from "@hapi/boom";
-
-import { publishCaseStatusUpdated } from "../publishers/case-event.publisher.js";
+import { config } from "../../common/config.js";
+import { withTransaction } from "../../common/with-transaction.js";
+import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
+import { Outbox } from "../models/outbox.js";
 import { findById, update } from "../repositories/case.repository.js";
+import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
-  const { caseId, actionCode, comment, user } = command;
-  const kase = await findById(caseId);
+  return await withTransaction(async (session) => {
+    const { caseId, actionCode, comment, user } = command;
+    const kase = await findById(caseId);
 
-  if (!kase) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
+    if (!kase) {
+      throw Boom.notFound(`Case with id "${caseId}" not found`);
+    }
 
-  const workflow = await findByCode(kase.workflowCode);
+    const workflow = await findByCode(kase.workflowCode);
 
-  workflow.validateStageActionComment({
-    actionCode,
-    stageCode: kase.currentStage,
-    comment,
-  });
+    workflow.validateStageActionComment({
+      actionCode,
+      position: kase.position,
+      comment,
+    });
 
-  kase.updateStageOutcome({
-    actionCode,
-    comment,
-    createdBy: user.id,
-  });
+    const previousPosition = kase.position;
 
-  await update(kase);
+    kase.updateStageOutcome({
+      workflow,
+      actionCode,
+      comment,
+      createdBy: user.id,
+    });
 
-  // TODO: publish correct currentStatus based on state machine transitions
-  await publishCaseStatusUpdated({
-    caseRef: kase.caseRef,
-    workflowCode: kase.workflowCode,
-    previousStatus: "not-implemented",
-    currentStatus: actionCode === "approve" ? "APPROVED" : "not-implemented",
+    await update(kase, session);
+
+    const caseStatusEvent = new CaseStatusUpdatedEvent({
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      previousStatus: previousPosition.toString(),
+      currentStatus: kase.position.toString(),
+    });
+
+    await insertMany(
+      [
+        new Outbox({
+          event: caseStatusEvent,
+          target: config.get("aws.sns.caseStatusUpdatedTopicArn"),
+        }),
+      ],
+      session,
+    );
   });
 };

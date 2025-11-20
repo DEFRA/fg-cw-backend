@@ -41,47 +41,68 @@ describe("GET /cases/{caseId}", () => {
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload).toEqual({
-      ...caseData2,
       _id: caseId,
-      dateReceived: new Date(caseData2.dateReceived).toISOString(),
-      tasks: {},
-      stages: [
-        {
-          ...caseData2.stages[0],
-          name: "Application Receipt",
-          description: "Application received",
-          taskGroups: [
-            {
-              ...caseData2.stages[0].taskGroups[0],
-              name: "Application Receipt tasks",
-              description: "Task group description",
-              tasks: [
-                {
-                  ...caseData2.stages[0].taskGroups[0].tasks[0],
-                  name: "Simple Review",
-                  description: "Simple review task",
-                  statusOptions: [],
-                  updatedBy: null,
+      caseRef: caseData2.caseRef,
+      workflowCode: caseData2.workflowCode,
+      currentStatus: "AWAITING_REVIEW",
+      stage: {
+        code: "APPLICATION_RECEIPT",
+        name: "Application Receipt",
+        description: "Application received",
+        interactive: true,
+        taskGroups: [
+          {
+            code: "APPLICATION_RECEIPT_TASKS",
+            name: "Application Receipt tasks",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "SIMPLE_REVIEW",
+                name: "Simple Review",
+                description: [
+                  {
+                    component: "heading",
+                    level: 2,
+                    text: "Simple review task",
+                  },
+                ],
+                status: "PENDING",
+                completed: false,
+                mandatory: true,
+                statusOptions: [],
+                commentInputDef: {
+                  helpText: "All notes will be saved for auditing purposes",
+                  label: "Note",
+                  mandatory: false,
                 },
-              ],
-            },
-          ],
-        },
-        {
-          ...caseData2.stages[1],
-          name: "Stage for contract management",
-          description: "Awaiting agreement",
-        },
-      ],
-      timeline: [
-        {
-          ...caseData2.timeline[0],
-          createdBy: {
-            id: "System",
-            name: "System",
+                commentRef: null,
+                updatedAt: null,
+                updatedBy: null,
+                requiredRoles: {
+                  allOf: ["ROLE_1", "ROLE_2"],
+                  anyOf: ["ROLE_3"],
+                },
+              },
+            ],
           },
-        },
-      ],
+        ],
+        actions: [
+          {
+            code: "APPROVE",
+            name: "Approve",
+            comment: null,
+          },
+        ],
+        actionsDisabled: true,
+      },
+      dateReceived: new Date(caseData2.dateReceived).toISOString(),
+      payload: caseData2.payload,
+      supplementaryData: caseData2.supplementaryData,
+      assignedUser: null,
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
       banner: {
         summary: {
           createdAt: {
@@ -132,7 +153,16 @@ describe("GET /cases/{caseId}", () => {
           text: "Timeline",
         },
       ],
-      supplementaryData: {},
+      comments: [],
+      timeline: [
+        {
+          ...caseData2.timeline[0],
+          createdBy: {
+            id: "System",
+            name: "System",
+          },
+        },
+      ],
     });
   });
 });

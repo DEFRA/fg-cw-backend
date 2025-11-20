@@ -19,6 +19,13 @@ const isProduction = process.env.NODE_ENV === "production";
 const isTest = process.env.NODE_ENV === "test";
 
 export const config = convict({
+  env: {
+    doc: "The node environment",
+    format: String,
+    nullable: false,
+    default: null,
+    env: "NODE_ENV",
+  },
   serviceVersion: {
     doc: "The service version, this variable is injected into your docker container in CDP environments",
     format: String,
@@ -89,7 +96,7 @@ export const config = convict({
     uri: {
       doc: "URI for mongodb",
       format: String,
-      default: "mongodb://127.0.0.1:27017/",
+      default: "mongodb://127.0.0.1:27017/?replicaSet=mongoRepl",
       env: "MONGO_URI",
     },
     databaseName: {
@@ -187,6 +194,58 @@ export const config = convict({
         "FCP.Casework.Admin",
       ],
       env: "AZURE_ENTRA_APP_ROLES",
+    },
+  },
+  outbox: {
+    outboxMaxRetries: {
+      doc: "Maximum number of retries before setting to DEAD_LETTER",
+      format: String,
+      default: null,
+      env: "OUTBOX_MAX_RETRIES",
+    },
+    outboxExpiresMs: {
+      doc: "Number in Milliseconds before outbox process expires and will be cleaned up",
+      format: String,
+      default: null,
+      env: "OUTBOX_EXPIRES_MS",
+    },
+    outboxClaimMaxRecords: {
+      doc: "Maximum number of db records to claim in a single loop",
+      format: String,
+      default: null,
+      env: "OUTBOX_CLAIM_MAX_RECORDS",
+    },
+    outboxPollMs: {
+      doc: "Number of milliseconds outbox should wait before repolling db",
+      format: String,
+      default: null,
+      env: "OUTBOX_POLL_MS",
+    },
+  },
+  inbox: {
+    inboxMaxRetries: {
+      doc: "Maximum number of retries before setting to DEAD_LETTER",
+      format: String,
+      default: null,
+      env: "INBOX_MAX_RETRIES",
+    },
+    inboxExpiresMs: {
+      doc: "Number in Milliseconds before inbox process expires and will be cleaned up",
+      format: String,
+      default: null,
+      env: "INBOX_EXPIRES_MS",
+    },
+    inboxClaimMaxRecords: {
+      doc: "Maximum number of db records to claim in a single loop",
+      format: String,
+      default: null,
+      env: "INBOX_CLAIM_MAX_RECORDS",
+    },
+    inboxPollMs: {
+      doc: "Number of milliseconds outbox should wait before repolling db",
+      format: String,
+      default: null,
+      env: "INBOX_POLL_MS",
     },
   },
 });

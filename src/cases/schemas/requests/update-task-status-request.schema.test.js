@@ -4,19 +4,18 @@ import { updateTaskStatusRequestSchema } from "./update-task-status-request.sche
 describe("updateTaskStatusRequestSchema", () => {
   it("allows task statuses", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "complete",
+      status: "COMPLETE",
+      completed: true,
     });
     expect(error).toBeUndefined();
   });
 
   it("does not allow invalid status", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "invalid_status",
+      status: 999,
     });
     expect(error.name).toEqual("ValidationError");
-    expect(error.details[0].message).toContain(
-      '"status" must be one of [pending, in_progress, complete]',
-    );
+    expect(error.details[0].message).toContain('"status" must be a string');
   });
 
   it("requires status", () => {
@@ -27,7 +26,8 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("allows comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "complete",
+      status: "COMPLETE",
+      completed: true,
       comment: "This is a comment",
     });
     expect(error).toBeUndefined();
@@ -35,7 +35,8 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("allows null comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "complete",
+      status: "COMPLETE",
+      completed: true,
       comment: null,
     });
     expect(error).toBeUndefined();
@@ -43,10 +44,11 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("removes other fields", () => {
     const { value, error } = updateTaskStatusRequestSchema.validate({
-      status: "complete",
+      status: "COMPLETE",
+      completed: true,
       extraField: "should be removed",
     });
     expect(error).toBeUndefined();
-    expect(value).toEqual({ status: "complete" });
+    expect(value).toEqual({ status: "COMPLETE", completed: true });
   });
 });
