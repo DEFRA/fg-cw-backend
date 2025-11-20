@@ -144,44 +144,26 @@
                 }
               }
             ]
-          },
-          {
-            "sheetId": "SD6843",
-            "parcelId": "9381",
-            "area": {
-              "unit": "ha",
-              "quantity": 0.3822
-            },
-            "actions": [
-              {
-                "code": "UPL2",
-                "description": "Low livestock grazing on moorland",
-                "durationYears": 3,
-                "paymentRates": 5300,
-                "annualPaymentPence": 419,
-                "eligible": {
-                  "unit": "ha",
-                  "quantity": 0.0792
-                },
-                "appliedFor": {
-                  "unit": "ha",
-                  "quantity": 0.0792
-                }
-              }
-            ]
-          }
-        ],
-        "agreement": [
-          {
-            "code": "CMOR1",
-            "description": "Assess moorland and produce a written record",
-            "durationYears": 3,
-            "paymentRates": 27200,
-            "annualPaymentPence": 27200
           }
         ]
       }
     }
+  },
+  "supplementaryData": {
+    "rulesCalculations": [
+      {
+        "message": "Application re-validated after updates",
+        "valid": false,
+        "id": 907,
+        "date": "2025-11-15T14:30:22.441Z"
+      },
+      {
+        "message": "Application validated successfully",
+        "valid": true,
+        "id": 908,
+        "date": "2025-11-18T09:15:10.223Z"
+      }
+    ]
   },
   "currentStage": "APPLICATION_RECEIPT",
   "phases": [
