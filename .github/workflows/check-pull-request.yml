@@ -42,9 +42,6 @@ jobs:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Create empty .env file for Docker Compose
-        run: touch .env
-
       - name: Run integration tests
         run: npm run test:integration
         env:
