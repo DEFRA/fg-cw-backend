@@ -365,4 +365,5 @@ export const workflowData2 = {
   definitions: {
     key1: "test",
   },
+  endpoints: [],
 };
