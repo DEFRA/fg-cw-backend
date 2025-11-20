@@ -50,9 +50,6 @@ jobs:
       - name: Check available disk space
         run: df -h
 
-      - name: Create empty .env file for Docker Compose
-        run: touch .env
-
       - name: Run integration tests
         run: npm run test:integration
         env:
