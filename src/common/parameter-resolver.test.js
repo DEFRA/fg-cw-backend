@@ -406,7 +406,7 @@ describe("parameter-resolver", () => {
                 endpointParams: {
                   PATH: {
                     runId:
-                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.rulesCalculation.id",
+                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
                   },
                 },
               },
