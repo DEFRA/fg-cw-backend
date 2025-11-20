@@ -6,16 +6,6 @@ import { User } from "../models/user.js";
 
 const collection = "users";
 
-const toIsoDateString = (value) => {
-  if (!value) {
-    return undefined;
-  }
-
-  const date = value instanceof Date ? value : new Date(value);
-
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-};
-
 const toUser = (doc) =>
   new User({
     id: doc._id.toHexString(),
@@ -24,8 +14,8 @@ const toUser = (doc) =>
     name: doc.name,
     idpRoles: doc.idpRoles,
     appRoles: doc.appRoles,
-    createdAt: toIsoDateString(doc.createdAt),
-    updatedAt: toIsoDateString(doc.updatedAt),
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
   });
 
 export const save = async (user) => {
