@@ -100,7 +100,29 @@
         }
       ],
       "totalAnnualPaymentPence": 35150
+    },
+    "rulesCalculation": {
+      "message": "Application validated successfully",
+      "valid": true,
+      "id": 906,
+      "date": "2025-10-26T22:08:43.553Z"
     }
+  },
+  "supplementaryData": {
+    "rulesCalculations": [
+      {
+        "message": "Application re-validated after updates",
+        "valid": false,
+        "id": 907,
+        "date": "2025-11-15T14:30:22.441Z"
+      },
+      {
+        "message": "Application validated successfully",
+        "valid": true,
+        "id": 908,
+        "date": "2025-11-18T09:15:10.223Z"
+      }
+    ]
   },
   "currentStage": "APPLICATION_RECEIPT",
   "phases": [

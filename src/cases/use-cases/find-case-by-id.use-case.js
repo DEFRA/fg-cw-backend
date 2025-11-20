@@ -1,6 +1,10 @@
 import Boom from "@hapi/boom";
 import { getAuthenticatedUser } from "../../common/auth.js";
-import { buildBanner, buildLinks } from "../../common/build-view-model.js";
+import {
+  buildBanner,
+  buildLinks,
+  createCaseWorkflowContext,
+} from "../../common/build-view-model.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
@@ -130,6 +134,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
 
+  const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
   const userMap = await createUserMap(kase.getUserIds(), user);
 
   const workflowStage = workflow.getStage(kase.position);
@@ -179,12 +184,12 @@ export const findCaseByIdUseCase = async (caseId, user) => {
           name: assignedUser.name,
         }
       : null,
-    banner: buildBanner(kase, workflow),
+    banner: await buildBanner(caseWorkflowContext),
     requiredRoles: {
       allOf: workflow.requiredRoles.allOf,
       anyOf: workflow.requiredRoles.anyOf,
     },
-    links: buildLinks(kase, workflow),
+    links: await buildLinks(caseWorkflowContext),
     comments: kase.comments.map((comment) => ({
       ...comment,
       title: comment.title,
