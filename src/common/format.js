@@ -22,6 +22,24 @@ export const formatFunctions = {
     const pounds = Number(value) / 100;
     return `£${pounds.toFixed(2)}`;
   },
+
+  formatDateTime: (value) => {
+    const date = new Date(value);
+    const time = date
+      .toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(/^0/, "") // Remove leading zero: "09:00 am" -> "9:00 am"
+      .replace(/\s/g, ""); // Remove space: "9:15 am" -> "9:15am"
+    const dateStr = date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    return `${time} ${dateStr}`;
+  },
 };
 
 export const parseFormatString = (formatString) => {

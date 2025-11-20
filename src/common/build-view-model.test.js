@@ -32,21 +32,23 @@ describe("buildViewModel", () => {
         testKey: "testValue",
       },
     };
-    it("should merge case and workflow definitions", () => {
+    it("should merge case and workflow definitions", async () => {
       const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
         caseRef: "REF-001",
         status: "active",
+        workflow,
         definitions: {
           apiUrl: "https://api.example.com",
           testKey: "testValue",
         },
+        request: {},
       });
     });
 
-    it("should handle workflow without definitions", () => {
+    it("should handle workflow without definitions", async () => {
       const kase = { _id: "case-123" };
       const workflow = { code: "test-workflow" };
 
@@ -54,11 +56,13 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
+        request: {},
       });
     });
 
-    it("should handle empty workflow definitions", () => {
+    it("should handle empty workflow definitions", async () => {
       const kase = { _id: "case-123" };
       const workflow = { code: "test-workflow", definitions: {} };
 
@@ -66,11 +70,13 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
+        request: {},
       });
     });
 
-    it("should include externalActions from workflow", () => {
+    it("should include externalActions from workflow", async () => {
       const kase = { _id: "case-123" };
       const workflow = {
         code: "test-workflow",
@@ -88,7 +94,9 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        workflow,
         definitions: {},
+        request: {},
         externalActions: [
           {
             code: "RERUN_RULES",
@@ -114,35 +122,38 @@ describe("buildViewModel", () => {
       },
     };
 
-    it("should return true when path exists and resolves to truthy value", () => {
-      expect(pathExists(mockRoot, "$.payload.businessName")).toBe(true);
-      expect(pathExists(mockRoot, "$.supplementaryData.agreements[0]")).toBe(
-        true,
-      );
-      expect(pathExists(mockRoot, "$._id")).toBe(true);
+    it("should return true when path exists and resolves to truthy value", async () => {
+      expect(await pathExists(mockRoot, "$.payload.businessName")).toBe(true);
+      expect(
+        await pathExists(mockRoot, "$.supplementaryData.agreements[0]"),
+      ).toBe(true);
+      expect(await pathExists(mockRoot, "$._id")).toBe(true);
     });
 
-    it("should return false when path exists but resolves to falsy value", () => {
-      expect(pathExists(mockRoot, "$.nonexistent")).toBe(false);
-      expect(pathExists(mockRoot, "$.payload.nonexistent")).toBe(false);
-      expect(pathExists(mockRoot, "$.supplementaryData.agreements[5]")).toBe(
-        false,
-      );
+    it("should return false when path exists but resolves to falsy value", async () => {
+      expect(await pathExists(mockRoot, "$.nonexistent")).toBe(false);
+      expect(await pathExists(mockRoot, "$.payload.nonexistent")).toBe(false);
+      expect(
+        await pathExists(mockRoot, "$.supplementaryData.agreements[5]"),
+      ).toBe(false);
     });
 
-    it("should return true when path is null or undefined", () => {
-      expect(pathExists(mockRoot, null)).toBe(true);
-      expect(pathExists(mockRoot, undefined)).toBe(true);
-      expect(pathExists(mockRoot, "")).toBe(true);
+    it("should return true when path is null or undefined", async () => {
+      expect(await pathExists(mockRoot, null)).toBe(true);
+      expect(await pathExists(mockRoot, undefined)).toBe(true);
+      expect(await pathExists(mockRoot, "")).toBe(true);
     });
 
-    it("should return false for empty arrays", () => {
+    it("should return false for empty arrays", async () => {
       const rootWithEmptyArray = {
         ...mockRoot,
         supplementaryData: { agreements: [] },
       };
       expect(
-        pathExists(rootWithEmptyArray, "$.supplementaryData.agreements[0]"),
+        await pathExists(
+          rootWithEmptyArray,
+          "$.supplementaryData.agreements[0]",
+        ),
       ).toBe(false);
     });
   });
@@ -155,31 +166,35 @@ describe("buildViewModel", () => {
       },
     };
 
-    it("should not throw when path exists and resolves to truthy value", () => {
-      expect(() =>
+    it("should not throw when path exists and resolves to truthy value", async () => {
+      await expect(
         assertPathExists(mockRoot, "$.payload.businessName"),
-      ).not.toThrow();
-      expect(() => assertPathExists(mockRoot, "$._id")).not.toThrow();
+      ).resolves.not.toThrow();
+      await expect(assertPathExists(mockRoot, "$._id")).resolves.not.toThrow();
     });
 
-    it("should not throw when path is null or undefined", () => {
-      expect(() => assertPathExists(mockRoot, null)).not.toThrow();
-      expect(() => assertPathExists(mockRoot, undefined)).not.toThrow();
-      expect(() => assertPathExists(mockRoot, "")).not.toThrow();
+    it("should not throw when path is null or undefined", async () => {
+      await expect(assertPathExists(mockRoot, null)).resolves.not.toThrow();
+      await expect(
+        assertPathExists(mockRoot, undefined),
+      ).resolves.not.toThrow();
+      await expect(assertPathExists(mockRoot, "")).resolves.not.toThrow();
     });
 
-    it("should throw when path resolves to falsy value", () => {
-      expect(() => assertPathExists(mockRoot, "$.nonexistent")).toThrow(
+    it("should throw when path resolves to falsy value", async () => {
+      await expect(assertPathExists(mockRoot, "$.nonexistent")).rejects.toThrow(
         "Path does not exist, $.nonexistent resolves to falsy value",
       );
-      expect(() => assertPathExists(mockRoot, "$.payload.nonexistent")).toThrow(
+      await expect(
+        assertPathExists(mockRoot, "$.payload.nonexistent"),
+      ).rejects.toThrow(
         "Path does not exist, $.payload.nonexistent resolves to falsy value",
       );
     });
 
-    it("should throw with correct error message", () => {
+    it("should throw with correct error message", async () => {
       const customPath = "$.some.custom.path";
-      expect(() => assertPathExists(mockRoot, customPath)).toThrow(
+      await expect(assertPathExists(mockRoot, customPath)).rejects.toThrow(
         `Path does not exist, ${customPath} resolves to falsy value`,
       );
     });
@@ -210,8 +225,9 @@ describe("buildViewModel", () => {
       definitions: {},
     };
 
-    it("should build default links plus workflow tab links", () => {
-      const result = buildLinks(mockCase, mockWorkflow);
+    it("should build default links plus workflow tab links", async () => {
+      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const result = await buildLinks(mockContext);
 
       expect(result).toEqual([
         ...knownLinks,
@@ -223,7 +239,7 @@ describe("buildViewModel", () => {
       ]);
     });
 
-    it("should handle workflow without tab definitions", () => {
+    it("should handle workflow without tab definitions", async () => {
       const workflowWithoutTabs = {
         code: "minimal-workflow",
         pages: {
@@ -233,19 +249,25 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-
-      expect(buildLinks(mockCase, workflowWithoutTabs)).toStrictEqual(
-        knownLinks,
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithoutTabs,
       );
+
+      expect(await buildLinks(mockContext)).toStrictEqual(knownLinks);
     });
 
-    it("should handle case with agreements that should render", () => {
+    it("should handle case with agreements that should render", async () => {
       const caseWithAgreements = {
         ...mockCase,
         supplementaryData: { agreements: [{ id: "agreement-1" }] },
       };
+      const mockContext = createCaseWorkflowContext(
+        caseWithAgreements,
+        mockWorkflow,
+      );
 
-      const result = buildLinks(caseWithAgreements, mockWorkflow);
+      const result = await buildLinks(mockContext);
 
       expect(result.find((link) => link.id === "agreements")).toEqual({
         id: "agreements",
@@ -254,7 +276,7 @@ describe("buildViewModel", () => {
       });
     });
 
-    it("should filter out known link ids from tabs", () => {
+    it("should filter out known link ids from tabs", async () => {
       const workflowWithKnownIds = {
         code: "test-workflow",
         pages: {
@@ -276,8 +298,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithKnownIds,
+      );
 
-      const result = buildLinks(mockCase, workflowWithKnownIds);
+      const result = await buildLinks(mockContext);
 
       expect(result.find((link) => link.id === "new-tab")).toBeDefined();
       // Should not have duplicate tasks or notes links
@@ -285,7 +311,7 @@ describe("buildViewModel", () => {
       expect(result.filter((link) => link.id === "notes")).toHaveLength(1);
     });
 
-    it("should handle workflow with empty tabs object", () => {
+    it("should handle workflow with empty tabs object", async () => {
       const workflowWithEmptyTabs = {
         code: "test-workflow",
         pages: {
@@ -297,8 +323,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithEmptyTabs,
+      );
 
-      const result = buildLinks(mockCase, workflowWithEmptyTabs);
+      const result = await buildLinks(mockContext);
 
       expect(result).toEqual(knownLinks);
     });
@@ -311,7 +341,7 @@ describe("buildViewModel", () => {
       caseRef: "REF-001",
     };
 
-    it("should convert kebab-case ids to title case", () => {
+    it("should convert kebab-case ids to title case", async () => {
       const workflowWithKebabCaseTab = {
         code: "test-workflow",
         pages: {
@@ -325,14 +355,18 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithKebabCaseTab,
+      );
 
-      const result = buildLinks(mockCase, workflowWithKebabCaseTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "multi-word-tab");
 
       expect(tabLink.text).toBe("Multi Word Tab");
     });
 
-    it("should handle single word ids", () => {
+    it("should handle single word ids", async () => {
       const workflowWithSingleWordTab = {
         code: "test-workflow",
         pages: {
@@ -346,14 +380,18 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithSingleWordTab,
+      );
 
-      const result = buildLinks(mockCase, workflowWithSingleWordTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "documents");
 
       expect(tabLink.text).toBe("Documents");
     });
 
-    it("should handle complex kebab-case ids", () => {
+    it("should handle complex kebab-case ids", async () => {
       const workflowWithComplexTab = {
         code: "test-workflow",
         pages: {
@@ -367,8 +405,12 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithComplexTab,
+      );
 
-      const result = buildLinks(mockCase, workflowWithComplexTab);
+      const result = await buildLinks(mockContext);
       const tabLink = result.find(
         (link) => link.id === "very-long-tab-name-here",
       );
@@ -420,8 +462,9 @@ describe("buildViewModel", () => {
       },
     };
 
-    it("should build banner with resolved values", () => {
-      const result = buildBanner(mockCase, mockWorkflow);
+    it("should build banner with resolved values", async () => {
+      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const result = await buildBanner(mockContext);
 
       expect(result).toEqual({
         title: {
@@ -443,7 +486,7 @@ describe("buildViewModel", () => {
       });
     });
 
-    it("should handle missing banner configuration", () => {
+    it("should handle missing banner configuration", async () => {
       const workflowWithoutBanner = {
         code: "minimal-workflow",
         pages: {
@@ -454,12 +497,17 @@ describe("buildViewModel", () => {
         definitions: {},
       };
 
-      const result = buildBanner(mockCase, workflowWithoutBanner);
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithoutBanner,
+      );
+
+      const result = await buildBanner(mockContext);
 
       expect(result).toBeUndefined();
     });
 
-    it("should include callToAction from externalActions", () => {
+    it("should include callToAction from externalActions", async () => {
       const workflowWithExternalActions = {
         ...mockWorkflow,
         externalActions: [
@@ -483,7 +531,12 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = buildBanner(mockCase, workflowWithExternalActions);
+      const mockContext = createCaseWorkflowContext(
+        mockCase,
+        workflowWithExternalActions,
+      );
+
+      const result = await buildBanner(mockContext);
 
       expect(result.callToAction).toEqual([
         {
@@ -497,7 +550,7 @@ describe("buildViewModel", () => {
       ]);
     });
 
-    it("should handle banner with complex nested structure", () => {
+    it("should handle banner with complex nested structure", async () => {
       const complexWorkflow = {
         ...mockWorkflow,
         pages: {
@@ -533,7 +586,9 @@ describe("buildViewModel", () => {
         },
       };
 
-      const result = buildBanner(mockCase, complexWorkflow);
+      const mockContext = createCaseWorkflowContext(mockCase, complexWorkflow);
+
+      const result = await buildBanner(mockContext);
 
       expect(result.callToAction).toBeUndefined();
       expect(result.summary.nested.deep.value).toEqual({

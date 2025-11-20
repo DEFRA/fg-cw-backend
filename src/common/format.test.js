@@ -97,6 +97,49 @@ describe("formatFunctions", () => {
       expect(result).toBe("£1.00");
     });
   });
+
+  describe("formatDateTime", () => {
+    it("should format date with time in 12-hour format", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T14:30:00.000Z");
+      expect(result).toMatch(/\d{1,2}:\d{2}[ap]m \d{1,2} \w+ \d{4}$/);
+    });
+
+    it("should remove leading zero from single digit hours", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T09:15:00.000Z");
+      // Should not have leading zero like "09:15am"
+      expect(result).not.toMatch(/^0\d:/);
+    });
+
+    it("should format AM times correctly", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T08:00:00.000Z");
+      expect(result).toContain("am");
+    });
+
+    it("should format PM times correctly", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T16:00:00.000Z");
+      expect(result).toContain("pm");
+    });
+
+    it("should handle midnight", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T00:00:00.000Z");
+      expect(result).toBeDefined();
+      expect(typeof result).toBe("string");
+      expect(result).toMatch(/\d{1,2}:\d{2}[ap]m/);
+    });
+
+    it("should handle noon", () => {
+      const result = formatFunctions.formatDateTime("2025-09-01T12:00:00.000Z");
+      expect(result).toBeDefined();
+      expect(typeof result).toBe("string");
+      expect(result).toMatch(/\d{1,2}:\d{2}[ap]m/);
+    });
+
+    it("should format Date object correctly", () => {
+      const date = new Date("2025-09-01T14:30:00.000Z");
+      const result = formatFunctions.formatDateTime(date);
+      expect(result).toMatch(/\d{1,2}:\d{2}[ap]m \d{1,2} \w+ \d{4}$/);
+    });
+  });
 });
 
 describe("parseFormatString", () => {
