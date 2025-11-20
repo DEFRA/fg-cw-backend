@@ -294,6 +294,7 @@ export const workflowData1 = {
   definitions: {
     key1: "test",
   },
+  endpoints: [],
 };
 
 export const workflowData2 = {
