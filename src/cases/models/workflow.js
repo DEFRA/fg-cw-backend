@@ -26,7 +26,10 @@ export class Workflow {
   }
 
   validateStageActionComment({ position, actionCode, comment }) {
-    const action = this.getStage(position).getActionByCode(actionCode);
+    const action = this.getStage(position).getActionByCode(
+      position,
+      actionCode,
+    );
 
     this.validateComment({
       phaseCode: position.phaseCode,
