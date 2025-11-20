@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { Permissions } from "../models/permissions.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
@@ -107,22 +108,39 @@ const toWorkflow = (doc) =>
   });
 
 export const save = async (workflow) => {
+  logger.debug("Saving workflow", {
+    code: workflow.code,
+    phasesCount: workflow.phases.length,
+  });
+
   const workflowDocument = new WorkflowDocument(workflow);
 
   let result;
 
   try {
     result = await db.collection(collection).insertOne(workflowDocument);
+    logger.debug("Workflow saved successfully", {
+      code: workflow.code,
+      insertedId: result.insertedId,
+    });
   } catch (error) {
     if (error.code === 11000) {
+      logger.debug("Workflow save failed - duplicate code", {
+        code: workflow.code,
+      });
       throw Boom.conflict(
         `Workflow with code "${workflow.code}" already exists`,
       );
     }
+    logger.debug("Workflow save failed with unexpected error", {
+      code: workflow.code,
+      error: error.message,
+    });
     throw error;
   }
 
   if (!result.acknowledged) {
+    logger.debug("Workflow save not acknowledged", { code: workflow.code });
     throw Boom.internal(
       `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
     );
@@ -144,10 +162,13 @@ export const createWorkflowFilter = (query = {}) => {
     filter.$expr = $expr;
   }
 
+  logger.debug("Created workflow filter", { filter, originalQuery: query });
   return filter;
 };
 
 export const findAll = async (query) => {
+  logger.debug("Finding all workflows", { query });
+
   const filter = createWorkflowFilter(query);
 
   const workflowDocuments = await db
@@ -155,13 +176,19 @@ export const findAll = async (query) => {
     .find(filter)
     .toArray();
 
+  logger.debug("Workflows found", { count: workflowDocuments.length, query });
   return workflowDocuments.map(toWorkflow);
 };
 
 export const findByCode = async (code) => {
+  logger.debug("Finding workflow by code", { code });
+
   const workflowDocument = await db.collection(collection).findOne({
     code,
   });
+
+  const found = !!workflowDocument;
+  logger.debug("Workflow search result", { code, found });
 
   return workflowDocument && toWorkflow(workflowDocument);
 };
