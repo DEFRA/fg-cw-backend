@@ -26,7 +26,7 @@ const uniqueServices = (endpoints = []) => {
  * Dynamically builds service configuration mapping from workflow definitions
  */
 export const buildServiceConfigMap = (workflow = {}) => {
-  return uniqueServices(workflow.endpoints).reduce(
+  return uniqueServices(workflow.endpoints || []).reduce(
     (serviceConfigMap, service) => {
       serviceConfigMap[service] = createServiceConfig(service);
       return serviceConfigMap;
