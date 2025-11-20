@@ -9,7 +9,7 @@ This service integrates with external APIs (e.g., Rules Engine for land grants c
 For each external service, you configure:
 
 1. **Base URL** - `{SERVICE}_URL`
-2. **Authentication Secrets** - `{SERVICE}_AUTH_TOKEN`, `{SERVICE}_API_KEY`, etc.
+2. **Authentication Secrets** (stored in Truststore) - `TRUSTSTORE_{SERVICE}_AUTH_TOKEN`, `TRUSTSTORE_{SERVICE}_API_KEY`, etc.
 3. **HTTP Headers** - `{SERVICE}_HEADERS` (can reference secrets)
 
 ### Variable Reference Syntax
@@ -18,13 +18,13 @@ Headers can reference other environment variables using **`${VAR_NAME}`** syntax
 
 ```bash
 # Define the secret
-RULES_ENGINE_AUTH_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # Reference it in headers
-RULES_ENGINE_HEADERS=Authorization: Bearer ${RULES_ENGINE_AUTH_TOKEN}
+RULES_ENGINE_HEADERS=Authorization: Bearer ${TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN}
 ```
 
-**At runtime**, `${RULES_ENGINE_AUTH_TOKEN}` is replaced with the actual token value from the environment.
+**At runtime**, `${TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN}` is replaced with the actual token value from the environment.
 
 ### Multiple Headers
 
@@ -43,11 +43,11 @@ Create a `.env` file (never commit this!):
 ```bash
 # Rules Engine API
 RULES_ENGINE_URL=https://land-grants-api.dev.cdp-int.defra.cloud
-RULES_ENGINE_AUTH_TOKEN=dev-token-abc123xyz
-RULES_ENGINE_API_KEY=dev-api-key-456
+TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN=dev-token-abc123xyz
+TRUSTSTORE_RULES_ENGINE_API_KEY=dev-api-key-456
 
 # Headers with secret references
-RULES_ENGINE_HEADERS=x-api-key: ${RULES_ENGINE_API_KEY},Authorization: Bearer ${RULES_ENGINE_AUTH_TOKEN}
+RULES_ENGINE_HEADERS=x-api-key: ${TRUSTSTORE_RULES_ENGINE_API_KEY},Authorization: Bearer ${TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN}
 ```
 
 ### CDP Environment Configuration
@@ -57,14 +57,14 @@ RULES_ENGINE_HEADERS=x-api-key: ${RULES_ENGINE_API_KEY},Authorization: Bearer ${
 ```bash
 # Public configuration (safe to commit)
 RULES_ENGINE_URL=https://land-grants-api.prod.cdp-int.defra.cloud
-RULES_ENGINE_HEADERS=Authorization: Bearer ${RULES_ENGINE_AUTH_TOKEN}
+RULES_ENGINE_HEADERS=Authorization: Bearer ${TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN}
 ```
 
 **In CDP Portal > Secrets**:
 
 Create these secrets:
 
-- **Name**: `RULES_ENGINE_AUTH_TOKEN`
+- **Name**: `TRUSTSTORE_RULES_ENGINE_AUTH_TOKEN`
   - **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (actual bearer token)
 
 ## Workflow Definition
@@ -96,7 +96,7 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
         endpointParams: {
           PATH: {
             // Extract runId from case data using JSONPath
-            runId: "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.rulesCalculation.id"
+            runId: "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculation.rulesCalculation.id"
           }
         }
       }
@@ -161,8 +161,8 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
 
    ```bash
    MY_SERVICE_URL=https://api.example.com
-   MY_SERVICE_AUTH_TOKEN=replace-with-token
-   MY_SERVICE_HEADERS=Authorization: Bearer ${MY_SERVICE_AUTH_TOKEN}
+   TRUSTSTORE_MY_SERVICE_AUTH_TOKEN=replace-with-token
+   MY_SERVICE_HEADERS=Authorization: Bearer ${TRUSTSTORE_MY_SERVICE_AUTH_TOKEN}
    ```
 
 3. **Configure in CDP**:
