@@ -9,7 +9,7 @@ export const createWorkflow = async (payload = {}) => {
           details: {
             banner: {
               title: {
-                text: "$.payload.businessName",
+                text: "$.payload.answers.applicant.business.name",
                 type: "string",
               },
               summary: {
