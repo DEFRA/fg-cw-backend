@@ -72,7 +72,10 @@ export const up = async (db) => {
       cases: {
         details: {
           banner: {
-            title: { text: "$.payload.businessName", type: "string" },
+            title: {
+              text: "$.payload.answers.applicant.business.name",
+              type: "string",
+            },
             summary: {
               sbi: {
                 label: "SBI",
@@ -199,7 +202,7 @@ export const up = async (db) => {
                     {
                       component: "repeat",
                       id: "land-parcels",
-                      itemsRef: "$.payload.answers.parcels[*]",
+                      itemsRef: "$.payload.answers.payments.parcel[*]",
                       items: {
                         heading: [
                           {
@@ -260,7 +263,7 @@ export const up = async (db) => {
                                         component: "container",
                                         items: [
                                           {
-                                            text: "@.paymentRates.ratePerUnitPence",
+                                            text: "@.paymentRates",
                                             format: "penniesToPounds",
                                           },
                                           { text: "@.appliedFor.unit" },

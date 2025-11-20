@@ -80,93 +80,173 @@ const messageFrps = {
         defraId: "DEFRA0001",
       },
       answers: {
-        applicationValidationRunId: "123",
+        rulesCalculations: {
+          id: 421,
+          message: "Application validated successfully",
+          valid: true,
+          date: "2025-11-18T13:51:50.549Z",
+        },
         scheme: "SFI",
         applicant: {
           business: {
-            reference: "9000000402",
-            email: { address: "farmer@example.test" },
+            name: "Example Ridge Farm Ltd",
+            reference: "9100000002",
+            email: {
+              address:
+                "meadow@example.test",
+            },
             phone: { mobile: "01632 960020" },
-            name: "Example Meadows Business Ltd",
             address: {
-              line1: "9 Example Lane",
-              line2: "10 Example Lane",
-              line3: "Example Village",
+              line1: "3 Example Lane",
+              line2: "Example Village",
+              line3: null,
               line4: null,
               line5: null,
-              street: "Example Street",
+              street: "Example Lane",
               city: "Exampleton",
-              postalCode: "ZZ99 8ZZ",
+              postalCode: "ZZ99 3ZZ",
             },
           },
           customer: {
             name: {
-              title: "Mrs",
-              first: "Casey",
-              middle: null,
-              last: "Example",
+              title: "Mr.",
+              first: "Jamie",
+              middle: "Test",
+              last: "Sample",
             },
           },
         },
-        parcels: [
-          {
-            sheetId: "AB1234",
-            parcelId: "10001",
-            area: {
-              unit: "ha",
-              quantity: 10.0,
-            },
-            actions: [
-              {
-                code: "CMOR1",
-                description: "Assess moorland and produce a written record",
-                durationYears: 3,
-                eligible: {
-                  unit: "ha",
-                  quantity: 7.5,
-                },
-                appliedFor: {
-                  unit: "ha",
-                  quantity: 7.5,
-                },
-                paymentRates: {
-                  ratePerUnitPence: 1060,
-                  agreementLevelAmountPence: 27200,
-                },
-                annualPaymentPence: 35150,
+        totalAnnualPaymentPence: 28062,
+        application: {
+          parcel: [
+            {
+              sheetId: "AA0007",
+              parcelId: "0010",
+              area: {
+                unit: "ha",
+                quantity: 0.1447,
               },
-            ],
-          },
-          {
-            sheetId: "DX1234",
-            parcelId: "10002",
-            area: {
-              unit: "ha",
-              quantity: 10.0,
+              actions: [
+                {
+                  code: "CMOR1",
+                  version: 1,
+                  durationYears: 3,
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                },
+                {
+                  code: "UPL1",
+                  version: 1,
+                  durationYears: 3,
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                },
+              ],
             },
-            actions: [
-              {
-                code: "UPL1",
-                description: "Assess moorland and produce a written record",
-                durationYears: 3,
-                eligible: {
-                  unit: "ha",
-                  quantity: 7.5,
-                },
-                appliedFor: {
-                  unit: "ha",
-                  quantity: 7.5,
-                },
-                paymentRates: {
-                  ratePerUnitPence: 1060,
-                  agreementLevelAmountPence: 27200,
-                },
-                annualPaymentPence: 35150,
+            {
+              sheetId: "AA0007",
+              parcelId: "0100",
+              area: {
+                unit: "ha",
+                quantity: 0.3822,
               },
-            ],
-          },
-        ],
-        totalAnnualPaymentPence: 35150,
+              actions: [
+                {
+                  code: "UPL2",
+                  version: 1,
+                  durationYears: 3,
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.0792,
+                  },
+                },
+              ],
+            },
+          ],
+          agreement: [],
+        },
+        payments: {
+          parcel: [
+            {
+              sheetId: "AA0007",
+              parcelId: "0010",
+              area: {
+                unit: "ha",
+                quantity: 0.1447,
+              },
+              actions: [
+                {
+                  code: "CMOR1",
+                  description: "Assess moorland and produce a written record",
+                  durationYears: 3,
+                  paymentRates: 1060,
+                  annualPaymentPence: 153,
+                  eligible: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                },
+                {
+                  code: "UPL1",
+                  description: "Moderate livestock grazing on moorland",
+                  durationYears: 3,
+                  paymentRates: 2000,
+                  annualPaymentPence: 289,
+                  eligible: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.1447,
+                  },
+                },
+              ],
+            },
+            {
+              sheetId: "AA0007",
+              parcelId: "0100",
+              area: {
+                unit: "ha",
+                quantity: 0.3822,
+              },
+              actions: [
+                {
+                  code: "UPL2",
+                  description: "Low livestock grazing on moorland",
+                  durationYears: 3,
+                  paymentRates: 5300,
+                  annualPaymentPence: 419,
+                  eligible: {
+                    unit: "ha",
+                    quantity: 0.0792,
+                  },
+                  appliedFor: {
+                    unit: "ha",
+                    quantity: 0.0792,
+                  },
+                },
+              ],
+            },
+          ],
+          agreement: [
+            {
+              code: "CMOR1",
+              description: "Assess moorland and produce a written record",
+              durationYears: 3,
+              paymentRates: 27200,
+              annualPaymentPence: 27200,
+            },
+          ],
+        },
       },
     },
   },

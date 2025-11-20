@@ -5,7 +5,7 @@
       "details": {
         "banner": {
           "title": {
-            "text": "$.payload.businessName",
+            "text": "$.payload.answers.applicant.business.name",
             "type": "string"
           },
           "summary": {
@@ -148,7 +148,7 @@
                   {
                     "component": "repeat",
                     "id": "land-parcels",
-                    "itemsRef": "$.payload.answers.parcels[*]",
+                    "itemsRef": "$.payload.answers.payments.parcel[*]",
                     "items": {
                       "heading": [
                         {
@@ -221,7 +221,7 @@
                                       "component": "container",
                                       "items": [
                                         {
-                                          "text": "@.paymentRates.ratePerUnitPence",
+                                          "text": "@.paymentRates",
                                           "format": "penniesToPounds"
                                         },
                                         {
