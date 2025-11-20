@@ -43,9 +43,6 @@ export default defineConfig({
       INBOX_EXPIRES_MS: 5000,
       INBOX_POLL_MS: 250,
       ENVIRONMENT: "test",
-      RULES_ENGINE_URL:
-        "https://ephemeral-protected.api.dev.cdp-int.defra.cloud/land-grants-api",
-      RULES_ENGINE_HEADERS: "x-api-key: fake-key",
     },
     hookTimeout: 30000,
   },

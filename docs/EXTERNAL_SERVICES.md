@@ -140,43 +140,33 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
 
 ## Adding a New External Service
 
-1. **Add config to convict** (`src/common/config.js`):
+The service uses a **convention-based configuration** system. No code changes are needed!
 
-   ```
-   externalServices: {
-     myService: {
-       url: {
-         env: "MY_SERVICE_URL",
-         // ...
-       },
-       headers: {
-         env: "MY_SERVICE_HEADERS",
-         // ...
-       }
-     }
-   }
-   ```
-
-2. **Add to `.env.example`**:
+1. **Add environment variables** following the naming pattern:
 
    ```bash
+   # In .env (local) or cdp-app-config (CDP)
    MY_SERVICE_URL=https://api.example.com
    MY_SERVICE_AUTH_TOKEN=replace-with-token
    MY_SERVICE_HEADERS=Authorization: Bearer ${MY_SERVICE_AUTH_TOKEN}
    ```
 
-3. **Configure in CDP**:
-   - Add URL and headers to `cdp-app-config`
-   - Add secrets to CDP Portal
+   The pattern is: `{SERVICE}_URL` and `{SERVICE}_HEADERS`
 
-4. **Define in workflow**:
+2. **Configure in CDP**:
+   - Add URL and headers to `cdp-app-config`
+   - Add secrets to CDP Portal (with `TRUSTSTORE_` prefix)
+
+3. **Define in workflow**:
    ```javascript
    endpoints: [
      {
        code: "MY_ENDPOINT",
-       service: "MY_SERVICE",
+       service: "MY_SERVICE", // Must match the prefix in env vars
        path: "/api/resource/{id}",
        method: "GET",
      },
    ];
    ```
+
+**That's it!** The service automatically discovers and loads configuration for any service referenced in workflow definitions.
