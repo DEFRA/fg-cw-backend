@@ -1,6 +1,5 @@
 import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
-import { findWorkflowsResponseSchema } from "../schemas/responses/find-workflows-response.schema.js";
 import { findWorkflowsUseCase } from "../use-cases/find-workflows.use-case.js";
 
 export const findWorkflowsRoute = {
@@ -11,7 +10,6 @@ export const findWorkflowsRoute = {
     tags: ["api"],
     response: {
       status: {
-        200: findWorkflowsResponseSchema,
         400: ValidationError,
       },
     },

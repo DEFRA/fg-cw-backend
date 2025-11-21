@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { logger } from "../../common/logger.js";
 import { findCaseByIdTabIdResponseSchema } from "../schemas/responses/find-case-by-id-tab-id-response.schema.js";
 import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.use-case.js";
 
@@ -14,6 +13,7 @@ export const findCaseByIdTabIdRoute = {
         caseId: Joi.string().hex().length(24),
         tabId: Joi.string(),
       }),
+      query: Joi.object().unknown(true).options({ stripUnknown: false }),
     },
     response: {
       schema: findCaseByIdTabIdResponseSchema,
@@ -21,12 +21,13 @@ export const findCaseByIdTabIdRoute = {
   },
   async handler(request) {
     const { caseId, tabId } = request.params;
+    const query = request.query ?? {};
 
-    logger.info(`Finding case ${caseId} by tab id ${tabId}`);
+    const tabData = await buildCaseDetailsTabUseCase({
+      params: { caseId, tabId },
+      query,
+    });
 
-    const tabData = await buildCaseDetailsTabUseCase(caseId, tabId);
-
-    logger.info(`Found case ${caseId} by tab id ${tabId}`);
     return tabData;
   },
 };

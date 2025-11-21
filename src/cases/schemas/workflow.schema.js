@@ -53,12 +53,27 @@ const ExternalActionTarget = Joi.object({
   place: Joi.string().valid("append").optional(),
 }).label("ExternalActionTarget");
 
+const ExternalActionEndpoint = Joi.object({
+  code: Joi.string().required(),
+  endpointParams: Joi.object().optional(),
+}).label("ExternalActionEndpoint");
+
+const Endpoint = Joi.object({
+  code: Joi.string().required(),
+  service: Joi.string().required(),
+  path: Joi.string().required(),
+  method: Joi.string().required(),
+  request: Joi.object().allow(null).required(),
+}).label("Endpoint");
+
 const ExternalAction = Joi.object({
   code: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
-  endpoint: Joi.string().required(),
-  target: ExternalActionTarget.required(),
+  endpoint: Joi.alternatives()
+    .try(Joi.string(), ExternalActionEndpoint)
+    .required(),
+  target: ExternalActionTarget.allow(null).required(),
 }).label("ExternalAction");
 
 const WorkflowData = Joi.object({
@@ -74,6 +89,7 @@ const WorkflowData = Joi.object({
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
   externalActions: Joi.array().items(ExternalAction).optional(),
+  endpoints: Joi.array().items(Endpoint).required(),
 }).unknown(true);
 
 const Workflow = WorkflowData.keys({

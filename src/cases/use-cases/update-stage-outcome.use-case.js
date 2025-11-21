@@ -20,12 +20,14 @@ export const updateStageOutcomeUseCase = async (command) => {
 
     workflow.validateStageActionComment({
       actionCode,
-      phaseCode: kase.currentPhase,
-      stageCode: kase.currentStage,
+      position: kase.position,
       comment,
     });
 
+    const previousPosition = kase.position;
+
     kase.updateStageOutcome({
+      workflow,
       actionCode,
       comment,
       createdBy: user.id,
@@ -33,13 +35,11 @@ export const updateStageOutcomeUseCase = async (command) => {
 
     await update(kase, session);
 
-    const { caseRef, workflowCode } = kase;
-    // TODO: publish correct currentStatus based on state machine transitions
     const caseStatusEvent = new CaseStatusUpdatedEvent({
-      caseRef,
-      workflowCode,
-      previousStatus: "not-implemented",
-      currentStatus: actionCode === "approve" ? "APPROVED" : "not-implemented",
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      previousStatus: previousPosition.toString(),
+      currentStatus: kase.position.toString(),
     });
 
     await insertMany(

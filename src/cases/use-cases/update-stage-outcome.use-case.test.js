@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
 import { Case } from "../models/case.js";
+import { Position } from "../models/position.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
@@ -23,12 +24,12 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
-      mockCase.currentStage = "stage-1";
+      mockCase.currentStage = "STAGE_1";
       mockCase.caseRef = "CASE-123";
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Application approved with conditions",
         user: {
           id: "user-123",
@@ -46,13 +47,13 @@ describe("updateStageOutcomeUseCase", () => {
       expect(findById).toHaveBeenCalledWith(mockCase._id);
       expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionCode: "approve",
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
+        actionCode: "APPROVE",
+        position: mockCase.position,
         comment: "Application approved with conditions",
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionCode: "approve",
+        workflow: mockWorkflow,
+        actionCode: "APPROVE",
         comment: "Application approved with conditions",
         createdBy: "user-123",
       });
@@ -65,12 +66,12 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
-      mockCase.currentStage = "stage-2";
+      mockCase.currentStage = "STAGE_2";
       mockCase.caseRef = "CASE-456";
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "reject",
+        actionCode: "REJECT",
         comment: null,
         user: {
           id: "user-123",
@@ -86,13 +87,13 @@ describe("updateStageOutcomeUseCase", () => {
       await updateStageOutcomeUseCase(command);
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionCode: "reject",
-        phaseCode: "phase-1",
-        stageCode: "stage-2",
+        actionCode: "REJECT",
+        position: mockCase.position,
         comment: null,
       });
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionCode: "reject",
+        workflow: mockWorkflow,
+        actionCode: "REJECT",
         comment: null,
         createdBy: "user-123",
       });
@@ -104,15 +105,15 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
-      const previousStage = "stage-1";
-      const newStage = "stage-2";
+      const previousStage = "STAGE_1";
+      const newStage = "STAGE_2";
 
       mockCase.currentStage = previousStage;
       mockCase.caseRef = "CASE-789";
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Moving to next stage",
         user: {
           id: "user-123",
@@ -139,7 +140,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",
@@ -155,7 +156,8 @@ describe("updateStageOutcomeUseCase", () => {
       await updateStageOutcomeUseCase(command);
 
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
-        actionCode: "approve",
+        workflow: mockWorkflow,
+        actionCode: "APPROVE",
         comment: "Test comment",
         createdBy: "user-123",
       });
@@ -168,7 +170,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const command = {
         caseId: "non-existent-case-id",
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",
@@ -194,7 +196,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "",
       };
 
@@ -213,9 +215,8 @@ describe("updateStageOutcomeUseCase", () => {
       );
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
-        actionCode: "approve",
-        phaseCode: mockCase.currentPhase,
-        stageCode: mockCase.currentStage,
+        actionCode: "APPROVE",
+        position: mockCase.position,
         comment: "",
       });
       expect(update).not.toHaveBeenCalled();
@@ -229,7 +230,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",
@@ -260,7 +261,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",
@@ -284,7 +285,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",
@@ -316,7 +317,7 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
 
-      mockCase.currentStage = "specific-stage-id";
+      mockCase.currentStage = "SPECIFIC_STAGE_CODE";
 
       const command = {
         caseId: mockCase._id,
@@ -337,8 +338,11 @@ describe("updateStageOutcomeUseCase", () => {
 
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionCode: "specific-action",
-        phaseCode: "phase-1",
-        stageCode: "specific-stage-id",
+        position: new Position({
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        }),
         comment: "specific comment text",
       });
     });
@@ -353,7 +357,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       const command = {
         caseId: mockCase._id,
-        actionCode: "approve",
+        actionCode: "APPROVE",
         comment: "Test comment",
         user: {
           id: "user-123",

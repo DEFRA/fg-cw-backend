@@ -2,29 +2,33 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { resolveJSONPath } from "./resolve-json.js";
 
-export const createRootContext = (kase, workflow) => ({
+export const createCaseWorkflowContext = (kase, workflow, request = {}) => ({
   ...kase,
+  workflow,
   definitions: { ...workflow.definitions },
   ...(workflow.externalActions && {
     externalActions: workflow.externalActions,
   }),
+  request: { ...request },
 });
 
-export const assertPathExists = (root, path) => {
-  if (!pathExists(root, path)) {
+export const assertPathExists = async (root, path) => {
+  if (!(await pathExists(root, path))) {
     throw Boom.notFound(`Path does not exist, ${path} resolves to falsy value`);
   }
 };
 
-export const pathExists = (root, path) => {
+export const pathExists = async (root, path) => {
   if (path) {
-    return Boolean(resolveJSONPath({ root, path }));
+    const resolved = await resolveJSONPath({ root, path });
+    return Boolean(resolved);
   }
   return true;
 };
 
-export const buildLinks = (kase, workflow) => {
-  const caseId = kase._id;
+// eslint-disable-next-line complexity
+export const buildLinks = async (root) => {
+  const caseId = root._id;
 
   const links = [
     {
@@ -52,7 +56,7 @@ export const buildLinks = (kase, workflow) => {
 
   const tabsObject =
     JSONPath({
-      json: workflow,
+      json: root.workflow,
       path: "$.pages.cases.details.tabs",
     })?.[0] ?? {};
 
@@ -63,10 +67,9 @@ export const buildLinks = (kase, workflow) => {
     }))
     .filter((tab) => !knownLinkIds.includes(tab.key));
 
-  const root = createRootContext(kase, workflow);
-  tabs.forEach((tab) => {
-    if (!pathExists(root, tab.renderIf)) {
-      return;
+  for (const tab of tabs) {
+    if (!(await pathExists(root, tab.renderIf))) {
+      continue;
     }
 
     links.push({
@@ -74,7 +77,7 @@ export const buildLinks = (kase, workflow) => {
       href: `/cases/${caseId}/${tab.key}`,
       text: idToText(tab.key),
     });
-  });
+  }
 
   return links;
 };
@@ -97,14 +100,13 @@ const addCallToActionToBanner = (banner, externalActions) => {
   }));
 };
 
-export const buildBanner = (kase, workflow) => {
+export const buildBanner = async (root) => {
   const [bannerJson] = JSONPath({
-    json: workflow,
+    json: root.workflow,
     path: "$.pages.cases.details.banner",
   });
 
-  const root = createRootContext(kase, workflow);
-  const banner = resolveJSONPath({ root, path: bannerJson });
+  const banner = await resolveJSONPath({ root, path: bannerJson });
 
   addCallToActionToBanner(banner, root.externalActions);
 

@@ -5,7 +5,7 @@
       "details": {
         "banner": {
           "title": {
-            "text": "$.payload.businessName",
+            "text": "$.payload.answers.applicant.business.name",
             "type": "string"
           },
           "summary": {
@@ -148,7 +148,7 @@
                   {
                     "component": "repeat",
                     "id": "land-parcels",
-                    "itemsRef": "$.payload.answers.parcels[*]",
+                    "itemsRef": "$.payload.answers.payments.parcel[*]",
                     "items": {
                       "heading": [
                         {
@@ -221,7 +221,7 @@
                                       "component": "container",
                                       "items": [
                                         {
-                                          "text": "@.paymentRates.ratePerUnitPence",
+                                          "text": "@.paymentRates",
                                           "format": "penniesToPounds"
                                         },
                                         {
@@ -267,6 +267,128 @@
                     ]
                   }
                 ]
+              }
+            ]
+          },
+          "calculations": {
+            "action": {
+              "rulesData": "FETCH_RULES"
+            },
+            "content": [
+              {
+                "component": "heading",
+                "text": "Land parcel calculations",
+                "level": 1,
+                "classes": "govuk-heading-l govuk-!-margin-bottom-1"
+              },
+              {
+                "component": "conditional",
+                "condition": "jsonata:[$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations)[0]",
+                "whenTrue": {
+                  "component": "container",
+                  "items": [
+                    {
+                      "text": "Rules check last run: ",
+                      "classes": "govuk-body"
+                    },
+                    {
+                      "text": "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
+                      "format": "formatDateTime",
+                      "classes": "govuk-body"
+                    },
+                    {
+                      "component": "details",
+                      "classes": "govuk-!-margin-top-2",
+                      "summaryItems": [
+                        {
+                          "text": "Show version history"
+                        }
+                      ],
+                      "items": [
+                        {
+                          "component": "table",
+                          "caption": "Dates and amounts",
+                          "captionClasses": "govuk-table__caption--m",
+                          "rowsRef": "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
+                          "head": [
+                            {
+                              "component": "text",
+                              "text": "Date/time"
+                            },
+                            {
+                              "component": "text",
+                              "text": "Result"
+                            },
+                            {
+                              "component": "text",
+                              "text": "Version",
+                              "classes": "govuk-visually-hidden"
+                            }
+                          ],
+                          "rows": [
+                            {
+                              "text": "@.date",
+                              "format": "formatDateTime"
+                            },
+                            {
+                              "component": "status",
+                              "text": "@.valid",
+                              "format": "yesNo",
+                              "classesMap": {
+                                "Yes": "govuk-tag--green",
+                                "No": "govuk-tag--red"
+                              },
+                              "labelsMap": {
+                                "Yes": "Passed",
+                                "No": "Failed"
+                              }
+                            },
+                            {
+                              "component": "conditional",
+                              "condition": "jsonata:$.request.query.runId ? $.request.query.runId = $string(@.id) : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
+                              "whenTrue": {
+                                "component": "text",
+                                "text": "Currently showing",
+                                "classes": "govuk-body"
+                              },
+                              "whenFalse": {
+                                "component": "url",
+                                "text": "View this version",
+                                "href": {
+                                  "urlTemplate": "/cases/{caseId}/calculations?runId={runId}",
+                                  "params": {
+                                    "caseId": "$._id",
+                                    "runId": "@.id"
+                                  }
+                                },
+                                "target": "_self",
+                                "classes": "govuk-link"
+                              }
+                            }
+                          ],
+                          "firstCellIsHeader": true
+                        }
+                      ],
+                      "open": "$.request.query.runId"
+                    }
+                  ]
+                },
+                "whenFalse": {
+                  "component": "warning-text",
+                  "text": "No rules calculation data found"
+                }
+              },
+              {
+                "component": "conditional",
+                "condition": "$.actionData.rulesData.response[0]",
+                "whenTrue": {
+                  "component": "component-container",
+                  "contentRef": "$.actionData.rulesData.response"
+                },
+                "whenFalse": {
+                  "component": "warning-text",
+                  "text": "Failed to fetch the current land parcel calculations"
+                }
               }
             ]
           },
@@ -319,18 +441,6 @@
                         "target": "_blank",
                         "rel": "noopener",
                         "classes": "govuk-!-margin-right-6"
-                      },
-                      {
-                        "label": "External",
-                        "component": "copyToClipboard",
-                        "text": {
-                          "urlTemplate": "$.definitions.agreementsService.externalUrl",
-                          "params": {
-                            "agreementRef": "@.agreementRef"
-                          }
-                        },
-                        "buttonText": "Copy external",
-                        "feedbackText": "Copied to clipboard"
                       }
                     ]
                   },
@@ -354,75 +464,479 @@
   },
   "phases": [
     {
-      "code": "default",
-      "name": "Default Phase",
+      "code": "PRE_AWARD",
+      "name": "Pre-award",
       "stages": [
         {
-          "code": "application-receipt",
-          "name": "Application Receipt",
-          "description": "Application received",
-          "statuses": [],
-          "taskGroups": [
+          "code": "REVIEW_APPLICATION",
+          "name": "Review Application",
+          "description": "Review the application for eligibility",
+          "statuses": [
             {
-              "code": "application-receipt-tasks",
-              "name": "Application Receipt tasks",
-              "description": "Task group description",
-              "tasks": [
+              "code": "APPLICATION_RECEIVED",
+              "name": "Application Received",
+              "interactive": false,
+              "description": "Application received and pending review",
+              "transitions": [
                 {
-                  "code": "simple-review",
-                  "type": "boolean",
-                  "name": "Simple Review",
-                  "description": [
-                    {
-                      "component": "heading",
-                      "text": "Customer details review",
-                      "level": 1
-                    },
-                    {
-                      "component": "ordered-list",
-                      "items": [
-                        {
-                          "text": "Go to Application to view submitted customer details."
-                        },
-                        {
-                          "text": "Check the submitted details match the details and permissions on the Rural Payments service (RPS)."
-                        },
-                        {
-                          "text": "Come back to this page and confirm if the details match."
-                        }
-                      ]
-                    },
-                    {
-                      "component": "heading",
-                      "text": "Customer detail review outcome",
-                      "level": 2
+                  "targetPosition": "::IN_REVIEW",
+                  "action": {
+                    "code": "START_REVIEW",
+                    "name": "Start Review",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            },
+            {
+              "code": "IN_REVIEW",
+              "name": "In Review",
+              "description": "Application is being reviewed",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "::AGREEMENT_GENERATING",
+                  "action": {
+                    "code": "APPROVE_APPLICATION",
+                    "name": "Approve",
+                    "checkTasks": true,
+                    "comment": {
+                      "label": "Note",
+                      "helpText": "All notes will be saved for auditing purposes",
+                      "mandatory": true
                     }
-                  ],
-                  "statusOptions": []
+                  }
+                },
+                {
+                  "targetPosition": "::APPLICATION_REJECTED",
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Reason for rejection",
+                      "helpText": "All notes will be saved for auditing purposes",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "::PUT_ON_HOLD",
+                  "action": {
+                    "code": "PUT_ON_HOLD",
+                    "name": "Put on Hold",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Details of information required",
+                      "helpText": "All notes will be saved for auditing purposes",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "AGREEMENT_GENERATING",
+              "name": "Agreement Generating",
+              "description": "Application has been approved and agreement is being generated",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": ":REVIEW_OFFER:",
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_REJECTED",
+              "name": "Rejected",
+              "interactive": true,
+              "description": "Application has been rejected",
+              "transitions": [
+                {
+                  "targetPosition": "::IN_REVIEW",
+                  "action": {
+                    "code": "REINSTATE_APPLICATION",
+                    "name": "Reinstate Application",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Note",
+                      "helpText": "All notes will be saved for auditing purposes",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "PUT_ON_HOLD",
+              "name": "On Hold",
+              "description": "Application is on hold pending more information",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "::IN_REVIEW",
+                  "action": {
+                    "code": "REMOVE_ON_HOLD",
+                    "name": "Remove On Hold",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Note",
+                      "helpText": "All notes will be saved for auditing purposes",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "::APPLICATION_REJECTED",
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": null
+                  }
                 }
               ]
             }
           ],
-          "actionsTitle": "Decision",
-          "actions": [
+          "taskGroups": [
             {
-              "code": "approve",
-              "name": "Approve",
-              "comment": {
-                "label": "Approval reason note",
-                "helpText": "All notes will be saved for auditing purposes",
-                "type": "REQUIRED"
-              }
+              "code": "MANUAL_REVIEW_TASKS",
+              "name": "Manual Review Tasks",
+              "description": "Tasks to be completed during the initial review of the application",
+              "tasks": [
+                {
+                  "code": "CHECK_CUSTOMER_DETAILS",
+                  "name": "Check Customer Details",
+                  "mandatory": true,
+                  "description": "Verify the customer's details for accuracy",
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "ReRequest information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "INTERNAL_INVESTIGATION",
+                      "name": "Pause for internal investigation",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "REVIEW_LAND_RULES",
+                  "name": "Land parcel rules checks",
+                  "mandatory": true,
+                  "description": "Review land parcels against scheme rules",
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "ReRequest information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "INTERNAL_INVESTIGATION",
+                      "name": "Pause for internal investigation",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "SSSI_CONSENT_REQUESTED",
+                  "name": "Check if SSSI consent has been requested",
+                  "mandatory": true,
+                  "description": "Verify if SSSI consent is required and has been requested",
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "ReRequest information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "NOT_REQUIRED",
+                      "name": "Not Required",
+                      "completes": true
+                    },
+                    {
+                      "code": "INTERNAL_INVESTIGATION",
+                      "name": "Pause for internal investigation",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "PAYMENT_AMOUNT_CHECK",
+                  "name": "Check Payment Amount",
+                  "mandatory": true,
+                  "description": "Verify the calculated payment amount against scheme limits",
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "ReRequest information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "INTERNAL_INVESTIGATION",
+                      "name": "Pause for internal investigation",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "REVIEW_SCHEME_BUDGET",
+                  "name": "Review Scheme Budget",
+                  "mandatory": true,
+                  "description": "Review that the budeget is available for the payment",
+                  "requiredRoles": {
+                    "allOf": ["ROLE_SFI_REFORM", "ROLE_RPA_FINANCE"],
+                    "anyOf": []
+                  },
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "ReRequest information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "INTERNAL_INVESTIGATION",
+                      "name": "Pause for internal investigation",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
         {
-          "code": "contract",
-          "name": "Stage for contract management",
-          "description": "Awaiting agreement",
-          "statuses": [],
-          "taskGroups": [],
-          "actions": []
+          "code": "REVIEW_OFFER",
+          "name": "Review Offer",
+          "description": "Draft agreement is live and can be accepted by the customer.",
+          "statuses": [
+            {
+              "code": "AGREEMENT_DRAFTED",
+              "name": "Review Offer",
+              "interactive": true,
+              "description": "Offer is under review",
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "action": {
+                    "code": "AGREEMENT_SENT",
+                    "name": "Agreement sent",
+                    "checkTasks": true,
+                    "comment": null
+                  }
+                },
+                {
+                  "targetPosition": "::APPLICATION_REJECTED",
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject Application",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_REJECTED",
+              "name": "Rejected",
+              "description": "Application has been rejected",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "::AGREEMENT_DRAFTED",
+                  "action": {
+                    "code": "REINSTATE_APPLICATION",
+                    "name": "Reinstate Application",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            }
+          ],
+          "taskGroups": [
+            {
+              "code": "DRAFT_AGREEMENT_REVIEW_TASKS",
+              "name": "Draft agreement review tasks",
+              "description": "Tasks to be completed during the review of the agreement offer",
+              "tasks": [
+                {
+                  "code": "REVIEW_OFFER_DOCUMENT",
+                  "name": "Check draft funding agreement",
+                  "mandatory": true,
+                  "description": "Ensure the offer document is accurate and complete",
+                  "statusOptions": [
+                    {
+                      "code": "CONFIRM",
+                      "name": "Confirm",
+                      "completes": true
+                    },
+                    {
+                      "code": "PROBLEM_FOUND",
+                      "name": "There's a problem",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "OFFER_AGREEMENT",
+                  "name": "Notify customer that draft agreement is ready",
+                  "mandatory": true,
+                  "description": "Send the offer document to the applicant for review and acceptance",
+                  "statusOptions": [
+                    {
+                      "code": "CONFIRM",
+                      "name": "Confirm",
+                      "completes": true
+                    },
+                    {
+                      "code": "PROBLEM_FOUND",
+                      "name": "There's a problem",
+                      "completes": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "CUSTOMER_AGREEMENT_REVIEW",
+          "name": "Customer Agreement Review",
+          "description": "Customer reviews the agreement offer",
+          "statuses": [
+            {
+              "code": "AGREEMENT_OFFERED",
+              "name": "Agreement Offer Made",
+              "description": "Offer has been made to the applicant",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
+                  "action": null
+                },
+                {
+                  "targetPosition": "::APPLICATION_REJECTED",
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_REJECTED",
+              "name": "Rejected",
+              "description": "Application has been rejected",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "::AGREEMENT_OFFERED",
+                  "action": {
+                    "code": "REINSTATE_APPLICATION",
+                    "name": "Reinstate Application",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            }
+          ],
+          "taskGroups": []
+        }
+      ]
+    },
+    {
+      "code": "POST_AGREEMENT_MONITORING",
+      "name": "Post Agreement Monitoring and Compliance",
+      "stages": [
+        {
+          "code": "MONITORING",
+          "name": "Monitoring",
+          "description": "Monitor the agreement and compliance",
+          "statuses": [
+            {
+              "code": "AGREEMENT_ACCEPTED",
+              "name": "Agreement accepted",
+              "description": "Agreement is active and being monitored",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "::COMPLETE_AGREEMENT",
+                  "action": {
+                    "code": "COMPLETE_AGREEMENT",
+                    "name": "Complete Agreement",
+                    "checkTasks": true,
+                    "comment": null
+                  }
+                }
+              ]
+            },
+            {
+              "code": "COMPLETE_AGREEMENT",
+              "name": "Complete Agreement",
+              "interactive": false,
+              "description": "Agreement has been completed",
+              "transitions": []
+            }
+          ],
+          "taskGroups": []
         }
       ]
     }
@@ -437,6 +951,15 @@
       "externalUrl": "https://grants-ui.dev.cdp-int.defra.cloud/agreement/review-offer/{agreementRef}"
     }
   },
+  "endpoints": [
+    {
+      "code": "FETCH_RULES_ENDPOINT",
+      "service": "RULES_ENGINE",
+      "path": "/case-management-adapter/application/validation-run/{runId}",
+      "method": "GET",
+      "request": null
+    }
+  ],
   "externalActions": [
     {
       "code": "RERUN_RULES",
@@ -449,6 +972,20 @@
         "nodeType": "array",
         "place": "append"
       }
+    },
+    {
+      "code": "FETCH_RULES",
+      "name": "Fetch Rules",
+      "description": "Fetch a specific rules engine run by ID",
+      "endpoint": {
+        "code": "FETCH_RULES_ENDPOINT",
+        "endpointParams": {
+          "PATH": {
+            "runId": "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id"
+          }
+        }
+      },
+      "target": null
     }
   ]
 }

@@ -35,6 +35,7 @@ export const logger = pino({
   level,
   ...format,
   nesting: true,
+  errorKey: "error",
   mixin() {
     const mixinValues = {};
 
