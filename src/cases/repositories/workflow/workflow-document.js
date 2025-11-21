@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { createPagesMock } from "../../models/create-pages-mock.js";
+import { EndpointDocument } from "./endpoint-document.js";
 import { PhaseDocument } from "./phase-document.js";
 import { RequiredRolesDocument } from "./required-roles-document.js";
 
@@ -14,6 +15,7 @@ export class WorkflowDocument {
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.requiredRoles = new RequiredRolesDocument(props.requiredRoles);
     this.definitions = props.definitions;
+    this.endpoints = mapEndpoints(props.endpoints);
 
     // Only include externalActions if it's defined and not null
     if (props.externalActions !== null && props.externalActions !== undefined) {
@@ -33,12 +35,15 @@ export class WorkflowDocument {
       definitions: {
         key1: "value1",
       },
+      endpoints: [EndpointDocument.createMock()],
       externalActions: [
         {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             node: "landGrantsRulesRun",
@@ -51,3 +56,6 @@ export class WorkflowDocument {
     });
   }
 }
+
+const mapEndpoints = (endpoints) =>
+  endpoints?.map((endpoint) => new EndpointDocument(endpoint));

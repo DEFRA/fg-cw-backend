@@ -25,6 +25,8 @@ export const setup = async ({ globalConfig }) => {
       OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
       ENVIRONMENT: env.ENVIRONMENT,
       OUTBOX_POLL_MS: 250,
+      RULES_ENGINE_URL: env.RULES_ENGINE_URL,
+      RULES_ENGINE_HEADERS: env.RULES_ENGINE_HEADERS,
     })
     .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()

@@ -4,6 +4,7 @@ import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
@@ -102,6 +103,15 @@ const toWorkflowPhase = (p) =>
     stages: p.stages.map(toWorkflowStage),
   });
 
+const toWorkflowEndpoint = (endpoint) =>
+  new WorkflowEndpoint({
+    code: endpoint.code,
+    service: endpoint.service,
+    path: endpoint.path,
+    method: endpoint.method,
+    request: endpoint.request,
+  });
+
 const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
@@ -114,6 +124,7 @@ const toWorkflow = (doc) =>
     }),
     definitions: doc.definitions,
     externalActions: doc.externalActions,
+    endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
   });
 
 export const save = async (workflow) => {

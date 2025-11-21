@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/workflow.repository.js";
 import { createWorkflowUseCase } from "./create-workflow.use-case.js";
@@ -27,12 +28,15 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             node: "landGrantsRulesRun",
@@ -64,12 +68,15 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             node: "landGrantsRulesRun",

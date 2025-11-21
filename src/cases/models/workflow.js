@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Permissions } from "./permissions.js";
 import { Position } from "./position.js";
+import { WorkflowEndpoint } from "./workflow-endpoint.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 
 export class Workflow {
@@ -14,6 +15,7 @@ export class Workflow {
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
     this.externalActions = props.externalActions;
+    this.endpoints = props.endpoints;
   }
 
   findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
@@ -109,12 +111,15 @@ export class Workflow {
       definitions: {
         key1: "value1",
       },
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             node: "landGrantsRulesRun",
