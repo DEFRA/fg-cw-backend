@@ -67,11 +67,14 @@ const toCase = (doc) => {
 };
 
 export const save = async (kase, session) => {
-  logger.debug("Saving new case", {
-    caseRef: kase.caseRef,
-    workflowCode: kase.workflowCode,
-    hasSession: !!session,
-  });
+  logger.debug(
+    {
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      hasSession: !!session,
+    },
+    "Saving new case",
+  );
 
   const caseDocument = new CaseDocument(kase);
 
@@ -81,24 +84,26 @@ export const save = async (kase, session) => {
     result = await db
       .collection(collection)
       .insertOne(caseDocument, { session });
-    logger.debug("Case saved successfully", {
-      caseRef: kase.caseRef,
-      insertedId: result.insertedId,
-    });
+    logger.debug(
+      {
+        caseRef: kase.caseRef,
+        insertedId: result.insertedId,
+      },
+      "Case saved successfully",
+    );
   } catch (error) {
     if (error.code === 11000) {
-      logger.debug("Case save failed - duplicate key", {
-        caseRef: kase.caseRef,
-        workflowCode: kase.workflowCode,
-      });
       throw Boom.conflict(
         `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" already exists`,
       );
     }
-    logger.debug("Case save failed with unexpected error", {
-      caseRef: kase.caseRef,
-      error: error.message,
-    });
+    logger.debug(
+      {
+        caseRef: kase.caseRef,
+        error: error.message,
+      },
+      "Case save failed with unexpected error",
+    );
     throw error;
   }
 
@@ -135,7 +140,7 @@ export const update = async (kase) => {
 export const findAll = async () => {
   logger.debug("Finding all cases");
   const caseDocuments = await db.collection(collection).find().toArray();
-  logger.debug("Cases found", { count: caseDocuments.length });
+  logger.debug({ count: caseDocuments.length }, "Cases found");
   return caseDocuments.map(toCase);
 };
 

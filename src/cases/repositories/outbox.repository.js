@@ -83,10 +83,13 @@ export const update = async (event, claimedBy) => {
 };
 
 export const insertMany = async (events, session) => {
-  logger.debug("Inserting multiple outbox events", {
-    count: events.length,
-    hasSession: !!session,
-  });
+  logger.debug(
+    {
+      count: events.length,
+      hasSession: !!session,
+    },
+    "Inserting multiple outbox events",
+  );
 
   const result = await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),

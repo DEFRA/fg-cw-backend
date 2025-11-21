@@ -9,10 +9,13 @@ const NUMBER_OF_RECORDS = parseInt(config.get("inbox.inboxClaimMaxRecords"));
 const EXPIRES_IN_MS = parseInt(config.get("inbox.inboxExpiresMs"));
 
 export const claimEvents = async (claimedBy) => {
-  logger.debug("Claiming inbox events", {
-    claimedBy,
-    maxRecords: NUMBER_OF_RECORDS,
-  });
+  logger.debug(
+    {
+      claimedBy,
+      maxRecords: NUMBER_OF_RECORDS,
+    },
+    "Claiming inbox events",
+  );
 
   const promises = [];
 
@@ -160,7 +163,7 @@ export const findByMessageId = async (messageId) => {
 
   const doc = await db.collection(collection).findOne({ messageId });
 
-  logger.debug("Inbox event search result", { messageId, found: !!doc });
+  logger.debug({ messageId, found: !!doc }, "Inbox event search result");
   return doc;
 };
 

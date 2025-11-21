@@ -36,11 +36,14 @@ export const assignUserToCaseUseCase = async (command) => {
     return update(kase);
   }
 
-  logger.debug("Validating user assignment", {
-    caseId,
-    assignedUserId,
-    workflowCode: kase.workflowCode,
-  });
+  logger.debug(
+    {
+      caseId,
+      assignedUserId,
+      workflowCode: kase.workflowCode,
+    },
+    "Validating user assignment",
+  );
 
   const [userToAssign, workflow] = await Promise.all([
     findUserByIdUseCase(assignedUserId),
@@ -53,10 +56,13 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  logger.debug("User authorized, assigning to case", {
-    caseId,
-    assignedUserId,
-  });
+  logger.debug(
+    {
+      caseId,
+      assignedUserId,
+    },
+    "User authorised, assigning to case",
+  );
 
   kase.assignUser({
     assignedUserId,
@@ -65,10 +71,13 @@ export const assignUserToCaseUseCase = async (command) => {
   });
 
   const result = await update(kase);
-  logger.debug("User assigned to case successfully", {
-    caseId,
-    assignedUserId,
-  });
+  logger.debug(
+    {
+      caseId,
+      assignedUserId,
+    },
+    "User assigned to case successfully",
+  );
 
   return result;
 };
