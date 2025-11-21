@@ -1,6 +1,7 @@
 import jsonata from "jsonata";
 import { JSONPath } from "jsonpath-plus";
 import { applyFormat } from "./format.js";
+import { logger } from "./logger.js";
 
 // eslint-disable-next-line complexity
 export const resolveJSONPath = async ({ root, path, row }) => {
@@ -37,8 +38,26 @@ const resolveJSONString = async ({ path, root, row }) => {
   return path;
 };
 
-const shouldSpreadArray = (item, resolved) =>
-  Array.isArray(resolved) && (isRepeat(item) || isComponentContainer(item));
+// eslint-disable-next-line complexity
+const shouldSpreadArray = (item, resolved) => {
+  if (!Array.isArray(resolved)) {
+    return false;
+  }
+
+  // Spread if the item itself is a repeat or component-container
+  if (isRepeat(item) || isComponentContainer(item)) {
+    return true;
+  }
+
+  // Spread if item is a conditional that resolved to an array of components
+  if (isConditional(item) && resolved.length > 0) {
+    return resolved.every(
+      (r) => r && typeof r === "object" && "component" in r,
+    );
+  }
+
+  return false;
+};
 
 const resolveJSONArray = async ({ path, root, row }) => {
   const results = [];
@@ -229,17 +248,40 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
   return repeatedItems;
 };
 
-const resolveComponentContainer = ({ path, root }) => {
+const resolveComponentContainer = async ({ path, root, row }) => {
   const { contentRef } = path;
   const content = JSONPath({ json: root, path: contentRef });
-  return content[0] || [];
+  const dataItems = content[0] || [];
+
+  const resolvedItems = [];
+  for await (const item of dataItems) {
+    const resolved = await resolveJSONPath({ root, path: item, row });
+    resolvedItems.push(resolved);
+  }
+
+  return resolvedItems;
 };
 
 const evaluateConditionalWithRow = async ({ condition, root, row }) => {
-  const expression = condition.replace("jsonata:", "").replace(/@\./g, "$row.");
-  const compiledExpression = jsonata(expression);
-  compiledExpression.assign("row", row);
-  return compiledExpression.evaluate(root);
+  try {
+    const expression = condition
+      .replace("jsonata:", "")
+      .replace(/@\./g, "$row.");
+    const compiledExpression = jsonata(expression);
+    compiledExpression.assign("row", row);
+    return await compiledExpression.evaluate(root);
+  } catch (error) {
+    // Log JSONata evaluation errors and return undefined to allow graceful degradation
+    logger.warn(
+      {
+        expression: condition,
+        error: error.message,
+        code: error.code,
+      },
+      "JSONata conditional evaluation error - returning undefined for graceful degradation",
+    );
+    return undefined;
+  }
 };
 
 const evaluateConditionResult = (conditionResult) => {
@@ -317,9 +359,22 @@ const resolveDataRef = async ({ root, path, row }) => {
 };
 
 const evaluateJSONata = async ({ path, root }) => {
-  const expression = path.replace("jsonata:", "");
-  const compiledExpression = jsonata(expression);
-  return await compiledExpression.evaluate(root);
+  try {
+    const expression = path.replace("jsonata:", "");
+    const compiledExpression = jsonata(expression);
+    return await compiledExpression.evaluate(root);
+  } catch (error) {
+    // Log JSONata evaluation errors and return undefined to allow graceful degradation
+    logger.warn(
+      {
+        expression: path,
+        error: error.message,
+        code: error.code,
+      },
+      "JSONata evaluation error - returning undefined for graceful degradation",
+    );
+    return undefined;
+  }
 };
 
 // Return a single value for a JSONPath (first match or empty string).
