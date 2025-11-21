@@ -70,6 +70,18 @@ describe("endpoint-resolver", () => {
         "x-api-key": "test-key",
       });
     });
+
+    it("should handle null and non-string values in stripOuterQuotes", () => {
+      expect(parseHeaders(null)).toEqual({});
+      expect(parseHeaders(undefined)).toEqual({});
+      expect(parseHeaders("")).toEqual({});
+    });
+
+    it("should handle edge cases in stripOuterQuotes", () => {
+      expect(parseHeaders('"Authorization: Bearer token"')).toEqual({
+        Authorization: "Bearer token",
+      });
+    });
   });
 
   describe("resolveEnvVarReferences", () => {
@@ -120,6 +132,14 @@ describe("endpoint-resolver", () => {
       expect(() => resolveEnvVarReferences(value)).toThrow(
         "Environment variable UNDEFINED_VAR referenced in header but not defined",
       );
+    });
+
+    it("should handle null and non-string values", () => {
+      expect(resolveEnvVarReferences(null)).toBe(null);
+      expect(resolveEnvVarReferences(undefined)).toBe(undefined);
+      expect(resolveEnvVarReferences(123)).toBe(123);
+      const testObj = {};
+      expect(resolveEnvVarReferences(testObj)).toBe(testObj);
     });
   });
 

@@ -1,16 +1,5 @@
 import { buildServiceConfigMap } from "./service-config-builder.js";
 
-// eslint-disable-next-line complexity
-const stripOuterQuotes = (str) => {
-  if (!str || typeof str !== "string") {
-    return str;
-  }
-  if (str.startsWith('"') && str.endsWith('"')) {
-    return str.slice(1, -1);
-  }
-  return str;
-};
-
 /**
  * Resolves environment variable references in a string.
  * Replaces ${VAR_NAME} with the actual environment variable value.
@@ -94,4 +83,16 @@ export const resolveEndpoint = (endpoint, caseWorkflowContext) => {
     url,
     headers,
   };
+};
+
+const isQuotedString = (str) => {
+  return str.startsWith('"') && str.endsWith('"');
+};
+
+const stripOuterQuotes = (str) => {
+  if (!str || typeof str !== "string") {
+    return str;
+  }
+
+  return isQuotedString(str) ? str.slice(1, -1) : str;
 };
