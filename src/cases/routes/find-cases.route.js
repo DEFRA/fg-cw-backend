@@ -1,3 +1,4 @@
+import { logger } from "../../common/logger.js";
 import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
 
 export const findCasesRoute = {
@@ -8,8 +9,9 @@ export const findCasesRoute = {
     tags: ["api"],
   },
   async handler() {
+    logger.info("Finding cases");
     const results = await findCasesUseCase();
-
+    logger.info("Found cases");
     return results;
   },
 };
