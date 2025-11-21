@@ -1,6 +1,5 @@
 import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { randomUUID } from "node:crypto";
-import { logger } from "../src/common/logger.js";
 /**
  *  call npm run publish:case:status:update to update status of a case
  *  you can add your own caseRef npm run publish:case:status:update <CASE_REF> <WORKFLOW_CODE>
@@ -46,17 +45,19 @@ const message = {
   },
 };
 
-logger.info(`Sending message to SQS queue: ${queueUrl}`);
+console.log("Sending message to SQS queue:", queueUrl);
 
 if (process.argv.length >= 4) {
-  logger.info(`Sending sqs case for ${process.argv[2]} ${process.argv[3]}`);
+  console.log(
+    "Sending sqs case for " + process.argv[2] + " " + process.argv[3],
+  );
   message.data.caseRef = process.argv[2];
   message.data.workflowCode = process.argv[3];
 }
 
 if (process.argv.length === 5) {
   const status = process.argv[4];
-  logger.info(`Setting status to ${status}`);
+  console.log("Setting status to " + status);
   message.data.newStatus = status;
   message.data.supplementaryData.data.agreementStatus = status;
 }
@@ -69,4 +70,4 @@ await sqs.send(
   }),
 );
 
-logger.info("Message sent");
+console.log("Message sent");
