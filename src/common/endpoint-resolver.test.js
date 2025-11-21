@@ -3,6 +3,7 @@ import {
   parseHeaders,
   resolveEndpoint,
   resolveEnvVarReferences,
+  stripOuterQuotes,
 } from "./endpoint-resolver.js";
 
 describe("endpoint-resolver", () => {
@@ -81,6 +82,15 @@ describe("endpoint-resolver", () => {
       expect(parseHeaders('"Authorization: Bearer token"')).toEqual({
         Authorization: "Bearer token",
       });
+    });
+
+    it("should handle null and non-string values in stripQuotes", () => {
+      expect(stripOuterQuotes(null)).toBe(null);
+      expect(stripOuterQuotes(undefined)).toBe(undefined);
+      expect(stripOuterQuotes(123)).toBe(123);
+      expect(stripOuterQuotes("")).toBe("");
+      expect(stripOuterQuotes('"quoted"')).toBe("quoted");
+      expect(stripOuterQuotes("unquoted")).toBe("unquoted");
     });
   });
 

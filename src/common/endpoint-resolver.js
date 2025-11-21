@@ -89,7 +89,7 @@ const isQuotedString = (str) => {
   return str.startsWith('"') && str.endsWith('"');
 };
 
-const stripOuterQuotes = (str) => {
+export const stripOuterQuotes = (str) => {
   if (!str || typeof str !== "string") {
     return str;
   }
