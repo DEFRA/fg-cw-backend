@@ -39,6 +39,37 @@ describe("endpoint-resolver", () => {
         "Invalid header format",
       );
     });
+
+    it("should handle header strings with surrounding quotes (CDP format)", () => {
+      const headersString = '"Authorization: Bearer token"';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        Authorization: "Bearer token",
+      });
+    });
+
+    it("should handle multiple headers with surrounding quotes", () => {
+      const headersString =
+        '"x-api-key: test-key, Authorization: Bearer token"';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        "x-api-key": "test-key",
+        Authorization: "Bearer token",
+      });
+    });
+
+    it("should handle whitespace around quoted headers", () => {
+      const headersString =
+        '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        Authorization: "Bearer token",
+        "x-api-key": "test-key",
+      });
+    });
   });
 
   describe("resolveEnvVarReferences", () => {

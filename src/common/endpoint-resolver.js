@@ -1,5 +1,16 @@
 import { buildServiceConfigMap } from "./service-config-builder.js";
 
+// eslint-disable-next-line complexity
+const stripOuterQuotes = (str) => {
+  if (!str || typeof str !== "string") {
+    return str;
+  }
+  if (str.startsWith('"') && str.endsWith('"')) {
+    return str.slice(1, -1);
+  }
+  return str;
+};
+
 /**
  * Resolves environment variable references in a string.
  * Replaces ${VAR_NAME} with the actual environment variable value.
@@ -23,23 +34,28 @@ export const resolveEnvVarReferences = (value) => {
 /**
  * Parses a comma-separated headers string into an object.
  * Format: "Header1: value1, Header2: value2"
+ * Also handles quoted format from environment variables: "Header1: value1, Header2: value2"
  */
 export const parseHeaders = (headersString) => {
   if (!headersString) {
     return {};
   }
 
+  // Strip outer quotes if present (handles CDP environment variable format)
+  const unquotedString = stripOuterQuotes(headersString);
   const headers = {};
-  const headerPairs = headersString.split(",");
+  const headerPairs = unquotedString.split(",");
 
   for (const pair of headerPairs) {
-    const colonIndex = pair.indexOf(":");
+    // Strip quotes from individual header pairs as well
+    const trimmedPair = stripOuterQuotes(pair.trim());
+    const colonIndex = trimmedPair.indexOf(":");
     if (colonIndex === -1) {
       throw new Error("Invalid header format");
     }
 
-    const name = pair.substring(0, colonIndex).trim();
-    const value = pair.substring(colonIndex + 1).trim();
+    const name = trimmedPair.substring(0, colonIndex).trim();
+    const value = trimmedPair.substring(colonIndex + 1).trim();
 
     // Resolve any environment variable references in the value
     headers[name] = resolveEnvVarReferences(value);
