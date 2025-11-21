@@ -1,8 +1,7 @@
-import Wreck from "@hapi/wreck";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildUrl, callExternalEndpoint } from "./external-endpoint-client.js";
+import { wreck } from "./wreck.js";
 
-vi.mock("@hapi/wreck");
 vi.mock("./logger.js", () => ({
   logger: {
     info: vi.fn(),
@@ -12,6 +11,12 @@ vi.mock("./logger.js", () => ({
 }));
 vi.mock("./endpoint-resolver.js", () => ({
   resolveEndpoint: vi.fn(),
+}));
+vi.mock("./wreck.js", () => ({
+  wreck: {
+    request: vi.fn(),
+    read: vi.fn(),
+  },
 }));
 
 describe("external-endpoint-client", () => {
@@ -93,8 +98,8 @@ describe("external-endpoint-client", () => {
       const mockResponse = { statusCode: 200 };
       const mockPayload = { data: "test-data" };
 
-      Wreck.request.mockResolvedValue(mockResponse);
-      Wreck.read.mockResolvedValue(mockPayload);
+      wreck.request.mockResolvedValue(mockResponse);
+      wreck.read.mockResolvedValue(mockPayload);
 
       const endpoint = {
         code: "FETCH_RULES_ENDPOINT",
@@ -111,7 +116,7 @@ describe("external-endpoint-client", () => {
       const result = await callExternalEndpoint(endpoint, params);
 
       expect(result).toEqual(mockPayload);
-      expect(Wreck.request).toHaveBeenCalledWith(
+      expect(wreck.request).toHaveBeenCalledWith(
         "GET",
         "https://api.example.com/api/runs/123",
         expect.objectContaining({
@@ -135,8 +140,8 @@ describe("external-endpoint-client", () => {
       const mockResponse = { statusCode: 201 };
       const mockPayload = { id: 123, status: "created" };
 
-      Wreck.request.mockResolvedValue(mockResponse);
-      Wreck.read.mockResolvedValue(mockPayload);
+      wreck.request.mockResolvedValue(mockResponse);
+      wreck.read.mockResolvedValue(mockPayload);
 
       const endpoint = {
         code: "CREATE_RESOURCE",
@@ -153,7 +158,7 @@ describe("external-endpoint-client", () => {
       const result = await callExternalEndpoint(endpoint, params);
 
       expect(result).toEqual(mockPayload);
-      expect(Wreck.request).toHaveBeenCalledWith(
+      expect(wreck.request).toHaveBeenCalledWith(
         "POST",
         "https://api.example.com/api/resources",
         expect.objectContaining({
@@ -177,7 +182,7 @@ describe("external-endpoint-client", () => {
       });
 
       const error = new Error("Network error");
-      Wreck.request.mockRejectedValue(error);
+      wreck.request.mockRejectedValue(error);
 
       const endpoint = {
         code: "FETCH_RULES_ENDPOINT",
@@ -213,8 +218,8 @@ describe("external-endpoint-client", () => {
       const mockResponse = { statusCode: 200 };
       const mockPayload = { data: "test" };
 
-      Wreck.request.mockResolvedValue(mockResponse);
-      Wreck.read.mockResolvedValue(mockPayload);
+      wreck.request.mockResolvedValue(mockResponse);
+      wreck.read.mockResolvedValue(mockPayload);
 
       const endpoint = {
         code: "LIST_RESOURCES",
@@ -226,7 +231,7 @@ describe("external-endpoint-client", () => {
       const result = await callExternalEndpoint(endpoint);
 
       expect(result).toEqual(mockPayload);
-      expect(Wreck.request).toHaveBeenCalledWith(
+      expect(wreck.request).toHaveBeenCalledWith(
         "GET",
         "https://api.example.com/api/resources",
         expect.any(Object),

@@ -1,6 +1,6 @@
-import Wreck from "@hapi/wreck";
 import { resolveEndpoint } from "./endpoint-resolver.js";
 import { logger } from "./logger.js";
+import { wreck } from "./wreck.js";
 
 const HTTP_SUCCESS_MIN = 200;
 const HTTP_SUCCESS_MAX = 300;
@@ -43,8 +43,8 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
 
   logRequestStart(endpoint, fullUrl, options.headers);
 
-  const response = await Wreck.request(endpoint.method, fullUrl, options);
-  const payload = await Wreck.read(response, { json: true });
+  const response = await wreck.request(endpoint.method, fullUrl, options);
+  const payload = await wreck.read(response, { json: true });
 
   return { response, payload };
 };
