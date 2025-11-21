@@ -8,6 +8,7 @@ import {
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
 import { callAPIAndFetchData } from "../../common/external-action-service.js";
+import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -36,7 +37,15 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     buildLinks(root),
     buildContent(root),
   ]);
-
+  logger.debug(
+    {
+      caseId,
+      tabId,
+      workflowCode: kase.workflowCode,
+      position: kase.position.toString(),
+    },
+    "Case details tab use case completed",
+  );
   return {
     caseId,
     caseRef: kase.caseRef,

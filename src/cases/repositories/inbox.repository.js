@@ -1,4 +1,5 @@
 import { config } from "../../common/config.js";
+import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 
@@ -8,6 +9,14 @@ const NUMBER_OF_RECORDS = parseInt(config.get("inbox.inboxClaimMaxRecords"));
 const EXPIRES_IN_MS = parseInt(config.get("inbox.inboxExpiresMs"));
 
 export const claimEvents = async (claimedBy) => {
+  logger.debug(
+    {
+      claimedBy,
+      maxRecords: NUMBER_OF_RECORDS,
+    },
+    "Claiming inbox events",
+  );
+
   const promises = [];
 
   for (let i = 0; i < NUMBER_OF_RECORDS; i++) {
@@ -34,11 +43,21 @@ export const claimEvents = async (claimedBy) => {
   const docs = await Promise.all(promises);
   const documents = docs.filter((d) => d !== null);
 
+  logger.debug(
+    {
+      claimedBy,
+      claimed: documents.length,
+      attempted: NUMBER_OF_RECORDS,
+    },
+    "Events claimed",
+  );
   return documents.map((doc) => Inbox.fromDocument(doc));
 };
 
 export const processExpiredEvents = async () => {
-  await db.collection(collection).updateMany(
+  logger.debug("Processing expired inbox events");
+
+  const result = await db.collection(collection).updateMany(
     {
       claimExpiresAt: { $lt: new Date() },
     },
@@ -51,9 +70,13 @@ export const processExpiredEvents = async () => {
       },
     },
   );
+
+  return result;
 };
 
 export const updateDeadEvents = async () => {
+  logger.debug({ maxRetries: MAX_RETRIES }, "Updating dead inbox events");
+
   const results = await db.collection(collection).updateMany(
     { completionAttempts: { $gte: MAX_RETRIES } },
     {
@@ -65,11 +88,14 @@ export const updateDeadEvents = async () => {
       },
     },
   );
+
   return results;
 };
 
 // Move failed events to resubmitted status
 export const updateFailedEvents = async () => {
+  logger.debug("Updating failed inbox events to resubmitted");
+
   const results = await db.collection(collection).updateMany(
     {
       status: InboxStatus.FAILED,
@@ -83,11 +109,14 @@ export const updateFailedEvents = async () => {
       },
     },
   );
+
   return results;
 };
 
 // Move resubmitted events to published status
 export const updateResubmittedEvents = async () => {
+  logger.debug("Updating resubmitted inbox events to published");
+
   const results = await db.collection(collection).updateMany(
     {
       status: InboxStatus.RESUBMITTED,
@@ -102,28 +131,74 @@ export const updateResubmittedEvents = async () => {
       $inc: { completionAttempts: 1 },
     },
   );
+
   return results;
 };
 
 export const insertMany = async (events, session) => {
-  return db.collection(collection).insertMany(
+  logger.debug(
+    {
+      count: events.length,
+      hasSession: !!session,
+    },
+    "Inserting multiple inbox events",
+  );
+
+  const result = await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),
     { session },
   );
+
+  logger.debug(
+    {
+      insertedCount: result.insertedCount,
+    },
+    "Multiple events inserted",
+  );
+  return result;
 };
 
 export const findByMessageId = async (messageId) => {
-  const doc = db.collection(collection).findOne({ messageId });
+  logger.debug({ messageId }, "Finding inbox event by messageId");
+
+  const doc = await db.collection(collection).findOne({ messageId });
+
+  logger.debug({ messageId, found: !!doc }, "Inbox event search result");
   return doc;
 };
 
 export const insertOne = async (inbox, session) => {
-  return db.collection(collection).insertOne(inbox.toDocument(), { session });
+  logger.debug(
+    {
+      messageId: inbox.messageId,
+      hasSession: !!session,
+    },
+    "Inserting single inbox event",
+  );
+
+  const result = await db
+    .collection(collection)
+    .insertOne(inbox.toDocument(), { session });
+
+  logger.debug({ insertedId: result.insertedId }, "Single event inserted");
+  return result;
 };
 
 export const update = async (inbox) => {
+  logger.debug(
+    {
+      messageId: inbox.messageId,
+      status: inbox.status,
+    },
+    "Updating inbox event",
+  );
+
   const document = inbox.toDocument();
   const { _id, ...updateDoc } = document;
 
-  return db.collection(collection).updateOne({ _id }, { $set: updateDoc });
+  const result = await db
+    .collection(collection)
+    .updateOne({ _id }, { $set: updateDoc });
+
+  return result;
 };

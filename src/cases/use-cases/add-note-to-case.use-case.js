@@ -1,8 +1,14 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { findById, update } from "../repositories/case.repository.js";
 
 export const addNoteToCaseUseCase = async (command) => {
   const { caseId, text, user } = command;
+
+  logger.debug(
+    { caseId, userId: user.id, hasText: !!text },
+    "Adding note to case use case started",
+  );
 
   const kase = await findById(caseId);
 
@@ -16,6 +22,8 @@ export const addNoteToCaseUseCase = async (command) => {
   });
 
   await update(kase);
+
+  logger.debug({ caseId, noteRef: note.ref }, "Case updated with new note");
 
   return note;
 };

@@ -1,9 +1,12 @@
+import { logger } from "../../common/logger.js";
 import { AppRole } from "../models/app-role.js";
 import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 
 export const updateUserUseCase = async ({ userId, props }) => {
   const user = await findUserByIdUseCase(userId);
+
+  logger.debug(`Updating user: ${user.name}`);
 
   if (props.name) {
     user.setName(props.name);
@@ -22,6 +25,7 @@ export const updateUserUseCase = async ({ userId, props }) => {
       {},
     );
 
+    logger.debug(`Assigning app roles: ${Object.keys(appRoles)}`);
     user.assignAppRoles(appRoles);
   }
 

@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { findUsersResponseSchema } from "../schemas/responses/find-users-response.schema.js";
@@ -24,13 +25,14 @@ export const findUsersRoute = {
     },
   },
   async handler(request) {
+    logger.info("Finding users");
     const results = await findUsersUseCase({
       idpId: request.query.idpId,
       ids: request.query.ids,
       allAppRoles: request.query.allAppRoles,
       anyAppRoles: request.query.anyAppRoles,
     });
-
+    logger.info("Users found");
     return results;
   },
 };

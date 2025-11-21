@@ -1,3 +1,4 @@
+import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { workflowSchema } from "../schemas/workflow.schema.js";
 import { createWorkflowUseCase } from "../use-cases/create-workflow.use-case.js";
@@ -18,8 +19,9 @@ export const createWorkflowRoute = {
     },
   },
   async handler(request, h) {
+    logger.info(`Creating workflow with code ${request.payload.code}`);
     await createWorkflowUseCase(request.payload);
-
+    logger.info(`Workflow created for code ${request.payload.code}`);
     return h.response().code(204);
   },
 };

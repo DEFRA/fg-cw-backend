@@ -1,9 +1,11 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../cases/models/access-control.js";
 import { findWorkflowByCodeUseCase } from "../../cases/use-cases/find-workflow-by-code.use-case.js";
+import { logger } from "../../common/logger.js";
 
 export const findSecretWorkflowUseCase = async ({ workflowCode, user }) => {
   const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  logger.debug(`Found workflow ${workflow?.code}`);
   if (!workflow) {
     throw Boom.notFound(`Workflow with code "${workflowCode}" not found`);
   }

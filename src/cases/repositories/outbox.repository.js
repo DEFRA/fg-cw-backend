@@ -10,6 +10,14 @@ const EXPIRES_IN_MS = parseInt(config.get("outbox.outboxExpiresMs"));
 const NUMBER_OF_RECORDS = parseInt(config.get("outbox.outboxClaimMaxRecords"));
 
 export const claimEvents = async (claimedBy) => {
+  logger.debug(
+    {
+      claimedBy,
+      maxRecords: NUMBER_OF_RECORDS,
+    },
+    "Claiming outbox events",
+  );
+
   const promises = [];
   for (let i = 0; i < NUMBER_OF_RECORDS; i++) {
     promises.push(
@@ -43,26 +51,57 @@ export const claimEvents = async (claimedBy) => {
   documents?.length &&
     logger.info(`Found ${documents.length} outbox documents to process.`);
 
+  logger.debug(
+    {
+      claimedBy,
+      claimed: documents.length,
+      attempted: NUMBER_OF_RECORDS,
+    },
+    "Outbox events claimed",
+  );
   return documents.map((doc) => Outbox.fromDocument(doc));
 };
 
 export const update = async (event, claimedBy) => {
+  logger.debug(
+    {
+      eventId: event.id,
+      claimedBy,
+      status: event.status,
+    },
+    "Updating outbox event",
+  );
+
   const document = event.toDocument();
   const { _id, ...updateDoc } = document;
 
-  return db
+  const result = await db
     .collection(collection)
     .updateOne({ _id, claimedBy }, { $set: updateDoc });
+
+  return result;
 };
 
 export const insertMany = async (events, session) => {
-  return db.collection(collection).insertMany(
+  logger.debug(
+    {
+      count: events.length,
+      hasSession: !!session,
+    },
+    "Inserting multiple outbox events",
+  );
+
+  const result = await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),
     { session },
   );
+
+  return result;
 };
 
 export const updateExpiredEvents = async () => {
+  logger.debug("Updating expired outbox events");
+
   const results = await db.collection(collection).updateMany(
     {
       claimExpiresAt: { $lt: new Date() },
@@ -76,10 +115,13 @@ export const updateExpiredEvents = async () => {
       },
     },
   );
+
   return results;
 };
 
 export const updateFailedEvents = async () => {
+  logger.debug("Updating failed outbox events to resubmitted");
+
   const results = await db.collection(collection).updateMany(
     {
       status: OutboxStatus.FAILED,
@@ -93,10 +135,13 @@ export const updateFailedEvents = async () => {
       },
     },
   );
+
   return results;
 };
 
 export const updateResubmittedEvents = async () => {
+  logger.debug("Updating resubmitted outbox events to published");
+
   const results = await db.collection(collection).updateMany(
     {
       status: OutboxStatus.RESUBMITTED,
@@ -111,10 +156,13 @@ export const updateResubmittedEvents = async () => {
       $inc: { completionAttempts: 1 },
     },
   );
+
   return results;
 };
 
 export const updateDeadEvents = async () => {
+  logger.debug({ maxRetries: MAX_RETRIES }, "Updating dead outbox events");
+
   const results = await db.collection(collection).updateMany(
     {
       completionAttempts: { $gte: MAX_RETRIES },
@@ -128,5 +176,6 @@ export const updateDeadEvents = async () => {
       },
     },
   );
+
   return results;
 };
