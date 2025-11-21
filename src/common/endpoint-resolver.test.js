@@ -3,6 +3,7 @@ import {
   parseHeaders,
   resolveEndpoint,
   resolveEnvVarReferences,
+  stripOuterQuotes,
 } from "./endpoint-resolver.js";
 
 describe("endpoint-resolver", () => {
@@ -38,6 +39,58 @@ describe("endpoint-resolver", () => {
       expect(() => parseHeaders(headersString)).toThrow(
         "Invalid header format",
       );
+    });
+
+    it("should handle header strings with surrounding quotes (CDP format)", () => {
+      const headersString = '"Authorization: Bearer token"';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        Authorization: "Bearer token",
+      });
+    });
+
+    it("should handle multiple headers with surrounding quotes", () => {
+      const headersString =
+        '"x-api-key: test-key, Authorization: Bearer token"';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        "x-api-key": "test-key",
+        Authorization: "Bearer token",
+      });
+    });
+
+    it("should handle whitespace around quoted headers", () => {
+      const headersString =
+        '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ';
+      const result = parseHeaders(headersString);
+
+      expect(result).toEqual({
+        Authorization: "Bearer token",
+        "x-api-key": "test-key",
+      });
+    });
+
+    it("should handle null and non-string values in stripOuterQuotes", () => {
+      expect(parseHeaders(null)).toEqual({});
+      expect(parseHeaders(undefined)).toEqual({});
+      expect(parseHeaders("")).toEqual({});
+    });
+
+    it("should handle edge cases in stripOuterQuotes", () => {
+      expect(parseHeaders('"Authorization: Bearer token"')).toEqual({
+        Authorization: "Bearer token",
+      });
+    });
+
+    it("should handle null and non-string values in stripQuotes", () => {
+      expect(stripOuterQuotes(null)).toBe(null);
+      expect(stripOuterQuotes(undefined)).toBe(undefined);
+      expect(stripOuterQuotes(123)).toBe(123);
+      expect(stripOuterQuotes("")).toBe("");
+      expect(stripOuterQuotes('"quoted"')).toBe("quoted");
+      expect(stripOuterQuotes("unquoted")).toBe("unquoted");
     });
   });
 
@@ -89,6 +142,14 @@ describe("endpoint-resolver", () => {
       expect(() => resolveEnvVarReferences(value)).toThrow(
         "Environment variable UNDEFINED_VAR referenced in header but not defined",
       );
+    });
+
+    it("should handle null and non-string values", () => {
+      expect(resolveEnvVarReferences(null)).toBe(null);
+      expect(resolveEnvVarReferences(undefined)).toBe(undefined);
+      expect(resolveEnvVarReferences(123)).toBe(123);
+      const testObj = {};
+      expect(resolveEnvVarReferences(testObj)).toBe(testObj);
     });
   });
 
