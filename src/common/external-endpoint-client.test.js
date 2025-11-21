@@ -120,6 +120,7 @@ describe("external-endpoint-client", () => {
             "x-api-key": "test-key",
           }),
           json: true,
+          timeout: 30000,
         }),
       );
     });
@@ -163,6 +164,7 @@ describe("external-endpoint-client", () => {
           }),
           json: true,
           payload: { name: "test", value: 42 },
+          timeout: 30000,
         }),
       );
     });
@@ -229,7 +231,41 @@ describe("external-endpoint-client", () => {
       expect(Wreck.request).toHaveBeenCalledWith(
         "GET",
         "https://api.example.com/api/resources",
-        expect.any(Object),
+        expect.objectContaining({
+          timeout: 30000,
+        }),
+      );
+    });
+
+    it("should use default timeout when none specified", async () => {
+      const { resolveEndpoint } = await import("./endpoint-resolver.js");
+
+      resolveEndpoint.mockReturnValue({
+        url: "https://api.example.com",
+        headers: {},
+      });
+
+      const mockResponse = { statusCode: 200 };
+      const mockPayload = { data: "test" };
+
+      Wreck.request.mockResolvedValue(mockResponse);
+      Wreck.read.mockResolvedValue(mockPayload);
+
+      const endpoint = {
+        code: "TEST_ENDPOINT",
+        service: "TEST_SERVICE",
+        path: "/api/test",
+        method: "GET",
+      };
+
+      await callExternalEndpoint(endpoint);
+
+      expect(Wreck.request).toHaveBeenCalledWith(
+        "GET",
+        "https://api.example.com/api/test",
+        expect.objectContaining({
+          timeout: 30000,
+        }),
       );
     });
   });

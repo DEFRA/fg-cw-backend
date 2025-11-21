@@ -4,6 +4,7 @@ import { logger } from "./logger.js";
 
 const HTTP_SUCCESS_MIN = 200;
 const HTTP_SUCCESS_MAX = 300;
+const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * Calls an external endpoint defined in the workflow.
@@ -49,13 +50,19 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   return { response, payload };
 };
 
-const buildRequestOptions = (method, configHeaders, requestData) => {
+const buildRequestOptions = (
+  method,
+  configHeaders,
+  requestData,
+  timeout = DEFAULT_TIMEOUT_MS,
+) => {
   const options = {
     headers: {
       "Content-Type": "application/json",
       ...configHeaders,
     },
     json: true,
+    timeout,
   };
 
   if (shouldIncludePayload(method, requestData)) {
