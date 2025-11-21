@@ -68,12 +68,7 @@ export const processExpiredEvents = async () => {
     },
   );
 
-  logger.debug(
-    {
-      modifiedCount: result.modifiedCount,
-    },
-    "Expired events processed",
-  );
+  return result;
 };
 
 export const updateDeadEvents = async () => {
@@ -91,7 +86,6 @@ export const updateDeadEvents = async () => {
     },
   );
 
-  logger.debug({ modifiedCount: results.modifiedCount }, "Dead events updated");
   return results;
 };
 
@@ -113,12 +107,6 @@ export const updateFailedEvents = async () => {
     },
   );
 
-  logger.debug(
-    {
-      modifiedCount: results.modifiedCount,
-    },
-    "Failed events updated",
-  );
   return results;
 };
 
@@ -141,12 +129,6 @@ export const updateResubmittedEvents = async () => {
     },
   );
 
-  logger.debug(
-    {
-      modifiedCount: results.modifiedCount,
-    },
-    "Resubmitted events updated",
-  );
   return results;
 };
 
@@ -215,9 +197,5 @@ export const update = async (inbox) => {
     .collection(collection)
     .updateOne({ _id }, { $set: updateDoc });
 
-  logger.debug("Inbox event updated", {
-    messageId: inbox.messageId,
-    modifiedCount: result.modifiedCount,
-  });
   return result;
 };
