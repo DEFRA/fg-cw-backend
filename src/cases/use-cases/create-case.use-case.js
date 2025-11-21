@@ -1,4 +1,5 @@
 import { config } from "../../common/config.js";
+import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { CasePhase } from "../models/case-phase.js";
@@ -50,6 +51,17 @@ export const createCaseUseCase = async (message) => {
       event: { data },
     } = message;
     const { caseRef, workflowCode, payload } = data;
+
+    logger.info({ caseRef, workflowCode }, "Case creation started");
+    logger.debug(
+      {
+        caseRef,
+        workflowCode,
+        hasPayload: !!payload,
+        payload: payload || [],
+      },
+      "Case creation data",
+    );
 
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
 

@@ -100,7 +100,7 @@ export const save = async (kase, session) => {
   }
 
   if (!result.acknowledged) {
-    logger.debug("Case save not acknowledged", { caseRef: kase.caseRef });
+    logger.debug({ caseRef: kase.caseRef }, "Case save not acknowledged");
     throw Boom.internal(
       `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" could not be created, the operation was not acknowledged`,
     );
@@ -108,7 +108,7 @@ export const save = async (kase, session) => {
 };
 
 export const update = async (kase) => {
-  logger.debug("Updating case", { caseId: kase._id, caseRef: kase.caseRef });
+  logger.debug({ caseId: kase._id, caseRef: kase.caseRef }, "Updating case");
 
   const caseDocument = new CaseDocument(kase);
 
@@ -116,19 +116,11 @@ export const update = async (kase) => {
     .collection(collection)
     .replaceOne({ _id: kase.objectId }, caseDocument);
 
-  logger.debug("Case update result", {
-    caseId: kase._id,
-    matchedCount: result.matchedCount,
-    modifiedCount: result.modifiedCount,
-  });
-
   if (result.matchedCount === 0) {
-    logger.debug("Case update failed - not found", { caseId: kase._id });
     throw Boom.notFound(`Case with id "${kase._id}" not found`);
   }
 
   if (!result.acknowledged) {
-    logger.debug("Case update not acknowledged", { caseId: kase._id });
     throw Boom.internal(
       `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
     );
@@ -145,39 +137,45 @@ export const findAll = async () => {
 };
 
 export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
-  logger.debug("Finding case by caseRef and workflowCode", {
-    caseRef,
-    workflowCode,
-  });
+  logger.debug(
+    {
+      caseRef,
+      workflowCode,
+    },
+    "Finding case by caseRef and workflowCode",
+  );
   const caseDocument = await db.collection(collection).findOne({
     caseRef,
     workflowCode,
   });
 
   const found = !!caseDocument;
-  logger.debug("Case search result", { caseRef, workflowCode, found });
+  logger.debug({ caseRef, workflowCode, found }, "Case search result");
 
   return caseDocument && toCase(caseDocument);
 };
 
 export const findById = async (caseId) => {
-  logger.debug("Finding case by ID", { caseId });
+  logger.debug({ caseId }, "Finding case by ID");
   const caseDocument = await db.collection(collection).findOne({
     _id: ObjectId.createFromHexString(caseId),
   });
 
   const found = !!caseDocument;
-  logger.debug("Case search result", { caseId, found });
+  logger.debug({ caseId, found }, "Case search result");
 
   return caseDocument && toCase(caseDocument);
 };
 
 export const updateStage = async (caseId, nextStage, timelineEvent) => {
-  logger.debug("Updating case stage", {
-    caseId,
-    nextStage,
-    hasTimelineEvent: !!timelineEvent,
-  });
+  logger.debug(
+    {
+      caseId,
+      nextStage,
+      hasTimelineEvent: !!timelineEvent,
+    },
+    "Updating case stage",
+  );
 
   const result = await db.collection(collection).updateOne(
     { _id: ObjectId.createFromHexString(caseId) },
@@ -192,14 +190,16 @@ export const updateStage = async (caseId, nextStage, timelineEvent) => {
     },
   );
 
-  logger.debug("Stage update result", {
-    caseId,
-    matchedCount: result.matchedCount,
-    modifiedCount: result.modifiedCount,
-  });
+  logger.debug(
+    {
+      caseId,
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    },
+    "Stage update result",
+  );
 
   if (result.matchedCount === 0) {
-    logger.debug("Stage update failed - case not found", { caseId });
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 };

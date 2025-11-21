@@ -40,11 +40,14 @@ export const claimEvents = async (claimedBy) => {
   const docs = await Promise.all(promises);
   const documents = docs.filter((d) => d !== null);
 
-  logger.debug("Events claimed", {
-    claimedBy,
-    claimed: documents.length,
-    attempted: NUMBER_OF_RECORDS,
-  });
+  logger.debug(
+    {
+      claimedBy,
+      claimed: documents.length,
+      attempted: NUMBER_OF_RECORDS,
+    },
+    "Events claimed",
+  );
   return documents.map((doc) => Inbox.fromDocument(doc));
 };
 
@@ -65,13 +68,16 @@ export const processExpiredEvents = async () => {
     },
   );
 
-  logger.debug("Expired events processed", {
-    modifiedCount: result.modifiedCount,
-  });
+  logger.debug(
+    {
+      modifiedCount: result.modifiedCount,
+    },
+    "Expired events processed",
+  );
 };
 
 export const updateDeadEvents = async () => {
-  logger.debug("Updating dead inbox events", { maxRetries: MAX_RETRIES });
+  logger.debug({ maxRetries: MAX_RETRIES }, "Updating dead inbox events");
 
   const results = await db.collection(collection).updateMany(
     { completionAttempts: { $gte: MAX_RETRIES } },
@@ -85,7 +91,7 @@ export const updateDeadEvents = async () => {
     },
   );
 
-  logger.debug("Dead events updated", { modifiedCount: results.modifiedCount });
+  logger.debug({ modifiedCount: results.modifiedCount }, "Dead events updated");
   return results;
 };
 
@@ -107,9 +113,12 @@ export const updateFailedEvents = async () => {
     },
   );
 
-  logger.debug("Failed events updated", {
-    modifiedCount: results.modifiedCount,
-  });
+  logger.debug(
+    {
+      modifiedCount: results.modifiedCount,
+    },
+    "Failed events updated",
+  );
   return results;
 };
 
@@ -132,31 +141,40 @@ export const updateResubmittedEvents = async () => {
     },
   );
 
-  logger.debug("Resubmitted events updated", {
-    modifiedCount: results.modifiedCount,
-  });
+  logger.debug(
+    {
+      modifiedCount: results.modifiedCount,
+    },
+    "Resubmitted events updated",
+  );
   return results;
 };
 
 export const insertMany = async (events, session) => {
-  logger.debug("Inserting multiple inbox events", {
-    count: events.length,
-    hasSession: !!session,
-  });
+  logger.debug(
+    {
+      count: events.length,
+      hasSession: !!session,
+    },
+    "Inserting multiple inbox events",
+  );
 
   const result = await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),
     { session },
   );
 
-  logger.debug("Multiple events inserted", {
-    insertedCount: result.insertedCount,
-  });
+  logger.debug(
+    {
+      insertedCount: result.insertedCount,
+    },
+    "Multiple events inserted",
+  );
   return result;
 };
 
 export const findByMessageId = async (messageId) => {
-  logger.debug("Finding inbox event by messageId", { messageId });
+  logger.debug({ messageId }, "Finding inbox event by messageId");
 
   const doc = await db.collection(collection).findOne({ messageId });
 
@@ -165,24 +183,30 @@ export const findByMessageId = async (messageId) => {
 };
 
 export const insertOne = async (inbox, session) => {
-  logger.debug("Inserting single inbox event", {
-    messageId: inbox.messageId,
-    hasSession: !!session,
-  });
+  logger.debug(
+    {
+      messageId: inbox.messageId,
+      hasSession: !!session,
+    },
+    "Inserting single inbox event",
+  );
 
   const result = await db
     .collection(collection)
     .insertOne(inbox.toDocument(), { session });
 
-  logger.debug("Single event inserted", { insertedId: result.insertedId });
+  logger.debug({ insertedId: result.insertedId }, "Single event inserted");
   return result;
 };
 
 export const update = async (inbox) => {
-  logger.debug("Updating inbox event", {
-    messageId: inbox.messageId,
-    status: inbox.status,
-  });
+  logger.debug(
+    {
+      messageId: inbox.messageId,
+      status: inbox.status,
+    },
+    "Updating inbox event",
+  );
 
   const document = inbox.toDocument();
   const { _id, ...updateDoc } = document;

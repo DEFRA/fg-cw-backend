@@ -1,4 +1,5 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
+import { logger } from "../../common/logger.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
@@ -40,6 +41,8 @@ export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
 
+  logger.debug({ userRoles, cases }, "User roles and cases found");
+
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);
   const workflowCodes = cases.map((c) => c.workflowCode);
 
@@ -53,6 +56,11 @@ export const findCasesUseCase = async () => {
     }),
     findWorkflowsUseCase(workflowFilter),
   ]);
+
+  logger.debug(
+    { assignedUsers, workflowsUserCanAccess },
+    "Assigned users and worklows users can access",
+  );
 
   const casesUserCanAccess = cases.reduce((acc, kase) => {
     const workflow = workflowsUserCanAccess.find(
@@ -76,6 +84,8 @@ export const findCasesUseCase = async () => {
     acc.push(kase);
     return acc;
   }, []);
+
+  logger.debug(casesUserCanAccess, "Cases users can access");
 
   return casesUserCanAccess;
 };
