@@ -25,7 +25,7 @@ export const findCaseByIdTabIdRoute = {
     const query = request.query ?? {};
 
     logger.debug(
-      `Finding case agreements for case ${caseId} using query ${query}`,
+      `Finding case agreements for case ${caseId} using query ${JSON.stringify(query)}`,
     );
     const tabData = await buildCaseDetailsTabUseCase({
       params: { caseId, tabId },
