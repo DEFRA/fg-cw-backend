@@ -572,7 +572,7 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:PUT_ON_HOLD",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
                     action: {
                       code: "PUT_ON_HOLD",
                       name: "Put on Hold",
@@ -623,7 +623,7 @@ export const up = async (db) => {
                 ],
               },
               {
-                code: "PUT_ON_HOLD",
+                code: "ON_HOLD",
                 name: "On Hold",
                 description: "Application is on hold pending more information",
                 interactive: true,
@@ -631,8 +631,8 @@ export const up = async (db) => {
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
-                      code: "REMOVE_ON_HOLD",
-                      name: "Remove On Hold",
+                      code: "RESUME",
+                      name: "Resume",
                       checkTasks: false,
                       comment: {
                         label: "Note",
@@ -640,16 +640,6 @@ export const up = async (db) => {
                           "All notes will be saved for auditing purposes",
                         mandatory: true,
                       },
-                    },
-                  },
-                  {
-                    targetPosition:
-                      "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
-                    action: {
-                      code: "REJECT_APPLICATION",
-                      name: "Reject",
-                      checkTasks: false,
-                      comment: null,
                     },
                   },
                 ],
@@ -847,7 +837,12 @@ export const up = async (db) => {
                       code: "REJECT_APPLICATION",
                       name: "Reject Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
                     },
                   },
                 ],
@@ -864,7 +859,12 @@ export const up = async (db) => {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for reinstate",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: false,
+                      },
                     },
                   },
                 ],
@@ -942,7 +942,12 @@ export const up = async (db) => {
                       code: "REJECT_APPLICATION",
                       name: "Reject",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
                     },
                   },
                 ],
@@ -960,7 +965,12 @@ export const up = async (db) => {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for reinstate",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: false,
+                      },
                     },
                   },
                 ],
@@ -983,24 +993,6 @@ export const up = async (db) => {
                 code: "AGREEMENT_ACCEPTED",
                 name: "Agreement accepted",
                 description: "Agreement is active and being monitored",
-                interactive: true,
-                transitions: [
-                  {
-                    targetPosition:
-                      "POST_AGREEMENT_MONITORING:MONITORING:COMPLETE_AGREEMENT",
-                    action: {
-                      code: "COMPLETE_AGREEMENT",
-                      name: "Complete Agreement",
-                      checkTasks: true,
-                      comment: null,
-                    },
-                  },
-                ],
-              },
-              {
-                code: "COMPLETE_AGREEMENT",
-                name: "Complete Agreement",
-                description: "Agreement has been completed",
                 interactive: false,
                 transitions: [],
               },
