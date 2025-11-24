@@ -18,10 +18,10 @@ export const findCaseByIdRoute = {
     const { caseId } = request.params;
     const { user } = request.auth.credentials;
 
-    logger.info(`Finding case ${caseId} for user ${user.id}`);
+    logger.info(`Finding case ${caseId}`);
     const result = await findCaseByIdUseCase(caseId, user);
 
-    logger.info(`Found case ${caseId} for user ${user.id}`);
+    logger.info(`Found case ${caseId}`);
     return result;
   },
 };
