@@ -54,6 +54,7 @@ export const up = async (db) => {
         name: "Rerun Rules",
         description: "Rerun the business rules validation",
         endpoint: "landGrantsRulesRerun",
+        display: true,
         target: {
           position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
           node: "landGrantsRulesRun",
@@ -65,6 +66,7 @@ export const up = async (db) => {
         code: "FETCH_RULES",
         name: "Fetch Rules",
         description: "Fetch a specific rules engine run by ID",
+        display: false,
         endpoint: {
           code: "FETCH_RULES_ENDPOINT",
           endpointParams: {
@@ -106,6 +108,11 @@ export const up = async (db) => {
                 text: "$.payload.createdAt",
                 type: "date",
                 format: "formatDate",
+              },
+              status: {
+                label: "Status",
+                text: "$.currentStatusName",
+                type: "string",
               },
             },
           },

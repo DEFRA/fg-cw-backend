@@ -75,6 +75,7 @@ describe("workflowSchema", () => {
             name: "Rerun Rules",
             description: "Rerun the business rules validation",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               node: "landGrantsRulesRun",
@@ -103,6 +104,7 @@ describe("workflowSchema", () => {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               node: "landGrantsRulesRun",
@@ -287,6 +289,7 @@ describe("workflowSchema", () => {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               node: "landGrantsRulesRun",
