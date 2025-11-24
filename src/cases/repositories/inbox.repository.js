@@ -136,25 +136,14 @@ export const updateResubmittedEvents = async () => {
 };
 
 export const insertMany = async (events, session) => {
-  logger.debug(
-    {
-      count: events.length,
-      hasSession: !!session,
-    },
-    "Inserting multiple inbox events",
-  );
+  logger.debug("Inserting multiple inbox events");
 
   const result = await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),
     { session },
   );
 
-  logger.debug(
-    {
-      insertedCount: result.insertedCount,
-    },
-    "Multiple events inserted",
-  );
+  logger.debug("Multiple events inserted");
   return result;
 };
 
@@ -168,19 +157,13 @@ export const findByMessageId = async (messageId) => {
 };
 
 export const insertOne = async (inbox, session) => {
-  logger.debug(
-    {
-      messageId: inbox.messageId,
-      hasSession: !!session,
-    },
-    "Inserting single inbox event",
-  );
+  logger.debug("Inserting single inbox event");
 
   const result = await db
     .collection(collection)
     .insertOne(inbox.toDocument(), { session });
 
-  logger.debug({ insertedId: result.insertedId }, "Single event inserted");
+  logger.debug("Inbox event inserted");
   return result;
 };
 
