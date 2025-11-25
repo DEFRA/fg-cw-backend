@@ -96,9 +96,9 @@ export class InboxSubscriber {
       await this.markEventComplete(msg);
     } catch (ex) {
       logger.error(
-        { err: ex, type, source, messageId },
-        "Error handling event for inbox message",
+        `Error handling event for inbox message ${type}:${messageId}`,
       );
+      logger.error(ex.message);
       await this.markEventFailed(msg);
     }
   }
