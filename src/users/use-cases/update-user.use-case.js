@@ -4,6 +4,8 @@ import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 
 export const updateUserUseCase = async ({ userId, props }) => {
+  logger.debug(`Updating user by id: ${userId}`);
+
   const user = await findUserByIdUseCase(userId);
 
   logger.debug(`Updating user: ${user.name}`);
@@ -30,6 +32,8 @@ export const updateUserUseCase = async ({ userId, props }) => {
   }
 
   await update(user);
+
+  logger.debug(`Finished: Updating user: ${user.id}`);
 
   return user;
 };

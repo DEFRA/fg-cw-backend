@@ -5,7 +5,7 @@ import { save } from "../repositories/role.repository.js";
 export const createRoleUseCase = async (props) => {
   const createdAt = new Date().toISOString();
 
-  logger.info(`Creating role: ${props.code}`);
+  logger.debug(`Creating role: ${props.code}`);
   const role = new Role({
     code: props.code,
     description: props.description,
@@ -14,6 +14,8 @@ export const createRoleUseCase = async (props) => {
   });
 
   await save(role);
-  logger.info(`Role created: ${role.code}`);
+
+  logger.debug(`Finished: Creating role: ${role.code}`);
+
   return role;
 };

@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { RoleDocument } from "../models/role-document.js";
 import { Role } from "../models/role.js";
@@ -39,9 +38,6 @@ export const save = async (role) => {
 export const findAll = async () => {
   const roleDocuments = await db.collection(collection).find({}).toArray();
 
-  logger.debug(
-    `Found ${roleDocuments.length} roles ${roleDocuments.join(", ")}`,
-  );
   return roleDocuments.map(toRole);
 };
 
@@ -49,8 +45,6 @@ export const findByCode = async (code) => {
   const roleDocument = await db.collection(collection).findOne({
     code,
   });
-
-  logger.debug(`Found role ${roleDocument?.code}`);
 
   return roleDocument && toRole(roleDocument);
 };

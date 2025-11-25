@@ -23,7 +23,7 @@ export const findUserByIdRoute = {
     const { userId } = request.params;
     logger.info(`Finding user by id: ${userId}`);
     const result = await findUserByIdUseCase(userId);
-    logger.info(`User found: ${result.name}`);
+    logger.info(`Finished: Finding user by id: ${userId}`);
     return result;
   },
 };

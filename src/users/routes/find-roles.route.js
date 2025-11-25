@@ -15,7 +15,7 @@ export const findRolesRoute = {
   async handler() {
     logger.info("Finding roles");
     const roles = await findRolesUseCase();
-    logger.info("Roles found");
+    logger.info("Finished: Finding roles");
     return roles;
   },
 };

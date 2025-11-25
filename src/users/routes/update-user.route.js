@@ -27,7 +27,7 @@ export const updateUserRoute = {
       userId: request.params.userId,
       props: request.payload,
     });
-    logger.info(`User updated: ${user.name}`);
+    logger.info(`Finished: Updating user: ${request.params.userId}`);
     return user;
   },
 };

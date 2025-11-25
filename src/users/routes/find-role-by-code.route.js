@@ -22,7 +22,7 @@ export const findRoleByCodeRoute = {
   async handler(request) {
     logger.info("Finding role by code");
     const role = await findRoleByCodeUseCase(request.params.code);
-    logger.info("Role found");
+    logger.info("Finished: Finding role by code");
     return role;
   },
 };

@@ -32,7 +32,7 @@ export const findUsersRoute = {
       allAppRoles: request.query.allAppRoles,
       anyAppRoles: request.query.anyAppRoles,
     });
-    logger.info("Users found");
+    logger.info("Finished: Finding users");
     return results;
   },
 };
