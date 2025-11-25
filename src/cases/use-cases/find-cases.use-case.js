@@ -41,7 +41,7 @@ export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
 
-  logger.debug({ userRoles, cases }, "User roles and cases found");
+  logger.debug(`Finding cases for user roles: ${userRoles.join(", ")}`);
 
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);
   const workflowCodes = cases.map((c) => c.workflowCode);
@@ -56,11 +56,6 @@ export const findCasesUseCase = async () => {
     }),
     findWorkflowsUseCase(workflowFilter),
   ]);
-
-  logger.debug(
-    { assignedUsers, workflowsUserCanAccess },
-    "Assigned users and worklows users can access",
-  );
 
   const casesUserCanAccess = cases.reduce((acc, kase) => {
     const workflow = workflowsUserCanAccess.find(
@@ -98,7 +93,9 @@ export const findCasesUseCase = async () => {
     return acc;
   }, []);
 
-  logger.debug(casesUserCanAccess, "Cases users can access");
+  logger.debug(
+    `Finished: finding cases for user roles: ${userRoles.join(", ")}`,
+  );
 
   return casesUserCanAccess;
 };

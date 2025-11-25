@@ -16,6 +16,10 @@ import { findByCode } from "../repositories/workflow.repository.js";
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
 
+  logger.debug(
+    `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+  );
+
   const { caseId, tabId } = request.params;
 
   const kase = await findById(caseId);
@@ -37,15 +41,11 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     buildLinks(root),
     buildContent(root),
   ]);
+
   logger.debug(
-    {
-      caseId,
-      tabId,
-      workflowCode: kase.workflowCode,
-      position: kase.position.toString(),
-    },
-    "Case details tab use case completed",
+    `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
   );
+
   return {
     caseId,
     caseRef: kase.caseRef,

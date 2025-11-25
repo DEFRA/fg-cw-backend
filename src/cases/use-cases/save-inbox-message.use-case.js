@@ -10,7 +10,7 @@ export const messageSource = {
 };
 
 export const saveInboxMessageUseCase = async (message, source) => {
-  logger.info("Save inbox message use case");
+  logger.debug("Save inbox message use case");
   const existing = await findByMessageId(message.id);
   if (existing !== null) {
     // message has already been stored
@@ -18,7 +18,7 @@ export const saveInboxMessageUseCase = async (message, source) => {
     return;
   }
 
-  logger.info(`Storing message with id ${message.id}.`);
+  logger.debug(`Storing message with id ${message.id}.`);
   const inbox = new Inbox({
     traceparent: message.traceparent,
     event: message,
@@ -28,5 +28,5 @@ export const saveInboxMessageUseCase = async (message, source) => {
   });
 
   await insertOne(inbox);
-  logger.info("Inbox message stored");
+  logger.debug("Finished: Save inbox message use case");
 };

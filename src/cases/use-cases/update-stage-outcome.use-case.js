@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { config } from "../../common/config.js";
+import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
@@ -8,6 +9,9 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
+  logger.debug(
+    `Updating stage outcome use case started - caseId: ${command.caseId}`,
+  );
   return await withTransaction(async (session) => {
     const { caseId, actionCode, comment, user } = command;
     const kase = await findById(caseId);
@@ -50,6 +54,10 @@ export const updateStageOutcomeUseCase = async (command) => {
         }),
       ],
       session,
+    );
+
+    logger.debug(
+      `Finished: Updating stage outcome use case started - caseId: ${command.caseId}`,
     );
   });
 };

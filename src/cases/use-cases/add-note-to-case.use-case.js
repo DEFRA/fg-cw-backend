@@ -6,8 +6,7 @@ export const addNoteToCaseUseCase = async (command) => {
   const { caseId, text, user } = command;
 
   logger.debug(
-    { caseId, userId: user.id, hasText: !!text },
-    "Adding note to case use case started",
+    `Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}`,
   );
 
   const kase = await findById(caseId);
@@ -23,7 +22,9 @@ export const addNoteToCaseUseCase = async (command) => {
 
   await update(kase);
 
-  logger.debug({ caseId, noteRef: note.ref }, "Case updated with new note");
+  logger.debug(
+    `Finished: Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}, noteRef: ${note.ref}`,
+  );
 
   return note;
 };

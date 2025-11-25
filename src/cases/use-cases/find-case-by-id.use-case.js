@@ -5,6 +5,7 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { logger } from "../../common/logger.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
@@ -128,6 +129,7 @@ export const mapWorkflowCommentDef = (workflowTask) => {
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
 
+  logger.debug(`Finding case by id ${caseId}`);
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }

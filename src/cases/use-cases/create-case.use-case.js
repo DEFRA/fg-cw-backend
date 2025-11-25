@@ -37,6 +37,7 @@ const createCasePhase = (phase) =>
   });
 
 export const createCaseUseCase = async (message) => {
+  logger.debug("Creating case use case started.");
   return await withTransaction(async (session) => {
     const {
       event: { data },
@@ -56,7 +57,7 @@ export const createCaseUseCase = async (message) => {
     });
 
     logger.info(
-      `Saving case with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+      `Finished: Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
     );
 
     await save(kase, session);

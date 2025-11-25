@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { Position } from "../models/position.js";
 import {
   findByCaseRefAndWorkflowCode,
@@ -12,6 +13,10 @@ export const updateSupplementaryDataUseCase = async ({
   newStatus,
   supplementaryData,
 }) => {
+  logger.debug(
+    `Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}, newStatus: ${newStatus}, supplementaryData: ${JSON.stringify(supplementaryData)}`,
+  );
+
   const kase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
 
   if (!kase) {
@@ -38,5 +43,8 @@ export const updateSupplementaryDataUseCase = async ({
 
   await update(kase);
 
+  logger.debug(
+    `Finished: Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}`,
+  );
   return kase;
 };
