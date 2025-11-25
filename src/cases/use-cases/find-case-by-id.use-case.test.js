@@ -305,18 +305,7 @@ describe("findCaseByIdUseCase", () => {
         name: "Stage 1",
         interactive: true,
         outcome: undefined,
-        actionsDisabled: true,
-        actions: [
-          {
-            code: "ACTION_1",
-            name: "Action 1",
-            comment: {
-              helpText: "Action help text",
-              label: "Action label 1",
-              mandatory: true,
-            },
-          },
-        ],
+        actions: [],
         taskGroups: [
           {
             code: "TASK_GROUP_1",
@@ -377,6 +366,33 @@ describe("findCaseByIdUseCase", () => {
         },
       ],
     });
+  });
+
+  it("returns permitted actions when stage is complete", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions).toEqual([
+      {
+        code: "ACTION_1",
+        name: "Action 1",
+        comment: {
+          helpText: "Action help text",
+          label: "Action label 1",
+          mandatory: true,
+        },
+      },
+    ]);
   });
 
   it("throws when case not found", async () => {

@@ -166,8 +166,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
           tasks: mapTasks(caseTaskGroup, workflowTaskGroup, userMap),
         };
       }),
-      actionsDisabled: !kase.isStageComplete(workflow),
-      actions: workflowStage.getActions(kase.position).map((a) => ({
+      actions: kase.getPermittedActions(workflow).map((a) => ({
         code: a.code,
         name: a.name,
         comment: a.comment,
