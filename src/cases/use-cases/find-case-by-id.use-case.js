@@ -145,7 +145,6 @@ export const findCaseByIdUseCase = async (caseId, user) => {
 
   return {
     _id: kase._id,
-    caseId: kase._id,
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
     currentStatus: kase.position.statusCode,
