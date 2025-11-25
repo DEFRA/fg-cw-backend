@@ -1,12 +1,12 @@
 /**
  * Finds an external action in a workflow by action code.
  */
-export const findExternalAction = (actionValue, workflow) => {
-  if (typeof actionValue !== "string" || !workflow.externalActions) {
+export const findExternalAction = (actionCode, workflow) => {
+  if (typeof actionCode !== "string" || !workflow.externalActions) {
     return null;
   }
 
-  return workflow.externalActions.find((action) => action.code === actionValue);
+  return workflow.externalActions.find((action) => action.code === actionCode);
 };
 
 /**

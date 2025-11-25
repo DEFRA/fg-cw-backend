@@ -701,7 +701,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       expect(result.content).toBeDefined();
     });
 
-    it("should handle non-string actionValue", async () => {
+    it("should handle non-string actionCode", async () => {
       const mockCase = Case.createMock();
 
       const mockWorkflow = Workflow.createMock({
@@ -723,7 +723,7 @@ describe("buildCaseDetailsTabUseCase", () => {
               tabs: {
                 "test-tab": {
                   action: {
-                    // Non-string actionValue - should be handled gracefully
+                    // Non-string actionCode - should be handled gracefully
                     numericAction: 123,
                   },
                   content: [
@@ -748,7 +748,7 @@ describe("buildCaseDetailsTabUseCase", () => {
         query: {},
       });
 
-      // Should handle gracefully when actionValue is not a string
+      // Should handle gracefully when actionCode is not a string
       expect(result.caseId).toBe("test-case-id");
       expect(result.content).toBeDefined();
     });

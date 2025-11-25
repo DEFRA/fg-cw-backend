@@ -159,7 +159,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "FETCH_APPLICATION",
+        actionCode: "FETCH_APPLICATION",
         caseWorkflowContext,
       });
 
@@ -197,7 +197,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "CREATE_USER",
+        actionCode: "CREATE_USER",
         caseWorkflowContext,
       });
 
@@ -239,7 +239,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "UPDATE_STATUS",
+        actionCode: "UPDATE_STATUS",
         caseWorkflowContext,
       });
 
@@ -280,7 +280,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "RECALCULATE_RULES",
+        actionCode: "RECALCULATE_RULES",
         caseWorkflowContext,
       });
 
@@ -320,7 +320,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "MIXED_PARAMS_ACTION",
+        actionCode: "MIXED_PARAMS_ACTION",
         caseWorkflowContext,
       });
 
@@ -349,7 +349,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "NON_EXISTENT_ACTION",
+        actionCode: "NON_EXISTENT_ACTION",
         caseWorkflowContext,
       });
 
@@ -371,7 +371,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "NO_ENDPOINT_ACTION",
+        actionCode: "NO_ENDPOINT_ACTION",
         caseWorkflowContext,
       });
 
@@ -396,7 +396,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "NO_PARAMS_ACTION",
+        actionCode: "NO_PARAMS_ACTION",
         caseWorkflowContext,
       });
 
@@ -412,7 +412,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "ANY_ACTION",
+        actionCode: "ANY_ACTION",
         caseWorkflowContext,
       });
 
@@ -453,7 +453,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "FETCH_RULES",
+        actionCode: "FETCH_RULES",
         caseWorkflowContext,
       });
 
@@ -496,7 +496,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "FETCH_RULES",
+        actionCode: "FETCH_RULES",
         caseWorkflowContext,
       });
 
@@ -532,7 +532,7 @@ describe("parameter-resolver", () => {
       };
 
       const result = await extractEndpointParameters({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext,
       });
 

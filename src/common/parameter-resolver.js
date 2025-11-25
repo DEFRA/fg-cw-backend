@@ -35,11 +35,11 @@ export const resolveParameterMap = async ({
  * Extracts and resolves endpoint parameters from an external action.
  */
 export const extractEndpointParameters = async ({
-  actionValue,
+  actionCode,
   caseWorkflowContext,
 }) => {
   const externalAction = findExternalAction(
-    actionValue,
+    actionCode,
     caseWorkflowContext.workflow,
   );
 

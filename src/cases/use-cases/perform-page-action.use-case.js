@@ -10,7 +10,6 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
   const kase = await loadCase(caseId);
   const workflow = await loadWorkflow(kase.workflowCode);
   const externalAction = validateExternalAction(actionCode, workflow);
-
   const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
 
   logger.info(
@@ -19,7 +18,7 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
   );
 
   const response = await callAPIAndFetchData({
-    actionValue: actionCode,
+    actionCode,
     caseWorkflowContext,
     throwOnError: true,
   });

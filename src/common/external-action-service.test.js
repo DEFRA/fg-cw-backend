@@ -88,13 +88,13 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(mockResponse);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
 
       expect(result).toEqual(mockResponse);
       expect(logger.info).toHaveBeenCalledWith(
-        { actionValue: "TEST_ACTION" },
+        { actionCode: "TEST_ACTION" },
         "Starting external service call for action: TEST_ACTION",
       );
       expect(mockFindExternalAction).toHaveBeenCalledWith(
@@ -103,7 +103,7 @@ describe("external-action-service", () => {
       );
       expect(mockFindEndpoint).toHaveBeenCalledWith("TEST_ENDPOINT", workflow);
       expect(mockExtractEndpointParameters).toHaveBeenCalledWith({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
       expect(mockCallExternalEndpoint).toHaveBeenCalledWith(
@@ -113,7 +113,7 @@ describe("external-action-service", () => {
         false,
       );
       expect(logger.info).toHaveBeenCalledWith(
-        { actionValue: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
+        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
         "Successfully fetched data from external service for action: TEST_ACTION",
       );
     });
@@ -130,7 +130,7 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(mockResponse);
 
       await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
         throwOnError: true,
       });
@@ -154,7 +154,7 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(null);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
 
@@ -176,7 +176,7 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(undefined);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
 
@@ -194,19 +194,19 @@ describe("external-action-service", () => {
       mockFindExternalAction.mockReturnValue(null);
 
       const result = await callAPIAndFetchData({
-        actionValue: "UNKNOWN_ACTION",
+        actionCode: "UNKNOWN_ACTION",
         caseWorkflowContext: context,
         throwOnError: false,
       });
 
       expect(result).toEqual({});
       expect(logger.warn).toHaveBeenCalledWith(
-        { actionValue: "UNKNOWN_ACTION" },
+        { actionCode: "UNKNOWN_ACTION" },
         "No endpoint defined for action: UNKNOWN_ACTION",
       );
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-          actionValue: "UNKNOWN_ACTION",
+          actionCode: "UNKNOWN_ACTION",
         }),
         expect.stringContaining(
           "Failed to fetch data for action UNKNOWN_ACTION",
@@ -222,14 +222,14 @@ describe("external-action-service", () => {
 
       await expect(
         callAPIAndFetchData({
-          actionValue: "UNKNOWN_ACTION",
+          actionCode: "UNKNOWN_ACTION",
           caseWorkflowContext: context,
           throwOnError: true,
         }),
       ).rejects.toThrow("No endpoint defined for action: UNKNOWN_ACTION");
 
       expect(logger.warn).toHaveBeenCalledWith(
-        { actionValue: "UNKNOWN_ACTION" },
+        { actionCode: "UNKNOWN_ACTION" },
         "No endpoint defined for action: UNKNOWN_ACTION",
       );
     });
@@ -245,14 +245,14 @@ describe("external-action-service", () => {
       mockFindExternalAction.mockReturnValue(actionWithoutEndpoint);
 
       const result = await callAPIAndFetchData({
-        actionValue: "NO_ENDPOINT_ACTION",
+        actionCode: "NO_ENDPOINT_ACTION",
         caseWorkflowContext: context,
         throwOnError: false,
       });
 
       expect(result).toEqual({});
       expect(logger.warn).toHaveBeenCalledWith(
-        { actionValue: "NO_ENDPOINT_ACTION" },
+        { actionCode: "NO_ENDPOINT_ACTION" },
         "No endpoint defined for action: NO_ENDPOINT_ACTION",
       );
       expect(logger.error).toHaveBeenCalled();
@@ -270,7 +270,7 @@ describe("external-action-service", () => {
 
       await expect(
         callAPIAndFetchData({
-          actionValue: "NO_ENDPOINT_ACTION",
+          actionCode: "NO_ENDPOINT_ACTION",
           caseWorkflowContext: context,
           throwOnError: true,
         }),
@@ -285,7 +285,7 @@ describe("external-action-service", () => {
       mockFindEndpoint.mockReturnValue(null);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
         throwOnError: false,
       });
@@ -307,7 +307,7 @@ describe("external-action-service", () => {
 
       await expect(
         callAPIAndFetchData({
-          actionValue: "TEST_ACTION",
+          actionCode: "TEST_ACTION",
           caseWorkflowContext: context,
           throwOnError: true,
         }),
@@ -331,14 +331,14 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockRejectedValue(testError);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
         throwOnError: false,
       });
 
       expect(result).toEqual({});
       expect(logger.error).toHaveBeenCalledWith(
-        { error: testError, actionValue: "TEST_ACTION" },
+        { error: testError, actionCode: "TEST_ACTION" },
         "Failed to fetch data for action TEST_ACTION: Network failure",
       );
     });
@@ -356,14 +356,14 @@ describe("external-action-service", () => {
 
       await expect(
         callAPIAndFetchData({
-          actionValue: "TEST_ACTION",
+          actionCode: "TEST_ACTION",
           caseWorkflowContext: context,
           throwOnError: true,
         }),
       ).rejects.toThrow("Connection timeout");
 
       expect(logger.error).toHaveBeenCalledWith(
-        { error: testError, actionValue: "TEST_ACTION" },
+        { error: testError, actionCode: "TEST_ACTION" },
         "Failed to fetch data for action TEST_ACTION: Connection timeout",
       );
     });
@@ -378,14 +378,14 @@ describe("external-action-service", () => {
       mockExtractEndpointParameters.mockRejectedValue(validationError);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
         throwOnError: false,
       });
 
       expect(result).toEqual({});
       expect(logger.error).toHaveBeenCalledWith(
-        { error: validationError, actionValue: "TEST_ACTION" },
+        { error: validationError, actionCode: "TEST_ACTION" },
         "Failed to fetch data for action TEST_ACTION: Invalid parameter format",
       );
     });
@@ -402,13 +402,13 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(emptyResponse);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
 
       expect(result).toEqual({});
       expect(logger.info).toHaveBeenCalledWith(
-        { actionValue: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
+        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
         "Successfully fetched data from external service for action: TEST_ACTION",
       );
     });
@@ -437,13 +437,13 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(complexResponse);
 
       const result = await callAPIAndFetchData({
-        actionValue: "TEST_ACTION",
+        actionCode: "TEST_ACTION",
         caseWorkflowContext: context,
       });
 
       expect(result).toEqual(complexResponse);
       expect(logger.info).toHaveBeenCalledWith(
-        { actionValue: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
+        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
         "Successfully fetched data from external service for action: TEST_ACTION",
       );
     });
@@ -481,7 +481,7 @@ describe("external-action-service", () => {
       mockCallExternalEndpoint.mockResolvedValue(mockResponse);
 
       const result = await callAPIAndFetchData({
-        actionValue: "POST_ACTION",
+        actionCode: "POST_ACTION",
         caseWorkflowContext: context,
       });
 

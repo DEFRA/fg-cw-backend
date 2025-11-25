@@ -7,18 +7,18 @@ import { findEndpoint, findExternalAction } from "./workflow-helpers.js";
  * Calls an external API and fetches data based on an action value.
  */
 export const callAPIAndFetchData = async ({
-  actionValue,
+  actionCode,
   caseWorkflowContext,
   throwOnError = false,
 }) => {
   try {
     logger.info(
-      { actionValue },
-      `Starting external service call for action: ${actionValue}`,
+      { actionCode },
+      `Starting external service call for action: ${actionCode}`,
     );
 
     const externalAction = validateExternalAction(
-      actionValue,
+      actionCode,
       caseWorkflowContext.workflow,
     );
 
@@ -28,7 +28,7 @@ export const callAPIAndFetchData = async ({
     );
 
     const params = await extractEndpointParameters({
-      actionValue,
+      actionCode,
       caseWorkflowContext,
     });
 
@@ -39,21 +39,21 @@ export const callAPIAndFetchData = async ({
       throwOnError,
     );
 
-    return handleResponse(response, endpoint.code, actionValue);
+    return handleResponse(response, endpoint.code, actionCode);
   } catch (error) {
-    return handleError(error, actionValue, throwOnError);
+    return handleError(error, actionCode, throwOnError);
   }
 };
 
-const validateExternalAction = (actionValue, workflow) => {
-  const externalAction = findExternalAction(actionValue, workflow);
+const validateExternalAction = (actionCode, workflow) => {
+  const externalAction = findExternalAction(actionCode, workflow);
 
   if (!externalAction?.endpoint?.code) {
     logger.warn(
-      { actionValue },
-      `No endpoint defined for action: ${actionValue}`,
+      { actionCode },
+      `No endpoint defined for action: ${actionCode}`,
     );
-    throw new Error(`No endpoint defined for action: ${actionValue}`);
+    throw new Error(`No endpoint defined for action: ${actionCode}`);
   }
 
   return externalAction;
@@ -70,27 +70,27 @@ const validateEndpoint = (endpointCode, workflow) => {
   return endpoint;
 };
 
-const handleResponse = (response, endpointCode, actionValue) => {
+const handleResponse = (response, endpoint, actionCode) => {
   if (!response) {
     logger.warn(
-      { endpoint: endpointCode },
-      `No response from external endpoint: ${endpointCode}`,
+      { endpoint },
+      `No response from external endpoint: ${endpoint}`,
     );
     return {};
   }
 
   logger.info(
-    { actionValue, endpoint: endpointCode },
-    `Successfully fetched data from external service for action: ${actionValue}`,
+    { actionCode, endpoint },
+    `Successfully fetched data from external service for action: ${actionCode}`,
   );
 
   return response;
 };
 
-const handleError = (error, actionValue, throwOnError) => {
+const handleError = (error, actionCode, throwOnError) => {
   logger.error(
-    { error, actionValue },
-    `Failed to fetch data for action ${actionValue}: ${error.message}`,
+    { error, actionCode },
+    `Failed to fetch data for action ${actionCode}: ${error.message}`,
   );
 
   if (throwOnError) {

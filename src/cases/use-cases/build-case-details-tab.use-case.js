@@ -106,9 +106,9 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
   }
   const actionData = {};
   for (const key of Object.keys(tabDefinition.action)) {
-    const actionValue = tabDefinition.action[key];
+    const actionCode = tabDefinition.action[key];
     actionData[key] = await callAPIAndFetchData({
-      actionValue,
+      actionCode,
       caseWorkflowContext,
     });
   }

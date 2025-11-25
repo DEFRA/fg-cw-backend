@@ -130,7 +130,7 @@ describe("performPageActionUseCase", () => {
     expect(mockFindById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
     expect(mockFindByCode).toHaveBeenCalledWith("FRPS");
     expect(mockCallAPIAndFetchData).toHaveBeenCalledWith({
-      actionValue: "RECALCULATE_RULES",
+      actionCode: "RECALCULATE_RULES",
       caseWorkflowContext: { ...mockCase, workflow: mockWorkflow },
       throwOnError: true,
     });
