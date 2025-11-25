@@ -558,7 +558,7 @@ describe("ExternalActionUseCase", () => {
     it("should return empty object when throwOnError is false", () => {
       const mockError = new Error("Test error");
 
-      const result = service.handleError(mockError, "TEST_ACTION", false);
+      const result = service.handleError(mockError, false);
 
       expect(result).toEqual({});
     });
@@ -566,9 +566,7 @@ describe("ExternalActionUseCase", () => {
     it("should throw error when throwOnError is true", () => {
       const mockError = new Error("Test error");
 
-      expect(() => service.handleError(mockError, "TEST_ACTION", true)).toThrow(
-        mockError,
-      );
+      expect(() => service.handleError(mockError, true)).toThrow(mockError);
     });
   });
 });

@@ -40,7 +40,7 @@ export class ExternalActionUseCase {
 
       return this.processResponse(response);
     } catch (error) {
-      return this.handleError(error, actionCode, throwOnError);
+      return this.handleError(error, throwOnError);
     }
   }
 
@@ -88,7 +88,7 @@ export class ExternalActionUseCase {
     return response;
   }
 
-  handleError(error, actionCode, throwOnError) {
+  handleError(error, throwOnError) {
     if (throwOnError) {
       throw error;
     }
