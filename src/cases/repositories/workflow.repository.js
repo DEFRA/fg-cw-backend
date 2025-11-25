@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
@@ -129,40 +128,18 @@ const toWorkflow = (doc) =>
   });
 
 export const save = async (workflow) => {
-  logger.debug(
-    {
-      code: workflow.code,
-      phasesCount: workflow.phases.length,
-    },
-    "Saving workflow",
-  );
-
   const workflowDocument = new WorkflowDocument(workflow);
 
   let result;
 
   try {
     result = await db.collection(collection).insertOne(workflowDocument);
-    logger.debug(
-      {
-        code: workflow.code,
-        insertedId: result.insertedId,
-      },
-      "Workflow saved successfully",
-    );
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(
         `Workflow with code "${workflow.code}" already exists`,
       );
     }
-    logger.debug(
-      {
-        code: workflow.code,
-        error: error.message,
-      },
-      "Workflow save failed with unexpected error",
-    );
     throw error;
   }
 
@@ -188,13 +165,10 @@ export const createWorkflowFilter = (query = {}) => {
     filter.$expr = $expr;
   }
 
-  logger.debug({ filter, originalQuery: query }, "Created workflow filter");
   return filter;
 };
 
 export const findAll = async (query) => {
-  logger.debug({ query }, "Finding all workflows");
-
   const filter = createWorkflowFilter(query);
 
   const workflowDocuments = await db
@@ -202,19 +176,13 @@ export const findAll = async (query) => {
     .find(filter)
     .toArray();
 
-  logger.debug({ count: workflowDocuments.length, query }, "Workflows found");
   return workflowDocuments.map(toWorkflow);
 };
 
 export const findByCode = async (code) => {
-  logger.debug({ code }, "Finding workflow by code");
-
   const workflowDocument = await db.collection(collection).findOne({
     code,
   });
-
-  const found = !!workflowDocument;
-  logger.debug({ code, found }, "Workflow search result");
 
   return workflowDocument && toWorkflow(workflowDocument);
 };

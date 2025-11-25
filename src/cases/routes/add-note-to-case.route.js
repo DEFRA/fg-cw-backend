@@ -41,7 +41,7 @@ export const addNoteToCaseRoute = {
       user,
     });
 
-    logger.info(`Added note ${note.ref} to case ${caseId}`);
+    logger.info(`Finished: Adding note to case ${caseId}`);
 
     return h
       .response({

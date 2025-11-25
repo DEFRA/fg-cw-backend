@@ -35,7 +35,7 @@ export const assignUserToCaseRoute = {
       user,
     });
 
-    logger.info(`Assigned user ${assignedUserId} to case ${caseId}`);
+    logger.info(`Finished: Assigning user ${assignedUserId} to case ${caseId}`);
 
     return h.response().code(204);
   },

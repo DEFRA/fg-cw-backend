@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
-import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
@@ -67,15 +66,6 @@ const toCase = (doc) => {
 };
 
 export const save = async (kase, session) => {
-  logger.debug(
-    {
-      caseRef: kase.caseRef,
-      workflowCode: kase.workflowCode,
-      hasSession: !!session,
-    },
-    "Saving new case",
-  );
-
   const caseDocument = new CaseDocument(kase);
 
   let result;
@@ -84,31 +74,16 @@ export const save = async (kase, session) => {
     result = await db
       .collection(collection)
       .insertOne(caseDocument, { session });
-    logger.debug(
-      {
-        caseRef: kase.caseRef,
-        insertedId: result.insertedId,
-      },
-      "Case saved successfully",
-    );
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(
         `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" already exists`,
       );
     }
-    logger.debug(
-      {
-        caseRef: kase.caseRef,
-        error: error.message,
-      },
-      "Case save failed with unexpected error",
-    );
     throw error;
   }
 
   if (!result.acknowledged) {
-    logger.debug({ caseRef: kase.caseRef }, "Case save not acknowledged");
     throw Boom.internal(
       `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" could not be created, the operation was not acknowledged`,
     );
@@ -116,8 +91,6 @@ export const save = async (kase, session) => {
 };
 
 export const update = async (kase) => {
-  logger.debug({ caseId: kase._id, caseRef: kase.caseRef }, "Updating case");
-
   const caseDocument = new CaseDocument(kase);
 
   const result = await db
@@ -138,53 +111,27 @@ export const update = async (kase) => {
 };
 
 export const findAll = async () => {
-  logger.debug("Finding all cases");
   const caseDocuments = await db.collection(collection).find().toArray();
-  logger.debug({ count: caseDocuments.length }, "Cases found");
   return caseDocuments.map(toCase);
 };
 
 export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
-  logger.debug(
-    {
-      caseRef,
-      workflowCode,
-    },
-    "Finding case by caseRef and workflowCode",
-  );
   const caseDocument = await db.collection(collection).findOne({
     caseRef,
     workflowCode,
   });
-
-  const found = !!caseDocument;
-  logger.debug({ caseRef, workflowCode, found }, "Case search result");
-
   return caseDocument && toCase(caseDocument);
 };
 
 export const findById = async (caseId) => {
-  logger.debug({ caseId }, "Finding case by ID");
   const caseDocument = await db.collection(collection).findOne({
     _id: ObjectId.createFromHexString(caseId),
   });
-
-  const found = !!caseDocument;
-  logger.debug({ caseId, found }, "Case search result");
 
   return caseDocument && toCase(caseDocument);
 };
 
 export const updateStage = async (caseId, nextStage, timelineEvent) => {
-  logger.debug(
-    {
-      caseId,
-      nextStage,
-      hasTimelineEvent: !!timelineEvent,
-    },
-    "Updating case stage",
-  );
-
   const result = await db.collection(collection).updateOne(
     { _id: ObjectId.createFromHexString(caseId) },
     {
@@ -196,15 +143,6 @@ export const updateStage = async (caseId, nextStage, timelineEvent) => {
         },
       },
     },
-  );
-
-  logger.debug(
-    {
-      caseId,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-    },
-    "Stage update result",
   );
 
   if (result.matchedCount === 0) {

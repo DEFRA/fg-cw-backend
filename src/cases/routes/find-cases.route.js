@@ -11,7 +11,7 @@ export const findCasesRoute = {
   async handler() {
     logger.info("Finding cases");
     const results = await findCasesUseCase();
-    logger.info("Found cases");
+    logger.info("Finished finding cases");
     return results;
   },
 };

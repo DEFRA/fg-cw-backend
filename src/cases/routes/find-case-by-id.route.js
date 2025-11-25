@@ -21,7 +21,7 @@ export const findCaseByIdRoute = {
     logger.info(`Finding case ${caseId}`);
     const result = await findCaseByIdUseCase(caseId, user);
 
-    logger.info(`Found case ${caseId}`);
+    logger.info(`Finished: Finding case ${caseId}`);
     return result;
   },
 };
