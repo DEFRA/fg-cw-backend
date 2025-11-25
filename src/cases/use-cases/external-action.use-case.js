@@ -1,26 +1,22 @@
+import Boom from "@hapi/boom";
 import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
-import { logger } from "../../common/logger.js";
 import { extractEndpointParameters } from "../../common/parameter-resolver.js";
 
 export class ExternalActionUseCase {
-  constructor({ endpointClient, parameterResolver, logger: loggerInstance }) {
+  constructor({ endpointClient, parameterResolver }) {
     this.endpointClient = endpointClient;
     this.parameterResolver = parameterResolver;
-    this.logger = loggerInstance;
   }
 
   static create() {
     return new ExternalActionUseCase({
       endpointClient: { callExternalEndpoint },
       parameterResolver: { extractEndpointParameters },
-      logger,
     });
   }
 
   async execute({ actionCode, caseWorkflowContext, throwOnError = false }) {
     try {
-      this.logExecutionStart(actionCode);
-
       const action = this.validateAction(
         actionCode,
         caseWorkflowContext.workflow,
@@ -42,7 +38,7 @@ export class ExternalActionUseCase {
         throwOnError,
       );
 
-      return this.processResponse(response, endpoint.code, actionCode);
+      return this.processResponse(response);
     } catch (error) {
       return this.handleError(error, actionCode, throwOnError);
     }
@@ -52,11 +48,7 @@ export class ExternalActionUseCase {
     const action = workflow.findExternalAction(actionCode);
 
     if (!action?.endpoint?.code) {
-      this.logger.warn(
-        { actionCode },
-        `No endpoint defined for action: ${actionCode}`,
-      );
-      throw new Error(`No endpoint defined for action: ${actionCode}`);
+      throw Boom.notFound(`No endpoint defined for action: ${actionCode}`);
     }
 
     return action;
@@ -66,8 +58,7 @@ export class ExternalActionUseCase {
     const endpoint = workflow.findEndpoint(endpointCode);
 
     if (!endpoint) {
-      this.logger.warn({ endpointCode }, `Endpoint not found: ${endpointCode}`);
-      throw new Error(`Endpoint not found: ${endpointCode}`);
+      throw Boom.notFound(`Endpoint not found: ${endpointCode}`);
     }
 
     return endpoint;
@@ -89,40 +80,19 @@ export class ExternalActionUseCase {
     );
   }
 
-  processResponse(response, endpointCode, actionCode) {
+  processResponse(response) {
     if (!response) {
-      this.logger.warn(
-        { endpoint: endpointCode },
-        `No response from external endpoint: ${endpointCode}`,
-      );
       return {};
     }
-
-    this.logger.info(
-      { actionCode, endpoint: endpointCode },
-      `Successfully executed external action: ${actionCode}`,
-    );
 
     return response;
   }
 
   handleError(error, actionCode, throwOnError) {
-    this.logger.error(
-      { error, actionCode },
-      `Failed to execute action ${actionCode}: ${error.message}`,
-    );
-
     if (throwOnError) {
       throw error;
     }
 
     return {};
-  }
-
-  logExecutionStart(actionCode) {
-    this.logger.info(
-      { actionCode },
-      `Starting external action execution: ${actionCode}`,
-    );
   }
 }

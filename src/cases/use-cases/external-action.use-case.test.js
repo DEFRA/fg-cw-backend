@@ -5,7 +5,6 @@ describe("ExternalActionUseCase", () => {
   let service;
   let mockEndpointClient;
   let mockParameterResolver;
-  let mockLogger;
 
   beforeEach(() => {
     mockEndpointClient = {
@@ -14,16 +13,10 @@ describe("ExternalActionUseCase", () => {
     mockParameterResolver = {
       extractEndpointParameters: vi.fn(),
     };
-    mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    };
 
     service = new ExternalActionUseCase({
       endpointClient: mockEndpointClient,
       parameterResolver: mockParameterResolver,
-      logger: mockLogger,
     });
   });
 
@@ -33,13 +26,11 @@ describe("ExternalActionUseCase", () => {
       expect(defaultService).toBeInstanceOf(ExternalActionUseCase);
       expect(defaultService.endpointClient).toBeDefined();
       expect(defaultService.parameterResolver).toBeDefined();
-      expect(defaultService.logger).toBeDefined();
     });
 
     it("should create instance with custom dependencies", () => {
       expect(service.endpointClient).toBe(mockEndpointClient);
       expect(service.parameterResolver).toBe(mockParameterResolver);
-      expect(service.logger).toBe(mockLogger);
     });
   });
 
@@ -78,14 +69,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual(mockResponse);
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION" },
-        "Starting external action execution: TEST_ACTION",
-      );
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
-        "Successfully executed external action: TEST_ACTION",
-      );
     });
 
     it("should handle throwOnError parameter", async () => {
@@ -112,10 +95,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Test error",
-      );
     });
 
     it("should return empty object when response is null", async () => {
@@ -140,10 +119,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpoint: "TEST_ENDPOINT" },
-        "No response from external endpoint: TEST_ENDPOINT",
-      );
     });
 
     it("should return empty object when response is undefined", async () => {
@@ -168,10 +143,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpoint: "TEST_ENDPOINT" },
-        "No response from external endpoint: TEST_ENDPOINT",
-      );
     });
 
     it("should return empty object when action not found and throwOnError is false", async () => {
@@ -188,10 +159,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "NON_EXISTENT_ACTION" },
-        "No endpoint defined for action: NON_EXISTENT_ACTION",
-      );
     });
 
     it("should throw error when action not found and throwOnError is true", async () => {
@@ -208,11 +175,6 @@ describe("ExternalActionUseCase", () => {
           throwOnError: true,
         }),
       ).rejects.toThrow("No endpoint defined for action: NON_EXISTENT_ACTION");
-
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "NON_EXISTENT_ACTION" },
-        "No endpoint defined for action: NON_EXISTENT_ACTION",
-      );
     });
 
     it("should return empty object when action has no endpoint and throwOnError is false", async () => {
@@ -232,10 +194,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION" },
-        "No endpoint defined for action: TEST_ACTION",
-      );
     });
 
     it("should throw error when action has no endpoint and throwOnError is true", async () => {
@@ -255,11 +213,6 @@ describe("ExternalActionUseCase", () => {
           throwOnError: true,
         }),
       ).rejects.toThrow("No endpoint defined for action: TEST_ACTION");
-
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION" },
-        "No endpoint defined for action: TEST_ACTION",
-      );
     });
 
     it("should return empty object when endpoint not found and throwOnError is false", async () => {
@@ -280,10 +233,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpointCode: "NON_EXISTENT_ENDPOINT" },
-        "Endpoint not found: NON_EXISTENT_ENDPOINT",
-      );
     });
 
     it("should throw error when endpoint not found and throwOnError is true", async () => {
@@ -304,11 +253,6 @@ describe("ExternalActionUseCase", () => {
           throwOnError: true,
         }),
       ).rejects.toThrow("Endpoint not found: NON_EXISTENT_ENDPOINT");
-
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpointCode: "NON_EXISTENT_ENDPOINT" },
-        "Endpoint not found: NON_EXISTENT_ENDPOINT",
-      );
     });
 
     it("should return empty object on error when throwOnError is false", async () => {
@@ -335,10 +279,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Test error",
-      );
     });
 
     it("should throw error when throwOnError is true", async () => {
@@ -365,11 +305,6 @@ describe("ExternalActionUseCase", () => {
           throwOnError: true,
         }),
       ).rejects.toThrow("Test error");
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Test error",
-      );
     });
 
     it("should handle validation error during parameter extraction", async () => {
@@ -395,10 +330,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Parameter extraction error",
-      );
     });
 
     it("should handle empty response object", async () => {
@@ -424,10 +355,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual({});
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
-        "Successfully executed external action: TEST_ACTION",
-      );
     });
 
     it("should handle complex response object", async () => {
@@ -456,10 +383,6 @@ describe("ExternalActionUseCase", () => {
       });
 
       expect(result).toEqual(mockResponse);
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
-        "Successfully executed external action: TEST_ACTION",
-      );
     });
 
     it("should handle different endpoint methods", async () => {
@@ -521,10 +444,6 @@ describe("ExternalActionUseCase", () => {
       expect(() =>
         service.validateAction("NON_EXISTENT_ACTION", mockWorkflow),
       ).toThrow("No endpoint defined for action: NON_EXISTENT_ACTION");
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "NON_EXISTENT_ACTION" },
-        "No endpoint defined for action: NON_EXISTENT_ACTION",
-      );
     });
 
     it("should throw error when action has no endpoint", () => {
@@ -534,10 +453,6 @@ describe("ExternalActionUseCase", () => {
       };
 
       expect(() => service.validateAction("TEST_ACTION", mockWorkflow)).toThrow(
-        "No endpoint defined for action: TEST_ACTION",
-      );
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION" },
         "No endpoint defined for action: TEST_ACTION",
       );
     });
@@ -564,10 +479,6 @@ describe("ExternalActionUseCase", () => {
       expect(() =>
         service.validateEndpoint("NON_EXISTENT_ENDPOINT", mockWorkflow),
       ).toThrow("Endpoint not found: NON_EXISTENT_ENDPOINT");
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpointCode: "NON_EXISTENT_ENDPOINT" },
-        "Endpoint not found: NON_EXISTENT_ENDPOINT",
-      );
     });
   });
 
@@ -625,59 +536,31 @@ describe("ExternalActionUseCase", () => {
     it("should return response when valid", () => {
       const mockResponse = { data: "test" };
 
-      const result = service.processResponse(
-        mockResponse,
-        "TEST_ENDPOINT",
-        "TEST_ACTION",
-      );
+      const result = service.processResponse(mockResponse);
 
       expect(result).toEqual(mockResponse);
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION", endpoint: "TEST_ENDPOINT" },
-        "Successfully executed external action: TEST_ACTION",
-      );
     });
 
     it("should return empty object when response is null", () => {
-      const result = service.processResponse(
-        null,
-        "TEST_ENDPOINT",
-        "TEST_ACTION",
-      );
+      const result = service.processResponse(null);
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpoint: "TEST_ENDPOINT" },
-        "No response from external endpoint: TEST_ENDPOINT",
-      );
     });
 
     it("should return empty object when response is undefined", () => {
-      const result = service.processResponse(
-        undefined,
-        "TEST_ENDPOINT",
-        "TEST_ACTION",
-      );
+      const result = service.processResponse(undefined);
 
       expect(result).toEqual({});
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { endpoint: "TEST_ENDPOINT" },
-        "No response from external endpoint: TEST_ENDPOINT",
-      );
     });
   });
 
   describe("handleError", () => {
-    it("should log error and return empty object when throwOnError is false", () => {
+    it("should return empty object when throwOnError is false", () => {
       const mockError = new Error("Test error");
 
       const result = service.handleError(mockError, "TEST_ACTION", false);
 
       expect(result).toEqual({});
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: mockError, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Test error",
-      );
     });
 
     it("should throw error when throwOnError is true", () => {
@@ -685,21 +568,6 @@ describe("ExternalActionUseCase", () => {
 
       expect(() => service.handleError(mockError, "TEST_ACTION", true)).toThrow(
         mockError,
-      );
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: mockError, actionCode: "TEST_ACTION" },
-        "Failed to execute action TEST_ACTION: Test error",
-      );
-    });
-  });
-
-  describe("logExecutionStart", () => {
-    it("should log execution start", () => {
-      service.logExecutionStart("TEST_ACTION");
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { actionCode: "TEST_ACTION" },
-        "Starting external action execution: TEST_ACTION",
       );
     });
   });
