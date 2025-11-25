@@ -47,10 +47,10 @@ const caseSchema = Joi.object({
 }).unknown(true);
 
 const ExternalActionTarget = Joi.object({
-  node: Joi.string().required(),
-  nodeType: Joi.string().valid("array").required(),
+  targetNode: Joi.string().required(),
+  dataType: Joi.string().valid("ARRAY", "OBJECT").required(),
   position: Joi.string().required(),
-  place: Joi.string().valid("append").optional(),
+  key: Joi.string().optional(),
 }).label("ExternalActionTarget");
 
 const ExternalActionEndpoint = Joi.object({
@@ -63,7 +63,6 @@ const Endpoint = Joi.object({
   service: Joi.string().required(),
   path: Joi.string().required(),
   method: Joi.string().required(),
-  request: Joi.object().allow(null).required(),
 }).label("Endpoint");
 
 const ExternalAction = Joi.object({

@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import Wreck from "@hapi/wreck";
 import { resolveEndpoint } from "./endpoint-resolver.js";
 import { logger } from "./logger.js";
@@ -12,6 +13,7 @@ export const callExternalEndpoint = async (
   endpoint,
   params,
   caseWorkflowContext,
+  throwOnError = false,
 ) => {
   const resolvedParams = params ?? {};
   try {
@@ -20,9 +22,9 @@ export const callExternalEndpoint = async (
       resolvedParams,
       caseWorkflowContext,
     );
-    return handleResponse(endpoint, response, payload);
+    return handleResponse(endpoint, response, payload, throwOnError);
   } catch (error) {
-    return handleRequestError(endpoint, error);
+    return handleRequestError(endpoint, error, throwOnError);
   }
 };
 
@@ -33,7 +35,7 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   );
 
   const pathParams = params.PATH || {};
-  const requestData = params.REQUEST || {};
+  const requestData = params.BODY || {};
   const fullUrl = buildUrl(baseUrl, endpoint.path, pathParams);
   const options = buildRequestOptions(
     endpoint.method,
@@ -86,13 +88,20 @@ const logRequestStart = (endpoint, url, headers) => {
   );
 };
 
-const handleResponse = (endpoint, response, payload) => {
+const handleResponse = (endpoint, response, payload, throwOnError) => {
   if (isSuccessStatus(response.statusCode)) {
     logSuccess(endpoint, response.statusCode);
     return payload;
   }
 
   logNonSuccessStatus(endpoint, response.statusCode, payload);
+
+  if (throwOnError) {
+    throw Boom.badGateway(
+      `External endpoint ${endpoint.code} returned non-success status: ${response.statusCode}`,
+    );
+  }
+
   return null;
 };
 
@@ -121,7 +130,7 @@ const logNonSuccessStatus = (endpoint, statusCode, responseBody) => {
   );
 };
 
-const handleRequestError = (endpoint, error) => {
+const handleRequestError = (endpoint, error, throwOnError) => {
   logger.error(
     {
       error,
@@ -130,6 +139,13 @@ const handleRequestError = (endpoint, error) => {
     },
     `Failed to call external endpoint: ${endpoint.code}`,
   );
+
+  if (throwOnError) {
+    throw Boom.badGateway(
+      `Failed to call external endpoint ${endpoint.code}: ${error.message}`,
+    );
+  }
+
   return null;
 };
 

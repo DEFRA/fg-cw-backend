@@ -168,11 +168,11 @@ describe("parameter-resolver", () => {
           caseId: "case-123",
           appId: "APP-456",
         },
-        REQUEST: {},
+        BODY: {},
       });
     });
 
-    it("should extract and resolve REQUEST parameters", async () => {
+    it("should extract and resolve BODY parameters", async () => {
       const caseWorkflowContext = {
         payload: {
           name: "John Doe",
@@ -185,7 +185,7 @@ describe("parameter-resolver", () => {
               endpoint: {
                 code: "CREATE_USER_ENDPOINT",
                 endpointParams: {
-                  REQUEST: {
+                  BODY: {
                     name: "$.payload.name",
                     email: "$.payload.email",
                   },
@@ -203,14 +203,14 @@ describe("parameter-resolver", () => {
 
       expect(result).toEqual({
         PATH: {},
-        REQUEST: {
+        BODY: {
           name: "John Doe",
           email: "john@example.com",
         },
       });
     });
 
-    it("should extract both PATH and REQUEST parameters", async () => {
+    it("should extract both PATH and BODY parameters", async () => {
       const caseWorkflowContext = {
         _id: "case-123",
         payload: {
@@ -227,7 +227,7 @@ describe("parameter-resolver", () => {
                   PATH: {
                     caseId: "$._id",
                   },
-                  REQUEST: {
+                  BODY: {
                     status: "$.payload.status",
                     comments: "$.payload.comments",
                   },
@@ -247,9 +247,89 @@ describe("parameter-resolver", () => {
         PATH: {
           caseId: "case-123",
         },
-        REQUEST: {
+        BODY: {
           status: "approved",
           comments: "Looks good",
+        },
+      });
+    });
+
+    it("should extract BODY parameters", async () => {
+      const caseWorkflowContext = {
+        supplementaryData: {
+          rulesCalculations: [
+            { id: 905, valid: true, date: "2025-10-25T22:08:43.553Z" },
+          ],
+        },
+        workflow: {
+          externalActions: [
+            {
+              code: "RECALCULATE_RULES",
+              endpoint: {
+                code: "RECALCULATE_RULES_ENDPOINT",
+                endpointParams: {
+                  BODY: {
+                    id: "$.supplementaryData.rulesCalculations[0].id",
+                    requesterUsername: "CASEWORKING_SYSTEM",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = await extractEndpointParameters({
+        actionValue: "RECALCULATE_RULES",
+        caseWorkflowContext,
+      });
+
+      expect(result).toEqual({
+        PATH: {},
+        BODY: {
+          id: 905,
+          requesterUsername: "CASEWORKING_SYSTEM",
+        },
+      });
+    });
+
+    it("should handle both PATH and BODY parameters", async () => {
+      const caseWorkflowContext = {
+        _id: "case-123",
+        supplementaryData: {
+          rulesCalculations: [{ id: 905 }],
+        },
+        workflow: {
+          externalActions: [
+            {
+              code: "MIXED_PARAMS_ACTION",
+              endpoint: {
+                code: "MIXED_PARAMS_ENDPOINT",
+                endpointParams: {
+                  PATH: {
+                    caseId: "$._id",
+                  },
+                  BODY: {
+                    ruleId: "$.supplementaryData.rulesCalculations[0].id",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const result = await extractEndpointParameters({
+        actionValue: "MIXED_PARAMS_ACTION",
+        caseWorkflowContext,
+      });
+
+      expect(result).toEqual({
+        PATH: {
+          caseId: "case-123",
+        },
+        BODY: {
+          ruleId: 905,
         },
       });
     });
@@ -275,7 +355,7 @@ describe("parameter-resolver", () => {
 
       expect(result).toEqual({
         PATH: {},
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -297,7 +377,7 @@ describe("parameter-resolver", () => {
 
       expect(result).toEqual({
         PATH: {},
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -322,7 +402,7 @@ describe("parameter-resolver", () => {
 
       expect(result).toEqual({
         PATH: {},
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -338,7 +418,7 @@ describe("parameter-resolver", () => {
 
       expect(result).toEqual({
         PATH: {},
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -381,7 +461,7 @@ describe("parameter-resolver", () => {
         PATH: {
           runId: "123",
         },
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -424,7 +504,7 @@ describe("parameter-resolver", () => {
         PATH: {
           runId: 789,
         },
-        REQUEST: {},
+        BODY: {},
       });
     });
 
@@ -462,7 +542,7 @@ describe("parameter-resolver", () => {
         PATH: {
           caseId: "case-123",
         },
-        REQUEST: {},
+        BODY: {},
       });
       expect(logger.warn).toHaveBeenCalledWith(
         { paramType: "UNKNOWN_TYPE" },

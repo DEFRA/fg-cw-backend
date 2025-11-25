@@ -956,8 +956,13 @@
       "code": "FETCH_RULES_ENDPOINT",
       "service": "RULES_ENGINE",
       "path": "/case-management-adapter/application/validation-run/{runId}",
-      "method": "GET",
-      "request": null
+      "method": "GET"
+    },
+    {
+      "code": "RECALCULATE_RULES_ENDPOINT",
+      "service": "RULES_ENGINE",
+      "path": "/case-management-adapter/application/validation-run/rerun",
+      "method": "POST"
     }
   ],
   "externalActions": [
@@ -965,12 +970,19 @@
       "code": "RERUN_RULES",
       "name": "Rerun Rules",
       "description": "Rerun the business rules validation",
-      "endpoint": "landGrantsRulesRerun",
+      "endpoint": {
+        "code": "RERUN_RULES_ENDPOINT",
+        "endpointParams": {
+          "BODY": {
+            "id": "$.payload.answers.rulesCalculations.id",
+            "requesterUsername": "CASEWORKING_SYSTEM"
+          }
+        }
+      },
       "target": {
-        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-        "node": "landGrantsRulesRun",
-        "nodeType": "array",
-        "place": "append"
+        "position": null,
+        "targetNode": "rulesCalculations",
+        "dataType": "ARRAY"
       }
     },
     {

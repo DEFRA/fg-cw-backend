@@ -518,9 +518,8 @@ describe("buildViewModel", () => {
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
-              place: "append",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
             },
           },
           {

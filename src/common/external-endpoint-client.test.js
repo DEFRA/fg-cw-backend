@@ -105,7 +105,7 @@ describe("external-endpoint-client", () => {
 
       const params = {
         PATH: { runId: 123 },
-        REQUEST: {},
+        BODY: {},
       };
 
       const result = await callExternalEndpoint(endpoint, params);
@@ -147,7 +147,7 @@ describe("external-endpoint-client", () => {
 
       const params = {
         PATH: {},
-        REQUEST: { name: "test", value: 42 },
+        BODY: { name: "test", value: 42 },
       };
 
       const result = await callExternalEndpoint(endpoint, params);

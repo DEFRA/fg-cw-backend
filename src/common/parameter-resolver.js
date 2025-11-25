@@ -60,7 +60,7 @@ const hasEndpointParams = (externalAction) => {
 const createEmptyParams = () => {
   return {
     PATH: {},
-    REQUEST: {},
+    BODY: {},
   };
 };
 
@@ -82,8 +82,8 @@ const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
 const assignParamsByType = (params, paramType, resolvedParams) => {
   if (paramType === "PATH") {
     params.PATH = resolvedParams;
-  } else if (paramType === "REQUEST") {
-    params.REQUEST = resolvedParams;
+  } else if (paramType === "BODY") {
+    params.BODY = resolvedParams;
   } else {
     logger.warn(
       { paramType },

@@ -9,6 +9,7 @@ import { findEndpoint, findExternalAction } from "./workflow-helpers.js";
 export const callAPIAndFetchData = async ({
   actionValue,
   caseWorkflowContext,
+  throwOnError = false,
 }) => {
   try {
     logger.info(
@@ -35,11 +36,12 @@ export const callAPIAndFetchData = async ({
       endpoint,
       params,
       caseWorkflowContext,
+      throwOnError,
     );
 
     return handleResponse(response, endpoint.code, actionValue);
   } catch (error) {
-    return handleError(error, actionValue);
+    return handleError(error, actionValue, throwOnError);
   }
 };
 
@@ -85,10 +87,15 @@ const handleResponse = (response, endpointCode, actionValue) => {
   return response;
 };
 
-const handleError = (error, actionValue) => {
+const handleError = (error, actionValue, throwOnError) => {
   logger.error(
     { error, actionValue },
     `Failed to fetch data for action ${actionValue}: ${error.message}`,
   );
+
+  if (throwOnError) {
+    throw error;
+  }
+
   return {};
 };

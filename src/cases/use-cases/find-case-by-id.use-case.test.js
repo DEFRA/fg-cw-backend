@@ -245,6 +245,7 @@ describe("findCaseByIdUseCase", () => {
     // TODO: strip to what's necessary when individual endpoints are exposed
     expect(result).toEqual({
       _id: kase._id,
+      caseId: kase._id,
       assignedUser: null,
       caseRef: "case-ref",
       comments: [],
