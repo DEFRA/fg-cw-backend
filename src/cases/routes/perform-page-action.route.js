@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { performPageActionRequestSchema } from "../schemas/requests/perform-page-action-request.schema.js";
 import { performPageActionUseCase } from "../use-cases/perform-page-action.use-case.js";
@@ -30,6 +31,6 @@ export const performPageActionRoute = {
       actionCode,
     });
 
-    return h.response().code(204);
+    return h.response().code(HttpCodes.NoContent);
   },
 };
