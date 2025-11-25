@@ -131,8 +131,8 @@ export const caseData2 = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: "PENDING",
-                  completed: false,
+                  status: "COMPLETE",
+                  completed: true,
                   commentRef: null,
                   updatedAt: null,
                   updatedBy: null,
