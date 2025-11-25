@@ -99,6 +99,22 @@ export class Workflow {
     return transition.targetPosition;
   }
 
+  findExternalAction(actionCode) {
+    if (typeof actionCode !== "string" || !this.externalActions) {
+      return null;
+    }
+
+    return this.externalActions.find((action) => action.code === actionCode);
+  }
+
+  findEndpoint(endpointCode) {
+    if (!this.endpoints) {
+      return null;
+    }
+
+    return this.endpoints.find((endpoint) => endpoint.code === endpointCode);
+  }
+
   static createMock(props) {
     return new Workflow({
       code: "workflow-code",

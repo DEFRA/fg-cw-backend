@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Workflow } from "../models/workflow.js";
 import { performPageActionUseCase } from "./perform-page-action.use-case.js";
 
 vi.mock("../../common/external-action-service.js");
@@ -17,7 +18,7 @@ describe("performPageActionUseCase", () => {
   let mockFindById;
   let mockFindByCode;
   let mockUpdate;
-  let mockCallAPIAndFetchData;
+  let mockExternalActionUseCase;
   let mockCreateCaseWorkflowContext;
 
   beforeEach(async () => {
@@ -27,22 +28,26 @@ describe("performPageActionUseCase", () => {
     const workflowRepository = await import(
       "../repositories/workflow.repository.js"
     );
-    const externalActionService = await import(
-      "../../common/external-action-service.js"
+    const { ExternalActionUseCase } = await import(
+      "./external-action.use-case.js"
     );
     const buildViewModel = await import("../../common/build-view-model.js");
 
     mockFindById = vi.spyOn(caseRepository, "findById");
     mockFindByCode = vi.spyOn(workflowRepository, "findByCode");
     mockUpdate = vi.spyOn(caseRepository, "update");
-    mockCallAPIAndFetchData = vi.spyOn(
-      externalActionService,
-      "callAPIAndFetchData",
-    );
+    mockExternalActionUseCase = vi.fn();
+    vi.spyOn(ExternalActionUseCase, "create").mockReturnValue({
+      execute: mockExternalActionUseCase,
+    });
     mockCreateCaseWorkflowContext = vi.spyOn(
       buildViewModel,
       "createCaseWorkflowContext",
     );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   const createMockCase = () => ({
@@ -57,50 +62,52 @@ describe("performPageActionUseCase", () => {
     updateSupplementaryData: vi.fn(),
   });
 
-  const createMockWorkflow = () => ({
-    code: "FRPS",
-    externalActions: [
-      {
-        code: "RECALCULATE_RULES",
-        name: "Recalculate Rules",
-        endpoint: {
+  const createMockWorkflow = () => {
+    return Workflow.createMock({
+      code: "FRPS",
+      externalActions: [
+        {
+          code: "RECALCULATE_RULES",
+          name: "Recalculate Rules",
+          endpoint: {
+            code: "RECALCULATE_RULES_ENDPOINT",
+            endpointParams: {
+              BODY: {
+                id: "$.supplementaryData.rulesCalculations[0].id",
+                requesterUsername: "CASEWORKING_SYSTEM",
+              },
+            },
+          },
+          target: {
+            position: null,
+            targetNode: "rulesCalculations",
+            dataType: "ARRAY",
+          },
+        },
+        {
+          code: "FETCH_RULES",
+          name: "Fetch Rules",
+          endpoint: {
+            code: "FETCH_RULES_ENDPOINT",
+            endpointParams: {
+              PATH: {
+                runId: "$.supplementaryData.rulesCalculations[0].id",
+              },
+            },
+          },
+          target: null,
+        },
+      ],
+      endpoints: [
+        {
           code: "RECALCULATE_RULES_ENDPOINT",
-          endpointParams: {
-            BODY: {
-              id: "$.supplementaryData.rulesCalculations[0].id",
-              requesterUsername: "CASEWORKING_SYSTEM",
-            },
-          },
+          service: "RULES_ENGINE",
+          path: "/api/rerun",
+          method: "POST",
         },
-        target: {
-          position: null,
-          targetNode: "rulesCalculations",
-          dataType: "ARRAY",
-        },
-      },
-      {
-        code: "FETCH_RULES",
-        name: "Fetch Rules",
-        endpoint: {
-          code: "FETCH_RULES_ENDPOINT",
-          endpointParams: {
-            PATH: {
-              runId: "$.supplementaryData.rulesCalculations[0].id",
-            },
-          },
-        },
-        target: null,
-      },
-    ],
-    endpoints: [
-      {
-        code: "RECALCULATE_RULES_ENDPOINT",
-        service: "RULES_ENGINE",
-        path: "/api/rerun",
-        method: "POST",
-      },
-    ],
-  });
+      ],
+    });
+  };
 
   it("should perform action and store response when target is defined", async () => {
     const mockCase = createMockCase();
@@ -114,7 +121,7 @@ describe("performPageActionUseCase", () => {
 
     mockFindById.mockResolvedValue(mockCase);
     mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockCallAPIAndFetchData.mockResolvedValue(mockResponse);
+    mockExternalActionUseCase.mockResolvedValue(mockResponse);
     mockCreateCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
@@ -129,7 +136,7 @@ describe("performPageActionUseCase", () => {
     expect(result).toEqual(mockResponse);
     expect(mockFindById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
     expect(mockFindByCode).toHaveBeenCalledWith("FRPS");
-    expect(mockCallAPIAndFetchData).toHaveBeenCalledWith({
+    expect(mockExternalActionUseCase).toHaveBeenCalledWith({
       actionCode: "RECALCULATE_RULES",
       caseWorkflowContext: { ...mockCase, workflow: mockWorkflow },
       throwOnError: true,
@@ -154,7 +161,7 @@ describe("performPageActionUseCase", () => {
 
     mockFindById.mockResolvedValue(mockCase);
     mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockCallAPIAndFetchData.mockResolvedValue(mockResponse);
+    mockExternalActionUseCase.mockResolvedValue(mockResponse);
     mockCreateCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
@@ -177,7 +184,7 @@ describe("performPageActionUseCase", () => {
 
     mockFindById.mockResolvedValue(mockCase);
     mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockCallAPIAndFetchData.mockResolvedValue(mockResponse);
+    mockExternalActionUseCase.mockResolvedValue(mockResponse);
     mockCreateCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
@@ -200,7 +207,7 @@ describe("performPageActionUseCase", () => {
 
     mockFindById.mockResolvedValue(mockCase);
     mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockCallAPIAndFetchData.mockResolvedValue(mockResponse);
+    mockExternalActionUseCase.mockResolvedValue(mockResponse);
     mockCreateCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,

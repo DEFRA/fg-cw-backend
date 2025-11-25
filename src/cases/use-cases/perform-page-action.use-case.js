@@ -1,10 +1,9 @@
 import Boom from "@hapi/boom";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
-import { callAPIAndFetchData } from "../../common/external-action-service.js";
 import { logger } from "../../common/logger.js";
-import { findExternalAction } from "../../common/workflow-helpers.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { ExternalActionUseCase } from "./external-action.use-case.js";
 
 export const performPageActionUseCase = async ({ caseId, actionCode }) => {
   const kase = await loadCase(caseId);
@@ -17,7 +16,8 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
     `Performing page action: ${actionCode} for case: ${caseId}`,
   );
 
-  const response = await callAPIAndFetchData({
+  const externalActionUseCase = ExternalActionUseCase.create();
+  const response = await externalActionUseCase.execute({
     actionCode,
     caseWorkflowContext,
     throwOnError: true,
@@ -55,7 +55,7 @@ const loadWorkflow = async (workflowCode) => {
 };
 
 const validateExternalAction = (actionCode, workflow) => {
-  const externalAction = findExternalAction(actionCode, workflow);
+  const externalAction = workflow.findExternalAction(actionCode);
 
   if (!externalAction) {
     throw Boom.notFound(`External action not found: ${actionCode}`);

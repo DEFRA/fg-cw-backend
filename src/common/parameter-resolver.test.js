@@ -1,38 +1,31 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { Workflow } from "../cases/models/workflow.js";
 import {
   extractEndpointParameters,
   resolveParameterMap,
 } from "./parameter-resolver.js";
 
-vi.mock("./logger.js", () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
-
 describe("parameter-resolver", () => {
-  beforeEach(async () => {
-    const { logger } = await import("./logger.js");
-    logger.info.mockClear();
-    logger.warn.mockClear();
-  });
+  const createMockWorkflowWithActions = (externalActions, endpoints = []) => {
+    return Workflow.createMock({
+      code: "FRPS",
+      externalActions,
+      endpoints,
+    });
+  };
 
   describe("resolveParameterMap", () => {
     it("should resolve simple JSONPath parameters", async () => {
       const caseWorkflowContext = {
         _id: "case-123",
-        caseRef: "REF-001",
         payload: {
-          businessName: "Test Business",
-          sbi: "123456789",
+          amount: 500,
         },
       };
 
       const paramMap = {
-        caseId: "$._id",
-        businessName: "$.payload.businessName",
-        sbi: "$.payload.sbi",
+        id: "$._id",
+        amount: "$.payload.amount",
       };
 
       const result = await resolveParameterMap({
@@ -41,22 +34,21 @@ describe("parameter-resolver", () => {
       });
 
       expect(result).toEqual({
-        caseId: "case-123",
-        businessName: "Test Business",
-        sbi: "123456789",
+        id: "case-123",
+        amount: 500,
       });
     });
 
     it("should resolve JSONata expressions", async () => {
       const caseWorkflowContext = {
         payload: {
-          amount: 1000,
-          rate: 0.1,
+          amount: 500,
+          multiplier: 2,
         },
       };
 
       const paramMap = {
-        total: "jsonata:$.payload.amount * $.payload.rate",
+        doubled: "jsonata:$.payload.amount * $.payload.multiplier",
       };
 
       const result = await resolveParameterMap({
@@ -65,7 +57,7 @@ describe("parameter-resolver", () => {
       });
 
       expect(result).toEqual({
-        total: 100,
+        doubled: 1000,
       });
     });
 
@@ -86,11 +78,11 @@ describe("parameter-resolver", () => {
 
     it("should resolve undefined paths as empty string", async () => {
       const caseWorkflowContext = {
-        _id: "case-123",
+        payload: {},
       };
 
       const paramMap = {
-        nonExistent: "$.nonExistent.path",
+        nonExistent: "$.payload.nonExistent",
       };
 
       const result = await resolveParameterMap({
@@ -140,8 +132,8 @@ describe("parameter-resolver", () => {
         payload: {
           applicationId: "APP-456",
         },
-        workflow: {
-          externalActions: [
+        workflow: createMockWorkflowWithActions(
+          [
             {
               code: "FETCH_APPLICATION",
               endpoint: {
@@ -155,7 +147,15 @@ describe("parameter-resolver", () => {
               },
             },
           ],
-        },
+          [
+            {
+              code: "FETCH_APP_ENDPOINT",
+              service: "APPLICATION_SERVICE",
+              path: "/api/applications",
+              method: "GET",
+            },
+          ],
+        ),
       };
 
       const result = await extractEndpointParameters({
@@ -178,22 +178,20 @@ describe("parameter-resolver", () => {
           name: "John Doe",
           email: "john@example.com",
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "CREATE_USER",
-              endpoint: {
-                code: "CREATE_USER_ENDPOINT",
-                endpointParams: {
-                  BODY: {
-                    name: "$.payload.name",
-                    email: "$.payload.email",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "CREATE_USER",
+            endpoint: {
+              code: "CREATE_USER_ENDPOINT",
+              endpointParams: {
+                BODY: {
+                  name: "$.payload.name",
+                  email: "$.payload.email",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -217,25 +215,23 @@ describe("parameter-resolver", () => {
           status: "approved",
           comments: "Looks good",
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "UPDATE_STATUS",
-              endpoint: {
-                code: "UPDATE_STATUS_ENDPOINT",
-                endpointParams: {
-                  PATH: {
-                    caseId: "$._id",
-                  },
-                  BODY: {
-                    status: "$.payload.status",
-                    comments: "$.payload.comments",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "UPDATE_STATUS",
+            endpoint: {
+              code: "UPDATE_STATUS_ENDPOINT",
+              endpointParams: {
+                PATH: {
+                  caseId: "$._id",
+                },
+                BODY: {
+                  status: "$.payload.status",
+                  comments: "$.payload.comments",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -261,22 +257,20 @@ describe("parameter-resolver", () => {
             { id: 905, valid: true, date: "2025-10-25T22:08:43.553Z" },
           ],
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "RECALCULATE_RULES",
-              endpoint: {
-                code: "RECALCULATE_RULES_ENDPOINT",
-                endpointParams: {
-                  BODY: {
-                    id: "$.supplementaryData.rulesCalculations[0].id",
-                    requesterUsername: "CASEWORKING_SYSTEM",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "RECALCULATE_RULES",
+            endpoint: {
+              code: "RECALCULATE_RULES_ENDPOINT",
+              endpointParams: {
+                BODY: {
+                  id: "$.supplementaryData.rulesCalculations[0].id",
+                  requesterUsername: "CASEWORKING_SYSTEM",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -299,24 +293,22 @@ describe("parameter-resolver", () => {
         supplementaryData: {
           rulesCalculations: [{ id: 905 }],
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "MIXED_PARAMS_ACTION",
-              endpoint: {
-                code: "MIXED_PARAMS_ENDPOINT",
-                endpointParams: {
-                  PATH: {
-                    caseId: "$._id",
-                  },
-                  BODY: {
-                    ruleId: "$.supplementaryData.rulesCalculations[0].id",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "MIXED_PARAMS_ACTION",
+            endpoint: {
+              code: "MIXED_PARAMS_ENDPOINT",
+              endpointParams: {
+                PATH: {
+                  caseId: "$._id",
+                },
+                BODY: {
+                  ruleId: "$.supplementaryData.rulesCalculations[0].id",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -336,16 +328,14 @@ describe("parameter-resolver", () => {
 
     it("should return empty params when action not found", async () => {
       const caseWorkflowContext = {
-        workflow: {
-          externalActions: [
-            {
-              code: "SOME_ACTION",
-              endpoint: {
-                code: "SOME_ENDPOINT",
-              },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "SOME_ACTION",
+            endpoint: {
+              code: "SOME_ENDPOINT",
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -361,13 +351,11 @@ describe("parameter-resolver", () => {
 
     it("should return empty params when action has no endpoint", async () => {
       const caseWorkflowContext = {
-        workflow: {
-          externalActions: [
-            {
-              code: "NO_ENDPOINT_ACTION",
-            },
-          ],
-        },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "NO_ENDPOINT_ACTION",
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -383,16 +371,14 @@ describe("parameter-resolver", () => {
 
     it("should return empty params when action has no endpointParams", async () => {
       const caseWorkflowContext = {
-        workflow: {
-          externalActions: [
-            {
-              code: "NO_PARAMS_ACTION",
-              endpoint: {
-                code: "NO_PARAMS_ENDPOINT",
-              },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "NO_PARAMS_ACTION",
+            endpoint: {
+              code: "NO_PARAMS_ENDPOINT",
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -408,7 +394,7 @@ describe("parameter-resolver", () => {
 
     it("should return empty params when workflow has no externalActions", async () => {
       const caseWorkflowContext = {
-        workflow: {},
+        workflow: createMockWorkflowWithActions([]),
       };
 
       const result = await extractEndpointParameters({
@@ -434,22 +420,20 @@ describe("parameter-resolver", () => {
             id: 456,
           },
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "FETCH_RULES",
-              endpoint: {
-                code: "FETCH_RULES_ENDPOINT",
-                endpointParams: {
-                  PATH: {
-                    runId:
-                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "FETCH_RULES",
+            endpoint: {
+              code: "FETCH_RULES_ENDPOINT",
+              endpointParams: {
+                PATH: {
+                  runId:
+                    "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -477,22 +461,20 @@ describe("parameter-resolver", () => {
             },
           },
         },
-        workflow: {
-          externalActions: [
-            {
-              code: "FETCH_RULES",
-              endpoint: {
-                code: "FETCH_RULES_ENDPOINT",
-                endpointParams: {
-                  PATH: {
-                    runId:
-                      "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "FETCH_RULES",
+            endpoint: {
+              code: "FETCH_RULES_ENDPOINT",
+              endpointParams: {
+                PATH: {
+                  runId:
+                    "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.id",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
       const result = await extractEndpointParameters({
@@ -508,46 +490,33 @@ describe("parameter-resolver", () => {
       });
     });
 
-    it("should log and ignore unknown parameter types", async () => {
+    it("should throw error for unknown parameter types", async () => {
       const caseWorkflowContext = {
         _id: "case-123",
-        workflow: {
-          externalActions: [
-            {
-              code: "TEST_ACTION",
-              endpoint: {
-                code: "TEST_ENDPOINT",
-                endpointParams: {
-                  PATH: {
-                    caseId: "$._id",
-                  },
-                  UNKNOWN_TYPE: {
-                    someParam: "value",
-                  },
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "TEST_ACTION",
+            endpoint: {
+              code: "TEST_ENDPOINT",
+              endpointParams: {
+                PATH: {
+                  caseId: "$._id",
+                },
+                UNKNOWN_TYPE: {
+                  someParam: "value",
                 },
               },
             },
-          ],
-        },
+          },
+        ]),
       };
 
-      const result = await extractEndpointParameters({
-        actionCode: "TEST_ACTION",
-        caseWorkflowContext,
-      });
-
-      const { logger } = await import("./logger.js");
-
-      expect(result).toEqual({
-        PATH: {
-          caseId: "case-123",
-        },
-        BODY: {},
-      });
-      expect(logger.warn).toHaveBeenCalledWith(
-        { paramType: "UNKNOWN_TYPE" },
-        "Unsupported endpoint parameter type: UNKNOWN_TYPE",
-      );
+      await expect(
+        extractEndpointParameters({
+          actionCode: "TEST_ACTION",
+          caseWorkflowContext,
+        }),
+      ).rejects.toThrow("Unsupported endpoint parameter type: UNKNOWN_TYPE");
     });
   });
 });
