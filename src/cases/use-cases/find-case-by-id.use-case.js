@@ -5,6 +5,7 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
@@ -69,30 +70,32 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap) =>
-  caseTaskGroup.tasks.map((caseTaskGroupTask) => {
-    const workflowTaskGroupTask = workflowTaskGroup.findTask(
-      caseTaskGroupTask.code,
-    );
+const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
+  Promise.all(
+    caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
+      const workflowTaskGroupTask = workflowTaskGroup.findTask(
+        caseTaskGroupTask.code,
+      );
 
-    return {
-      code: caseTaskGroupTask.code,
-      name: workflowTaskGroupTask.name,
-      description: mapDescription(workflowTaskGroupTask),
-      mandatory: workflowTaskGroupTask.mandatory,
-      statusOptions: workflowTaskGroupTask.statusOptions,
-      status: caseTaskGroupTask.status,
-      completed: caseTaskGroupTask.completed,
-      commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
-      commentRef: caseTaskGroupTask.commentRef,
-      updatedAt: caseTaskGroupTask.updatedAt,
-      updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-      requiredRoles: workflowTaskGroupTask.requiredRoles && {
-        allOf: workflowTaskGroupTask.requiredRoles.allOf,
-        anyOf: workflowTaskGroupTask.requiredRoles.anyOf,
-      },
-    };
-  });
+      return {
+        code: caseTaskGroupTask.code,
+        name: workflowTaskGroupTask.name,
+        description: await mapDescription(workflowTaskGroupTask, root),
+        mandatory: workflowTaskGroupTask.mandatory,
+        statusOptions: workflowTaskGroupTask.statusOptions,
+        status: caseTaskGroupTask.status,
+        completed: caseTaskGroupTask.completed,
+        commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
+        commentRef: caseTaskGroupTask.commentRef,
+        updatedAt: caseTaskGroupTask.updatedAt,
+        updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
+        requiredRoles: workflowTaskGroupTask.requiredRoles && {
+          allOf: workflowTaskGroupTask.requiredRoles.allOf,
+          anyOf: workflowTaskGroupTask.requiredRoles.anyOf,
+        },
+      };
+    }),
+  );
 
 const isValidArray = (description) =>
   Array.isArray(description) && description.length > 0;
@@ -100,9 +103,9 @@ const isValidArray = (description) =>
 const isValidString = (description) =>
   typeof description === "string" && description.trim() !== "";
 
-export const mapDescription = ({ name = "Task", description }) => {
+export const mapDescription = async ({ name = "Task", description }, root) => {
   if (isValidArray(description)) {
-    return description;
+    return await resolveJSONPath({ root, path: description });
   }
 
   if (isValidString(description)) {
@@ -153,18 +156,25 @@ export const findCaseByIdUseCase = async (caseId, user) => {
       name: workflowStage.name,
       description: workflowStage.description,
       interactive: currentStatus.interactive,
-      taskGroups: caseStage.taskGroups.map((caseTaskGroup) => {
-        const workflowTaskGroup = workflowStage.findTaskGroup(
-          caseTaskGroup.code,
-        );
+      taskGroups: await Promise.all(
+        caseStage.taskGroups.map(async (caseTaskGroup) => {
+          const workflowTaskGroup = workflowStage.findTaskGroup(
+            caseTaskGroup.code,
+          );
 
-        return {
-          code: caseTaskGroup.code,
-          name: workflowTaskGroup.name,
-          description: workflowTaskGroup.description,
-          tasks: mapTasks(caseTaskGroup, workflowTaskGroup, userMap),
-        };
-      }),
+          return {
+            code: caseTaskGroup.code,
+            name: workflowTaskGroup.name,
+            description: workflowTaskGroup.description,
+            tasks: await mapTasks(
+              caseTaskGroup,
+              workflowTaskGroup,
+              userMap,
+              caseWorkflowContext,
+            ),
+          };
+        }),
+      ),
       actions: kase.getPermittedActions(workflow).map((a) => ({
         code: a.code,
         name: a.name,
