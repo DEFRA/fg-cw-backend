@@ -10,7 +10,7 @@ import {
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
-import { ExternalActionUseCase } from "./external-action.use-case.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
@@ -104,12 +104,11 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
   if (!tabDefinition.action) {
     return {};
   }
-  const externalActionUseCase = ExternalActionUseCase.create();
 
   const actionData = {};
   for (const key of Object.keys(tabDefinition.action)) {
     const actionCode = tabDefinition.action[key];
-    actionData[key] = await externalActionUseCase.execute({
+    actionData[key] = await externalActionUseCase({
       actionCode,
       caseWorkflowContext,
     });

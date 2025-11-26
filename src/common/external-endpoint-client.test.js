@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resolveEndpoint } from "./endpoint-resolver.js";
 import { buildUrl, callExternalEndpoint } from "./external-endpoint-client.js";
+import { logger } from "./logger.js";
 import { wreck } from "./wreck.js";
 
 vi.mock("./logger.js", () => ({
@@ -139,8 +141,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should call external endpoint with GET request", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: { "x-api-key": "test-key" },
@@ -181,8 +181,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should call external endpoint with POST request and body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: { Authorization: "Bearer token" },
@@ -224,9 +222,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should return null on error", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-      const { logger } = await import("./logger.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -259,8 +254,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle empty params gracefully", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -290,8 +283,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should throw error when throwOnError=true and request fails", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -317,9 +308,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should return null for non-success status code", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-      const { logger } = await import("./logger.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -356,8 +344,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should throw error when throwOnError=true and non-success status", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -386,8 +372,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle PUT request with body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -424,8 +408,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle PATCH request with body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -462,8 +444,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle DELETE request", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -497,8 +477,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle HEAD request", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -530,8 +508,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should not include payload for GET with empty body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -561,9 +537,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle all 2xx status codes as success", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-      const { logger } = await import("./logger.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -601,9 +574,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should handle 3xx and 4xx status codes as non-success", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-      const { logger } = await import("./logger.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -641,8 +611,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should pass caseWorkflowContext to resolveEndpoint", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -675,9 +643,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should log request details before execution", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-      const { logger } = await import("./logger.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: { "x-custom": "header" },
@@ -718,8 +683,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should not include payload for POST with empty body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -749,8 +712,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should include payload for POST with non-empty body", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {},
@@ -780,8 +741,6 @@ describe("external-endpoint-client", () => {
     });
 
     it("should merge config headers with default headers", async () => {
-      const { resolveEndpoint } = await import("./endpoint-resolver.js");
-
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
         headers: {

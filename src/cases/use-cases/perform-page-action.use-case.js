@@ -3,7 +3,7 @@ import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
-import { ExternalActionUseCase } from "./external-action.use-case.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const performPageActionUseCase = async ({ caseId, actionCode }) => {
   const kase = await loadCase(caseId);
@@ -16,8 +16,7 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
     `Performing page action: ${actionCode} for case: ${caseId}`,
   );
 
-  const externalActionUseCase = ExternalActionUseCase.create();
-  const response = await externalActionUseCase.execute({
+  const response = await externalActionUseCase({
     actionCode,
     caseWorkflowContext,
     throwOnError: true,

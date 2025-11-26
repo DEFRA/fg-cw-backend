@@ -1,11 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { Workflow } from "../models/workflow.js";
+import { findById, update } from "../repositories/case.repository.js";
+import { findByCode } from "../repositories/workflow.repository.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 import { performPageActionUseCase } from "./perform-page-action.use-case.js";
 
-vi.mock("../../common/external-action-service.js");
 vi.mock("../../common/build-view-model.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("./external-action.use-case.js");
 vi.mock("../../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
@@ -15,41 +19,6 @@ vi.mock("../../common/logger.js", () => ({
 }));
 
 describe("performPageActionUseCase", () => {
-  let mockFindById;
-  let mockFindByCode;
-  let mockUpdate;
-  let mockExternalActionUseCase;
-  let mockCreateCaseWorkflowContext;
-
-  beforeEach(async () => {
-    vi.clearAllMocks();
-
-    const caseRepository = await import("../repositories/case.repository.js");
-    const workflowRepository = await import(
-      "../repositories/workflow.repository.js"
-    );
-    const { ExternalActionUseCase } = await import(
-      "./external-action.use-case.js"
-    );
-    const buildViewModel = await import("../../common/build-view-model.js");
-
-    mockFindById = vi.spyOn(caseRepository, "findById");
-    mockFindByCode = vi.spyOn(workflowRepository, "findByCode");
-    mockUpdate = vi.spyOn(caseRepository, "update");
-    mockExternalActionUseCase = vi.fn();
-    vi.spyOn(ExternalActionUseCase, "create").mockReturnValue({
-      execute: mockExternalActionUseCase,
-    });
-    mockCreateCaseWorkflowContext = vi.spyOn(
-      buildViewModel,
-      "createCaseWorkflowContext",
-    );
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   const createMockCase = () => ({
     _id: "64c88faac1f56f71e1b89a33",
     caseRef: "REF-001",
@@ -119,14 +88,14 @@ describe("performPageActionUseCase", () => {
       date: "2025-10-26T22:08:43.553Z",
     };
 
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockExternalActionUseCase.mockResolvedValue(mockResponse);
-    mockCreateCaseWorkflowContext.mockReturnValue({
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+    externalActionUseCase.mockResolvedValue(mockResponse);
+    createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
     });
-    mockUpdate.mockResolvedValue(mockCase);
+    update.mockResolvedValue(mockCase);
 
     const result = await performPageActionUseCase({
       caseId: "64c88faac1f56f71e1b89a33",
@@ -134,9 +103,9 @@ describe("performPageActionUseCase", () => {
     });
 
     expect(result).toEqual(mockResponse);
-    expect(mockFindById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
-    expect(mockFindByCode).toHaveBeenCalledWith("FRPS");
-    expect(mockExternalActionUseCase).toHaveBeenCalledWith({
+    expect(findById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
+    expect(findByCode).toHaveBeenCalledWith("FRPS");
+    expect(externalActionUseCase).toHaveBeenCalledWith({
       actionCode: "RECALCULATE_RULES",
       caseWorkflowContext: { ...mockCase, workflow: mockWorkflow },
       throwOnError: true,
@@ -147,7 +116,7 @@ describe("performPageActionUseCase", () => {
       key: undefined,
       data: mockResponse,
     });
-    expect(mockUpdate).toHaveBeenCalledWith(mockCase);
+    expect(update).toHaveBeenCalledWith(mockCase);
   });
 
   it("should perform action but not store when target is null", async () => {
@@ -159,10 +128,10 @@ describe("performPageActionUseCase", () => {
       message: "Application validated successfully",
     };
 
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockExternalActionUseCase.mockResolvedValue(mockResponse);
-    mockCreateCaseWorkflowContext.mockReturnValue({
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+    externalActionUseCase.mockResolvedValue(mockResponse);
+    createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
     });
@@ -174,7 +143,7 @@ describe("performPageActionUseCase", () => {
 
     expect(result).toEqual(mockResponse);
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("should not store when response is empty", async () => {
@@ -182,10 +151,10 @@ describe("performPageActionUseCase", () => {
     const mockWorkflow = createMockWorkflow();
     const mockResponse = {};
 
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockExternalActionUseCase.mockResolvedValue(mockResponse);
-    mockCreateCaseWorkflowContext.mockReturnValue({
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+    externalActionUseCase.mockResolvedValue(mockResponse);
+    createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
     });
@@ -197,7 +166,7 @@ describe("performPageActionUseCase", () => {
 
     expect(result).toEqual(mockResponse);
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("should not store when response is null", async () => {
@@ -205,10 +174,10 @@ describe("performPageActionUseCase", () => {
     const mockWorkflow = createMockWorkflow();
     const mockResponse = null;
 
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(mockWorkflow);
-    mockExternalActionUseCase.mockResolvedValue(mockResponse);
-    mockCreateCaseWorkflowContext.mockReturnValue({
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+    externalActionUseCase.mockResolvedValue(mockResponse);
+    createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
       workflow: mockWorkflow,
     });
@@ -220,11 +189,11 @@ describe("performPageActionUseCase", () => {
 
     expect(result).toBeNull();
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
-    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("should throw error when case is not found", async () => {
-    mockFindById.mockResolvedValue(null);
+    findById.mockResolvedValue(null);
 
     await expect(
       performPageActionUseCase({
@@ -236,8 +205,8 @@ describe("performPageActionUseCase", () => {
 
   it("should throw error when workflow is not found", async () => {
     const mockCase = createMockCase();
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(null);
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(null);
 
     await expect(
       performPageActionUseCase({
@@ -250,8 +219,8 @@ describe("performPageActionUseCase", () => {
   it("should throw error when external action is not found", async () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
-    mockFindById.mockResolvedValue(mockCase);
-    mockFindByCode.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
       performPageActionUseCase({

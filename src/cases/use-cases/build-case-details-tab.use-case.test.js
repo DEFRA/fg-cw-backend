@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -507,10 +508,6 @@ describe("buildCaseDetailsTabUseCase", () => {
 
   describe("action context integration", () => {
     it("should add actionData to root context when tab has action definition", async () => {
-      const { callExternalEndpoint } = await import(
-        "../../common/external-endpoint-client.js"
-      );
-
       // Mock external endpoint to return test data
       callExternalEndpoint.mockResolvedValue({
         response: [

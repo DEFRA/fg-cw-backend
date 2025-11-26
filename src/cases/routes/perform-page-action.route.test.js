@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { performPageActionUseCase } from "../use-cases/perform-page-action.use-case.js";
 import { performPageActionRoute } from "./perform-page-action.route.js";
 
 vi.mock("../use-cases/perform-page-action.use-case.js");
@@ -32,10 +33,6 @@ describe("performPageActionRoute", () => {
   });
 
   it("should call use case and return 204", async () => {
-    const { performPageActionUseCase } = await import(
-      "../use-cases/perform-page-action.use-case.js"
-    );
-
     const mockResponse = {
       code: vi.fn().mockReturnThis(),
     };
@@ -53,7 +50,7 @@ describe("performPageActionRoute", () => {
       },
     };
 
-    vi.mocked(performPageActionUseCase).mockResolvedValue({ data: "test" });
+    performPageActionUseCase.mockResolvedValue({ data: "test" });
 
     const result = await performPageActionRoute.handler(mockRequest, mockH);
 
@@ -67,10 +64,6 @@ describe("performPageActionRoute", () => {
   });
 
   it("should handle different action codes", async () => {
-    const { performPageActionUseCase } = await import(
-      "../use-cases/perform-page-action.use-case.js"
-    );
-
     const mockResponse = {
       code: vi.fn().mockReturnThis(),
     };
@@ -88,7 +81,7 @@ describe("performPageActionRoute", () => {
       },
     };
 
-    vi.mocked(performPageActionUseCase).mockResolvedValue({ id: 123 });
+    performPageActionUseCase.mockResolvedValue({ id: 123 });
 
     await performPageActionRoute.handler(mockRequest, mockH);
 
@@ -100,10 +93,6 @@ describe("performPageActionRoute", () => {
   });
 
   it("should propagate errors from use case", async () => {
-    const { performPageActionUseCase } = await import(
-      "../use-cases/perform-page-action.use-case.js"
-    );
-
     const mockH = {
       response: vi.fn(),
     };
@@ -118,7 +107,7 @@ describe("performPageActionRoute", () => {
     };
 
     const testError = new Error("External action not found");
-    vi.mocked(performPageActionUseCase).mockRejectedValue(testError);
+    performPageActionUseCase.mockRejectedValue(testError);
 
     await expect(
       performPageActionRoute.handler(mockRequest, mockH),
