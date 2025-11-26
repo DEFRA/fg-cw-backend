@@ -165,6 +165,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               node: "landGrantsRulesRun",
@@ -186,6 +187,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
           },
         ];
@@ -203,6 +205,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -224,6 +227,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -245,6 +249,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -267,6 +272,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               node: "landGrantsRulesRun",
@@ -312,6 +318,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -323,6 +330,7 @@ describe("workflowSchema", () => {
           {
             code: "ANOTHER_ACTION",
             name: "Another Action",
+            display: true,
             endpoint: "anotherEndpoint",
             target: {
               position: "POST_AWARD:FINAL_REVIEW:COMPLETED",
