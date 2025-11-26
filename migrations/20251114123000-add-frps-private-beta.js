@@ -54,6 +54,7 @@ export const up = async (db) => {
         name: "Rerun Rules",
         description: "Rerun the business rules validation",
         endpoint: "landGrantsRulesRerun",
+        display: true,
         target: {
           position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
           targetNode: "landGrantsRulesRun",
@@ -64,6 +65,7 @@ export const up = async (db) => {
         code: "FETCH_RULES",
         name: "Fetch Rules",
         description: "Fetch a specific rules engine run by ID",
+        display: false,
         endpoint: {
           code: "FETCH_RULES_ENDPOINT",
           endpointParams: {
@@ -85,26 +87,25 @@ export const up = async (db) => {
               type: "string",
             },
             summary: {
-              sbi: {
-                label: "SBI",
-                text: "$.payload.identifiers.sbi",
-                type: "string",
-              },
-              reference: {
-                label: "Reference",
-                text: "$.caseRef",
-                type: "string",
-              },
               scheme: {
                 label: "Scheme",
                 text: "$.payload.answers.scheme",
                 type: "string",
               },
-              createdAt: {
-                label: "Created At",
-                text: "$.payload.createdAt",
-                type: "date",
-                format: "formatDate",
+              applicationId: {
+                label: "Application ID",
+                text: "$.caseRef",
+                type: "string",
+              },
+              sbi: {
+                label: "SBI",
+                text: "$.payload.identifiers.sbi",
+                type: "string",
+              },
+              status: {
+                label: "Status",
+                text: "$.currentStatusName",
+                type: "string",
               },
             },
           },

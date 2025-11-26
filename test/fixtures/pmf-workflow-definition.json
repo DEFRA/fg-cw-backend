@@ -16,7 +16,7 @@
             },
             "status": {
               "label": "Status",
-              "text": "$.status",
+              "text": "$.currentStatusName",
               "type": "string"
             },
             "dateReceived": {
@@ -218,6 +218,7 @@
       "name": "Rerun Rules",
       "description": "Rerun the business rules validation",
       "endpoint": "landGrantsRulesRerun",
+      "display": true,
       "target": {
         "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
         "targetNode": "landGrantsRulesRun",

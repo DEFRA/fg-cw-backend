@@ -24,6 +24,11 @@ describe("buildViewModel", () => {
       _id: "case-123",
       caseRef: "REF-001",
       status: "active",
+      position: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
+      },
     };
     const workflow = {
       code: "test-workflow",
@@ -31,6 +36,10 @@ describe("buildViewModel", () => {
         apiUrl: "https://api.example.com",
         testKey: "testValue",
       },
+      getStatus: () => ({
+        code: "STATUS_1",
+        name: "Status One",
+      }),
     };
     it("should merge case and workflow definitions", async () => {
       const result = createCaseWorkflowContext(kase, workflow);
@@ -39,53 +48,81 @@ describe("buildViewModel", () => {
         _id: "case-123",
         caseRef: "REF-001",
         status: "active",
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
         workflow,
         definitions: {
           apiUrl: "https://api.example.com",
           testKey: "testValue",
         },
+        currentStatusName: "Status One",
         request: {},
       });
     });
 
     it("should handle workflow without definitions", async () => {
-      const kase = { _id: "case-123" };
-      const workflow = { code: "test-workflow" };
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
 
       const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        currentStatusName: "Status Name",
         request: {},
       });
     });
 
     it("should handle empty workflow definitions", async () => {
-      const kase = { _id: "case-123" };
-      const workflow = { code: "test-workflow", definitions: {} };
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
 
       const result = createCaseWorkflowContext(kase, workflow);
 
       expect(result).toEqual({
         _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        currentStatusName: "Status Name",
         request: {},
       });
     });
 
     it("should include externalActions from workflow", async () => {
-      const kase = { _id: "case-123" };
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
       const workflow = {
         code: "test-workflow",
         definitions: {},
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         externalActions: [
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
           },
         ],
       };
@@ -94,14 +131,106 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual({
         _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        currentStatusName: "Status Name",
         request: {},
         externalActions: [
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
+          },
+        ],
+      });
+    });
+
+    it("should filter out externalActions with display=false", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
+          },
+          {
+            code: "FETCH_RULES",
+            name: "Fetch Rules",
+            endpoint: "fetchRulesEndpoint",
+            display: false,
+          },
+        ],
+      };
+
+      const result = createCaseWorkflowContext(kase, workflow);
+
+      expect(result).toEqual({
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+        workflow,
+        definitions: {},
+        currentStatusName: "Status Name",
+        request: {},
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
+          },
+        ],
+      });
+    });
+
+    it("should filter out externalActions without display flag", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
+          },
+          {
+            code: "HIDDEN_ACTION",
+            name: "Hidden Action",
+            endpoint: "hiddenEndpoint",
+          },
+        ],
+      };
+
+      const result = createCaseWorkflowContext(kase, workflow);
+
+      expect(result).toEqual({
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+        workflow,
+        definitions: {},
+        currentStatusName: "Status Name",
+        request: {},
+        externalActions: [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
           },
         ],
       });
@@ -204,6 +333,7 @@ describe("buildViewModel", () => {
     const mockCase = {
       _id: "case-123",
       caseRef: "REF-001",
+      position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
     };
 
     const mockWorkflow = {
@@ -223,6 +353,7 @@ describe("buildViewModel", () => {
         },
       },
       definitions: {},
+      getStatus: () => ({ code: "ST1", name: "Status Name" }),
     };
 
     it("should build default links plus workflow tab links", async () => {
@@ -242,6 +373,7 @@ describe("buildViewModel", () => {
     it("should handle workflow without tab definitions", async () => {
       const workflowWithoutTabs = {
         code: "minimal-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {},
@@ -279,6 +411,7 @@ describe("buildViewModel", () => {
     it("should filter out known link ids from tabs", async () => {
       const workflowWithKnownIds = {
         code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {
@@ -314,6 +447,7 @@ describe("buildViewModel", () => {
     it("should handle workflow with empty tabs object", async () => {
       const workflowWithEmptyTabs = {
         code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {
@@ -339,11 +473,13 @@ describe("buildViewModel", () => {
     const mockCase = {
       _id: "case-123",
       caseRef: "REF-001",
+      position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
     };
 
     it("should convert kebab-case ids to title case", async () => {
       const workflowWithKebabCaseTab = {
         code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {
@@ -369,6 +505,7 @@ describe("buildViewModel", () => {
     it("should handle single word ids", async () => {
       const workflowWithSingleWordTab = {
         code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {
@@ -394,6 +531,7 @@ describe("buildViewModel", () => {
     it("should handle complex kebab-case ids", async () => {
       const workflowWithComplexTab = {
         code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {
@@ -423,6 +561,7 @@ describe("buildViewModel", () => {
     const mockCase = {
       _id: "case-123",
       caseRef: "REF-001",
+      position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
       payload: {
         businessName: "Test Business Ltd",
         identifiers: {
@@ -433,6 +572,7 @@ describe("buildViewModel", () => {
 
     const mockWorkflow = {
       code: "test-workflow",
+      getStatus: () => ({ code: "ST1", name: "Status Name" }),
       pages: {
         cases: {
           details: {
@@ -489,6 +629,7 @@ describe("buildViewModel", () => {
     it("should handle missing banner configuration", async () => {
       const workflowWithoutBanner = {
         code: "minimal-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
         pages: {
           cases: {
             details: {},
@@ -515,6 +656,7 @@ describe("buildViewModel", () => {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             description: "Rerun the business rules validation",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -525,6 +667,7 @@ describe("buildViewModel", () => {
           {
             code: "ANOTHER_ACTION",
             name: "Another Action",
+            display: true,
             endpoint: "anotherEndpoint",
           },
         ],

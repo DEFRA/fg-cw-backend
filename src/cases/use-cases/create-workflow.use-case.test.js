@@ -34,6 +34,7 @@ describe("createWorkflowUseCase", () => {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
+          display: true,
           endpoint: {
             code: "rules-engine-endpoint",
           },
@@ -73,6 +74,7 @@ describe("createWorkflowUseCase", () => {
           code: "RERUN_RULES",
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
+          display: true,
           endpoint: {
             code: "rules-engine-endpoint",
           },

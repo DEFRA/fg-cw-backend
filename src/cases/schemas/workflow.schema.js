@@ -51,6 +51,7 @@ const ExternalActionTarget = Joi.object({
   dataType: Joi.string().valid("ARRAY", "OBJECT").required(),
   position: Joi.string().required(),
   key: Joi.string().optional(),
+  place: Joi.string().valid("append").required(),
 }).label("ExternalActionTarget");
 
 const ExternalActionEndpoint = Joi.object({
@@ -69,6 +70,7 @@ const ExternalAction = Joi.object({
   code: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
+  display: Joi.boolean().required(),
   endpoint: Joi.alternatives()
     .try(Joi.string(), ExternalActionEndpoint)
     .required(),

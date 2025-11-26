@@ -75,10 +75,12 @@ describe("workflowSchema", () => {
             name: "Rerun Rules",
             description: "Rerun the business rules validation",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -102,10 +104,12 @@ describe("workflowSchema", () => {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -162,6 +166,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
@@ -183,6 +188,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
           },
         ];
@@ -200,6 +206,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -221,6 +228,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -242,6 +250,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -264,6 +273,7 @@ describe("workflowSchema", () => {
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               targetNode: "landGrantsRulesRun",
@@ -279,27 +289,55 @@ describe("workflowSchema", () => {
         );
       });
 
-      it("accepts multiple externalActions", () => {
+      it("validates place must be 'append' if provided", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
             code: "RERUN_RULES",
             name: "Rerun Rules",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "prepend",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.place" must be [append]',
+        );
+      });
+
+      it("accepts multiple externalActions", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            display: true,
+            endpoint: "landGrantsRulesRerun",
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
           {
             code: "ANOTHER_ACTION",
             name: "Another Action",
+            display: true,
             endpoint: "anotherEndpoint",
             target: {
               position: "POST_AWARD:FINAL_REVIEW:COMPLETED",
               targetNode: "anotherNode",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
