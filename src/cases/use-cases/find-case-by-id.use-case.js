@@ -105,7 +105,8 @@ const isValidString = (description) =>
 
 export const mapDescription = async ({ name = "Task", description }, root) => {
   if (isValidArray(description)) {
-    return resolveJSONPath({ root, path: description });
+    const resolved = await resolveJSONPath({ root, path: description });
+    return resolved;
   }
 
   if (isValidString(description)) {
