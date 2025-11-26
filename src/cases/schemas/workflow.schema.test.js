@@ -128,6 +128,7 @@ describe("workflowSchema", () => {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -171,6 +172,7 @@ describe("workflowSchema", () => {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -211,6 +213,7 @@ describe("workflowSchema", () => {
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -233,6 +236,7 @@ describe("workflowSchema", () => {
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
+              place: "append",
             },
           },
         ];
@@ -256,6 +260,7 @@ describe("workflowSchema", () => {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
               targetNode: "landGrantsRulesRun",
               dataType: "STRING",
+              place: "append",
             },
           },
         ];
@@ -278,6 +283,7 @@ describe("workflowSchema", () => {
             target: {
               targetNode: "landGrantsRulesRun",
               dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -286,6 +292,29 @@ describe("workflowSchema", () => {
         expect(error.name).toEqual("ValidationError");
         expect(error.details[0].message).toEqual(
           '"externalActions[0].target.position" is required',
+        );
+      });
+
+      it("validates place must be provided", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RERUN_RULES",
+            name: "Rerun Rules",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.place" is required',
         );
       });
 

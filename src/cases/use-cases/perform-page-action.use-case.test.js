@@ -51,6 +51,7 @@ describe("performPageActionUseCase", () => {
             position: null,
             targetNode: "rulesCalculations",
             dataType: "ARRAY",
+            place: "append",
           },
         },
         {

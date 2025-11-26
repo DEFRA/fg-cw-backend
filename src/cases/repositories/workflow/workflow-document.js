@@ -49,6 +49,7 @@ export class WorkflowDocument {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             targetNode: "landGrantsRulesRun",
             dataType: "ARRAY",
+            place: "append",
           },
         },
       ],

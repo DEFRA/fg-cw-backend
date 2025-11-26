@@ -222,7 +222,8 @@
       "target": {
         "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
         "targetNode": "landGrantsRulesRun",
-        "dataType": "ARRAY"
+        "dataType": "ARRAY",
+        "place": "append"
       }
     }
   ],

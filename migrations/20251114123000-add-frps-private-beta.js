@@ -59,6 +59,7 @@ export const up = async (db) => {
           position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
           targetNode: "landGrantsRulesRun",
           dataType: "ARRAY",
+          place: "append",
         },
       },
       {

@@ -982,7 +982,8 @@
       "target": {
         "position": null,
         "targetNode": "rulesCalculations",
-        "dataType": "ARRAY"
+        "dataType": "ARRAY",
+        "place": "append"
       }
     },
     {
