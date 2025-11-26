@@ -39,6 +39,15 @@ export const up = async (db) => {
     code: "frps-private-beta",
     requiredRoles: { allOf: [], anyOf: [] },
     definitions,
+    endpoints: [
+      {
+        code: "FETCH_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/{runId}",
+        method: "GET",
+        request: null,
+      },
+    ],
     externalActions: [
       {
         code: "RERUN_RULES",
@@ -61,7 +70,7 @@ export const up = async (db) => {
           endpointParams: {
             PATH: {
               runId:
-                "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
+                "jsonata:$.request.query.runId ? $.request.query.runId : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id",
             },
           },
         },
@@ -318,108 +327,117 @@ export const up = async (db) => {
                   classes: "govuk-heading-l govuk-!-margin-bottom-1",
                 },
                 {
-                  component: "container",
-                  items: [
-                    {
-                      text: "Rules check last run: ",
-                      classes: "govuk-body",
-                    },
-                    {
-                      text: "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
-                      format: "formatDateTime",
-                      classes: "govuk-body",
-                    },
-                  ],
-                },
-                {
-                  component: "details",
-                  classes: "govuk-!-margin-top-2",
-                  summaryItems: [
-                    {
-                      text: "Show version history",
-                    },
-                  ],
-                  items: [
-                    {
-                      component: "table",
-                      caption: "Dates and amounts",
-                      captionClasses: "govuk-table__caption--m",
-                      rowsRef:
-                        "jsonata:$sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
-                      head: [
-                        {
-                          component: "text",
-                          text: "Date/time",
-                        },
-                        {
-                          component: "text",
-                          text: "Result",
-                        },
-                        {
-                          component: "text",
-                          text: "Version",
-                          classes: "govuk-visually-hidden",
-                        },
-                      ],
-                      rows: [
-                        {
-                          text: "@.date",
-                          format: "formatDateTime",
-                        },
-                        {
-                          component: "status",
-                          text: "@.valid",
-                          format: "yesNo",
-                          classesMap: {
-                            Yes: "govuk-tag--green",
-                            No: "govuk-tag--red",
+                  component: "conditional",
+                  condition:
+                    "jsonata:[$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations)[0]",
+                  whenTrue: {
+                    component: "container",
+                    items: [
+                      {
+                        text: "Rules check last run: ",
+                        classes: "govuk-body",
+                      },
+                      {
+                        text: "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
+                        format: "formatDateTime",
+                        classes: "govuk-body",
+                      },
+                      {
+                        component: "details",
+                        classes: "govuk-!-margin-top-2",
+                        summaryItems: [
+                          {
+                            text: "Show version history",
                           },
-                          labelsMap: {
-                            Yes: "Passed",
-                            No: "Failed",
-                          },
-                        },
-                        {
-                          component: "conditional",
-                          condition:
-                            "jsonata:$.request.query.runId ? $number($.request.query.runId) = @.id : $sort([$.payload.rulesCalculation] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
-                          whenTrue: {
-                            component: "text",
-                            text: "Currently showing",
-                            classes: "govuk-body",
-                          },
-                          whenFalse: {
-                            component: "url",
-                            text: "View this version",
-                            href: {
-                              urlTemplate:
-                                "/cases/{caseId}/calculations?runId={runId}",
-                              params: {
-                                caseId: "$._id",
-                                runId: "@.id",
+                        ],
+                        items: [
+                          {
+                            component: "table",
+                            caption: "Dates and amounts",
+                            captionClasses: "govuk-table__caption--m",
+                            rowsRef:
+                              "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })",
+                            head: [
+                              {
+                                component: "text",
+                                text: "Date/time",
                               },
-                            },
-                            target: "_self",
-                            classes: "govuk-link",
+                              {
+                                component: "text",
+                                text: "Result",
+                              },
+                              {
+                                component: "text",
+                                text: "Version",
+                                classes: "govuk-visually-hidden",
+                              },
+                            ],
+                            rows: [
+                              {
+                                text: "@.date",
+                                format: "formatDateTime",
+                              },
+                              {
+                                component: "status",
+                                text: "@.valid",
+                                format: "yesNo",
+                                classesMap: {
+                                  Yes: "govuk-tag--green",
+                                  No: "govuk-tag--red",
+                                },
+                                labelsMap: {
+                                  Yes: "Passed",
+                                  No: "Failed",
+                                },
+                              },
+                              {
+                                component: "conditional",
+                                condition:
+                                  "jsonata:$.request.query.runId ? $.request.query.runId = $string(@.id) : $sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].id = @.id",
+                                whenTrue: {
+                                  component: "text",
+                                  text: "Currently showing",
+                                  classes: "govuk-body",
+                                },
+                                whenFalse: {
+                                  component: "url",
+                                  text: "View this version",
+                                  href: {
+                                    urlTemplate:
+                                      "/cases/{caseId}/calculations?runId={runId}",
+                                    params: {
+                                      caseId: "$._id",
+                                      runId: "@.id",
+                                    },
+                                  },
+                                  target: "_self",
+                                  classes: "govuk-link",
+                                },
+                              },
+                            ],
+                            firstCellIsHeader: true,
                           },
-                        },
-                      ],
-                      firstCellIsHeader: true,
-                    },
-                  ],
-                  open: "$.request.query.runId",
+                        ],
+                        open: "$.request.query.runId",
+                      },
+                    ],
+                  },
+                  whenFalse: {
+                    component: "warning-text",
+                    text: "No rules calculation data found",
+                  },
                 },
                 {
                   component: "conditional",
                   condition: "$.actionData.rulesData.response[0]",
+                  whenTrue: {
+                    component: "component-container",
+                    contentRef: "$.actionData.rulesData.response",
+                  },
                   whenFalse: {
                     component: "warning-text",
-                    text: "Failed to fetch land parcel calculations",
+                    text: "Failed to fetch the current land parcel calculations",
                   },
-                },
-                {
-                  component: "component-container",
-                  contentRef: "$.actionData.rulesData.response",
                 },
               ],
             },
@@ -554,7 +572,7 @@ export const up = async (db) => {
                     },
                   },
                   {
-                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:PUT_ON_HOLD",
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
                     action: {
                       code: "PUT_ON_HOLD",
                       name: "Put on Hold",
@@ -605,7 +623,7 @@ export const up = async (db) => {
                 ],
               },
               {
-                code: "PUT_ON_HOLD",
+                code: "ON_HOLD",
                 name: "On Hold",
                 description: "Application is on hold pending more information",
                 interactive: true,
@@ -613,8 +631,8 @@ export const up = async (db) => {
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
-                      code: "REMOVE_ON_HOLD",
-                      name: "Remove On Hold",
+                      code: "RESUME",
+                      name: "Resume",
                       checkTasks: false,
                       comment: {
                         label: "Note",
@@ -622,16 +640,6 @@ export const up = async (db) => {
                           "All notes will be saved for auditing purposes",
                         mandatory: true,
                       },
-                    },
-                  },
-                  {
-                    targetPosition:
-                      "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
-                    action: {
-                      code: "REJECT_APPLICATION",
-                      name: "Reject",
-                      checkTasks: false,
-                      comment: null,
                     },
                   },
                 ],
@@ -829,7 +837,12 @@ export const up = async (db) => {
                       code: "REJECT_APPLICATION",
                       name: "Reject Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
                     },
                   },
                 ],
@@ -846,7 +859,12 @@ export const up = async (db) => {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for reinstate",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: false,
+                      },
                     },
                   },
                 ],
@@ -924,7 +942,12 @@ export const up = async (db) => {
                       code: "REJECT_APPLICATION",
                       name: "Reject",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
                     },
                   },
                 ],
@@ -942,7 +965,12 @@ export const up = async (db) => {
                       code: "REINSTATE_APPLICATION",
                       name: "Reinstate Application",
                       checkTasks: false,
-                      comment: null,
+                      comment: {
+                        label: "Reason for reinstate",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: false,
+                      },
                     },
                   },
                 ],
@@ -965,24 +993,6 @@ export const up = async (db) => {
                 code: "AGREEMENT_ACCEPTED",
                 name: "Agreement accepted",
                 description: "Agreement is active and being monitored",
-                interactive: true,
-                transitions: [
-                  {
-                    targetPosition:
-                      "POST_AGREEMENT_MONITORING:MONITORING:COMPLETE_AGREEMENT",
-                    action: {
-                      code: "COMPLETE_AGREEMENT",
-                      name: "Complete Agreement",
-                      checkTasks: true,
-                      comment: null,
-                    },
-                  },
-                ],
-              },
-              {
-                code: "COMPLETE_AGREEMENT",
-                name: "Complete Agreement",
-                description: "Agreement has been completed",
                 interactive: false,
                 transitions: [],
               },

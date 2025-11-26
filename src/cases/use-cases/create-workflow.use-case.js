@@ -3,6 +3,7 @@ import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
@@ -213,9 +214,19 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
     }),
     definitions: createWorkflowCommand.definitions,
     externalActions: createWorkflowCommand.externalActions,
+    endpoints: createWorkflowCommand.endpoints?.map(createWorkflowEndpoint),
   });
 
   await save(workflow);
 
   return workflow;
 };
+
+const createWorkflowEndpoint = (endpoint) =>
+  new WorkflowEndpoint({
+    code: endpoint.code,
+    service: endpoint.service,
+    path: endpoint.path,
+    method: endpoint.method,
+    request: endpoint.request,
+  });

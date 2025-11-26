@@ -296,6 +296,7 @@ export const createWorkflow = async (payload = {}) => {
       definitions: {
         key1: "test",
       },
+      endpoints: [],
       ...payload,
     },
   });

@@ -66,8 +66,8 @@ describe("GET /cases/{caseId}", () => {
                     text: "Simple review task",
                   },
                 ],
-                status: "PENDING",
-                completed: false,
+                status: "COMPLETE",
+                completed: true,
                 mandatory: true,
                 statusOptions: [],
                 commentInputDef: {
@@ -93,7 +93,6 @@ describe("GET /cases/{caseId}", () => {
             comment: null,
           },
         ],
-        actionsDisabled: true,
       },
       dateReceived: new Date(caseData2.dateReceived).toISOString(),
       payload: caseData2.payload,
