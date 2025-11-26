@@ -69,9 +69,7 @@ const messageFrps = {
   data: {
     caseRef: Math.random().toString(30).substring(2, 9),
     workflowCode: "frps-private-beta",
-    currentPhase: "PRE_AWARD",
-    currentStage: "REVIEW_APPLICATION",
-    currentStatus: "APPLICATION_RECEIVED",
+    status: "NEW",
     payload: {
       createdAt: "2025-03-27T10:34:52.000Z",
       submittedAt: "2025-03-28T11:30:52.000Z",
@@ -251,36 +249,6 @@ const messageFrps = {
         },
       },
     },
-    phases: [
-      {
-        code: "PRE_AWARD",
-        name: "Default Phase",
-        stages: [
-          {
-            code: "REVIEW_APPLICATION",
-            taskGroups: [
-              {
-                code: "APPLICATION_RECEIVED",
-                name: "Application Received",
-                interactive: false,
-                description: "Application received and pending review",
-                transitions: [
-                  {
-                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
-                    action: {
-                      code: "START_REVIEW",
-                      name: "Start Review",
-                      checkTasks: false,
-                      comment: null,
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
   },
 };
 

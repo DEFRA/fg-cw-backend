@@ -70,7 +70,7 @@ const ExternalAction = Joi.object({
   code: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
-  display: Joi.boolean().optional(),
+  display: Joi.boolean().required(),
   endpoint: Joi.alternatives()
     .try(Joi.string(), ExternalActionEndpoint)
     .required(),
