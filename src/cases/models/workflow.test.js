@@ -128,6 +128,7 @@ describe("Workflow", () => {
           name: "Rerun Rules",
           description: "Rerun the business rules validation",
           endpoint: "landGrantsRulesRerun",
+          display: true,
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
             node: "landGrantsRulesRun",
