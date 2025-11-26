@@ -127,93 +127,44 @@ export const mapWorkflowCommentDef = (workflowTask) => {
     : DEFAULT_COMMENT;
 };
 
-// eslint-disable-next-line complexity
 export const findCaseByIdUseCase = async (caseId, user) => {
   const kase = await findById(caseId);
-
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
-
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
-
   const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
   const userMap = await createUserMap(kase.getUserIds(), user);
-
   const workflowStage = workflow.getStage(kase.position);
   const currentStatus = workflow.getStatus(kase.position);
   const caseStage = kase.getStage();
-
   const assignedUser = userMap.get(kase.assignedUser?.id);
-
   return {
     _id: kase._id,
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
     currentStatus: kase.position.statusCode,
-    stage: {
-      code: workflowStage.code,
-      name: workflowStage.name,
-      description: workflowStage.description,
-      interactive: currentStatus.interactive,
-      taskGroups: await Promise.all(
-        caseStage.taskGroups.map(async (caseTaskGroup) => {
-          const workflowTaskGroup = workflowStage.findTaskGroup(
-            caseTaskGroup.code,
-          );
-
-          return {
-            code: caseTaskGroup.code,
-            name: workflowTaskGroup.name,
-            description: workflowTaskGroup.description,
-            tasks: await mapTasks(
-              caseTaskGroup,
-              workflowTaskGroup,
-              userMap,
-              caseWorkflowContext,
-            ),
-          };
-        }),
-      ),
-      actions: kase.getPermittedActions(workflow).map((a) => ({
-        code: a.code,
-        name: a.name,
-        comment: a.comment,
-      })),
-      outcome: caseStage.outcome && {
-        ...caseStage.outcome,
-        comment: kase.findComment(caseStage.outcome?.commentRef)?.text,
-      },
-    },
+    stage: await mapStageData(
+      kase,
+      workflow,
+      workflowStage,
+      currentStatus,
+      caseStage,
+      userMap,
+      caseWorkflowContext,
+    ),
     dateReceived: kase.dateReceived,
     payload: kase.payload,
     supplementaryData: kase.supplementaryData,
-    assignedUser: assignedUser
-      ? {
-          name: assignedUser.name,
-        }
-      : null,
+    assignedUser: assignedUser ? { name: assignedUser.name } : null,
     banner: await buildBanner(caseWorkflowContext),
     requiredRoles: {
       allOf: workflow.requiredRoles.allOf,
       anyOf: workflow.requiredRoles.anyOf,
     },
     links: await buildLinks(caseWorkflowContext),
-    comments: kase.comments.map((comment) => ({
-      ...comment,
-      title: comment.title,
-      createdBy: mapUserIdToName(comment.createdBy, userMap),
-    })),
-    timeline: kase.timeline.map((tl) => {
-      tl.createdBy = mapUserIdToUser(tl.createdBy, userMap);
-      if (tl.data?.assignedTo) {
-        tl.data.assignedTo = mapUserIdToUser(tl.data.assignedTo, userMap);
-      }
-      tl.commentRef = mapCommentRef(tl.comment);
-      tl.comment = null;
-      tl.description = formatTimelineItemDescription(tl, workflow);
-      return tl;
-    }),
+    comments: mapCommentsWithUsers(kase.comments, userMap),
+    timeline: mapTimelineWithUsers(kase.timeline, workflow, userMap),
   };
 };
 
@@ -230,4 +181,81 @@ const createUserMap = async (userIds, user) => {
 
 const mapCommentRef = (comment) => {
   return comment?.ref || undefined;
+};
+
+const mapTaskGroups = async (
+  caseStage,
+  workflowStage,
+  userMap,
+  caseWorkflowContext,
+) => {
+  return await Promise.all(
+    caseStage.taskGroups.map(async (caseTaskGroup) => {
+      const workflowTaskGroup = workflowStage.findTaskGroup(caseTaskGroup.code);
+      return {
+        code: caseTaskGroup.code,
+        name: workflowTaskGroup.name,
+        description: workflowTaskGroup.description,
+        tasks: await mapTasks(
+          caseTaskGroup,
+          workflowTaskGroup,
+          userMap,
+          caseWorkflowContext,
+        ),
+      };
+    }),
+  );
+};
+
+const mapStageData = async (
+  kase,
+  workflow,
+  workflowStage,
+  currentStatus,
+  caseStage,
+  userMap,
+  caseWorkflowContext,
+) => {
+  return {
+    code: workflowStage.code,
+    name: workflowStage.name,
+    description: workflowStage.description,
+    interactive: currentStatus.interactive,
+    taskGroups: await mapTaskGroups(
+      caseStage,
+      workflowStage,
+      userMap,
+      caseWorkflowContext,
+    ),
+    actions: kase.getPermittedActions(workflow).map((a) => ({
+      code: a.code,
+      name: a.name,
+      comment: a.comment,
+    })),
+    outcome: caseStage.outcome && {
+      ...caseStage.outcome,
+      comment: kase.findComment(caseStage.outcome?.commentRef)?.text,
+    },
+  };
+};
+
+const mapCommentsWithUsers = (comments, userMap) => {
+  return comments.map((comment) => ({
+    ...comment,
+    title: comment.title,
+    createdBy: mapUserIdToName(comment.createdBy, userMap),
+  }));
+};
+
+const mapTimelineWithUsers = (timeline, workflow, userMap) => {
+  return timeline.map((tl) => {
+    tl.createdBy = mapUserIdToUser(tl.createdBy, userMap);
+    if (tl.data?.assignedTo) {
+      tl.data.assignedTo = mapUserIdToUser(tl.data.assignedTo, userMap);
+    }
+    tl.commentRef = mapCommentRef(tl.comment);
+    tl.comment = null;
+    tl.description = formatTimelineItemDescription(tl, workflow);
+    return tl;
+  });
 };
