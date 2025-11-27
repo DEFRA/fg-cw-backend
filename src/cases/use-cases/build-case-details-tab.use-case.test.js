@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -507,10 +508,6 @@ describe("buildCaseDetailsTabUseCase", () => {
 
   describe("action context integration", () => {
     it("should add actionData to root context when tab has action definition", async () => {
-      const { callExternalEndpoint } = await import(
-        "../../common/external-endpoint-client.js"
-      );
-
       // Mock external endpoint to return test data
       callExternalEndpoint.mockResolvedValue({
         response: [
@@ -701,7 +698,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       expect(result.content).toBeDefined();
     });
 
-    it("should handle non-string actionValue", async () => {
+    it("should handle non-string actionCode", async () => {
       const mockCase = Case.createMock();
 
       const mockWorkflow = Workflow.createMock({
@@ -723,7 +720,7 @@ describe("buildCaseDetailsTabUseCase", () => {
               tabs: {
                 "test-tab": {
                   action: {
-                    // Non-string actionValue - should be handled gracefully
+                    // Non-string actionCode - should be handled gracefully
                     numericAction: 123,
                   },
                   content: [
@@ -748,7 +745,7 @@ describe("buildCaseDetailsTabUseCase", () => {
         query: {},
       });
 
-      // Should handle gracefully when actionValue is not a string
+      // Should handle gracefully when actionCode is not a string
       expect(result.caseId).toBe("test-case-id");
       expect(result.content).toBeDefined();
     });
