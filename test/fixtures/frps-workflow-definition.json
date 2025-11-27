@@ -958,7 +958,7 @@
       "method": "GET"
     },
     {
-      "code": "RECALCULATE_RULES_ENDPOINT",
+      "code": "RERUN_RULES_ENDPOINT",
       "service": "RULES_ENGINE",
       "path": "/case-management-adapter/application/validation-run/rerun",
       "method": "POST"

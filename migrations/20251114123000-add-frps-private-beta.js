@@ -45,7 +45,12 @@ export const up = async (db) => {
         service: "RULES_ENGINE",
         path: "/case-management-adapter/application/validation-run/{runId}",
         method: "GET",
-        request: null,
+      },
+      {
+        code: "RERUN_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/rerun",
+        method: "POST",
       },
     ],
     externalActions: [
@@ -53,11 +58,19 @@ export const up = async (db) => {
         code: "RERUN_RULES",
         name: "Run calculations again",
         description: "Rerun the business rules validation",
-        endpoint: "landGrantsRulesRerun",
+        endpoint: {
+          code: "RERUN_RULES_ENDPOINT",
+          endpointParams: {
+            BODY: {
+              id: "$.payload.answers.rulesCalculations.id",
+              requesterUsername: "CASEWORKING_SYSTEM",
+            },
+          },
+        },
         display: true,
         target: {
-          position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
-          targetNode: "landGrantsRulesRun",
+          position: null,
+          targetNode: "rulesCalculations",
           dataType: "ARRAY",
           place: "append",
         },
