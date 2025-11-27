@@ -38,8 +38,8 @@ export class WorkflowDocument {
       endpoints: [EndpointDocument.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
           display: true,
           endpoint: {
@@ -47,8 +47,8 @@ export class WorkflowDocument {
           },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },

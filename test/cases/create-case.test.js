@@ -64,7 +64,7 @@ describe("On CreateNewCase event", () => {
     createCaseEvent3.type = type.replace("development", env.ENVIRONMENT);
     await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, createCaseEvent3);
 
-    const documents = await waitForDocuments(inbox, 3, {
+    const documents = await waitForDocuments(inbox, 10, {
       target: env.CW__SQS__CREATE_NEW_CASE_URL,
       messageId,
     });

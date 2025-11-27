@@ -97,6 +97,10 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
           PATH: {
             // Extract runId from case data using JSONPath
             runId: "jsonata:$.request.query.runId ? $.request.query.runId : $.payload.answers.rulesCalculations.rulesCalculation.id"
+          },
+          BODY: {
+            // Example: Body parameters for POST/PUT/PATCH requests
+            // requesterUsername: "CASEWORKING_SYSTEM"
           }
         }
       }

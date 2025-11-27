@@ -4,7 +4,6 @@ export class EndpointDocument {
     this.service = endpoint.service;
     this.path = endpoint.path;
     this.method = endpoint.method;
-    this.request = endpoint.request ?? null;
   }
 
   static createMock(props) {
@@ -13,7 +12,6 @@ export class EndpointDocument {
       service: "RULES_ENGINE",
       path: "/case-management-adapter/application/validation-run/{runId}",
       method: "GET",
-      request: null,
       ...props,
     });
   }

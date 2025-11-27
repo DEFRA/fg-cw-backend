@@ -1,6 +1,5 @@
-import { logger } from "./logger.js";
+import Boom from "@hapi/boom";
 import { resolveJSONPath } from "./resolve-json.js";
-import { findExternalAction } from "./workflow-helpers.js";
 
 /**
  * Resolves a parameter map by evaluating JSONPath expressions.
@@ -11,22 +10,10 @@ export const resolveParameterMap = async ({
 }) => {
   const params = {};
   for (const [paramName, paramExpression] of Object.entries(paramMap)) {
-    const resolvedValue = await resolveJSONPath({
+    params[paramName] = await resolveJSONPath({
       root: caseWorkflowContext,
       path: paramExpression,
     });
-
-    logger.info(
-      {
-        paramName,
-        paramExpression,
-        resolvedValue,
-        valueType: typeof resolvedValue,
-      },
-      `Resolved parameter: ${paramName}`,
-    );
-
-    params[paramName] = resolvedValue;
   }
   return params;
 };
@@ -35,13 +22,11 @@ export const resolveParameterMap = async ({
  * Extracts and resolves endpoint parameters from an external action.
  */
 export const extractEndpointParameters = async ({
-  actionValue,
+  actionCode,
   caseWorkflowContext,
 }) => {
-  const externalAction = findExternalAction(
-    actionValue,
-    caseWorkflowContext.workflow,
-  );
+  const externalAction =
+    caseWorkflowContext.workflow.findExternalAction(actionCode);
 
   if (!hasEndpointParams(externalAction)) {
     return createEmptyParams();
@@ -60,7 +45,7 @@ const hasEndpointParams = (externalAction) => {
 const createEmptyParams = () => {
   return {
     PATH: {},
-    REQUEST: {},
+    BODY: {},
   };
 };
 
@@ -68,6 +53,12 @@ const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
   const params = createEmptyParams();
 
   for (const [paramType, paramMap] of Object.entries(endpointParams)) {
+    if (paramType !== "PATH" && paramType !== "BODY") {
+      throw Boom.badRequest(
+        `Unsupported endpoint parameter type: ${paramType}`,
+      );
+    }
+
     const resolvedParams = await resolveParameterMap({
       paramMap,
       caseWorkflowContext,
@@ -82,12 +73,9 @@ const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
 const assignParamsByType = (params, paramType, resolvedParams) => {
   if (paramType === "PATH") {
     params.PATH = resolvedParams;
-  } else if (paramType === "REQUEST") {
-    params.REQUEST = resolvedParams;
+  } else if (paramType === "BODY") {
+    params.BODY = resolvedParams;
   } else {
-    logger.warn(
-      { paramType },
-      `Unsupported endpoint parameter type: ${paramType}`,
-    );
+    throw Boom.badRequest(`Unsupported endpoint parameter type: ${paramType}`);
   }
 };
