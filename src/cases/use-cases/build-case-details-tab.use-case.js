@@ -7,10 +7,10 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
-import { callAPIAndFetchData } from "../../common/external-action-service.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
@@ -104,11 +104,12 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
   if (!tabDefinition.action) {
     return {};
   }
+
   const actionData = {};
   for (const key of Object.keys(tabDefinition.action)) {
-    const actionValue = tabDefinition.action[key];
-    actionData[key] = await callAPIAndFetchData({
-      actionValue,
+    const actionCode = tabDefinition.action[key];
+    actionData[key] = await externalActionUseCase({
+      actionCode,
       caseWorkflowContext,
     });
   }
