@@ -1,10 +1,9 @@
 export class WorkflowEndpoint {
-  constructor({ code, service, path, method, request = null }) {
+  constructor({ code, service, path, method }) {
     this.code = code;
     this.service = service;
     this.path = path;
     this.method = method;
-    this.request = request;
   }
 
   static createMock(props) {
@@ -13,7 +12,6 @@ export class WorkflowEndpoint {
       service: "RULES_ENGINE",
       path: "/case-management-adapter/application/validation-run/{runId}",
       method: "GET",
-      request: null,
       ...props,
     });
   }

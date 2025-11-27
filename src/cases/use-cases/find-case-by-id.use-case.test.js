@@ -305,8 +305,8 @@ describe("findCaseByIdUseCase", () => {
       banner: {
         callToAction: [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
           },
         ],
         summary: {
