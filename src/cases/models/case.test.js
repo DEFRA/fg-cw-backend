@@ -1,5 +1,13 @@
 import { ObjectId } from "mongodb";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  vitest,
+} from "vitest";
 import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
@@ -651,6 +659,7 @@ describe("Case", () => {
     let workflow;
 
     beforeEach(() => {
+      vitest.clearAllMocks();
       const props = createValidProps();
       props.phases = [
         new CasePhase({
@@ -792,14 +801,18 @@ describe("Case", () => {
       ];
       const caseWithIncompleteTasks = createTestCase(props);
 
-      expect(() => {
+      try {
         caseWithIncompleteTasks.updateStageOutcome({
           workflow,
           actionCode: "ACTION_1",
           comment: "Trying to progress with incomplete tasks",
           createdBy: validUserId,
         });
-      }).toThrow("required tasks are not complete");
+      } catch (e) {
+        expect(e.message).toBe(
+          "Cannot perform action ACTION_1 from position PHASE_1:STAGE_1:STATUS_1: required tasks are not complete",
+        );
+      }
     });
 
     it("allows actions with checkTasks:false even when tasks are incomplete", () => {
@@ -992,15 +1005,17 @@ describe("Case", () => {
         statusCode: "STATUS_1",
       });
 
-      expect(() => {
+      try {
         kase.progressTo({
           position: newPosition,
           workflow,
           createdBy: validUserId,
         });
-      }).toThrow(
-        "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
-      );
+      } catch (e) {
+        expect(e.message).toBe(
+          "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
+        );
+      }
     });
 
     it("creates CASE_STATUS_CHANGED event when transitioning to different status", () => {

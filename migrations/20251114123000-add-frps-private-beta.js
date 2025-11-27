@@ -573,6 +573,21 @@ export const up = async (db) => {
                     },
                   },
                   {
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:WITHDRAW_REQUESTED",
+                    action: {
+                      code: "WITHDRAW_REQUESTED",
+                      name: "Withdraw",
+                      checkTasks: false,
+                      comment: {
+                        label: "Note",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
                     action: {
                       code: "PUT_ON_HOLD",
@@ -606,6 +621,41 @@ export const up = async (db) => {
                 name: "Rejected",
                 description: "Application has been rejected",
                 interactive: true,
+                transitions: [
+                  {
+                    targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                    action: {
+                      code: "REINSTATE_APPLICATION",
+                      name: "Reinstate Application",
+                      checkTasks: false,
+                      comment: {
+                        label: "Note",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                code: "WITHDRAW_REQUESTED",
+                name: "Withdraw Requested",
+                description: "Application withdraw has been requested",
+                interactive: false,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_WITHDRAWN",
+                    checkTasks: false,
+                  },
+                ],
+              },
+              {
+                code: "APPLICATION_WITHDRAWN",
+                name: "Withdrawn",
+                description: "Application has been withdrawn",
+                interactive: false,
                 transitions: [
                   {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -777,7 +827,7 @@ export const up = async (db) => {
                     name: "Review Scheme Budget",
                     mandatory: true,
                     description:
-                      "Review that the budeget is available for the payment",
+                      "Review that the budget is available for the payment",
                     requiredRoles: {
                       allOf: ["ROLE_SFI_REFORM", "ROLE_RPA_FINANCE"],
                       anyOf: [],
@@ -840,6 +890,21 @@ export const up = async (db) => {
                       checkTasks: false,
                       comment: {
                         label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:WITHDRAW_REQUESTED",
+                    action: {
+                      code: "WITHDRAW_REQUESTED",
+                      name: "Withdraw",
+                      checkTasks: false,
+                      comment: {
+                        label: "Note",
                         helpText:
                           "All notes will be saved for auditing purposes",
                         mandatory: true,
@@ -945,6 +1010,21 @@ export const up = async (db) => {
                       checkTasks: false,
                       comment: {
                         label: "Reason for rejection",
+                        helpText:
+                          "All notes will be saved for auditing purposes",
+                        mandatory: true,
+                      },
+                    },
+                  },
+                  {
+                    targetPosition:
+                      "PRE_AWARD:REVIEW_APPLICATION:WITHDRAW_REQUESTED",
+                    action: {
+                      code: "WITHDRAW_APPLICATION",
+                      name: "Withdraw",
+                      checkTasks: false,
+                      comment: {
+                        label: "Reason for Withdraw",
                         helpText:
                           "All notes will be saved for auditing purposes",
                         mandatory: true,

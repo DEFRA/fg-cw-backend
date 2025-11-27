@@ -261,7 +261,25 @@ export class Case {
       return;
     }
 
-    if (!this.#areTasksComplete(workflow)) {
+    const currentPosition = this.position;
+
+    // get the new position transition
+    const transitions = workflow.phases
+      .find((p) => p.code === currentPosition.phaseCode)
+      .stages.find((s) => s.code === currentPosition.stageCode)
+      .statuses.find(
+        (status) => status.code === currentPosition.statusCode,
+      ).transitions;
+
+    const transition = transitions.find((t) =>
+      t.targetPosition.equals(position),
+    );
+
+    if (
+      transition &&
+      transition.checkTasks &&
+      !this.#areTasksComplete(workflow)
+    ) {
       throw Boom.preconditionFailed(
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );
