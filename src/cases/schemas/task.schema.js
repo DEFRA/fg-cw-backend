@@ -15,6 +15,7 @@ const Transition = Joi.object({
   targetPosition: Joi.string()
     .pattern(/[A-Z0-9_:]/)
     .required(),
+  checkTasks: Joi.bool().allow(null),
   action: Action.allow(null).required(),
 }).label("Transition");
 

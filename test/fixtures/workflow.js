@@ -236,6 +236,7 @@ export const workflowData1 = {
               interactive: true,
               transitions: [
                 {
+                  checkTasks: true,
                   targetPosition: ":CONTRACT:",
                   action: {
                     code: "APPROVE",
