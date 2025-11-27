@@ -31,7 +31,7 @@ describe("createWorkflowUseCase", () => {
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
+          code: "RECALCULATE_RULES",
           name: "Run calculations again",
           description: "Rerun the business rules validation",
           display: true,
@@ -72,7 +72,7 @@ describe("createWorkflowUseCase", () => {
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
+          code: "RECALCULATE_RULES",
           name: "Run calculations again",
           description: "Rerun the business rules validation",
           display: true,

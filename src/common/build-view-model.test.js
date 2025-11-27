@@ -119,7 +119,7 @@ describe("buildViewModel", () => {
         getStatus: () => ({ code: "ST1", name: "Status Name" }),
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -138,7 +138,7 @@ describe("buildViewModel", () => {
         request: {},
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -158,7 +158,7 @@ describe("buildViewModel", () => {
         getStatus: () => ({ code: "ST1", name: "Status Name" }),
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -183,7 +183,7 @@ describe("buildViewModel", () => {
         request: {},
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -203,7 +203,7 @@ describe("buildViewModel", () => {
         getStatus: () => ({ code: "ST1", name: "Status Name" }),
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -227,7 +227,7 @@ describe("buildViewModel", () => {
         request: {},
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -653,7 +653,7 @@ describe("buildViewModel", () => {
         ...mockWorkflow,
         externalActions: [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             description: "Rerun the business rules validation",
             display: true,
@@ -683,7 +683,7 @@ describe("buildViewModel", () => {
 
       expect(result.callToAction).toEqual([
         {
-          code: "RERUN_RULES",
+          code: "RECALCULATE_RULES",
           name: "Run calculations again",
         },
         {

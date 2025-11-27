@@ -47,7 +47,7 @@ export const up = async (db) => {
         method: "GET",
       },
       {
-        code: "RERUN_RULES_ENDPOINT",
+        code: "RECALCULATE_RULES_ENDPOINT",
         service: "RULES_ENGINE",
         path: "/case-management-adapter/application/validation-run/rerun",
         method: "POST",
@@ -55,11 +55,11 @@ export const up = async (db) => {
     ],
     externalActions: [
       {
-        code: "RERUN_RULES",
+        code: "RECALCULATE_RULES",
         name: "Run calculations again",
         description: "Rerun the business rules validation",
         endpoint: {
-          code: "RERUN_RULES_ENDPOINT",
+          code: "RECALCULATE_RULES_ENDPOINT",
           endpointParams: {
             BODY: {
               id: "$.payload.answers.rulesCalculations.id",

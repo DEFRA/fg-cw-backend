@@ -71,7 +71,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             description: "Rerun the business rules validation",
             endpoint: "landGrantsRulesRerun",
@@ -101,7 +101,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -144,7 +144,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -165,7 +165,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             target: {
@@ -188,7 +188,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
@@ -206,7 +206,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
@@ -229,7 +229,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
@@ -252,7 +252,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
@@ -276,7 +276,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
@@ -299,7 +299,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -322,7 +322,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -346,7 +346,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
