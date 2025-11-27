@@ -72,7 +72,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             description: "Rerun the business rules validation",
             endpoint: "landGrantsRulesRerun",
             display: true,
@@ -102,7 +102,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
             target: {
@@ -122,7 +122,7 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            name: "Rerun Rules",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -166,7 +166,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
@@ -189,7 +189,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
           },
@@ -207,7 +207,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
@@ -230,7 +230,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
@@ -253,7 +253,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
@@ -277,7 +277,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
@@ -300,7 +300,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
             target: {
@@ -323,7 +323,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             display: true,
             target: {
@@ -347,7 +347,7 @@ describe("workflowSchema", () => {
         data.externalActions = [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
             display: true,
             endpoint: "landGrantsRulesRerun",
             target: {

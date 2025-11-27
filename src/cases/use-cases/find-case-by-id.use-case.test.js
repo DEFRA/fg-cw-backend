@@ -306,7 +306,7 @@ describe("findCaseByIdUseCase", () => {
         callToAction: [
           {
             code: "RERUN_RULES",
-            name: "Rerun Rules",
+            name: "Run calculations again",
           },
         ],
         summary: {

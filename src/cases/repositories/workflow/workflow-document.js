@@ -39,7 +39,7 @@ export class WorkflowDocument {
       externalActions: [
         {
           code: "RERUN_RULES",
-          name: "Rerun Rules",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
           display: true,
           endpoint: {

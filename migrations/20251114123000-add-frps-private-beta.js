@@ -51,7 +51,7 @@ export const up = async (db) => {
     externalActions: [
       {
         code: "RERUN_RULES",
-        name: "Rerun Rules",
+        name: "Run calculations again",
         description: "Rerun the business rules validation",
         endpoint: "landGrantsRulesRerun",
         display: true,
