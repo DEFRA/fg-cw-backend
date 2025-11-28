@@ -410,6 +410,7 @@ describe("findCaseByIdUseCase", () => {
           },
         },
       ],
+      beforeContent: [],
     });
   });
 
@@ -824,5 +825,217 @@ describe("mapWorkflowCommentDef", () => {
       helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
+  });
+});
+
+describe("beforeContent", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+  };
+
+  it("returns empty array when stage has no beforeContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+    expect(result.beforeContent).toEqual([]);
+  });
+
+  it("processes beforeContent with truthy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "This is before content",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "This is before content",
+        level: 2,
+      },
+    ]);
+  });
+
+  it("filters out beforeContent with falsy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "This should not appear",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "case-details" },
+    });
+
+    expect(result.beforeContent).toEqual([]);
+  });
+
+  it("processes multiple beforeContent items", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "First heading",
+            level: 2,
+          },
+        ],
+      },
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "text",
+            text: "Second text",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "First heading",
+        level: 2,
+      },
+      {
+        component: "text",
+        text: "Second text",
+      },
+    ]);
+  });
+
+  it("processes beforeContent without renderIf (always included)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        content: [
+          {
+            component: "heading",
+            text: "Always visible content",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "any-tab" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "Always visible content",
+        level: 2,
+      },
+    ]);
+  });
+
+  it("resolves JSONPath references in beforeContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.caseRef = "TEST-REF-123";
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "$.caseRef",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "TEST-REF-123",
+        level: 2,
+      },
+    ]);
   });
 });

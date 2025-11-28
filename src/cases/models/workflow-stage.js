@@ -7,6 +7,7 @@ export class WorkflowStage {
     this.description = props.description;
     this.statuses = props.statuses;
     this.taskGroups = props.taskGroups;
+    this.beforeContent = props.beforeContent || [];
   }
 
   findTaskGroup(taskGroupCode) {

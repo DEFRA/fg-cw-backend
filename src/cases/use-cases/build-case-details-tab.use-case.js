@@ -10,6 +10,7 @@ import {
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { buildBeforeContent } from "./build-before-content.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
@@ -31,10 +32,13 @@ export const buildCaseDetailsTabUseCase = async (request) => {
 
   const root = await createRootContext({ kase, workflow, request, tabId });
 
-  const [banner, links, content] = await Promise.all([
+  const workflowStage = workflow.getStage(kase.position);
+
+  const [banner, links, content, beforeContent] = await Promise.all([
     buildBanner(root),
     buildLinks(root),
     buildContent(root),
+    buildBeforeContent(workflowStage, root),
   ]);
 
   return {
@@ -44,6 +48,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     banner,
     links,
     content,
+    beforeContent,
   };
 };
 
