@@ -13,7 +13,7 @@ export const updateSupplementaryDataUseCase = async ({
   newStatus,
   supplementaryData,
 }) => {
-  logger.debug(
+  logger.info(
     `Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}, newStatus: ${newStatus}, supplementaryData: ${JSON.stringify(supplementaryData)}`,
   );
 
@@ -43,7 +43,7 @@ export const updateSupplementaryDataUseCase = async ({
 
   await update(kase);
 
-  logger.debug(
+  logger.info(
     `Finished: Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}`,
   );
   return kase;

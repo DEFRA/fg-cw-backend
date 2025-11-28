@@ -3,7 +3,7 @@ import { logger } from "../../common/logger.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const findWorkflowByCodeUseCase = async (code) => {
-  logger.debug(`Finding workflow by code use case started - code: ${code}`);
+  logger.info(`Finding workflow by code use case started - code: ${code}`);
 
   const workflow = await findByCode(code);
 
@@ -11,8 +11,8 @@ export const findWorkflowByCodeUseCase = async (code) => {
     throw Boom.notFound(`Workflow with code "${code}" not found`);
   }
 
-  logger.debug(
-    `Workflow found successfully - code: ${code} and workflowId: ${workflow._id}`,
+  logger.info(
+    `Finished: Finding workflow by code use case started - code: ${code}`,
   );
 
   return workflow;

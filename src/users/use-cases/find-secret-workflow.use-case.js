@@ -4,9 +4,9 @@ import { findWorkflowByCodeUseCase } from "../../cases/use-cases/find-workflow-b
 import { logger } from "../../common/logger.js";
 
 export const findSecretWorkflowUseCase = async ({ workflowCode, user }) => {
-  logger.debug(`Authorising workflow "${workflowCode}" for user "${user.id}"`);
+  logger.info(`Authorising workflow "${workflowCode}" for user "${user.id}"`);
   const workflow = await findWorkflowByCodeUseCase(workflowCode);
-  logger.debug(`Found workflow ${workflow?.code}`);
+  logger.info(`Found workflow ${workflow?.code}`);
   if (!workflow) {
     throw Boom.notFound(`Workflow with code "${workflowCode}" not found`);
   }
@@ -14,7 +14,7 @@ export const findSecretWorkflowUseCase = async ({ workflowCode, user }) => {
   const accessControl = new AccessControl(user);
   accessControl.authorise(workflow.requiredRoles);
 
-  logger.debug(
+  logger.info(
     `Finished: authorising workflow ${workflowCode} for user ${user.id}`,
   );
 

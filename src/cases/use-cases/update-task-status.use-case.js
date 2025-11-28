@@ -10,7 +10,7 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  logger.debug(
+  logger.info(
     `Updating task status use case started - caseId: ${command.caseId}`,
   );
 
@@ -52,7 +52,7 @@ export const updateTaskStatusUseCase = async (command) => {
     updatedBy: user.id,
   });
 
-  logger.debug(
+  logger.info(
     `Finished: Updating task status use case started - caseId: ${command.caseId}`,
   );
 

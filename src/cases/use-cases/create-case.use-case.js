@@ -37,7 +37,7 @@ const createCasePhase = (phase) =>
   });
 
 export const createCaseUseCase = async (message) => {
-  logger.debug("Creating case use case started.");
+  logger.info(`Creating case use case started.`);
   return await withTransaction(async (session) => {
     const {
       event: { data },

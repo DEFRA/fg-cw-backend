@@ -4,11 +4,11 @@ import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 
 export const updateUserUseCase = async ({ userId, props }) => {
-  logger.debug(`Updating user by id: ${userId}`);
+  logger.info(`Updating user by id: ${userId}`);
 
   const user = await findUserByIdUseCase(userId);
 
-  logger.debug(`Updating user: ${user.name}`);
+  logger.info(`Updating user: ${user.name}`);
 
   if (props.name) {
     user.setName(props.name);
@@ -27,13 +27,13 @@ export const updateUserUseCase = async ({ userId, props }) => {
       {},
     );
 
-    logger.debug(`Assigning app roles: ${Object.keys(appRoles)}`);
+    logger.info(`Assigning app roles: ${Object.keys(appRoles)}`);
     user.assignAppRoles(appRoles);
   }
 
   await update(user);
 
-  logger.debug(`Finished: Updating user: ${user.id}`);
+  logger.info(`Finished: Updating user: ${user.id}`);
 
   return user;
 };

@@ -7,7 +7,7 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
 
-  logger.debug(`Assigning user to case use case started - caseId: ${caseId}`);
+  logger.info(`Assigning user to case use case started - caseId: ${caseId}`);
 
   const kase = await findById(caseId);
 
@@ -16,7 +16,7 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   if (assignedUserId === null) {
-    logger.debug(
+    logger.info(
       { caseId, requestingUserId: user.id },
       "Unassigning user from case",
     );
@@ -28,7 +28,7 @@ export const assignUserToCaseUseCase = async (command) => {
     return update(kase);
   }
 
-  logger.debug(
+  logger.info(
     `Validating user assignment - caseId: ${caseId}, userId: ${assignedUserId}`,
   );
 
@@ -43,9 +43,7 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  logger.debug(
-    `User authorised - caseId: ${caseId}, userId: ${assignedUserId}`,
-  );
+  logger.info(`User authorised - caseId: ${caseId}, userId: ${assignedUserId}`);
 
   kase.assignUser({
     assignedUserId,
@@ -55,7 +53,7 @@ export const assignUserToCaseUseCase = async (command) => {
 
   const result = await update(kase);
 
-  logger.debug(
+  logger.info(
     `Finished: Assigning user to case use case started - caseId: ${caseId}`,
   );
 

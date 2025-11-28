@@ -24,13 +24,17 @@ export const findCaseByIdTabIdRoute = {
     const { caseId, tabId } = request.params;
     const query = request.query ?? {};
 
-    logger.debug(
+    logger.info(
       `Finding case agreements for case ${caseId} using query ${JSON.stringify(query)}`,
     );
     const tabData = await buildCaseDetailsTabUseCase({
       params: { caseId, tabId },
       query,
     });
+
+    logger.info(
+      `Finished: Finding case agreements for case ${caseId} using query ${JSON.stringify(query)}`,
+    );
 
     return tabData;
   },

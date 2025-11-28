@@ -9,7 +9,7 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
-  logger.debug(
+  logger.info(
     `Updating stage outcome use case started - caseId: ${command.caseId}`,
   );
   return await withTransaction(async (session) => {
@@ -56,7 +56,7 @@ export const updateStageOutcomeUseCase = async (command) => {
       session,
     );
 
-    logger.debug(
+    logger.info(
       `Finished: Updating stage outcome use case started - caseId: ${command.caseId}`,
     );
   });

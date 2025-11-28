@@ -36,7 +36,7 @@ export const updateStageOutcomeRoute = {
       user,
     });
 
-    logger.info(`Finished updating stage outcome for case ${caseId}`);
+    logger.info(`Finished: Updating stage outcome for case ${caseId}`);
 
     return h.response().code(HttpCodes.NoContent);
   },

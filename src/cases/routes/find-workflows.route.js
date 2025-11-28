@@ -15,9 +15,9 @@ export const findWorkflowsRoute = {
     },
   },
   async handler() {
-    logger.info("Finding workflows");
+    logger.info("Finding all workflows");
     const results = await findWorkflowsUseCase();
-    logger.info("Finished finding workflows");
+    logger.info("Finished: Finding all workflows");
     return results;
   },
 };

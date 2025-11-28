@@ -6,7 +6,7 @@ import { save } from "../repositories/user.repository.js";
 export const createUserUseCase = async (props) => {
   const createdAt = new Date().toISOString();
 
-  logger.debug(`Creating user: ${props.name}`);
+  logger.info(`Creating user: ${props.name}`);
 
   const appRoles = Object.entries(props.appRoles).reduce(
     (acc, [code, value]) => {
@@ -28,6 +28,6 @@ export const createUserUseCase = async (props) => {
 
   await save(user);
 
-  logger.debug(`Finished: Creating user: ${user.id}`);
+  logger.info(`Finished: Creating user: ${user.id}`);
   return user;
 };

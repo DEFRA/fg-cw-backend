@@ -10,7 +10,10 @@ export const messageSource = {
 };
 
 export const saveInboxMessageUseCase = async (message, source) => {
-  logger.debug("Save inbox message use case");
+  logger.info(
+    `Save inbox message use case for caseRef ${message.data.caseRef} and workflowCode ${message.data.workflowCode} started.`,
+  );
+
   const existing = await findByMessageId(message.id);
   if (existing !== null) {
     // message has already been stored
@@ -18,7 +21,7 @@ export const saveInboxMessageUseCase = async (message, source) => {
     return;
   }
 
-  logger.debug(`Storing message with id ${message.id}.`);
+  logger.info(`Storing message with id ${message.id}.`);
   const inbox = new Inbox({
     traceparent: message.traceparent,
     event: message,
@@ -28,5 +31,8 @@ export const saveInboxMessageUseCase = async (message, source) => {
   });
 
   await insertOne(inbox);
-  logger.debug("Finished: Save inbox message use case");
+
+  logger.info(
+    `Finished: Save inbox message use case for caseRef ${message.data.caseRef} and workflowCode ${message.data.workflowCode} started.`,
+  );
 };

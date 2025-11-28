@@ -5,7 +5,7 @@ import { findById, update } from "../repositories/case.repository.js";
 export const addNoteToCaseUseCase = async (command) => {
   const { caseId, text, user } = command;
 
-  logger.debug(
+  logger.info(
     `Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}`,
   );
 
@@ -22,7 +22,7 @@ export const addNoteToCaseUseCase = async (command) => {
 
   await update(kase);
 
-  logger.debug(
+  logger.info(
     `Finished: Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}, noteRef: ${note.ref}`,
   );
 

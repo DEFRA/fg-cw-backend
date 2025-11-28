@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
+import { logger } from "../../common/logger.js";
 import { extractEndpointParameters } from "../../common/parameter-resolver.js";
 
 export const externalActionUseCase = async ({
@@ -53,6 +54,10 @@ const executeAction = async ({
     caseWorkflowContext.workflow,
   );
 
+  logger.info(
+    `Calling external endpoint: ${endpoint.code} for action: ${actionCode}`,
+  );
+
   const params = await extractEndpointParameters({
     actionCode,
     caseWorkflowContext,
@@ -63,6 +68,10 @@ const executeAction = async ({
     params,
     caseWorkflowContext,
     throwOnError,
+  );
+
+  logger.info(
+    `Finished: Calling external endpoint: ${endpoint.code} for action: ${actionCode}`,
   );
 
   return response || {};

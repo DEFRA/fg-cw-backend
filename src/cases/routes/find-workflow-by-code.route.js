@@ -25,7 +25,7 @@ export const findWorkflowByCodeRoute = {
     const { code } = request.params;
     logger.info(`Finding workflow ${code}`);
     const result = await findWorkflowByCodeUseCase(code);
-    logger.info(`Finished finding workflow ${code}`);
+    logger.info(`Finished: Finding workflow ${code}`);
     return result;
   },
 };

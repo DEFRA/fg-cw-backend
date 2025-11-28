@@ -9,9 +9,9 @@ export const findCasesRoute = {
     tags: ["api"],
   },
   async handler() {
-    logger.info("Finding cases");
+    logger.info("Finding all cases");
     const results = await findCasesUseCase();
-    logger.info("Finished finding cases");
+    logger.info("Finished: Finding all cases");
     return results;
   },
 };

@@ -43,7 +43,7 @@ export const updateTaskStatusRoute = {
     });
 
     logger.info(
-      `Finished updating status of task ${taskCode} in case ${caseId}`,
+      `Finished: Updating status of task ${taskCode} in case ${caseId}`,
     );
 
     return h.response().code(204);

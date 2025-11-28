@@ -17,7 +17,7 @@ import { externalActionUseCase } from "./external-action.use-case.js";
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
 
-  logger.debug(
+  logger.info(
     `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
   );
 
@@ -46,7 +46,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     buildBeforeContent(workflowStage, root),
   ]);
 
-  logger.debug(
+  logger.info(
     `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
   );
 

@@ -204,7 +204,7 @@ const createWorkflowPhase = (phase, phases) =>
   });
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
-  logger.debug(`Creating workflow with code '${createWorkflowCommand.code}'`);
+  logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
 
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
@@ -223,7 +223,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   await save(workflow);
 
-  logger.debug(`Finished: Workflow created with code '${workflow.code}'`);
+  logger.info(`Finished: Workflow created with code '${workflow.code}'`);
 
   return workflow;
 };
