@@ -50,7 +50,9 @@ describe("findCaseByIdRoute", () => {
 
     expect(statusCode).toEqual(200);
     expect(result).toEqual(kase);
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser);
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser, {
+      params: { caseId, tabId: undefined },
+    });
   });
 
   it("returns 400 when caseId param is invalid", async () => {

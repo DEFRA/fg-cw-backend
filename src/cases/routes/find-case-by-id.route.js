@@ -15,9 +15,12 @@ export const findCaseByIdRoute = {
   },
   async handler(request) {
     const { caseId } = request.params;
+    const tabId = request.query.tabId;
     const { user } = request.auth.credentials;
 
-    const result = await findCaseByIdUseCase(caseId, user);
+    const result = await findCaseByIdUseCase(caseId, user, {
+      params: { caseId, tabId },
+    });
 
     return result;
   },

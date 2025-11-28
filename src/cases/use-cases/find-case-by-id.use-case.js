@@ -10,6 +10,7 @@ import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
 import { findById } from "../repositories/case.repository.js";
+import { buildBeforeContent } from "./build-before-content.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 // eslint-disable-next-line complexity
@@ -128,13 +129,18 @@ export const mapWorkflowCommentDef = (workflowTask) => {
     : DEFAULT_COMMENT;
 };
 
-export const findCaseByIdUseCase = async (caseId, user) => {
+export const findCaseByIdUseCase = async (caseId, user, request) => {
   const kase = await findById(caseId);
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
-  const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
+  const caseWorkflowContext = createCaseWorkflowContext(
+    kase,
+    workflow,
+    request,
+  );
+
   const userMap = await createUserMap(kase.getUserIds(), user);
   const workflowStage = workflow.getStage(kase.position);
   const currentStatus = workflow.getStatus(kase.position);
@@ -166,6 +172,7 @@ export const findCaseByIdUseCase = async (caseId, user) => {
     links: await buildLinks(caseWorkflowContext),
     comments: mapCommentsWithUsers(kase.comments, userMap),
     timeline: mapTimelineWithUsers(kase.timeline, workflow, userMap),
+    beforeContent: await buildBeforeContent(workflowStage, caseWorkflowContext),
   };
 };
 

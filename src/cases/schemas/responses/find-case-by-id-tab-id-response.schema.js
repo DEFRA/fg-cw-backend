@@ -16,6 +16,7 @@ export const findCaseByIdTabIdResponseSchema = Joi.object({
   banner: bannerSchema.required(),
   links: Joi.array().items(linkSchema).min(1).required(),
   content: Joi.array().items(componentSchema).required(),
+  beforeContent: Joi.array().items(componentSchema).required(),
 })
   .options({
     presence: "required",

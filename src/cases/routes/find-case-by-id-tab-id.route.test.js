@@ -64,6 +64,7 @@ describe("findCaseByIdTabIdRoute", () => {
           ],
         },
       ],
+      beforeContent: [],
     };
 
     buildCaseDetailsTabUseCase.mockResolvedValueOnce(mockTabData);

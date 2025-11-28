@@ -1420,6 +1420,58 @@ export const up = async (db) => {
             code: "CUSTOMER_AGREEMENT_REVIEW",
             name: "Customer Agreement Review",
             description: "Customer reviews the agreement offer",
+            beforeContent: [
+              {
+                renderIf:
+                  "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_OFFERED'",
+                content: [
+                  {
+                    component: "alert",
+                    variant: "success",
+                    title: "Agreement sent",
+                    text: "There is nothing more you need to do.",
+                    showTitleAsHeading: true,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "You can still withdraw the agreement until the customer has accepted or rejected.",
+                  },
+                  {
+                    component: "heading",
+                    text: "Agreement with customer for review",
+                    level: 3,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "There are no tasks to complete.",
+                  },
+                  {
+                    component: "heading",
+                    text: "You can still withdraw this agreement",
+                    level: 3,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "You may want to withdraw this agreement if:",
+                  },
+                  {
+                    component: "unordered-list",
+                    items: [
+                      {
+                        text: "the customer needs to update their application",
+                      },
+                      {
+                        text: "the customer has not responded to the agreement offer within 10 working days",
+                      },
+                      {
+                        text: "there is an error in the agreement",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+
             statuses: [
               {
                 code: "AGREEMENT_OFFERED",

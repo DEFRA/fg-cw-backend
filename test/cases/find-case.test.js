@@ -163,6 +163,7 @@ describe("GET /cases/{caseId}", () => {
           },
         },
       ],
+      beforeContent: [],
     });
   });
 });
