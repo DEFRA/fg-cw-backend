@@ -366,8 +366,9 @@ describe("findCaseByIdUseCase", () => {
                 updatedBy: null,
                 commentRef: undefined,
                 commentInputDef: {
-                  helpText: "All notes will be saved for auditing purposes",
-                  label: "Note",
+                  helpText:
+                    "You must include an explanation for auditing purposes.",
+                  label: "Explain this outcome",
                   mandatory: false,
                 },
                 description: [
@@ -725,8 +726,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -755,8 +756,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(null);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -765,8 +766,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(undefined);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -784,7 +785,7 @@ describe("mapWorkflowCommentDef", () => {
 
     expect(result).toEqual({
       label: "Custom Label",
-      helpText: "All notes will be saved for auditing purposes",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -819,8 +820,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });

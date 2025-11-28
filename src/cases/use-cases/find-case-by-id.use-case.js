@@ -118,8 +118,8 @@ export const mapDescription = async ({ name = "Task", description }, root) => {
 
 export const mapWorkflowCommentDef = (workflowTask) => {
   const DEFAULT_COMMENT = {
-    label: "Note",
-    helpText: "All notes will be saved for auditing purposes",
+    label: "Explain this outcome",
+    helpText: "You must include an explanation for auditing purposes.",
     mandatory: false,
   };
 
