@@ -13,7 +13,7 @@ describe("buildViewModel", () => {
     {
       id: "case-details",
       href: "/cases/case-123/case-details",
-      text: "Case Details",
+      text: "Application",
     },
     { id: "notes", href: "/cases/case-123/notes", text: "Notes" },
     { id: "timeline", href: "/cases/case-123/timeline", text: "Timeline" },

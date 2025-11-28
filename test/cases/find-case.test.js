@@ -140,7 +140,7 @@ describe("GET /cases/{caseId}", () => {
         {
           href: `/cases/${caseId}/case-details`,
           id: "case-details",
-          text: "Case Details",
+          text: "Application",
         },
         {
           href: `/cases/${caseId}/notes`,
