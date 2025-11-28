@@ -7,11 +7,12 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
-import { callAPIAndFetchData } from "../../common/external-action-service.js";
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { buildBeforeContent } from "./build-before-content.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
@@ -36,10 +37,13 @@ export const buildCaseDetailsTabUseCase = async (request) => {
 
   const root = await createRootContext({ kase, workflow, request, tabId });
 
-  const [banner, links, content] = await Promise.all([
+  const workflowStage = workflow.getStage(kase.position);
+
+  const [banner, links, content, beforeContent] = await Promise.all([
     buildBanner(root),
     buildLinks(root),
     buildContent(root),
+    buildBeforeContent(workflowStage, root),
   ]);
 
   logger.debug(
@@ -53,6 +57,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     banner,
     links,
     content,
+    beforeContent,
   };
 };
 
@@ -113,11 +118,12 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
   if (!tabDefinition.action) {
     return {};
   }
+
   const actionData = {};
   for (const key of Object.keys(tabDefinition.action)) {
-    const actionValue = tabDefinition.action[key];
-    actionData[key] = await callAPIAndFetchData({
-      actionValue,
+    const actionCode = tabDefinition.action[key];
+    actionData[key] = await externalActionUseCase({
+      actionCode,
       caseWorkflowContext,
     });
   }

@@ -112,103 +112,148 @@ describe("formatTimelineItemDescription", () => {
 });
 
 describe("mapDescription", () => {
-  it("converts string description to heading component array", () => {
-    const result = mapDescription({
-      name: "Review Task",
-      description: "Simple review task",
-    });
+  it("converts string description to heading component array", async () => {
+    const result = await mapDescription(
+      {
+        name: "Review Task",
+        description: "Simple review task",
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Simple review task" },
     ]);
   });
 
-  it("falls back to task name for empty string", () => {
-    const result = mapDescription({
-      name: "Review Task",
-      description: "",
-    });
+  it("falls back to task name for empty string", async () => {
+    const result = await mapDescription(
+      {
+        name: "Review Task",
+        description: "",
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Review Task" },
     ]);
   });
 
-  it("returns array description as-is when already an array", () => {
+  it("returns array description as-is when already an array", async () => {
     const input = [
       { component: "heading", level: 2, text: "Title" },
       { component: "paragraph", text: "Description" },
     ];
-    const result = mapDescription({
-      name: "Review Task",
-      description: input,
-    });
+    const result = await mapDescription(
+      {
+        name: "Review Task",
+        description: input,
+      },
+      {},
+    );
     expect(result).toEqual(input);
   });
 
-  it("returns heading with task name for null description", () => {
-    const result = mapDescription({
-      name: "Review Application",
-      description: null,
-    });
+  it("resolves JSON paths in description arrays", async () => {
+    const input = [{ component: "heading", level: 2, text: "$.title" }];
+    const result = await mapDescription(
+      {
+        name: "Review Task",
+        description: input,
+      },
+      { title: "Test Title Resolves" },
+    );
+    expect(result).toEqual([
+      {
+        component: "heading",
+        level: 2,
+        text: "Test Title Resolves",
+      },
+    ]);
+  });
+
+  it("returns heading with task name for null description", async () => {
+    const result = await mapDescription(
+      {
+        name: "Review Application",
+        description: null,
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Review Application" },
     ]);
   });
 
-  it("returns heading with task name for undefined description", () => {
-    const result = mapDescription({
-      name: "Check Details",
-      description: undefined,
-    });
+  it("returns heading with task name for undefined description", async () => {
+    const result = await mapDescription(
+      {
+        name: "Check Details",
+        description: undefined,
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Check Details" },
     ]);
   });
 
-  it("uses default name 'Task' when name not provided and description is null", () => {
-    const result = mapDescription({ description: null });
+  it("uses default name 'Task' when name not provided and description is null", async () => {
+    const result = await mapDescription({ description: null }, {});
     expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
   });
 
-  it("uses default name 'Task' when name not provided and description is undefined", () => {
-    const result = mapDescription({ description: undefined });
+  it("uses default name 'Task' when name not provided and description is undefined", async () => {
+    const result = await mapDescription({ description: undefined }, {});
     expect(result).toEqual([{ component: "heading", level: 2, text: "Task" }]);
   });
 
-  it("returns heading with task name for object description", () => {
-    const result = mapDescription({
-      name: "Verify Data",
-      description: { foo: "bar" },
-    });
+  it("returns heading with task name for object description", async () => {
+    const result = await mapDescription(
+      {
+        name: "Verify Data",
+        description: { foo: "bar" },
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Verify Data" },
     ]);
   });
 
-  it("returns heading with task name for number description", () => {
-    const result = mapDescription({
-      name: "Process Item",
-      description: 123,
-    });
+  it("returns heading with task name for number description", async () => {
+    const result = await mapDescription(
+      {
+        name: "Process Item",
+        description: 123,
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Process Item" },
     ]);
   });
 
-  it("falls back to task name for empty array", () => {
-    const result = mapDescription({
-      name: "Review Task",
-      description: [],
-    });
+  it("falls back to task name for empty array", async () => {
+    const result = await mapDescription(
+      {
+        name: "Review Task",
+        description: [],
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Review Task" },
     ]);
   });
 
-  it("falls back to task name for whitespace-only string", () => {
-    const result = mapDescription({
-      name: "Process Data",
-      description: "   ",
-    });
+  it("falls back to task name for whitespace-only string", async () => {
+    const result = await mapDescription(
+      {
+        name: "Process Data",
+        description: "   ",
+      },
+      {},
+    );
     expect(result).toEqual([
       { component: "heading", level: 2, text: "Process Data" },
     ]);
@@ -260,8 +305,8 @@ describe("findCaseByIdUseCase", () => {
       banner: {
         callToAction: [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
           },
         ],
         summary: {
@@ -285,7 +330,7 @@ describe("findCaseByIdUseCase", () => {
         {
           href: `/cases/${kase._id}/case-details`,
           id: "case-details",
-          text: "Case Details",
+          text: "Application",
         },
         {
           href: `/cases/${kase._id}/notes`,
@@ -304,18 +349,7 @@ describe("findCaseByIdUseCase", () => {
         name: "Stage 1",
         interactive: true,
         outcome: undefined,
-        actionsDisabled: true,
-        actions: [
-          {
-            code: "ACTION_1",
-            name: "Action 1",
-            comment: {
-              helpText: "Action help text",
-              label: "Action label 1",
-              mandatory: true,
-            },
-          },
-        ],
+        actions: [],
         taskGroups: [
           {
             code: "TASK_GROUP_1",
@@ -332,8 +366,9 @@ describe("findCaseByIdUseCase", () => {
                 updatedBy: null,
                 commentRef: undefined,
                 commentInputDef: {
-                  helpText: "All notes will be saved for auditing purposes",
-                  label: "Note",
+                  helpText:
+                    "You must include an explanation for auditing purposes.",
+                  label: "Explain this outcome",
                   mandatory: false,
                 },
                 description: [
@@ -375,7 +410,35 @@ describe("findCaseByIdUseCase", () => {
           },
         },
       ],
+      beforeContent: [],
     });
+  });
+
+  it("returns permitted actions when stage is complete", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions).toEqual([
+      {
+        code: "ACTION_1",
+        name: "Action 1",
+        comment: {
+          helpText: "Action help text",
+          label: "Action label 1",
+          mandatory: true,
+        },
+      },
+    ]);
   });
 
   it("throws when case not found", async () => {
@@ -664,8 +727,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -694,8 +757,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(null);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -704,8 +767,8 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(undefined);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -723,7 +786,7 @@ describe("mapWorkflowCommentDef", () => {
 
     expect(result).toEqual({
       label: "Custom Label",
-      helpText: "All notes will be saved for auditing purposes",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
   });
@@ -758,9 +821,221 @@ describe("mapWorkflowCommentDef", () => {
     const result = mapWorkflowCommentDef(workflowTask);
 
     expect(result).toEqual({
-      label: "Note",
-      helpText: "All notes will be saved for auditing purposes",
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
       mandatory: false,
     });
+  });
+});
+
+describe("beforeContent", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = {
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+  };
+
+  it("returns empty array when stage has no beforeContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+    expect(result.beforeContent).toEqual([]);
+  });
+
+  it("processes beforeContent with truthy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "This is before content",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "This is before content",
+        level: 2,
+      },
+    ]);
+  });
+
+  it("filters out beforeContent with falsy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "This should not appear",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "case-details" },
+    });
+
+    expect(result.beforeContent).toEqual([]);
+  });
+
+  it("processes multiple beforeContent items", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "First heading",
+            level: 2,
+          },
+        ],
+      },
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "text",
+            text: "Second text",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "First heading",
+        level: 2,
+      },
+      {
+        component: "text",
+        text: "Second text",
+      },
+    ]);
+  });
+
+  it("processes beforeContent without renderIf (always included)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        content: [
+          {
+            component: "heading",
+            text: "Always visible content",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "any-tab" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "Always visible content",
+        level: 2,
+      },
+    ]);
+  });
+
+  it("resolves JSONPath references in beforeContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.caseRef = "TEST-REF-123";
+
+    const stageWithBeforeContent = mockWorkflow.phases[0].stages[0];
+    stageWithBeforeContent.beforeContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "$.caseRef",
+            level: 2,
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.beforeContent).toEqual([
+      {
+        component: "heading",
+        text: "TEST-REF-123",
+        level: 2,
+      },
+    ]);
   });
 });

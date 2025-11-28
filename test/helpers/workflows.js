@@ -46,7 +46,7 @@ export const createWorkflow = async (payload = {}) => {
                       caseId: "$._id",
                     },
                   },
-                  text: "Case Details",
+                  text: "Application",
                   index: 1,
                 },
                 content: [

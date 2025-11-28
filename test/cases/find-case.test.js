@@ -66,13 +66,14 @@ describe("GET /cases/{caseId}", () => {
                     text: "Simple review task",
                   },
                 ],
-                status: "PENDING",
-                completed: false,
+                status: "COMPLETE",
+                completed: true,
                 mandatory: true,
                 statusOptions: [],
                 commentInputDef: {
-                  helpText: "All notes will be saved for auditing purposes",
-                  label: "Note",
+                  helpText:
+                    "You must include an explanation for auditing purposes.",
+                  label: "Explain this outcome",
                   mandatory: false,
                 },
                 commentRef: null,
@@ -93,7 +94,6 @@ describe("GET /cases/{caseId}", () => {
             comment: null,
           },
         ],
-        actionsDisabled: true,
       },
       dateReceived: new Date(caseData2.dateReceived).toISOString(),
       payload: caseData2.payload,
@@ -140,7 +140,7 @@ describe("GET /cases/{caseId}", () => {
         {
           href: `/cases/${caseId}/case-details`,
           id: "case-details",
-          text: "Case Details",
+          text: "Application",
         },
         {
           href: `/cases/${caseId}/notes`,
@@ -163,6 +163,7 @@ describe("GET /cases/{caseId}", () => {
           },
         },
       ],
+      beforeContent: [],
     });
   });
 });

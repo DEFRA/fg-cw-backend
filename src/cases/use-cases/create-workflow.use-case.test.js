@@ -31,16 +31,17 @@ describe("createWorkflowUseCase", () => {
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
+          display: true,
           endpoint: {
             code: "rules-engine-endpoint",
           },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },
@@ -71,16 +72,17 @@ describe("createWorkflowUseCase", () => {
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
+          display: true,
           endpoint: {
             code: "rules-engine-endpoint",
           },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },

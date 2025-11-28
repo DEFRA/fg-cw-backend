@@ -45,19 +45,33 @@ export const up = async (db) => {
         service: "RULES_ENGINE",
         path: "/case-management-adapter/application/validation-run/{runId}",
         method: "GET",
-        request: null,
+      },
+      {
+        code: "RECALCULATE_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/rerun",
+        method: "POST",
       },
     ],
     externalActions: [
       {
-        code: "RERUN_RULES",
-        name: "Rerun Rules",
+        code: "RECALCULATE_RULES",
+        name: "Run calculations again",
         description: "Rerun the business rules validation",
-        endpoint: "landGrantsRulesRerun",
+        endpoint: {
+          code: "RECALCULATE_RULES_ENDPOINT",
+          endpointParams: {
+            BODY: {
+              id: "$.payload.answers.rulesCalculations.id",
+              requesterUsername: "CASEWORKING_SYSTEM",
+            },
+          },
+        },
+        display: true,
         target: {
-          position: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
-          node: "landGrantsRulesRun",
-          nodeType: "array",
+          position: null,
+          targetNode: "rulesCalculations",
+          dataType: "ARRAY",
           place: "append",
         },
       },
@@ -65,6 +79,7 @@ export const up = async (db) => {
         code: "FETCH_RULES",
         name: "Fetch Rules",
         description: "Fetch a specific rules engine run by ID",
+        display: false,
         endpoint: {
           code: "FETCH_RULES_ENDPOINT",
           endpointParams: {
@@ -86,31 +101,41 @@ export const up = async (db) => {
               type: "string",
             },
             summary: {
-              sbi: {
-                label: "SBI",
-                text: "$.payload.identifiers.sbi",
-                type: "string",
-              },
-              reference: {
-                label: "Reference",
-                text: "$.caseRef",
-                type: "string",
-              },
               scheme: {
                 label: "Scheme",
                 text: "$.payload.answers.scheme",
                 type: "string",
               },
-              createdAt: {
-                label: "Created At",
-                text: "$.payload.createdAt",
-                type: "date",
-                format: "formatDate",
+              applicationId: {
+                label: "Application ID",
+                text: "$.caseRef",
+                type: "string",
+              },
+              sbi: {
+                label: "SBI",
+                text: "$.payload.identifiers.sbi",
+                type: "string",
+              },
+              status: {
+                label: "Status",
+                text: "$.currentStatusName",
+                type: "string",
               },
             },
           },
           tabs: {
             "case-details": {
+              link: {
+                id: "case-details",
+                href: {
+                  urlTemplate: "/cases/{caseId}/case-details",
+                  params: {
+                    caseId: "$._id",
+                  },
+                },
+                text: "Application",
+                index: 1,
+              },
               content: [
                 {
                   id: "title",
@@ -252,6 +277,20 @@ export const up = async (db) => {
                                     ],
                                   },
                                   {
+                                    label: "Total available area for action",
+                                    text: [
+                                      {
+                                        component: "container",
+                                        items: [
+                                          {
+                                            text: "@.eligible.quantity",
+                                          },
+                                          { text: "@.eligible.unit" },
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  {
                                     label: "Quantity (ha)",
                                     text: [
                                       {
@@ -297,15 +336,132 @@ export const up = async (db) => {
                       },
                     },
                     {
-                      heading: [{ text: "Total yearly payment" }],
+                      heading: [{ text: "Payment" }],
                       content: [
                         {
                           component: "summary-list",
                           rows: [
                             {
+                              label: "Agreement total payment",
+                              text: [
+                                {
+                                  component: "container",
+                                  items: [
+                                    {
+                                      text: "jsonata:$.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears",
+                                      format: "penniesToPounds",
+                                    },
+                                    {
+                                      text: "jsonata:' over ' & $string($.payload.answers.payments.parcel[0].actions[0].durationYears) & ' years'",
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            {
                               label: "Total yearly payment",
                               text: "$.payload.answers.totalAnnualPaymentPence",
                               format: "penniesToPounds",
+                            },
+                          ],
+                        },
+                        {
+                          component: "heading",
+                          text: "Funded action payment detail",
+                          level: 3,
+                          classes:
+                            "govuk-heading-m govuk-!-margin-top-6 govuk-!-margin-bottom-3",
+                        },
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              component: "repeat",
+                              itemsRef:
+                                "$.payload.answers.payments.parcel[*].actions[*]",
+                              items: [
+                                {
+                                  label: "@.code annual payment",
+                                  text: [
+                                    {
+                                      text: "jsonata:@.annualPaymentPence + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)",
+                                      format: "penniesToPounds",
+                                      classes: "govuk-!-display-block",
+                                    },
+                                    {
+                                      component: "container",
+                                      classes: "govuk-body-m",
+                                      items: [
+                                        { text: "( " },
+                                        { text: "@.appliedFor.quantity" },
+                                        { text: " " },
+                                        { text: "@.appliedFor.unit" },
+                                        { text: " x " },
+                                        {
+                                          text: "@.paymentRates",
+                                          format: "penniesToPounds",
+                                        },
+                                        { text: " per " },
+                                        { text: "@.appliedFor.unit" },
+                                        {
+                                          component: "conditional",
+                                          condition:
+                                            "jsonata:$exists($.payload.answers.payments.agreement[code=@.code])",
+                                          whenTrue: [
+                                            { component: "text", text: ", " },
+                                            {
+                                              component: "text",
+                                              text: "jsonata:$.payload.answers.payments.agreement[code=@.code].annualPaymentPence",
+                                              format: "penniesToPounds",
+                                            },
+                                            {
+                                              component: "text",
+                                              text: " per SFI agreement per year",
+                                            },
+                                          ],
+                                        },
+                                        { text: " )" },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            {
+                              component: "repeat",
+                              itemsRef:
+                                "jsonata:$.payload.answers.payments.agreement[code $not in $.payload.answers.payments.parcel[*].actions[*].code]",
+                              items: [
+                                {
+                                  label: "@.code annual payment",
+                                  text: [
+                                    {
+                                      text: "@.annualPaymentPence",
+                                      format: "penniesToPounds",
+                                      classes: "govuk-!-display-block",
+                                    },
+                                    {
+                                      component: "container",
+                                      classes: "govuk-body-m",
+                                      items: [
+                                        { text: "(1 ha x " },
+                                        {
+                                          text: "@.paymentRates",
+                                          format: "penniesToPounds",
+                                        },
+                                        { text: " per ha, " },
+                                        {
+                                          text: "@.annualPaymentPence",
+                                          format: "penniesToPounds",
+                                        },
+                                        {
+                                          text: " per SFI agreement per year)",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
                             },
                           ],
                         },
@@ -515,7 +671,7 @@ export const up = async (db) => {
         stages: [
           {
             code: "REVIEW_APPLICATION",
-            name: "Review Application",
+            name: "Tasks",
             description: "Review the application for eligibility",
             statuses: [
               {
@@ -528,7 +684,7 @@ export const up = async (db) => {
                     targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                     action: {
                       code: "START_REVIEW",
-                      name: "Start Review",
+                      name: "Start",
                       checkTasks: false,
                       comment: null,
                     },
@@ -549,9 +705,9 @@ export const up = async (db) => {
                       name: "Approve",
                       checkTasks: true,
                       comment: {
-                        label: "Note",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -564,9 +720,9 @@ export const up = async (db) => {
                       name: "Reject",
                       checkTasks: false,
                       comment: {
-                        label: "Reason for rejection",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -578,9 +734,9 @@ export const up = async (db) => {
                       name: "Put on Hold",
                       checkTasks: false,
                       comment: {
-                        label: "Details of information required",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -613,9 +769,9 @@ export const up = async (db) => {
                       name: "Reinstate Application",
                       checkTasks: false,
                       comment: {
-                        label: "Note",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -635,9 +791,9 @@ export const up = async (db) => {
                       name: "Resume",
                       checkTasks: false,
                       comment: {
-                        label: "Note",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -648,15 +804,77 @@ export const up = async (db) => {
             taskGroups: [
               {
                 code: "MANUAL_REVIEW_TASKS",
-                name: "Manual Review Tasks",
+                name: "Application review tasks",
                 description:
                   "Tasks to be completed during the initial review of the application",
                 tasks: [
                   {
                     code: "CHECK_CUSTOMER_DETAILS",
-                    name: "Check Customer Details",
+                    name: "Check customer details",
                     mandatory: true,
-                    description: "Verify the customer's details for accuracy",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Check customer details",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "ordered-list",
+                        classes:
+                          "govuk-list govuk-list--number govuk-!-margin-bottom-6",
+                        items: [
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Go to ",
+                              },
+                              {
+                                component: "url",
+                                text: "Application",
+                                href: {
+                                  urlTemplate: "/cases/{caseId}/case-details",
+                                  params: {
+                                    caseId: "$._id",
+                                  },
+                                },
+                                target: "_self",
+                              },
+                              {
+                                component: "text",
+                                text: " to view submitted customer details.",
+                              },
+                            ],
+                          },
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Check the submitted details match the details and permissions on the ",
+                              },
+                              {
+                                component: "url",
+                                href: "https://www.ruralpayments.service.gov.uk/login",
+                                text: "Rural Payments service (opens in new tab)",
+                                target: "_blank",
+                                rel: "noopener",
+                              },
+                              {
+                                component: "text",
+                                text: ".",
+                              },
+                            ],
+                          },
+                          {
+                            component: "text",
+                            text: "Come back to this page and confirm if the details match.",
+                          },
+                        ],
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "ACCEPTED",
@@ -665,7 +883,7 @@ export const up = async (db) => {
                       },
                       {
                         code: "RFI",
-                        name: "ReRequest information from customer",
+                        name: "Request information from customer",
                         completes: false,
                       },
                       {
@@ -682,9 +900,70 @@ export const up = async (db) => {
                   },
                   {
                     code: "REVIEW_LAND_RULES",
-                    name: "Land parcel rules checks",
+                    name: "Review land parcel rule checks",
                     mandatory: true,
-                    description: "Review land parcels against scheme rules",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Review land parcel rule checks",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "ordered-list",
+                        classes:
+                          "govuk-list govuk-list--number govuk-list--spaced govuk-!-margin-bottom-6",
+                        items: [
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Go to ",
+                              },
+                              {
+                                component: "url",
+                                text: "Calculations",
+                                href: {
+                                  urlTemplate: "/cases/{caseId}/calculations",
+                                  params: {
+                                    caseId: "$._id",
+                                  },
+                                },
+                                target: "_self",
+                              },
+                              {
+                                component: "text",
+                                text: " to view automated checks against the customer's land parcels and actions",
+                              },
+                            ],
+                          },
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Check for failures and resolve these by:",
+                              },
+                              {
+                                component: "unordered-list",
+                                classes: "govuk-list govuk-list--bullet",
+                                items: [
+                                  {
+                                    component: "text",
+                                    text: "requesting information from the customer",
+                                  },
+                                  {
+                                    component: "text",
+                                    text: "running the calculations again",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "ACCEPTED",
@@ -693,7 +972,7 @@ export const up = async (db) => {
                       },
                       {
                         code: "RFI",
-                        name: "ReRequest information from customer",
+                        name: "Request information from customer",
                         completes: false,
                       },
                       {
@@ -710,10 +989,76 @@ export const up = async (db) => {
                   },
                   {
                     code: "SSSI_CONSENT_REQUESTED",
-                    name: "Check if SSSI consent has been requested",
+                    name: "Check if any land parcels are within an SSSI",
                     mandatory: true,
-                    description:
-                      "Verify if SSSI consent is required and has been requested",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Check if any land parcels are within a site of special scientific interest (SSSI)",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "container",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
+                        items: [
+                          {
+                            component: "text",
+                            text: "You can find the land parcels listed in the ",
+                          },
+                          {
+                            component: "url",
+                            text: "Application",
+                            href: {
+                              urlTemplate: "/cases/{caseId}/case-details",
+                              params: {
+                                caseId: "$._id",
+                              },
+                            },
+                            target: "_self",
+                          },
+                          {
+                            component: "text",
+                            text: ". You can check for SSSIs using SITI Agri or other data sources.",
+                          },
+                        ],
+                      },
+                      {
+                        component: "heading",
+                        text: "If no land parcels in this application are on an SSSI",
+                        level: 3,
+                        classes: "govuk-!-margin-bottom-4",
+                      },
+                      {
+                        component: "paragraph",
+                        text: "You can accept the details provided.",
+                        classes: "govuk-!-margin-bottom-4",
+                      },
+                      {
+                        component: "heading",
+                        text: "If any land parcel is on an SSSI",
+                        level: 3,
+                        classes: "govuk-!-margin-bottom-4",
+                      },
+                      {
+                        component: "paragraph",
+                        text: "Confirm if a request for planned activity on an SSSI has been made. Consent does not have to be confirmed, only requested.",
+                        classes: "govuk-!-margin-bottom-4",
+                      },
+                      {
+                        component: "container",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
+                        items: [
+                          {
+                            component: "url",
+                            text: "View SSSI request spreadsheet (opens in new tab)",
+                            href: "https://defra.sharepoint.com/:x:/r/teams/Team1512/SFI%2024%20expanded%20offer/SSSI/SFI%2024%20Expanded%20offer%20SSSI%20Shared%20Spreadsheet%20V1.xlsm?d=wda46d49f73e44fdb8da1777b927c2b92&csf=1&web=1&e=FtxaTy",
+                            target: "_blank",
+                            rel: "noopener",
+                          },
+                        ],
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "ACCEPTED",
@@ -722,13 +1067,8 @@ export const up = async (db) => {
                       },
                       {
                         code: "RFI",
-                        name: "ReRequest information from customer",
+                        name: "Request information from customer",
                         completes: false,
-                      },
-                      {
-                        code: "NOT_REQUIRED",
-                        name: "Not Required",
-                        completes: true,
                       },
                       {
                         code: "INTERNAL_INVESTIGATION",
@@ -744,10 +1084,97 @@ export const up = async (db) => {
                   },
                   {
                     code: "PAYMENT_AMOUNT_CHECK",
-                    name: "Check Payment Amount",
+                    name: "Check payment amount",
                     mandatory: true,
-                    description:
-                      "Verify the calculated payment amount against scheme limits",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Check payment amount",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "paragraph",
+                        text: "To check payment amount: ",
+                      },
+                      {
+                        component: "ordered-list",
+                        classes:
+                          "govuk-list govuk-list--number govuk-!-margin-bottom-6",
+                        items: [
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Check the payment section of the ",
+                              },
+                              {
+                                component: "url",
+                                text: "Application",
+                                href: {
+                                  urlTemplate: "/cases/{caseId}/case-details",
+                                  params: {
+                                    caseId: "$._id",
+                                  },
+                                },
+                                target: "_self",
+                              },
+                              {
+                                component: "text",
+                                text: " and make a note of the:",
+                              },
+                              {
+                                component: "unordered-list",
+                                classes: "govuk-list govuk-list--bullet",
+                                items: [
+                                  {
+                                    component: "text",
+                                    text: "hectares per funded action",
+                                  },
+                                  {
+                                    component: "text",
+                                    text: "annual payments per funded action",
+                                  },
+                                  {
+                                    component: "text",
+                                    text: "per hectare payment rate per funded action",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                          {
+                            component: "container",
+                            items: [
+                              {
+                                component: "text",
+                                text: "Search how much the funded action pays per hectare on ",
+                              },
+                              {
+                                component: "url",
+                                href: "https://www.gov.uk/find-funding-for-land-or-farms",
+                                text: "Find funding for land or farms (opens in new tab)",
+                                target: "_blank",
+                                rel: "noopener",
+                              },
+                              {
+                                component: "text",
+                                text: " - check it matches the rate in the application",
+                              },
+                            ],
+                          },
+                          {
+                            component: "text",
+                            text: "Multiply the total hectares for each funded action by the payment rate per hectare",
+                          },
+                          {
+                            component: "text",
+                            text: "Check your figure matches the total yearly payment in the application",
+                          },
+                        ],
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "ACCEPTED",
@@ -756,7 +1183,7 @@ export const up = async (db) => {
                       },
                       {
                         code: "RFI",
-                        name: "ReRequest information from customer",
+                        name: "Request information from customer",
                         completes: false,
                       },
                       {
@@ -773,10 +1200,38 @@ export const up = async (db) => {
                   },
                   {
                     code: "REVIEW_SCHEME_BUDGET",
-                    name: "Review Scheme Budget",
+                    name: "Review scheme budget as a finance officer",
                     mandatory: true,
-                    description:
-                      "Review that the budeget is available for the payment",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Review scheme budget as a finance officer",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "paragraph",
+                        text: "You must check there is enough budget left for the total yearly payment the customer has applied for.",
+                        classes: "govuk-body",
+                      },
+                      {
+                        component: "table",
+                        firstCellIsHeader: true,
+                        rows: [
+                          [
+                            {
+                              component: "text",
+                              text: "Total yearly payment applied for",
+                            },
+                            {
+                              component: "text",
+                              text: "$.payload.answers.totalAnnualPaymentPence",
+                              format: "penniesToPounds",
+                            },
+                          ],
+                        ],
+                      },
+                    ],
                     requiredRoles: {
                       allOf: ["ROLE_SFI_REFORM", "ROLE_RPA_FINANCE"],
                       anyOf: [],
@@ -789,7 +1244,7 @@ export const up = async (db) => {
                       },
                       {
                         code: "RFI",
-                        name: "ReRequest information from customer",
+                        name: "Request information from customer",
                         completes: false,
                       },
                       {
@@ -810,7 +1265,7 @@ export const up = async (db) => {
           },
           {
             code: "REVIEW_OFFER",
-            name: "Review Offer",
+            name: "Tasks",
             description:
               "Draft agreement is live and can be accepted by the customer.",
             statuses: [
@@ -835,12 +1290,12 @@ export const up = async (db) => {
                       "PRE_AWARD:REVIEW_OFFER:APPLICATION_REJECTED",
                     action: {
                       code: "REJECT_APPLICATION",
-                      name: "Reject Application",
+                      name: "Reject",
                       checkTasks: false,
                       comment: {
-                        label: "Reason for rejection",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: true,
                       },
                     },
@@ -860,9 +1315,9 @@ export const up = async (db) => {
                       name: "Reinstate Application",
                       checkTasks: false,
                       comment: {
-                        label: "Reason for reinstate",
+                        label: "Explain this decision",
                         helpText:
-                          "All notes will be saved for auditing purposes",
+                          "You must include an explanation for auditing purposes.",
                         mandatory: false,
                       },
                     },
@@ -881,8 +1336,39 @@ export const up = async (db) => {
                     code: "REVIEW_OFFER_DOCUMENT",
                     name: "Check draft funding agreement",
                     mandatory: true,
-                    description:
-                      "Ensure the offer document is accurate and complete",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Check funding agreement",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "container",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
+                        items: [
+                          {
+                            component: "text",
+                            text: "Check the ",
+                          },
+                          {
+                            component: "url",
+                            text: "agreement",
+                            href: {
+                              urlTemplate: "/cases/{caseId}/agreements",
+                              params: {
+                                caseId: "$._id",
+                              },
+                            },
+                            target: "_self",
+                          },
+                          {
+                            component: "text",
+                            text: " is accurate.",
+                          },
+                        ],
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "CONFIRM",
@@ -898,10 +1384,21 @@ export const up = async (db) => {
                   },
                   {
                     code: "OFFER_AGREEMENT",
-                    name: "Notify customer that draft agreement is ready",
+                    name: "Notify customer that agreement is ready",
                     mandatory: true,
-                    description:
-                      "Send the offer document to the applicant for review and acceptance",
+                    description: [
+                      {
+                        component: "heading",
+                        text: "Notify customer that agreement is ready",
+                        level: 2,
+                        classes: "govuk-!-margin-bottom-3",
+                      },
+                      {
+                        component: "paragraph",
+                        text: "Tell the customer their agreement is ready to review.",
+                        classes: "govuk-!-margin-bottom-6",
+                      },
+                    ],
                     statusOptions: [
                       {
                         code: "CONFIRM",
@@ -923,6 +1420,58 @@ export const up = async (db) => {
             code: "CUSTOMER_AGREEMENT_REVIEW",
             name: "Customer Agreement Review",
             description: "Customer reviews the agreement offer",
+            beforeContent: [
+              {
+                renderIf:
+                  "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_OFFERED'",
+                content: [
+                  {
+                    component: "alert",
+                    variant: "success",
+                    title: "Agreement sent",
+                    text: "There is nothing more you need to do.",
+                    showTitleAsHeading: true,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "You can still withdraw the agreement until the customer has accepted or rejected.",
+                  },
+                  {
+                    component: "heading",
+                    text: "Agreement with customer for review",
+                    level: 3,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "There are no tasks to complete.",
+                  },
+                  {
+                    component: "heading",
+                    text: "You can still withdraw this agreement",
+                    level: 3,
+                  },
+                  {
+                    component: "paragraph",
+                    text: "You may want to withdraw this agreement if:",
+                  },
+                  {
+                    component: "unordered-list",
+                    items: [
+                      {
+                        text: "the customer needs to update their application",
+                      },
+                      {
+                        text: "the customer has not responded to the agreement offer within 10 working days",
+                      },
+                      {
+                        text: "there is an error in the agreement",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+
             statuses: [
               {
                 code: "AGREEMENT_OFFERED",
@@ -934,44 +1483,6 @@ export const up = async (db) => {
                     targetPosition:
                       "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
                     action: null,
-                  },
-                  {
-                    targetPosition:
-                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_REJECTED",
-                    action: {
-                      code: "REJECT_APPLICATION",
-                      name: "Reject",
-                      checkTasks: false,
-                      comment: {
-                        label: "Reason for rejection",
-                        helpText:
-                          "All notes will be saved for auditing purposes",
-                        mandatory: true,
-                      },
-                    },
-                  },
-                ],
-              },
-              {
-                code: "APPLICATION_REJECTED",
-                name: "Rejected",
-                description: "Application has been rejected",
-                interactive: true,
-                transitions: [
-                  {
-                    targetPosition:
-                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
-                    action: {
-                      code: "REINSTATE_APPLICATION",
-                      name: "Reinstate Application",
-                      checkTasks: false,
-                      comment: {
-                        label: "Reason for reinstate",
-                        helpText:
-                          "All notes will be saved for auditing purposes",
-                        mandatory: false,
-                      },
-                    },
                   },
                 ],
               },
