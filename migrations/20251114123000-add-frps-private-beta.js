@@ -125,6 +125,17 @@ export const up = async (db) => {
           },
           tabs: {
             "case-details": {
+              link: {
+                id: "case-details",
+                href: {
+                  urlTemplate: "/cases/{caseId}/case-details",
+                  params: {
+                    caseId: "$._id",
+                  },
+                },
+                text: "Application",
+                index: 1,
+              },
               content: [
                 {
                   id: "title",
