@@ -71,8 +71,9 @@ describe("GET /cases/{caseId}", () => {
                 mandatory: true,
                 statusOptions: [],
                 commentInputDef: {
-                  helpText: "All notes will be saved for auditing purposes",
-                  label: "Note",
+                  helpText:
+                    "You must include an explanation for auditing purposes.",
+                  label: "Explain this outcome",
                   mandatory: false,
                 },
                 commentRef: null,
