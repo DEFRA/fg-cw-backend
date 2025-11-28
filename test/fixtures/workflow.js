@@ -42,7 +42,7 @@ export const workflowData1 = {
                   caseId: "$._id",
                 },
               },
-              text: "Case Details",
+              text: "Application",
               index: 1,
             },
             content: [

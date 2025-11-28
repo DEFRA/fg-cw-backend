@@ -330,7 +330,7 @@ describe("findCaseByIdUseCase", () => {
         {
           href: `/cases/${kase._id}/case-details`,
           id: "case-details",
-          text: "Case Details",
+          text: "Application",
         },
         {
           href: `/cases/${kase._id}/notes`,
