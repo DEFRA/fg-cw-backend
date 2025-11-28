@@ -360,7 +360,7 @@ const resolveDataRef = async ({ root, path, row }) => {
 
 const evaluateJSONata = async ({ path, root, row }) => {
   try {
-    const expression = path.replace("jsonata:", "").replace(/@\./g, "$row.");
+    const expression = path.replace("jsonata:", "").replaceAll("@.", "$row.");
     const compiledExpression = jsonata(expression);
     if (row !== undefined && row !== null) {
       compiledExpression.assign("row", row);
