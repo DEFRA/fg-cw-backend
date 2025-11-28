@@ -858,7 +858,7 @@ export const up = async (db) => {
                               {
                                 component: "url",
                                 href: "https://www.ruralpayments.service.gov.uk/login",
-                                text: "Rural Payments service (RPS)",
+                                text: "Rural Payments service (opens in new tab)",
                                 target: "_blank",
                                 rel: "noopener",
                               },
@@ -1047,11 +1047,11 @@ export const up = async (db) => {
                       },
                       {
                         component: "container",
-                        classes: "govuk-!-margin-bottom-6",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
                         items: [
                           {
                             component: "url",
-                            text: "View SSSI request spreadsheet",
+                            text: "View SSSI request spreadsheet (opens in new tab)",
                             href: "https://defra.sharepoint.com/:x:/r/teams/Team1512/SFI%2024%20expanded%20offer/SSSI/SFI%2024%20Expanded%20offer%20SSSI%20Shared%20Spreadsheet%20V1.xlsm?d=wda46d49f73e44fdb8da1777b927c2b92&csf=1&web=1&e=FtxaTy",
                             target: "_blank",
                             rel: "noopener",
@@ -1154,7 +1154,7 @@ export const up = async (db) => {
                               {
                                 component: "url",
                                 href: "https://www.gov.uk/find-funding-for-land-or-farms",
-                                text: "Find funding for land or farms",
+                                text: "Find funding for land or farms (opens in new tab)",
                                 target: "_blank",
                                 rel: "noopener",
                               },
@@ -1431,44 +1431,6 @@ export const up = async (db) => {
                     targetPosition:
                       "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
                     action: null,
-                  },
-                  {
-                    targetPosition:
-                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_REJECTED",
-                    action: {
-                      code: "REJECT_APPLICATION",
-                      name: "Reject",
-                      checkTasks: false,
-                      comment: {
-                        label: "Explain this decision",
-                        helpText:
-                          "You must include an explanation for auditing purposes.",
-                        mandatory: true,
-                      },
-                    },
-                  },
-                ],
-              },
-              {
-                code: "APPLICATION_REJECTED",
-                name: "Rejected",
-                description: "Application has been rejected",
-                interactive: true,
-                transitions: [
-                  {
-                    targetPosition:
-                      "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
-                    action: {
-                      code: "REINSTATE_APPLICATION",
-                      name: "Reinstate Application",
-                      checkTasks: false,
-                      comment: {
-                        label: "Explain this decision",
-                        helpText:
-                          "You must include an explanation for auditing purposes.",
-                        mandatory: false,
-                      },
-                    },
                   },
                 ],
               },
