@@ -2325,4 +2325,116 @@ describe("conditional component resolution", () => {
       ["item1", "item2", "item3"],
     ]);
   });
+
+  it("should support JSONata expressions with row context in repeat text fields", async () => {
+    const mockRoot = {
+      payload: {
+        answers: {
+          payments: {
+            parcel: [
+              {
+                actions: [
+                  {
+                    code: "CMOR1",
+                    annualPaymentPence: 153,
+                    appliedFor: {
+                      quantity: 0.1447,
+                      unit: "ha",
+                    },
+                    paymentRates: 1060,
+                  },
+                  {
+                    code: "UPL1",
+                    annualPaymentPence: 289,
+                    appliedFor: {
+                      quantity: 0.1447,
+                      unit: "ha",
+                    },
+                    paymentRates: 2000,
+                  },
+                ],
+              },
+            ],
+            agreement: [
+              {
+                code: "CMOR1",
+                annualPaymentPence: 27200,
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.payments.parcel[*].actions[*]",
+      items: [
+        {
+          label: "@.code",
+          text: [
+            {
+              text: "jsonata:@.annualPaymentPence + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)",
+            },
+            {
+              component: "container",
+              items: [
+                { text: "( " },
+                { text: "@.appliedFor.quantity" },
+                { text: " " },
+                { text: "@.appliedFor.unit" },
+                {
+                  component: "conditional",
+                  condition:
+                    "jsonata:$exists($.payload.answers.payments.agreement[code=@.code])",
+                  whenTrue: [{ component: "text", text: ", with agreement" }],
+                },
+                { text: " )" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root: mockRoot, path });
+
+    expect(result).toEqual([
+      {
+        label: "CMOR1",
+        text: [
+          {
+            text: 27353, // 153 + 27200
+          },
+          {
+            component: "container",
+            items: [
+              { text: "( " },
+              { text: 0.1447 },
+              { text: " " },
+              { text: "ha" },
+              { component: "text", text: ", with agreement" },
+              { text: " )" },
+            ],
+          },
+        ],
+      },
+      {
+        label: "UPL1",
+        text: [
+          { text: 289 },
+          {
+            component: "container",
+            items: [
+              { text: "( " },
+              { text: 0.1447 },
+              { text: " " },
+              { text: "ha" },
+              { text: " )" },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
 });

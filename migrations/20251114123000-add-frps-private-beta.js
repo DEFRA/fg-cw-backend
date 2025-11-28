@@ -266,6 +266,20 @@ export const up = async (db) => {
                                     ],
                                   },
                                   {
+                                    label: "Total available area for action",
+                                    text: [
+                                      {
+                                        component: "container",
+                                        items: [
+                                          {
+                                            text: "@.eligible.quantity",
+                                          },
+                                          { text: "@.eligible.unit" },
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                  {
                                     label: "Quantity (ha)",
                                     text: [
                                       {
@@ -311,15 +325,132 @@ export const up = async (db) => {
                       },
                     },
                     {
-                      heading: [{ text: "Total yearly payment" }],
+                      heading: [{ text: "Payment" }],
                       content: [
                         {
                           component: "summary-list",
                           rows: [
                             {
+                              label: "Agreement total payment",
+                              text: [
+                                {
+                                  component: "container",
+                                  items: [
+                                    {
+                                      text: "jsonata:$.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears",
+                                      format: "penniesToPounds",
+                                    },
+                                    {
+                                      text: "jsonata:' over ' & $string($.payload.answers.payments.parcel[0].actions[0].durationYears) & ' years'",
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            {
                               label: "Total yearly payment",
                               text: "$.payload.answers.totalAnnualPaymentPence",
                               format: "penniesToPounds",
+                            },
+                          ],
+                        },
+                        {
+                          component: "heading",
+                          text: "Funded action payment detail",
+                          level: 3,
+                          classes:
+                            "govuk-heading-m govuk-!-margin-top-6 govuk-!-margin-bottom-3",
+                        },
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              component: "repeat",
+                              itemsRef:
+                                "$.payload.answers.payments.parcel[*].actions[*]",
+                              items: [
+                                {
+                                  label: "@.code annual payment",
+                                  text: [
+                                    {
+                                      text: "jsonata:@.annualPaymentPence + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)",
+                                      format: "penniesToPounds",
+                                      classes: "govuk-!-display-block",
+                                    },
+                                    {
+                                      component: "container",
+                                      classes: "govuk-body-m",
+                                      items: [
+                                        { text: "( " },
+                                        { text: "@.appliedFor.quantity" },
+                                        { text: " " },
+                                        { text: "@.appliedFor.unit" },
+                                        { text: " x " },
+                                        {
+                                          text: "@.paymentRates",
+                                          format: "penniesToPounds",
+                                        },
+                                        { text: " per " },
+                                        { text: "@.appliedFor.unit" },
+                                        {
+                                          component: "conditional",
+                                          condition:
+                                            "jsonata:$exists($.payload.answers.payments.agreement[code=@.code])",
+                                          whenTrue: [
+                                            { component: "text", text: ", " },
+                                            {
+                                              component: "text",
+                                              text: "jsonata:$.payload.answers.payments.agreement[code=@.code].annualPaymentPence",
+                                              format: "penniesToPounds",
+                                            },
+                                            {
+                                              component: "text",
+                                              text: " per SFI agreement per year",
+                                            },
+                                          ],
+                                        },
+                                        { text: " )" },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            {
+                              component: "repeat",
+                              itemsRef:
+                                "jsonata:$.payload.answers.payments.agreement[code $not in $.payload.answers.payments.parcel[*].actions[*].code]",
+                              items: [
+                                {
+                                  label: "@.code annual payment",
+                                  text: [
+                                    {
+                                      text: "@.annualPaymentPence",
+                                      format: "penniesToPounds",
+                                      classes: "govuk-!-display-block",
+                                    },
+                                    {
+                                      component: "container",
+                                      classes: "govuk-body-m",
+                                      items: [
+                                        { text: "(1 ha x " },
+                                        {
+                                          text: "@.paymentRates",
+                                          format: "penniesToPounds",
+                                        },
+                                        { text: " per ha, " },
+                                        {
+                                          text: "@.annualPaymentPence",
+                                          format: "penniesToPounds",
+                                        },
+                                        {
+                                          text: " per SFI agreement per year)",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
                             },
                           ],
                         },
