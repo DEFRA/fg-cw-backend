@@ -1000,7 +1000,7 @@ export const up = async (db) => {
                       },
                       {
                         component: "container",
-                        classes: "govuk-!-margin-bottom-6",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
                         items: [
                           {
                             component: "text",
@@ -1345,7 +1345,7 @@ export const up = async (db) => {
                       },
                       {
                         component: "container",
-                        classes: "govuk-!-margin-bottom-6",
+                        classes: "govuk-!-margin-bottom-6 govuk-body",
                         items: [
                           {
                             component: "text",
