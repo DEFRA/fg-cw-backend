@@ -16,5 +16,7 @@ export const handleAgreementStatusUpdateUseCase = async (message) => {
       `Updated case status with caseRef "${data.caseRef}" and workflowCode "${data.workflowCode}"`,
     );
   }
-  logger.info("Finished: Handle agreement status update use case started.");
+  logger.info(
+    `Finished: Handle agreement status update use case started ${data.caseRef} and workflowCode ${data.workflowCode}`,
+  );
 };
