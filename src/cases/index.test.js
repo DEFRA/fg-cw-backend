@@ -110,6 +110,7 @@ describe("cases", () => {
         path: "/cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status",
       },
       { method: "post", path: "/workflows" },
+      { method: "post", path: "/cases/{caseId}/page-action" },
       { method: "post", path: "/cases/{caseId}/notes" },
     ]);
   });

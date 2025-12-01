@@ -124,14 +124,15 @@ describe("Workflow", () => {
       ],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
           endpoint: "landGrantsRulesRerun",
+          display: true,
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },

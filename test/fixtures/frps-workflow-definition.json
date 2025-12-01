@@ -9,26 +9,25 @@
             "type": "string"
           },
           "summary": {
-            "sbi": {
-              "label": "SBI",
-              "text": "$.payload.identifiers.sbi",
-              "type": "string"
-            },
-            "reference": {
-              "label": "Reference",
-              "text": "$.caseRef",
-              "type": "string"
-            },
             "scheme": {
               "label": "Scheme",
               "text": "$.payload.answers.scheme",
               "type": "string"
             },
-            "createdAt": {
-              "label": "Created At",
-              "text": "$.payload.createdAt",
-              "type": "date",
-              "format": "formatDate"
+            "applicationId": {
+              "label": "Application ID",
+              "text": "$.caseRef",
+              "type": "string"
+            },
+            "sbi": {
+              "label": "SBI",
+              "text": "$.payload.identifiers.sbi",
+              "type": "string"
+            },
+            "status": {
+              "label": "Status",
+              "text": "$.currentStatusName",
+              "type": "string"
             }
           }
         },
@@ -858,6 +857,56 @@
           "code": "CUSTOMER_AGREEMENT_REVIEW",
           "name": "Customer Agreement Review",
           "description": "Customer reviews the agreement offer",
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_OFFERED'",
+              "content": [
+                {
+                  "component": "alert",
+                  "variant": "success",
+                  "title": "Agreement sent",
+                  "text": "There is nothing more you need to do.",
+                  "showTitleAsHeading": true
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You can still withdraw the agreement until the customer has accepted or rejected."
+                },
+                {
+                  "component": "heading",
+                  "text": "Agreement with customer for review",
+                  "level": 3
+                },
+                {
+                  "component": "paragraph",
+                  "text": "There are no tasks to complete."
+                },
+                {
+                  "component": "heading",
+                  "text": "You can still withdraw this agreement",
+                  "level": 3
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You may want to withdraw this agreement if:"
+                },
+                {
+                  "component": "unordered-list",
+                  "items": [
+                    {
+                      "text": "the customer needs to update their application"
+                    },
+                    {
+                      "text": "the customer has not responded to the agreement offer within 10 working days"
+                    },
+                    {
+                      "text": "there is an error in the agreement"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
           "statuses": [
             {
               "code": "AGREEMENT_OFFERED",
@@ -956,20 +1005,34 @@
       "code": "FETCH_RULES_ENDPOINT",
       "service": "RULES_ENGINE",
       "path": "/case-management-adapter/application/validation-run/{runId}",
-      "method": "GET",
-      "request": null
+      "method": "GET"
+    },
+    {
+      "code": "RECALCULATE_RULES_ENDPOINT",
+      "service": "RULES_ENGINE",
+      "path": "/case-management-adapter/application/validation-run/rerun",
+      "method": "POST"
     }
   ],
   "externalActions": [
     {
-      "code": "RERUN_RULES",
-      "name": "Rerun Rules",
+      "code": "RECALCULATE_RULES",
+      "name": "Run calculations again",
       "description": "Rerun the business rules validation",
-      "endpoint": "landGrantsRulesRerun",
+      "endpoint": {
+        "code": "RECALCULATE_RULES_ENDPOINT",
+        "endpointParams": {
+          "BODY": {
+            "id": "$.payload.answers.rulesCalculations.id",
+            "requesterUsername": "CASEWORKING_SYSTEM"
+          }
+        }
+      },
+      "display": true,
       "target": {
-        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-        "node": "landGrantsRulesRun",
-        "nodeType": "array",
+        "position": null,
+        "targetNode": "rulesCalculations",
+        "dataType": "ARRAY",
         "place": "append"
       }
     },
@@ -977,6 +1040,7 @@
       "code": "FETCH_RULES",
       "name": "Fetch Rules",
       "description": "Fetch a specific rules engine run by ID",
+      "display": false,
       "endpoint": {
         "code": "FETCH_RULES_ENDPOINT",
         "endpointParams": {

@@ -2,15 +2,22 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { resolveJSONPath } from "./resolve-json.js";
 
-export const createCaseWorkflowContext = (kase, workflow, request = {}) => ({
-  ...kase,
-  workflow,
-  definitions: { ...workflow.definitions },
-  ...(workflow.externalActions && {
-    externalActions: workflow.externalActions,
-  }),
-  request: { ...request },
-});
+export const createCaseWorkflowContext = (kase, workflow, request = {}) => {
+  const status = workflow.getStatus(kase.position);
+
+  return {
+    ...kase,
+    workflow,
+    definitions: { ...workflow.definitions },
+    currentStatusName: status.name,
+    ...(workflow.externalActions && {
+      externalActions: workflow.externalActions.filter(
+        (action) => action.display === true,
+      ),
+    }),
+    request: { ...request },
+  };
+};
 
 export const assertPathExists = async (root, path) => {
   if (!(await pathExists(root, path))) {
@@ -39,7 +46,7 @@ export const buildLinks = async (root) => {
     {
       id: "case-details",
       href: `/cases/${caseId}/case-details`,
-      text: "Case Details",
+      text: "Application",
     },
     {
       id: "notes",

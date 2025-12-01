@@ -2,6 +2,13 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 
+const componentSchema = Joi.object({
+  id: Joi.string().optional(),
+  component: Joi.string().optional(),
+})
+  .unknown()
+  .label("Component");
+
 export const Code = Joi.string().pattern(/^[A-Z0-9_]+$/);
 
 const Action = Joi.object({
@@ -59,6 +66,7 @@ export const Stage = Joi.object({
   actionsTitle: Joi.string().optional(),
   statuses: Joi.array().items(Status).required(),
   agreements: Joi.array().optional().allow(null),
+  beforeContent: Joi.array().items(componentSchema).optional(),
 }).label("Stage");
 
 export const Phase = Joi.object({

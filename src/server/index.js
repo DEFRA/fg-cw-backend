@@ -40,13 +40,13 @@ export const createServer = async () => {
   });
 
   await server.register([
+    tracing,
     auth,
     health,
     logging,
     mongo,
     shutdown,
     swagger,
-    tracing,
   ]);
 
   // SonarCloud magic numbers

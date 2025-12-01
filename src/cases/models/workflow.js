@@ -99,6 +99,22 @@ export class Workflow {
     return transition.targetPosition;
   }
 
+  findExternalAction(actionCode) {
+    if (typeof actionCode !== "string" || !this.externalActions) {
+      return null;
+    }
+
+    return this.externalActions.find((action) => action.code === actionCode);
+  }
+
+  findEndpoint(endpointCode) {
+    if (!this.endpoints) {
+      return null;
+    }
+
+    return this.endpoints.find((endpoint) => endpoint.code === endpointCode);
+  }
+
   static createMock(props) {
     return new Workflow({
       code: "workflow-code",
@@ -114,16 +130,17 @@ export class Workflow {
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
+          display: true,
           endpoint: {
             code: "rules-engine-endpoint",
           },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },

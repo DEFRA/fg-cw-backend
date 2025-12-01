@@ -1,10 +1,13 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
+
+  logger.info(`Assigning user to case use case started - caseId: ${caseId}`);
 
   const kase = await findById(caseId);
 
@@ -13,12 +16,18 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   if (assignedUserId === null) {
+    logger.debug(`Unassigning user ${user.id} from case - caseId: ${caseId}`);
+
     kase.unassignUser({
       text: notes,
       createdBy: user.id,
     });
     return update(kase);
   }
+
+  logger.debug(
+    `Validating user assignment - caseId: ${caseId}, userId: ${assignedUserId}`,
+  );
 
   const [userToAssign, workflow] = await Promise.all([
     findUserByIdUseCase(assignedUserId),
@@ -31,11 +40,21 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
+  logger.debug(
+    `User authorised - caseId: ${caseId}, userId: ${assignedUserId}`,
+  );
+
   kase.assignUser({
     assignedUserId,
     createdBy: user.id,
     text: notes,
   });
 
-  return update(kase);
+  const result = await update(kase);
+
+  logger.info(
+    `Finished: Assigning user to case use case started - caseId: ${caseId}`,
+  );
+
+  return result;
 };

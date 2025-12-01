@@ -71,14 +71,15 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
             description: "Rerun the business rules validation",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
               place: "append",
             },
           },
@@ -100,13 +101,15 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -119,12 +122,13 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            name: "Rerun Rules",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -140,12 +144,12 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
+            code: "RECALCULATE_RULES",
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
             },
           },
         ];
@@ -161,12 +165,14 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -182,8 +188,9 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
           },
         ];
@@ -195,16 +202,18 @@ describe("workflowSchema", () => {
         );
       });
 
-      it("requires node field in target", () => {
+      it("requires targetNode field in target", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              nodeType: "array",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -212,20 +221,22 @@ describe("workflowSchema", () => {
         const { error } = WorkflowData.validate(data);
         expect(error.name).toEqual("ValidationError");
         expect(error.details[0].message).toEqual(
-          '"externalActions[0].target.node" is required',
+          '"externalActions[0].target.targetNode" is required',
         );
       });
 
-      it("requires nodeType field in target", () => {
+      it("requires dataType field in target", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
+              targetNode: "landGrantsRulesRun",
+              place: "append",
             },
           },
         ];
@@ -233,21 +244,23 @@ describe("workflowSchema", () => {
         const { error } = WorkflowData.validate(data);
         expect(error.name).toEqual("ValidationError");
         expect(error.details[0].message).toEqual(
-          '"externalActions[0].target.nodeType" is required',
+          '"externalActions[0].target.dataType" is required',
         );
       });
 
-      it("validates nodeType must be 'array'", () => {
+      it("validates dataType must be 'ARRAY' or 'OBJECT'", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "object",
+              targetNode: "landGrantsRulesRun",
+              dataType: "STRING",
+              place: "append",
             },
           },
         ];
@@ -255,7 +268,7 @@ describe("workflowSchema", () => {
         const { error } = WorkflowData.validate(data);
         expect(error.name).toEqual("ValidationError");
         expect(error.details[0].message).toEqual(
-          '"externalActions[0].target.nodeType" must be [array]',
+          '"externalActions[0].target.dataType" must be one of [ARRAY, OBJECT]',
         );
       });
 
@@ -263,12 +276,14 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -280,17 +295,41 @@ describe("workflowSchema", () => {
         );
       });
 
+      it("validates place must be provided", () => {
+        const data = structuredClone(workflowData1);
+        data.externalActions = [
+          {
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            endpoint: "landGrantsRulesRerun",
+            display: true,
+            target: {
+              position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
+            },
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.name).toEqual("ValidationError");
+        expect(error.details[0].message).toEqual(
+          '"externalActions[0].target.place" is required',
+        );
+      });
+
       it("validates place must be 'append' if provided", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
             endpoint: "landGrantsRulesRerun",
+            display: true,
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
               place: "prepend",
             },
           },
@@ -307,24 +346,27 @@ describe("workflowSchema", () => {
         const data = structuredClone(workflowData1);
         data.externalActions = [
           {
-            code: "RERUN_RULES",
-            name: "Rerun Rules",
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
             endpoint: "landGrantsRulesRerun",
             target: {
               position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-              node: "landGrantsRulesRun",
-              nodeType: "array",
+              targetNode: "landGrantsRulesRun",
+              dataType: "ARRAY",
               place: "append",
             },
           },
           {
             code: "ANOTHER_ACTION",
             name: "Another Action",
+            display: true,
             endpoint: "anotherEndpoint",
             target: {
               position: "POST_AWARD:FINAL_REVIEW:COMPLETED",
-              node: "anotherNode",
-              nodeType: "array",
+              targetNode: "anotherNode",
+              dataType: "ARRAY",
+              place: "append",
             },
           },
         ];
@@ -343,7 +385,6 @@ describe("workflowSchema", () => {
             service: "RULES_ENGINE",
             path: "/applications/{runId}",
             method: "GET",
-            request: null,
           },
         ];
 

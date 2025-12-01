@@ -67,6 +67,43 @@ describe("outbox.subscriber", () => {
     expect(subscriber.running).toBeFalsy();
   });
 
+  it("should continue polling and process events after an error", async () => {
+    const error = new Error("Temporary poll failure");
+    vi.spyOn(logger, "error");
+    vi.spyOn(logger, "info");
+
+    const mockEvent = new Outbox({
+      target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+      event: { data: { foo: "bar" } },
+    });
+    mockEvent.markAsComplete = vi.fn();
+
+    claimEvents
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce([mockEvent])
+      .mockResolvedValue([]);
+
+    publish.mockResolvedValue(1);
+
+    const subscriber = new OutboxSubscriber();
+    subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(error, "Error polling outbox");
+    });
+
+    await vi.advanceTimersByTimeAsync(subscriber.interval);
+
+    await vi.waitFor(() => {
+      expect(publish).toHaveBeenCalled();
+    });
+
+    expect(subscriber.running).toBeTruthy();
+    expect(claimEvents).toHaveBeenCalledTimes(3);
+
+    subscriber.stop();
+  });
+
   it("should mark events as unsent", async () => {
     publish.mockRejectedValue(1);
     const mockEvent = {

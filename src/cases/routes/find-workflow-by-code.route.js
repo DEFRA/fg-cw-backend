@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 import { findWorkflowByCodeUseCase } from "../use-cases/find-workflow-by-code.use-case.js";
@@ -22,9 +23,9 @@ export const findWorkflowByCodeRoute = {
   },
   async handler(request) {
     const { code } = request.params;
-
+    logger.info(`Finding workflow ${code}`);
     const result = await findWorkflowByCodeUseCase(code);
-
+    logger.info(`Finished: Finding workflow ${code}`);
     return result;
   },
 };

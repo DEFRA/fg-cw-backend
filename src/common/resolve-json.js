@@ -26,7 +26,7 @@ const resolveJSONString = async ({ path, root, row }) => {
     return path.slice(1);
   }
   if (isJSONataExpression(path)) {
-    return await evaluateJSONata({ path, root });
+    return await evaluateJSONata({ path, root, row });
   }
   // Check for multiple space-separated JSONPath references (before single ref check)
   if (hasMultipleRefs(path)) {
@@ -353,15 +353,18 @@ const resolveDataRef = async ({ root, path, row }) => {
     return [];
   }
   if (isJSONataExpression(path)) {
-    return toArray(await evaluateJSONata({ path, root }));
+    return toArray(await evaluateJSONata({ path, root, row }));
   }
   return evalPath({ root, path, row });
 };
 
-const evaluateJSONata = async ({ path, root }) => {
+const evaluateJSONata = async ({ path, root, row }) => {
   try {
-    const expression = path.replace("jsonata:", "");
+    const expression = path.replace("jsonata:", "").replaceAll("@.", "$row.");
     const compiledExpression = jsonata(expression);
+    if (row !== undefined && row !== null) {
+      compiledExpression.assign("row", row);
+    }
     return await compiledExpression.evaluate(root);
   } catch (error) {
     // Log JSONata evaluation errors and return undefined to allow graceful degradation
