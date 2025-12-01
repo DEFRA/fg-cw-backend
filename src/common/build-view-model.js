@@ -46,7 +46,7 @@ export const buildLinks = async (root) => {
     {
       id: "case-details",
       href: `/cases/${caseId}/case-details`,
-      text: "Case Details",
+      text: "Application",
     },
     {
       id: "notes",

@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { idSchema } from "../schemas/id.schema.js";
@@ -32,11 +33,15 @@ export const addNoteToCaseRoute = {
     const { text } = request.payload;
     const { user } = request.auth.credentials;
 
+    logger.info(`Adding note to case ${caseId}`);
+
     const note = await addNoteToCaseUseCase({
       caseId,
       text,
       user,
     });
+
+    logger.info(`Finished: Adding note to case ${caseId}`);
 
     return h
       .response({

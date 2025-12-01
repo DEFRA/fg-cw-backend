@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { updateTaskStatusRequestSchema } from "../schemas/requests/update-task-status-request.schema.js";
 import { Code } from "../schemas/task.schema.js";
@@ -29,6 +30,8 @@ export const updateTaskStatusRoute = {
     const { status, completed, comment } = request.payload;
     const { user } = request.auth.credentials;
 
+    logger.info(`Updating status of task ${taskCode} in case ${caseId}`);
+
     await updateTaskStatusUseCase({
       caseId,
       taskCode,
@@ -38,6 +41,10 @@ export const updateTaskStatusRoute = {
       comment,
       user,
     });
+
+    logger.info(
+      `Finished: Updating status of task ${taskCode} in case ${caseId}`,
+    );
 
     return h.response().code(204);
   },

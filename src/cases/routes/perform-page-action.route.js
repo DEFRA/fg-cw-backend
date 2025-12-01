@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { performPageActionRequestSchema } from "../schemas/requests/perform-page-action-request.schema.js";
@@ -26,10 +27,16 @@ export const performPageActionRoute = {
     const { caseId } = request.params;
     const { actionCode } = request.payload;
 
+    logger.info(`Performing page action ${actionCode} for case ${caseId}`);
+
     await performPageActionUseCase({
       caseId,
       actionCode,
     });
+
+    logger.info(
+      `Finished: Performing page action ${actionCode} for case ${caseId}`,
+    );
 
     return h.response().code(HttpCodes.NoContent);
   },

@@ -11,10 +11,7 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
   const externalAction = validateExternalAction(actionCode, workflow);
   const caseWorkflowContext = createCaseWorkflowContext(kase, workflow);
 
-  logger.info(
-    { caseId, actionCode },
-    `Performing page action: ${actionCode} for case: ${caseId}`,
-  );
+  logger.info(`Performing page action: ${actionCode} for case: ${caseId}`);
 
   const response = await externalActionUseCase({
     actionCode,
@@ -28,6 +25,10 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
     response,
     caseId,
     actionCode,
+  );
+
+  logger.info(
+    `Finished: Performing page action: ${actionCode} for case: ${caseId}`,
   );
 
   return response;
@@ -73,9 +74,8 @@ const storeResponseIfNeeded = async (
   if (shouldStoreResponse(externalAction, response)) {
     storeResponseInSupplementaryData(kase, externalAction, response);
     await update(kase);
-    logger.info(
-      { caseId, actionCode, target: externalAction.target },
-      `Successfully stored response in supplementaryData for action: ${actionCode}`,
+    logger.debug(
+      `Successfully stored response in supplementaryData for action: ${actionCode} for case: ${caseId}`,
     );
   }
 };

@@ -42,7 +42,7 @@ export const workflowData1 = {
                   caseId: "$._id",
                 },
               },
-              text: "Case Details",
+              text: "Application",
               index: 1,
             },
             content: [
@@ -228,6 +228,7 @@ export const workflowData1 = {
           code: "APPLICATION_RECEIPT",
           name: "Application Receipt",
           description: "Application received",
+          beforeContent: [],
           statuses: [
             {
               code: "STATUS_1",
@@ -274,6 +275,7 @@ export const workflowData1 = {
           code: "CONTRACT",
           name: "Stage for contract management",
           description: "Awaiting agreement",
+          beforeContent: [],
           statuses: [
             {
               code: "AWAITING_AGREEMENT",
@@ -346,6 +348,7 @@ export const workflowData2 = {
           code: "REVIEW",
           name: "Review",
           description: "Review description",
+          beforeContent: [],
           statuses: [],
           taskGroups: [],
         },
@@ -353,6 +356,7 @@ export const workflowData2 = {
           code: "DECISION",
           name: "Decision",
           description: "Decision description",
+          beforeContent: [],
           statuses: [],
           taskGroups: [],
         },
