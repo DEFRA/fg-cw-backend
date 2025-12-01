@@ -1,3 +1,4 @@
+import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
@@ -42,6 +43,10 @@ export const createCaseUseCase = async (message) => {
     } = message;
     const { caseRef, workflowCode, payload } = data;
 
+    logger.info(
+      `Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+    );
+
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
 
     const position = workflow.getInitialPosition();
@@ -53,6 +58,10 @@ export const createCaseUseCase = async (message) => {
       payload,
       phases: workflow.phases.map(createCasePhase),
     });
+
+    logger.info(
+      `Finished: Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+    );
 
     await save(kase, session);
   });

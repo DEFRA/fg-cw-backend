@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
@@ -203,6 +204,8 @@ const createWorkflowPhase = (phase, phases) =>
   });
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
+  logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
+
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
     pages: createWorkflowCommand.pages,
@@ -219,6 +222,8 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
   });
 
   await save(workflow);
+
+  logger.info(`Finished: Workflow created with code '${workflow.code}'`);
 
   return workflow;
 };

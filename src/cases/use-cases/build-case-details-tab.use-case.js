@@ -7,6 +7,7 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -15,6 +16,10 @@ import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
+
+  logger.info(
+    `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+  );
 
   const { caseId, tabId } = request.params;
 
@@ -40,6 +45,10 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     buildContent(root),
     buildBeforeContent(workflowStage, root),
   ]);
+
+  logger.info(
+    `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+  );
 
   return {
     caseId,
