@@ -23,9 +23,10 @@ export class OutboxSubscriber {
 
   // eslint-disable-next-line complexity
   async poll() {
-    try {
-      while (this.running) {
-        logger.trace("Outbox checking for events.");
+    while (this.running) {
+      logger.trace("Outbox checking for events.");
+
+      try {
         const claimToken = randomUUID();
         const pendingEvents = await claimEvents(claimToken);
         if (pendingEvents?.length > 0) {
@@ -38,10 +39,11 @@ export class OutboxSubscriber {
         await this.processFailedEvents();
         await this.processDeadEvents();
         await this.processExpiredEvents();
-        await setTimeout(this.interval);
+      } catch (error) {
+        logger.error(error, "Error polling outbox");
       }
-    } catch (error) {
-      logger.error(error, `Error during polling outbox`);
+
+      await setTimeout(this.interval);
     }
   }
 

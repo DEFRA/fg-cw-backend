@@ -55,19 +55,42 @@ describe("inbox.subscriber", () => {
     expect(subscriber.running).toBeTruthy();
   });
 
-  it("should handle poll failure start()", async () => {
-    const error = new Error("Poll failure");
+  it("should continue polling and process events after an error", async () => {
+    const error = new Error("Temporary poll failure");
     vi.spyOn(logger, "error");
-    claimEvents.mockRejectedValue(error);
+    vi.spyOn(logger, "info");
+
+    const mockEvent = new Inbox({
+      type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
+      traceparent: "test-trace",
+      event: { data: { foo: "bar" } },
+    });
+
+    claimEvents
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce([mockEvent])
+      .mockResolvedValue([]);
+
+    createCaseUseCase.mockResolvedValue(true);
+    withTraceParent.mockImplementation((_, fn) => fn());
+
     const subscriber = new InboxSubscriber();
     subscriber.start();
+
     await vi.waitFor(() => {
-      expect(logger.error).toHaveBeenCalledWith(
-        error,
-        "Error during polling inbox",
-      );
+      expect(logger.error).toHaveBeenCalledWith(error, "Error polling inbox");
     });
+
+    await vi.advanceTimersByTimeAsync(subscriber.interval);
+
+    await vi.waitFor(() => {
+      expect(createCaseUseCase).toHaveBeenCalled();
+    });
+
     expect(subscriber.running).toBeTruthy();
+    expect(claimEvents).toHaveBeenCalledTimes(3);
+
+    subscriber.stop();
   });
 
   it("should stop polling after stop()", async () => {
