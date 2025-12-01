@@ -8,8 +8,6 @@ export const updateUserUseCase = async ({ userId, props }) => {
 
   const user = await findUserByIdUseCase(userId);
 
-  logger.info(`Updating user: ${user.name}`);
-
   if (props.name) {
     user.setName(props.name);
   }
@@ -27,13 +25,15 @@ export const updateUserUseCase = async ({ userId, props }) => {
       {},
     );
 
-    logger.info(`Assigning app roles: ${Object.keys(appRoles)}`);
+    logger.debug(
+      `Assigning app roles: ${Object.keys(appRoles)} to user ${userId}`,
+    );
     user.assignAppRoles(appRoles);
   }
 
   await update(user);
 
-  logger.info(`Finished: Updating user: ${user.id}`);
+  logger.info(`Finished: Updating user: ${userId}`);
 
   return user;
 };

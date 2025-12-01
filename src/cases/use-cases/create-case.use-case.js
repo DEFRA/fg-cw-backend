@@ -37,12 +37,15 @@ const createCasePhase = (phase) =>
   });
 
 export const createCaseUseCase = async (message) => {
-  logger.info(`Creating case use case started.`);
   return await withTransaction(async (session) => {
     const {
       event: { data },
     } = message;
     const { caseRef, workflowCode, payload } = data;
+
+    logger.info(
+      `Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+    );
 
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
 

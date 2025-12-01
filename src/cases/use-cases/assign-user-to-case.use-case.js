@@ -16,7 +16,7 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   if (assignedUserId === null) {
-    logger.info(
+    logger.debug(
       { caseId, requestingUserId: user.id },
       "Unassigning user from case",
     );
@@ -28,7 +28,7 @@ export const assignUserToCaseUseCase = async (command) => {
     return update(kase);
   }
 
-  logger.info(
+  logger.debug(
     `Validating user assignment - caseId: ${caseId}, userId: ${assignedUserId}`,
   );
 
@@ -43,7 +43,9 @@ export const assignUserToCaseUseCase = async (command) => {
     );
   }
 
-  logger.info(`User authorised - caseId: ${caseId}, userId: ${assignedUserId}`);
+  logger.debug(
+    `User authorised - caseId: ${caseId}, userId: ${assignedUserId}`,
+  );
 
   kase.assignUser({
     assignedUserId,

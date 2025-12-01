@@ -4,13 +4,7 @@ import { pino } from "pino";
 import { config } from "./config.js";
 import { getTraceParent } from "./trace-parent.js";
 
-const requestedLevel = config.get("log.level");
-const envName = config.get("cdpEnvironment");
-const level =
-  envName === "prod" &&
-  (requestedLevel === "debug" || requestedLevel === "trace")
-    ? "info"
-    : requestedLevel;
+const level = config.get("log.level");
 const format = {
   ecs: {
     ...ecsFormat({

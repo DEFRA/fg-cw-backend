@@ -12,7 +12,7 @@ export const handleAgreementStatusUpdateUseCase = async (message) => {
 
   if (data?.supplementaryData) {
     await updateSupplementaryDataUseCase(data);
-    logger.info(
+    logger.debug(
       `Updated case status with caseRef "${data.caseRef}" and workflowCode "${data.workflowCode}"`,
     );
   }
