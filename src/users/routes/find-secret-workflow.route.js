@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { findSecretWorkflowUseCase } from "../use-cases/find-secret-workflow.use-case.js";
 
 export const findSecretWorkflowRoute = {
@@ -15,6 +16,7 @@ export const findSecretWorkflowRoute = {
     },
   },
   async handler(request) {
+    logger.info("Finding secret workflow");
     return await findSecretWorkflowUseCase({
       workflowCode: request.params.workflowCode,
       user: request.auth.credentials.user,

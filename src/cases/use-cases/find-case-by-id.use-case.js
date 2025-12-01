@@ -5,6 +5,7 @@ import {
   buildLinks,
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
@@ -131,6 +132,8 @@ export const mapWorkflowCommentDef = (workflowTask) => {
 
 export const findCaseByIdUseCase = async (caseId, user, request) => {
   const kase = await findById(caseId);
+
+  logger.info(`Finding case by id ${caseId}`);
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
@@ -146,6 +149,9 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
   const currentStatus = workflow.getStatus(kase.position);
   const caseStage = kase.getStage();
   const assignedUser = userMap.get(kase.assignedUser?.id);
+
+  logger.info(`Finished:Finding case by id ${caseId}`);
+
   return {
     _id: kase._id,
     caseRef: kase.caseRef,
