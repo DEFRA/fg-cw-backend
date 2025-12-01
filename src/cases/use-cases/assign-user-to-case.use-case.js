@@ -16,10 +16,7 @@ export const assignUserToCaseUseCase = async (command) => {
   }
 
   if (assignedUserId === null) {
-    logger.debug(
-      { caseId, requestingUserId: user.id },
-      "Unassigning user from case",
-    );
+    logger.debug(`Unassigning user ${user.id} from case - caseId: ${caseId}`);
 
     kase.unassignUser({
       text: notes,
