@@ -378,50 +378,19 @@ export const up = async (db) => {
                             {
                               component: "repeat",
                               itemsRef:
-                                "$.payload.answers.payments.parcel[*].actions[*]",
+                                'jsonata:( $allActions := $.payload.answers.payments.parcel[*].actions[*]; $validActions := $allActions[$exists(paymentRates) and $exists(appliedFor.quantity)]; $distinct($validActions.code).( $currentCode := $; { "code": $currentCode, "actions": $validActions[code=$currentCode] } ) )',
                               items: [
                                 {
                                   label: "@.code annual payment",
                                   text: [
                                     {
-                                      text: "jsonata:@.annualPaymentPence + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)",
+                                      text: "jsonata:$floor($sum(@.actions.( appliedFor.quantity * paymentRates )) + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0))",
                                       format: "penniesToPounds",
                                       classes: "govuk-!-display-block",
                                     },
                                     {
-                                      component: "container",
+                                      text: "jsonata:'( ' & $join(@.actions.( $string(appliedFor.quantity) & ' ' & appliedFor.unit & ' x £' & $formatNumber(paymentRates / 100, '#.00') & ' per ' & appliedFor.unit ), ', ') & ($exists($.payload.answers.payments.agreement[code=@.code]) ? ', £' & $formatNumber($.payload.answers.payments.agreement[code=@.code].annualPaymentPence / 100, '#.00') & ' per SFI agreement per year' : '') & ' )'",
                                       classes: "govuk-body-m",
-                                      items: [
-                                        { text: "( " },
-                                        { text: "@.appliedFor.quantity" },
-                                        { text: " " },
-                                        { text: "@.appliedFor.unit" },
-                                        { text: " x " },
-                                        {
-                                          text: "@.paymentRates",
-                                          format: "penniesToPounds",
-                                        },
-                                        { text: " per " },
-                                        { text: "@.appliedFor.unit" },
-                                        {
-                                          component: "conditional",
-                                          condition:
-                                            "jsonata:$exists($.payload.answers.payments.agreement[code=@.code])",
-                                          whenTrue: [
-                                            { component: "text", text: ", " },
-                                            {
-                                              component: "text",
-                                              text: "jsonata:$.payload.answers.payments.agreement[code=@.code].annualPaymentPence",
-                                              format: "penniesToPounds",
-                                            },
-                                            {
-                                              component: "text",
-                                              text: " per SFI agreement per year",
-                                            },
-                                          ],
-                                        },
-                                        { text: " )" },
-                                      ],
                                     },
                                   ],
                                 },
