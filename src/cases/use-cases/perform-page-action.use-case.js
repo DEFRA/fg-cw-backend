@@ -75,7 +75,7 @@ const storeResponseIfNeeded = async (
     storeResponseInSupplementaryData(kase, externalAction, response);
     await update(kase);
     logger.debug(
-      `Successfully stored response in supplementaryData for action: ${actionCode}`,
+      `Successfully stored response in supplementaryData for action: ${actionCode} for case: ${caseId}`,
     );
   }
 };
