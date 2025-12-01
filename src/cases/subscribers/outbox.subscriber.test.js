@@ -67,6 +67,21 @@ describe("outbox.subscriber", () => {
     expect(subscriber.running).toBeFalsy();
   });
 
+  it("should handle poll failure", async () => {
+    const error = new Error("Poll failure");
+    vi.spyOn(logger, "error");
+    claimEvents.mockRejectedValue(error);
+    const subscriber = new OutboxSubscriber();
+    subscriber.start();
+    await vi.waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(
+        error,
+        `Error during polling outbox`,
+      );
+    });
+    expect(subscriber.running).toBeTruthy();
+  });
+
   it("should mark events as unsent", async () => {
     publish.mockRejectedValue(1);
     const mockEvent = {
