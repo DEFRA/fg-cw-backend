@@ -235,6 +235,7 @@ export const createWorkflow = async (payload = {}) => {
                 {
                   code: "AWAITING_REVIEW",
                   name: "Awaiting Review",
+                  theme: "INFO",
                   description: null,
                   interactive: true,
                   transitions: [
@@ -280,6 +281,7 @@ export const createWorkflow = async (payload = {}) => {
                   code: "AWAITING_AGREEMENT",
                   name: "Awaiting Agreement",
                   description: "Awaiting agreement signature",
+                  theme: "INFO",
                   interactive: true,
                   transitions: [],
                 },
