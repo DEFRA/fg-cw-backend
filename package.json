@@ -13,7 +13,7 @@
     "test:unit": "vitest --config vitest.config.js --dir src",
     "test:integration": "vitest --config test/vitest.config.js --dir test",
     "test:integration:verbose": "PRINT_LOGS=1 npm run test:integration",
-    "dev": "nodemon --env-file .env src/main.js",
+    "dev": "node scripts/dev-wrapper.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
     "publish:case:status:update": "node scripts/publish-update-case-status.js",
@@ -71,7 +71,7 @@
     "nodemon": "3.1.10",
     "prettier": "3.6.2",
     "prettier-plugin-organize-imports": "4.3.0",
-    "testcontainers": "^11.7.1",
+    "testcontainers": "11.9.0",
     "vitest": "3.2.4"
   }
 }

@@ -4,7 +4,7 @@ const mongoConfig = baseConfig.get("mongo");
 
 const config = {
   mongodb: {
-    url: mongoConfig.url,
+    url: mongoConfig.uri,
     databaseName: mongoConfig.databaseName,
     options: {
       useNewUrlParser: true, // removes a deprecation warning when connecting

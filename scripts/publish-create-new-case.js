@@ -7,15 +7,14 @@ import { randomUUID } from "node:crypto";
 
 const sqs = new SQSClient({
   region: "eu-west-2",
-  endpoint: "http://localhost:4566",
+  endpoint: "http://localhost:55134",
   credentials: {
     accessKeyId: "test",
     secretAccessKey: "test",
   },
 });
 
-const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
+const queueUrl = "http://localhost:55134/000000000000/cw__sqs__create_new_case";
 
 const messagePmf = {
   id: randomUUID(),
