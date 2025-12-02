@@ -62,6 +62,14 @@ export class Workflow {
     return this.getStage(position).getStatus(position.statusCode);
   }
 
+  getTransitionForTargetPosition(currentPosition, targetPosition) {
+    const targetTransition = this.getStatus(currentPosition).transitions.find(
+      (transition) => transition.targetPosition.equals(targetPosition),
+    );
+
+    return targetTransition;
+  }
+
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(
