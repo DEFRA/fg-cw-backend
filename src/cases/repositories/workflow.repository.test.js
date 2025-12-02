@@ -24,12 +24,8 @@ describe("save", () => {
     await save(workflow);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
-
-    expect(insertOne).toHaveBeenCalledWith(
-      WorkflowDocument.createMock({
-        _id: workflow._id,
-      }),
-    );
+    expect(insertOne.mock.calls[0][0]).toBeInstanceOf(WorkflowDocument);
+    expect(insertOne.mock.calls[0][0]).toEqual(new WorkflowDocument(workflow));
   });
 
   it("throws Boom.conflict when a workflow with the same code exists", async () => {

@@ -479,6 +479,7 @@
               "transitions": [
                 {
                   "targetPosition": "::IN_REVIEW",
+                  "checkTasks": true,
                   "action": {
                     "code": "START_REVIEW",
                     "name": "Start Review",
@@ -496,6 +497,7 @@
               "transitions": [
                 {
                   "targetPosition": "::AGREEMENT_GENERATING",
+                  "checkTasks": true,
                   "action": {
                     "code": "APPROVE_APPLICATION",
                     "name": "Approve",
@@ -509,6 +511,7 @@
                 },
                 {
                   "targetPosition": "::APPLICATION_REJECTED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
@@ -522,6 +525,7 @@
                 },
                 {
                   "targetPosition": "::PUT_ON_HOLD",
+                  "checkTasks": true,
                   "action": {
                     "code": "PUT_ON_HOLD",
                     "name": "Put on Hold",
@@ -543,6 +547,7 @@
               "transitions": [
                 {
                   "targetPosition": ":REVIEW_OFFER:",
+                  "checkTasks": true,
                   "action": null
                 }
               ]
@@ -555,6 +560,7 @@
               "transitions": [
                 {
                   "targetPosition": "::IN_REVIEW",
+                  "checkTasks": true,
                   "action": {
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
@@ -576,6 +582,7 @@
               "transitions": [
                 {
                   "targetPosition": "::IN_REVIEW",
+                  "checkTasks": true,
                   "action": {
                     "code": "REMOVE_ON_HOLD",
                     "name": "Remove On Hold",
@@ -589,6 +596,7 @@
                 },
                 {
                   "targetPosition": "::APPLICATION_REJECTED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
@@ -771,6 +779,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "checkTasks": true,
                   "action": {
                     "code": "AGREEMENT_SENT",
                     "name": "Agreement sent",
@@ -780,6 +789,7 @@
                 },
                 {
                   "targetPosition": "::APPLICATION_REJECTED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject Application",
@@ -797,6 +807,7 @@
               "transitions": [
                 {
                   "targetPosition": "::AGREEMENT_DRAFTED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
@@ -920,6 +931,7 @@
                 },
                 {
                   "targetPosition": "::APPLICATION_REJECTED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
@@ -937,6 +949,7 @@
               "transitions": [
                 {
                   "targetPosition": "::AGREEMENT_OFFERED",
+                  "checkTasks": true,
                   "action": {
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
@@ -968,6 +981,7 @@
               "transitions": [
                 {
                   "targetPosition": "::COMPLETE_AGREEMENT",
+                  "checkTasks": true,
                   "action": {
                     "code": "COMPLETE_AGREEMENT",
                     "name": "Complete Agreement",

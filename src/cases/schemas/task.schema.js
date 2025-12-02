@@ -22,7 +22,7 @@ const Transition = Joi.object({
   targetPosition: Joi.string()
     .pattern(/[A-Z0-9_:]/)
     .required(),
-  checkTasks: Joi.bool().allow(null),
+  checkTasks: Joi.bool().required(),
   action: Action.allow(null).required(),
 }).label("Transition");
 
