@@ -525,18 +525,5 @@ describe("Workflow", () => {
       expect(transition.checkTasks).toBeFalsy();
       expect(transition.action.name).toBe("withdraw");
     });
-
-    it("should throw if transition is not supported or found", () => {
-      const workflow = createMockWorkflow();
-      const position = Position.from("PHASE_1:STAGE_1:IN_PROGRESS");
-      const targetPosition = Position.from("PHASE_1:STAGE_1:UNKNOWN");
-      try {
-        workflow.getTransitionForTargetPosition(position, targetPosition);
-      } catch (e) {
-        expect(e.message).toBe(
-          "Workflow does not support transition from PHASE_1:STAGE_1:IN_PROGRESS to PHASE_1:STAGE_1:UNKNOWN",
-        );
-      }
-    });
   });
 });
