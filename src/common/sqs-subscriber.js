@@ -84,7 +84,7 @@ export class SqsSubscriber {
       new ReceiveMessageCommand({
         QueueUrl: this.queueUrl,
         MaxNumberOfMessages: 10,
-        WaitTimeSeconds: 20,
+        WaitTimeSeconds: config.get("aws.sqs.waitTimeSeconds"),
         AttributeNames: ["All"],
         MessageAttributeNames: ["All"],
       }),

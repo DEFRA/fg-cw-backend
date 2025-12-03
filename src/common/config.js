@@ -150,6 +150,12 @@ export const config = convict({
           "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_case_status",
         env: "CW__SQS__UPDATE_STATUS_URL",
       },
+      waitTimeSeconds: {
+        doc: "SQS long polling wait time in seconds",
+        format: "nat",
+        default: 20,
+        env: "SQS_WAIT_TIME_SECONDS",
+      },
     },
   },
   tracing: {
