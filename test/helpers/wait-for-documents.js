@@ -18,5 +18,5 @@ export const waitForDocuments = async (
 
   await setTimeout(1000);
 
-  return waitForDocuments(collection, maxRetries - 1);
+  return waitForDocuments(collection, maxRetries - 1, filter);
 };
