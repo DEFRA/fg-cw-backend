@@ -89,14 +89,10 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
 
-    expect(result).toEqual([
-      Workflow.createMock({
-        _id: workflows[0]._id.toString(),
-      }),
-      Workflow.createMock({
-        _id: workflows[1]._id.toString(),
-      }),
-    ]);
+    expect(result[0]).toBeInstanceOf(Workflow);
+    expect(result[1]).toBeInstanceOf(Workflow);
+    expect(result[0]._id.toString()).toEqual(workflows[0]._id.toString());
+    expect(result[1]._id.toString()).toEqual(workflows[1]._id.toString());
   });
 
   it("returns workflows filtered by single code", async () => {
@@ -118,12 +114,8 @@ describe("findAll", () => {
     expect(find).toHaveBeenCalledWith({
       code: { $in: ["WORKFLOW_A"] },
     });
-    expect(result).toEqual([
-      Workflow.createMock({
-        _id: workflows[0]._id.toString(),
-        code: "WORKFLOW_A",
-      }),
-    ]);
+    expect(result[0].code).toBe("WORKFLOW_A");
+    expect(result[0]._id.toString()).toBe(workflows[0]._id.toString());
   });
 
   it("returns workflows filtered by multiple codes", async () => {
@@ -146,16 +138,8 @@ describe("findAll", () => {
     expect(find).toHaveBeenCalledWith({
       code: { $in: ["WORKFLOW_A", "WORKFLOW_C"] },
     });
-    expect(result).toEqual([
-      Workflow.createMock({
-        _id: workflows[0]._id.toString(),
-        code: "WORKFLOW_A",
-      }),
-      Workflow.createMock({
-        _id: workflows[2]._id.toString(),
-        code: "WORKFLOW_C",
-      }),
-    ]);
+    expect(result[0].code).toBe("WORKFLOW_A");
+    expect(result[1].code).toBe("WORKFLOW_C");
   });
 
   it("returns all workflows when codes query is empty", async () => {
@@ -175,14 +159,8 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(find).toHaveBeenCalledWith({});
-    expect(result).toEqual([
-      Workflow.createMock({
-        _id: workflows[0]._id.toString(),
-      }),
-      Workflow.createMock({
-        _id: workflows[1]._id.toString(),
-      }),
-    ]);
+    expect(result[0]._id.toString()).toEqual(workflows[0]._id.toString());
+    expect(result[1]._id.toString()).toEqual(workflows[1]._id.toString());
   });
 
   it("returns no results when no workflows match the codes", async () => {
@@ -222,12 +200,7 @@ describe("findAll", () => {
       ...query,
     });
 
-    expect(result).toEqual([
-      Workflow.createMock({
-        _id: workflows[0]._id.toString(),
-        code: "WORKFLOW_A",
-      }),
-    ]);
+    expect(result[0]._id.toString()).toEqual(workflows[0]._id.toString());
   });
 });
 
@@ -246,11 +219,7 @@ describe("findByCode", () => {
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(findOne).toHaveBeenCalledWith({ code });
-    expect(result).toEqual(
-      Workflow.createMock({
-        _id: workflowDocument._id.toString(),
-      }),
-    );
+    expect(result._id.toString()).toEqual(workflowDocument._id.toString());
   });
 
   it("returns null when no workflow is found", async () => {

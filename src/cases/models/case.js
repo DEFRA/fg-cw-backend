@@ -266,7 +266,7 @@ export class Case {
       position,
     );
 
-    if (transition?.checkTasks && !this.#areTasksComplete(workflow)) {
+    if (transition.checkTasks && !this.#areTasksComplete(workflow)) {
       throw Boom.preconditionFailed(
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );

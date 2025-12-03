@@ -42,6 +42,7 @@ export class WorkflowPhase {
               transitions: [
                 new WorkflowTransition({
                   targetPosition: Position.from("PHASE_1:STAGE_1:STATUS_2"),
+                  checkTasks: true,
                   action: new WorkflowAction({
                     code: "ACTION_1",
                     name: "Action 1",
@@ -52,6 +53,14 @@ export class WorkflowPhase {
                       mandatory: true,
                     }),
                   }),
+                }),
+                new WorkflowTransition({
+                  targetPosition: Position.from("PHASE_1:STAGE_2:STATUS_1"),
+                  checkTasks: true,
+                }),
+                new WorkflowTransition({
+                  targetPosition: Position.from("PHASE_2:STAGE_1:STATUS_1"),
+                  checkTasks: true,
                 }),
               ],
             }),
