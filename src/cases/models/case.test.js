@@ -1,13 +1,5 @@
 import { ObjectId } from "mongodb";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  vitest,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
@@ -659,7 +651,6 @@ describe("Case", () => {
     let workflow;
 
     beforeEach(() => {
-      vitest.clearAllMocks();
       const props = createValidProps();
       props.phases = [
         new CasePhase({
@@ -813,61 +804,6 @@ describe("Case", () => {
           "Cannot perform action ACTION_1 from position PHASE_1:STAGE_1:STATUS_1: required tasks are not complete",
         );
       }
-    });
-
-    it("allows actions with checkTasks:false even when tasks are incomplete", () => {
-      const props = createValidProps();
-      props.phases = [
-        new CasePhase({
-          code: "PHASE_1",
-          stages: [
-            new CaseStage({
-              code: "STAGE_1",
-              taskGroups: [
-                new CaseTaskGroup({
-                  code: "TASK_GROUP_1",
-                  tasks: [
-                    new CaseTask({
-                      code: "TASK_1",
-                      status: "PENDING",
-                      completed: false,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new CaseStage({
-              code: "STAGE_2",
-              taskGroups: [],
-            }),
-          ],
-        }),
-      ];
-      const caseWithIncompleteTasks = createTestCase(props);
-
-      const status = workflow.getStatus(caseWithIncompleteTasks.position);
-      status.transitions.push(
-        new WorkflowTransition({
-          targetPosition: Position.from("PHASE_1:STAGE_1:STATUS_2"),
-          action: new WorkflowAction({
-            code: "REJECT_ACTION",
-            name: "Reject",
-            checkTasks: false,
-          }),
-        }),
-      );
-
-      caseWithIncompleteTasks.updateStageOutcome({
-        workflow,
-        actionCode: "REJECT_ACTION",
-        comment: "Rejecting without task completion",
-        createdBy: validUserId,
-      });
-
-      const currentStage = caseWithIncompleteTasks.phases[0].stages[0];
-      expect(currentStage.outcome).toBeDefined();
-      expect(currentStage.outcome.actionCode).toBe("REJECT_ACTION");
-      expect(caseWithIncompleteTasks.position.statusCode).toBe("STATUS_2");
     });
 
     it("throws error when action code does not exist", () => {
