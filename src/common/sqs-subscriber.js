@@ -21,6 +21,7 @@ export class SqsSubscriber {
   }
 
   async start() {
+    logger.info("SQS Subscriber starting", { queueUrl: this.queueUrl });
     this.isRunning = true;
     await this.poll();
   }
