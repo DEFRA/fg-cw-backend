@@ -12,13 +12,11 @@ let cases;
 
 let client;
 let inbox;
-let workflow;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
   inbox = client.db().collection("inbox");
-  workflow = client.db().collection("workflow");
 });
 
 afterAll(async () => {
@@ -28,7 +26,6 @@ afterAll(async () => {
 beforeEach(async () => {
   await cases.deleteMany({});
   await inbox.deleteMany({});
-  await workflow.deleteMany({});
 });
 
 describe("On CreateNewCase event", () => {
@@ -37,7 +34,24 @@ describe("On CreateNewCase event", () => {
   });
 
   it("creates a new case", async () => {
-    const expected = [
+    const messageId = randomUUID();
+
+    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
+      ...createCaseEvent3,
+      id: messageId,
+      type: createCaseEvent3.type.replace("development", env.ENVIRONMENT),
+    });
+
+    const documents = await waitForDocuments(inbox, 10, {
+      target: env.CW__SQS__CREATE_NEW_CASE_URL,
+      messageId,
+    });
+
+    expect(documents).toHaveLength(1);
+
+    const caseDocs = await waitForDocuments(cases);
+
+    expect(caseDocs).toEqual([
       {
         ...caseData3Document,
         _id: expect.any(ObjectId),
@@ -55,25 +69,6 @@ describe("On CreateNewCase event", () => {
           },
         ],
       },
-    ];
-
-    const messageId = randomUUID();
-    const type = createCaseEvent3.type;
-
-    createCaseEvent3.id = messageId;
-    createCaseEvent3.type = type.replace("development", env.ENVIRONMENT);
-    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, createCaseEvent3);
-
-    const documents = await waitForDocuments(inbox, 10, {
-      target: env.CW__SQS__CREATE_NEW_CASE_URL,
-      messageId,
-    });
-
-    expect(documents).toHaveLength(1);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const caseDocs = await waitForDocuments(cases);
-    expect(caseDocs).toEqual(expected);
+    ]);
   });
 });
