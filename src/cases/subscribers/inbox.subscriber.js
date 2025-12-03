@@ -34,11 +34,6 @@ export class InboxSubscriber {
       try {
         const claimToken = randomUUID();
         const events = await claimEvents(claimToken);
-
-        if (events.length > 0) {
-          logger.info("Claimed inbox events", { count: events.length });
-        }
-
         await this.processEvents(events);
         await this.processResubmittedEvents();
         await this.processFailedEvents();
@@ -90,8 +85,6 @@ export class InboxSubscriber {
 
   async handleEvent(msg) {
     const { type, traceparent, source, messageId } = msg;
-    const startTime = Date.now();
-
     logger.info(
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
@@ -105,17 +98,12 @@ export class InboxSubscriber {
         throw new Error(`Unable to handle inbox message ${msg.messageId}`);
       }
 
-      const duration = Date.now() - startTime;
-      logger.info("Event handler completed", { messageId, duration });
-
       await this.markEventComplete(msg);
     } catch (ex) {
-      const duration = Date.now() - startTime;
       logger.error(
         `Error handling event for inbox message ${type}:${messageId}`,
       );
       logger.error(ex.message);
-      logger.info("Event handler failed", { messageId, duration });
       await this.markEventFailed(msg);
     }
   }

@@ -54,24 +54,14 @@ export const ensureQueues = async (queueUrls, attempt = 1) => {
   return ensureQueues(queueUrls, attempt + 1);
 };
 
-export const sendMessage = async (queueUrl, message) => {
-  const queueName = queueUrl.split("/000000000000/").at(-1);
-  const messageId = message.id || "unknown";
-  const timestamp = new Date().toISOString();
-
-  // eslint-disable-next-line no-console
-  console.log(
-    `[TEST ${timestamp}] Sending message to SQS: messageId=${messageId}, queue=${queueName}`,
-  );
-
-  return sqs.send(
+export const sendMessage = async (queueUrl, message) =>
+  sqs.send(
     new SendMessageCommand({
       QueueUrl: queueUrl,
       MessageBody: JSON.stringify(message),
       DelaySeconds: 0,
     }),
   );
-};
 
 export const purgeQueue = async (queueUrl) =>
   sqs.send(

@@ -21,7 +21,6 @@ export class SqsSubscriber {
   }
 
   async start() {
-    logger.info("SQS Subscriber starting", { queueUrl: this.queueUrl });
     this.isRunning = true;
     await this.poll();
   }
@@ -62,10 +61,7 @@ export class SqsSubscriber {
     const traceparent = body.traceparent || message.MessageId;
 
     await withTraceParent(traceparent, async () => {
-      logger.info(`Processing SQS message ${message.MessageId}`, {
-        sqsMessageId: message.MessageId,
-        cloudEventId: body.id,
-      });
+      logger.info(`Processing SQS message ${message.MessageId}`);
       try {
         await this.onMessage(body);
         await this.deleteMessage(message);
@@ -79,7 +75,6 @@ export class SqsSubscriber {
   }
 
   async getMessages() {
-    const startTime = Date.now();
     const response = await this.sqsClient.send(
       new ReceiveMessageCommand({
         QueueUrl: this.queueUrl,
@@ -89,14 +84,6 @@ export class SqsSubscriber {
         MessageAttributeNames: ["All"],
       }),
     );
-    const duration = Date.now() - startTime;
-    const messageCount = response.Messages?.length || 0;
-
-    logger.info("SQS long poll completed", {
-      queueUrl: this.queueUrl,
-      duration,
-      messageCount,
-    });
 
     return response.Messages || [];
   }

@@ -40,13 +40,6 @@ export const saveInboxMessageUseCase = async (message, source) => {
 
   await insertOne(inbox);
 
-  logger.info("Inbox message saved to database", {
-    messageId: message.id,
-    type: message.type,
-    source,
-    status: inbox.status,
-  });
-
   logger.info(
     `Finished: Save inbox message use case${
       message?.data?.caseRef ? ` for caseRef ${message.data.caseRef}` : ""
