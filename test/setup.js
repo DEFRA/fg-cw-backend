@@ -1,52 +1,49 @@
-import * as path from "node:path";
-import { styleText } from "node:util";
-import { DockerComposeEnvironment, Wait } from "testcontainers";
-import { ensureQueues } from "./helpers/sqs.js";
+import process from "node:process";
+import { TestContainers } from "./helpers/test-containers.js";
 
-let environment;
+let containers;
+let server;
 
 export const setup = async ({ globalConfig }) => {
   const { env } = globalConfig;
 
-  const composeFilePath = path.resolve(import.meta.dirname, "..");
+  // Set env vars BEFORE importing modules that depend on config
+  Object.assign(process.env, env);
 
-  environment = await new DockerComposeEnvironment(
-    composeFilePath,
-    "compose.yml",
-  )
-    .withBuild()
-    .withEnvironment({
-      CW_PORT: env.CW_PORT,
-      MONGO_PORT: env.MONGO_PORT,
-      LOCALSTACK_PORT: env.LOCALSTACK_PORT,
-      ENTRA_PORT: env.ENTRA_PORT,
-      OIDC_JWKS_URI: env.OIDC_JWKS_URI,
-      OIDC_VERIFY_ISS: env.OIDC_VERIFY_ISS,
-      OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
-      ENVIRONMENT: env.ENVIRONMENT,
-      OUTBOX_POLL_MS: 250,
-      RULES_ENGINE_URL: env.RULES_ENGINE_URL,
-      RULES_ENGINE_HEADERS: env.RULES_ENGINE_HEADERS,
-    })
-    .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
-    .withNoRecreate()
-    .up();
+  // Start infrastructure containers
+  containers = new TestContainers();
+  const containerEnv = await containers.start();
 
-  await ensureQueues([
-    env.CW__SQS__CREATE_NEW_CASE_URL,
-    env.CW__SQS__UPDATE_STATUS_URL,
-  ]);
+  // Merge container env with test config env
+  Object.assign(process.env, containerEnv);
 
-  if (env.PRINT_LOGS) {
-    const backendContainer = environment.getContainer("fg-cw-backend-1");
-    const logStream = await backendContainer.logs();
+  console.log("🚀 Starting application...\n");
 
-    logStream.on("data", (line) =>
-      process.stdout.write(styleText("gray", line)),
-    );
-  }
+  // Import after env vars are set to avoid config validation errors
+  const { createServer } = await import("../src/server/index.js");
+  const { cases } = await import("../src/cases/index.js");
+  const { users } = await import("../src/users/index.js");
+
+  // Start the app server directly
+  server = await createServer();
+  await server.register([cases, users]);
+  await server.start();
+
+  // Set API_URL for tests to use
+  process.env.API_URL = server.info.uri;
+
+  console.log(`✅ Application ready at ${server.info.uri}\n`);
 };
 
 export const teardown = async () => {
-  await environment?.down();
+  console.log("\n🛑 Shutting down test environment...");
+
+  if (server) {
+    await server.stop();
+    console.log("✅ Application stopped");
+  }
+
+  if (containers) {
+    await containers.stop();
+  }
 };
