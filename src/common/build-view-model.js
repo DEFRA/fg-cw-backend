@@ -2,7 +2,12 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { resolveJSONPath } from "./resolve-json.js";
 
-export const createCaseWorkflowContext = (kase, workflow, request = {}) => {
+export const createCaseWorkflowContext = ({
+  kase,
+  workflow,
+  request = {},
+  user = null,
+}) => {
   const status = workflow.getStatus(kase.position);
 
   return {
@@ -16,6 +21,7 @@ export const createCaseWorkflowContext = (kase, workflow, request = {}) => {
       ),
     }),
     request: { ...request },
+    user,
   };
 };
 

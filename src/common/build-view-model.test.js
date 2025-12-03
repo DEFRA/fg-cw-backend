@@ -42,7 +42,7 @@ describe("buildViewModel", () => {
       }),
     };
     it("should merge case and workflow definitions", async () => {
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -60,6 +60,7 @@ describe("buildViewModel", () => {
         },
         currentStatusName: "Status One",
         request: {},
+        user: null,
       });
     });
 
@@ -73,7 +74,7 @@ describe("buildViewModel", () => {
         getStatus: () => ({ code: "ST1", name: "Status Name" }),
       };
 
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -82,6 +83,7 @@ describe("buildViewModel", () => {
         definitions: {},
         currentStatusName: "Status Name",
         request: {},
+        user: null,
       });
     });
 
@@ -96,7 +98,7 @@ describe("buildViewModel", () => {
         getStatus: () => ({ code: "ST1", name: "Status Name" }),
       };
 
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -105,6 +107,7 @@ describe("buildViewModel", () => {
         definitions: {},
         currentStatusName: "Status Name",
         request: {},
+        user: null,
       });
     });
 
@@ -127,7 +130,7 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -144,6 +147,7 @@ describe("buildViewModel", () => {
             display: true,
           },
         ],
+        user: null,
       });
     });
 
@@ -172,7 +176,7 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -189,6 +193,7 @@ describe("buildViewModel", () => {
             display: true,
           },
         ],
+        user: null,
       });
     });
 
@@ -216,7 +221,7 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const result = createCaseWorkflowContext(kase, workflow);
+      const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
         _id: "case-123",
@@ -233,6 +238,46 @@ describe("buildViewModel", () => {
             display: true,
           },
         ],
+        user: null,
+      });
+    });
+
+    it("should include user when provided", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+      const user = {
+        id: "user-123",
+        name: "Test User",
+        email: "test@example.com",
+        appRoles: {
+          ROLE_1: {
+            startDate: "2025-01-01",
+            endDate: "2100-12-31",
+          },
+          ROLE_2: {
+            startDate: "2025-01-01",
+            endDate: "2100-12-31",
+          },
+        },
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow, user });
+
+      expect(result).toEqual({
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+        workflow,
+        definitions: {},
+        currentStatusName: "Status Name",
+        request: {},
+        user,
       });
     });
   });
@@ -357,7 +402,10 @@ describe("buildViewModel", () => {
     };
 
     it("should build default links plus workflow tab links", async () => {
-      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: mockWorkflow,
+      });
       const result = await buildLinks(mockContext);
 
       expect(result).toEqual([
@@ -381,10 +429,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithoutTabs,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithoutTabs,
+      });
 
       expect(await buildLinks(mockContext)).toStrictEqual(knownLinks);
     });
@@ -394,10 +442,10 @@ describe("buildViewModel", () => {
         ...mockCase,
         supplementaryData: { agreements: [{ id: "agreement-1" }] },
       };
-      const mockContext = createCaseWorkflowContext(
-        caseWithAgreements,
-        mockWorkflow,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: caseWithAgreements,
+        workflow: mockWorkflow,
+      });
 
       const result = await buildLinks(mockContext);
 
@@ -431,10 +479,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithKnownIds,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithKnownIds,
+      });
 
       const result = await buildLinks(mockContext);
 
@@ -457,10 +505,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithEmptyTabs,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithEmptyTabs,
+      });
 
       const result = await buildLinks(mockContext);
 
@@ -491,10 +539,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithKebabCaseTab,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithKebabCaseTab,
+      });
 
       const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "multi-word-tab");
@@ -517,10 +565,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithSingleWordTab,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithSingleWordTab,
+      });
 
       const result = await buildLinks(mockContext);
       const tabLink = result.find((link) => link.id === "documents");
@@ -543,10 +591,10 @@ describe("buildViewModel", () => {
         },
         definitions: {},
       };
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithComplexTab,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithComplexTab,
+      });
 
       const result = await buildLinks(mockContext);
       const tabLink = result.find(
@@ -603,7 +651,10 @@ describe("buildViewModel", () => {
     };
 
     it("should build banner with resolved values", async () => {
-      const mockContext = createCaseWorkflowContext(mockCase, mockWorkflow);
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: mockWorkflow,
+      });
       const result = await buildBanner(mockContext);
 
       expect(result).toEqual({
@@ -638,10 +689,10 @@ describe("buildViewModel", () => {
         definitions: {},
       };
 
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithoutBanner,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithoutBanner,
+      });
 
       const result = await buildBanner(mockContext);
 
@@ -674,10 +725,10 @@ describe("buildViewModel", () => {
         ],
       };
 
-      const mockContext = createCaseWorkflowContext(
-        mockCase,
-        workflowWithExternalActions,
-      );
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithExternalActions,
+      });
 
       const result = await buildBanner(mockContext);
 
@@ -729,7 +780,10 @@ describe("buildViewModel", () => {
         },
       };
 
-      const mockContext = createCaseWorkflowContext(mockCase, complexWorkflow);
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: complexWorkflow,
+      });
 
       const result = await buildBanner(mockContext);
 
