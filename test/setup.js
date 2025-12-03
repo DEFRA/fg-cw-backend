@@ -37,6 +37,9 @@ export const setup = async ({ globalConfig }) => {
     env.CW__SQS__UPDATE_STATUS_URL,
   ]);
 
+  // Add startup delay to ensure SQS subscribers are fully ready before tests start
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
   if (env.PRINT_LOGS) {
     const backendContainer = environment.getContainer("fg-cw-backend-1");
     const logStream = await backendContainer.logs();
