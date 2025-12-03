@@ -69,5 +69,5 @@ describe("On CreateNewCase event", () => {
         ],
       },
     ]);
-  }, 30000);
+  });
 });
