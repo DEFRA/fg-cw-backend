@@ -106,6 +106,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Interactive Status",
+                  theme: "INFO",
                   description: "Status description",
                   interactive: true,
                   transitions: [],
@@ -185,6 +186,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Interactive Status",
+                  theme: "INFO",
                   description: "Status description",
                   interactive: true,
                   transitions: [],
@@ -264,6 +266,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Interactive Status",
+                  theme: "INFO",
                   description: "Status description",
                   interactive: true,
                   transitions: [],
@@ -342,6 +345,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Interactive Status",
+                  theme: "INFO",
                   description: "Status description",
                   interactive: true,
                   transitions: [],
@@ -410,6 +414,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Not Interactive Status",
+                  theme: "NEUTRAL",
                   description: "Status description",
                   interactive: false,
                   transitions: [],
@@ -477,6 +482,7 @@ describe("updateTaskStatusUseCase", () => {
                 new WorkflowStageStatus({
                   code: "STATUS_1",
                   name: "Interactive Status",
+                  theme: "INFO",
                   description: "Status description",
                   interactive: true,
                   transitions: [],

@@ -49,6 +49,7 @@ describe("Workflow", () => {
                 new WorkflowStageStatus({
                   code: "IN_PROGRESS",
                   name: "In Progress",
+                  theme: "INFO",
                   transitions: [
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_1:APPROVED"),
@@ -126,6 +127,7 @@ describe("Workflow", () => {
                 new WorkflowStageStatus({
                   code: "IN_PROGRESS",
                   name: "In Progress",
+                  theme: "INFO",
                   transitions: [
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_2:APPROVED"),
