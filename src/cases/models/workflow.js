@@ -62,10 +62,18 @@ export class Workflow {
     return this.getStage(position).getStatus(position.statusCode);
   }
 
-  getTransitionForTargetPosition(currentPosition, targetPosition) {
-    const targetTransition = this.getStatus(currentPosition).transitions.find(
-      (transition) => transition.targetPosition.equals(targetPosition),
+  getTransitionForTargetPosition(casePosition, targetPosition) {
+    const transitions = this.getStatus(casePosition).transitions;
+
+    const targetTransition = transitions.find((transition) =>
+      transition.targetPosition.equals(targetPosition),
     );
+
+    if (!targetTransition) {
+      throw new Error(
+        `Workflow does not support transition from ${casePosition} to ${targetPosition}`,
+      );
+    }
 
     return targetTransition;
   }
