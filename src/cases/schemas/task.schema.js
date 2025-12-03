@@ -28,6 +28,9 @@ const Transition = Joi.object({
 export const Status = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
   description: Joi.string().allow(null).required(),
   interactive: Joi.boolean().required(),
   transitions: Joi.array().items(Transition).required(),
