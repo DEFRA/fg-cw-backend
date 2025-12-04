@@ -4,7 +4,7 @@ export const up = async (db) => {
   const environment = config.get("cdpEnvironment");
 
   // Only remove placeholder users in non-production environments
-  if (environment === "production") {
+  if (environment === "prod") {
     return;
   }
 
