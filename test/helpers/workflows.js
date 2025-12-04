@@ -262,7 +262,14 @@ export const createWorkflow = async (payload = {}) => {
                       name: "Simple Review",
                       description: "Simple review task",
                       mandatory: true,
-                      statusOptions: [],
+                      statusOptions: [
+                        {
+                          code: "COMPLETE",
+                          name: "Complete",
+                          theme: "SUCCESS",
+                          completes: true,
+                        },
+                      ],
                       requiredRoles: {
                         allOf: ["ROLE_1", "ROLE_2"],
                         anyOf: ["ROLE_3"],

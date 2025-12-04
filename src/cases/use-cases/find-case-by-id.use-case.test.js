@@ -12,6 +12,8 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
+  mapSelectedStatusOption,
+  mapStatusOptions,
   mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
@@ -388,8 +390,11 @@ describe("findCaseByIdUseCase", () => {
                     code: "STATUS_OPTION_1",
                     completes: true,
                     name: "Status option 1",
+                    theme: "SUCCESS",
                   },
                 ],
+                statusText: "Incomplete",
+                statusTheme: "INFO",
               },
             ],
           },
@@ -715,6 +720,324 @@ describe("findCaseByIdUseCase", () => {
 
       expect(result.stage.outcome).toBeUndefined();
     });
+
+    it("maps statusText using altName when present and transforms statusOptions", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      // Set a task status
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status =
+        "STATUS_OPTION_1";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+      // Add theme and altName to workflow status option
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+        {
+          code: "STATUS_OPTION_1",
+          name: "Accepted",
+          theme: "NONE",
+          altName: "Accept",
+          completes: true,
+        },
+        {
+          code: "STATUS_OPTION_2",
+          name: "Information requested",
+          theme: "NOTICE",
+          altName: "Request information from customer",
+          completes: false,
+        },
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.status).toBe("STATUS_OPTION_1");
+      expect(task.statusText).toBe("Accepted");
+      expect(task.statusTheme).toBe("NONE");
+
+      // Verify statusOptions are transformed
+      expect(task.statusOptions).toEqual([
+        {
+          code: "STATUS_OPTION_1",
+          name: "Accept",
+          theme: "NONE",
+          completes: true,
+        },
+        {
+          code: "STATUS_OPTION_2",
+          name: "Request information from customer",
+          theme: "NOTICE",
+          completes: false,
+        },
+      ]);
+    });
+
+    it("returns Incomplete when task has no selected status", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      // Ensure task has no status
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = null;
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.status).toBeNull();
+      expect(task.statusText).toBe("Incomplete");
+      expect(task.statusTheme).toBe("INFO");
+    });
+
+    it("shows selected status even when task is not completed", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      // Set task with status but not completed
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = "RFI";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
+
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+        {
+          code: "RFI",
+          name: "Information requested",
+          altName: "Request information from customer",
+          theme: "NOTICE",
+          completes: false,
+        },
+        {
+          code: "ACCEPTED",
+          name: "Accepted",
+          altName: "Accept",
+          theme: "NONE",
+          completes: true,
+        },
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.status).toBe("RFI");
+      expect(task.statusText).toBe("Information requested");
+      expect(task.statusTheme).toBe("NOTICE");
+      expect(task.completed).toBe(false);
+    });
+  });
+});
+
+describe("mapSelectedStatusOption", () => {
+  it("returns name as statusText (altName is used only in statusOptions array)", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+      {
+        code: "RFI",
+        name: "Information requested",
+        altName: "Request information from customer",
+        theme: "NOTICE",
+        completes: false,
+      },
+    ];
+
+    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+
+    expect(result).toEqual({
+      statusText: "Accepted",
+      statusTheme: "NONE",
+    });
+  });
+
+  it("returns Incomplete when status code is null", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+    ];
+
+    const result = mapSelectedStatusOption(null, statusOptions);
+
+    expect(result).toEqual({
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    });
+  });
+
+  it("returns Incomplete when status code does not match any option", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+    ];
+
+    const result = mapSelectedStatusOption("NONEXISTENT", statusOptions);
+
+    expect(result).toEqual({
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    });
+  });
+
+  it("falls back to name as statusText when altName is not present", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        theme: "NONE",
+        completes: true,
+      },
+    ];
+
+    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+
+    expect(result).toEqual({
+      statusText: "Accepted",
+      statusTheme: "NONE",
+    });
+  });
+
+  it("handles missing theme gracefully", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        completes: true,
+      },
+    ];
+
+    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+
+    expect(result).toEqual({
+      statusText: "Accepted",
+      statusTheme: "NONE",
+    });
+  });
+});
+
+describe("mapStatusOptions", () => {
+  it("transforms status options using altName when present", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+      {
+        code: "RFI",
+        name: "Information requested",
+        altName: "Request information from customer",
+        theme: "NOTICE",
+        completes: false,
+      },
+    ];
+
+    const result = mapStatusOptions(statusOptions);
+
+    expect(result).toEqual([
+      {
+        code: "ACCEPTED",
+        name: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+      {
+        code: "RFI",
+        name: "Request information from customer",
+        theme: "NOTICE",
+        completes: false,
+      },
+    ]);
+  });
+
+  it("falls back to name when altName is missing", () => {
+    const statusOptions = [
+      {
+        code: "COMPLETE",
+        name: "Complete",
+        theme: "SUCCESS",
+        completes: true,
+      },
+    ];
+
+    const result = mapStatusOptions(statusOptions);
+
+    expect(result).toEqual([
+      {
+        code: "COMPLETE",
+        name: "Complete",
+        theme: "SUCCESS",
+        completes: true,
+      },
+    ]);
+  });
+
+  it("handles empty array", () => {
+    const result = mapStatusOptions([]);
+    expect(result).toEqual([]);
+  });
+
+  it("handles mixed altName presence", () => {
+    const statusOptions = [
+      {
+        code: "ACCEPTED",
+        name: "Accepted",
+        altName: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+      {
+        code: "COMPLETE",
+        name: "Complete",
+        theme: "SUCCESS",
+        completes: true,
+      },
+    ];
+
+    const result = mapStatusOptions(statusOptions);
+
+    expect(result).toEqual([
+      {
+        code: "ACCEPTED",
+        name: "Accept",
+        theme: "NONE",
+        completes: true,
+      },
+      {
+        code: "COMPLETE",
+        name: "Complete",
+        theme: "SUCCESS",
+        completes: true,
+      },
+    ]);
   });
 });
 

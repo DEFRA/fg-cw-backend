@@ -260,8 +260,15 @@ export const workflowData1 = {
                   name: "Simple Review",
                   description: null,
                   comment: null,
-                  mandatory: false,
-                  statusOptions: [],
+                  mandatory: true,
+                  statusOptions: [
+                    {
+                      code: "COMPLETE",
+                      name: "Complete",
+                      theme: "SUCCESS",
+                      completes: true,
+                    },
+                  ],
                   requiredRoles: {
                     allOf: ["ROLE_1", "ROLE_2"],
                     anyOf: ["ROLE_3"],
