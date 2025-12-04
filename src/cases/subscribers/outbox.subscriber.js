@@ -92,8 +92,7 @@ export class OutboxSubscriber {
       await publish(topic, data);
       await this.markEventComplete(event);
     } catch (ex) {
-      logger.error(`Error sending outbox event to topic ${topic}`);
-      logger.error(ex);
+      logger.error(ex, `Error sending outbox event to topic ${topic}`);
       this.markEventUnsent(event);
     }
   }
