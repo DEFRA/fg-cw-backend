@@ -102,6 +102,9 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
           allOf: workflowTaskGroupTask.requiredRoles.allOf,
           anyOf: workflowTaskGroupTask.requiredRoles.anyOf,
         },
+        canComplete: workflowTaskGroupTask.requiredRoles?.isAuthorised(
+          root.user.appRoles,
+        ),
       };
     }),
   );
@@ -176,11 +179,12 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
-  const caseWorkflowContext = createCaseWorkflowContext(
+  const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
     request,
-  );
+    user,
+  });
 
   const userMap = await createUserMap(kase.getUserIds(), user);
   const workflowStage = workflow.getStage(kase.position);

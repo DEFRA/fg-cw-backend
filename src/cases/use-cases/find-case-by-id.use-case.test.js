@@ -384,6 +384,7 @@ describe("findCaseByIdUseCase", () => {
                   allOf: ["ROLE_1"],
                   anyOf: ["ROLE_2"],
                 },
+                canComplete: false,
                 statusOptions: [
                   {
                     code: "STATUS_OPTION_1",
@@ -1159,6 +1160,7 @@ describe("beforeContent", () => {
     name: "Test User",
     email: "test.user@example.com",
     idpRoles: ["user"],
+    appRoles: {},
   };
 
   it("returns empty array when stage has no beforeContent", async () => {
