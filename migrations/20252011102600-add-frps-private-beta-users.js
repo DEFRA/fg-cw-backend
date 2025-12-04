@@ -1,11 +1,7 @@
+import { config } from "../src/common/config.js";
+
 export const up = async (db) => {
-  const user = {
-    name: "placeholder",
-    email: "placeholder@rpa.gov.uk",
-    idpRoles: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const environment = config.get("cdpEnvironment");
 
   const roles = db.collection("roles");
   await roles.insertMany([
@@ -22,6 +18,19 @@ export const up = async (db) => {
       updatedAt: new Date(),
     },
   ]);
+
+  // Only add placeholder users in production environment
+  if (environment !== "production") {
+    return;
+  }
+
+  const user = {
+    name: "placeholder",
+    email: "placeholder@rpa.gov.uk",
+    idpRoles: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   const appRoles = {
     ROLE_SFI_REFORM: {
