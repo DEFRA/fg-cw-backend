@@ -793,18 +793,16 @@ describe("Case", () => {
       ];
       const caseWithIncompleteTasks = createTestCase(props);
 
-      try {
+      expect(() =>
         caseWithIncompleteTasks.updateStageOutcome({
           workflow,
           actionCode: "ACTION_1",
           comment: "Trying to progress with incomplete tasks",
           createdBy: validUserId,
-        });
-      } catch (e) {
-        expect(e.message).toBe(
-          "Cannot perform action ACTION_1 from position PHASE_1:STAGE_1:STATUS_1: required tasks are not complete",
-        );
-      }
+        }),
+      ).toThrow(
+        "Cannot perform action ACTION_1 from position PHASE_1:STAGE_1:STATUS_1: required tasks are not complete",
+      );
     });
 
     it("throws error when action code does not exist", () => {
