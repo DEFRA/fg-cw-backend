@@ -38,6 +38,7 @@ describe("Workflow", () => {
                         new WorkflowTaskStatusOption({
                           code: "COMPLETE",
                           name: "Complete",
+                          theme: "SUCCESS",
                           completes: true,
                         }),
                       ],

@@ -79,13 +79,20 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         caseTaskGroupTask.code,
       );
 
+      const selectedStatus = mapSelectedStatusOption(
+        caseTaskGroupTask.status,
+        workflowTaskGroupTask.statusOptions,
+      );
+
       return {
         code: caseTaskGroupTask.code,
         name: workflowTaskGroupTask.name,
         description: await mapDescription(workflowTaskGroupTask, root),
         mandatory: workflowTaskGroupTask.mandatory,
-        statusOptions: workflowTaskGroupTask.statusOptions,
+        statusOptions: mapStatusOptions(workflowTaskGroupTask.statusOptions),
         status: caseTaskGroupTask.status,
+        statusText: selectedStatus.statusText,
+        statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
         commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
         commentRef: caseTaskGroupTask.commentRef,
@@ -101,6 +108,37 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
       };
     }),
   );
+
+export const mapStatusOptions = (statusOptions) =>
+  statusOptions.map((option) => ({
+    code: option.code,
+    name: option.altName || option.name,
+    theme: option.theme,
+    completes: option.completes,
+  }));
+
+export const mapSelectedStatusOption = (statusCode, statusOptions) => {
+  if (!statusCode) {
+    return {
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    };
+  }
+
+  const selectedOption = statusOptions.find((opt) => opt.code === statusCode);
+
+  if (!selectedOption) {
+    return {
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    };
+  }
+
+  return {
+    statusText: selectedOption.name,
+    statusTheme: selectedOption.theme ?? "NONE",
+  };
+};
 
 const isValidArray = (description) =>
   Array.isArray(description) && description.length > 0;
