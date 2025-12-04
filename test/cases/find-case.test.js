@@ -67,9 +67,18 @@ describe("GET /cases/{caseId}", () => {
                   },
                 ],
                 status: "COMPLETE",
+                statusText: "Complete",
+                statusTheme: "SUCCESS",
                 completed: true,
                 mandatory: true,
-                statusOptions: [],
+                statusOptions: [
+                  {
+                    code: "COMPLETE",
+                    name: "Complete",
+                    theme: "SUCCESS",
+                    completes: true,
+                  },
+                ],
                 commentInputDef: {
                   helpText:
                     "You must include an explanation for auditing purposes.",

@@ -846,22 +846,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -934,22 +942,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1029,22 +1045,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1144,22 +1168,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1205,22 +1237,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1334,12 +1374,16 @@
                   "statusOptions": [
                     {
                       "code": "CONFIRM",
-                      "name": "Confirm",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
                       "completes": true
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
                       "completes": false
                     }
                   ]
@@ -1364,12 +1408,16 @@
                   "statusOptions": [
                     {
                       "code": "CONFIRM",
-                      "name": "Confirm",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
                       "completes": true
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
                       "completes": false
                     }
                   ]
