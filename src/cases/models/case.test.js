@@ -968,8 +968,6 @@ describe("Case", () => {
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
-      // workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
-
       const newPosition = new Position({
         phaseCode: "PHASE_1",
         stageCode: "STAGE_2",
