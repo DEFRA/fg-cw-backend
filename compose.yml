@@ -61,6 +61,12 @@ services:
       - "${ENTRA_PORT:-3010}:3010"
     networks:
       - cdp-tenant
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3010/jwks"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   fg-cw-backend:
     build: .
@@ -79,7 +85,7 @@ services:
       mongodb:
         condition: service_started
       entra:
-        condition: service_started
+        condition: service_healthy
     env_file:
       - ".env"
     networks:
