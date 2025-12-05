@@ -40,6 +40,10 @@ export const Status = Joi.object({
 export const StatusOption = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NONE", "NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
+  altName: Joi.string().allow(null),
   completes: Joi.boolean().required(),
 }).label("StatusOption");
 

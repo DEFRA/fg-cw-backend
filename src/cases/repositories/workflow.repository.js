@@ -53,6 +53,8 @@ const toWorkflowTaskStatusOption = (so) =>
   new WorkflowTaskStatusOption({
     code: so.code,
     name: so.name,
+    theme: so.theme,
+    altName: so.altName,
     completes: so.completes,
   });
 

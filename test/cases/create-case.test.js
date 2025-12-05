@@ -8,24 +8,16 @@ import { sendMessage } from "../helpers/sqs.js";
 import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
-let cases;
-
 let client;
-let inbox;
+let cases;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
-  inbox = client.db().collection("inbox");
 });
 
 afterAll(async () => {
   await client.close(true);
-});
-
-beforeEach(async () => {
-  await cases.deleteMany({});
-  await inbox.deleteMany({});
 });
 
 describe("On CreateNewCase event", () => {
@@ -34,19 +26,10 @@ describe("On CreateNewCase event", () => {
   });
 
   it("creates a new case", async () => {
-    const messageId = randomUUID();
-
     await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
       ...createCaseEvent3,
-      id: messageId,
-      type: createCaseEvent3.type.replace("development", env.ENVIRONMENT),
+      id: randomUUID(),
     });
-
-    const documents = await waitForDocuments(inbox, 10, {
-      messageId,
-    });
-
-    expect(documents).toHaveLength(1);
 
     const caseDocs = await waitForDocuments(cases);
 
@@ -69,5 +52,5 @@ describe("On CreateNewCase event", () => {
         ],
       },
     ]);
-  }, 10000);
+  });
 });

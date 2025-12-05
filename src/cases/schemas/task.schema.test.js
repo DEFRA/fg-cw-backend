@@ -83,6 +83,7 @@ describe("Task Schema", () => {
         {
           code: "COMPLETE",
           name: "Complete",
+          theme: "SUCCESS",
           completes: true,
         },
       ],
@@ -116,11 +117,13 @@ describe("Task Schema", () => {
         {
           code: "COMPLETE",
           name: "Complete",
+          theme: "SUCCESS",
           completes: true,
         },
         {
           code: "COMPLETE_WITH_NOTES",
           name: "Complete with Notes",
+          theme: "SUCCESS",
           completes: true,
         },
       ],

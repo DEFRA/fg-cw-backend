@@ -112,6 +112,8 @@ const createWorkflowTaskStatusOption = (statusOption) =>
   new WorkflowTaskStatusOption({
     code: statusOption.code,
     name: statusOption.name,
+    theme: statusOption.theme,
+    altName: statusOption.altName,
     completes: statusOption.completes,
   });
 

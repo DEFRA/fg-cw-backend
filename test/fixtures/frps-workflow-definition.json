@@ -655,7 +655,6 @@
               "interactive": false,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                   "action": {
                     "code": "START_REVIEW",
@@ -674,7 +673,6 @@
               "interactive": true,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
                   "action": {
                     "code": "APPROVE_APPLICATION",
@@ -688,7 +686,6 @@
                   }
                 },
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
                   "action": {
                     "code": "REJECT_APPLICATION",
@@ -702,7 +699,6 @@
                   }
                 },
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
                   "action": {
                     "code": "PUT_ON_HOLD",
@@ -725,7 +721,6 @@
               "interactive": true,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
                   "action": null
                 }
@@ -739,7 +734,6 @@
               "interactive": true,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                   "action": {
                     "code": "REINSTATE_APPLICATION",
@@ -762,7 +756,6 @@
               "interactive": true,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
                   "action": {
                     "code": "RESUME",
@@ -773,15 +766,6 @@
                       "helpText": "You must include an explanation for auditing purposes.",
                       "mandatory": true
                     }
-                  }
-                },
-                {
-                  "checkTasks": true,
-                  "action": {
-                    "code": "REJECT_APPLICATION",
-                    "name": "Reject",
-                    "checkTasks": false,
-                    "comment": null
                   }
                 }
               ]
@@ -862,22 +846,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -950,22 +942,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1045,22 +1045,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1160,22 +1168,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1221,22 +1237,30 @@
                   "statusOptions": [
                     {
                       "code": "ACCEPTED",
-                      "name": "Accept",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
-                      "name": "Request information from customer",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
-                      "name": "Pause for internal investigation",
+                      "name": "Internal investigation",
+                      "theme": "NOTICE",
+                      "altName": "Pause for internal investigation",
                       "completes": false
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
                       "completes": false
                     }
                   ]
@@ -1259,7 +1283,6 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
-                  "checkTasks": true,
                   "action": {
                     "code": "AGREEMENT_SENT",
                     "name": "Agreement sent",
@@ -1268,7 +1291,6 @@
                   }
                 },
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:APPLICATION_REJECTED",
                   "action": {
                     "code": "REJECT_APPLICATION",
@@ -1291,7 +1313,6 @@
               "interactive": true,
               "transitions": [
                 {
-                  "checkTasks": true,
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
                   "action": {
                     "code": "REINSTATE_APPLICATION",
@@ -1353,12 +1374,16 @@
                   "statusOptions": [
                     {
                       "code": "CONFIRM",
-                      "name": "Confirm",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
                       "completes": true
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
                       "completes": false
                     }
                   ]
@@ -1383,12 +1408,16 @@
                   "statusOptions": [
                     {
                       "code": "CONFIRM",
-                      "name": "Confirm",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
                       "completes": true
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
                       "completes": false
                     }
                   ]
@@ -1462,34 +1491,6 @@
                 {
                   "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
                   "action": null
-                },
-                {
-                  "targetPosition": "::APPLICATION_REJECTED",
-                  "checkTasks": true,
-                  "action": {
-                    "code": "REJECT_APPLICATION",
-                    "name": "Reject",
-                    "checkTasks": false,
-                    "comment": null
-                  }
-                }
-              ]
-            },
-            {
-              "code": "APPLICATION_REJECTED",
-              "name": "Rejected",
-              "description": "Application has been rejected",
-              "interactive": true,
-              "transitions": [
-                {
-                  "targetPosition": "::AGREEMENT_OFFERED",
-                  "checkTasks": true,
-                  "action": {
-                    "code": "REINSTATE_APPLICATION",
-                    "name": "Reinstate Application",
-                    "checkTasks": false,
-                    "comment": null
-                  }
                 }
               ]
             }
@@ -1512,23 +1513,6 @@
               "name": "Agreement accepted",
               "theme": "SUCCESS",
               "description": "Agreement is active and being monitored",
-              "interactive": true,
-              "transitions": [
-                {
-                  "targetPosition": "::COMPLETE_AGREEMENT",
-                  "checkTasks": true,
-                  "action": {
-                    "code": "COMPLETE_AGREEMENT",
-                    "name": "Complete Agreement",
-                    "checkTasks": true,
-                    "comment": null
-                  }
-                }
-              ]
-            },
-            {
-              "code": "COMPLETE_AGREEMENT",
-              "name": "Complete Agreement",
               "interactive": false,
               "transitions": []
             }
