@@ -235,6 +235,7 @@ export const createWorkflow = async (payload = {}) => {
                 {
                   code: "AWAITING_REVIEW",
                   name: "Awaiting Review",
+                  theme: "INFO",
                   description: null,
                   interactive: true,
                   transitions: [
@@ -261,7 +262,14 @@ export const createWorkflow = async (payload = {}) => {
                       name: "Simple Review",
                       description: "Simple review task",
                       mandatory: true,
-                      statusOptions: [],
+                      statusOptions: [
+                        {
+                          code: "COMPLETE",
+                          name: "Complete",
+                          theme: "SUCCESS",
+                          completes: true,
+                        },
+                      ],
                       requiredRoles: {
                         allOf: ["ROLE_1", "ROLE_2"],
                         anyOf: ["ROLE_3"],
@@ -280,6 +288,7 @@ export const createWorkflow = async (payload = {}) => {
                   code: "AWAITING_AGREEMENT",
                   name: "Awaiting Agreement",
                   description: "Awaiting agreement signature",
+                  theme: "INFO",
                   interactive: true,
                   transitions: [],
                 },

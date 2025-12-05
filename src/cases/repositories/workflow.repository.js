@@ -42,6 +42,7 @@ const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
     code: s.code,
     name: s.name,
+    theme: s.theme,
     description: s.description,
     interactive: s.interactive,
     transitions: s.transitions.map(toWorkflowTransition),
@@ -51,6 +52,8 @@ const toWorkflowTaskStatusOption = (so) =>
   new WorkflowTaskStatusOption({
     code: so.code,
     name: so.name,
+    theme: so.theme,
+    altName: so.altName,
     completes: so.completes,
   });
 
