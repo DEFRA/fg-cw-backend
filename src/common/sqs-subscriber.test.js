@@ -172,7 +172,7 @@ describe("SqsSubscriber", () => {
     await expect
       .poll(() => logger.error)
       .toHaveBeenCalledWith(
-        { err: new Error("Processing error") },
+        new Error("Processing error"),
         "Error processing SQS message 19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
       );
   });

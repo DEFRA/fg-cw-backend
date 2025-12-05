@@ -2,6 +2,7 @@ export class WorkflowStageStatus {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.theme = props.theme;
     this.description = props.description;
     this.interactive = props.interactive;
     this.transitions = props.transitions;

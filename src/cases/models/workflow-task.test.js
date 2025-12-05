@@ -14,6 +14,7 @@ describe("WorkflowTask", () => {
           new WorkflowTaskStatusOption({
             code: "COMPLETE",
             name: "Complete",
+            theme: "SUCCESS",
             completes: true,
           }),
         ],
@@ -36,6 +37,7 @@ describe("WorkflowTask", () => {
               new WorkflowTaskStatusOption({
                 code: "IN_PROGRESS",
                 name: "In Progress",
+                theme: "INFO",
                 completes: false,
               }),
             ],
@@ -53,11 +55,13 @@ describe("WorkflowTask", () => {
           new WorkflowTaskStatusOption({
             code: "IN_PROGRESS",
             name: "In Progress",
+            theme: "INFO",
             completes: false,
           }),
           new WorkflowTaskStatusOption({
             code: "COMPLETE",
             name: "Complete",
+            theme: "SUCCESS",
             completes: true,
           }),
         ],
@@ -88,6 +92,7 @@ describe("WorkflowTask", () => {
           new WorkflowTaskStatusOption({
             code: "COMPLETE",
             name: "Complete",
+            theme: "SUCCESS",
             completes: true,
           }),
         ],
@@ -106,6 +111,7 @@ describe("WorkflowTask", () => {
           new WorkflowTaskStatusOption({
             code: "COMPLETE",
             name: "Complete",
+            theme: "SUCCESS",
             completes: true,
           }),
         ],

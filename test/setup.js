@@ -20,13 +20,6 @@ export const setup = async ({ globalConfig }) => {
       MONGO_PORT: env.MONGO_PORT,
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
-      OIDC_JWKS_URI: env.OIDC_JWKS_URI,
-      OIDC_VERIFY_ISS: env.OIDC_VERIFY_ISS,
-      OIDC_VERIFY_AUD: env.OIDC_VERIFY_AUD,
-      ENVIRONMENT: env.ENVIRONMENT,
-      OUTBOX_POLL_MS: 250,
-      RULES_ENGINE_URL: env.RULES_ENGINE_URL,
-      RULES_ENGINE_HEADERS: env.RULES_ENGINE_HEADERS,
     })
     .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
     .withNoRecreate()

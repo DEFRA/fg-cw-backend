@@ -233,6 +233,7 @@ export const workflowData1 = {
             {
               code: "STATUS_1",
               name: "Status 1",
+              theme: "INFO",
               description: "Status 1 dscription",
               interactive: true,
               transitions: [
@@ -259,8 +260,15 @@ export const workflowData1 = {
                   name: "Simple Review",
                   description: null,
                   comment: null,
-                  mandatory: false,
-                  statusOptions: [],
+                  mandatory: true,
+                  statusOptions: [
+                    {
+                      code: "COMPLETE",
+                      name: "Complete",
+                      theme: "SUCCESS",
+                      completes: true,
+                    },
+                  ],
                   requiredRoles: {
                     allOf: ["ROLE_1", "ROLE_2"],
                     anyOf: ["ROLE_3"],
@@ -279,6 +287,7 @@ export const workflowData1 = {
             {
               code: "AWAITING_AGREEMENT",
               name: "Awaiting Agreement",
+              theme: "INFO",
               description: "Awaiting agreement signature",
               interactive: true,
               transitions: [],

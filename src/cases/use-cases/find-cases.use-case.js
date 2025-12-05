@@ -80,6 +80,7 @@ export const findCasesUseCase = async () => {
       workflowCode: kase.workflowCode,
       dateReceived: kase.dateReceived,
       currentStatus: currentStatus.name,
+      currentStatusTheme: currentStatus.theme,
       assignedUser: assignedUser
         ? {
             id: assignedUser.id,

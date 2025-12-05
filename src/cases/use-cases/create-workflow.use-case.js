@@ -112,6 +112,8 @@ const createWorkflowTaskStatusOption = (statusOption) =>
   new WorkflowTaskStatusOption({
     code: statusOption.code,
     name: statusOption.name,
+    theme: statusOption.theme,
+    altName: statusOption.altName,
     completes: statusOption.completes,
   });
 
@@ -167,6 +169,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
   new WorkflowStageStatus({
     code: status.code,
     name: status.name,
+    theme: status.theme,
     description: status.description,
     interactive: status.interactive,
     transitions: status.transitions.map((transition) =>

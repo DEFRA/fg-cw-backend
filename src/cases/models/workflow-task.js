@@ -2,7 +2,7 @@ import Joi from "joi";
 import { validateProps } from "../../common/validation.js";
 import { comment } from "../schemas/comment.schema.js";
 import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
-import { Code } from "../schemas/task.schema.js";
+import { Code, StatusOption } from "../schemas/task.schema.js";
 
 export class WorkflowTask {
   constructor(props) {
@@ -29,15 +29,7 @@ WorkflowTask.validationSchema = Joi.object({
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
-  statusOptions: Joi.array()
-    .items(
-      Joi.object({
-        code: Joi.string().required(),
-        name: Joi.string().required(),
-        completes: Joi.boolean().required(),
-      }).label("StatusOption"),
-    )
-    .required(),
+  statusOptions: Joi.array().items(StatusOption).required(),
   comment: comment.optional().allow(null),
   requiredRoles: Joi.alternatives()
     .try(requiredRolesSchema, Joi.valid(null))

@@ -26,6 +26,7 @@ export class PhaseDocument {
             new StatusDocument({
               code: "STATUS_1",
               name: "Stage status 1",
+              theme: "INFO",
               description: "Stage status 1 description",
               interactive: true,
               transitions: [
@@ -47,6 +48,7 @@ export class PhaseDocument {
             new StatusDocument({
               code: "STATUS_2",
               name: "Stage status 2",
+              theme: "INFO",
               description: "Stage status 2 description",
               interactive: true,
               transitions: [],

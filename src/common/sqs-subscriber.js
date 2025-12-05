@@ -13,6 +13,7 @@ export class SqsSubscriber {
     this.queueUrl = options.queueUrl;
     this.onMessage = options.onMessage;
     this.isRunning = false;
+    this.delayOnErrorMs = 250;
 
     this.sqsClient = new SQSClient({
       region: config.get("aws.region"),
@@ -37,8 +38,8 @@ export class SqsSubscriber {
         const messages = await this.getMessages();
         await Promise.all(messages.map((m) => this.processMessage(m)));
       } catch (err) {
-        logger.error({ err }, `Error polling SQS queue ${this.queueUrl}`);
-        await setTimeout(30000);
+        logger.error(err, `Error polling SQS queue ${this.queueUrl}`);
+        await setTimeout(this.delayOnErrorMs);
       }
     }
 
@@ -52,7 +53,7 @@ export class SqsSubscriber {
       body = JSON.parse(message.Body);
     } catch (err) {
       logger.error(
-        { err },
+        err,
         `Error parsing SQS message body for message ${message.MessageId}`,
       );
       return;
@@ -66,10 +67,7 @@ export class SqsSubscriber {
         await this.onMessage(body);
         await this.deleteMessage(message);
       } catch (err) {
-        logger.error(
-          { err },
-          `Error processing SQS message ${message.MessageId}`,
-        );
+        logger.error(err, `Error processing SQS message ${message.MessageId}`);
       }
     });
   }
