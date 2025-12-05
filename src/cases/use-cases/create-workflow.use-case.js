@@ -123,12 +123,10 @@ const createWorkflowTask = (task) =>
     name: task.name,
     mandatory: task.mandatory,
     description: task.description,
-    requiredRoles: task.requiredRoles
-      ? new Permissions({
-          allOf: task.requiredRoles.allOf,
-          anyOf: task.requiredRoles.anyOf,
-        })
-      : null,
+    requiredRoles: new Permissions({
+      allOf: task.requiredRoles?.allOf,
+      anyOf: task.requiredRoles?.anyOf,
+    }),
     statusOptions: task.statusOptions.map(createWorkflowTaskStatusOption),
     comment: task.comment,
   });
