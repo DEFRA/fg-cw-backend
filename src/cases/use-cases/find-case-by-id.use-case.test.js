@@ -5,6 +5,7 @@ import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
+import { Permissions } from "../models/permissions.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -418,6 +419,84 @@ describe("findCaseByIdUseCase", () => {
       ],
       beforeContent: [],
     });
+  });
+
+  it("sets canComplete to true when task has no required roles", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    // Set task requiredRoles to have empty arrays (simulating null in database)
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
+      new Permissions({
+        allOf: [],
+        anyOf: [],
+      });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    const task = result.stage.taskGroups[0].tasks[0];
+    expect(task.requiredRoles).toEqual({
+      allOf: [],
+      anyOf: [],
+    });
+    expect(task.canComplete).toBe(true);
+  });
+
+  it("sets canComplete to false when user lacks required roles", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
+      new Permissions({
+        allOf: ["ROLE_RPA_ADMIN"],
+        anyOf: [],
+      });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    const task = result.stage.taskGroups[0].tasks[0];
+    expect(task.canComplete).toBe(false);
+  });
+
+  it("sets canComplete to true when user has required roles", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    const authenticatedUserWithRoles = {
+      ...mockAuthUser,
+      appRoles: {
+        ROLE_RPA_ADMIN: true,
+      },
+    };
+
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
+      new Permissions({
+        allOf: ["ROLE_RPA_ADMIN"],
+        anyOf: [],
+      });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase(
+      "test-case-id",
+      authenticatedUserWithRoles,
+    );
+
+    const task = result.stage.taskGroups[0].tasks[0];
+    expect(task.canComplete).toBe(true);
   });
 
   it("returns permitted actions when stage is complete", async () => {
