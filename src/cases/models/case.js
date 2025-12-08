@@ -153,7 +153,9 @@ export class Case {
   }
 
   updateSupplementaryData({ targetNode, key, dataType, data }) {
-    if (!targetNode) return null;
+    if (!targetNode) {
+      return null;
+    }
 
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
