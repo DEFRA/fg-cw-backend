@@ -234,6 +234,17 @@ describe("Case", () => {
       expect(result).toHaveLength(2);
       expect(result[1].foo).toBe("barr");
     });
+
+    it("should do nothing if no target node is passed", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryData({
+        targetNode: undefined,
+        key: "agreementRef",
+        dataType: "ARRAY",
+        data: { agreementRef: "1234", foo: "barr" },
+      });
+      expect(result).toBe(null);
+    });
   });
 
   describe("objectId getter", () => {
