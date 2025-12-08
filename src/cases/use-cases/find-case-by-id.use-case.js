@@ -98,11 +98,8 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         commentRef: caseTaskGroupTask.commentRef,
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-        requiredRoles: workflowTaskGroupTask.requiredRoles && {
-          allOf: workflowTaskGroupTask.requiredRoles.allOf,
-          anyOf: workflowTaskGroupTask.requiredRoles.anyOf,
-        },
-        canComplete: workflowTaskGroupTask.requiredRoles?.isAuthorised(
+        requiredRoles: workflowTaskGroupTask.requiredRoles,
+        canComplete: workflowTaskGroupTask.requiredRoles.isAuthorised(
           root.user.appRoles,
         ),
       };
