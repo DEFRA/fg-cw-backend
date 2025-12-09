@@ -270,6 +270,12 @@ export class Case {
       position,
     );
 
+    if (!transition) {
+      throw Boom.preconditionFailed(
+        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: transition does not exist`,
+      );
+    }
+
     if (transition.checkTasks && !this.#areTasksComplete(workflow)) {
       throw Boom.preconditionFailed(
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
