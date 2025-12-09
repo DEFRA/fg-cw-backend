@@ -462,6 +462,7 @@ describe("createWorkflowUseCase", () => {
         createTestWorkflow([
           {
             targetPosition: "::",
+            checkTasks: true,
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
@@ -473,6 +474,7 @@ describe("createWorkflowUseCase", () => {
         createTestWorkflow([
           {
             targetPosition: "PHASE_X::",
+            checkTasks: true,
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
@@ -484,6 +486,7 @@ describe("createWorkflowUseCase", () => {
         createTestWorkflow([
           {
             targetPosition: ":STAGE_X:",
+            checkTasks: true,
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
@@ -495,6 +498,7 @@ describe("createWorkflowUseCase", () => {
         createTestWorkflow([
           {
             targetPosition: "::STATUS_X",
+            checkTasks: true,
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),

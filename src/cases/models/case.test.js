@@ -10,6 +10,7 @@ import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
 import { TimelineEvent } from "./timeline-event.js";
 import { WorkflowAction } from "./workflow-action.js";
+import { WorkflowStageStatus } from "./workflow-stage-status.js";
 import { WorkflowTransition } from "./workflow-transition.js";
 import { Workflow } from "./workflow.js";
 
@@ -232,6 +233,17 @@ describe("Case", () => {
       });
       expect(result).toHaveLength(2);
       expect(result[1].foo).toBe("barr");
+    });
+
+    it("should do nothing if no target node is passed", () => {
+      const caseInstance = createTestCase();
+      const result = caseInstance.updateSupplementaryData({
+        targetNode: undefined,
+        key: "agreementRef",
+        dataType: "ARRAY",
+        data: { agreementRef: "1234", foo: "barr" },
+      });
+      expect(result).toBe(null);
     });
   });
 
@@ -792,69 +804,16 @@ describe("Case", () => {
       ];
       const caseWithIncompleteTasks = createTestCase(props);
 
-      expect(() => {
+      expect(() =>
         caseWithIncompleteTasks.updateStageOutcome({
           workflow,
           actionCode: "ACTION_1",
           comment: "Trying to progress with incomplete tasks",
           createdBy: validUserId,
-        });
-      }).toThrow("required tasks are not complete");
-    });
-
-    it("allows actions with checkTasks:false even when tasks are incomplete", () => {
-      const props = createValidProps();
-      props.phases = [
-        new CasePhase({
-          code: "PHASE_1",
-          stages: [
-            new CaseStage({
-              code: "STAGE_1",
-              taskGroups: [
-                new CaseTaskGroup({
-                  code: "TASK_GROUP_1",
-                  tasks: [
-                    new CaseTask({
-                      code: "TASK_1",
-                      status: "PENDING",
-                      completed: false,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new CaseStage({
-              code: "STAGE_2",
-              taskGroups: [],
-            }),
-          ],
         }),
-      ];
-      const caseWithIncompleteTasks = createTestCase(props);
-
-      const status = workflow.getStatus(caseWithIncompleteTasks.position);
-      status.transitions.push(
-        new WorkflowTransition({
-          targetPosition: Position.from("PHASE_1:STAGE_1:STATUS_2"),
-          action: new WorkflowAction({
-            code: "REJECT_ACTION",
-            name: "Reject",
-            checkTasks: false,
-          }),
-        }),
+      ).toThrow(
+        "Cannot perform action ACTION_1 from position PHASE_1:STAGE_1:STATUS_1: required tasks are not complete",
       );
-
-      caseWithIncompleteTasks.updateStageOutcome({
-        workflow,
-        actionCode: "REJECT_ACTION",
-        comment: "Rejecting without task completion",
-        createdBy: validUserId,
-      });
-
-      const currentStage = caseWithIncompleteTasks.phases[0].stages[0];
-      expect(currentStage.outcome).toBeDefined();
-      expect(currentStage.outcome.actionCode).toBe("REJECT_ACTION");
-      expect(caseWithIncompleteTasks.position.statusCode).toBe("STATUS_2");
     });
 
     it("throws error when action code does not exist", () => {
@@ -979,6 +938,40 @@ describe("Case", () => {
       expect(kase.timeline).toHaveLength(initialTimelineLength);
     });
 
+    it("should not check tasks if transition.checkTasks is false", () => {
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock();
+      const initialTimelineLength = kase.timeline.length;
+
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
+
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = false;
+
+      const newPosition = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_2",
+      });
+
+      kase.progressTo({
+        position: newPosition,
+        workflow,
+        createdBy: validUserId,
+      });
+      expect(kase.timeline).toHaveLength(initialTimelineLength + 1);
+      expect(kase.timeline[0].eventType).toBe(
+        EventEnums.eventTypes.CASE_STATUS_CHANGED,
+      );
+      expect(kase.timeline[0].data).toEqual({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_2",
+      });
+      expect(kase.timeline[0].createdBy).toBe(validUserId);
+      expect(kase.position).toEqual(newPosition);
+    });
+
     it("throws error when stage is incomplete", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
@@ -992,15 +985,17 @@ describe("Case", () => {
         statusCode: "STATUS_1",
       });
 
-      expect(() => {
+      try {
         kase.progressTo({
           position: newPosition,
           workflow,
           createdBy: validUserId,
         });
-      }).toThrow(
-        "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
-      );
+      } catch (e) {
+        expect(e.message).toBe(
+          "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
+        );
+      }
     });
 
     it("creates CASE_STATUS_CHANGED event when transitioning to different status", () => {
@@ -1010,6 +1005,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       const newPosition = new Position({
         phaseCode: "PHASE_1",
@@ -1043,6 +1039,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       const newPosition = new Position({
         phaseCode: "PHASE_1",
@@ -1079,6 +1076,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       kase.phases.push(
         new CasePhase({
@@ -1086,6 +1084,20 @@ describe("Case", () => {
           stages: [
             new CaseStage({
               code: "STAGE_1",
+              statuses: [
+                new WorkflowStageStatus({
+                  code: "STATUS_1",
+                  name: "Stage status 1",
+                  description: "Stage status 1 description",
+                  interactive: true,
+                }),
+                new WorkflowStageStatus({
+                  code: "STATUS_2",
+                  name: "Stage status 2",
+                  description: "Stage status 2 description",
+                  interactive: true,
+                }),
+              ],
               taskGroups: [],
             }),
           ],
@@ -1123,6 +1135,40 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
+
+      workflow.phases.push(
+        new CasePhase({
+          code: "PHASE_2",
+          stages: [
+            new CaseStage({
+              code: "STAGE_3",
+              statuses: [
+                new WorkflowStageStatus({
+                  code: "STATUS_3",
+                  name: "Stage status 3",
+                  description: "Stage status 3 description",
+                  interactive: true,
+                }),
+                new WorkflowStageStatus({
+                  code: "STATUS_2",
+                  name: "Stage status 2",
+                  description: "Stage status 2 description",
+                  interactive: true,
+                }),
+              ],
+              taskGroups: [],
+            }),
+          ],
+        }),
+      );
+
+      workflow.phases[0].stages[0].statuses[0].transitions.push(
+        new WorkflowTransition({
+          targetPosition: Position.from("PHASE_2:STAGE_3:STATUS_3"),
+          checkTasks: true,
+        }),
+      );
 
       kase.phases.push(
         new CasePhase({
@@ -1165,6 +1211,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       kase.phases.push(
         new CasePhase({
@@ -1179,8 +1226,8 @@ describe("Case", () => {
       );
 
       const newPosition = new Position({
-        phaseCode: "PHASE_2",
-        stageCode: "STAGE_2",
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
         statusCode: "STATUS_2",
       });
 
@@ -1199,6 +1246,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       const newPosition = new Position({
         phaseCode: "PHASE_1",
@@ -1224,6 +1272,7 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
       const newPosition = new Position({
         phaseCode: "PHASE_1",
@@ -1255,6 +1304,40 @@ describe("Case", () => {
 
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
+
+      workflow.phases.push(
+        new CasePhase({
+          code: "PHASE_2",
+          stages: [
+            new CaseStage({
+              code: "STAGE_2",
+              statuses: [
+                new WorkflowStageStatus({
+                  code: "STATUS_2",
+                  name: "Stage status 2",
+                  description: "Stage status 2 description",
+                  interactive: true,
+                }),
+                new WorkflowStageStatus({
+                  code: "STATUS_3",
+                  name: "Stage status 3",
+                  description: "Stage status 3 description",
+                  interactive: true,
+                }),
+              ],
+              taskGroups: [],
+            }),
+          ],
+        }),
+      );
+
+      workflow.phases[0].stages[0].statuses[0].transitions.push(
+        new WorkflowTransition({
+          targetPosition: Position.from("PHASE_2:STAGE_2:STATUS_3"),
+          checkTasks: true,
+        }),
+      );
 
       kase.phases.push(
         new CasePhase({
@@ -1271,7 +1354,7 @@ describe("Case", () => {
       const newPosition = new Position({
         phaseCode: "PHASE_2",
         stageCode: "STAGE_2",
-        statusCode: "STATUS_2",
+        statusCode: "STATUS_3",
       });
 
       kase.progressTo({

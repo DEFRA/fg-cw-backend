@@ -54,6 +54,7 @@ describe("Workflow", () => {
                   transitions: [
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_1:APPROVED"),
+                      checkTasks: true,
                       action: new WorkflowAction({
                         code: "approve",
                         name: "Approve",
@@ -66,6 +67,7 @@ describe("Workflow", () => {
                     }),
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_1:REJECTED"),
+                      checkTasks: true,
                       action: new WorkflowAction({
                         code: "reject",
                         name: "Reject",
@@ -78,6 +80,7 @@ describe("Workflow", () => {
                     }),
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_1:ON_HOLD"),
+                      checkTasks: true,
                       action: new WorkflowAction({
                         code: "on-hold",
                         name: "Put on hold",
@@ -90,8 +93,24 @@ describe("Workflow", () => {
                     }),
                     new WorkflowTransition({
                       targetPosition: Position.from(
+                        "PHASE_1:STAGE_1:WITHDRAW_REQUESTED",
+                      ),
+                      checkTasks: false,
+                      action: new WorkflowAction({
+                        code: "withdraw-requested",
+                        name: "withdraw",
+                        comment: new WorkflowActionComment({
+                          label: "Note (optional)",
+                          helpText: "Help optional text",
+                          mandatory: false,
+                        }),
+                      }),
+                    }),
+                    new WorkflowTransition({
+                      targetPosition: Position.from(
                         "PHASE_1:STAGE_1:COMPLETED",
                       ),
+                      checkTasks: true,
                       action: new WorkflowAction({
                         code: "no-comment-action",
                         name: "Action without comment",
@@ -113,6 +132,7 @@ describe("Workflow", () => {
                   transitions: [
                     new WorkflowTransition({
                       targetPosition: Position.from("PHASE_1:STAGE_2:APPROVED"),
+                      checkTasks: true,
                       action: new WorkflowAction({
                         code: "final-approve",
                         name: "Final Approval",
@@ -491,6 +511,22 @@ describe("Workflow", () => {
           taskCode: "TASK_1",
         });
       }).toThrowError('Stage with code "non-existent-stage" not found');
+    });
+  });
+
+  describe("getTransitionForTargetPosition", () => {
+    it("should get target position", () => {
+      const workflow = createMockWorkflow();
+      const position = Position.from("PHASE_1:STAGE_1:IN_PROGRESS");
+      const targetPosition = Position.from(
+        "PHASE_1:STAGE_1:WITHDRAW_REQUESTED",
+      );
+      const transition = workflow.getTransitionForTargetPosition(
+        position,
+        targetPosition,
+      );
+      expect(transition.checkTasks).toBeFalsy();
+      expect(transition.action.name).toBe("withdraw");
     });
   });
 });

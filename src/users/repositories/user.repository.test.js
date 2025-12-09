@@ -135,19 +135,30 @@ describe("update", () => {
   });
 });
 
+const expectedNameFilter = {
+  name: {
+    $exists: true,
+    $nin: [null, ""],
+    $not: { $regex: /^placeholder$/i },
+  },
+};
+
 describe("findAll", () => {
   it("returns a list of users", async () => {
     const docs = [UserDocument.createMock(), UserDocument.createMock()];
 
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
     db.collection.mockReturnValue({
-      find: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(docs),
-      }),
+      find,
     });
 
     const result = await findAll();
 
     expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith(expectedNameFilter);
 
     expect(result).toEqual([
       User.createMock({
@@ -175,7 +186,7 @@ describe("findAll", () => {
     const result = await findAll({ idpId });
 
     expect(db.collection).toHaveBeenCalledWith("users");
-    expect(find).toHaveBeenCalledWith({ idpId });
+    expect(find).toHaveBeenCalledWith({ ...expectedNameFilter, idpId });
 
     expect(result).toEqual([
       User.createMock({
@@ -216,6 +227,7 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
       $and: [
         {
           "appRoles.ROLE_RPA_ADMIN": {
@@ -282,6 +294,7 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
       $or: [{ "appRoles.ANY_APP_ROLE": { $exists: true } }],
     });
 
@@ -328,6 +341,7 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
       $and: [
         {
           "appRoles.ROLE_RPA_ADMIN": {
@@ -380,6 +394,7 @@ describe("findAll", () => {
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
       _id: { $in: [id1, id2] },
     });
 

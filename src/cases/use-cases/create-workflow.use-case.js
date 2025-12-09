@@ -160,6 +160,7 @@ const createWorkflowTransition = (transition, context, phases) =>
       context,
       phases,
     }),
+    checkTasks: transition.checkTasks,
     action: transition.action ? createWorkflowAction(transition.action) : null,
   });
 
