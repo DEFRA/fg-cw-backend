@@ -33,6 +33,12 @@ export class Workflow {
       actionCode,
     );
 
+    if (!action) {
+      throw Boom.notFound(
+        `Action with code "${actionCode}" not found for position ${position}`,
+      );
+    }
+
     this.validateComment({
       phaseCode: position.phaseCode,
       stageCode: position.stageCode,
