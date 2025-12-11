@@ -176,6 +176,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],
@@ -238,6 +239,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],
@@ -315,6 +317,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],
@@ -343,6 +346,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],
@@ -420,6 +424,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],
@@ -448,6 +453,7 @@ describe("CasePhase", () => {
                       new WorkflowTaskStatusOption({
                         code: "COMPLETE",
                         name: "Complete",
+                        theme: "SUCCESS",
                         completes: true,
                       }),
                     ],

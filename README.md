@@ -419,6 +419,44 @@ async function doStuff(server) {
 
 Helper methods are also available in `/src/helpers/mongo-lock.js`.
 
+## Logging
+
+This application uses [Pino](https://getpino.io/) for structured logging, configured with ECS (Elastic Common Schema) formatting for better observability and log analysis.
+
+Logging is configured in `src/common/logger.js`.
+
+### Basic Logging
+
+We use entry and exit level logging patterns for better log correlation.
+
+**Entry logs** indicate the start of an operation:
+
+**Exit logs** indicate the completion of an operation:
+
+> **Note**: We use consistent entry text to make it easier to correlate logs within OpenSearch.
+
+### Conditional Logging
+
+For operations that have conditional logic between entry and exit logs, use `logger.debug()` or `logger.info()` based on relevance:
+
+**Example implementation**: See `src/users/use-cases/update-user.use-case.js`
+
+### Log Levels
+
+**Warning logs** for recoverable issues:
+
+**Debug logs** for detailed diagnostic information:
+
+> **Note**: Error logging (`logger.error`) is typically not required in use cases as errors are thrown and will propagate up the call stack where they can be handled and logged by the error handling middleware.
+
+### Best Practices
+
+- Use structured logging with context objects for better searchability
+- Include relevant identifiers (IDs, codes, references) in log messages
+- Keep entry and exit log messages consistent for easier correlation
+- Use appropriate log levels based on the importance of the information
+-
+
 ### Proxy
 
 We are using forward-proxy which is set up by default. To make use of this: `import { fetch } from 'undici'` then

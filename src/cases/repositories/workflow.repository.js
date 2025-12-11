@@ -35,6 +35,7 @@ const toWorkflowAction = (a) =>
 const toWorkflowTransition = (t) =>
   new WorkflowTransition({
     targetPosition: Position.from(t.targetPosition),
+    checkTasks: t.checkTasks,
     action: t.action ? toWorkflowAction(t.action) : null,
   });
 
@@ -42,6 +43,7 @@ const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
     code: s.code,
     name: s.name,
+    theme: s.theme,
     description: s.description,
     interactive: s.interactive,
     transitions: s.transitions.map(toWorkflowTransition),
@@ -51,6 +53,8 @@ const toWorkflowTaskStatusOption = (so) =>
   new WorkflowTaskStatusOption({
     code: so.code,
     name: so.name,
+    theme: so.theme,
+    altName: so.altName,
     completes: so.completes,
   });
 
@@ -69,12 +73,10 @@ const toWorkflowTask = (t) =>
     name: t.name,
     mandatory: t.mandatory,
     description: t.description,
-    requiredRoles: t.requiredRoles
-      ? new Permissions({
-          allOf: t.requiredRoles.allOf,
-          anyOf: t.requiredRoles.anyOf,
-        })
-      : null,
+    requiredRoles: new Permissions({
+      allOf: t.requiredRoles?.allOf,
+      anyOf: t.requiredRoles?.anyOf,
+    }),
     statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
     comment: toWorkflowTaskComment(t.comment),
   });

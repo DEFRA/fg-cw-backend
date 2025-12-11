@@ -112,6 +112,8 @@ const createWorkflowTaskStatusOption = (statusOption) =>
   new WorkflowTaskStatusOption({
     code: statusOption.code,
     name: statusOption.name,
+    theme: statusOption.theme,
+    altName: statusOption.altName,
     completes: statusOption.completes,
   });
 
@@ -121,12 +123,10 @@ const createWorkflowTask = (task) =>
     name: task.name,
     mandatory: task.mandatory,
     description: task.description,
-    requiredRoles: task.requiredRoles
-      ? new Permissions({
-          allOf: task.requiredRoles.allOf,
-          anyOf: task.requiredRoles.anyOf,
-        })
-      : null,
+    requiredRoles: new Permissions({
+      allOf: task.requiredRoles?.allOf,
+      anyOf: task.requiredRoles?.anyOf,
+    }),
     statusOptions: task.statusOptions.map(createWorkflowTaskStatusOption),
     comment: task.comment,
   });
@@ -160,6 +160,7 @@ const createWorkflowTransition = (transition, context, phases) =>
       context,
       phases,
     }),
+    checkTasks: transition.checkTasks,
     action: transition.action ? createWorkflowAction(transition.action) : null,
   });
 
@@ -167,6 +168,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
   new WorkflowStageStatus({
     code: status.code,
     name: status.name,
+    theme: status.theme,
     description: status.description,
     interactive: status.interactive,
     transitions: status.transitions.map((transition) =>

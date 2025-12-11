@@ -22,12 +22,16 @@ const Transition = Joi.object({
   targetPosition: Joi.string()
     .pattern(/[A-Z0-9_:]/)
     .required(),
+  checkTasks: Joi.bool().required(),
   action: Action.allow(null).required(),
 }).label("Transition");
 
 export const Status = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
   description: Joi.string().allow(null).required(),
   interactive: Joi.boolean().required(),
   transitions: Joi.array().items(Transition).required(),
@@ -36,6 +40,10 @@ export const Status = Joi.object({
 export const StatusOption = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NONE", "NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
+  altName: Joi.string().allow(null),
   completes: Joi.boolean().required(),
 }).label("StatusOption");
 
