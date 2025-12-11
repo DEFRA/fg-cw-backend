@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterEach, beforeEach } from "vitest";
-import { purgeQueue } from "./helpers/sqs.js";
+import { purgeQueues } from "./helpers/sqs.js";
 
 let client;
 
@@ -16,7 +16,11 @@ beforeEach(async () => {
     db.collection("roles").deleteMany({}),
   ]);
 
-  await purgeQueue(env.CW__SQS__CREATE_NEW_CASE_URL);
+  await purgeQueues([
+    env.CW__SQS__CREATE_NEW_CASE_URL,
+    env.CW__SQS__UPDATE_STATUS_URL,
+    env.GAS__SQS__UPDATE_STATUS,
+  ]);
 });
 
 afterEach(async () => {

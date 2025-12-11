@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caseData1, caseData2 } from "../fixtures/case.js";
+import { createUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -21,6 +22,27 @@ afterAll(async () => {
 describe("GET /cases/{caseId}", () => {
   beforeEach(async () => {
     await createWorkflow();
+
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+      appRoles: {
+        ROLE_1: {
+          startDate: "2025-01-01",
+          endDate: "2100-12-31",
+        },
+        ROLE_2: {
+          startDate: "2025-01-01",
+          endDate: "2100-12-31",
+        },
+        ROLE_3: {
+          startDate: "2025-01-01",
+          endDate: "2100-12-31",
+        },
+      },
+    });
   });
 
   it("finds a case by id", async () => {
@@ -41,75 +63,78 @@ describe("GET /cases/{caseId}", () => {
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload).toEqual({
-      ...caseData2,
       _id: caseId,
-      dateReceived: new Date(caseData2.dateReceived).toISOString(),
-      phases: [
-        {
-          code: "default",
-          name: "Default Phase",
-          stages: [
-            {
-              code: "application-receipt",
-              name: "Application Receipt",
-              description: "Application received",
-              statuses: [],
-              actions: [
-                {
-                  code: "approve",
-                  name: "Approve",
-                  comment: null,
+      caseRef: caseData2.caseRef,
+      workflowCode: caseData2.workflowCode,
+      currentStatus: "AWAITING_REVIEW",
+      stage: {
+        code: "APPLICATION_RECEIPT",
+        name: "Application Receipt",
+        description: "Application received",
+        interactive: true,
+        taskGroups: [
+          {
+            code: "APPLICATION_RECEIPT_TASKS",
+            name: "Application Receipt tasks",
+            description: "Task group description",
+            tasks: [
+              {
+                code: "SIMPLE_REVIEW",
+                name: "Simple Review",
+                description: [
+                  {
+                    component: "heading",
+                    level: 2,
+                    text: "Simple review task",
+                  },
+                ],
+                status: "COMPLETE",
+                statusText: "Complete",
+                statusTheme: "SUCCESS",
+                completed: true,
+                mandatory: true,
+                statusOptions: [
+                  {
+                    code: "COMPLETE",
+                    name: "Complete",
+                    theme: "SUCCESS",
+                    completes: true,
+                  },
+                ],
+                commentInputDef: {
+                  helpText:
+                    "You must include an explanation for auditing purposes.",
+                  label: "Explain this outcome",
+                  mandatory: false,
                 },
-              ],
-              taskGroups: [
-                {
-                  code: "application-receipt-tasks",
-                  name: "Application Receipt tasks",
-                  description: "Task group description",
-                  tasks: [
-                    {
-                      code: "simple-review",
-                      name: "Simple Review",
-                      description: [
-                        {
-                          component: "heading",
-                          level: 2,
-                          text: "Simple review task",
-                        },
-                      ],
-                      status: "pending",
-                      type: "boolean",
-                      statusOptions: [],
-                      updatedBy: null,
-                      requiredRoles: {
-                        allOf: ["ROLE_1", "ROLE_2"],
-                        anyOf: ["ROLE_3"],
-                      },
-                    },
-                  ],
+                commentRef: null,
+                updatedAt: null,
+                updatedBy: null,
+                requiredRoles: {
+                  allOf: ["ROLE_1", "ROLE_2"],
+                  anyOf: ["ROLE_3"],
                 },
-              ],
-            },
-            {
-              code: "contract",
-              name: "Stage for contract management",
-              description: "Awaiting agreement",
-              statuses: [],
-              actions: [],
-              taskGroups: [],
-            },
-          ],
-        },
-      ],
-      timeline: [
-        {
-          ...caseData2.timeline[0],
-          createdBy: {
-            id: "System",
-            name: "System",
+                canComplete: true,
+              },
+            ],
           },
-        },
-      ],
+        ],
+        actions: [
+          {
+            code: "APPROVE",
+            name: "Approve",
+            comment: null,
+          },
+        ],
+      },
+      dateReceived: new Date(caseData2.dateReceived).toISOString(),
+      payload: caseData2.payload,
+      supplementaryData: caseData2.supplementaryData,
+      assignedUser: null,
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
       banner: {
         summary: {
           createdAt: {
@@ -147,7 +172,7 @@ describe("GET /cases/{caseId}", () => {
         {
           href: `/cases/${caseId}/case-details`,
           id: "case-details",
-          text: "Case Details",
+          text: "Application",
         },
         {
           href: `/cases/${caseId}/notes`,
@@ -160,7 +185,17 @@ describe("GET /cases/{caseId}", () => {
           text: "Timeline",
         },
       ],
-      supplementaryData: {},
+      comments: [],
+      timeline: [
+        {
+          ...caseData2.timeline[0],
+          createdBy: {
+            id: "System",
+            name: "System",
+          },
+        },
+      ],
+      beforeContent: [],
     });
   });
 });

@@ -34,16 +34,15 @@ describe("updateTaskStatusRoute", () => {
 
   it("sets the status of a task", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
-    const phaseCode = "phase-1";
-    const stageCode = "application-receipt";
-    const taskGroupCode = "application-receipt-tasks";
-    const taskCode = "simple-review";
+    const taskGroupCode = "APPLICATION_RECEIPT_TASKS";
+    const taskCode = "SIMPLE_REVIEW";
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/phases/${phaseCode}/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
-        status: "complete",
+        status: "COMPLETE",
+        completed: true,
       },
       auth: {
         strategy: "entra",
@@ -59,11 +58,10 @@ describe("updateTaskStatusRoute", () => {
 
     expect(updateTaskStatusUseCase).toHaveBeenCalledWith({
       caseId,
-      phaseCode,
-      stageCode,
       taskGroupCode,
       taskCode,
-      status: "complete",
+      status: "COMPLETE",
+      completed: true,
       user: mockAuthUser,
     });
   });
@@ -76,15 +74,14 @@ describe("updateTaskStatusRoute", () => {
 
   it("returns 400 when payload does not match schema", async () => {
     const caseId = "808b8c8f8c8f8c8f8c8f8c8f";
-    const stageCode = "application-receipt";
-    const taskGroupCode = "application-receipt-tasks";
-    const taskCode = "simple-review";
+    const taskGroupCode = "APPLICATION_RECEIPT_TASKS";
+    const taskCode = "SIMPLE_REVIEW";
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/phases/phase-1/stages/${stageCode}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
       payload: {
-        status: "bang",
+        status: 999,
       },
     });
 

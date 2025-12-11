@@ -8,27 +8,16 @@ import { sendMessage } from "../helpers/sqs.js";
 import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
-let cases;
-
 let client;
-let inbox;
-let workflow;
+let cases;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
-  inbox = client.db().collection("inbox");
-  workflow = client.db().collection("workflow");
 });
 
 afterAll(async () => {
   await client.close(true);
-});
-
-beforeEach(async () => {
-  await cases.deleteMany({});
-  await inbox.deleteMany({});
-  await workflow.deleteMany({});
 });
 
 describe("On CreateNewCase event", () => {
@@ -37,7 +26,14 @@ describe("On CreateNewCase event", () => {
   });
 
   it("creates a new case", async () => {
-    const expected = [
+    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
+      ...createCaseEvent3,
+      id: randomUUID(),
+    });
+
+    const caseDocs = await waitForDocuments(cases);
+
+    expect(caseDocs).toEqual([
       {
         ...caseData3Document,
         _id: expect.any(ObjectId),
@@ -55,31 +51,6 @@ describe("On CreateNewCase event", () => {
           },
         ],
       },
-    ];
-
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].commentRef = null;
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].updatedAt = null;
-    expected[0].phases[0].stages[0].taskGroups[0].tasks[0].updatedBy = null;
-    expected[0].phases[0].stages[0].outcome = null;
-    expected[0].phases[0].stages[1].outcome = null;
-
-    const messageId = randomUUID();
-    const type = createCaseEvent3.type;
-
-    createCaseEvent3.id = messageId;
-    createCaseEvent3.type = type.replace("development", env.ENVIRONMENT);
-    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, createCaseEvent3);
-
-    const documents = await waitForDocuments(inbox, 3, {
-      target: env.CW__SQS__CREATE_NEW_CASE_URL,
-      messageId,
-    });
-
-    expect(documents).toHaveLength(1);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const caseDocs = await waitForDocuments(cases);
-    expect(caseDocs).toEqual(expected);
+    ]);
   });
 });

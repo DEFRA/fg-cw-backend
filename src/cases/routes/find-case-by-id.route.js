@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { findCaseResponseSchema } from "../schemas/responses/find-case-response.schema.js";
+import { logger } from "../../common/logger.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 
 export const findCaseByIdRoute = {
@@ -13,16 +13,18 @@ export const findCaseByIdRoute = {
         caseId: Joi.string().hex().length(24),
       }),
     },
-    response: {
-      schema: findCaseResponseSchema,
-    },
   },
   async handler(request) {
     const { caseId } = request.params;
+    const tabId = request.query.tabId;
     const { user } = request.auth.credentials;
 
-    const result = await findCaseByIdUseCase(caseId, user);
+    logger.info(`Finding case ${caseId}`);
+    const result = await findCaseByIdUseCase(caseId, user, {
+      params: { caseId, tabId },
+    });
 
+    logger.info(`Finished: Finding case ${caseId}`);
     return result;
   },
 };

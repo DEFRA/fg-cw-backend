@@ -30,10 +30,18 @@ describe("Workflows", () => {
       const documents = await workflows.find({}).toArray();
 
       expect(documents.length).toBe(1);
-      expect(documents[0]).toEqual({
-        ...payload,
+      expect(documents[0]).toMatchObject({
         _id: expect.any(Object),
+        code: payload.code,
+        pages: payload.pages,
+        requiredRoles: payload.requiredRoles,
+        definitions: payload.definitions,
       });
+
+      expect(
+        documents[0].phases[0].stages[0].statuses[0].transitions[0]
+          .targetPosition,
+      ).toBe("DEFAULT:CONTRACT:AWAITING_AGREEMENT");
     });
 
     it("throws when workflow code exists", async () => {

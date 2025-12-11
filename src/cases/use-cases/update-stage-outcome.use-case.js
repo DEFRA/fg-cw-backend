@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { config } from "../../common/config.js";
+import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
@@ -8,6 +9,9 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
+  logger.info(
+    `Updating stage outcome use case started - caseId: ${command.caseId}`,
+  );
   return await withTransaction(async (session) => {
     const { caseId, actionCode, comment, user } = command;
     const kase = await findById(caseId);
@@ -20,12 +24,14 @@ export const updateStageOutcomeUseCase = async (command) => {
 
     workflow.validateStageActionComment({
       actionCode,
-      phaseCode: kase.currentPhase,
-      stageCode: kase.currentStage,
+      position: kase.position,
       comment,
     });
 
+    const previousPosition = kase.position;
+
     kase.updateStageOutcome({
+      workflow,
       actionCode,
       comment,
       createdBy: user.id,
@@ -33,13 +39,11 @@ export const updateStageOutcomeUseCase = async (command) => {
 
     await update(kase, session);
 
-    const { caseRef, workflowCode } = kase;
-    // TODO: publish correct currentStatus based on state machine transitions
     const caseStatusEvent = new CaseStatusUpdatedEvent({
-      caseRef,
-      workflowCode,
-      previousStatus: "not-implemented",
-      currentStatus: actionCode === "approve" ? "APPROVED" : "not-implemented",
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      previousStatus: previousPosition.toString(),
+      currentStatus: kase.position.toString(),
     });
 
     await insertMany(
@@ -50,6 +54,10 @@ export const updateStageOutcomeUseCase = async (command) => {
         }),
       ],
       session,
+    );
+
+    logger.info(
+      `Finished: Updating stage outcome use case started - caseId: ${command.caseId}`,
     );
   });
 };

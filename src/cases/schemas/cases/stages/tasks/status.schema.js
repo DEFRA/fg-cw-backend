@@ -1,7 +1,3 @@
 import Joi from "joi";
 
-export const statusSchema = Joi.string().valid(
-  "pending",
-  "in_progress",
-  "complete",
-);
+export const statusSchema = Joi.string().allow(null);

@@ -16,7 +16,7 @@
             },
             "status": {
               "label": "Status",
-              "text": "$.status",
+              "text": "$.currentStatusName",
               "type": "string"
             },
             "dateReceived": {
@@ -83,7 +83,7 @@
   },
   "phases": [
     {
-      "code": "default",
+      "code": "DEFAULT",
       "name": "Default Phase",
       "stages": [
         {
@@ -99,7 +99,6 @@
               "tasks": [
                 {
                   "code": "review-application-data",
-                  "type": "boolean",
                   "name": "Review application data",
                   "description": null,
                   "statusOptions": []
@@ -147,21 +146,18 @@
               "tasks": [
                 {
                   "code": "check-application-and-documents",
-                  "type": "boolean",
                   "name": "Check application and documents",
                   "description": null,
                   "statusOptions": []
                 },
                 {
                   "code": "check-find-farm-and-land-payment-data",
-                  "type": "boolean",
                   "name": "Check on Find farm and land payment data",
                   "description": null,
                   "statusOptions": []
                 },
                 {
                   "code": "check-rps-dual-funding",
-                  "type": "boolean",
                   "name": "Check on RPS (Dual Funding)",
                   "description": null,
                   "statusOptions": []
@@ -176,14 +172,12 @@
                 {
                   "code": "confirm-farm-has-cph",
                   "name": "Confirm farm has a CPH",
-                  "type": "boolean",
                   "description": null,
                   "statusOptions": []
                 },
                 {
                   "code": "confirm-apha-registration",
                   "name": "Confirm APHA registration",
-                  "type": "boolean",
                   "description": null,
                   "statusOptions": []
                 }
@@ -220,16 +214,18 @@
   },
   "externalActions": [
     {
-      "code": "RERUN_RULES",
-      "name": "Rerun Rules",
+      "code": "RECALCULATE_RULES",
+      "name": "Run calculations again",
       "description": "Rerun the business rules validation",
       "endpoint": "landGrantsRulesRerun",
+      "display": true,
       "target": {
         "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-        "node": "landGrantsRulesRun",
-        "nodeType": "array",
+        "targetNode": "landGrantsRulesRun",
+        "dataType": "ARRAY",
         "place": "append"
       }
     }
-  ]
+  ],
+  "endpoints": []
 }

@@ -47,18 +47,34 @@ const caseSchema = Joi.object({
 }).unknown(true);
 
 const ExternalActionTarget = Joi.object({
-  node: Joi.string().required(),
-  nodeType: Joi.string().valid("array").required(),
-  position: Joi.string().required(),
-  place: Joi.string().valid("append").optional(),
+  targetNode: Joi.string().required(),
+  dataType: Joi.string().valid("ARRAY", "OBJECT").required(),
+  position: Joi.string().allow(null).required(),
+  key: Joi.string().optional(),
+  place: Joi.string().valid("append").required(),
 }).label("ExternalActionTarget");
+
+const ExternalActionEndpoint = Joi.object({
+  code: Joi.string().required(),
+  endpointParams: Joi.object().optional(),
+}).label("ExternalActionEndpoint");
+
+const Endpoint = Joi.object({
+  code: Joi.string().required(),
+  service: Joi.string().required(),
+  path: Joi.string().required(),
+  method: Joi.string().required(),
+}).label("Endpoint");
 
 const ExternalAction = Joi.object({
   code: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
-  endpoint: Joi.string().required(),
-  target: ExternalActionTarget.required(),
+  display: Joi.boolean().required(),
+  endpoint: Joi.alternatives()
+    .try(Joi.string(), ExternalActionEndpoint)
+    .required(),
+  target: ExternalActionTarget.allow(null).required(),
 }).label("ExternalAction");
 
 const WorkflowData = Joi.object({
@@ -74,6 +90,7 @@ const WorkflowData = Joi.object({
   requiredRoles: requiredRolesSchema.required(),
   definitions: Joi.object().optional(),
   externalActions: Joi.array().items(ExternalAction).optional(),
+  endpoints: Joi.array().items(Endpoint).required(),
 }).unknown(true);
 
 const Workflow = WorkflowData.keys({

@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { Position } from "./position.js";
+import { WorkflowActionComment } from "./workflow-action-comment.js";
 import { WorkflowAction } from "./workflow-action.js";
 import { WorkflowPhase } from "./workflow-phase.js";
+import { WorkflowStageStatus } from "./workflow-stage-status.js";
 import { WorkflowStage } from "./workflow-stage.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
+import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
 import { WorkflowTask } from "./workflow-task.js";
+import { WorkflowTransition } from "./workflow-transition.js";
 import { Workflow } from "./workflow.js";
 
 describe("Workflow", () => {
@@ -13,63 +18,127 @@ describe("Workflow", () => {
       code: "test-workflow",
       phases: [
         new WorkflowPhase({
-          code: "phase-1",
+          code: "PHASE_1",
           stages: [
             new WorkflowStage({
-              code: "stage-1",
+              code: "STAGE_1",
               name: "Initial Review",
               taskGroups: [
                 new WorkflowTaskGroup({
-                  code: "task-group-1",
+                  code: "TASK_GROUP_1",
                   name: "Task Group 1",
                   description: "Task group description",
                   tasks: [
                     new WorkflowTask({
-                      code: "task-1",
+                      code: "TASK_1",
                       name: "Review application",
+                      mandatory: true,
+                      description: "Review the application",
+                      statusOptions: [
+                        new WorkflowTaskStatusOption({
+                          code: "COMPLETE",
+                          name: "Complete",
+                          theme: "SUCCESS",
+                          completes: true,
+                        }),
+                      ],
                     }),
                   ],
                 }),
               ],
-              actions: [
-                new WorkflowAction({
-                  code: "approve",
-                  name: "Approve",
-                  comment: {
-                    label: "Approval reason",
-                    type: "REQUIRED",
-                  },
-                }),
-                new WorkflowAction({
-                  code: "reject",
-                  name: "Reject",
-                  comment: {
-                    label: "Rejection reason",
-                    type: "REQUIRED",
-                  },
-                }),
-                new WorkflowAction({
-                  code: "on-hold",
-                  name: "Put on hold",
-                  comment: {
-                    label: "Note (optional)",
-                    type: "OPTIONAL",
-                  },
-                }),
-                new WorkflowAction({
-                  code: "no-comment-action",
-                  name: "Action without comment",
+              statuses: [
+                new WorkflowStageStatus({
+                  code: "IN_PROGRESS",
+                  name: "In Progress",
+                  theme: "INFO",
+                  transitions: [
+                    new WorkflowTransition({
+                      targetPosition: Position.from("PHASE_1:STAGE_1:APPROVED"),
+                      checkTasks: true,
+                      action: new WorkflowAction({
+                        code: "approve",
+                        name: "Approve",
+                        comment: new WorkflowActionComment({
+                          label: "Approval reason",
+                          helpText: "Help text",
+                          mandatory: false,
+                        }),
+                      }),
+                    }),
+                    new WorkflowTransition({
+                      targetPosition: Position.from("PHASE_1:STAGE_1:REJECTED"),
+                      checkTasks: true,
+                      action: new WorkflowAction({
+                        code: "reject",
+                        name: "Reject",
+                        comment: new WorkflowActionComment({
+                          label: "Rejection reason",
+                          helpText: "Help reject text",
+                          mandatory: true,
+                        }),
+                      }),
+                    }),
+                    new WorkflowTransition({
+                      targetPosition: Position.from("PHASE_1:STAGE_1:ON_HOLD"),
+                      checkTasks: true,
+                      action: new WorkflowAction({
+                        code: "on-hold",
+                        name: "Put on hold",
+                        comment: new WorkflowActionComment({
+                          label: "Note (optional)",
+                          helpText: "Help optional text",
+                          mandatory: false,
+                        }),
+                      }),
+                    }),
+                    new WorkflowTransition({
+                      targetPosition: Position.from(
+                        "PHASE_1:STAGE_1:WITHDRAW_REQUESTED",
+                      ),
+                      checkTasks: false,
+                      action: new WorkflowAction({
+                        code: "withdraw-requested",
+                        name: "withdraw",
+                        comment: new WorkflowActionComment({
+                          label: "Note (optional)",
+                          helpText: "Help optional text",
+                          mandatory: false,
+                        }),
+                      }),
+                    }),
+                    new WorkflowTransition({
+                      targetPosition: Position.from(
+                        "PHASE_1:STAGE_1:COMPLETED",
+                      ),
+                      checkTasks: true,
+                      action: new WorkflowAction({
+                        code: "no-comment-action",
+                        name: "Action without comment",
+                      }),
+                    }),
+                  ],
                 }),
               ],
             }),
             new WorkflowStage({
-              code: "stage-2",
+              code: "STAGE_2",
               name: "Final Decision",
               taskGroups: [],
-              actions: [
-                new WorkflowAction({
-                  code: "final-approve",
-                  label: "Final Approval",
+              statuses: [
+                new WorkflowStageStatus({
+                  code: "IN_PROGRESS",
+                  name: "In Progress",
+                  theme: "INFO",
+                  transitions: [
+                    new WorkflowTransition({
+                      targetPosition: Position.from("PHASE_1:STAGE_2:APPROVED"),
+                      checkTasks: true,
+                      action: new WorkflowAction({
+                        code: "final-approve",
+                        name: "Final Approval",
+                      }),
+                    }),
+                  ],
                 }),
               ],
             }),
@@ -78,14 +147,15 @@ describe("Workflow", () => {
       ],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
           endpoint: "landGrantsRulesRerun",
+          display: true,
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },
@@ -93,62 +163,10 @@ describe("Workflow", () => {
     });
   };
 
-  describe("findAction", () => {
-    it("finds action by id in stage", () => {
-      const workflow = createMockWorkflow();
-      const stage = workflow.findPhase("phase-1").findStage("stage-1");
-
-      const action = workflow.findAction(stage, "approve");
-
-      expect(action).toBeDefined();
-      expect(action.code).toBe("approve");
-      expect(action.name).toBe("Approve");
-    });
-
-    it("finds different actions in same stage", () => {
-      const workflow = createMockWorkflow();
-      const stage = workflow.findPhase("phase-1").findStage("stage-1");
-
-      const rejectAction = workflow.findAction(stage, "reject");
-      const holdAction = workflow.findAction(stage, "on-hold");
-
-      expect(rejectAction.code).toBe("reject");
-      expect(holdAction.code).toBe("on-hold");
-    });
-
-    it("finds action in different stage", () => {
-      const workflow = createMockWorkflow();
-      const stage2 = workflow.findPhase("phase-1").findStage("stage-2");
-
-      const action = workflow.findAction(stage2, "final-approve");
-
-      expect(action).toBeDefined();
-      expect(action.code).toBe("final-approve");
-    });
-
-    it("throws error when action not found", () => {
-      const workflow = createMockWorkflow();
-      const stage = workflow.findPhase("phase-1").findStage("stage-1");
-
-      expect(() => workflow.findAction(stage, "non-existent")).toThrowError(
-        'Stage "stage-1" does not contain action with code "non-existent"',
-      );
-    });
-
-    it("throws error for null action id", () => {
-      const workflow = createMockWorkflow();
-      const stage = workflow.findPhase("phase-1").findStage("stage-1");
-
-      expect(() => workflow.findAction(stage, null)).toThrowError(
-        'Stage "stage-1" does not contain action with code "null"',
-      );
-    });
-  });
-
   describe("isMissingRequiredComment", () => {
     it("returns true when required comment is missing", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       const result = workflow.isMissingRequiredComment(action, null);
 
@@ -157,7 +175,7 @@ describe("Workflow", () => {
 
     it("returns true when required comment is empty string", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       const result = workflow.isMissingRequiredComment(action, "");
 
@@ -166,7 +184,7 @@ describe("Workflow", () => {
 
     it("returns true when required comment is whitespace only", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       const result = workflow.isMissingRequiredComment(action, "   \t\n   ");
 
@@ -175,7 +193,7 @@ describe("Workflow", () => {
 
     it("returns false when required comment is provided", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       const result = workflow.isMissingRequiredComment(action, "Valid comment");
 
@@ -184,7 +202,7 @@ describe("Workflow", () => {
 
     it("returns false when comment is optional and not provided", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "OPTIONAL" } };
+      const action = { comment: { mandatory: false } };
 
       const result = workflow.isMissingRequiredComment(action, null);
 
@@ -193,7 +211,7 @@ describe("Workflow", () => {
 
     it("returns false when comment is optional and provided", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "OPTIONAL" } };
+      const action = { comment: { mandatory: false } };
 
       const result = workflow.isMissingRequiredComment(
         action,
@@ -225,12 +243,13 @@ describe("Workflow", () => {
   describe("validateComment", () => {
     it("passes validation when required comment is provided", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       expect(() => {
         workflow.validateComment({
-          stageCode: "stage-1",
-          actionCode: "approve",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          actionCode: "APPROVE",
           action,
           comment: "Valid comment",
         });
@@ -239,11 +258,12 @@ describe("Workflow", () => {
 
     it("passes validation when optional comment is not provided", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "OPTIONAL" } };
+      const action = { comment: { mandatory: false } };
 
       expect(() => {
         workflow.validateComment({
-          stageCode: "stage-1",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
           actionCode: "on-hold",
           action,
           comment: null,
@@ -257,7 +277,8 @@ describe("Workflow", () => {
 
       expect(() => {
         workflow.validateComment({
-          stageCode: "stage-1",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
           actionCode: "no-comment",
           action,
           comment: null,
@@ -267,55 +288,67 @@ describe("Workflow", () => {
 
     it("throws error when required comment is missing", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       expect(() => {
         workflow.validateComment({
-          stageCode: "stage-1",
-          actionCode: "approve",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          actionCode: "APPROVE",
           action,
           comment: null,
         });
-      }).toThrowError('Stage "stage-1", Action "approve" requires a comment');
+      }).toThrowError(
+        'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
+      );
     });
 
     it("throws error when required comment is empty", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       expect(() => {
         workflow.validateComment({
-          stageCode: "stage-1",
-          actionCode: "approve",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          actionCode: "APPROVE",
           action,
           comment: "",
         });
-      }).toThrowError('Stage "stage-1", Action "approve" requires a comment');
+      }).toThrowError(
+        'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
+      );
     });
 
     it("throws error when required comment is whitespace only", () => {
       const workflow = createMockWorkflow();
-      const action = { comment: { type: "REQUIRED" } };
+      const action = { comment: { mandatory: true } };
 
       expect(() => {
         workflow.validateComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
-          actionCode: "approve",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          actionCode: "APPROVE",
           action,
           comment: "   \t   ",
         });
-      }).toThrowError('Stage "stage-1", Action "approve" requires a comment');
+      }).toThrowError(
+        'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
+      );
     });
   });
 
   describe("validateStageActionComment", () => {
     it("validates successfully with valid stage, action, and comment", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "IN_PROGRESS",
+      });
 
       const result = workflow.validateStageActionComment({
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
+        position,
         actionCode: "approve",
         comment: "Valid approval comment",
       });
@@ -325,10 +358,14 @@ describe("Workflow", () => {
 
     it("validates successfully with optional comment action", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "IN_PROGRESS",
+      });
 
       const result = workflow.validateStageActionComment({
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
+        position,
         actionCode: "on-hold",
         comment: null,
       });
@@ -338,10 +375,14 @@ describe("Workflow", () => {
 
     it("validates successfully with action that has no comment requirement", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "IN_PROGRESS",
+      });
 
       const result = workflow.validateStageActionComment({
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
+        position,
         actionCode: "no-comment-action",
         comment: null,
       });
@@ -351,53 +392,52 @@ describe("Workflow", () => {
 
     it("throws error when stage is not found", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "non-existent-stage",
+        statusCode: "IN_PROGRESS",
+      });
 
       expect(() => {
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "non-existent-stage",
+          position,
           actionCode: "approve",
           comment: "Comment",
         });
       }).toThrowError('Stage with code "non-existent-stage" not found');
     });
 
-    it("throws error when action is not found", () => {
-      const workflow = createMockWorkflow();
-
-      expect(() => {
-        workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
-          actionCode: "non-existent-action",
-          comment: "Comment",
-        });
-      }).toThrowError(
-        'Stage "stage-1" does not contain action with code "non-existent-action"',
-      );
-    });
-
     it("throws error when required comment is missing", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "IN_PROGRESS",
+      });
 
       expect(() => {
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
-          actionCode: "approve",
+          position,
+          actionCode: "reject",
           comment: null,
         });
-      }).toThrowError('Stage "stage-1", Action "approve" requires a comment');
+      }).toThrowError(
+        'Phase "PHASE_1", Stage "STAGE_1", Action "reject" requires a comment',
+      );
     });
 
     it("validates multiple different scenarios", () => {
       const workflow = createMockWorkflow();
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "IN_PROGRESS",
+      });
 
-      // Required comment provided
+      // Optional comment not provided (approve has mandatory: false in our mock)
       expect(
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
+          position,
           actionCode: "approve",
           comment: "Approved because criteria met",
         }),
@@ -406,8 +446,7 @@ describe("Workflow", () => {
       // Optional comment not provided
       expect(
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
+          position,
           actionCode: "on-hold",
           comment: null,
         }),
@@ -416,8 +455,7 @@ describe("Workflow", () => {
       // Optional comment provided
       expect(
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
+          position,
           actionCode: "on-hold",
           comment: "Waiting for more information",
         }),
@@ -426,8 +464,7 @@ describe("Workflow", () => {
       // No comment requirement
       expect(
         workflow.validateStageActionComment({
-          phaseCode: "phase-1",
-          stageCode: "stage-1",
+          position,
           actionCode: "no-comment-action",
           comment: null,
         }),
@@ -440,14 +477,14 @@ describe("Workflow", () => {
       const workflow = createMockWorkflow();
 
       const task = workflow.findTask({
-        phaseCode: "phase-1",
-        stageCode: "stage-1",
-        taskGroupCode: "task-group-1",
-        taskCode: "task-1",
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
       });
 
       expect(task).toBeDefined();
-      expect(task.code).toBe("task-1");
+      expect(task.code).toBe("TASK_1");
     });
 
     it("throws error from findPhase when phase not found", () => {
@@ -456,9 +493,9 @@ describe("Workflow", () => {
       expect(() => {
         workflow.findTask({
           phaseCode: "non-existent-phase",
-          stageCode: "stage-1",
-          taskGroupCode: "task-group-1",
-          taskCode: "task-1",
+          stageCode: "STAGE_1",
+          taskGroupCode: "TASK_GROUP_1",
+          taskCode: "TASK_1",
         });
       }).toThrowError('Phase with code "non-existent-phase" not found');
     });
@@ -468,12 +505,28 @@ describe("Workflow", () => {
 
       expect(() => {
         workflow.findTask({
-          phaseCode: "phase-1",
+          phaseCode: "PHASE_1",
           stageCode: "non-existent-stage",
-          taskGroupCode: "task-group-1",
-          taskCode: "task-1",
+          taskGroupCode: "TASK_GROUP_1",
+          taskCode: "TASK_1",
         });
       }).toThrowError('Stage with code "non-existent-stage" not found');
+    });
+  });
+
+  describe("getTransitionForTargetPosition", () => {
+    it("should get target position", () => {
+      const workflow = createMockWorkflow();
+      const position = Position.from("PHASE_1:STAGE_1:IN_PROGRESS");
+      const targetPosition = Position.from(
+        "PHASE_1:STAGE_1:WITHDRAW_REQUESTED",
+      );
+      const transition = workflow.getTransitionForTargetPosition(
+        position,
+        targetPosition,
+      );
+      expect(transition.checkTasks).toBeFalsy();
+      expect(transition.action.name).toBe("withdraw");
     });
   });
 });

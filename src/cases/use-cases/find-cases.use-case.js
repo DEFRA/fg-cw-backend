@@ -1,4 +1,5 @@
 import { getAuthenticatedUserRoles } from "../../common/auth.js";
+import { logger } from "../../common/logger.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
@@ -40,6 +41,8 @@ export const findCasesUseCase = async () => {
   const userRoles = Object.keys(getAuthenticatedUserRoles());
   const cases = await findAll();
 
+  logger.info(`Finding cases for user roles: ${userRoles.join(", ")}`);
+
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);
   const workflowCodes = cases.map((c) => c.workflowCode);
 
@@ -63,19 +66,37 @@ export const findCasesUseCase = async () => {
       return acc;
     }
 
-    kase.requiredRoles = workflow.requiredRoles;
-
     const assignedUser = assignedUsers.find(
       (u) => u.id === kase.assignedUser?.id,
     );
 
-    if (assignedUser) {
-      kase.assignedUser.name = assignedUser.name;
-    }
+    const currentStatus = workflow
+      .getStage(kase.position)
+      .getStatus(kase.position.statusCode);
 
-    acc.push(kase);
+    const result = {
+      _id: kase._id,
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      dateReceived: kase.dateReceived,
+      currentStatus: currentStatus.name,
+      currentStatusTheme: currentStatus.theme,
+      assignedUser: assignedUser
+        ? {
+            id: assignedUser.id,
+            name: assignedUser.name,
+          }
+        : null,
+      payload: kase.payload,
+    };
+
+    acc.push(result);
     return acc;
   }, []);
+
+  logger.info(
+    `Finished: finding cases for user roles: ${userRoles.join(", ")}`,
+  );
 
   return casesUserCanAccess;
 };

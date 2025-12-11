@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -7,6 +8,9 @@ import { buildCaseDetailsTabUseCase } from "./build-case-details-tab.use-case.js
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../../common/external-endpoint-client.js", () => ({
+  callExternalEndpoint: vi.fn(),
+}));
 
 describe("buildCaseDetailsTabUseCase", () => {
   it("builds case details tab successfully", async () => {
@@ -27,10 +31,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "case-details" },
+      query: {},
+    });
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
     expect(findByCode).toHaveBeenCalledWith("frps-private-beta");
@@ -50,7 +54,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(null);
 
     await expect(
-      buildCaseDetailsTabUseCase("non-existent-id", "case-details"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "non-existent-id", tabId: "case-details" },
+        query: {},
+      }),
     ).rejects.toThrow();
 
     expect(findById).toHaveBeenCalledWith("non-existent-id");
@@ -65,7 +72,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(null);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "case-details"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "case-details" },
+        query: {},
+      }),
     ).rejects.toThrow();
   });
 
@@ -93,7 +103,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "non-existent-tab"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "non-existent-tab" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "non-existent-tab" not found in workflow "test-workflow"',
     );
@@ -126,7 +139,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       "Path does not exist, $.supplementaryData.agreements[0] resolves to falsy value",
     );
@@ -168,10 +184,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "agreements",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "agreements" },
+      query: {},
+    });
 
     expect(result.caseId).toBe("test-case-id");
     expect(result.caseRef).toBe("TEST-REF-001");
@@ -194,7 +210,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "agreements" not found in workflow "minimal-workflow"',
     );
@@ -216,7 +235,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findByCode.mockResolvedValue(mockWorkflow);
 
     await expect(
-      buildCaseDetailsTabUseCase("test-case-id", "agreements"),
+      buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "agreements" },
+        query: {},
+      }),
     ).rejects.toThrow(
       'Tab "agreements" not found in workflow "minimal-workflow"',
     );
@@ -314,10 +336,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "64c88faac1f56f71e1b89a77",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "64c88faac1f56f71e1b89a77", tabId: "case-details" },
+      query: {},
+    });
 
     // Verify the structure
     expect(result.caseId).toBe("64c88faac1f56f71e1b89a77");
@@ -413,10 +435,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
 
-    const result = await buildCaseDetailsTabUseCase(
-      "test-case-id",
-      "case-details",
-    );
+    const result = await buildCaseDetailsTabUseCase({
+      params: { caseId: "test-case-id", tabId: "case-details" },
+      query: {},
+    });
 
     // Verify basic structure
     expect(result.caseId).toBe("test-case-id");
@@ -482,5 +504,250 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(tableComponent).toBeDefined();
     expect(tableComponent.type).toBe("array");
     expect(Array.isArray(tableComponent.rows)).toBe(true);
+  });
+
+  describe("action context integration", () => {
+    it("should add actionData to root context when tab has action definition", async () => {
+      // Mock external endpoint to return test data
+      callExternalEndpoint.mockResolvedValue({
+        response: [
+          {
+            component: "summary-list",
+            rows: [{ label: "Test", text: "Value" }],
+          },
+        ],
+      });
+
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "frps-private-beta",
+        endpoints: [
+          {
+            code: "RULES_ENGINE_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/api/test",
+            method: "GET",
+          },
+        ],
+        externalActions: [
+          {
+            code: "rules-engine-endpoint",
+            endpoint: {
+              code: "RULES_ENGINE_ENDPOINT",
+              endpointParams: {},
+            },
+          },
+        ],
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "land-grants": {
+                  action: {
+                    landGrants: "rules-engine-endpoint",
+                  },
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Land Grants",
+                      level: 2,
+                    },
+                    {
+                      component: "component-container",
+                      contentRef: "$.actionData.landGrants.response",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "land-grants" },
+        query: {},
+      });
+
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.caseRef).toBe("case-ref");
+      expect(result.tabId).toBe("land-grants");
+      expect(result.content).toBeDefined();
+      expect(Array.isArray(result.content)).toBe(true);
+
+      // Verify that content includes both static heading and dynamic content from actionData
+      expect(result.content.length).toBeGreaterThan(1);
+      expect(result.content[0]).toEqual({
+        component: "heading",
+        text: "Land Grants",
+        level: 2,
+      });
+
+      // Verify the component-container is resolved to actual components from temp-rules-engine-output.json
+      // The rest of the content should be the flattened response from the rules engine
+      const dynamicContent = result.content.slice(1);
+      expect(dynamicContent.length).toBeGreaterThan(0);
+      expect(dynamicContent[0]).toHaveProperty("component");
+    });
+
+    it("should not add actionData when tab has no action definition", async () => {
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "frps-private-beta",
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "simple-tab": {
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Simple Tab",
+                      level: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "simple-tab" },
+        query: {},
+      });
+
+      // Should still work without action definition
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.caseRef).toBe("case-ref");
+      expect(result.tabId).toBe("simple-tab");
+      expect(result.content).toBeDefined();
+      expect(result.content).toEqual([
+        {
+          component: "heading",
+          text: "Simple Tab",
+          level: 2,
+        },
+      ]);
+    });
+  });
+
+  describe("external actions", () => {
+    it("should handle workflow without externalActions property", async () => {
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "test-workflow",
+        // No externalActions property
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "test-tab": {
+                  action: {
+                    someAction: "NON_EXISTENT_ACTION",
+                  },
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Test Tab",
+                      level: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "test-tab" },
+        query: {},
+      });
+
+      // Should handle gracefully when externalActions doesn't exist
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.content).toBeDefined();
+    });
+
+    it("should handle non-string actionCode", async () => {
+      const mockCase = Case.createMock();
+
+      const mockWorkflow = Workflow.createMock({
+        code: "test-workflow",
+        externalActions: [
+          {
+            code: "VALID_ACTION",
+            name: "Valid Action",
+          },
+        ],
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                title: {
+                  text: "$.payload.businessName",
+                },
+              },
+              tabs: {
+                "test-tab": {
+                  action: {
+                    // Non-string actionCode - should be handled gracefully
+                    numericAction: 123,
+                  },
+                  content: [
+                    {
+                      component: "heading",
+                      text: "Test Tab",
+                      level: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      findById.mockResolvedValue(mockCase);
+      findByCode.mockResolvedValue(mockWorkflow);
+
+      const result = await buildCaseDetailsTabUseCase({
+        params: { caseId: "test-case-id", tabId: "test-tab" },
+        query: {},
+      });
+
+      // Should handle gracefully when actionCode is not a string
+      expect(result.caseId).toBe("test-case-id");
+      expect(result.content).toBeDefined();
+    });
   });
 });

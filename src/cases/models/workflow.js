@@ -2,6 +2,8 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Permissions } from "./permissions.js";
+import { Position } from "./position.js";
+import { WorkflowEndpoint } from "./workflow-endpoint.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 
 export class Workflow {
@@ -13,6 +15,7 @@ export class Workflow {
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
     this.externalActions = props.externalActions;
+    this.endpoints = props.endpoints;
   }
 
   findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
@@ -24,10 +27,25 @@ export class Workflow {
     return task;
   }
 
-  validateStageActionComment({ phaseCode, stageCode, actionCode, comment }) {
-    const stage = this.findPhase(phaseCode).findStage(stageCode);
-    const action = this.findAction(stage, actionCode);
-    this.validateComment({ phaseCode, stageCode, actionCode, action, comment });
+  validateStageActionComment({ position, actionCode, comment }) {
+    const action = this.getStage(position).getActionByCode(
+      position,
+      actionCode,
+    );
+
+    if (!action) {
+      throw Boom.notFound(
+        `Action with code "${actionCode}" not found for position ${position}`,
+      );
+    }
+
+    this.validateComment({
+      phaseCode: position.phaseCode,
+      stageCode: position.stageCode,
+      actionCode,
+      action,
+      comment,
+    });
 
     return true;
   }
@@ -42,14 +60,21 @@ export class Workflow {
     return phase;
   }
 
-  findAction(stage, actionCode) {
-    const action = stage.actions.find((a) => a.code === actionCode);
-    if (!action) {
-      throw Boom.badRequest(
-        `Stage "${stage.code}" does not contain action with code "${actionCode}"`,
-      );
-    }
-    return action;
+  getStage(position) {
+    return this.findPhase(position.phaseCode).findStage(position.stageCode);
+  }
+
+  getStatus(position) {
+    return this.getStage(position).getStatus(position.statusCode);
+  }
+
+  getTransitionForTargetPosition(casePosition, targetPosition) {
+    const transitions = this.getStatus(casePosition).transitions;
+    const targetTransition = transitions.find((transition) =>
+      transition.targetPosition.equals(targetPosition),
+    );
+
+    return targetTransition;
   }
 
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
@@ -61,7 +86,48 @@ export class Workflow {
   }
 
   isMissingRequiredComment(action, comment) {
-    return action.comment?.type === "REQUIRED" && !comment?.trim();
+    return action.comment?.mandatory && !comment?.trim();
+  }
+
+  getInitialPosition() {
+    const [phase] = this.phases;
+    const [stage] = phase.stages;
+    const [status] = stage.statuses;
+
+    return new Position({
+      phaseCode: phase.code,
+      stageCode: stage.code,
+      statusCode: status.code,
+    });
+  }
+
+  getNextPosition(position, actionCode) {
+    const stage = this.getStage(position);
+    const transition = stage.getTransition(position, actionCode);
+
+    if (!transition) {
+      throw new Error(
+        `Workflow ${this.code} does not support transition from ${position} with action ${actionCode}`,
+      );
+    }
+
+    return transition.targetPosition;
+  }
+
+  findExternalAction(actionCode) {
+    if (typeof actionCode !== "string" || !this.externalActions) {
+      return null;
+    }
+
+    return this.externalActions.find((action) => action.code === actionCode);
+  }
+
+  findEndpoint(endpointCode) {
+    if (!this.endpoints) {
+      return null;
+    }
+
+    return this.endpoints.find((endpoint) => endpoint.code === endpointCode);
   }
 
   static createMock(props) {
@@ -76,16 +142,20 @@ export class Workflow {
       definitions: {
         key1: "value1",
       },
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          display: true,
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },

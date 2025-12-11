@@ -19,4 +19,16 @@ export class CasePhase {
   getUserIds() {
     return this.stages.flatMap((s) => s.getUserIds());
   }
+
+  areTasksComplete(workflowPhase) {
+    for (const workflowStage of workflowPhase.stages) {
+      const caseStage = this.findStage(workflowStage.code);
+
+      if (!caseStage.areTasksComplete(workflowStage)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

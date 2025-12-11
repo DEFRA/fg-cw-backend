@@ -5,23 +5,50 @@ import {
   assertPathExists,
   buildBanner,
   buildLinks,
-  createRootContext,
+  createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
+import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { buildBeforeContent } from "./build-before-content.js";
+import { externalActionUseCase } from "./external-action.use-case.js";
 
-export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
+export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
 
+  logger.info(
+    `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+  );
+
+  const { caseId, tabId } = request.params;
+
   const kase = await findById(caseId);
+
+  if (!kase) {
+    throw Boom.notFound(`Case not found: ${caseId}`);
+  }
+
   const workflow = await findByCode(kase.workflowCode);
 
-  const root = createRootContext(kase, workflow);
-  const tabDefinition = getTabDefinition({ root, workflow, tabId });
-  const banner = buildBanner(kase, workflow);
-  const links = buildLinks(kase, workflow);
-  const content = resolveJSONPath({ root, path: tabDefinition.content });
+  if (!workflow) {
+    throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
+  }
+
+  const root = await createRootContext({ kase, workflow, request, tabId });
+
+  const workflowStage = workflow.getStage(kase.position);
+
+  const [banner, links, content, beforeContent] = await Promise.all([
+    buildBanner(root),
+    buildLinks(root),
+    buildContent(root),
+    buildBeforeContent(workflowStage, root),
+  ]);
+
+  logger.info(
+    `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+  );
 
   return {
     caseId,
@@ -30,27 +57,52 @@ export const buildCaseDetailsTabUseCase = async (caseId, tabId) => {
     banner,
     links,
     content,
+    beforeContent,
   };
 };
 
-const getTabDefinition = ({ root, workflow, tabId }) => {
+export const createRootContext = async ({ kase, workflow, request, tabId }) => {
+  const caseWorkflowContext = createCaseWorkflowContext({
+    kase,
+    workflow,
+    request,
+  });
+
+  const tabDefinition = await getTabDefinition({
+    root: caseWorkflowContext,
+    tabId,
+  });
+
+  const actionData = await getActionContext({
+    tabDefinition,
+    caseWorkflowContext,
+  });
+
+  return {
+    ...caseWorkflowContext,
+    tabDefinition,
+    actionData,
+  };
+};
+
+const getTabDefinition = async ({ root, tabId }) => {
   const [tabDefinition] = JSONPath({
-    json: workflow,
+    json: root.workflow,
     path: `$.pages.cases.details.tabs.${tabId}`,
   });
 
   if (!tabDefinition) {
-    return handleMissingTabDefinition({ root, workflow, tabId });
+    return handleMissingTabDefinition({ root, tabId });
   }
 
   if (tabDefinition.renderIf) {
-    assertPathExists(root, tabDefinition.renderIf);
+    await assertPathExists(root, tabDefinition.renderIf);
   }
 
   return tabDefinition;
 };
 
-const handleMissingTabDefinition = ({ root, workflow, tabId }) => {
+const handleMissingTabDefinition = ({ root, tabId }) => {
   if (tabId === "case-details") {
     return {
       content: buildDynamicContent(root.payload),
@@ -58,6 +110,29 @@ const handleMissingTabDefinition = ({ root, workflow, tabId }) => {
   }
 
   throw Boom.notFound(
-    `Tab "${tabId}" not found in workflow "${workflow.code}"`,
+    `Tab "${tabId}" not found in workflow "${root.workflow.code}"`,
   );
+};
+
+const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
+  if (!tabDefinition.action) {
+    return {};
+  }
+
+  const actionData = {};
+  for (const key of Object.keys(tabDefinition.action)) {
+    const actionCode = tabDefinition.action[key];
+    actionData[key] = await externalActionUseCase({
+      actionCode,
+      caseWorkflowContext,
+    });
+  }
+  return actionData;
+};
+
+const buildContent = async (root) => {
+  return await resolveJSONPath({
+    root,
+    path: root.tabDefinition.content,
+  });
 };

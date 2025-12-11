@@ -1,7 +1,6 @@
 import hapi from "@hapi/hapi";
 import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { Case } from "../models/case.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 import { findCaseByIdRoute } from "./find-case-by-id.route.js";
 
@@ -34,31 +33,9 @@ describe("findCaseByIdRoute", () => {
 
   it("returns a case matching caseId", async () => {
     const caseId = "60b8d295f1d2c916c8f0e6b7";
+    const kase = { _id: caseId };
 
-    const caseMock = Case.createMock();
-    caseMock.assignedUser.name = "Test User";
-    caseMock.supplementaryData.agreements = [];
-    caseMock.phases[0].code = "phase-1";
-    caseMock.phases[0].name = "Phase 1";
-    caseMock.phases[0].stages[0].name = "Stage 1";
-    caseMock.phases[0].stages[0].description = "Stage 1 description";
-    caseMock.phases[0].stages[0].taskGroups[0].description =
-      "Task group description";
-    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].name = "Task 1";
-    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].description = [
-      { component: "heading", level: 2, text: "Task description" },
-    ];
-    caseMock.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [];
-
-    caseMock.phases[0].stages[1].name = "Stage 2";
-    caseMock.phases[0].stages[1].description = "Stage 2 description";
-
-    caseMock.requiredRoles = {
-      allOf: [],
-      anyOf: [],
-    };
-
-    findCaseByIdUseCase.mockResolvedValueOnce(caseMock);
+    findCaseByIdUseCase.mockResolvedValueOnce(kase);
 
     const { statusCode, result } = await server.inject({
       method: "GET",
@@ -72,8 +49,10 @@ describe("findCaseByIdRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(caseMock);
-    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser);
+    expect(result).toEqual(kase);
+    expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser, {
+      params: { caseId, tabId: undefined },
+    });
   });
 
   it("returns 400 when caseId param is invalid", async () => {

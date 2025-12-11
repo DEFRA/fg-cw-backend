@@ -40,14 +40,40 @@ export const createServer = async () => {
   });
 
   await server.register([
+    tracing,
     auth,
     health,
     logging,
     mongo,
     shutdown,
     swagger,
-    tracing,
   ]);
+
+  // SonarCloud magic numbers
+  const statusCodes = {
+    badRequest: 400,
+    internalServerError: 500,
+  };
+
+  server.ext("onPreResponse", (request, h) => {
+    const response = request.response;
+
+    if (
+      response.isBoom &&
+      response.output.statusCode >= statusCodes.badRequest &&
+      response.output.statusCode < statusCodes.internalServerError
+    ) {
+      const error = new Error(response.message);
+
+      // CDP doesn't support error.stack
+      delete error.stack;
+      error.stack_trace = response.stack;
+
+      logger.error(error);
+    }
+
+    return h.continue;
+  });
 
   return server;
 };

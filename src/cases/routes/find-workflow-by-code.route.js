@@ -1,7 +1,7 @@
 import Joi from "joi";
+import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
-import { workflowSchema } from "../schemas/workflow.schema.js";
 import { findWorkflowByCodeUseCase } from "../use-cases/find-workflow-by-code.use-case.js";
 
 export const findWorkflowByCodeRoute = {
@@ -17,16 +17,15 @@ export const findWorkflowByCodeRoute = {
     },
     response: {
       status: {
-        200: workflowSchema.Workflow,
         400: ValidationError,
       },
     },
   },
-  async handler(request, h) {
+  async handler(request) {
     const { code } = request.params;
-
+    logger.info(`Finding workflow ${code}`);
     const result = await findWorkflowByCodeUseCase(code);
-
-    return h.response(result);
+    logger.info(`Finished: Finding workflow ${code}`);
+    return result;
   },
 };
