@@ -33,6 +33,12 @@ export class Workflow {
       actionCode,
     );
 
+    if (!action) {
+      throw Boom.notFound(
+        `Action with code "${actionCode}" not found for position ${position}`,
+      );
+    }
+
     this.validateComment({
       phaseCode: position.phaseCode,
       stageCode: position.stageCode,
@@ -60,6 +66,15 @@ export class Workflow {
 
   getStatus(position) {
     return this.getStage(position).getStatus(position.statusCode);
+  }
+
+  getTransitionForTargetPosition(casePosition, targetPosition) {
+    const transitions = this.getStatus(casePosition).transitions;
+    const targetTransition = transitions.find((transition) =>
+      transition.targetPosition.equals(targetPosition),
+    );
+
+    return targetTransition;
   }
 
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {

@@ -174,25 +174,23 @@ const replacePathParameters = (pathTemplate, pathParams) => {
 
 const validatePathParameter = (key, value, pathTemplate, allParams) => {
   if (isInvalidValue(value)) {
-    logInvalidParameter(key, value, pathTemplate, allParams);
+    logger.error(
+      `Missing or invalid path parameter: ${key}.\nGot ${JSON.stringify(
+        {
+          value,
+          pathTemplate,
+          allParams,
+        },
+        null,
+        2,
+      )}`,
+    );
     throw new Error(buildErrorMessage(key, value));
   }
 };
 
 const isInvalidValue = (value) => {
   return value === undefined || value === null || value === "";
-};
-
-const logInvalidParameter = (key, value, pathTemplate, allParams) => {
-  logger.error(
-    {
-      parameter: key,
-      value,
-      pathTemplate,
-      allParams,
-    },
-    `Missing or invalid path parameter: ${key}`,
-  );
 };
 
 const buildErrorMessage = (key, value) => {

@@ -89,21 +89,20 @@ export class InboxSubscriber {
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
     try {
-      const handlerString = type.replace(config.get("cdpEnvironment"), "ENV");
-      const handler = useCaseMap[handlerString];
+      const eventType = type.replace(config.get("cdpEnvironment"), "ENV");
+      const handler = useCaseMap[eventType];
 
-      if (handler) {
-        await withTraceParent(traceparent, async () => handler(msg));
-      } else {
-        throw new Error(`Unable to handle inbox message ${msg.messageId}`);
+      if (!handler) {
+        throw new Error(`No handler found for event type ${eventType}`);
       }
 
+      await withTraceParent(traceparent, async () => handler(msg));
       await this.markEventComplete(msg);
     } catch (ex) {
       logger.error(
+        ex,
         `Error handling event for inbox message ${type}:${messageId}`,
       );
-      logger.error(ex.message);
       await this.markEventFailed(msg);
     }
   }

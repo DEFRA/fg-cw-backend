@@ -62,11 +62,11 @@ export const buildCaseDetailsTabUseCase = async (request) => {
 };
 
 export const createRootContext = async ({ kase, workflow, request, tabId }) => {
-  const caseWorkflowContext = createCaseWorkflowContext(
+  const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
     request,
-  );
+  });
 
   const tabDefinition = await getTabDefinition({
     root: caseWorkflowContext,

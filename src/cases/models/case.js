@@ -153,6 +153,10 @@ export class Case {
   }
 
   updateSupplementaryData({ targetNode, key, dataType, data }) {
+    if (!targetNode) {
+      return null;
+    }
+
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
     if (dataType === "ARRAY") {
@@ -261,7 +265,18 @@ export class Case {
       return;
     }
 
-    if (!this.#areTasksComplete(workflow)) {
+    const transition = workflow.getTransitionForTargetPosition(
+      this.position,
+      position,
+    );
+
+    if (!transition) {
+      throw Boom.preconditionFailed(
+        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: transition does not exist`,
+      );
+    }
+
+    if (transition.checkTasks && !this.#areTasksComplete(workflow)) {
       throw Boom.preconditionFailed(
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );

@@ -79,25 +79,63 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         caseTaskGroupTask.code,
       );
 
+      const selectedStatus = mapSelectedStatusOption(
+        caseTaskGroupTask.status,
+        workflowTaskGroupTask.statusOptions,
+      );
+
       return {
         code: caseTaskGroupTask.code,
         name: workflowTaskGroupTask.name,
         description: await mapDescription(workflowTaskGroupTask, root),
         mandatory: workflowTaskGroupTask.mandatory,
-        statusOptions: workflowTaskGroupTask.statusOptions,
+        statusOptions: mapStatusOptions(workflowTaskGroupTask.statusOptions),
         status: caseTaskGroupTask.status,
+        statusText: selectedStatus.statusText,
+        statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
         commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
         commentRef: caseTaskGroupTask.commentRef,
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-        requiredRoles: workflowTaskGroupTask.requiredRoles && {
-          allOf: workflowTaskGroupTask.requiredRoles.allOf,
-          anyOf: workflowTaskGroupTask.requiredRoles.anyOf,
-        },
+        requiredRoles: workflowTaskGroupTask.requiredRoles,
+        canComplete: workflowTaskGroupTask.requiredRoles.isAuthorised(
+          root.user.appRoles,
+        ),
       };
     }),
   );
+
+export const mapStatusOptions = (statusOptions) =>
+  statusOptions.map((option) => ({
+    code: option.code,
+    name: option.altName || option.name,
+    theme: option.theme,
+    completes: option.completes,
+  }));
+
+export const mapSelectedStatusOption = (statusCode, statusOptions) => {
+  if (!statusCode) {
+    return {
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    };
+  }
+
+  const selectedOption = statusOptions.find((opt) => opt.code === statusCode);
+
+  if (!selectedOption) {
+    return {
+      statusText: "Incomplete",
+      statusTheme: "INFO",
+    };
+  }
+
+  return {
+    statusText: selectedOption.name,
+    statusTheme: selectedOption.theme ?? "NONE",
+  };
+};
 
 const isValidArray = (description) =>
   Array.isArray(description) && description.length > 0;
@@ -138,11 +176,12 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
-  const caseWorkflowContext = createCaseWorkflowContext(
+  const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
     request,
-  );
+    user,
+  });
 
   const userMap = await createUserMap(kase.getUserIds(), user);
   const workflowStage = workflow.getStage(kase.position);

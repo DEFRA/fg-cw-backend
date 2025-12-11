@@ -25,6 +25,7 @@ export class TaskGroupDocument {
             new StatusOptionDocument({
               code: "STATUS_OPTION_1",
               name: "Status option 1",
+              theme: "SUCCESS",
               completes: true,
             }),
           ],

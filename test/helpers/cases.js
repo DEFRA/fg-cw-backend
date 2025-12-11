@@ -5,7 +5,9 @@ export const createCase = async (cases, payload = {}) => {
   const kase = {
     workflowCode: "frps-private-beta",
     caseRef: "APPLICATION-REF-1",
-    status: "NEW",
+    currentPhase: "DEFAULT",
+    currentStage: "APPLICATION_RECEIPT",
+    currentStatus: "AWAITING_REVIEW",
     dateReceived: new Date("2025-03-27T11:34:52.000Z"),
     payload: {
       clientRef: "APPLICATION-REF-1",
@@ -35,7 +37,6 @@ export const createCase = async (cases, payload = {}) => {
         ],
       },
     },
-    currentStage: "APPLICATION_RECEIPT",
     timeline: [],
     phases: [
       {
@@ -57,7 +58,7 @@ export const createCase = async (cases, payload = {}) => {
             ],
           },
           {
-            code: "contract",
+            code: "CONTRACT",
             taskGroups: [],
           },
         ],
@@ -82,6 +83,26 @@ export const assignUserToCase = async (caseId, assignedUserId) => {
       assignedUserId,
     },
   });
+
+  return response;
+};
+
+export const completeTask = async ({
+  caseId,
+  taskGroupCode,
+  taskCode,
+  comment = null,
+}) => {
+  const response = await wreck.patch(
+    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+    {
+      payload: {
+        status: "COMPLETE",
+        completed: true,
+        comment,
+      },
+    },
+  );
 
   return response;
 };

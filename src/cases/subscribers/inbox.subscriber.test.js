@@ -87,8 +87,13 @@ describe("inbox.subscriber", () => {
       expect(createCaseUseCase).toHaveBeenCalled();
     });
 
+    await vi.advanceTimersByTimeAsync(subscriber.interval);
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalledTimes(3);
+    });
+
     expect(subscriber.running).toBeTruthy();
-    expect(claimEvents).toHaveBeenCalledTimes(3);
 
     subscriber.stop();
   });

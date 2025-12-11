@@ -67,7 +67,16 @@ export const findAll = async (query = {}) => {
 
 // eslint-disable-next-line complexity
 const createFilter = (query) => {
-  const filter = {};
+  const filter = {
+    // Exclude users without valid names (null, undefined, empty, or "placeholder")
+    // We seem to have some users with a name of "placeholder" in the database, so we need to exclude them.
+    // TODO: Remove this once we have a proper solution for this.
+    name: {
+      $exists: true,
+      $nin: [null, ""],
+      $not: { $regex: /^placeholder$/i },
+    },
+  };
 
   if (query.idpId) {
     filter.idpId = query.idpId;
