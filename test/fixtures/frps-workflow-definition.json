@@ -351,8 +351,7 @@
                                 "component": "container",
                                 "items": [
                                   {
-                                    "text": "jsonata:$.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears",
-                                    "format": "penniesToPounds"
+                                    "text": "jsonata:'£' & $formatNumber(($.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears) / 100, '#,##0.00')"
                                   },
                                   {
                                     "text": "jsonata:' over ' & $string($.payload.answers.payments.parcel[0].actions[0].durationYears) & ' years'"
@@ -363,8 +362,7 @@
                           },
                           {
                             "label": "Total yearly payment",
-                            "text": "$.payload.answers.totalAnnualPaymentPence",
-                            "format": "penniesToPounds"
+                            "text": "jsonata:'£' & $formatNumber($.payload.answers.totalAnnualPaymentPence / 100, '#,##0.00')"
                           }
                         ]
                       },
@@ -379,14 +377,13 @@
                         "rows": [
                           {
                             "component": "repeat",
-                            "itemsRef": "jsonata:( $allActions := $.payload.answers.payments.parcel[*].actions[*]; $validActions := $allActions[$exists(paymentRates) and $exists(appliedFor.quantity)]; $distinct($validActions.code).( $currentCode := $; { \"code\": $currentCode, \"actions\": $validActions[code=$currentCode] } ) )",
+                            "itemsRef": "jsonata:( $allActions := $.payload.answers.payments.parcel[*].actions[*]; $validActions := $allActions[$exists(paymentRates) and $exists(appliedFor.quantity)]; $agreements := $.payload.answers.payments.agreement; $codes := $distinct($validActions.code); $sorted := $sort($codes, function($l, $r) { ($exists($agreements[code=$l]) ? 1 : 0) - ($exists($agreements[code=$r]) ? 1 : 0) }); $sorted.( $currentCode := $; { \"code\": $currentCode, \"actions\": $validActions[code=$currentCode] } ) )",
                             "items": [
                               {
                                 "label": "@.code annual payment",
                                 "text": [
                                   {
-                                    "text": "jsonata:$floor($sum(@.actions.( appliedFor.quantity * paymentRates )) + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0))",
-                                    "format": "penniesToPounds",
+                                    "text": "jsonata:'£' & $formatNumber($round($sum(@.actions.( appliedFor.quantity * paymentRates )) + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)) / 100, '#,##0.00')",
                                     "classes": "govuk-!-display-block"
                                   },
                                   {
@@ -405,8 +402,7 @@
                                 "label": "@.code annual payment",
                                 "text": [
                                   {
-                                    "text": "@.annualPaymentPence",
-                                    "format": "penniesToPounds",
+                                    "text": "jsonata:'£' & $formatNumber(@.annualPaymentPence / 100, '#,##0.00')",
                                     "classes": "govuk-!-display-block"
                                   },
                                   {
