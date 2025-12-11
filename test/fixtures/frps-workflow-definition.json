@@ -351,8 +351,7 @@
                                 "component": "container",
                                 "items": [
                                   {
-                                    "text": "jsonata:$.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears",
-                                    "format": "penniesToPounds"
+                                    "text": "jsonata:'£' & $formatNumber(($.payload.answers.totalAnnualPaymentPence * $.payload.answers.payments.parcel[0].actions[0].durationYears) / 100, '#,##0.00')"
                                   },
                                   {
                                     "text": "jsonata:' over ' & $string($.payload.answers.payments.parcel[0].actions[0].durationYears) & ' years'"
@@ -363,8 +362,7 @@
                           },
                           {
                             "label": "Total yearly payment",
-                            "text": "$.payload.answers.totalAnnualPaymentPence",
-                            "format": "penniesToPounds"
+                            "text": "jsonata:'£' & $formatNumber($.payload.answers.totalAnnualPaymentPence / 100, '#,##0.00')"
                           }
                         ]
                       },
@@ -379,14 +377,13 @@
                         "rows": [
                           {
                             "component": "repeat",
-                            "itemsRef": "jsonata:( $allActions := $.payload.answers.payments.parcel[*].actions[*]; $validActions := $allActions[$exists(paymentRates) and $exists(appliedFor.quantity)]; $distinct($validActions.code).( $currentCode := $; { \"code\": $currentCode, \"actions\": $validActions[code=$currentCode] } ) )",
+                            "itemsRef": "jsonata:( $allActions := $.payload.answers.payments.parcel[*].actions[*]; $validActions := $allActions[$exists(paymentRates) and $exists(appliedFor.quantity)]; $agreements := $.payload.answers.payments.agreement; $codes := $distinct($validActions.code); $sorted := $sort($codes, function($l, $r) { ($exists($agreements[code=$l]) ? 1 : 0) - ($exists($agreements[code=$r]) ? 1 : 0) }); $sorted.( $currentCode := $; { \"code\": $currentCode, \"actions\": $validActions[code=$currentCode] } ) )",
                             "items": [
                               {
                                 "label": "@.code annual payment",
                                 "text": [
                                   {
-                                    "text": "jsonata:$floor($sum(@.actions.( appliedFor.quantity * paymentRates )) + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0))",
-                                    "format": "penniesToPounds",
+                                    "text": "jsonata:'£' & $formatNumber($round($sum(@.actions.( appliedFor.quantity * paymentRates )) + ($exists($.payload.answers.payments.agreement[code=@.code]) ? $sum($.payload.answers.payments.agreement[code=@.code].annualPaymentPence) : 0)) / 100, '#,##0.00')",
                                     "classes": "govuk-!-display-block"
                                   },
                                   {
@@ -405,8 +402,7 @@
                                 "label": "@.code annual payment",
                                 "text": [
                                   {
-                                    "text": "@.annualPaymentPence",
-                                    "format": "penniesToPounds",
+                                    "text": "jsonata:'£' & $formatNumber(@.annualPaymentPence / 100, '#,##0.00')",
                                     "classes": "govuk-!-display-block"
                                   },
                                   {
@@ -508,9 +504,9 @@
                               "component": "status",
                               "text": "@.valid",
                               "format": "yesNo",
-                              "classesMap": {
-                                "Yes": "govuk-tag--green",
-                                "No": "govuk-tag--red"
+                              "themeMap": {
+                                "Yes": "SUCCESS",
+                                "No": "ERROR"
                               },
                               "labelsMap": {
                                 "Yes": "Passed",
@@ -572,64 +568,139 @@
               {
                 "id": "title",
                 "component": "heading",
-                "text": "Case grant funding agreement",
+                "text": "Funding agreement",
                 "level": 2,
                 "classes": "govuk-!-margin-top-6"
               },
               {
-                "id": "subtitle",
-                "component": "heading",
-                "text": "Check the grant funding agreement system to see the final terms of the agreement.",
-                "level": 3,
-                "classes": "govuk-inset-text"
-              },
-              {
-                "type": "array",
-                "component": "table",
-                "rowsRef": "$.supplementaryData.agreements[*]",
+                "component": "summary-list",
                 "rows": [
                   {
-                    "label": "Reference",
-                    "text": "@.agreementRef"
-                  },
-                  {
-                    "label": "Date",
-                    "text": "@.createdAt",
-                    "type": "date",
-                    "format": "formatDate"
-                  },
-                  {
-                    "id": "internal",
-                    "component": "container",
-                    "label": "View",
-                    "items": [
+                    "label": "Agreement status",
+                    "text": [
                       {
-                        "label": "Internal",
-                        "component": "url",
-                        "text": "Internal",
-                        "href": {
-                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
-                          "params": {
-                            "agreementRef": "@.agreementRef"
-                          }
+                        "component": "status",
+                        "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
+                        "themeMap": {
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "AGREEMENT_GENERATING": "INFO",
+                          "WITHDRAWN": "NEUTRAL",
+                          "REJECTED": "NEUTRAL"
                         },
-                        "target": "_blank",
-                        "rel": "noopener",
-                        "classes": "govuk-!-margin-right-6"
+                        "labelsMap": {
+                          "AGREEMENT_GENERATING": "Agreement generating",
+                          "AGREEMENT_DRAFTED": "Agreement drafted",
+                          "OFFERED": "Offered",
+                          "ACCEPTED": "Accepted",
+                          "WITHDRAWN": "Withdrawn",
+                          "REJECTED": "Rejected"
+                        }
                       }
                     ]
                   },
                   {
-                    "label": "Status",
-                    "component": "status",
-                    "text": "@.agreementStatus",
-                    "classesMap": {
-                      "OFFERED": "govuk-tag--yellow",
-                      "ACCEPTED": "govuk-tag--blue",
-                      "WITHDRAWN": "govuk-tag--grey"
-                    }
+                    "label": "Reference",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                  },
+                  {
+                    "label": "Date created",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
+                    "format": "formatDate"
+                  },
+                  {
+                    "label": "Date accepted",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus = 'ACCEPTED' ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].acceptedAt), '[D] [MNn] [Y]') : 'Not accepted'"
+                  },
+                  {
+                    "label": "Start date",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate), '[D] [MNn] [Y]') : 'Not started'"
+                  },
+                  {
+                    "label": "View",
+                    "text": [
+                      {
+                        "component": "url",
+                        "text": "View agreement",
+                        "href": {
+                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                          "params": {
+                            "agreementRef": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                          }
+                        },
+                        "target": "_blank",
+                        "rel": "noopener"
+                      }
+                    ]
                   }
                 ]
+              },
+              {
+                "component": "conditional",
+                "condition": "jsonata:$count($.supplementaryData.agreements) > 1",
+                "whenTrue": {
+                  "component": "container",
+                  "items": [
+                    {
+                      "id": "version-history-title",
+                      "component": "heading",
+                      "text": "Version history",
+                      "level": 3,
+                      "classes": "govuk-!-margin-top-6"
+                    },
+                    {
+                      "type": "array",
+                      "component": "table",
+                      "rowsRef": "jsonata:$filter($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt }), function($v, $i) { $i > 0 })",
+                      "rows": [
+                        {
+                          "label": "Reference",
+                          "text": "@.agreementRef"
+                        },
+                        {
+                          "label": "Date",
+                          "text": "@.createdAt",
+                          "format": "formatDate"
+                        },
+                        {
+                          "label": "Status",
+                          "component": "status",
+                          "text": "@.agreementStatus",
+                          "themeMap": {
+                            "OFFERED": "NOTICE",
+                            "ACCEPTED": "INFO",
+                            "AGREEMENT_DRAFTED": "INFO",
+                            "AGREEMENT_GENERATING": "INFO",
+                            "WITHDRAWN": "NEUTRAL",
+                            "REJECTED": "NEUTRAL"
+                          },
+                          "labelsMap": {
+                            "AGREEMENT_GENERATING": "Agreement generating",
+                            "AGREEMENT_DRAFTED": "Agreement drafted",
+                            "OFFERED": "Offered",
+                            "ACCEPTED": "Accepted",
+                            "WITHDRAWN": "Withdrawn",
+                            "REJECTED": "Rejected"
+                          }
+                        },
+                        {
+                          "label": "",
+                          "component": "url",
+                          "text": "View this version",
+                          "href": {
+                            "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                            "params": {
+                              "agreementRef": "@.agreementRef"
+                            }
+                          },
+                          "target": "_blank",
+                          "rel": "noopener"
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           }

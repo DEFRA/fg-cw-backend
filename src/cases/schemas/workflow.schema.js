@@ -49,7 +49,7 @@ const caseSchema = Joi.object({
 const ExternalActionTarget = Joi.object({
   targetNode: Joi.string().required(),
   dataType: Joi.string().valid("ARRAY", "OBJECT").required(),
-  position: Joi.string().required(),
+  position: Joi.string().allow(null).required(),
   key: Joi.string().optional(),
   place: Joi.string().valid("append").required(),
 }).label("ExternalActionTarget");
