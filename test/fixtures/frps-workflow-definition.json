@@ -504,9 +504,9 @@
                               "component": "status",
                               "text": "@.valid",
                               "format": "yesNo",
-                              "classesMap": {
-                                "Yes": "govuk-tag--green",
-                                "No": "govuk-tag--red"
+                              "themeMap": {
+                                "Yes": "SUCCESS",
+                                "No": "ERROR"
                               },
                               "labelsMap": {
                                 "Yes": "Passed",
@@ -581,13 +581,13 @@
                       {
                         "component": "status",
                         "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
-                        "classesMap": {
-                          "OFFERED": "govuk-tag--yellow",
-                          "ACCEPTED": "govuk-tag--blue",
-                          "AGREEMENT_DRAFTED": "govuk-tag--blue",
-                          "AGREEMENT_GENERATING": "govuk-tag--blue",
-                          "WITHDRAWN": "govuk-tag--grey",
-                          "REJECTED": "govuk-tag--grey"
+                        "themeMap": {
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "AGREEMENT_GENERATING": "INFO",
+                          "WITHDRAWN": "NEUTRAL",
+                          "REJECTED": "NEUTRAL"
                         },
                         "labelsMap": {
                           "AGREEMENT_GENERATING": "Agreement generating",
@@ -667,13 +667,13 @@
                           "label": "Status",
                           "component": "status",
                           "text": "@.agreementStatus",
-                          "classesMap": {
-                            "OFFERED": "govuk-tag--yellow",
-                            "ACCEPTED": "govuk-tag--blue",
-                            "AGREEMENT_DRAFTED": "govuk-tag--blue",
-                            "AGREEMENT_GENERATING": "govuk-tag--blue",
-                            "WITHDRAWN": "govuk-tag--grey",
-                            "REJECTED": "govuk-tag--grey"
+                          "themeMap": {
+                            "OFFERED": "NOTICE",
+                            "ACCEPTED": "INFO",
+                            "AGREEMENT_DRAFTED": "INFO",
+                            "AGREEMENT_GENERATING": "INFO",
+                            "WITHDRAWN": "NEUTRAL",
+                            "REJECTED": "NEUTRAL"
                           },
                           "labelsMap": {
                             "AGREEMENT_GENERATING": "Agreement generating",
