@@ -153,6 +153,10 @@ export class Case {
   }
 
   updateSupplementaryData({ targetNode, key, dataType, data }) {
+    if (!targetNode) {
+      return null;
+    }
+
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
     if (dataType === "ARRAY") {
@@ -218,9 +222,9 @@ export class Case {
       return;
     }
 
-    if (!this.isStageComplete(workflow)) {
+    if (!this.#canPerformAction(workflow, actionCode)) {
       throw Boom.preconditionFailed(
-        `Cannot trigger transition for actionCode ${actionCode}, stage is incomplete`,
+        `Cannot perform action ${actionCode} from position ${this.position}: required tasks are not complete`,
       );
     }
 
@@ -261,9 +265,20 @@ export class Case {
       return;
     }
 
-    if (!this.isStageComplete(workflow)) {
+    const transition = workflow.getTransitionForTargetPosition(
+      this.position,
+      position,
+    );
+
+    if (!transition) {
       throw Boom.preconditionFailed(
-        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: stage is incomplete`,
+        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: transition does not exist`,
+      );
+    }
+
+    if (transition.checkTasks && !this.#areTasksComplete(workflow)) {
+      throw Boom.preconditionFailed(
+        `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );
     }
 
@@ -307,11 +322,37 @@ export class Case {
     this.position = position;
   }
 
-  isStageComplete(workflow) {
+  #areTasksComplete(workflow) {
     const workflowStage = workflow.getStage(this.position);
     const caseStage = this.getStage();
 
-    return caseStage.isComplete(workflowStage, this.position);
+    return caseStage.areTasksComplete(workflowStage);
+  }
+
+  #canPerformAction(workflow, actionCode) {
+    const workflowStage = workflow.getStage(this.position);
+    const action = workflowStage.getActionByCode(this.position, actionCode);
+
+    if (!action) {
+      throw Boom.notFound(
+        `Action with code ${actionCode} not found for position ${this.position}`,
+      );
+    }
+
+    if (!action.checkTasks) {
+      return true;
+    }
+
+    return this.#areTasksComplete(workflow);
+  }
+
+  getPermittedActions(workflow) {
+    const workflowStage = workflow.getStage(this.position);
+    const areTasksComplete = this.#areTasksComplete(workflow);
+
+    return workflowStage
+      .getActions(this.position)
+      .filter((a) => !a.checkTasks || areTasksComplete);
   }
 
   getUserIds() {

@@ -4,6 +4,7 @@ import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
@@ -34,6 +35,7 @@ const toWorkflowAction = (a) =>
 const toWorkflowTransition = (t) =>
   new WorkflowTransition({
     targetPosition: Position.from(t.targetPosition),
+    checkTasks: t.checkTasks,
     action: t.action ? toWorkflowAction(t.action) : null,
   });
 
@@ -41,6 +43,7 @@ const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
     code: s.code,
     name: s.name,
+    theme: s.theme,
     description: s.description,
     interactive: s.interactive,
     transitions: s.transitions.map(toWorkflowTransition),
@@ -50,6 +53,8 @@ const toWorkflowTaskStatusOption = (so) =>
   new WorkflowTaskStatusOption({
     code: so.code,
     name: so.name,
+    theme: so.theme,
+    altName: so.altName,
     completes: so.completes,
   });
 
@@ -68,12 +73,10 @@ const toWorkflowTask = (t) =>
     name: t.name,
     mandatory: t.mandatory,
     description: t.description,
-    requiredRoles: t.requiredRoles
-      ? new Permissions({
-          allOf: t.requiredRoles.allOf,
-          anyOf: t.requiredRoles.anyOf,
-        })
-      : null,
+    requiredRoles: new Permissions({
+      allOf: t.requiredRoles?.allOf,
+      anyOf: t.requiredRoles?.anyOf,
+    }),
     statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
     comment: toWorkflowTaskComment(t.comment),
   });
@@ -93,6 +96,7 @@ const toWorkflowStage = (s) =>
     description: s.description,
     statuses: s.statuses.map(toWorkflowStageStatus),
     taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
+    beforeContent: s.beforeContent,
   });
 
 const toWorkflowPhase = (p) =>
@@ -100,6 +104,15 @@ const toWorkflowPhase = (p) =>
     code: p.code,
     name: p.name,
     stages: p.stages.map(toWorkflowStage),
+  });
+
+const toWorkflowEndpoint = (endpoint) =>
+  new WorkflowEndpoint({
+    code: endpoint.code,
+    service: endpoint.service,
+    path: endpoint.path,
+    method: endpoint.method,
+    request: endpoint.request,
   });
 
 const toWorkflow = (doc) =>
@@ -114,6 +127,7 @@ const toWorkflow = (doc) =>
     }),
     definitions: doc.definitions,
     externalActions: doc.externalActions,
+    endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
   });
 
 export const save = async (workflow) => {

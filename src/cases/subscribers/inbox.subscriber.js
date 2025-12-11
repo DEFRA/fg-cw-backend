@@ -30,13 +30,18 @@ export class InboxSubscriber {
   async poll() {
     while (this.running) {
       logger.trace("Polling inbox");
-      const claimToken = randomUUID();
-      const events = await claimEvents(claimToken);
-      await this.processEvents(events);
-      await this.processResubmittedEvents();
-      await this.processFailedEvents();
-      await this.processDeadEvents();
-      await this.processExpiredEvents();
+
+      try {
+        const claimToken = randomUUID();
+        const events = await claimEvents(claimToken);
+        await this.processEvents(events);
+        await this.processResubmittedEvents();
+        await this.processFailedEvents();
+        await this.processDeadEvents();
+        await this.processExpiredEvents();
+      } catch (error) {
+        logger.error(error, "Error polling inbox");
+      }
 
       await setTimeout(this.interval);
     }
@@ -84,21 +89,20 @@ export class InboxSubscriber {
       `Handle event for inbox message ${type}:${source}:${messageId}`,
     );
     try {
-      const handlerString = type.replace(config.get("cdpEnvironment"), "ENV");
-      const handler = useCaseMap[handlerString];
+      const eventType = type.replace(config.get("cdpEnvironment"), "ENV");
+      const handler = useCaseMap[eventType];
 
-      if (handler) {
-        await withTraceParent(traceparent, async () => handler(msg));
-      } else {
-        throw new Error(`Unable to handle inbox message ${msg.messageId}`);
+      if (!handler) {
+        throw new Error(`No handler found for event type ${eventType}`);
       }
 
+      await withTraceParent(traceparent, async () => handler(msg));
       await this.markEventComplete(msg);
     } catch (ex) {
       logger.error(
+        ex,
         `Error handling event for inbox message ${type}:${messageId}`,
       );
-      logger.error(ex.message);
       await this.markEventFailed(msg);
     }
   }

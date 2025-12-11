@@ -3,6 +3,9 @@
   "caseRef": "CASE-REF-2",
   "status": "NEW",
   "dateReceived": "2025-03-27T11:34:52Z",
+  "currentPhase": "PRE_AWARD",
+  "currentStage": "REVIEW_APPLICATION",
+  "currentStatus": "APPLICATION_RECEIVED",
   "payload": {
     "createdAt": "2025-03-27T10:34:52.000Z",
     "submittedAt": "2025-03-28T11:30:52.000Z",
@@ -165,7 +168,6 @@
       }
     ]
   },
-  "currentStage": "APPLICATION_RECEIPT",
   "phases": [
     {
       "code": "DEFAULT",

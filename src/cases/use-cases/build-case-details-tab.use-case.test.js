@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -7,6 +8,9 @@ import { buildCaseDetailsTabUseCase } from "./build-case-details-tab.use-case.js
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../../common/external-endpoint-client.js", () => ({
+  callExternalEndpoint: vi.fn(),
+}));
 
 describe("buildCaseDetailsTabUseCase", () => {
   it("builds case details tab successfully", async () => {
@@ -504,10 +508,37 @@ describe("buildCaseDetailsTabUseCase", () => {
 
   describe("action context integration", () => {
     it("should add actionData to root context when tab has action definition", async () => {
+      // Mock external endpoint to return test data
+      callExternalEndpoint.mockResolvedValue({
+        response: [
+          {
+            component: "summary-list",
+            rows: [{ label: "Test", text: "Value" }],
+          },
+        ],
+      });
+
       const mockCase = Case.createMock();
 
       const mockWorkflow = Workflow.createMock({
         code: "frps-private-beta",
+        endpoints: [
+          {
+            code: "RULES_ENGINE_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/api/test",
+            method: "GET",
+          },
+        ],
+        externalActions: [
+          {
+            code: "rules-engine-endpoint",
+            endpoint: {
+              code: "RULES_ENGINE_ENDPOINT",
+              endpointParams: {},
+            },
+          },
+        ],
         pages: {
           cases: {
             details: {
@@ -667,7 +698,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       expect(result.content).toBeDefined();
     });
 
-    it("should handle non-string actionValue", async () => {
+    it("should handle non-string actionCode", async () => {
       const mockCase = Case.createMock();
 
       const mockWorkflow = Workflow.createMock({
@@ -689,7 +720,7 @@ describe("buildCaseDetailsTabUseCase", () => {
               tabs: {
                 "test-tab": {
                   action: {
-                    // Non-string actionValue - should be handled gracefully
+                    // Non-string actionCode - should be handled gracefully
                     numericAction: 123,
                   },
                   content: [
@@ -714,185 +745,7 @@ describe("buildCaseDetailsTabUseCase", () => {
         query: {},
       });
 
-      // Should handle gracefully when actionValue is not a string
-      expect(result.caseId).toBe("test-case-id");
-      expect(result.content).toBeDefined();
-    });
-  });
-
-  describe("rules engine data loading (temporary code needed to keep sonar happy)", () => {
-    it("should load specific rules run data when runId is provided", async () => {
-      const mockCase = Case.createMock({
-        payload: {
-          businessName: "Test Business",
-          rulesRunId: "906",
-        },
-      });
-
-      const mockWorkflow = Workflow.createMock({
-        code: "test-workflow",
-        externalActions: [
-          {
-            code: "LOAD_RULES",
-            name: "Load Rules Data",
-            endpoint: {
-              endpointParams: {
-                rulesRun: {
-                  runId: "$.payload.rulesRunId",
-                },
-              },
-            },
-          },
-        ],
-        pages: {
-          cases: {
-            details: {
-              banner: {
-                title: {
-                  text: "$.payload.businessName",
-                },
-              },
-              tabs: {
-                "rules-tab": {
-                  action: {
-                    rulesData: "LOAD_RULES",
-                  },
-                  content: [
-                    {
-                      component: "heading",
-                      text: "Rules Results",
-                      level: 2,
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      });
-
-      findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
-
-      const result = await buildCaseDetailsTabUseCase({
-        params: { caseId: "test-case-id", tabId: "rules-tab" },
-        query: {},
-      });
-
-      // Should successfully load rules-run-906.json
-      expect(result.caseId).toBe("test-case-id");
-      expect(result.content).toBeDefined();
-    });
-
-    it("should load different runId based on payload value", async () => {
-      const mockCase = Case.createMock({
-        payload: {
-          businessName: "Test Business",
-          rulesRunId: "907",
-        },
-      });
-
-      const mockWorkflow = Workflow.createMock({
-        code: "test-workflow",
-        externalActions: [
-          {
-            code: "LOAD_RULES",
-            name: "Load Rules Data",
-            endpoint: {
-              endpointParams: {
-                rulesRun: {
-                  runId: "$.payload.rulesRunId",
-                },
-              },
-            },
-          },
-        ],
-        pages: {
-          cases: {
-            details: {
-              banner: {
-                title: {
-                  text: "$.payload.businessName",
-                },
-              },
-              tabs: {
-                "rules-tab": {
-                  action: {
-                    rulesData: "LOAD_RULES",
-                  },
-                  content: [],
-                },
-              },
-            },
-          },
-        },
-      });
-
-      findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
-
-      const result = await buildCaseDetailsTabUseCase({
-        params: { caseId: "test-case-id", tabId: "rules-tab" },
-        query: {},
-      });
-
-      // Should successfully load rules-run-907.json
-      expect(result.caseId).toBe("test-case-id");
-      expect(result.content).toBeDefined();
-    });
-
-    it("should load default rules data when no runId is provided", async () => {
-      const mockCase = Case.createMock({
-        payload: {
-          businessName: "Test Business",
-        },
-      });
-
-      const mockWorkflow = Workflow.createMock({
-        code: "test-workflow",
-        externalActions: [
-          {
-            code: "LOAD_RULES_NO_ID",
-            name: "Load Default Rules",
-            endpoint: {
-              endpointParams: {
-                someOtherParam: {
-                  value: "$.payload.businessName",
-                },
-              },
-            },
-          },
-        ],
-        pages: {
-          cases: {
-            details: {
-              banner: {
-                title: {
-                  text: "$.payload.businessName",
-                },
-              },
-              tabs: {
-                "rules-tab": {
-                  action: {
-                    rulesData: "LOAD_RULES_NO_ID",
-                  },
-                  content: [],
-                },
-              },
-            },
-          },
-        },
-      });
-
-      findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
-
-      const result = await buildCaseDetailsTabUseCase({
-        params: { caseId: "test-case-id", tabId: "rules-tab" },
-        query: {},
-      });
-
-      // Should successfully load rules-run-default.json
+      // Should handle gracefully when actionCode is not a string
       expect(result.caseId).toBe("test-case-id");
       expect(result.content).toBeDefined();
     });

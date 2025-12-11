@@ -42,7 +42,7 @@ export const workflowData1 = {
                   caseId: "$._id",
                 },
               },
-              text: "Case Details",
+              text: "Application",
               index: 1,
             },
             content: [
@@ -228,14 +228,17 @@ export const workflowData1 = {
           code: "APPLICATION_RECEIPT",
           name: "Application Receipt",
           description: "Application received",
+          beforeContent: [],
           statuses: [
             {
               code: "STATUS_1",
               name: "Status 1",
+              theme: "INFO",
               description: "Status 1 dscription",
               interactive: true,
               transitions: [
                 {
+                  checkTasks: true,
                   targetPosition: ":CONTRACT:",
                   action: {
                     code: "APPROVE",
@@ -258,8 +261,15 @@ export const workflowData1 = {
                   name: "Simple Review",
                   description: null,
                   comment: null,
-                  mandatory: false,
-                  statusOptions: [],
+                  mandatory: true,
+                  statusOptions: [
+                    {
+                      code: "COMPLETE",
+                      name: "Complete",
+                      theme: "SUCCESS",
+                      completes: true,
+                    },
+                  ],
                   requiredRoles: {
                     allOf: ["ROLE_1", "ROLE_2"],
                     anyOf: ["ROLE_3"],
@@ -273,10 +283,12 @@ export const workflowData1 = {
           code: "CONTRACT",
           name: "Stage for contract management",
           description: "Awaiting agreement",
+          beforeContent: [],
           statuses: [
             {
               code: "AWAITING_AGREEMENT",
               name: "Awaiting Agreement",
+              theme: "INFO",
               description: "Awaiting agreement signature",
               interactive: true,
               transitions: [],
@@ -294,6 +306,7 @@ export const workflowData1 = {
   definitions: {
     key1: "test",
   },
+  endpoints: [],
 };
 
 export const workflowData2 = {
@@ -344,6 +357,7 @@ export const workflowData2 = {
           code: "REVIEW",
           name: "Review",
           description: "Review description",
+          beforeContent: [],
           statuses: [],
           taskGroups: [],
         },
@@ -351,6 +365,7 @@ export const workflowData2 = {
           code: "DECISION",
           name: "Decision",
           description: "Decision description",
+          beforeContent: [],
           statuses: [],
           taskGroups: [],
         },
@@ -364,4 +379,5 @@ export const workflowData2 = {
   definitions: {
     key1: "test",
   },
+  endpoints: [],
 };
