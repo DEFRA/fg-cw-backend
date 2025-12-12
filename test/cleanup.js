@@ -15,6 +15,8 @@ beforeEach(async () => {
     db.collection("workflows").deleteMany({}),
     db.collection("users").deleteMany({}),
     db.collection("roles").deleteMany({}),
+    db.collection("outbox").deleteMany({}),
+    db.collection("inbox").deleteMany({}),
   ]);
 
   await drainQueues([
