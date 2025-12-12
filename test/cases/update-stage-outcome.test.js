@@ -1,7 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { env } from "node:process";
-
 import { MongoClient } from "mongodb";
+import { env } from "node:process";
 import {
   afterAll,
   beforeAll,
@@ -45,12 +43,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
-    // Unique ref so parallel tests can't satisfy this assertion.
-    const caseRef = `APPLICATION-REF-${randomUUID()}`;
-    const kase = await createCase(cases, {
-      caseRef,
-      payload: { clientRef: caseRef },
-    });
+    const kase = await createCase(cases);
 
     await completeTask({
       caseId: kase._id,
@@ -87,35 +80,29 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       actionCode: "APPROVE",
     });
 
-    await vi.waitFor(
-      async () => {
-        const caseStatusUpdatedEvents = await receiveMessages(
-          env.GAS__SQS__UPDATE_STATUS,
-        );
+    await vi.waitFor(async () => {
+      const caseStatusUpdatedEvents = await receiveMessages(
+        env.GAS__SQS__UPDATE_STATUS,
+      );
 
-        expect(caseStatusUpdatedEvents).toContainEqual(
-          expect.objectContaining({
-            id: expect.any(String),
-            traceparent: expect.any(String),
-            type: "cloud.defra.local.fg-cw-backend.case.status.updated",
-            datacontenttype: "application/json",
-            source: "fg-cw-backend",
-            specversion: "1.0",
-            time: expect.any(String),
-            data: expect.objectContaining({
-              caseRef,
-              currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
-              previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
-              workflowCode: "frps-private-beta",
-            }),
-          }),
-        );
-      },
-      {
-        // SQS is eventually consistent; allow for slow delivery on CI runners.
-        timeout: 60_000,
-      },
-    );
+      expect(caseStatusUpdatedEvents).toEqual([
+        {
+          id: expect.any(String),
+          traceparent: expect.any(String),
+          type: "cloud.defra.local.fg-cw-backend.case.status.updated",
+          datacontenttype: "application/json",
+          source: "fg-cw-backend",
+          specversion: "1.0",
+          time: expect.any(String),
+          data: {
+            caseRef: "APPLICATION-REF-1",
+            currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
+            previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
+            workflowCode: "frps-private-beta",
+          },
+        },
+      ]);
+    });
   });
 
   it("updates stage outcome with optional comment", async () => {
