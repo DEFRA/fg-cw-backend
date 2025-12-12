@@ -1,5 +1,7 @@
-import { MongoClient } from "mongodb";
+import { randomUUID } from "node:crypto";
 import { env } from "node:process";
+
+import { MongoClient } from "mongodb";
 import {
   afterAll,
   beforeAll,
@@ -43,7 +45,12 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
-    const kase = await createCase(cases);
+    // Unique ref so parallel tests can't satisfy this assertion.
+    const caseRef = `APPLICATION-REF-${randomUUID()}`;
+    const kase = await createCase(cases, {
+      caseRef,
+      payload: { clientRef: caseRef },
+    });
 
     await completeTask({
       caseId: kase._id,
@@ -95,7 +102,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
           specversion: "1.0",
           time: expect.any(String),
           data: {
-            caseRef: "APPLICATION-REF-1",
+            caseRef,
             currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
             previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
             workflowCode: "frps-private-beta",
