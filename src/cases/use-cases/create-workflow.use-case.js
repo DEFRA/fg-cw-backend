@@ -1,8 +1,10 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
@@ -110,6 +112,8 @@ const createWorkflowTaskStatusOption = (statusOption) =>
   new WorkflowTaskStatusOption({
     code: statusOption.code,
     name: statusOption.name,
+    theme: statusOption.theme,
+    altName: statusOption.altName,
     completes: statusOption.completes,
   });
 
@@ -119,12 +123,10 @@ const createWorkflowTask = (task) =>
     name: task.name,
     mandatory: task.mandatory,
     description: task.description,
-    requiredRoles: task.requiredRoles
-      ? new Permissions({
-          allOf: task.requiredRoles.allOf,
-          anyOf: task.requiredRoles.anyOf,
-        })
-      : null,
+    requiredRoles: new Permissions({
+      allOf: task.requiredRoles?.allOf,
+      anyOf: task.requiredRoles?.anyOf,
+    }),
     statusOptions: task.statusOptions.map(createWorkflowTaskStatusOption),
     comment: task.comment,
   });
@@ -158,6 +160,7 @@ const createWorkflowTransition = (transition, context, phases) =>
       context,
       phases,
     }),
+    checkTasks: transition.checkTasks,
     action: transition.action ? createWorkflowAction(transition.action) : null,
   });
 
@@ -165,6 +168,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
   new WorkflowStageStatus({
     code: status.code,
     name: status.name,
+    theme: status.theme,
     description: status.description,
     interactive: status.interactive,
     transitions: status.transitions.map((transition) =>
@@ -189,6 +193,7 @@ const createWorkflowStage = (stage, context, phases) =>
       ),
     ),
     taskGroups: stage.taskGroups.map(createWorkflowTaskGroup),
+    beforeContent: stage.beforeContent,
   });
 
 const createWorkflowPhase = (phase, phases) =>
@@ -201,6 +206,8 @@ const createWorkflowPhase = (phase, phases) =>
   });
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
+  logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
+
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
     pages: createWorkflowCommand.pages,
@@ -213,9 +220,21 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
     }),
     definitions: createWorkflowCommand.definitions,
     externalActions: createWorkflowCommand.externalActions,
+    endpoints: createWorkflowCommand.endpoints?.map(createWorkflowEndpoint),
   });
 
   await save(workflow);
 
+  logger.info(`Finished: Workflow created with code '${workflow.code}'`);
+
   return workflow;
 };
+
+const createWorkflowEndpoint = (endpoint) =>
+  new WorkflowEndpoint({
+    code: endpoint.code,
+    service: endpoint.service,
+    path: endpoint.path,
+    method: endpoint.method,
+    request: endpoint.request,
+  });

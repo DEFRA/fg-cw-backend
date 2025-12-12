@@ -1,6 +1,7 @@
 import {
   ListQueuesCommand,
   PurgeQueueCommand,
+  ReceiveMessageCommand,
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
@@ -63,9 +64,28 @@ export const sendMessage = async (queueUrl, message) =>
     }),
   );
 
+export const receiveMessages = async (queueUrl) => {
+  const data = await sqs.send(
+    new ReceiveMessageCommand({
+      QueueUrl: queueUrl,
+      MaxNumberOfMessages: 10,
+      WaitTimeSeconds: 5,
+    }),
+  );
+
+  if (!data.Messages) {
+    return [];
+  }
+
+  return data.Messages.map((message) => JSON.parse(message.Body));
+};
+
 export const purgeQueue = async (queueUrl) =>
   sqs.send(
     new PurgeQueueCommand({
       QueueUrl: queueUrl,
     }),
   );
+
+export const purgeQueues = async (queueUrls) =>
+  Promise.all(queueUrls.map((url) => purgeQueue(url)));

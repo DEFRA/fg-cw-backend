@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { logger } from "../../common/logger.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -9,6 +10,10 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
+  logger.info(
+    `Updating task status use case started - caseId: ${command.caseId}`,
+  );
+
   const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
     command;
 
@@ -46,6 +51,10 @@ export const updateTaskStatusUseCase = async (command) => {
     comment,
     updatedBy: user.id,
   });
+
+  logger.info(
+    `Finished: Updating task status use case started - caseId: ${command.caseId}`,
+  );
 
   return update(kase);
 };

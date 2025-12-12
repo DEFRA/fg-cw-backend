@@ -44,7 +44,7 @@ describe("findCaseByIdTabIdRoute", () => {
         {
           id: "case-details",
           href: `/cases/${caseId}/case-details`,
-          text: "Case Details",
+          text: "Application",
         },
       ],
       content: [
@@ -64,6 +64,7 @@ describe("findCaseByIdTabIdRoute", () => {
           ],
         },
       ],
+      beforeContent: [],
     };
 
     buildCaseDetailsTabUseCase.mockResolvedValueOnce(mockTabData);

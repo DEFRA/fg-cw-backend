@@ -2,6 +2,13 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 
+const componentSchema = Joi.object({
+  id: Joi.string().optional(),
+  component: Joi.string().optional(),
+})
+  .unknown()
+  .label("Component");
+
 export const Code = Joi.string().pattern(/^[A-Z0-9_]+$/);
 
 const Action = Joi.object({
@@ -15,12 +22,16 @@ const Transition = Joi.object({
   targetPosition: Joi.string()
     .pattern(/[A-Z0-9_:]/)
     .required(),
+  checkTasks: Joi.bool().required(),
   action: Action.allow(null).required(),
 }).label("Transition");
 
 export const Status = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
   description: Joi.string().allow(null).required(),
   interactive: Joi.boolean().required(),
   transitions: Joi.array().items(Transition).required(),
@@ -29,6 +40,10 @@ export const Status = Joi.object({
 export const StatusOption = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  theme: Joi.string()
+    .valid("NONE", "NEUTRAL", "INFO", "NOTICE", "ERROR", "WARN", "SUCCESS")
+    .required(),
+  altName: Joi.string().allow(null),
   completes: Joi.boolean().required(),
 }).label("StatusOption");
 
@@ -59,6 +74,7 @@ export const Stage = Joi.object({
   actionsTitle: Joi.string().optional(),
   statuses: Joi.array().items(Status).required(),
   agreements: Joi.array().optional().allow(null),
+  beforeContent: Joi.array().items(componentSchema).optional(),
 }).label("Stage");
 
 export const Phase = Joi.object({

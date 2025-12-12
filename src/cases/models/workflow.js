@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Permissions } from "./permissions.js";
 import { Position } from "./position.js";
+import { WorkflowEndpoint } from "./workflow-endpoint.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 
 export class Workflow {
@@ -14,6 +15,7 @@ export class Workflow {
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
     this.externalActions = props.externalActions;
+    this.endpoints = props.endpoints;
   }
 
   findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
@@ -30,6 +32,12 @@ export class Workflow {
       position,
       actionCode,
     );
+
+    if (!action) {
+      throw Boom.notFound(
+        `Action with code "${actionCode}" not found for position ${position}`,
+      );
+    }
 
     this.validateComment({
       phaseCode: position.phaseCode,
@@ -58,6 +66,15 @@ export class Workflow {
 
   getStatus(position) {
     return this.getStage(position).getStatus(position.statusCode);
+  }
+
+  getTransitionForTargetPosition(casePosition, targetPosition) {
+    const transitions = this.getStatus(casePosition).transitions;
+    const targetTransition = transitions.find((transition) =>
+      transition.targetPosition.equals(targetPosition),
+    );
+
+    return targetTransition;
   }
 
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
@@ -97,6 +114,22 @@ export class Workflow {
     return transition.targetPosition;
   }
 
+  findExternalAction(actionCode) {
+    if (typeof actionCode !== "string" || !this.externalActions) {
+      return null;
+    }
+
+    return this.externalActions.find((action) => action.code === actionCode);
+  }
+
+  findEndpoint(endpointCode) {
+    if (!this.endpoints) {
+      return null;
+    }
+
+    return this.endpoints.find((endpoint) => endpoint.code === endpointCode);
+  }
+
   static createMock(props) {
     return new Workflow({
       code: "workflow-code",
@@ -109,16 +142,20 @@ export class Workflow {
       definitions: {
         key1: "value1",
       },
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
-          code: "RERUN_RULES",
-          name: "Rerun Rules",
+          code: "RECALCULATE_RULES",
+          name: "Run calculations again",
           description: "Rerun the business rules validation",
-          endpoint: "landGrantsRulesRerun",
+          display: true,
+          endpoint: {
+            code: "rules-engine-endpoint",
+          },
           target: {
             position: "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-            node: "landGrantsRulesRun",
-            nodeType: "array",
+            targetNode: "landGrantsRulesRun",
+            dataType: "ARRAY",
             place: "append",
           },
         },
