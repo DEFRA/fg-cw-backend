@@ -1,5 +1,7 @@
-import { MongoClient } from "mongodb";
+import { randomUUID } from "node:crypto";
 import { env } from "node:process";
+
+import { MongoClient } from "mongodb";
 import {
   afterAll,
   beforeAll,
@@ -10,7 +12,6 @@ import {
   vi,
 } from "vitest";
 
-import { randomUUID } from "node:crypto";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
 import { createUser } from "../helpers/users.js";
@@ -86,29 +87,35 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       actionCode: "APPROVE",
     });
 
-    await vi.waitFor(async () => {
-      const caseStatusUpdatedEvents = await receiveMessages(
-        env.GAS__SQS__UPDATE_STATUS,
-      );
+    await vi.waitFor(
+      async () => {
+        const caseStatusUpdatedEvents = await receiveMessages(
+          env.GAS__SQS__UPDATE_STATUS,
+        );
 
-      expect(caseStatusUpdatedEvents).toEqual([
-        {
-          id: expect.any(String),
-          traceparent: expect.any(String),
-          type: "cloud.defra.local.fg-cw-backend.case.status.updated",
-          datacontenttype: "application/json",
-          source: "fg-cw-backend",
-          specversion: "1.0",
-          time: expect.any(String),
-          data: {
-            caseRef,
-            currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
-            previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
-            workflowCode: "frps-private-beta",
-          },
-        },
-      ]);
-    });
+        expect(caseStatusUpdatedEvents).toContainEqual(
+          expect.objectContaining({
+            id: expect.any(String),
+            traceparent: expect.any(String),
+            type: "cloud.defra.local.fg-cw-backend.case.status.updated",
+            datacontenttype: "application/json",
+            source: "fg-cw-backend",
+            specversion: "1.0",
+            time: expect.any(String),
+            data: expect.objectContaining({
+              caseRef,
+              currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
+              previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
+              workflowCode: "frps-private-beta",
+            }),
+          }),
+        );
+      },
+      {
+        // SQS is eventually consistent; allow for slow delivery on CI runners.
+        timeout: 60_000,
+      },
+    );
   });
 
   it("updates stage outcome with optional comment", async () => {

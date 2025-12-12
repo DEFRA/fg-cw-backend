@@ -1,12 +1,13 @@
 import {
+  DeleteMessageBatchCommand,
   ListQueuesCommand,
   PurgeQueueCommand,
   ReceiveMessageCommand,
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
+import { env } from "node:process";
 import { setTimeout } from "node:timers/promises";
-import { env } from "process";
 
 const sqs = new SQSClient({
   region: env.AWS_REGION || "eu-west-2",
@@ -89,3 +90,40 @@ export const purgeQueue = async (queueUrl) =>
 
 export const purgeQueues = async (queueUrls) =>
   Promise.all(queueUrls.map((url) => purgeQueue(url)));
+
+// SQS PurgeQueue is eventually-consistent and can delete messages sent shortly
+// after the purge request. For tests we prefer draining (receive+delete) so the
+// queue is empty immediately and deterministically.
+// eslint-disable-next-line complexity
+export const drainQueue = async (queueUrl, maxIterations = 100) => {
+  for (let i = 0; i < maxIterations; i += 1) {
+    const data = await sqs.send(
+      new ReceiveMessageCommand({
+        QueueUrl: queueUrl,
+        MaxNumberOfMessages: 10,
+        WaitTimeSeconds: 0,
+      }),
+    );
+
+    const messages = data.Messages ?? [];
+
+    if (messages.length === 0) {
+      return;
+    }
+
+    await sqs.send(
+      new DeleteMessageBatchCommand({
+        QueueUrl: queueUrl,
+        Entries: messages.map((message, index) => ({
+          Id: String(index),
+          ReceiptHandle: message.ReceiptHandle,
+        })),
+      }),
+    );
+  }
+
+  throw new Error(`SQS queue not drained after ${maxIterations} iterations`);
+};
+
+export const drainQueues = async (queueUrls) =>
+  Promise.all(queueUrls.map((url) => drainQueue(url)));
