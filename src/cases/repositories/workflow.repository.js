@@ -35,6 +35,7 @@ const toWorkflowAction = (a) =>
 const toWorkflowTransition = (t) =>
   new WorkflowTransition({
     targetPosition: Position.from(t.targetPosition),
+    checkTasks: t.checkTasks,
     action: t.action ? toWorkflowAction(t.action) : null,
   });
 

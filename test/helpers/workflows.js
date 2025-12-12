@@ -241,6 +241,7 @@ export const createWorkflow = async (payload = {}) => {
                   transitions: [
                     {
                       targetPosition: "DEFAULT:CONTRACT:",
+                      checkTasks: false,
                       action: {
                         code: "APPROVE",
                         name: "Approve",
