@@ -53,7 +53,7 @@
     "hapi-pulse": "3.0.1",
     "hapi-swagger": "^17.3.2",
     "joi": "17.13.3",
-    "jose": "6.1.0",
+    "jose": "6.1.2",
     "jsonata": "2.1.0",
     "jsonpath-plus": "10.3.0",
     "migrate-mongo": "12.1.3",
