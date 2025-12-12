@@ -91,9 +91,9 @@ export const purgeQueue = async (queueUrl) =>
 export const purgeQueues = async (queueUrls) =>
   Promise.all(queueUrls.map((url) => purgeQueue(url)));
 
-// SQS PurgeQueue is eventually-consistent and can delete messages sent shortly
-// after the purge request. For tests we prefer draining (receive+delete) so the
-// queue is empty immediately and deterministically.
+// SQS PurgeQueue is eventually-consistent (AWS says it can take up to 60 seconds)
+// and can delete messages sent shortly after the purge request.
+// With draining (receive+delete) the queue is empty immediately
 // eslint-disable-next-line complexity
 export const drainQueue = async (queueUrl, maxIterations = 100) => {
   for (let i = 0; i < maxIterations; i += 1) {
