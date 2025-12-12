@@ -45,7 +45,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
-    // Unique ref so parallel tests can't satisfy this assertion.
+    // Unique ref so other tests interfere with the assertion.
     const caseRef = `APPLICATION-REF-${randomUUID()}`;
     const kase = await createCase(cases, {
       caseRef,
