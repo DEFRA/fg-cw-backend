@@ -81,6 +81,39 @@ export const receiveMessages = async (queueUrl) => {
   return data.Messages.map((message) => JSON.parse(message.Body));
 };
 
+// Receives messages and deletes them immediately (ie consumes).
+// Useful in tests where the queue might contain unrelated backlog.
+export const receiveAndDeleteMessages = async (
+  queueUrl,
+  waitTimeSeconds = 5,
+) => {
+  const data = await sqs.send(
+    new ReceiveMessageCommand({
+      QueueUrl: queueUrl,
+      MaxNumberOfMessages: 10,
+      WaitTimeSeconds: waitTimeSeconds,
+    }),
+  );
+
+  const messages = data.Messages ?? [];
+
+  if (messages.length === 0) {
+    return [];
+  }
+
+  await sqs.send(
+    new DeleteMessageBatchCommand({
+      QueueUrl: queueUrl,
+      Entries: messages.map((message, index) => ({
+        Id: String(index),
+        ReceiptHandle: message.ReceiptHandle,
+      })),
+    }),
+  );
+
+  return messages.map((message) => JSON.parse(message.Body));
+};
+
 export const purgeQueue = async (queueUrl) =>
   sqs.send(
     new PurgeQueueCommand({
