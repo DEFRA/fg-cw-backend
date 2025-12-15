@@ -3,11 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRole } from "./app-role.js";
 import { User } from "./user.js";
 
-vi.mock("mongodb", () => ({
-  ObjectId: vi.fn(() => ({
-    toHexString: vi.fn(() => "507f1f77bcf86cd799439011"),
-  })),
-}));
+vi.mock("mongodb", () => {
+  const ObjectId = vi.fn(function ObjectIdMock() {
+    this.toHexString = vi.fn(() => "507f1f77bcf86cd799439011");
+  });
+
+  return { ObjectId };
+});
 
 beforeEach(() => {
   vi.useFakeTimers();

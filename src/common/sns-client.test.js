@@ -1,26 +1,32 @@
-import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
-import { describe, expect, it, vi } from "vitest";
+import { PublishCommand } from "@aws-sdk/client-sns";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@aws-sdk/client-sns", () => ({
-  SNSClient: vi.fn(),
-  PublishCommand: vi.fn(),
-}));
+let send;
+
+vi.mock("@aws-sdk/client-sns", () => {
+  const SNSClient = vi.fn(function SNSClientMock() {
+    return { send };
+  });
+
+  const PublishCommand = vi.fn(function PublishCommandMock(params) {
+    return params;
+  });
+
+  return { SNSClient, PublishCommand };
+});
 
 describe("publish", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    send = vi.fn();
+  });
+
   it("publishes a message to a topic", async () => {
     const topicArn = "arn:aws:sns:us-east-1:123456789012:MyTopic";
 
     const message = {
       key: "value",
     };
-
-    const send = vi.fn();
-
-    SNSClient.mockReturnValue({
-      send,
-    });
-
-    PublishCommand.mockImplementation((params) => params);
 
     const { publish } = await import("./sns-client.js");
 
