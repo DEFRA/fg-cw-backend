@@ -2,7 +2,9 @@ import Boom from "@hapi/boom";
 import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
+import { AccessControl } from "../models/access-control.js";
 import { Outbox } from "../models/outbox.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
@@ -21,6 +23,11 @@ export const updateStageOutcomeUseCase = async (command) => {
     }
 
     const workflow = await findByCode(kase.workflowCode);
+
+    AccessControl.authorise(user, {
+      idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite],
+      appRoles: workflow.requiredRoles,
+    });
 
     workflow.validateStageActionComment({
       actionCode,
