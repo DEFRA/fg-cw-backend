@@ -2,8 +2,8 @@ import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
-import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
@@ -232,7 +232,7 @@ describe("createWorkflowUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task 1",
-                      requiredRoles: new Permissions({
+                      requiredRoles: new RequiredAppRoles({
                         allOf: [],
                         anyOf: [],
                       }),
@@ -250,7 +250,7 @@ describe("createWorkflowUseCase", () => {
                       name: "Task 2",
                       mandatory: false,
                       description: "Task 2",
-                      requiredRoles: new Permissions({
+                      requiredRoles: new RequiredAppRoles({
                         allOf: ["ROLE_ADMIN"],
                         anyOf: ["ROLE_USER"],
                       }),
@@ -270,7 +270,7 @@ describe("createWorkflowUseCase", () => {
           ],
         }),
       ],
-      requiredRoles: new Permissions({
+      requiredRoles: new RequiredAppRoles({
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
       }),
