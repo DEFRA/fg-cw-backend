@@ -212,6 +212,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   AccessControl.authorise(createWorkflowCommand.user, {
     idpRoles: [IdpRoles.Admin],
+    appRoles: { allOf: [], anyOf: [] },
   });
 
   const workflow = new Workflow({
