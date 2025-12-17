@@ -1,5 +1,7 @@
 import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { AccessControl } from "../models/access-control.js";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
@@ -207,6 +209,10 @@ const createWorkflowPhase = (phase, phases) =>
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
   logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
+
+  AccessControl.authorise(createWorkflowCommand.user, {
+    idpRoles: [IdpRoles.Admin],
+  });
 
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
