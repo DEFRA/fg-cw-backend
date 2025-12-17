@@ -19,8 +19,9 @@ export const createWorkflowRoute = {
     },
   },
   async handler(request, h) {
+    const { user } = request.auth.credentials;
     logger.info(`Creating workflow with code ${request.payload.code}`);
-    await createWorkflowUseCase(request.payload);
+    await createWorkflowUseCase({ ...request.payload, user });
     logger.info(
       `Finished: Creating workflow with code ${request.payload.code}`,
     );

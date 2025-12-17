@@ -1,4 +1,7 @@
+import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
@@ -18,8 +21,34 @@ import { createWorkflowUseCase } from "./create-workflow.use-case.js";
 vi.mock("../repositories/workflow.repository.js");
 
 describe("createWorkflowUseCase", () => {
+  const adminUser = User.createMock({
+    id: "admin-user",
+    idpRoles: [IdpRoles.Admin],
+  });
+
+  const nonAdminUser = User.createMock({
+    id: "readwrite-user",
+    idpRoles: [IdpRoles.ReadWrite],
+  });
+
+  it("throws forbidden when user is not admin", async () => {
+    await expect(
+      createWorkflowUseCase({
+        code: "wf-001",
+        user: nonAdminUser,
+      }),
+    ).rejects.toThrow(
+      Boom.forbidden(
+        `User ${nonAdminUser.id} does not have required roles to perform action`,
+      ),
+    );
+
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it("creates a workflow", async () => {
     const workflow = await createWorkflowUseCase({
+      user: adminUser,
       code: "wf-001",
       pages: {
         cases: {
@@ -275,6 +304,7 @@ describe("createWorkflowUseCase", () => {
     const createTestWorkflow = (transitions) =>
       createWorkflowUseCase({
         code: "test-workflow",
+        user: adminUser,
         pages: { cases: { details: { banner: {}, tabs: {} } } },
         phases: [
           {
@@ -509,6 +539,7 @@ describe("createWorkflowUseCase", () => {
       await expect(
         createWorkflowUseCase({
           code: "test-workflow",
+          user: adminUser,
           pages: { cases: { details: { banner: {}, tabs: {} } } },
           phases: [
             {
