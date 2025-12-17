@@ -1,22 +1,33 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
+import { AppRole } from "../models/app-role.js";
 import { UserDocument } from "../models/user-document.js";
 import { User } from "../models/user.js";
 
 const collection = "users";
 
-const toUser = (doc) =>
-  new User({
+const toUser = (doc) => {
+  const appRoles = {};
+  for (const [roleName, roleData] of Object.entries(doc.appRoles)) {
+    appRoles[roleName] = new AppRole({
+      name: roleName,
+      startDate: roleData.startDate,
+      endDate: roleData.endDate,
+    });
+  }
+
+  return new User({
     id: doc._id.toHexString(),
     idpId: doc.idpId,
     email: doc.email,
     name: doc.name,
     idpRoles: doc.idpRoles,
-    appRoles: doc.appRoles,
+    appRoles,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   });
+};
 
 export const save = async (user) => {
   const userDocument = new UserDocument(user);
