@@ -266,7 +266,7 @@ describe("mapDescription", () => {
 
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = new User({
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
@@ -474,7 +474,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    const authenticatedUserWithRoles = new User({
+    const authenticatedUserWithRoles = User.createMock({
       id: mockAuthUser.id,
       idpId: mockAuthUser.idpId,
       name: mockAuthUser.name,
@@ -1244,7 +1244,7 @@ describe("mapWorkflowCommentDef", () => {
 
 describe("beforeContent", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = new User({
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
