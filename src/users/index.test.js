@@ -52,10 +52,6 @@ describe("users", () => {
           method: "get",
           path: "/users/{userId}",
         },
-        {
-          method: "get",
-          path: "/secret/workflow/{workflowCode}",
-        },
       ]),
     );
   });

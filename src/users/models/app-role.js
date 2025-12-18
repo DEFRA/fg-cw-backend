@@ -17,4 +17,12 @@ export class AppRole {
       );
     }
   }
+
+  isActive() {
+    const currentDate = new Date();
+    const startDate = new Date(this.startDate + "T00:00:00.000Z");
+    const endDate = new Date(this.endDate + "T23:59:59.999Z");
+
+    return currentDate >= startDate && currentDate <= endDate;
+  }
 }
