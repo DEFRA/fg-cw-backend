@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
+import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
 import { Workflow } from "../models/workflow.js";
@@ -23,6 +24,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       mockCase.currentStage = "STAGE_1";
       mockCase.caseRef = "CASE-123";
@@ -31,9 +33,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Application approved with conditions",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -55,7 +55,7 @@ describe("updateStageOutcomeUseCase", () => {
         workflow: mockWorkflow,
         actionCode: "APPROVE",
         comment: "Application approved with conditions",
-        createdBy: "user-123",
+        createdBy: mockUser.id,
       });
       expect(update).toHaveBeenCalledWith(mockCase, session);
     });
@@ -65,6 +65,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       mockCase.currentStage = "STAGE_2";
       mockCase.caseRef = "CASE-456";
@@ -73,9 +74,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionCode: "REJECT",
         comment: null,
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -95,7 +94,7 @@ describe("updateStageOutcomeUseCase", () => {
         workflow: mockWorkflow,
         actionCode: "REJECT",
         comment: null,
-        createdBy: "user-123",
+        createdBy: mockUser.id,
       });
     });
 
@@ -104,6 +103,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const previousStage = "STAGE_1";
       const newStage = "STAGE_2";
@@ -115,9 +115,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Moving to next stage",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -137,14 +135,13 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const command = {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -159,7 +156,7 @@ describe("updateStageOutcomeUseCase", () => {
         workflow: mockWorkflow,
         actionCode: "APPROVE",
         comment: "Test comment",
-        createdBy: "user-123",
+        createdBy: mockUser.id,
       });
     });
   });
@@ -172,9 +169,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: "non-existent-case-id",
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: User.createMock(),
       };
 
       findById.mockResolvedValue(null);
@@ -193,11 +188,13 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const command = {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "",
+        user: mockUser,
       };
 
       const validationError = Boom.badRequest(
@@ -227,14 +224,13 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const command = {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       const updateError = new Error("Database update failed");
@@ -258,14 +254,13 @@ describe("updateStageOutcomeUseCase", () => {
       insertMany.mockRejectedValue(false);
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const command = {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -282,14 +277,13 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       const command = {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       const caseError = Boom.badRequest("Cannot progress from this stage");
@@ -316,6 +310,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       mockCase.currentStage = "SPECIFIC_STAGE_CODE";
 
@@ -323,9 +318,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionCode: "specific-action",
         comment: "specific comment text",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);
@@ -352,6 +345,7 @@ describe("updateStageOutcomeUseCase", () => {
       withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
+      const mockUser = User.createMock();
 
       mockCase.workflowCode = "specific-workflow-code";
 
@@ -359,9 +353,7 @@ describe("updateStageOutcomeUseCase", () => {
         caseId: mockCase._id,
         actionCode: "APPROVE",
         comment: "Test comment",
-        user: {
-          id: "user-123",
-        },
+        user: mockUser,
       };
 
       findById.mockResolvedValue(mockCase);

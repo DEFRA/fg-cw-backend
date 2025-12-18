@@ -19,7 +19,6 @@ import { wreck } from "../helpers/wreck.js";
 describe("PATCH /cases/{caseId}/stage/outcome", () => {
   let cases;
   let client;
-  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -33,16 +32,16 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
 
   beforeEach(async () => {
     await createWorkflow();
+  });
 
-    user = await createUser({
+  it("updates stage outcome and transitions to next stage", async () => {
+    const user = await createUser({
       idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
       name: "Test Admin",
       email: "admin@t.gov.uk",
       idpRoles: ["FCP.Casework.Admin"],
     });
-  });
 
-  it("updates stage outcome and transitions to next stage", async () => {
     const kase = await createCase(cases);
 
     await completeTask({
@@ -106,6 +105,13 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("updates stage outcome with optional comment", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const kase = await createCase(cases);
 
     await completeTask({
@@ -131,6 +137,13 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("returns 404 when case does not exist", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const nonExistentCaseId = "507f1f77bcf86cd799439011";
 
     await expect(
@@ -144,6 +157,13 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("returns 400 for invalid case id format", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const invalidCaseId = "invalid-case-id";
 
     await expect(
@@ -156,7 +176,41 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     ).rejects.toThrow("Bad Request");
   });
 
+  it("returns 400 when user does not have access", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Read"],
+      appRoles: {},
+    });
+
+    const kase = await createCase(cases);
+
+    await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    await expect(
+      wreck.patch(`/cases/${kase._id}/stage/outcome`, {
+        payload: {
+          actionCode: "APPROVE",
+          comment: null,
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
   it("returns 404 for invalid action code", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const kase = await createCase(cases);
 
     await completeTask({
@@ -176,6 +230,13 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("returns 400 when action code is missing", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const kase = await createCase(cases);
 
     await expect(
@@ -188,6 +249,13 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   it("returns 412 when updating outcome for case in non-interactive stage", async () => {
+    await createUser({
+      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+      name: "Test Admin",
+      email: "admin@t.gov.uk",
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
     const kase = await createCase(cases);
 
     await expect(
