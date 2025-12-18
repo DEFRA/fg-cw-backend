@@ -57,8 +57,10 @@ describe("createWorkflowRoute", () => {
     });
   });
 
-  it("returns 403 when user is not authorised", async () => {
-    createWorkflowUseCase.mockRejectedValue(Boom.forbidden("Access denied"));
+  it("returns 403 when use-case throws forbidden error", async () => {
+    createWorkflowUseCase.mockRejectedValueOnce(
+      Boom.forbidden("Access denied"),
+    );
 
     const { statusCode, result } = await server.inject({
       method: "POST",
@@ -69,10 +71,15 @@ describe("createWorkflowRoute", () => {
         credentials: {
           user: mockAuthUser,
           raw: {
-            idpRoles: [],
+            idpRoles: [IdpRoles.Admin],
           },
         },
       },
+    });
+
+    expect(createWorkflowUseCase).toHaveBeenCalledWith({
+      ...workflowData1,
+      user: mockAuthUser,
     });
 
     expect(statusCode).toEqual(403);
