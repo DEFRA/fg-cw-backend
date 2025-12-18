@@ -12,7 +12,7 @@ import {
 } from "vitest";
 
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createUser } from "../helpers/users.js";
+import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -57,6 +57,7 @@ describe("POST /cases/{caseId}/page-action", () => {
 
     await new Promise((resolve) => externalAction.listen(5666, resolve));
 
+    await createAdminUser();
     await createWorkflow({
       externalActions: [
         {
@@ -89,13 +90,6 @@ describe("POST /cases/{caseId}/page-action", () => {
           method: "POST",
         },
       ],
-    });
-
-    await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
     });
   });
 
