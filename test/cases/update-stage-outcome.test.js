@@ -1,14 +1,6 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
@@ -79,12 +71,9 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       actionCode: "APPROVE",
     });
 
-    await vi.waitFor(async () => {
-      const caseStatusUpdatedEvents = await receiveMessages(
-        env.GAS__SQS__UPDATE_STATUS,
-      );
-
-      expect(caseStatusUpdatedEvents).toEqual([
+    await expect
+      .poll(() => receiveMessages(env.GAS__SQS__UPDATE_STATUS))
+      .toEqual([
         {
           id: expect.any(String),
           traceparent: expect.any(String),
@@ -101,7 +90,6 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
           },
         },
       ]);
-    });
   });
 
   it("updates stage outcome with optional comment", async () => {
