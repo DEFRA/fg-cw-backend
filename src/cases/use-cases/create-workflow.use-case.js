@@ -1,7 +1,9 @@
 import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
-import { Permissions } from "../models/permissions.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { AccessControl } from "../models/access-control.js";
 import { Position } from "../models/position.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
@@ -123,7 +125,7 @@ const createWorkflowTask = (task) =>
     name: task.name,
     mandatory: task.mandatory,
     description: task.description,
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: task.requiredRoles?.allOf,
       anyOf: task.requiredRoles?.anyOf,
     }),
@@ -208,13 +210,18 @@ const createWorkflowPhase = (phase, phases) =>
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
   logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
 
+  AccessControl.authorise(createWorkflowCommand.user, {
+    idpRoles: [IdpRoles.Admin],
+    appRoles: { allOf: [], anyOf: [] },
+  });
+
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
     pages: createWorkflowCommand.pages,
     phases: createWorkflowCommand.phases.map((phase) =>
       createWorkflowPhase(phase, createWorkflowCommand.phases),
     ),
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: createWorkflowCommand.requiredRoles.allOf,
       anyOf: createWorkflowCommand.requiredRoles.anyOf,
     }),

@@ -8,6 +8,7 @@ import {
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findAll } from "../../users/repositories/user.repository.js";
+import { AccessControl } from "../models/access-control.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
 import { findById } from "../repositories/case.repository.js";
@@ -99,9 +100,10 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
         requiredRoles: workflowTaskGroupTask.requiredRoles,
-        canComplete: workflowTaskGroupTask.requiredRoles.isAuthorised(
-          root.user.appRoles,
-        ),
+        canComplete: AccessControl.canAccess(root.user, {
+          idpRoles: [],
+          appRoles: workflowTaskGroupTask.requiredRoles,
+        }),
       };
     }),
   );

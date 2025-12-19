@@ -3,7 +3,7 @@ import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createUser } from "../helpers/users.js";
+import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -22,14 +22,8 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   beforeEach(async () => {
+    await createAdminUser();
     await createWorkflow();
-
-    await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-    });
   });
 
   it("adds a note to a case successfully", async () => {

@@ -197,23 +197,10 @@ describe("findAll", () => {
   });
 
   it("returns a list of users filtered by allAppRoles", async () => {
-    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
+    const allAppRoles = ["ROLE_1", "ROLE_2"];
     const anyAppRoles = [];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: {
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -230,12 +217,12 @@ describe("findAll", () => {
       ...expectedNameFilter,
       $and: [
         {
-          "appRoles.ROLE_RPA_ADMIN": {
+          "appRoles.ROLE_1": {
             $exists: true,
           },
         },
         {
-          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+          "appRoles.ROLE_2": {
             $exists: true,
           },
         },
@@ -245,42 +232,15 @@ describe("findAll", () => {
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: {
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
       }),
     ]);
   });
 
   it("returns a list of users filtered by anyAppRoles", async () => {
     const allAppRoles = [];
-    const anyAppRoles = ["ANY_APP_ROLE"];
+    const anyAppRoles = ["ROLE_3"];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: {
-          ANY_APP_ROLE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -295,39 +255,21 @@ describe("findAll", () => {
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
       ...expectedNameFilter,
-      $or: [{ "appRoles.ANY_APP_ROLE": { $exists: true } }],
+      $or: [{ "appRoles.ROLE_3": { $exists: true } }],
     });
 
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: {
-          ANY_APP_ROLE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
       }),
     ]);
   });
 
   it("returns a list of users filtered by allAppRoles and anyAppRoles", async () => {
-    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
-    const anyAppRoles = ["ANY_APP_ROLE"];
+    const allAppRoles = ["ROLE_1", "ROLE_2"];
+    const anyAppRoles = ["ROLE_3"];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -344,19 +286,19 @@ describe("findAll", () => {
       ...expectedNameFilter,
       $and: [
         {
-          "appRoles.ROLE_RPA_ADMIN": {
+          "appRoles.ROLE_1": {
             $exists: true,
           },
         },
         {
-          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+          "appRoles.ROLE_2": {
             $exists: true,
           },
         },
       ],
       $or: [
         {
-          "appRoles.ANY_APP_ROLE": {
+          "appRoles.ROLE_3": {
             $exists: true,
           },
         },
@@ -366,7 +308,6 @@ describe("findAll", () => {
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
       }),
     ]);
   });
