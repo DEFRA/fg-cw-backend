@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AppRole } from "../../users/models/app-role.js";
 import { User } from "../../users/models/user.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { Case } from "../models/case.js";
@@ -34,18 +35,21 @@ describe("assignUserToCaseUseCase", () => {
 
     const mockUser = User.createMock({
       appRoles: {
-        ROLE_1: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_2: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_3: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
+        ROLE_1: new AppRole({
+          name: "ROLE_1",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
+        ROLE_2: new AppRole({
+          name: "ROLE_2",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
+        ROLE_3: new AppRole({
+          name: "ROLE_3",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
       },
     });
 
@@ -168,18 +172,21 @@ describe("assignUserToCaseUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
       appRoles: {
-        ROLE_1: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_2: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-        ROLE_3: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
+        ROLE_1: new AppRole({
+          name: "ROLE_1",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
+        ROLE_2: new AppRole({
+          name: "ROLE_2",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
+        ROLE_3: new AppRole({
+          name: "ROLE_3",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
       },
     });
     const repositoryError = new Error("Database update failed");
@@ -212,10 +219,11 @@ describe("assignUserToCaseUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const mockUser = User.createMock({
       appRoles: {
-        ROLE_1: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
+        ROLE_1: new AppRole({
+          name: "ROLE_1",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
       },
     });
 
