@@ -216,6 +216,109 @@ describe("User", () => {
     });
   });
 
+  describe("hasActiveRole", () => {
+    it("returns true when user has active role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ACTIVE: new AppRole({
+            name: "ROLE_ACTIVE",
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
+          }),
+        },
+      });
+
+      expect(user.hasActiveRole("ROLE_ACTIVE")).toBe(true);
+    });
+
+    it("returns false when role exists but is not active", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EXPIRED: new AppRole({
+            name: "ROLE_EXPIRED",
+            startDate: "2024-01-01",
+            endDate: "2024-12-31",
+          }),
+        },
+      });
+
+      expect(user.hasActiveRole("ROLE_EXPIRED")).toBe(false);
+    });
+
+    it("returns false when role does not exist", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ACTIVE: new AppRole({
+            name: "ROLE_ACTIVE",
+            startDate: "2025-01-01",
+            endDate: "2025-12-31",
+          }),
+        },
+      });
+
+      expect(user.hasActiveRole("NONEXISTENT_ROLE")).toBe(false);
+    });
+
+    it("returns false when appRoles is undefined", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+      });
+
+      expect(user.hasActiveRole("ANY_ROLE")).toBe(false);
+    });
+
+    it("returns false when appRoles is empty object", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {},
+      });
+
+      expect(user.hasActiveRole("ANY_ROLE")).toBe(false);
+    });
+  });
+
+  describe("hasIdpRole", () => {
+    it("returns true when user has the IDP role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: ["FCP.Casework.ReadWrite", "FCP.Casework.Admin"],
+      });
+
+      expect(user.hasIdpRole("FCP.Casework.ReadWrite")).toBe(true);
+      expect(user.hasIdpRole("FCP.Casework.Admin")).toBe(true);
+    });
+
+    it("returns false when user does not have the IDP role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: ["FCP.Casework.Read"],
+      });
+
+      expect(user.hasIdpRole("FCP.Casework.ReadWrite")).toBe(false);
+      expect(user.hasIdpRole("FCP.Casework.Admin")).toBe(false);
+    });
+
+    it("returns false when idpRoles is undefined", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+      });
+
+      expect(user.hasIdpRole("FCP.Casework.ReadWrite")).toBe(false);
+    });
+
+    it("returns false when idpRoles is empty array", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [],
+      });
+
+      expect(user.hasIdpRole("FCP.Casework.ReadWrite")).toBe(false);
+    });
+  });
+
   describe("assignAppRoles", () => {
     it("updates appRoles and updatedAt timestamp", () => {
       const user = new User({
@@ -294,7 +397,7 @@ describe("User", () => {
       expect(mockUser.name).toBe("Bob Bill");
       expect(mockUser.email).toBe("bob.bill@defra.gov.uk");
       expect(mockUser.idpRoles).toEqual(["FCP.Casework.ReadWrite"]);
-      expect(mockUser.appRoles.ROLE_RPA_CASES_APPROVE).toBeInstanceOf(AppRole);
+      expect(mockUser.appRoles.ROLE_1).toBeInstanceOf(AppRole);
       expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
       expect(mockUser.updatedAt).toBe("2025-01-01T00:00:00.000Z");
     });

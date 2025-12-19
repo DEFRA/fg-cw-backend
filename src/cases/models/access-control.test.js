@@ -1,9 +1,11 @@
 import Boom from "@hapi/boom";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { AppRole } from "../../users/models/app-role.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { AccessControl } from "./access-control.js";
 
 describe("AccessControl", () => {
-  // Mock Date to control current time for role validation
   const mockDate = new Date("2025-07-15T12:00:00.000Z");
 
   beforeAll(() => {
@@ -15,269 +17,619 @@ describe("AccessControl", () => {
     vi.useRealTimers();
   });
 
-  describe("constructor", () => {
-    it("initialises with valid user appRoles", () => {
-      const user = {
+  describe("canAccess", () => {
+    it("returns true when no roles are required", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
-          ROLE_USER: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
-          EXPIRED_ROLE: {
-            startDate: "2025-06-01",
-            endDate: "2025-07-01",
-          },
+          }),
         },
-      };
+      });
 
-      const accessControl = new AccessControl(user);
-
-      // Should only include valid (non-expired) roles
-      expect(accessControl.userAppRoles).toContain("ROLE_ADMIN");
-      expect(accessControl.userAppRoles).toContain("ROLE_USER");
-      expect(accessControl.userAppRoles).not.toContain("EXPIRED_ROLE");
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: { allOf: [], anyOf: [] },
+      });
+      expect(result).toBe(true);
     });
 
-    it("handles empty user object", () => {
-      const accessControl = new AccessControl({});
-      expect(accessControl.userAppRoles).toEqual([]);
+    it("returns true when user has all required app allOf roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+          ROLE_MANAGER: new AppRole({
+            name: "ROLE_MANAGER",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(true);
     });
 
-    it("handles null user object", () => {
-      const accessControl = new AccessControl(null);
-      expect(accessControl.userAppRoles).toEqual([]);
+    it("returns false when user is missing any app allOf role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(false);
     });
 
-    it("handles user without appRoles", () => {
-      const accessControl = new AccessControl({ id: "user123" });
-      expect(accessControl.userAppRoles).toEqual([]);
+    it("returns true when user has any of the required app anyOf roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns false when user has none of the app anyOf roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns true when user has app allOf and anyOf roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN"],
+          anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns false when user has app allOf roles but not anyOf role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+          ROLE_MANAGER: new AppRole({
+            name: "ROLE_MANAGER",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN"],
+          anyOf: ["ROLE_EDITOR"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false when user has app anyOf role but not allOf roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
+          anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false when user has no app roles", () => {
+      const user = new User({ idpId: "test-idp-id" });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
+          anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("handles empty app roles gracefully", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: { allOf: [], anyOf: [] },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns true when user has required IDP role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.ReadWrite],
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          allOf: [],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns true when user has any of the required IDP roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.Read],
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.Read, IdpRoles.ReadWrite, IdpRoles.Admin],
+        appRoles: {
+          allOf: [],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns false when user has no required IDP roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.Read],
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.ReadWrite, IdpRoles.Admin],
+        appRoles: {
+          allOf: [],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns true when user has both required IDP and app roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          ROLE_APPROVE: new AppRole({
+            name: "ROLE_APPROVE",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.ReadWrite, IdpRoles.Admin],
+        appRoles: {
+          allOf: ["ROLE_APPROVE"],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("returns false when user has IDP role but missing app role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          ROLE_VIEW: new AppRole({
+            name: "ROLE_VIEW",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          allOf: ["ROLE_APPROVE"],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false when user has app role but missing IDP role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.Read],
+        appRoles: {
+          ROLE_APPROVE: new AppRole({
+            name: "ROLE_APPROVE",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [IdpRoles.ReadWrite, IdpRoles.Admin],
+        appRoles: {
+          allOf: ["ROLE_APPROVE"],
+          anyOf: [],
+        },
+      });
+      expect(result).toBe(false);
     });
   });
 
-  describe("canAccess", () => {
-    it("returns true when no roles are required", () => {
-      const user = {
+  describe("validation errors", () => {
+    it("throws error when idpRoles is not supplied", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_USER: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({ allOf: [], anyOf: [] });
-      expect(result).toBe(true);
-    });
-
-    it("returns true when user has all required allOf roles", () => {
-      const user = {
-        appRoles: {
-          ROLE_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
-          ROLE_MANAGER: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
-        },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
-        anyOf: [],
       });
-      expect(result).toBe(true);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          appRoles: { allOf: [], anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("idpRoles not supplied"));
     });
 
-    it("returns false when user is missing any allOf role", () => {
-      const user = {
+    it("throws error when idpRoles is null", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
-        anyOf: [],
       });
-      expect(result).toBe(false);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: null,
+          appRoles: { allOf: [], anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("idpRoles not supplied"));
     });
 
-    it("returns true when user has any of the required anyOf roles", () => {
-      const user = {
+    it("throws error when idpRoles is not an array", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_EDITOR: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: [],
-        anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
       });
-      expect(result).toBe(true);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: "not-an-array",
+          appRoles: { allOf: [], anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("idpRoles not supplied"));
     });
 
-    it("returns false when user has none of the anyOf roles", () => {
-      const user = {
+    it("throws error when appRoles.allOf is not supplied", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: [],
-        anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
       });
-      expect(result).toBe(false);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.allOf not supplied"));
     });
 
-    it("returns true when user has allOf and anyOf roles", () => {
-      const user = {
+    it("throws error when appRoles.allOf is null", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
-          ROLE_EDITOR: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN"],
-        anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
       });
-      expect(result).toBe(true);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { allOf: null, anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.allOf not supplied"));
     });
 
-    it("returns false when user has allOf roles but not anyOf role", () => {
-      const user = {
+    it("throws error when appRoles.allOf is not an array", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
-          ROLE_MANAGER: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN"],
-        anyOf: ["ROLE_EDITOR"],
       });
-      expect(result).toBe(false);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { allOf: "not-an-array", anyOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.allOf not supplied"));
     });
 
-    it("returns false when user has anyOf role but not allOf roles", () => {
-      const user = {
+    it("throws error when appRoles.anyOf is not supplied", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
-          ROLE_EDITOR: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
-        anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
       });
-      expect(result).toBe(false);
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { allOf: [] },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.anyOf not supplied"));
     });
 
-    it("returns false when user has no roles", () => {
-      const accessControl = new AccessControl({});
-
-      const result = accessControl.canAccess({
-        allOf: ["ROLE_ADMIN", "ROLE_MANAGER"],
-        anyOf: ["ROLE_EDITOR", "ROLE_REVIEWER"],
-      });
-      expect(result).toBe(false);
-    });
-
-    it("handles undefined requiredRoles gracefully", () => {
-      const user = {
+    it("throws error when appRoles.anyOf is null", () => {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_USER: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
+      });
 
-      const result = accessControl.canAccess({});
-      expect(result).toBe(true);
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { allOf: [], anyOf: null },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.anyOf not supplied"));
+    });
+
+    it("throws error when appRoles.anyOf is not an array", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+          appRoles: { allOf: [], anyOf: "not-an-array" },
+        });
+      }).toThrow(Boom.badImplementation("appRoles.anyOf not supplied"));
+    });
+
+    it("throws error when appRoles object is not supplied", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
+            startDate: "2025-07-01",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      expect(() => {
+        AccessControl.canAccess(user, {
+          idpRoles: [],
+        });
+      }).toThrow(Boom.badImplementation("appRoles.allOf not supplied"));
     });
   });
 
   describe("authorise", () => {
     it("returns true when access is granted", () => {
-      const user = {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_ADMIN: {
+          ROLE_ADMIN: new AppRole({
+            name: "ROLE_ADMIN",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
+      });
 
-      const result = accessControl.authorise({
-        allOf: ["ROLE_ADMIN"],
-        anyOf: [],
+      const result = AccessControl.authorise(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: ["ROLE_ADMIN"],
+          anyOf: [],
+        },
       });
       expect(result).toBe(true);
     });
 
     it("throws Boom.forbidden when access is denied", () => {
-      const user = {
+      const user = new User({
+        idpId: "test-idp-id",
         appRoles: {
-          ROLE_USER: {
+          ROLE_USER: new AppRole({
+            name: "ROLE_USER",
             startDate: "2025-07-01",
             endDate: "2025-08-01",
-          },
+          }),
         },
-      };
-      const accessControl = new AccessControl(user);
+      });
 
       expect(() => {
-        accessControl.authorise({
-          allOf: ["ROLE_ADMIN"],
-          anyOf: [],
+        AccessControl.authorise(user, {
+          idpRoles: [],
+          appRoles: {
+            allOf: ["ROLE_ADMIN"],
+            anyOf: [],
+          },
         });
-      }).toThrow(Boom.forbidden("Access denied"));
+      }).toThrow(
+        Boom.forbidden(
+          `User ${user.id} does not have required roles to perform action`,
+        ),
+      );
+    });
+
+    it("throws Boom.forbidden when user lacks required IDP role", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        idpRoles: [IdpRoles.Read],
+      });
+
+      expect(() => {
+        AccessControl.authorise(user, {
+          idpRoles: [IdpRoles.ReadWrite, IdpRoles.Admin],
+          appRoles: {
+            allOf: [],
+            anyOf: [],
+          },
+        });
+      }).toThrow(
+        Boom.forbidden(
+          `User ${user.id} does not have required roles to perform action`,
+        ),
+      );
     });
   });
 });

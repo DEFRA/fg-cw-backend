@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caseData3Document } from "../fixtures/case.js";
 import createCaseEvent3 from "../fixtures/create-case-event-3.json";
 import { sendMessage } from "../helpers/sqs.js";
+import { createAdminUser } from "../helpers/users.js";
 import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
@@ -22,6 +23,7 @@ afterAll(async () => {
 
 describe("On CreateNewCase event", () => {
   beforeEach(async () => {
+    await createAdminUser();
     await createWorkflow();
   });
 

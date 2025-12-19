@@ -22,9 +22,17 @@ describe("createUserUseCase", () => {
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: {
-        ROLE_RPA_CASES_APPROVE: {
+        ROLE_1: {
           startDate: "2025-07-01",
-          endDate: "2025-08-02",
+          endDate: "2100-01-01",
+        },
+        ROLE_2: {
+          startDate: "2025-07-02",
+          endDate: "2100-01-02",
+        },
+        ROLE_3: {
+          startDate: "2025-07-03",
+          endDate: "2100-01-03",
         },
       },
     });

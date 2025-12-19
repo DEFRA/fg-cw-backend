@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { db } from "../../common/mongo-client.js";
-import { Permissions } from "../models/permissions.js";
 import { Position } from "../models/position.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
@@ -73,7 +73,7 @@ const toWorkflowTask = (t) =>
     name: t.name,
     mandatory: t.mandatory,
     description: t.description,
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: t.requiredRoles?.allOf,
       anyOf: t.requiredRoles?.anyOf,
     }),
@@ -121,7 +121,7 @@ const toWorkflow = (doc) =>
     code: doc.code,
     pages: doc.pages,
     phases: doc.phases.map(toWorkflowPhase),
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: doc.requiredRoles.allOf,
       anyOf: doc.requiredRoles.anyOf,
     }),

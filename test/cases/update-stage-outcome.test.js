@@ -12,7 +12,7 @@ import {
 
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
-import { createUser } from "../helpers/users.js";
+import { createAdminUser, updateUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -32,14 +32,8 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   beforeEach(async () => {
+    user = await createAdminUser();
     await createWorkflow();
-
-    user = await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-    });
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
@@ -154,6 +148,29 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
         },
       }),
     ).rejects.toThrow("Bad Request");
+  });
+
+  it("returns 400 when user does not have access", async () => {
+    await updateUser(user.payload.id, {
+      appRoles: {}, // remove test user app roles so they don't have access
+    });
+
+    const kase = await createCase(cases);
+
+    await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    await expect(
+      wreck.patch(`/cases/${kase._id}/stage/outcome`, {
+        payload: {
+          actionCode: "APPROVE",
+          comment: null,
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 for invalid action code", async () => {

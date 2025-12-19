@@ -1,62 +1,59 @@
 import Boom from "@hapi/boom";
 
 export class AccessControl {
-  constructor(user) {
-    this.userAppRoles = this.#getValidRoles(user?.appRoles || {});
-  }
-
-  authorise(requiredRoles) {
-    if (!this.canAccess(requiredRoles)) {
-      throw Boom.forbidden("Access denied");
+  static authorise(user, requirements) {
+    if (!this.canAccess(user, requirements)) {
+      throw Boom.forbidden(
+        `User ${user.id} does not have required roles to perform action`,
+      );
     }
+
     return true;
   }
 
-  canAccess(requiredRoles) {
-    return (
-      this.#hasAllRequiredRoles(requiredRoles.allOf) &&
-      this.#hasAnyRequiredRole(requiredRoles.anyOf)
-    );
+  static canAccess(user, requirements) {
+    const hasIdpAccess = this.#hasIdpRoles(user, requirements.idpRoles);
+    const hasAppAccess = this.#hasAppRoles(user, requirements.appRoles);
+
+    return hasIdpAccess && hasAppAccess;
   }
 
-  #hasAllRequiredRoles(requiredRoles) {
-    if (!requiredRoles || requiredRoles.length === 0) {
+  static #hasIdpRoles(user, roles) {
+    if (!Array.isArray(roles)) {
+      throw Boom.badImplementation("idpRoles not supplied");
+    }
+
+    if (roles.length === 0) {
       return true;
     }
-    return requiredRoles.every((role) => this.userAppRoles.includes(role));
+
+    return roles.some((role) => user.hasIdpRole(role));
   }
 
-  #hasAnyRequiredRole(requiredRoles) {
-    if (!requiredRoles || requiredRoles.length === 0) {
+  static #hasAppRoles(user, appRoles) {
+    const hasAllOf = this.#hasAllAppRoles(user, appRoles?.allOf);
+    const hasAnyOf = this.#hasAnyAppRole(user, appRoles?.anyOf);
+
+    return hasAllOf && hasAnyOf;
+  }
+
+  static #hasAllAppRoles(user, roles) {
+    if (!Array.isArray(roles)) {
+      throw Boom.badImplementation("appRoles.allOf not supplied");
+    }
+
+    return roles.every((role) => user.hasActiveRole(role));
+  }
+
+  static #hasAnyAppRole(user, roles) {
+    if (!Array.isArray(roles)) {
+      throw Boom.badImplementation("appRoles.anyOf not supplied");
+    }
+
+    if (roles.length === 0) {
       return true;
     }
-    return requiredRoles.some((role) => this.userAppRoles.includes(role));
-  }
 
-  #getValidRoles(appRoles) {
-    const now = new Date();
-    const validRoles = [];
-
-    for (const [roleName, roleData] of Object.entries(appRoles)) {
-      if (this.#isRoleValid(roleData, now)) {
-        validRoles.push(roleName);
-      }
-    }
-
-    return validRoles;
-  }
-
-  #isRoleValid(roleData, currentDate) {
-    if (!roleData.startDate || !roleData.endDate) {
-      return false;
-    }
-
-    const startDateStr = roleData.startDate + "T00:00:00.000Z";
-    const endDateStr = roleData.endDate + "T23:59:59.999Z";
-
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-
-    return currentDate >= startDate && currentDate <= endDate;
+    return roles.some((role) => user.hasActiveRole(role));
   }
 }

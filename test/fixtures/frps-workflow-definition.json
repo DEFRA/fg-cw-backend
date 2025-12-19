@@ -802,7 +802,7 @@
               "name": "Rejected",
               "theme": "ERROR",
               "description": "Application has been rejected",
-              "interactive": true,
+              "interactive": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -1381,7 +1381,7 @@
               "name": "Rejected",
               "theme": "ERROR",
               "description": "Application has been rejected",
-              "interactive": true,
+              "interactive": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",

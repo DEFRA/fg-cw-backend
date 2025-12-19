@@ -1,6 +1,15 @@
 import Boom from "@hapi/boom";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppRole } from "./app-role.js";
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("AppRole", () => {
   describe("constructor", () => {
@@ -166,6 +175,166 @@ describe("AppRole", () => {
       });
 
       expect(() => appRole.validateRole()).not.toThrow();
+    });
+  });
+
+  describe("isActive", () => {
+    it("returns true when current date is within role date range", () => {
+      const role = new AppRole({
+        name: "ROLE_ACTIVE",
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false when current date is before start date", () => {
+      const role = new AppRole({
+        name: "ROLE_FUTURE",
+        startDate: "2026-01-01",
+        endDate: "2026-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("returns false when current date is after end date", () => {
+      const role = new AppRole({
+        name: "ROLE_EXPIRED",
+        startDate: "2024-01-01",
+        endDate: "2024-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("returns true when current date equals start date at midnight", () => {
+      const role = new AppRole({
+        name: "ROLE_START_TODAY",
+        startDate: "2025-01-15",
+        endDate: "2025-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T00:00:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns true when current date equals end date at end of day", () => {
+      const role = new AppRole({
+        name: "ROLE_END_TODAY",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T23:59:59.999Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false when startDate is missing", () => {
+      const role = new AppRole({
+        name: "ROLE_NO_START",
+        endDate: "2025-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("returns false when endDate is missing", () => {
+      const role = new AppRole({
+        name: "ROLE_NO_END",
+        startDate: "2025-01-01",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("returns false when both dates are missing", () => {
+      const role = new AppRole({
+        name: "ROLE_NO_DATES",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("uses current date when no parameter is provided", () => {
+      const role = new AppRole({
+        name: "ROLE_ACTIVE_NOW",
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
+      });
+
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns true for role active just after midnight on start date", () => {
+      const role = new AppRole({
+        name: "ROLE_STARTS_MIDNIGHT",
+        startDate: "2025-01-15",
+        endDate: "2025-12-31",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T00:00:01.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false for role expired just after midnight on day after end date", () => {
+      const role = new AppRole({
+        name: "ROLE_ENDS_MIDNIGHT",
+        startDate: "2025-01-01",
+        endDate: "2025-01-15",
+      });
+
+      vi.setSystemTime(new Date("2025-01-16T00:00:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(false);
+    });
+
+    it("handles single day role correctly", () => {
+      const role = new AppRole({
+        name: "ROLE_ONE_DAY",
+        startDate: "2025-01-15",
+        endDate: "2025-01-16",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T12:00:00.000Z"));
+      expect(role.isActive()).toBe(true);
+
+      vi.setSystemTime(new Date("2025-01-16T12:00:00.000Z"));
+      expect(role.isActive()).toBe(true);
+
+      vi.setSystemTime(new Date("2025-01-14T23:59:59.999Z"));
+      expect(role.isActive()).toBe(false);
+
+      vi.setSystemTime(new Date("2025-01-17T00:00:00.000Z"));
+      expect(role.isActive()).toBe(false);
     });
   });
 });

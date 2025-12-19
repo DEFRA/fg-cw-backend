@@ -1,8 +1,8 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { createPagesMock } from "./create-pages-mock.js";
-import { Permissions } from "./permissions.js";
 import { Position } from "./position.js";
+import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowEndpoint } from "./workflow-endpoint.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 
@@ -135,7 +135,7 @@ export class Workflow {
       code: "workflow-code",
       pages: createPagesMock(),
       phases: [WorkflowPhase.createMock()],
-      requiredRoles: new Permissions({
+      requiredRoles: new RequiredAppRoles({
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
       }),
