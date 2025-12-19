@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caseData1, caseData2 } from "../fixtures/case.js";
+import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -19,6 +20,7 @@ afterAll(async () => {
 
 describe("GET /cases", () => {
   beforeEach(async () => {
+    await createAdminUser();
     await createWorkflow();
   });
 

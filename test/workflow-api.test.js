@@ -1,7 +1,8 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { workflowData1, workflowData2 } from "./fixtures/workflow.js";
+import { createAdminUser } from "./helpers/users.js";
 import { wreck } from "./helpers/wreck.js";
 
 describe("Workflows", () => {
@@ -19,6 +20,10 @@ describe("Workflows", () => {
   });
 
   describe("POST /workflows", () => {
+    beforeEach(async () => {
+      await createAdminUser();
+    });
+
     it("adds a workflow", async () => {
       const payload = { ...workflowData1 };
       const response = await wreck.post("/workflows", {

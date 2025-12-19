@@ -1,6 +1,9 @@
+import Boom from "@hapi/boom";
 import { describe, expect, it, vi } from "vitest";
-import { Permissions } from "../models/permissions.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { Position } from "../models/position.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
@@ -18,8 +21,34 @@ import { createWorkflowUseCase } from "./create-workflow.use-case.js";
 vi.mock("../repositories/workflow.repository.js");
 
 describe("createWorkflowUseCase", () => {
+  const adminUser = User.createMock({
+    id: "admin-user",
+    idpRoles: [IdpRoles.Admin],
+  });
+
+  const nonAdminUser = User.createMock({
+    id: "readwrite-user",
+    idpRoles: [IdpRoles.ReadWrite],
+  });
+
+  it("throws forbidden when user is not admin", async () => {
+    await expect(
+      createWorkflowUseCase({
+        code: "wf-001",
+        user: nonAdminUser,
+      }),
+    ).rejects.toThrow(
+      Boom.forbidden(
+        `User ${nonAdminUser.id} does not have required roles to perform action`,
+      ),
+    );
+
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it("creates a workflow", async () => {
     const workflow = await createWorkflowUseCase({
+      user: adminUser,
       code: "wf-001",
       pages: {
         cases: {
@@ -203,7 +232,7 @@ describe("createWorkflowUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task 1",
-                      requiredRoles: new Permissions({
+                      requiredRoles: new RequiredAppRoles({
                         allOf: [],
                         anyOf: [],
                       }),
@@ -221,7 +250,7 @@ describe("createWorkflowUseCase", () => {
                       name: "Task 2",
                       mandatory: false,
                       description: "Task 2",
-                      requiredRoles: new Permissions({
+                      requiredRoles: new RequiredAppRoles({
                         allOf: ["ROLE_ADMIN"],
                         anyOf: ["ROLE_USER"],
                       }),
@@ -241,7 +270,7 @@ describe("createWorkflowUseCase", () => {
           ],
         }),
       ],
-      requiredRoles: new Permissions({
+      requiredRoles: new RequiredAppRoles({
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
       }),
@@ -275,6 +304,7 @@ describe("createWorkflowUseCase", () => {
     const createTestWorkflow = (transitions) =>
       createWorkflowUseCase({
         code: "test-workflow",
+        user: adminUser,
         pages: { cases: { details: { banner: {}, tabs: {} } } },
         phases: [
           {
@@ -509,6 +539,7 @@ describe("createWorkflowUseCase", () => {
       await expect(
         createWorkflowUseCase({
           code: "test-workflow",
+          user: adminUser,
           pages: { cases: { details: { banner: {}, tabs: {} } } },
           phases: [
             {

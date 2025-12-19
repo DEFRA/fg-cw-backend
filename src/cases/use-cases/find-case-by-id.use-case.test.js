@@ -1,11 +1,12 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
+import { AppRole } from "../../users/models/app-role.js";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
-import { Permissions } from "../models/permissions.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -265,7 +266,7 @@ describe("mapDescription", () => {
 
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
@@ -274,7 +275,7 @@ describe("findCaseByIdUseCase", () => {
     appRoles: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   it("finds case by id", async () => {
     const mockUser = User.createMock();
@@ -428,7 +429,7 @@ describe("findCaseByIdUseCase", () => {
 
     // Set task requiredRoles to have empty arrays (simulating null in database)
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: [],
         anyOf: [],
       });
@@ -453,7 +454,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: ["ROLE_RPA_ADMIN"],
         anyOf: [],
       });
@@ -473,15 +474,25 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    const authenticatedUserWithRoles = {
-      ...mockAuthUser,
+    const authenticatedUserWithRoles = User.createMock({
+      id: mockAuthUser.id,
+      idpId: mockAuthUser.idpId,
+      name: mockAuthUser.name,
+      email: mockAuthUser.email,
+      idpRoles: mockAuthUser.idpRoles,
       appRoles: {
-        ROLE_RPA_ADMIN: true,
+        ROLE_RPA_ADMIN: new AppRole({
+          name: "ROLE_RPA_ADMIN",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
       },
-    };
+      createdAt: mockAuthUser.createdAt,
+      updatedAt: mockAuthUser.updatedAt,
+    });
 
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: ["ROLE_RPA_ADMIN"],
         anyOf: [],
       });
@@ -1233,14 +1244,14 @@ describe("mapWorkflowCommentDef", () => {
 
 describe("beforeContent", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
     email: "test.user@example.com",
     idpRoles: ["user"],
     appRoles: {},
-  };
+  });
 
   it("returns empty array when stage has no beforeContent", async () => {
     const mockUser = User.createMock();

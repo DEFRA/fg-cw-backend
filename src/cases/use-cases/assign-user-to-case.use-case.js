@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
+import { AccessControl } from "../models/access-control.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
@@ -34,7 +35,12 @@ export const assignUserToCaseUseCase = async (command) => {
     findWorkflowByCodeUseCase(kase.workflowCode),
   ]);
 
-  if (!workflow.requiredRoles.isAuthorised(userToAssign.appRoles)) {
+  if (
+    !AccessControl.canAccess(userToAssign, {
+      idpRoles: [],
+      appRoles: workflow.requiredRoles,
+    })
+  ) {
     throw Boom.unauthorized(
       `User with id "${userToAssign.id}" does not have the required permissions to be assigned to this case.`,
     );
