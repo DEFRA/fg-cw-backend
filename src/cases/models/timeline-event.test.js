@@ -124,7 +124,7 @@ describe("TimelineEvent", () => {
             },
           }),
       ).toThrowError(
-        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, TASK_UPDATED, PHASE_COMPLETED, STAGE_COMPLETED, CASE_STATUS_CHANGED, NOTE_ADDED]',
+        'Invalid TimelineEvent: "eventType" must be one of [CASE_CREATED, CASE_ASSIGNED, CASE_UNASSIGNED, TASK_COMPLETED, TASK_UPDATED, PHASE_COMPLETED, STAGE_COMPLETED, CASE_STATUS_CHANGED, NOTE_ADDED, EXTERNAL_ACTION_TRIGGERED]',
       );
     });
   });
@@ -335,6 +335,27 @@ describe("TimelineEvent", () => {
         stageCode: "STC",
         statusCode: "SC",
       });
+      expect(timelineEvent.comment).toBeNull();
+    });
+  });
+
+  describe("createExternalActionTriggered", () => {
+    it("creates an external action triggered event", () => {
+      const props = {
+        actionName: "Run calculations again",
+        createdBy: "64c88faac1f56f71e1b89a33",
+      };
+
+      const timelineEvent = TimelineEvent.createExternalActionTriggered(props);
+
+      expect(timelineEvent.eventType).toBe(
+        EventEnums.eventTypes.EXTERNAL_ACTION_TRIGGERED,
+      );
+      expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
+      expect(timelineEvent.data).toEqual({
+        actionName: "Run calculations again",
+      });
+      expect(timelineEvent.description).toBe("Action - Run calculations again");
       expect(timelineEvent.comment).toBeNull();
     });
   });
