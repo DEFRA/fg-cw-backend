@@ -26,12 +26,14 @@ export const performPageActionRoute = {
   async handler(request, h) {
     const { caseId } = request.params;
     const { actionCode } = request.payload;
+    const { user } = request.auth.credentials;
 
     logger.info(`Performing page action ${actionCode} for case ${caseId}`);
 
     await performPageActionUseCase({
       caseId,
       actionCode,
+      user,
     });
 
     logger.info(

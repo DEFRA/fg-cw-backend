@@ -55,7 +55,7 @@ describe("POST /cases/{caseId}/page-action", () => {
       });
     });
 
-    await new Promise((resolve) => externalAction.listen(5666, resolve));
+    await new Promise((resolve) => externalAction.listen(5666, "0.0.0.0", resolve));
 
     await createAdminUser();
     await createWorkflow({
@@ -125,6 +125,14 @@ describe("POST /cases/{caseId}/page-action", () => {
         },
       },
     ]);
+
+    // Verify timeline event was created for the external action with display: true
+    const timelineEvent = updatedCase.timeline.find(
+      (event) => event.eventType === "EXTERNAL_ACTION_TRIGGERED",
+    );
+    expect(timelineEvent).toBeDefined();
+    expect(timelineEvent.data.actionName).toBe("Perform action");
+    expect(timelineEvent.description).toBe("Action - Perform action");
   });
 
   it("returns 404 when case does not exist", async () => {

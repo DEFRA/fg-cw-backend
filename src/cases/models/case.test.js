@@ -357,6 +357,26 @@ describe("Case", () => {
     });
   });
 
+  describe("addExternalActionTimelineEvent", () => {
+    it("adds external action timeline event", () => {
+      const caseInstance = createTestCase();
+
+      caseInstance.addExternalActionTimelineEvent({
+        actionName: "Run calculations again",
+        createdBy: validUserId,
+      });
+
+      expect(caseInstance.timeline).toHaveLength(1);
+      expect(caseInstance.timeline[0].eventType).toBe(
+        EventEnums.eventTypes.EXTERNAL_ACTION_TRIGGERED,
+      );
+      expect(caseInstance.timeline[0].data.actionName).toBe(
+        "Run calculations again",
+      );
+      expect(caseInstance.timeline[0].createdBy).toBe(validUserId);
+    });
+  });
+
   describe("getUserIds", () => {
     it("returns unique user IDs from assignedUser, timeline, and comments", () => {
       const comment1 = new Comment({
