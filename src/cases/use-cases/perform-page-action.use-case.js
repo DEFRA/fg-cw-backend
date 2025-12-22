@@ -5,7 +5,11 @@ import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 
-export const performPageActionUseCase = async ({ caseId, actionCode }) => {
+export const performPageActionUseCase = async ({
+  caseId,
+  actionCode,
+  user,
+}) => {
   const kase = await loadCase(caseId);
   const workflow = await loadWorkflow(kase.workflowCode);
   const externalAction = validateExternalAction(actionCode, workflow);
@@ -19,13 +23,27 @@ export const performPageActionUseCase = async ({ caseId, actionCode }) => {
     throwOnError: true,
   });
 
-  await storeResponseIfNeeded(
-    kase,
-    externalAction,
-    response,
-    caseId,
-    actionCode,
-  );
+  let caseUpdated = false;
+
+  if (shouldStoreResponse(externalAction, response)) {
+    storeResponseInSupplementaryData(kase, externalAction, response);
+    caseUpdated = true;
+    logger.debug(
+      `Successfully stored response in supplementaryData for action: ${actionCode} for case: ${caseId}`,
+    );
+  }
+
+  if (externalAction.display === true) {
+    kase.addExternalActionTimelineEvent({
+      actionName: externalAction.name,
+      createdBy: user.id,
+    });
+    caseUpdated = true;
+  }
+
+  if (caseUpdated) {
+    await update(kase);
+  }
 
   logger.info(
     `Finished: Performing page action: ${actionCode} for case: ${caseId}`,
@@ -62,22 +80,6 @@ const validateExternalAction = (actionCode, workflow) => {
   }
 
   return externalAction;
-};
-
-const storeResponseIfNeeded = async (
-  kase,
-  externalAction,
-  response,
-  caseId,
-  actionCode,
-) => {
-  if (shouldStoreResponse(externalAction, response)) {
-    storeResponseInSupplementaryData(kase, externalAction, response);
-    await update(kase);
-    logger.debug(
-      `Successfully stored response in supplementaryData for action: ${actionCode} for case: ${caseId}`,
-    );
-  }
 };
 
 const shouldStoreResponse = (externalAction, response) => {

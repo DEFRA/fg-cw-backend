@@ -121,6 +121,15 @@ export class TimelineEvent {
       createdBy,
     });
   }
+
+  static createExternalActionTriggered({ actionName, createdBy }) {
+    return TimelineEvent.create({
+      eventType: EventEnums.eventTypes.EXTERNAL_ACTION_TRIGGERED,
+      data: { actionName },
+      description: `Action - ${actionName}`,
+      createdBy,
+    });
+  }
 }
 
 export const toTimelineEvents = (timelineEventDocs, comments) => {
