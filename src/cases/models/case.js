@@ -143,6 +143,14 @@ export class Case {
     return timelineEvent.comment;
   }
 
+  addExternalActionTimelineEvent({ actionName, createdBy }) {
+    const timelineEvent = TimelineEvent.createExternalActionTriggered({
+      actionName,
+      createdBy,
+    });
+    this.#addTimelineEvent(timelineEvent);
+  }
+
   getSupplementaryDataNode(targetNode, dataType) {
     if (this.supplementaryData[targetNode]) {
       return this.supplementaryData[targetNode];

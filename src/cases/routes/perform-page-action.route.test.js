@@ -41,12 +41,19 @@ describe("performPageActionRoute", () => {
       response: vi.fn().mockReturnValue(mockResponse),
     };
 
+    const mockUser = { id: "user-123" };
+
     const mockRequest = {
       params: {
         caseId: "64c88faac1f56f71e1b89a33",
       },
       payload: {
         actionCode: "TEST_ACTION",
+      },
+      auth: {
+        credentials: {
+          user: mockUser,
+        },
       },
     };
 
@@ -57,6 +64,7 @@ describe("performPageActionRoute", () => {
     expect(performPageActionUseCase).toHaveBeenCalledWith({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "TEST_ACTION",
+      user: mockUser,
     });
     expect(mockH.response).toHaveBeenCalled();
     expect(mockResponse.code).toHaveBeenCalledWith(204);
@@ -72,12 +80,19 @@ describe("performPageActionRoute", () => {
       response: vi.fn().mockReturnValue(mockResponse),
     };
 
+    const mockUser = { id: "user-456" };
+
     const mockRequest = {
       params: {
         caseId: "64c88faac1f56f71e1b89a33",
       },
       payload: {
         actionCode: "RECALCULATE_RULES",
+      },
+      auth: {
+        credentials: {
+          user: mockUser,
+        },
       },
     };
 
@@ -88,6 +103,7 @@ describe("performPageActionRoute", () => {
     expect(performPageActionUseCase).toHaveBeenCalledWith({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "RECALCULATE_RULES",
+      user: mockUser,
     });
     expect(mockResponse.code).toHaveBeenCalledWith(204);
   });
@@ -97,12 +113,19 @@ describe("performPageActionRoute", () => {
       response: vi.fn(),
     };
 
+    const mockUser = { id: "user-123" };
+
     const mockRequest = {
       params: {
         caseId: "64c88faac1f56f71e1b89a33",
       },
       payload: {
         actionCode: "INVALID_ACTION",
+      },
+      auth: {
+        credentials: {
+          user: mockUser,
+        },
       },
     };
 
