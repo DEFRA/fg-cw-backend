@@ -155,17 +155,17 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     ).rejects.toThrow("Bad Request");
   });
 
-  it("returns 400 when user does not have access", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {}, // remove test user app roles so they don't have access
-    });
-
+  it("returns 403 when user does not have access", async () => {
     const kase = await createCase(cases);
 
     await completeTask({
       caseId: kase._id,
       taskGroupCode: "APPLICATION_RECEIPT_TASKS",
       taskCode: "SIMPLE_REVIEW",
+    });
+
+    await updateUser(user.payload.id, {
+      appRoles: {}, // remove test user app roles so they don't have access
     });
 
     await expect(
