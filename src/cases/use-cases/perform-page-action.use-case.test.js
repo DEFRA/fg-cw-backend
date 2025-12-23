@@ -20,6 +20,8 @@ vi.mock("../../common/logger.js", () => ({
 }));
 
 describe("performPageActionUseCase", () => {
+  const mockUser = { id: "user-123" };
+
   const createMockCase = () => ({
     _id: "64c88faac1f56f71e1b89a33",
     caseRef: "REF-001",
@@ -30,6 +32,7 @@ describe("performPageActionUseCase", () => {
       ],
     },
     updateSupplementaryData: vi.fn(),
+    addExternalActionTimelineEvent: vi.fn(),
   });
 
   const createMockWorkflow = () => {
@@ -38,7 +41,8 @@ describe("performPageActionUseCase", () => {
       externalActions: [
         {
           code: "RECALCULATE_RULES",
-          name: "Recalculate Rules",
+          name: "Run calculations again",
+          display: true,
           endpoint: {
             code: "RECALCULATE_RULES_ENDPOINT",
             endpointParams: {
@@ -58,6 +62,7 @@ describe("performPageActionUseCase", () => {
         {
           code: "FETCH_RULES",
           name: "Fetch Rules",
+          display: false,
           endpoint: {
             code: "FETCH_RULES_ENDPOINT",
             endpointParams: {
@@ -80,7 +85,7 @@ describe("performPageActionUseCase", () => {
     });
   };
 
-  it("should perform action and store response when target is defined", async () => {
+  it("should perform action, store response and add timeline event when target is defined and display is true", async () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
     const mockResponse = {
@@ -102,6 +107,7 @@ describe("performPageActionUseCase", () => {
     const result = await performPageActionUseCase({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "RECALCULATE_RULES",
+      user: mockUser,
     });
 
     expect(result).toEqual(mockResponse);
@@ -118,10 +124,14 @@ describe("performPageActionUseCase", () => {
       key: undefined,
       data: mockResponse,
     });
+    expect(mockCase.addExternalActionTimelineEvent).toHaveBeenCalledWith({
+      actionName: "Run calculations again",
+      createdBy: "user-123",
+    });
     expect(update).toHaveBeenCalledWith(mockCase);
   });
 
-  it("should perform action but not store when target is null", async () => {
+  it("should perform action but not store or add timeline event when target is null and display is false", async () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
     const mockResponse = {
@@ -141,14 +151,16 @@ describe("performPageActionUseCase", () => {
     const result = await performPageActionUseCase({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "FETCH_RULES",
+      user: mockUser,
     });
 
     expect(result).toEqual(mockResponse);
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
+    expect(mockCase.addExternalActionTimelineEvent).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("should not store when response is empty", async () => {
+  it("should add timeline event but not store response when response is empty", async () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
     const mockResponse = {};
@@ -160,18 +172,24 @@ describe("performPageActionUseCase", () => {
       ...mockCase,
       workflow: mockWorkflow,
     });
+    update.mockResolvedValue(mockCase);
 
     const result = await performPageActionUseCase({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "RECALCULATE_RULES",
+      user: mockUser,
     });
 
     expect(result).toEqual(mockResponse);
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
+    expect(mockCase.addExternalActionTimelineEvent).toHaveBeenCalledWith({
+      actionName: "Run calculations again",
+      createdBy: "user-123",
+    });
+    expect(update).toHaveBeenCalledWith(mockCase);
   });
 
-  it("should not store when response is null", async () => {
+  it("should add timeline event even if response is null", async () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
     const mockResponse = null;
@@ -183,15 +201,21 @@ describe("performPageActionUseCase", () => {
       ...mockCase,
       workflow: mockWorkflow,
     });
+    update.mockResolvedValue(mockCase);
 
     const result = await performPageActionUseCase({
       caseId: "64c88faac1f56f71e1b89a33",
       actionCode: "RECALCULATE_RULES",
+      user: mockUser,
     });
 
     expect(result).toBeNull();
     expect(mockCase.updateSupplementaryData).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
+    expect(mockCase.addExternalActionTimelineEvent).toHaveBeenCalledWith({
+      actionName: "Run calculations again",
+      createdBy: "user-123",
+    });
+    expect(update).toHaveBeenCalledWith(mockCase);
   });
 
   it("should throw error when case is not found", async () => {
@@ -201,6 +225,7 @@ describe("performPageActionUseCase", () => {
       performPageActionUseCase({
         caseId: "64c88faac1f56f71e1b89a33",
         actionCode: "RECALCULATE_RULES",
+        user: mockUser,
       }),
     ).rejects.toThrow("Case not found: 64c88faac1f56f71e1b89a33");
   });
@@ -214,6 +239,7 @@ describe("performPageActionUseCase", () => {
       performPageActionUseCase({
         caseId: "64c88faac1f56f71e1b89a33",
         actionCode: "RECALCULATE_RULES",
+        user: mockUser,
       }),
     ).rejects.toThrow("Workflow not found: FRPS");
   });
@@ -228,6 +254,7 @@ describe("performPageActionUseCase", () => {
       performPageActionUseCase({
         caseId: "64c88faac1f56f71e1b89a33",
         actionCode: "NONEXISTENT_ACTION",
+        user: mockUser,
       }),
     ).rejects.toThrow("External action not found: NONEXISTENT_ACTION");
   });
