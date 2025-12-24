@@ -10,6 +10,7 @@ import {
   vi,
 } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
 import { createAdminUser, updateUser } from "../helpers/users.js";
@@ -34,6 +35,10 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   beforeEach(async () => {
     user = await createAdminUser();
     await createWorkflow();
+
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.ReadWrite],
+    });
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
@@ -150,17 +155,17 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     ).rejects.toThrow("Bad Request");
   });
 
-  it("returns 400 when user does not have access", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {}, // remove test user app roles so they don't have access
-    });
-
+  it("returns 403 when user does not have access", async () => {
     const kase = await createCase(cases);
 
     await completeTask({
       caseId: kase._id,
       taskGroupCode: "APPLICATION_RECEIPT_TASKS",
       taskCode: "SIMPLE_REVIEW",
+    });
+
+    await updateUser(user.payload.id, {
+      appRoles: {}, // remove test user app roles so they don't have access
     });
 
     await expect(

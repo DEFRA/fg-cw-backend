@@ -2,14 +2,16 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser } from "../helpers/users.js";
+import { createAdminUser, updateUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
 describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status", () => {
   let cases;
   let client;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -22,8 +24,12 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
   });
 
   beforeEach(async () => {
-    await createAdminUser();
+    user = await createAdminUser();
     await createWorkflow();
+
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.ReadWrite],
+    });
   });
 
   it("updates task status successfully", async () => {
@@ -66,6 +72,38 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     const comment = updatedCase.comments[0];
 
     expect(comment.text).toEqual("Task reviewed and approved");
+  });
+
+  it("returns 403 when user does not have ReadWrite role", async () => {
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.Read],
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when user does not have required task roles", async () => {
+    await updateUser(user.payload.id, {
+      appRoles: {},
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 when case does not exist", async () => {

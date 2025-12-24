@@ -1,5 +1,8 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
+import { AppRole } from "../../users/models/app-role.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
@@ -19,17 +22,10 @@ vi.mock("./find-case-by-id.use-case.js");
 vi.mock("../repositories/workflow.repository.js");
 
 describe("updateTaskStatusUseCase", () => {
-  const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
-    id: authenticatedUserId,
-    idpId: new ObjectId().toHexString(),
-    name: "Test User",
-    email: "test.user@example.com",
-    idpRoles: ["user"],
-    appRoles: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  const mockAuthUser = User.createMock({
+    id: new ObjectId().toHexString(),
+    idpRoles: [IdpRoles.ReadWrite],
+  });
 
   it("throws if comment payload is not provided but required", () => {
     expect(() => validatePayloadComment(undefined, true)).toThrowError();
@@ -84,6 +80,104 @@ describe("updateTaskStatusUseCase", () => {
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.status).toBe("STATUS_OPTION_1");
     expect(task.commentRef).toBeDefined();
+    expect(update).toHaveBeenCalledWith(kase);
+  });
+
+  it("throws forbidden when user does not have ReadWrite role", async () => {
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    kase.workflowCode = workflow.code;
+
+    findByCode.mockResolvedValue(workflow);
+    findById.mockResolvedValue(kase);
+
+    const user = User.createMock({
+      id: "test-user-id",
+      idpRoles: [IdpRoles.Read],
+    });
+
+    await expect(() =>
+      updateTaskStatusUseCase({
+        caseId: kase._id,
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        status: "STATUS_OPTION_1",
+        completed: true,
+        comment: "This is a note/comment",
+        user,
+      }),
+    ).rejects.toThrow(
+      `User ${user.id} does not have required roles to perform action`,
+    );
+  });
+
+  it("throws forbidden when user does not have required task roles", async () => {
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    kase.workflowCode = workflow.code;
+
+    findByCode.mockResolvedValue(workflow);
+    findById.mockResolvedValue(kase);
+
+    const user = User.createMock({
+      id: "test-user-id",
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: {
+        ROLE_1: new AppRole({
+          name: "ROLE_1",
+          startDate: "2025-07-01",
+          endDate: "2100-01-01",
+        }),
+      },
+    });
+
+    await expect(() =>
+      updateTaskStatusUseCase({
+        caseId: kase._id,
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        status: "STATUS_OPTION_1",
+        completed: true,
+        comment: "This is a note/comment",
+        user,
+      }),
+    ).rejects.toThrow(
+      `User ${user.id} does not have required roles to perform action`,
+    );
+  });
+
+  it("allows task update when task requiredRoles is null", async () => {
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    kase.workflowCode = workflow.code;
+
+    workflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles = null;
+
+    findByCode.mockResolvedValue(workflow);
+    findById.mockResolvedValue(kase);
+
+    const user = User.createMock({
+      id: new ObjectId().toHexString(),
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: {},
+    });
+
+    await updateTaskStatusUseCase({
+      caseId: kase._id,
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+      status: "STATUS_OPTION_1",
+      completed: true,
+      comment: "This is a note/comment",
+      user,
+    });
+
     expect(update).toHaveBeenCalledWith(kase);
   });
 
