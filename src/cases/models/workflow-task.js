@@ -20,6 +20,15 @@ export class WorkflowTask {
     this.requiredRoles = value.requiredRoles;
     this.comment = value.comment;
   }
+
+  getRequiredRoles() {
+    return (
+      this.requiredRoles ?? {
+        allOf: [],
+        anyOf: [],
+      }
+    );
+  }
 }
 
 WorkflowTask.validationSchema = Joi.object({
