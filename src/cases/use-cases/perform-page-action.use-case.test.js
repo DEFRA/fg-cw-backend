@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
+import { AppRole } from "../../users/models/app-role.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -20,7 +23,10 @@ vi.mock("../../common/logger.js", () => ({
 }));
 
 describe("performPageActionUseCase", () => {
-  const mockUser = { id: "user-123" };
+  const mockUser = User.createMock({
+    id: "user-123",
+    idpRoles: [IdpRoles.ReadWrite],
+  });
 
   const createMockCase = () => ({
     _id: "64c88faac1f56f71e1b89a33",
@@ -35,10 +41,13 @@ describe("performPageActionUseCase", () => {
     addExternalActionTimelineEvent: vi.fn(),
   });
 
-  const createMockWorkflow = () => {
+  const createMockWorkflow = (overrides = {}) => {
+    const { externalActions, endpoints, ...restOverrides } = overrides;
+
     return Workflow.createMock({
       code: "FRPS",
-      externalActions: [
+      ...restOverrides,
+      externalActions: externalActions ?? [
         {
           code: "RECALCULATE_RULES",
           name: "Run calculations again",
@@ -74,7 +83,7 @@ describe("performPageActionUseCase", () => {
           target: null,
         },
       ],
-      endpoints: [
+      endpoints: endpoints ?? [
         {
           code: "RECALCULATE_RULES_ENDPOINT",
           service: "RULES_ENGINE",
@@ -84,6 +93,63 @@ describe("performPageActionUseCase", () => {
       ],
     });
   };
+
+  it("throws forbidden when user does not have ReadWrite role", async () => {
+    const user = User.createMock({
+      id: "user-123",
+      idpRoles: [IdpRoles.Read],
+    });
+
+    const mockCase = createMockCase();
+    const mockWorkflow = createMockWorkflow();
+
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+
+    await expect(
+      performPageActionUseCase({
+        caseId: "64c88faac1f56f71e1b89a33",
+        actionCode: "RECALCULATE_RULES",
+        user,
+      }),
+    ).rejects.toThrow(
+      `User ${user.id} does not have required roles to perform action`,
+    );
+
+    expect(externalActionUseCase).not.toHaveBeenCalled();
+  });
+
+  it("throws forbidden when user does not have required workflow roles", async () => {
+    const user = User.createMock({
+      id: "user-123",
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: {
+        ROLE_1: new AppRole({
+          name: "ROLE_1",
+          startDate: "2025-07-01",
+          endDate: "2100-01-01",
+        }),
+      },
+    });
+
+    const mockCase = createMockCase();
+    const mockWorkflow = createMockWorkflow();
+
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(mockWorkflow);
+
+    await expect(
+      performPageActionUseCase({
+        caseId: "64c88faac1f56f71e1b89a33",
+        actionCode: "RECALCULATE_RULES",
+        user,
+      }),
+    ).rejects.toThrow(
+      `User ${user.id} does not have required roles to perform action`,
+    );
+
+    expect(externalActionUseCase).not.toHaveBeenCalled();
+  });
 
   it("should perform action, store response and add timeline event when target is defined and display is true", async () => {
     const mockCase = createMockCase();
