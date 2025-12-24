@@ -162,7 +162,7 @@ export const mapWorkflowCommentDef = (workflowTask) => {
   const DEFAULT_COMMENT = {
     label: "Explain this outcome",
     helpText: "You must include an explanation for auditing purposes.",
-    mandatory: false,
+    mandatory: true,
   };
 
   return workflowTask?.comment
