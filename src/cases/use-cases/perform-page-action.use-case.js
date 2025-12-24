@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { AccessControl } from "../models/access-control.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
@@ -12,8 +14,18 @@ export const performPageActionUseCase = async ({
 }) => {
   const kase = await loadCase(caseId);
   const workflow = await loadWorkflow(kase.workflowCode);
+
+  AccessControl.authorise(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: workflow.requiredRoles,
+  });
+
   const externalAction = validateExternalAction(actionCode, workflow);
-  const caseWorkflowContext = createCaseWorkflowContext({ kase, workflow });
+  const caseWorkflowContext = createCaseWorkflowContext({
+    kase,
+    workflow,
+    user,
+  });
 
   logger.info(`Performing page action: ${actionCode} for case: ${caseId}`);
 

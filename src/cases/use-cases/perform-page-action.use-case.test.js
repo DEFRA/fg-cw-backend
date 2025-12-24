@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
+import { User } from "../../users/models/user.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -20,7 +21,9 @@ vi.mock("../../common/logger.js", () => ({
 }));
 
 describe("performPageActionUseCase", () => {
-  const mockUser = { id: "user-123" };
+  const mockUser = User.createMock({
+    id: "user-123",
+  });
 
   const createMockCase = () => ({
     _id: "64c88faac1f56f71e1b89a33",

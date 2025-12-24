@@ -2,12 +2,17 @@ import Boom from "@hapi/boom";
 import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { logger } from "../../common/logger.js";
 import { extractEndpointParameters } from "../../common/parameter-resolver.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { AccessControl } from "../models/access-control.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 
 export const externalActionUseCase = async ({
   actionCode,
   caseWorkflowContext,
   throwOnError = false,
 }) => {
+  authoriseExternalAction(caseWorkflowContext);
+
   try {
     return await executeAction({
       actionCode,
@@ -21,6 +26,14 @@ export const externalActionUseCase = async ({
 
     return {};
   }
+};
+
+const authoriseExternalAction = (caseWorkflowContext) => {
+  AccessControl.authorise(caseWorkflowContext.user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles:
+      caseWorkflowContext.workflow.requiredRoles ?? RequiredAppRoles.None,
+  });
 };
 
 const validateAction = (actionCode, workflow) => {

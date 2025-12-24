@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
+import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -576,6 +577,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "land-grants" },
         query: {},
+        user: User.createMock(),
       });
 
       expect(result.caseId).toBe("test-case-id");
@@ -691,6 +693,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "test-tab" },
         query: {},
+        user: User.createMock(),
       });
 
       // Should handle gracefully when externalActions doesn't exist
@@ -743,6 +746,7 @@ describe("buildCaseDetailsTabUseCase", () => {
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "test-tab" },
         query: {},
+        user: User.createMock(),
       });
 
       // Should handle gracefully when actionCode is not a string
