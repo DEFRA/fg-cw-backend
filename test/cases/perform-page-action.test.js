@@ -11,8 +11,9 @@ import {
   it,
 } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser } from "../helpers/users.js";
+import { createAdminUser, updateUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -20,6 +21,7 @@ describe("POST /cases/{caseId}/page-action", () => {
   let cases;
   let client;
   let externalAction;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -55,9 +57,11 @@ describe("POST /cases/{caseId}/page-action", () => {
       });
     });
 
-    await new Promise((resolve) => externalAction.listen(5666, "0.0.0.0", resolve));
+    await new Promise((resolve) =>
+      externalAction.listen(5666, "0.0.0.0", resolve),
+    );
 
-    await createAdminUser();
+    user = await createAdminUser();
     await createWorkflow({
       externalActions: [
         {
@@ -90,6 +94,11 @@ describe("POST /cases/{caseId}/page-action", () => {
           method: "POST",
         },
       ],
+    });
+
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: user.payload.appRoles,
     });
   });
 

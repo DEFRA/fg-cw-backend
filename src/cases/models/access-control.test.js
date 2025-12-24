@@ -18,6 +18,14 @@ describe("AccessControl", () => {
   });
 
   describe("canAccess", () => {
+    it("returns false when user is missing", () => {
+      const result = AccessControl.canAccess(null, {
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: { allOf: [], anyOf: [] },
+      });
+      expect(result).toBe(false);
+    });
+
     it("returns true when no roles are required", () => {
       const user = new User({
         idpId: "test-idp-id",
@@ -562,6 +570,18 @@ describe("AccessControl", () => {
   });
 
   describe("authorise", () => {
+    it("throws Boom.badImplementation when user is missing", () => {
+      expect(() => {
+        AccessControl.authorise(null, {
+          idpRoles: [IdpRoles.ReadWrite],
+          appRoles: {
+            allOf: [],
+            anyOf: [],
+          },
+        });
+      }).toThrow(Boom.badImplementation("user not supplied"));
+    });
+
     it("returns true when access is granted", () => {
       const user = new User({
         idpId: "test-idp-id",
