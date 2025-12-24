@@ -371,7 +371,7 @@ describe("findCaseByIdUseCase", () => {
                   helpText:
                     "You must include an explanation for auditing purposes.",
                   label: "Explain this outcome",
-                  mandatory: false,
+                  mandatory: true,
                 },
                 description: [
                   {
@@ -1141,7 +1141,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1171,7 +1171,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1181,7 +1181,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1199,7 +1199,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Custom Label",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1235,7 +1235,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 });
