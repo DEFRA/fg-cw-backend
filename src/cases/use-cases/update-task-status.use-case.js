@@ -1,5 +1,7 @@
 import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { AccessControl } from "../models/access-control.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -39,6 +41,12 @@ export const updateTaskStatusUseCase = async (command) => {
     taskGroupCode,
     taskCode,
   });
+
+  AccessControl.authorise(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: task.getRequiredRoles(),
+  });
+
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
   const taskCompleted = mapCompleted({ task, status, completed });
