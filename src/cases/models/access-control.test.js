@@ -18,6 +18,15 @@ describe("AccessControl", () => {
   });
 
   describe("canAccess", () => {
+    it("returns false when user is missing", () => {
+      const result = AccessControl.canAccess(null, {
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: { allOf: [], anyOf: [] },
+      });
+
+      expect(result).toBe(false);
+    });
+
     it("returns true when no roles are required", () => {
       const user = new User({
         idpId: "test-idp-id",

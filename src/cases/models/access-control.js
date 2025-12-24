@@ -12,6 +12,10 @@ export class AccessControl {
   }
 
   static canAccess(user, requirements) {
+    if (!user) {
+      return false;
+    }
+
     const hasIdpAccess = this.#hasIdpRoles(user, requirements.idpRoles);
     const hasAppAccess = this.#hasAppRoles(user, requirements.appRoles);
 
