@@ -1,6 +1,7 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { appRoles } from "../../../test/helpers/appRoles.js";
+import { IdpRoles } from "../models/idp-roles.js";
 import { User } from "../models/user.js";
 import { createUserRequestSchema } from "../schemas/requests/create-user-request.schema.js";
 import { createUserUseCase } from "../use-cases/create-user.use-case.js";
@@ -9,6 +10,12 @@ import { createUserRoute } from "./create-user.route.js";
 vi.mock("../use-cases/create-user.use-case.js");
 
 describe("createUserRoute", () => {
+  const mockAuthUser = {
+    id: "user-123",
+    idpRoles: [IdpRoles.Admin],
+    appRoles: {},
+  };
+
   let server;
 
   beforeAll(async () => {
@@ -41,6 +48,15 @@ describe("createUserRoute", () => {
           },
         },
       },
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+          raw: {
+            idpRoles: [IdpRoles.Admin],
+          },
+        },
+      },
     });
 
     expect(statusCode).toEqual(201);
@@ -53,6 +69,7 @@ describe("createUserRoute", () => {
       email: "john.doe@defra.co.uk",
       idpRoles: ["defra-idp"],
       appRoles,
+      user: mockAuthUser,
     });
   });
 

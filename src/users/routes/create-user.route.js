@@ -18,8 +18,9 @@ export const createUserRoute = {
   },
   async handler(request, h) {
     logger.info(`Creating user: ${request.payload.name}`);
-    const user = await createUserUseCase(request.payload);
+    const { user } = request.auth.credentials;
+    const createdUser = await createUserUseCase({ ...request.payload, user });
     logger.info(`Finished: Creating user: ${request.payload.name}`);
-    return h.response(user).code(201);
+    return h.response(createdUser).code(201);
   },
 };

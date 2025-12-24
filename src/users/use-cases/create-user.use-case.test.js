@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { IdpRoles } from "../models/idp-roles.js";
 import { User } from "../models/user.js";
 import { save } from "../repositories/user.repository.js";
 import { createUserUseCase } from "./create-user.use-case.js";
@@ -16,7 +17,12 @@ describe("createUserUseCase", () => {
   });
 
   it("creates a user", async () => {
+    const authenticatedUser = User.createMock({
+      idpRoles: [IdpRoles.Admin],
+    });
+
     const user = await createUserUseCase({
+      user: authenticatedUser,
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
@@ -44,5 +50,26 @@ describe("createUserUseCase", () => {
         id: expect.any(String),
       }),
     );
+  });
+
+  it("throws 403 when user does not have Admin role", async () => {
+    const authenticatedUser = User.createMock({
+      idpRoles: ["FCP.Casework.ReadWrite"],
+    });
+
+    try {
+      await createUserUseCase({
+        user: authenticatedUser,
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Bob Bill",
+        email: "bob.bill@defra.gov.uk",
+        idpRoles: ["FCP.Casework.ReadWrite"],
+        appRoles: {},
+      });
+      expect.fail("Expected error to be thrown");
+    } catch (error) {
+      expect(error.isBoom).toBe(true);
+      expect(error.output.statusCode).toBe(403);
+    }
   });
 });
