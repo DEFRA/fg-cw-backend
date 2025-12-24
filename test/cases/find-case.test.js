@@ -85,7 +85,7 @@ describe("GET /cases/{caseId}", () => {
                   helpText:
                     "You must include an explanation for auditing purposes.",
                   label: "Explain this outcome",
-                  mandatory: false,
+                  mandatory: true,
                 },
                 commentRef: null,
                 updatedAt: null,
