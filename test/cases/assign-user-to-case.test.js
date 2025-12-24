@@ -2,18 +2,20 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import {
   assignUserToCase,
   createCase,
   findCaseById,
 } from "../helpers/cases.js";
-import { createAdminUser, createUser } from "../helpers/users.js";
+import { createAdminUser, createUser, updateUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
 describe("PATCH /cases/{caseId}/assigned-user", () => {
   let cases;
 
   let client;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -26,8 +28,13 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
   });
 
   beforeEach(async () => {
-    await createAdminUser();
+    user = await createAdminUser();
     await createWorkflow();
+
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: user.payload.appRoles,
+    });
   });
 
   it("assigns a user to a case", async () => {
@@ -51,6 +58,32 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     expect(findCaseByIdResponse.assignedUser).toEqual({
       id: createUserResponse.payload.id,
     });
+  });
+
+  it("returns 403 when actor does not have ReadWrite role", async () => {
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.Read],
+    });
+
+    const createUserResponse = await createUser();
+    const kase = await createCase(cases);
+
+    await expect(
+      assignUserToCase(kase._id, createUserResponse.payload.id),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when actor does not have required workflow roles", async () => {
+    await updateUser(user.payload.id, {
+      appRoles: {},
+    });
+
+    const createUserResponse = await createUser();
+    const kase = await createCase(cases);
+
+    await expect(
+      assignUserToCase(kase._id, createUserResponse.payload.id),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 not found when case does not exist", async () => {
