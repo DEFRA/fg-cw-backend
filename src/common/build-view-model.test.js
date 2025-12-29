@@ -8,15 +8,22 @@ import {
 } from "./build-view-model.js";
 
 describe("buildViewModel", () => {
+  // Links are sorted by index, so this array reflects the sorted order
   const knownLinks = [
-    { id: "tasks", href: "/cases/case-123", text: "Tasks" },
+    { id: "tasks", href: "/cases/case-123", text: "Tasks", index: 0 },
     {
       id: "case-details",
       href: "/cases/case-123/case-details",
       text: "Application",
+      index: 1,
     },
-    { id: "notes", href: "/cases/case-123/notes", text: "Notes" },
-    { id: "timeline", href: "/cases/case-123/timeline", text: "Timeline" },
+    {
+      id: "timeline",
+      href: "/cases/case-123/timeline",
+      text: "Timeline",
+      index: 3,
+    },
+    { id: "notes", href: "/cases/case-123/notes", text: "Notes", index: 4 },
   ];
 
   describe("createRootContext", () => {

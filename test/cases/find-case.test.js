@@ -147,22 +147,26 @@ describe("GET /cases/{caseId}", () => {
         {
           href: `/cases/${caseId}`,
           id: "tasks",
+          index: 0,
           text: "Tasks",
         },
         {
           href: `/cases/${caseId}/case-details`,
           id: "case-details",
+          index: 1,
           text: "Application",
-        },
-        {
-          href: `/cases/${caseId}/notes`,
-          id: "notes",
-          text: "Notes",
         },
         {
           href: `/cases/${caseId}/timeline`,
           id: "timeline",
+          index: 3,
           text: "Timeline",
+        },
+        {
+          href: `/cases/${caseId}/notes`,
+          id: "notes",
+          index: 4,
+          text: "Notes",
         },
       ],
       comments: [],
