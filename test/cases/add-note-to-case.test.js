@@ -92,7 +92,7 @@ describe("POST /cases/{caseId}/notes", () => {
     expect(notes.map((n) => n.text)).toContain("Second note");
   });
 
-  it("returns 403 when user does not have ReadWrite role", async () => {
+  it("returns 403 when user does not have ReadWrite idp role", async () => {
     await updateUser(user.payload.id, {
       idpRoles: [IdpRoles.Read],
     });
@@ -106,7 +106,7 @@ describe("POST /cases/{caseId}/notes", () => {
     ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
-  it("returns 403 when user does not have required workflow roles", async () => {
+  it("returns 403 when user does not have required workflow app roles", async () => {
     await updateUser(user.payload.id, {
       appRoles: {},
     });
