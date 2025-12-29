@@ -27,9 +27,11 @@ export const findCaseByIdTabIdRoute = {
     logger.info(
       `Finding case agreements for case ${caseId} with tabId ${tabId}`,
     );
+    const { user } = request.auth.credentials;
     const tabData = await buildCaseDetailsTabUseCase({
       params: { caseId, tabId },
       query,
+      user,
     });
 
     logger.info(

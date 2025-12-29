@@ -7,6 +7,8 @@ import { findCaseByIdTabIdRoute } from "./find-case-by-id-tab-id.route.js";
 vi.mock("../use-cases/build-case-details-tab.use-case.js");
 
 describe("findCaseByIdTabIdRoute", () => {
+  const mockAuthUser = { id: "user-123" };
+
   let server;
 
   beforeAll(async () => {
@@ -72,6 +74,12 @@ describe("findCaseByIdTabIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}/tabs/${tabId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(200);
@@ -79,6 +87,7 @@ describe("findCaseByIdTabIdRoute", () => {
     expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
       params: { caseId, tabId },
       query: {},
+      user: mockAuthUser,
     });
   });
 
@@ -122,6 +131,12 @@ describe("findCaseByIdTabIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}/tabs/${tabId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(404);
@@ -133,6 +148,7 @@ describe("findCaseByIdTabIdRoute", () => {
     expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
       params: { caseId, tabId },
       query: {},
+      user: mockAuthUser,
     });
   });
 
@@ -149,6 +165,12 @@ describe("findCaseByIdTabIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}/tabs/${tabId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(404);
@@ -160,6 +182,7 @@ describe("findCaseByIdTabIdRoute", () => {
     expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
       params: { caseId, tabId },
       query: {},
+      user: mockAuthUser,
     });
   });
 
@@ -174,6 +197,12 @@ describe("findCaseByIdTabIdRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/cases/${caseId}/tabs/${tabId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: mockAuthUser,
+        },
+      },
     });
 
     expect(statusCode).toEqual(500);
@@ -185,6 +214,7 @@ describe("findCaseByIdTabIdRoute", () => {
     expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
       params: { caseId, tabId },
       query: {},
+      user: mockAuthUser,
     });
   });
 });

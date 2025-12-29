@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { AppRole } from "../users/models/app-role.js";
+import { IdpRoles } from "../users/models/idp-roles.js";
+import { User } from "../users/models/user.js";
 import {
   assertPathExists,
   buildBanner,
@@ -699,9 +702,13 @@ describe("buildViewModel", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should include callToAction from externalActions", async () => {
+    it("should include callToAction from externalActions when user is authorised", async () => {
       const workflowWithExternalActions = {
         ...mockWorkflow,
+        requiredRoles: {
+          allOf: ["ROLE_1"],
+          anyOf: [],
+        },
         externalActions: [
           {
             code: "RECALCULATE_RULES",
@@ -725,9 +732,14 @@ describe("buildViewModel", () => {
         ],
       };
 
+      const user = User.createMock({
+        idpRoles: [IdpRoles.ReadWrite],
+      });
+
       const mockContext = createCaseWorkflowContext({
         kase: mockCase,
         workflow: workflowWithExternalActions,
+        user,
       });
 
       const result = await buildBanner(mockContext);
@@ -742,6 +754,77 @@ describe("buildViewModel", () => {
           name: "Another Action",
         },
       ]);
+    });
+
+    it("should not include callToAction when user is Read only", async () => {
+      const workflowWithExternalActions = {
+        ...mockWorkflow,
+        requiredRoles: {
+          allOf: [],
+          anyOf: [],
+        },
+        externalActions: [
+          {
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
+            endpoint: "landGrantsRulesRerun",
+          },
+        ],
+      };
+
+      const user = User.createMock({
+        idpRoles: [IdpRoles.Read],
+      });
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithExternalActions,
+        user,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result.callToAction).toBeUndefined();
+    });
+
+    it("should not include callToAction when user lacks workflow roles", async () => {
+      const workflowWithExternalActions = {
+        ...mockWorkflow,
+        requiredRoles: {
+          allOf: ["ROLE_1"],
+          anyOf: [],
+        },
+        externalActions: [
+          {
+            code: "RECALCULATE_RULES",
+            name: "Run calculations again",
+            display: true,
+            endpoint: "landGrantsRulesRerun",
+          },
+        ],
+      };
+
+      const user = User.createMock({
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          ROLE_2: new AppRole({
+            name: "ROLE_2",
+            startDate: "2025-07-02",
+            endDate: "2100-01-02",
+          }),
+        },
+      });
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithExternalActions,
+        user,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result.callToAction).toBeUndefined();
     });
 
     it("should handle banner with complex nested structure", async () => {
