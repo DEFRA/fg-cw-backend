@@ -23,6 +23,7 @@ describe("AccessControl", () => {
         idpRoles: [IdpRoles.ReadWrite],
         appRoles: { allOf: [], anyOf: [] },
       });
+
       expect(result).toBe(false);
     });
 

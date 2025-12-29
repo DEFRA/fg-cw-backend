@@ -144,6 +144,38 @@ describe("POST /cases/{caseId}/page-action", () => {
     expect(timelineEvent.description).toBe("Action - Perform action");
   });
 
+  it("returns 403 when user does not have ReadWrite role", async () => {
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.Read],
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/page-action`, {
+        payload: {
+          actionCode: "TEST_ACTION",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when user does not have required workflow roles", async () => {
+    await updateUser(user.payload.id, {
+      appRoles: {},
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/page-action`, {
+        payload: {
+          actionCode: "TEST_ACTION",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
   it("returns 404 when case does not exist", async () => {
     const nonExistentCaseId = "507f1f77bcf86cd799439011";
 
