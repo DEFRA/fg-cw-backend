@@ -62,7 +62,6 @@ describe("POST /cases/{caseId}/page-action", () => {
     );
 
     user = await createAdminUser();
-
     await createWorkflow({
       externalActions: [
         {
@@ -99,6 +98,7 @@ describe("POST /cases/{caseId}/page-action", () => {
 
     await updateUser(user.payload.id, {
       idpRoles: [IdpRoles.ReadWrite],
+      appRoles: user.payload.appRoles,
     });
   });
 

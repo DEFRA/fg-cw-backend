@@ -21,7 +21,11 @@ export const performPageActionUseCase = async ({
   });
 
   const externalAction = validateExternalAction(actionCode, workflow);
-  const caseWorkflowContext = createCaseWorkflowContext({ kase, workflow });
+  const caseWorkflowContext = createCaseWorkflowContext({
+    kase,
+    workflow,
+    user,
+  });
 
   logger.info(`Performing page action: ${actionCode} for case: ${caseId}`);
 

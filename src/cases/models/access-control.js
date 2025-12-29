@@ -2,6 +2,10 @@ import Boom from "@hapi/boom";
 
 export class AccessControl {
   static authorise(user, requirements) {
+    if (!user) {
+      throw Boom.badImplementation("user not supplied");
+    }
+
     if (!this.canAccess(user, requirements)) {
       throw Boom.forbidden(
         `User ${user.id} does not have required roles to perform action`,
