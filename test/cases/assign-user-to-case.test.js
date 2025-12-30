@@ -33,7 +33,6 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
     await updateUser(user.payload.id, {
       idpRoles: [IdpRoles.ReadWrite],
-      appRoles: user.payload.appRoles,
     });
   });
 
