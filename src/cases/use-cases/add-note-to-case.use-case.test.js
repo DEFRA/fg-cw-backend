@@ -122,6 +122,47 @@ describe("addNoteToCaseUseCase", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("throws error when workflow is not found", async () => {
+    const mockCase = Case.createMock();
+
+    const command = {
+      caseId: mockCase._id,
+      text: "This is a test note",
+      user: mockUser,
+    };
+
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue(null);
+
+    await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
+      `Workflow not found: ${mockCase.workflowCode}`,
+    );
+
+    expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("defaults to no required roles when appRoles is missing", async () => {
+    const mockCase = Case.createMock();
+
+    const command = {
+      caseId: mockCase._id,
+      text: "This is a test note",
+      user: mockUser,
+    };
+
+    findById.mockResolvedValue(mockCase);
+    findByCode.mockResolvedValue({});
+    update.mockResolvedValue(mockCase);
+
+    const result = await addNoteToCaseUseCase(command);
+
+    expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
+    expect(result).toBeInstanceOf(Comment);
+    expect(result.text).toBe("This is a test note");
+    expect(update).toHaveBeenCalledWith(mockCase);
+  });
+
   it("throws error when case is not found", async () => {
     const command = {
       caseId: "non-existent-case-id",
