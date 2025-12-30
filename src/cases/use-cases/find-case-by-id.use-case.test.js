@@ -271,8 +271,6 @@ describe("findCaseByIdUseCase", () => {
     idpId: new ObjectId().toHexString(),
     name: "Test User",
     email: "test.user@example.com",
-    idpRoles: ["user"],
-    appRoles: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -329,22 +327,26 @@ describe("findCaseByIdUseCase", () => {
         {
           href: `/cases/${kase._id}`,
           id: "tasks",
+          index: 0,
           text: "Tasks",
         },
         {
           href: `/cases/${kase._id}/case-details`,
           id: "case-details",
+          index: 1,
           text: "Application",
-        },
-        {
-          href: `/cases/${kase._id}/notes`,
-          id: "notes",
-          text: "Notes",
         },
         {
           href: `/cases/${kase._id}/timeline`,
           id: "timeline",
+          index: 3,
           text: "Timeline",
+        },
+        {
+          href: `/cases/${kase._id}/notes`,
+          id: "notes",
+          index: 4,
+          text: "Notes",
         },
       ],
       stage: {
@@ -365,10 +367,10 @@ describe("findCaseByIdUseCase", () => {
                 name: "Task 1",
                 mandatory: true,
                 status: "PENDING",
-                completed: false,
                 updatedAt: undefined,
                 updatedBy: null,
                 commentRef: undefined,
+                completed: false,
                 commentInputDef: {
                   helpText:
                     "You must include an explanation for auditing purposes.",
@@ -382,11 +384,11 @@ describe("findCaseByIdUseCase", () => {
                     text: "Task 1 description",
                   },
                 ],
-                requiredRoles: {
+                requiredRoles: new RequiredAppRoles({
                   allOf: ["ROLE_1"],
                   anyOf: ["ROLE_2"],
-                },
-                canComplete: false,
+                }),
+                canComplete: true,
                 statusOptions: [
                   {
                     code: "STATUS_OPTION_1",
