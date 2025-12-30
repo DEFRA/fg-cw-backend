@@ -20,7 +20,7 @@ describe("addNoteToCaseUseCase", () => {
     anyOf: ["ROLE_3"],
   };
 
-  const authorisedUser = User.createMock({
+  const mockUser = User.createMock({
     id: validUserId,
     idpRoles: [IdpRoles.ReadWrite],
   });
@@ -31,7 +31,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -45,7 +45,7 @@ describe("addNoteToCaseUseCase", () => {
     expect(result).toBeInstanceOf(Comment);
     expect(result.type).toBe("NOTE_ADDED");
     expect(result.text).toBe("This is a test note");
-    expect(result.createdBy).toBe(authorisedUser.id);
+    expect(result.createdBy).toBe(mockUser.id);
     expect(result.ref).toBeDefined();
     expect(result.createdAt).toBeDefined();
 
@@ -59,7 +59,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "Task has been completed",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -70,7 +70,7 @@ describe("addNoteToCaseUseCase", () => {
 
     expect(result.type).toBe("NOTE_ADDED");
     expect(result.text).toBe("Task has been completed");
-    expect(result.createdBy).toBe(authorisedUser.id);
+    expect(result.createdBy).toBe(mockUser.id);
   });
 
   it("throws forbidden when user does not have ReadWrite role", async () => {
@@ -126,7 +126,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: "non-existent-case-id",
       text: "This is a test note",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(null);
@@ -150,7 +150,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -170,7 +170,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "", // Invalid text - empty string
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
@@ -190,7 +190,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "This is a test note",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     const updateError = new Error("Database update failed");
@@ -221,7 +221,7 @@ describe("addNoteToCaseUseCase", () => {
     const command = {
       caseId: mockCase._id,
       text: "New comment",
-      user: authorisedUser,
+      user: mockUser,
     };
 
     findById.mockResolvedValue(mockCase);
