@@ -1,12 +1,19 @@
+import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as externalEndpointClient from "../../common/external-endpoint-client.js";
 import * as parameterResolver from "../../common/parameter-resolver.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
+import { User } from "../../users/models/user.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 
 vi.mock("../../common/external-endpoint-client.js");
 vi.mock("../../common/parameter-resolver.js");
 
 describe("externalActionUseCase", () => {
+  const authorisedUser = User.createMock({
+    idpRoles: [IdpRoles.ReadWrite],
+  });
+
   let mockCallExternalEndpoint;
   let mockExtractEndpointParameters;
 
@@ -22,52 +29,94 @@ describe("externalActionUseCase", () => {
     );
   });
 
-  it("should successfully execute action and return response", async () => {
+  it("throws forbidden when user does not have ReadWrite role", async () => {
     const mockWorkflow = {
+      requiredRoles: {
+        allOf: [],
+        anyOf: [],
+      },
       findExternalAction: vi.fn().mockReturnValue({
         code: "TEST_ACTION",
-        name: "Test Action",
         endpoint: { code: "TEST_ENDPOINT" },
       }),
       findEndpoint: vi.fn().mockReturnValue({
         code: "TEST_ENDPOINT",
-        method: "POST",
-        path: "/test",
+      }),
+    };
+
+    const user = User.createMock({
+      idpRoles: [IdpRoles.Read],
+    });
+
+    await expect(
+      externalActionUseCase({
+        actionCode: "TEST_ACTION",
+        caseWorkflowContext: { workflow: mockWorkflow, user },
+        throwOnError: true,
+      }),
+    ).rejects.toThrow(
+      Boom.forbidden(
+        `User ${user.id} does not have required roles to perform action`,
+      ),
+    );
+
+    expect(mockCallExternalEndpoint).not.toHaveBeenCalled();
+  });
+
+  it("throws forbidden when user does not have required workflow roles", async () => {
+    const mockWorkflow = {
+      requiredRoles: {
+        allOf: ["ROLE_1"],
+        anyOf: [],
+      },
+      findExternalAction: vi.fn().mockReturnValue({
+        code: "TEST_ACTION",
+        endpoint: { code: "TEST_ENDPOINT" },
+      }),
+      findEndpoint: vi.fn().mockReturnValue({
+        code: "TEST_ENDPOINT",
+      }),
+    };
+
+    const user = User.createMock({
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: {},
+    });
+
+    await expect(
+      externalActionUseCase({
+        actionCode: "TEST_ACTION",
+        caseWorkflowContext: { workflow: mockWorkflow, user },
+        throwOnError: true,
+      }),
+    ).rejects.toThrow(
+      Boom.forbidden(
+        `User ${user.id} does not have required roles to perform action`,
+      ),
+    );
+
+    expect(mockCallExternalEndpoint).not.toHaveBeenCalled();
+  });
+
+  it("should successfully execute action and return response", async () => {
+    const mockWorkflow = {
+      requiredRoles: {
+        allOf: ["ROLE_1"],
+        anyOf: [],
+      },
+      findExternalAction: vi.fn().mockReturnValue({
+        code: "TEST_ACTION",
+        endpoint: { code: "TEST_ENDPOINT" },
+      }),
+      findEndpoint: vi.fn().mockReturnValue({
+        code: "TEST_ENDPOINT",
       }),
     };
 
     const mockCaseWorkflowContext = {
       workflow: mockWorkflow,
-      _id: "case-123",
-      payload: { data: "test" },
+      user: authorisedUser,
     };
-
-    const mockParams = { PATH: { id: "case-123" }, BODY: {} };
-    const mockResponse = { success: true, data: "response" };
-
-    mockExtractEndpointParameters.mockResolvedValue(mockParams);
-    mockCallExternalEndpoint.mockResolvedValue(mockResponse);
-
-    const result = await externalActionUseCase({
-      actionCode: "TEST_ACTION",
-      caseWorkflowContext: mockCaseWorkflowContext,
-    });
-
-    expect(result).toEqual(mockResponse);
-  });
-
-  it("should handle throwOnError parameter", async () => {
-    const mockWorkflow = {
-      findExternalAction: vi.fn().mockReturnValue({
-        code: "TEST_ACTION",
-        endpoint: { code: "TEST_ENDPOINT" },
-      }),
-      findEndpoint: vi.fn().mockReturnValue({
-        code: "TEST_ENDPOINT",
-      }),
-    };
-
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
     const error = new Error("Test error");
 
     mockExtractEndpointParameters.mockResolvedValue({});
@@ -93,7 +142,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     mockExtractEndpointParameters.mockResolvedValue({});
     mockCallExternalEndpoint.mockResolvedValue(null);
@@ -117,7 +169,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     mockExtractEndpointParameters.mockResolvedValue({});
     mockCallExternalEndpoint.mockResolvedValue(undefined);
@@ -135,7 +190,10 @@ describe("externalActionUseCase", () => {
       findExternalAction: vi.fn().mockReturnValue(null),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     const result = await externalActionUseCase({
       actionCode: "NON_EXISTENT_ACTION",
@@ -151,7 +209,10 @@ describe("externalActionUseCase", () => {
       findExternalAction: vi.fn().mockReturnValue(null),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     await expect(
       externalActionUseCase({
@@ -170,7 +231,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     const result = await externalActionUseCase({
       actionCode: "TEST_ACTION",
@@ -189,7 +253,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     await expect(
       externalActionUseCase({
@@ -209,7 +276,10 @@ describe("externalActionUseCase", () => {
       findEndpoint: vi.fn().mockReturnValue(null),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     const result = await externalActionUseCase({
       actionCode: "TEST_ACTION",
@@ -229,7 +299,10 @@ describe("externalActionUseCase", () => {
       findEndpoint: vi.fn().mockReturnValue(null),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
 
     await expect(
       externalActionUseCase({
@@ -251,7 +324,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const error = new Error("Test error");
 
     mockExtractEndpointParameters.mockResolvedValue({});
@@ -277,7 +353,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const error = new Error("Test error");
 
     mockExtractEndpointParameters.mockResolvedValue({});
@@ -303,7 +382,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const error = new Error("Parameter extraction error");
 
     mockExtractEndpointParameters.mockRejectedValue(error);
@@ -328,7 +410,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const mockResponse = {};
 
     mockExtractEndpointParameters.mockResolvedValue({});
@@ -353,7 +438,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const mockResponse = {
       data: { items: [1, 2, 3] },
       metadata: { count: 3, total: 100 },
@@ -382,7 +470,10 @@ describe("externalActionUseCase", () => {
       }),
     };
 
-    const mockCaseWorkflowContext = { workflow: mockWorkflow };
+    const mockCaseWorkflowContext = {
+      workflow: mockWorkflow,
+      user: authorisedUser,
+    };
     const mockResponse = { data: "GET response" };
 
     mockExtractEndpointParameters.mockResolvedValue({});

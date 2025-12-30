@@ -271,8 +271,6 @@ describe("findCaseByIdUseCase", () => {
     idpId: new ObjectId().toHexString(),
     name: "Test User",
     email: "test.user@example.com",
-    idpRoles: ["user"],
-    appRoles: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -369,10 +367,10 @@ describe("findCaseByIdUseCase", () => {
                 name: "Task 1",
                 mandatory: true,
                 status: "PENDING",
-                completed: false,
                 updatedAt: undefined,
                 updatedBy: null,
                 commentRef: undefined,
+                completed: false,
                 commentInputDef: {
                   helpText:
                     "You must include an explanation for auditing purposes.",
@@ -386,11 +384,11 @@ describe("findCaseByIdUseCase", () => {
                     text: "Task 1 description",
                   },
                 ],
-                requiredRoles: {
+                requiredRoles: new RequiredAppRoles({
                   allOf: ["ROLE_1"],
                   anyOf: ["ROLE_2"],
-                },
-                canComplete: false,
+                }),
+                canComplete: true,
                 statusOptions: [
                   {
                     code: "STATUS_OPTION_1",
