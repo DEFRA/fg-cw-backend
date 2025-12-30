@@ -11,8 +11,9 @@ import {
   it,
 } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser } from "../helpers/users.js";
+import { createAdminUser, updateUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -20,6 +21,7 @@ describe("POST /cases/{caseId}/page-action", () => {
   let cases;
   let client;
   let externalAction;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -55,9 +57,11 @@ describe("POST /cases/{caseId}/page-action", () => {
       });
     });
 
-    await new Promise((resolve) => externalAction.listen(5666, "0.0.0.0", resolve));
+    await new Promise((resolve) =>
+      externalAction.listen(5666, "0.0.0.0", resolve),
+    );
 
-    await createAdminUser();
+    user = await createAdminUser();
     await createWorkflow({
       externalActions: [
         {
@@ -90,6 +94,11 @@ describe("POST /cases/{caseId}/page-action", () => {
           method: "POST",
         },
       ],
+    });
+
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: user.payload.appRoles,
     });
   });
 
@@ -133,6 +142,38 @@ describe("POST /cases/{caseId}/page-action", () => {
     expect(timelineEvent).toBeDefined();
     expect(timelineEvent.data.actionName).toBe("Perform action");
     expect(timelineEvent.description).toBe("Action - Perform action");
+  });
+
+  it("returns 403 when user does not have ReadWrite role", async () => {
+    await updateUser(user.payload.id, {
+      idpRoles: [IdpRoles.Read],
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/page-action`, {
+        payload: {
+          actionCode: "TEST_ACTION",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when user does not have required workflow roles", async () => {
+    await updateUser(user.payload.id, {
+      appRoles: {},
+    });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/page-action`, {
+        payload: {
+          actionCode: "TEST_ACTION",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 when case does not exist", async () => {

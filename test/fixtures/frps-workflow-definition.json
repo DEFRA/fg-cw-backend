@@ -498,6 +498,17 @@
             ]
           },
           "calculations": {
+            "link": {
+              "id": "calculations",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/calculations",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Calculations",
+              "index": 2
+            },
             "action": {
               "rulesData": "FETCH_RULES"
             },
@@ -620,6 +631,17 @@
             ]
           },
           "agreements": {
+            "link": {
+              "id": "agreements",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/agreements",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Agreements",
+              "index": 5
+            },
             "renderIf": "$.supplementaryData.agreements[0]",
             "content": [
               {
