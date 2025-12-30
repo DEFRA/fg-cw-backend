@@ -2,7 +2,7 @@ import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
 import { AccessControl } from "../cases/models/access-control.js";
 import { IdpRoles } from "../users/models/idp-roles.js";
-import { resolveJSONPath } from "./resolve-json.js";
+import { populateUrlTemplate, resolveJSONPath } from "./resolve-json.js";
 
 export const createCaseWorkflowContext = ({
   kase,
@@ -50,21 +50,25 @@ export const buildLinks = async (root) => {
       id: "tasks",
       href: `/cases/${caseId}`,
       text: "Tasks",
+      index: 0,
     },
     {
       id: "case-details",
       href: `/cases/${caseId}/case-details`,
       text: "Application",
+      index: 1,
     },
     {
       id: "notes",
       href: `/cases/${caseId}/notes`,
       text: "Notes",
+      index: 4,
     },
     {
       id: "timeline",
       href: `/cases/${caseId}/timeline`,
       text: "Timeline",
+      index: 3,
     },
   ];
   const knownLinkIds = links.map((link) => link.id);
@@ -87,12 +91,35 @@ export const buildLinks = async (root) => {
       continue;
     }
 
+    const linkData = tab.link || {};
+    let href = `/cases/${caseId}/${tab.key}`;
+
+    if (linkData.href?.urlTemplate) {
+      const template = await resolveJSONPath({
+        root,
+        path: linkData.href.urlTemplate,
+      });
+      const params = await resolveJSONPath({
+        root,
+        path: linkData.href.params || {},
+      });
+      href = populateUrlTemplate(template, params);
+    }
+
     links.push({
       id: tab.key,
-      href: `/cases/${caseId}/${tab.key}`,
-      text: idToText(tab.key),
+      href,
+      text: linkData.text || idToText(tab.key),
+      index: linkData.index,
     });
   }
+
+  // Sort all links by index, placing links without index at the end
+  links.sort(
+    (a, b) =>
+      (a.index ?? Number.MAX_SAFE_INTEGER) -
+      (b.index ?? Number.MAX_SAFE_INTEGER),
+  );
 
   return links;
 };
