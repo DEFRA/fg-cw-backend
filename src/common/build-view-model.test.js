@@ -11,15 +11,22 @@ import {
 } from "./build-view-model.js";
 
 describe("buildViewModel", () => {
+  // Links are sorted by index, so this array reflects the sorted order
   const knownLinks = [
-    { id: "tasks", href: "/cases/case-123", text: "Tasks" },
+    { id: "tasks", href: "/cases/case-123", text: "Tasks", index: 0 },
     {
       id: "case-details",
       href: "/cases/case-123/case-details",
       text: "Application",
+      index: 1,
     },
-    { id: "notes", href: "/cases/case-123/notes", text: "Notes" },
-    { id: "timeline", href: "/cases/case-123/timeline", text: "Timeline" },
+    {
+      id: "timeline",
+      href: "/cases/case-123/timeline",
+      text: "Timeline",
+      index: 3,
+    },
+    { id: "notes", href: "/cases/case-123/notes", text: "Notes", index: 4 },
   ];
 
   describe("createRootContext", () => {
@@ -517,6 +524,214 @@ describe("buildViewModel", () => {
 
       expect(result).toEqual(knownLinks);
     });
+
+    it("should use link definition with urlTemplate from workflow", async () => {
+      const workflowWithLinkTemplate = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              tabs: {
+                calculations: {
+                  link: {
+                    id: "calculations",
+                    href: {
+                      urlTemplate: "/cases/{caseId}/calculations",
+                      params: {
+                        caseId: "$._id",
+                      },
+                    },
+                    text: "Calculations",
+                    index: 2,
+                  },
+                },
+              },
+            },
+          },
+        },
+        definitions: {},
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithLinkTemplate,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      const calculationsLink = result.find(
+        (link) => link.id === "calculations",
+      );
+      expect(calculationsLink).toEqual({
+        id: "calculations",
+        href: "/cases/case-123/calculations",
+        text: "Calculations",
+        index: 2,
+      });
+      // Should be sorted between case-details (1) and timeline (3)
+      expect(result.indexOf(calculationsLink)).toBe(2);
+    });
+
+    it("should handle urlTemplate without params (uses empty object fallback)", async () => {
+      const workflowWithTemplateNoParams = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              tabs: {
+                "static-tab": {
+                  link: {
+                    id: "static-tab",
+                    href: {
+                      urlTemplate: "/static/path",
+                      // No params property
+                    },
+                    text: "Static Tab",
+                    index: 6,
+                  },
+                },
+              },
+            },
+          },
+        },
+        definitions: {},
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithTemplateNoParams,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      const staticTab = result.find((link) => link.id === "static-tab");
+      expect(staticTab.href).toBe("/static/path");
+    });
+
+    it("should use link text from workflow definition", async () => {
+      const workflowWithCustomText = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              tabs: {
+                "custom-tab": {
+                  link: {
+                    text: "Custom Tab Name",
+                    index: 10,
+                  },
+                },
+              },
+            },
+          },
+        },
+        definitions: {},
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithCustomText,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      const customTab = result.find((link) => link.id === "custom-tab");
+      expect(customTab.text).toBe("Custom Tab Name");
+    });
+
+    it("should handle tab with link but no urlTemplate", async () => {
+      const workflowWithLinkNoTemplate = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              tabs: {
+                "simple-tab": {
+                  link: {
+                    text: "Simple Tab",
+                    index: 5,
+                  },
+                },
+              },
+            },
+          },
+        },
+        definitions: {},
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithLinkNoTemplate,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      const simpleTab = result.find((link) => link.id === "simple-tab");
+      expect(simpleTab).toEqual({
+        id: "simple-tab",
+        href: "/cases/case-123/simple-tab",
+        text: "Simple Tab",
+        index: 5,
+      });
+    });
+
+    it("should sort links with missing index at the end", async () => {
+      const workflowWithMixedIndices = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              tabs: {
+                "tab-with-index": {
+                  link: {
+                    index: 2,
+                  },
+                },
+                "tab-without-index": {
+                  // No index
+                },
+              },
+            },
+          },
+        },
+        definitions: {},
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithMixedIndices,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      const withIndex = result.find((link) => link.id === "tab-with-index");
+      const withoutIndex = result.find(
+        (link) => link.id === "tab-without-index",
+      );
+
+      expect(result.indexOf(withIndex)).toBeLessThan(
+        result.indexOf(withoutIndex),
+      );
+      // withoutIndex should be at the end (after all indexed links)
+      expect(result.indexOf(withoutIndex)).toBeGreaterThan(
+        result.findIndex((link) => link.id === "notes"),
+      );
+    });
+
+    it("should handle tab with renderIf that evaluates to false", async () => {
+      const caseWithoutAgreements = {
+        ...mockCase,
+        supplementaryData: { agreements: [] },
+      };
+      const mockContext = createCaseWorkflowContext({
+        kase: caseWithoutAgreements,
+        workflow: mockWorkflow,
+      });
+
+      const result = await buildLinks(mockContext);
+
+      expect(result.find((link) => link.id === "agreements")).toBeUndefined();
+    });
   });
 
   describe("idToText helper", () => {
@@ -877,6 +1092,83 @@ describe("buildViewModel", () => {
         type: "string",
       });
       expect(result.metadata.definitions).toBe("https://api.example.com");
+    });
+
+    it("should not add callToAction when banner is null", async () => {
+      const workflowWithNullBanner = {
+        code: "test-workflow",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {},
+          },
+        },
+        definitions: {},
+        externalActions: [
+          {
+            code: "ACTION_1",
+            name: "Action 1",
+            display: true,
+          },
+        ],
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithNullBanner,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should not add callToAction when externalActions is empty", async () => {
+      const workflowWithEmptyActions = {
+        ...mockWorkflow,
+        externalActions: [],
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithEmptyActions,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result.callToAction).toBeUndefined();
+    });
+
+    it("should not add callToAction when externalActions is null", async () => {
+      const workflowWithNullActions = {
+        ...mockWorkflow,
+        externalActions: null,
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithNullActions,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result.callToAction).toBeUndefined();
+    });
+
+    it("should not add callToAction when externalActions is undefined", async () => {
+      const workflowWithoutActions = {
+        ...mockWorkflow,
+      };
+      delete workflowWithoutActions.externalActions;
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithoutActions,
+      });
+
+      const result = await buildBanner(mockContext);
+
+      expect(result.callToAction).toBeUndefined();
     });
   });
 });

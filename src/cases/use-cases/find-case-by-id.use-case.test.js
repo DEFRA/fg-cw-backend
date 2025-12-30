@@ -327,22 +327,26 @@ describe("findCaseByIdUseCase", () => {
         {
           href: `/cases/${kase._id}`,
           id: "tasks",
+          index: 0,
           text: "Tasks",
         },
         {
           href: `/cases/${kase._id}/case-details`,
           id: "case-details",
+          index: 1,
           text: "Application",
-        },
-        {
-          href: `/cases/${kase._id}/notes`,
-          id: "notes",
-          text: "Notes",
         },
         {
           href: `/cases/${kase._id}/timeline`,
           id: "timeline",
+          index: 3,
           text: "Timeline",
+        },
+        {
+          href: `/cases/${kase._id}/notes`,
+          id: "notes",
+          index: 4,
+          text: "Notes",
         },
       ],
       stage: {
