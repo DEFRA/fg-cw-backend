@@ -7,6 +7,26 @@ import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
+export const assignUserToCaseUseCase = async (command) => {
+  const { assignedUserId, caseId, notes, user } = command;
+
+  logger.info(`Assigning user to case use case started - caseId: ${caseId}`);
+
+  const kase = await loadCase(caseId);
+  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+
+  AccessControl.authorise(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: workflow.requiredRoles ?? RequiredAppRoles.None,
+  });
+
+  if (assignedUserId === null) {
+    return unassignUser({ kase, notes, user, caseId });
+  }
+
+  return assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
+};
+
 const loadCase = async (caseId) => {
   const kase = await findById(caseId);
 
@@ -15,13 +35,6 @@ const loadCase = async (caseId) => {
   }
 
   return kase;
-};
-
-const authoriseActor = (user, workflow) => {
-  AccessControl.authorise(user, {
-    idpRoles: [IdpRoles.ReadWrite],
-    appRoles: workflow.requiredRoles ?? RequiredAppRoles.None,
-  });
 };
 
 const unassignUser = async ({ kase, notes, user, caseId }) => {
@@ -71,21 +84,4 @@ const assignUser = async ({
   });
 
   return update(kase);
-};
-
-export const assignUserToCaseUseCase = async (command) => {
-  const { assignedUserId, caseId, notes, user } = command;
-
-  logger.info(`Assigning user to case use case started - caseId: ${caseId}`);
-
-  const kase = await loadCase(caseId);
-  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
-
-  authoriseActor(user, workflow);
-
-  if (assignedUserId === null) {
-    return unassignUser({ kase, notes, user, caseId });
-  }
-
-  return assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
 };
