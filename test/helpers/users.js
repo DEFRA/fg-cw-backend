@@ -1,13 +1,23 @@
+import { MongoClient } from "mongodb";
+import { env } from "node:process";
+
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
 
 export const createUser = async (payload = {}) => {
-  const response = await wreck.post("/users", {
-    payload: {
+  const client = new MongoClient(env.MONGO_URI);
+  await client.connect();
+
+  try {
+    const users = client.db().collection("users");
+
+    const now = new Date();
+
+    const doc = {
       idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
       name: "Name",
       email: "name.surname@defra.gov.uk",
-      idpRoles: ["FCP.Casework.ReadWrite"],
+      idpRoles: [IdpRoles.ReadWrite],
       appRoles: {
         ROLE_1: {
           startDate: "2025-07-01",
@@ -23,19 +33,39 @@ export const createUser = async (payload = {}) => {
         },
       },
       ...payload,
-    },
-  });
+      createdAt: now,
+      updatedAt: now,
+    };
 
-  return response;
+    const { insertedId } = await users.insertOne(doc);
+
+    return {
+      res: {
+        statusCode: 201,
+      },
+      payload: {
+        id: insertedId.toHexString(),
+        idpId: doc.idpId,
+        name: doc.name,
+        email: doc.email,
+        idpRoles: doc.idpRoles,
+        appRoles: doc.appRoles,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      },
+    };
+  } finally {
+    await client.close(true);
+  }
 };
 
 export const createAdminUser = async (payload = {}) => {
   return createUser({
-    idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
     name: "Test Admin",
     email: "admin@t.gov.uk",
-    idpRoles: [IdpRoles.Admin],
     ...payload,
+    idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+    idpRoles: [IdpRoles.Admin],
   });
 };
 

@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -15,6 +16,10 @@ afterAll(async () => {
 });
 
 describe("GET /users", () => {
+  beforeEach(async () => {
+    await createAdminUser();
+  });
+
   it("finds users", async () => {
     await wreck.post("/users", {
       payload: {
@@ -55,6 +60,29 @@ describe("GET /users", () => {
       payload: [
         {
           id: expect.any(String),
+          idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+          name: "Test Admin",
+          email: "admin@t.gov.uk",
+          idpRoles: ["FCP.Casework.Admin"],
+          appRoles: {
+            ROLE_1: {
+              startDate: "2025-07-01",
+              endDate: "2100-01-01",
+            },
+            ROLE_2: {
+              startDate: "2025-07-02",
+              endDate: "2100-01-02",
+            },
+            ROLE_3: {
+              startDate: "2025-07-03",
+              endDate: "2100-01-03",
+            },
+          },
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        },
+        {
+          id: expect.any(String),
           idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
           name: "Name",
           email: "name.surname@defra.gov.uk",
@@ -88,6 +116,8 @@ describe("GET /users", () => {
   });
 
   it("returns an empty array if no users are found", async () => {
+    await client.db().collection("users").deleteMany({});
+
     const response = await wreck.get("/users");
 
     expect(response).toEqual({
