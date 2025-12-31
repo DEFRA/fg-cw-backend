@@ -1,4 +1,5 @@
 import { AccessControl } from "../../cases/models/access-control.js";
+import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { logger } from "../../common/logger.js";
 import { AppRole } from "../models/app-role.js";
 import { IdpRoles } from "../models/idp-roles.js";
@@ -10,7 +11,7 @@ export const createUserUseCase = async (props) => {
 
   AccessControl.authorise(authenticatedUser, {
     idpRoles: [IdpRoles.Admin],
-    appRoles: { allOf: [], anyOf: [] },
+    appRoles: RequiredAppRoles.None,
   });
 
   const createdAt = new Date().toISOString();
