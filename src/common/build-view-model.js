@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
-import { resolveJSONPath } from "./resolve-json.js";
+import { AccessControl } from "../cases/models/access-control.js";
+import { IdpRoles } from "../users/models/idp-roles.js";
+import { populateUrlTemplate, resolveJSONPath } from "./resolve-json.js";
 
 export const createCaseWorkflowContext = ({
   kase,
@@ -48,21 +50,25 @@ export const buildLinks = async (root) => {
       id: "tasks",
       href: `/cases/${caseId}`,
       text: "Tasks",
+      index: 0,
     },
     {
       id: "case-details",
       href: `/cases/${caseId}/case-details`,
       text: "Application",
+      index: 1,
     },
     {
       id: "notes",
       href: `/cases/${caseId}/notes`,
       text: "Notes",
+      index: 4,
     },
     {
       id: "timeline",
       href: `/cases/${caseId}/timeline`,
       text: "Timeline",
+      index: 3,
     },
   ];
   const knownLinkIds = links.map((link) => link.id);
@@ -85,12 +91,35 @@ export const buildLinks = async (root) => {
       continue;
     }
 
+    const linkData = tab.link || {};
+    let href = `/cases/${caseId}/${tab.key}`;
+
+    if (linkData.href?.urlTemplate) {
+      const template = await resolveJSONPath({
+        root,
+        path: linkData.href.urlTemplate,
+      });
+      const params = await resolveJSONPath({
+        root,
+        path: linkData.href.params || {},
+      });
+      href = populateUrlTemplate(template, params);
+    }
+
     links.push({
       id: tab.key,
-      href: `/cases/${caseId}/${tab.key}`,
-      text: idToText(tab.key),
+      href,
+      text: linkData.text || idToText(tab.key),
+      index: linkData.index,
     });
   }
+
+  // Sort all links by index, placing links without index at the end
+  links.sort(
+    (a, b) =>
+      (a.index ?? Number.MAX_SAFE_INTEGER) -
+      (b.index ?? Number.MAX_SAFE_INTEGER),
+  );
 
   return links;
 };
@@ -102,15 +131,16 @@ const idToText = (segment) => {
     .join(" "); // join back with spaces
 };
 
-const addCallToActionToBanner = (banner, externalActions) => {
-  if (!banner || !externalActions || externalActions.length === 0) {
-    return;
+const addCallToActionToBanner = (banner, root) => {
+  if (hasExternalActions(banner, root) && canCallExternalActions(root)) {
+    const callToAction = root.externalActions.map((action) => ({
+      code: action.code,
+      name: action.name,
+    }));
+    return { ...banner, callToAction };
+  } else {
+    return banner;
   }
-
-  banner.callToAction = externalActions.map((action) => ({
-    code: action.code,
-    name: action.name,
-  }));
 };
 
 export const buildBanner = async (root) => {
@@ -121,7 +151,16 @@ export const buildBanner = async (root) => {
 
   const banner = await resolveJSONPath({ root, path: bannerJson });
 
-  addCallToActionToBanner(banner, root.externalActions);
+  return addCallToActionToBanner(banner, root);
+};
 
-  return banner;
+const hasExternalActions = (banner, root) => {
+  return banner && root.externalActions && root.externalActions.length > 0;
+};
+
+const canCallExternalActions = (root) => {
+  return AccessControl.canAccess(root.user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: root.workflow.requiredRoles,
+  });
 };
