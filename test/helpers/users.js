@@ -61,11 +61,11 @@ export const createUser = async (payload = {}) => {
 
 export const createAdminUser = async (payload = {}) => {
   return createUser({
+    idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
     name: "Test Admin",
     email: "admin@t.gov.uk",
-    ...payload,
-    idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
     idpRoles: [IdpRoles.Admin],
+    ...payload,
   });
 };
 
