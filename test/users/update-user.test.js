@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -15,6 +16,10 @@ afterAll(async () => {
 });
 
 describe("PATCH /users/{userId}", () => {
+  beforeEach(async () => {
+    await createAdminUser();
+  });
+
   it("updates mutable properties", async () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
