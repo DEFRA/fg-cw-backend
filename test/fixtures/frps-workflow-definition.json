@@ -665,8 +665,8 @@
                           "ACCEPTED": "INFO",
                           "AGREEMENT_DRAFTED": "INFO",
                           "AGREEMENT_GENERATING": "INFO",
-                          "WITHDRAWN": "NEUTRAL",
-                          "REJECTED": "NEUTRAL"
+                          "WITHDRAWN": "WARN",
+                          "REJECTED": "ERROR"
                         },
                         "labelsMap": {
                           "AGREEMENT_GENERATING": "Agreement generating",
@@ -751,8 +751,8 @@
                             "ACCEPTED": "INFO",
                             "AGREEMENT_DRAFTED": "INFO",
                             "AGREEMENT_GENERATING": "INFO",
-                            "WITHDRAWN": "NEUTRAL",
-                            "REJECTED": "NEUTRAL"
+                            "WITHDRAWN": "WARN",
+                            "REJECTED": "ERROR"
                           },
                           "labelsMap": {
                             "AGREEMENT_GENERATING": "Agreement generating",
@@ -919,6 +919,14 @@
                   }
                 }
               ]
+            },
+            {
+              "code": "APPLICATION_WITHDRAWN",
+              "name": "Withdrawn",
+              "theme": "WARN",
+              "description": "Application has been withdrawn",
+              "interactive": false,
+              "transitions": []
             }
           ],
           "taskGroups": [
