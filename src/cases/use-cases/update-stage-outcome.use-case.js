@@ -25,7 +25,7 @@ export const updateStageOutcomeUseCase = async (command) => {
     const workflow = await findByCode(kase.workflowCode);
 
     AccessControl.authorise(user, {
-      idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite],
+      idpRoles: [IdpRoles.ReadWrite],
       appRoles: workflow.requiredRoles,
     });
 
