@@ -7,6 +7,7 @@ import {
 } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { AccessControl } from "../models/access-control.js";
 import { EventEnums } from "../models/event-enums.js";
@@ -262,6 +263,24 @@ const mapTaskGroups = async (
   );
 };
 
+const canPerformStageActions = (user, workflow) => {
+  return AccessControl.canAccess(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: workflow.requiredRoles,
+  });
+};
+
+const mapStageActions = (kase, workflow, canPerformActions) => {
+  if (!canPerformActions) {
+    return [];
+  }
+  return kase.getPermittedActions(workflow).map((a) => ({
+    code: a.code,
+    name: a.name,
+    comment: a.comment,
+  }));
+};
+
 const mapStageData = async (
   kase,
   workflow,
@@ -271,22 +290,24 @@ const mapStageData = async (
   userMap,
   caseWorkflowContext,
 ) => {
+  const canPerformActions = canPerformStageActions(
+    caseWorkflowContext.user,
+    workflow,
+  );
+
   return {
     code: workflowStage.code,
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    canPerformActions,
     taskGroups: await mapTaskGroups(
       caseStage,
       workflowStage,
       userMap,
       caseWorkflowContext,
     ),
-    actions: kase.getPermittedActions(workflow).map((a) => ({
-      code: a.code,
-      name: a.name,
-      comment: a.comment,
-    })),
+    actions: mapStageActions(kase, workflow, canPerformActions),
     outcome: caseStage.outcome && {
       ...caseStage.outcome,
       comment: kase.findComment(caseStage.outcome?.commentRef)?.text,
