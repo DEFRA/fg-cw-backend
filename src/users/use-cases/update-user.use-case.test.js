@@ -19,6 +19,9 @@ describe("updateUserUseCase", () => {
     findById.mockResolvedValue(user);
 
     const updatedUser = await updateUserUseCase({
+      authenticatedUser: {
+        id: userId,
+      },
       userId,
       props: {
         name: "Name",
@@ -88,6 +91,9 @@ describe("updateUserUseCase", () => {
     findById.mockResolvedValue(user);
 
     await updateUserUseCase({
+      authenticatedUser: {
+        id: userId,
+      },
       userId,
       props: {
         ipdId: "new-idp-id",
@@ -110,5 +116,22 @@ describe("updateUserUseCase", () => {
         updatedAt: expect.any(String),
       }),
     );
+  });
+
+  it("throws forbidden when updating another user", async () => {
+    await expect(() =>
+      updateUserUseCase({
+        authenticatedUser: {
+          id: "different-user",
+        },
+        userId: "user-123",
+        props: {
+          name: "Name",
+        },
+      }),
+    ).rejects.toThrow("Cannot update another user");
+
+    expect(findById).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 });

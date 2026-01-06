@@ -1,13 +1,32 @@
+import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
 import { AppRole } from "../models/app-role.js";
 import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 
-export const updateUserUseCase = async ({ userId, props }) => {
+export const updateUserUseCase = async ({
+  authenticatedUser,
+  userId,
+  props,
+}) => {
   logger.info(`Updating user by id: ${userId}`);
+
+  if (authenticatedUser.id !== userId) {
+    throw Boom.forbidden("Cannot update another user");
+  }
 
   const user = await findUserByIdUseCase(userId);
 
+  applyUpdates(user, props);
+
+  await update(user);
+
+  logger.info(`Finished: Updating user: ${userId}`);
+
+  return user;
+};
+
+const applyUpdates = (user, props) => {
   if (props.name) {
     user.setName(props.name);
   }
@@ -26,14 +45,9 @@ export const updateUserUseCase = async ({ userId, props }) => {
     );
 
     logger.debug(
-      `Assigning app roles: ${Object.keys(appRoles)} to user ${userId}`,
+      `Assigning app roles: ${Object.keys(appRoles)} to user ${user.id}`,
     );
+
     user.assignAppRoles(appRoles);
   }
-
-  await update(user);
-
-  logger.info(`Finished: Updating user: ${userId}`);
-
-  return user;
 };

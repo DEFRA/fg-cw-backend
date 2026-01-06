@@ -22,12 +22,18 @@ export const updateUserRoute = {
     },
   },
   async handler(request) {
+    const { user: authenticatedUser } = request.auth.credentials;
+
     logger.info(`Updating user: ${request.params.userId}`);
-    const user = await updateUserUseCase({
+
+    const updatedUser = await updateUserUseCase({
+      authenticatedUser,
       userId: request.params.userId,
       props: request.payload,
     });
+
     logger.info(`Finished: Updating user: ${request.params.userId}`);
-    return user;
+
+    return updatedUser;
   },
 };
