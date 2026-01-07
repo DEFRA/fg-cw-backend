@@ -25,14 +25,14 @@ export const findUsersRoute = {
     },
   },
   async handler(request) {
-    logger.info("Finding users");
+    logger.info("Finding Users");
     const results = await findUsersUseCase({
       idpId: request.query.idpId,
       ids: request.query.ids,
       allAppRoles: request.query.allAppRoles,
       anyAppRoles: request.query.anyAppRoles,
     });
-    logger.info("Finished: Finding users");
+    logger.info("Finished: Finding Users");
     return results;
   },
 };

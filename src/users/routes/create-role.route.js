@@ -13,11 +13,9 @@ export const createRoleRoute = {
     },
   },
   async handler(request, h) {
-    logger.info(`Creating user role for code ${request.payload.code}`);
+    logger.info(`Creating role with code ${request.payload.code}`);
     await createRoleUseCase(request.payload);
-    logger.info(
-      `Finished: Creating user role for code ${request.payload.code}`,
-    );
+    logger.info(`Finished: Creating role with code ${request.payload.code}`);
     return h.response().code(204);
   },
 };
