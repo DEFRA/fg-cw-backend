@@ -29,6 +29,14 @@ describe("updateUserRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "PATCH",
       url: `/users/${user.id}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: user.id,
+          },
+        },
+      },
       payload: {
         name: "John",
         idpRoles: ["admin"],
@@ -46,6 +54,9 @@ describe("updateUserRoute", () => {
     expect(result).toEqual(user);
 
     expect(updateUserUseCase).toHaveBeenCalledWith({
+      authenticatedUser: {
+        id: user.id,
+      },
       userId: user.id,
       props: {
         name: "John",

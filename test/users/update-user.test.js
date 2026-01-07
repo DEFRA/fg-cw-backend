@@ -18,7 +18,7 @@ describe("PATCH /users/{userId}", () => {
   it("updates mutable properties", async () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
-        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
@@ -57,7 +57,7 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["updated-idp", "replaces-all-roles"],
@@ -84,7 +84,7 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["updated-idp", "replaces-all-roles"],
@@ -107,7 +107,7 @@ describe("PATCH /users/{userId}", () => {
   it("does not update other properties", async () => {
     const createUserResponse = await wreck.post("/users", {
       payload: {
-        idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["defra-idp"],
@@ -137,7 +137,7 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "abcd1234-5678-90ab-cdef-1234567890ab", // not updated
+        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1", // not updated
         name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
         idpRoles: ["defra-idp"],
