@@ -12,7 +12,9 @@ export const updateUserUseCase = async ({
   logger.info(`Updating user by id: ${userId}`);
 
   if (authenticatedUser.id !== userId) {
-    throw Boom.forbidden("Cannot update another user");
+    throw Boom.forbidden(
+      `User: ${authenticatedUser.id} cannot update user: ${userId}`,
+    );
   }
 
   const user = await findUserByIdUseCase(userId);
