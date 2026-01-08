@@ -21,9 +21,9 @@ export const findUserByIdRoute = {
   },
   async handler(request) {
     const { userId } = request.params;
-    logger.info(`Finding user by id: ${userId}`);
+    logger.info(`Finding User by id: ${userId}`);
     const result = await findUserByIdUseCase(userId);
-    logger.info(`Finished: Finding user by id: ${userId}`);
+    logger.info(`Finished: Finding User by id: ${userId}`);
     return result;
   },
 };

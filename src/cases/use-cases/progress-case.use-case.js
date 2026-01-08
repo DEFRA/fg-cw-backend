@@ -7,14 +7,14 @@ import {
 } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
-export const updateSupplementaryDataUseCase = async ({
+export const progressCaseUseCase = async ({
   caseRef,
   workflowCode,
   newStatus,
   supplementaryData,
 }) => {
   logger.info(
-    `Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}, newStatus: ${newStatus}, supplementaryData: ${JSON.stringify(supplementaryData)}`,
+    `Progressing case with caseRef "${caseRef}" and workflowCode "${workflowCode}" to position "${newStatus}"`,
   );
 
   const kase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
@@ -25,7 +25,6 @@ export const updateSupplementaryDataUseCase = async ({
     );
   }
 
-  const { targetNode, data, key, dataType } = supplementaryData;
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
 
   kase.progressTo({
@@ -34,17 +33,26 @@ export const updateSupplementaryDataUseCase = async ({
     createdBy: "System",
   });
 
-  kase.updateSupplementaryData({
-    targetNode,
-    data,
-    dataType,
-    key,
-  });
+  if (supplementaryData) {
+    const { targetNode, data, key, dataType } = supplementaryData;
+
+    logger.info(
+      `Attaching supplementary data to ${targetNode}[${key}]. Data type is ${dataType}`,
+    );
+
+    kase.updateSupplementaryData({
+      targetNode,
+      data,
+      dataType,
+      key,
+    });
+  }
 
   await update(kase);
 
   logger.info(
-    `Finished: Updating supplementary data use case started - caseRef: ${caseRef}, workflowCode: ${workflowCode}`,
+    `Finished: Progressing case with caseRef "${caseRef}" and workflowCode "${workflowCode}" to position "${newStatus}"`,
   );
+
   return kase;
 };
