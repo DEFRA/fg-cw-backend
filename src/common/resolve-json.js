@@ -272,14 +272,7 @@ const evaluateConditionalWithRow = async ({ condition, root, row }) => {
     return await compiledExpression.evaluate(root);
   } catch (error) {
     // Log JSONata evaluation errors and return undefined to allow graceful degradation
-    logger.warn(
-      {
-        expression: condition,
-        error: error.message,
-        code: error.code,
-      },
-      "JSONata conditional evaluation error - returning undefined for graceful degradation",
-    );
+    logger.warn(error, `JSONata ${condition} resulted in code ${error.code})`);
     return undefined;
   }
 };
@@ -368,14 +361,7 @@ const evaluateJSONata = async ({ path, root, row }) => {
     return await compiledExpression.evaluate(root);
   } catch (error) {
     // Log JSONata evaluation errors and return undefined to allow graceful degradation
-    logger.warn(
-      {
-        expression: path,
-        error: error.message,
-        code: error.code,
-      },
-      "JSONata evaluation error - returning undefined for graceful degradation",
-    );
+    logger.warn(error, `JSONata ${path} resulted in code ${error.code})`);
     return undefined;
   }
 };
