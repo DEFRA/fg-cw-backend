@@ -9,11 +9,11 @@ export const updateUserUseCase = async ({
   userId,
   props,
 }) => {
-  logger.info(`Updating user by id: ${userId}`);
+  logger.info(`Updating User ${userId}`);
 
   if (authenticatedUser.id !== userId) {
     throw Boom.forbidden(
-      `User: ${authenticatedUser.id} cannot update user: ${userId}`,
+      `User ${authenticatedUser.id} cannot update another's details`,
     );
   }
 
@@ -23,7 +23,7 @@ export const updateUserUseCase = async ({
 
   await update(user);
 
-  logger.info(`Finished: Updating user: ${userId}`);
+  logger.info(`Finished: Updating User ${userId}`);
 
   return user;
 };
@@ -47,7 +47,7 @@ const applyUpdates = (user, props) => {
     );
 
     logger.debug(
-      `Assigning app roles: ${Object.keys(appRoles)} to user ${user.id}`,
+      `Assigning app roles ${Object.keys(appRoles)} to User ${user.id}`,
     );
 
     user.assignAppRoles(appRoles);

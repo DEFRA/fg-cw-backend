@@ -27,7 +27,7 @@ export const assignUserToCaseRoute = {
     const { user } = request.auth.credentials;
     const { assignedUserId, notes } = request.payload;
 
-    logger.info(`Assigning user ${assignedUserId} to case ${caseId}`);
+    logger.info(`Assigning User ${assignedUserId} to case ${caseId}`);
     await assignUserToCaseUseCase({
       caseId,
       assignedUserId,
@@ -35,7 +35,7 @@ export const assignUserToCaseRoute = {
       user,
     });
 
-    logger.info(`Finished: Assigning user ${assignedUserId} to case ${caseId}`);
+    logger.info(`Finished: Assigning User ${assignedUserId} to case ${caseId}`);
 
     return h.response().code(204);
   },

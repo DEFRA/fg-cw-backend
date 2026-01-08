@@ -24,7 +24,7 @@ export const updateUserRoute = {
   async handler(request) {
     const { user: authenticatedUser } = request.auth.credentials;
 
-    logger.info(`Updating user: ${request.params.userId}`);
+    logger.info(`Updating User ${request.params.userId}`);
 
     const updatedUser = await updateUserUseCase({
       authenticatedUser,
@@ -32,7 +32,7 @@ export const updateUserRoute = {
       props: request.payload,
     });
 
-    logger.info(`Finished: Updating user: ${request.params.userId}`);
+    logger.info(`Finished: Updating User ${request.params.userId}`);
 
     return updatedUser;
   },

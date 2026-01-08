@@ -10,7 +10,7 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
 
-  logger.info(`Assigning user to case use case started - caseId: ${caseId}`);
+  logger.info(`Assigning User ${assignedUserId} to case ${caseId}`);
 
   const kase = await loadCase(caseId);
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
@@ -21,10 +21,12 @@ export const assignUserToCaseUseCase = async (command) => {
   });
 
   if (assignedUserId === null) {
-    return unassignUser({ kase, notes, user, caseId });
+    await unassignUser({ kase, notes, user, caseId });
+  } else {
+    await assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
   }
 
-  return assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
+  logger.info(`Finished: Assigning User ${assignedUserId} to case ${caseId}`);
 };
 
 const loadCase = async (caseId) => {
@@ -37,9 +39,7 @@ const loadCase = async (caseId) => {
   return kase;
 };
 
-const unassignUser = async ({ kase, notes, user, caseId }) => {
-  logger.debug(`Unassigning user ${user.id} from case - caseId: ${caseId}`);
-
+const unassignUser = async ({ kase, notes, user }) => {
   kase.unassignUser({
     text: notes,
     createdBy: user.id,
@@ -56,10 +56,6 @@ const assignUser = async ({
   assignedUserId,
   workflow,
 }) => {
-  logger.debug(
-    `Validating user assignment - caseId: ${caseId}, userId: ${assignedUserId}`,
-  );
-
   const userToAssign = await findUserByIdUseCase(assignedUserId);
 
   if (
@@ -69,13 +65,9 @@ const assignUser = async ({
     })
   ) {
     throw Boom.unauthorized(
-      `User with id "${userToAssign.id}" does not have the required permissions to be assigned to this case.`,
+      `User ${userToAssign.id} does not have access to case ${caseId}`,
     );
   }
-
-  logger.debug(
-    `User authorised - caseId: ${caseId}, userId: ${assignedUserId}`,
-  );
 
   kase.assignUser({
     assignedUserId,

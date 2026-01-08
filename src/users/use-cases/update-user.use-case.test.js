@@ -129,7 +129,7 @@ describe("updateUserUseCase", () => {
           name: "Name",
         },
       }),
-    ).rejects.toThrow("User: different-user cannot update user: user-123");
+    ).rejects.toThrow("User different-user cannot update another's details");
 
     expect(findById).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();

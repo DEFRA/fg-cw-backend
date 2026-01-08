@@ -3,7 +3,7 @@ import Boom from "@hapi/boom";
 export class AccessControl {
   static authorise(user, requirements) {
     if (!user) {
-      throw Boom.badImplementation("user not supplied");
+      throw Boom.badImplementation("User not supplied");
     }
 
     if (!this.canAccess(user, requirements)) {

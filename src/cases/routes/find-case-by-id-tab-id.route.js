@@ -7,7 +7,7 @@ export const findCaseByIdTabIdRoute = {
   method: "GET",
   path: "/cases/{caseId}/tabs/{tabId}",
   options: {
-    description: "Find case agreements by id",
+    description: "Find case details by tab id",
     tags: ["api"],
     validate: {
       params: Joi.object({
@@ -24,9 +24,8 @@ export const findCaseByIdTabIdRoute = {
     const { caseId, tabId } = request.params;
     const query = request.query ?? {};
 
-    logger.info(
-      `Finding case agreements for case ${caseId} with tabId ${tabId}`,
-    );
+    logger.info(`Finding details for case ${caseId} and tab ${tabId}`);
+
     const { user } = request.auth.credentials;
     const tabData = await buildCaseDetailsTabUseCase({
       params: { caseId, tabId },
@@ -35,7 +34,7 @@ export const findCaseByIdTabIdRoute = {
     });
 
     logger.info(
-      `Finished: Finding case agreements for case ${caseId} with tabId ${tabId}`,
+      `Finished: Finding details for case ${caseId} and tab ${tabId}`,
     );
 
     return tabData;

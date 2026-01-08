@@ -21,7 +21,7 @@ describe("findRoleByCode", () => {
     const nonExistentCode = "NonExistent.Code";
 
     await expect(findRoleByCodeUseCase(nonExistentCode)).rejects.toThrow(
-      `Role with code "${nonExistentCode}" not found`,
+      `Role with code ${nonExistentCode} not found`,
     );
   });
 });

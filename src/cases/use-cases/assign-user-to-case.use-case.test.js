@@ -432,7 +432,7 @@ describe("assignUserToCaseUseCase", () => {
         user: mockUser,
       }),
     ).rejects.toThrow(
-      `User with id "${userToAssign.id}" does not have the required permissions to be assigned to this case.`,
+      `User ${userToAssign.id} does not have access to case ${mockCase._id}`,
     );
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);

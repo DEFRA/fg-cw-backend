@@ -580,7 +580,7 @@ describe("AccessControl", () => {
             anyOf: [],
           },
         });
-      }).toThrow(Boom.badImplementation("user not supplied"));
+      }).toThrow(Boom.badImplementation("User not supplied"));
     });
 
     it("returns true when access is granted", () => {

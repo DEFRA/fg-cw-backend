@@ -18,7 +18,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
 
   logger.info(
-    `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+    `Building case details tab for case ${request.params.caseId} and tab ${request.params.tabId}`,
   );
 
   const { caseId, tabId } = request.params;
@@ -54,7 +54,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   ]);
 
   logger.info(
-    `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+    `Finished: Building case details tab for case ${request.params.caseId} and tab ${request.params.tabId}`,
   );
 
   return {

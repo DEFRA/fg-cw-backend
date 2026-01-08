@@ -9,9 +9,7 @@ import { findByCode } from "../repositories/workflow.repository.js";
 export const addNoteToCaseUseCase = async (command) => {
   const { caseId, text, user } = command;
 
-  logger.info(
-    `Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}`,
-  );
+  logger.info(`Adding a note to case ${caseId}`);
 
   const kase = await findById(caseId);
 
@@ -37,9 +35,9 @@ export const addNoteToCaseUseCase = async (command) => {
 
   await update(kase);
 
-  logger.info(
-    `Finished: Adding note to case use case started - caseId: ${caseId}, userId: ${user.id}, noteRef: ${note.ref}`,
-  );
+  logger.info(`Note with nodeRef ${note.ref} created by User ${user.id}`);
+
+  logger.info(`Finished: Adding a note to case ${caseId}`);
 
   return note;
 };

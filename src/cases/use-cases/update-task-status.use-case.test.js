@@ -559,7 +559,7 @@ describe("updateTaskStatusUseCase", () => {
         user: mockAuthUser,
       }),
     ).rejects.toThrow(
-      'Cannot update task status. The current stage status "Not Interactive Status" is not interactive.',
+      "The task TASK_GROUP_1/TASK_1 cannot be modified while case is in PHASE_1:STAGE_1:STATUS_1",
     );
   });
 
