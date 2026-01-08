@@ -1,7 +1,12 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createAdminUser } from "../helpers/users.js";
+import {
+  createAdminUser,
+  createUser,
+  getTokenFor,
+  TestUser,
+} from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -49,6 +54,24 @@ describe("POST /roles", () => {
         updatedAt: expect.any(String),
       },
     });
+  });
+
+  it("returns 403 when user is not admin", async () => {
+    await createUser(TestUser.ReadOnly);
+
+    const token = await getTokenFor(TestUser.ReadOnly.email);
+
+    await expect(
+      wreck.post("/roles", {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        payload: {
+          code: "ROLE_SHOULD_NOT_CREATE",
+          description: "Should not be created",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("does not create roles with the same code", async () => {
