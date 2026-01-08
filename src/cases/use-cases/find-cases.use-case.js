@@ -47,7 +47,7 @@ export const findCasesUseCase = async () => {
   const workflowCodes = cases.map((c) => c.workflowCode);
 
   const workflowFilter = createUserRolesFilter(userRoles, {
-    codes: workflowCodes,
+    codes: Array.from(new Set(workflowCodes)),
   });
 
   const [assignedUsers, workflowsUserCanAccess] = await Promise.all([
@@ -95,7 +95,7 @@ export const findCasesUseCase = async () => {
   }, []);
 
   logger.info(
-    `Finished: finding cases for User roles: ${userRoles.join(", ")}`,
+    `Finished: Finding cases for User roles: ${userRoles.join(", ")}`,
   );
 
   return casesUserCanAccess;
