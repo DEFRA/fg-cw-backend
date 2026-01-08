@@ -57,7 +57,7 @@
     "jsonata": "2.1.0",
     "jsonpath-plus": "10.3.0",
     "migrate-mongo": "14.0.7",
-    "mongodb": "6.20.0",
+    "mongodb": "7.0.0",
     "pino": "10.1.0",
     "pino-pretty": "13.1.3"
   },
