@@ -311,11 +311,37 @@ describe("findCasesUseCase", () => {
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
-      createUserRolesFilter(userRoles, {
-        codes: ["WORKFLOW_A", "WORKFLOW_B", "WORKFLOW_A"],
-      }),
-    );
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
+      $expr: {
+        $and: [
+          {
+            $or: [
+              { $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []] },
+              { $setIsSubset: ["$requiredRoles.allOf", ["ROLE_1", "ROLE_2"]] },
+            ],
+          },
+          {
+            $or: [
+              { $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []] },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $setIntersection: [
+                        "$requiredRoles.anyOf",
+                        ["ROLE_1", "ROLE_2"],
+                      ],
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+          { codes: ["WORKFLOW_A", "WORKFLOW_B"] },
+        ],
+      },
+    });
   });
 
   it("throws when find user use cases fails", async () => {
