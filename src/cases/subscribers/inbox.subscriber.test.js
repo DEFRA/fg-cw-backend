@@ -13,7 +13,7 @@ import { withTraceParent } from "../../common/trace-parent.js";
 import { Inbox } from "../models/inbox.js";
 import { claimEvents } from "../repositories/inbox.repository.js";
 import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
-import { handleAgreementStatusUpdateUseCase } from "../use-cases/handle-agreement-status-update.use-case.js";
+import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
 vi.mock("../use-cases/create-case.use-case.js");
@@ -21,7 +21,7 @@ vi.mock("../../common/trace-parent.js");
 vi.mock("../use-cases/approve-application.use-case.js");
 vi.mock("../repositories/inbox.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
-vi.mock("../use-cases/handle-agreement-status-update.use-case.js");
+vi.mock("../use-cases/handle-case-status-update.use-case.js");
 vi.mock("../../common/logger.js");
 
 describe("inbox.subscriber", () => {
@@ -178,7 +178,7 @@ describe("inbox.subscriber", () => {
       const mockEventData = {
         foo: "barr",
       };
-      handleAgreementStatusUpdateUseCase.mockResolvedValue("COMPLETE");
+      handleCaseStatusUpdateUseCase.mockResolvedValue("COMPLETE");
 
       withTraceParent.mockImplementationOnce((_, fn) => fn());
       const mockEvent = {

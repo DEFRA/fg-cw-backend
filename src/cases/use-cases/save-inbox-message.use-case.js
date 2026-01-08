@@ -9,27 +9,18 @@ export const messageSource = {
   Gas: "GAS",
 };
 
-// eslint-disable-next-line complexity
 export const saveInboxMessageUseCase = async (message, source) => {
+  logger.info("Saving inbox message");
+
   const existing = await findByMessageId(message.id);
 
-  logger.info(
-    `Save inbox message use case${
-      message?.data?.caseRef ? ` for caseRef ${message.data.caseRef}` : ""
-    }${
-      message?.data?.workflowCode
-        ? ` and workflowCode ${message.data.workflowCode}`
-        : ""
-    } started.`,
-  );
-
   if (existing !== null) {
-    // message has already been stored
     logger.warn(`Message with id ${message.id} already exists`);
     return;
   }
 
   logger.debug(`Storing message with id ${message.id}.`);
+
   const inbox = new Inbox({
     traceparent: message.traceparent,
     event: message,
@@ -40,13 +31,5 @@ export const saveInboxMessageUseCase = async (message, source) => {
 
   await insertOne(inbox);
 
-  logger.info(
-    `Finished: Save inbox message use case${
-      message?.data?.caseRef ? ` for caseRef ${message.data.caseRef}` : ""
-    }${
-      message?.data?.workflowCode
-        ? ` and workflowCode ${message.data.workflowCode}`
-        : ""
-    } started.`,
-  );
+  logger.info(`Finished: Saving inbox message`);
 };

@@ -6,7 +6,7 @@ import {
   update,
 } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
-import { updateSupplementaryDataUseCase } from "./update-supplementary-data.use-case.js";
+import { progressCaseUseCase } from "./progress-case.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
@@ -43,7 +43,7 @@ describe("update supplementary data use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 
     await expect(() =>
-      updateSupplementaryDataUseCase({
+      progressCaseUseCase({
         caseRef: "ABCD1234",
         workflowCode: "workflow-1",
         newStatus: "foo",
@@ -71,7 +71,7 @@ describe("update supplementary data use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
     findWorkflowByCodeUseCase.mockResolvedValue(workflow);
 
-    const returnValue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await progressCaseUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe("update supplementary data use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
     findWorkflowByCodeUseCase.mockResolvedValue(workflow);
 
-    const returnValue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await progressCaseUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
@@ -150,7 +150,7 @@ describe("update supplementary data use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
     findWorkflowByCodeUseCase.mockResolvedValue(workflow);
 
-    const returnValue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await progressCaseUseCase(data);
 
     expect(kase.supplementaryData.customData).toEqual({
       customValue: {
@@ -171,7 +171,7 @@ describe("update supplementary data use case", () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
     findWorkflowByCodeUseCase.mockResolvedValue(workflow);
 
-    const returnValue = await updateSupplementaryDataUseCase(data);
+    const returnValue = await progressCaseUseCase(data);
 
     const caseAgreements = kase.supplementaryData.agreements;
     expect(caseAgreements).toHaveLength(1);
