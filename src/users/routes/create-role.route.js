@@ -17,12 +17,7 @@ export const createRoleRoute = {
 
     const { user } = request.auth.credentials;
     const { code, description } = request.payload;
-
-    await createRoleUseCase({
-      user,
-      code,
-      description,
-    });
+    await createRoleUseCase({ user, code, description });
 
     logger.info(`Finished: Creating user role for code ${code}`);
     return h.response().code(204);
