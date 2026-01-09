@@ -21,28 +21,19 @@ afterAll(async () => {
 describe("GET /cases", () => {
   beforeEach(async () => {
     await createAdminUser();
-    await createWorkflow();
   });
 
   it("finds cases", async () => {
+    await createWorkflow();
+
     await cases.insertMany([
       {
         ...caseData1,
-        requiredRoles: {
-          allOf: ["ROLE_1", "ROLE_2"],
-          anyOf: ["ROLE_3"],
-        },
         dateReceived: new Date(caseData1.dateReceived),
-        supplementaryData: {},
       },
       {
         ...caseData2,
-        requiredRoles: {
-          allOf: ["ROLE_1", "ROLE_2"],
-          anyOf: ["ROLE_3"],
-        },
         dateReceived: new Date(caseData2.dateReceived),
-        supplementaryData: {},
       },
     ]);
 
@@ -72,5 +63,63 @@ describe("GET /cases", () => {
         payload: caseData2.payload,
       },
     ]);
+  });
+
+  it("exludes cases user does not have access to", async () => {
+    await createWorkflow({
+      code: "WF-1",
+      requiredRoles: {
+        allOf: [],
+        anyOf: [],
+      },
+    });
+
+    await createWorkflow({
+      code: "WF-2",
+      requiredRoles: {
+        allOf: ["ROLE_USER_DOES_NOT_HAVE"],
+        anyOf: [],
+      },
+    });
+
+    await createWorkflow({
+      code: "WF-3",
+      requiredRoles: {
+        allOf: ["ROLE_1", "ROLE_2"],
+        anyOf: ["ROLE_3"],
+      },
+    });
+
+    await cases.insertMany([
+      {
+        ...caseData1,
+        caseRef: "UNRESTRCITED-CASE",
+        workflowCode: "WF-1",
+        dateReceived: new Date(caseData1.dateReceived),
+      },
+      {
+        ...caseData1,
+        caseRef: "UNAUTHORIZED-CASE",
+        workflowCode: "WF-2",
+        dateReceived: new Date(caseData1.dateReceived),
+      },
+      {
+        ...caseData1,
+        caseRef: "AUTHORIZED-CASE",
+        workflowCode: "WF-3",
+        dateReceived: new Date(caseData1.dateReceived),
+      },
+    ]);
+
+    const response = await wreck.get("/cases");
+
+    expect(response.res.statusCode).toBe(200);
+    expect(response.payload.length).toBe(2);
+
+    expect(response.payload[0].caseRef).toBe("UNRESTRCITED-CASE");
+    expect(response.payload[0].workflowCode).toBe("WF-1");
+
+    expect(response.payload[1].caseRef).toBe("AUTHORIZED-CASE");
+    expect(response.payload[1].workflowCode).toBe("WF-3");
   });
 });
