@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { logger } from "../../common/logger.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { assignUserToCaseRequestSchema } from "../schemas/requests/assign-user-to-case-request.schema.js";
 import { assignUserToCaseUseCase } from "../use-cases/assign-user-to-case.use-case.js";
@@ -27,15 +26,12 @@ export const assignUserToCaseRoute = {
     const { user } = request.auth.credentials;
     const { assignedUserId, notes } = request.payload;
 
-    logger.info(`Assigning User ${assignedUserId} to case ${caseId}`);
     await assignUserToCaseUseCase({
       caseId,
       assignedUserId,
       notes,
       user,
     });
-
-    logger.info(`Finished: Assigning User ${assignedUserId} to case ${caseId}`);
 
     return h.response().code(204);
   },

@@ -208,7 +208,7 @@ const createWorkflowPhase = (phase, phases) =>
   });
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
-  logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
+  logger.info(`Creating workflow with code "${createWorkflowCommand.code}"`);
 
   AccessControl.authorise(createWorkflowCommand.user, {
     idpRoles: [IdpRoles.Admin],
@@ -232,7 +232,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   await save(workflow);
 
-  logger.info(`Finished: Workflow created with code '${workflow.code}'`);
+  logger.info(`Finished: Creating workflow with code "${workflow.code}"`);
 
   return workflow;
 };

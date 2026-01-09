@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { logger } from "../../common/logger.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { updateUserRequestSchema } from "../schemas/requests/update-user-request.schema.js";
 import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
@@ -24,16 +23,10 @@ export const updateUserRoute = {
   async handler(request) {
     const { user: authenticatedUser } = request.auth.credentials;
 
-    logger.info(`Updating User ${request.params.userId}`);
-
-    const updatedUser = await updateUserUseCase({
+    return await updateUserUseCase({
       authenticatedUser,
       userId: request.params.userId,
       props: request.payload,
     });
-
-    logger.info(`Finished: Updating User ${request.params.userId}`);
-
-    return updatedUser;
   },
 };

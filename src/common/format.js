@@ -66,13 +66,13 @@ export const applyFormat = (value, formatString) => {
     const formatFn = formatFunctions[name];
 
     if (!formatFn) {
-      logger.warn(`Unknown format: ${name}`);
+      logger.warn(`Unknown format: "${name}"`);
       return value;
     }
 
     return formatFn(value, ...params);
   } catch (error) {
-    logger.warn(`Format error: ${error.message}`);
+    logger.warn(`Format error: "${error.message}"`);
     return value;
   }
 };
