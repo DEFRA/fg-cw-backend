@@ -25,7 +25,7 @@ export const cases = {
     logger.info("Running migrations");
     const migrated = await up(db, mongoClient);
 
-    migrated.forEach((fileName) => logger.info(`Migrated: ${fileName}`));
+    migrated.forEach((fileName) => logger.info(`Migrated: "${fileName}"`));
     logger.info("Finished running migrations");
 
     const outboxSubscriber = new OutboxSubscriber();

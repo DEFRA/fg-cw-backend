@@ -15,11 +15,11 @@ export const saveInboxMessageUseCase = async (message, source) => {
   const existing = await findByMessageId(message.id);
 
   if (existing !== null) {
-    logger.warn(`Message with id ${message.id} already exists`);
+    logger.warn(`Message with id "${message.id}" already exists`);
     return;
   }
 
-  logger.debug(`Storing message with id ${message.id}.`);
+  logger.debug(`Storing message with id "${message.id}".`);
 
   const inbox = new Inbox({
     traceparent: message.traceparent,

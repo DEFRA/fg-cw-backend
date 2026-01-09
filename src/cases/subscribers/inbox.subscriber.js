@@ -50,44 +50,46 @@ export class InboxSubscriber {
   async processExpiredEvents() {
     const results = await processExpiredEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results?.modifiedCount} expired inbox events`);
+      logger.info(`Updated "${results?.modifiedCount}" expired inbox events`);
   }
 
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results?.modifiedCount} dead inbox events`);
+      logger.info(`Updated "${results?.modifiedCount}" dead inbox events`);
   }
 
   async processResubmittedEvents() {
     const results = await updateResubmittedEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results?.modifiedCount} resubmitted inbox events`);
+      logger.info(
+        `Updated "${results?.modifiedCount}" resubmitted inbox events`,
+      );
   }
 
   async processFailedEvents() {
     const results = await updateFailedEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results?.modifiedCount} failed inbox events`);
+      logger.info(`Updated "${results?.modifiedCount}" failed inbox events`);
   }
 
   async markEventFailed(inboxEvent) {
     inboxEvent.markAsFailed();
     await update(inboxEvent);
-    logger.info(`Marked inbox event failed ${inboxEvent.messageId}`);
+    logger.info(`Marked inbox event failed "${inboxEvent.messageId}"`);
   }
 
   async markEventComplete(inboxEvent) {
     inboxEvent.markAsComplete();
     await update(inboxEvent);
-    logger.info(`Marked inbox event as complete ${inboxEvent.messageId}`);
+    logger.info(`Marked inbox event as complete "${inboxEvent.messageId}"`);
   }
 
   async handleEvent(msg) {
     const { type, traceparent, source, messageId } = msg;
-    logger.info(
-      `Handle event for inbox message ${type}:${source}:${messageId}`,
-    );
+
+    logger.info(`Handling inbox message "${type}:${source}:${messageId}"`);
+
     try {
       const eventType = type.replace(config.get("cdpEnvironment"), "ENV");
       const handler = useCaseMap[eventType];
@@ -97,12 +99,14 @@ export class InboxSubscriber {
       }
 
       await withTraceParent(traceparent, async () => handler(msg));
+
+      logger.info(
+        `Finished: Handling inbox message "${type}:${source}:${messageId}"`,
+      );
+
       await this.markEventComplete(msg);
     } catch (ex) {
-      logger.error(
-        ex,
-        `Error handling event for inbox message ${type}:${messageId}`,
-      );
+      logger.error(ex, `Error handling inbox message "${type}:${messageId}"`);
       await this.markEventFailed(msg);
     }
   }
@@ -118,7 +122,7 @@ export class InboxSubscriber {
   }
 
   stop() {
-    logger.info("stopping inbox subscriber");
+    logger.info("Stopping inbox subscriber");
     this.running = false;
   }
 }

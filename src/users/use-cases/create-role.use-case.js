@@ -11,7 +11,7 @@ export const createRoleUseCase = async ({ user, code, description }) => {
     appRoles: RequiredAppRoles.None,
   });
 
-  logger.info(`Creating role: ${code}`);
+  logger.info(`Creating role: "${code}"`);
 
   const createdAt = new Date().toISOString();
   const role = new Role({
@@ -23,7 +23,7 @@ export const createRoleUseCase = async ({ user, code, description }) => {
 
   await save(role);
 
-  logger.info(`Finished: Creating role: ${role.code}`);
+  logger.info(`Finished: Creating role: "${role.code}"`);
 
   return role;
 };
