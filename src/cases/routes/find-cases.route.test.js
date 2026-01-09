@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createServer } from "../../server/index.js";
+import { User } from "../../users/models/user.js";
 import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
 import { findCasesRoute } from "./find-cases.route.js";
 
@@ -19,6 +20,7 @@ describe("findCasesRoute", () => {
   });
 
   it("returns cases", async () => {
+    const user = User.createMock();
     const cases = [{}];
 
     findCasesUseCase.mockResolvedValue(cases);
@@ -29,11 +31,12 @@ describe("findCasesRoute", () => {
       auth: {
         strategy: "entra",
         credentials: {
-          userId: "12345",
-          scope: ["admin"],
+          user,
         },
       },
     });
+
+    expect(findCasesUseCase).toHaveBeenCalledWith(user);
 
     expect(statusCode).toEqual(200);
     expect(result).toEqual(cases);
