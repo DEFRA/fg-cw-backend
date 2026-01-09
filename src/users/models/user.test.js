@@ -4,9 +4,11 @@ import { AppRole } from "./app-role.js";
 import { User } from "./user.js";
 
 vi.mock("mongodb", () => ({
-  ObjectId: vi.fn(() => ({
-    toHexString: vi.fn(() => "507f1f77bcf86cd799439011"),
-  })),
+  ObjectId: vi.fn().mockImplementation(function () {
+    this.toHexString = function () {
+      return "507f1f77bcf86cd799439011";
+    };
+  }),
 }));
 
 beforeEach(() => {
@@ -16,11 +18,17 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.resetAllMocks();
 });
 
 describe("User", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    ObjectId.mockImplementation(function () {
+      this.toHexString = function () {
+        return "507f1f77bcf86cd799439011";
+      };
+    });
   });
 
   describe("constructor", () => {
