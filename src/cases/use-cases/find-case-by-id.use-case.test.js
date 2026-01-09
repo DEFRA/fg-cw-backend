@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { AppRole } from "../../users/models/app-role.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
@@ -354,6 +355,7 @@ describe("findCaseByIdUseCase", () => {
         description: "Stage 1 description",
         name: "Stage 1",
         interactive: true,
+        canPerformActions: true,
         outcome: undefined,
         actions: [],
         taskGroups: [
@@ -526,6 +528,67 @@ describe("findCaseByIdUseCase", () => {
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
 
+    expect(result.stage.canPerformActions).toBe(true);
+    expect(result.stage.actions).toEqual([
+      {
+        code: "ACTION_1",
+        name: "Action 1",
+        comment: {
+          helpText: "Action help text",
+          label: "Action label 1",
+          mandatory: true,
+        },
+      },
+    ]);
+  });
+
+  it("returns empty actions when user lacks ReadWrite IDP role", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    // Complete tasks to ensure actions would normally be available
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    // User with only Read role (not ReadWrite)
+    const readOnlyUser = User.createMock({
+      id: new ObjectId().toHexString(),
+      idpRoles: [IdpRoles.Read],
+    });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", readOnlyUser);
+
+    expect(result.stage.canPerformActions).toBe(false);
+    expect(result.stage.actions).toEqual([]);
+  });
+
+  it("returns actions when user has ReadWrite IDP role", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    // Complete tasks to ensure actions are available
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    // User with ReadWrite role
+    const readWriteUser = User.createMock({
+      id: new ObjectId().toHexString(),
+      idpRoles: [IdpRoles.ReadWrite],
+    });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", readWriteUser);
+
+    expect(result.stage.canPerformActions).toBe(true);
     expect(result.stage.actions).toEqual([
       {
         code: "ACTION_1",
