@@ -10,7 +10,7 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
 
-  logger.info(`Assigning User ${assignedUserId} to case ${caseId}`);
+  logger.info(`Assigning User "${assignedUserId}" to case "${caseId}"`);
 
   const kase = await loadCase(caseId);
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
@@ -26,7 +26,9 @@ export const assignUserToCaseUseCase = async (command) => {
     await assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
   }
 
-  logger.info(`Finished: Assigning User ${assignedUserId} to case ${caseId}`);
+  logger.info(
+    `Finished: Assigning User "${assignedUserId}" to case "${caseId}"`,
+  );
 };
 
 const loadCase = async (caseId) => {

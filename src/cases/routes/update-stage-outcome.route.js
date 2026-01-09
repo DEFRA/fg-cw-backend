@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { logger } from "../../common/logger.js";
 import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { ValidationError } from "../schemas/common.schema.js";
 import { updateStageOutcomeRequestSchema } from "../schemas/requests/update-stage-outcome-request.schema.js";
@@ -28,15 +27,12 @@ export const updateStageOutcomeRoute = {
     const { actionCode, comment } = request.payload;
     const { user } = request.auth.credentials;
 
-    logger.info(`Updating stage outcome for case ${caseId}`);
     await updateStageOutcomeUseCase({
       caseId,
       actionCode,
       comment,
       user,
     });
-
-    logger.info(`Finished: Updating stage outcome for case ${caseId}`);
 
     return h.response().code(HttpCodes.NoContent);
   },
