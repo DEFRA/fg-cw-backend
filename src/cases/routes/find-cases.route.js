@@ -7,7 +7,8 @@ export const findCasesRoute = {
     description: "Find all cases",
     tags: ["api"],
   },
-  async handler() {
-    return await findCasesUseCase();
+  async handler(request) {
+    const { user } = request.auth.credentials;
+    return await findCasesUseCase(user);
   },
 };

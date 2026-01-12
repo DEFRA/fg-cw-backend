@@ -19,6 +19,12 @@ export class User {
     this.updatedAt = new Date().toISOString();
   }
 
+  getRoles() {
+    return Object.keys(this.appRoles).filter((roleName) =>
+      this.hasActiveRole(roleName),
+    );
+  }
+
   assignIdpRoles(idpRoles) {
     this.idpRoles = idpRoles;
     this.updatedAt = new Date().toISOString();
