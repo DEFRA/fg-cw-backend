@@ -907,7 +907,7 @@
             {
               "code": "ON_HOLD",
               "name": "On Hold",
-              "theme": "WARN",
+              "theme": "NOTICE",
               "description": "Application is on hold pending more information",
               "interactive": true,
               "transitions": [
