@@ -50,49 +50,51 @@ export class OutboxSubscriber {
   async processExpiredEvents() {
     const results = await updateExpiredEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results.modifiedCount} expired outbox events`);
+      logger.info(`Updated "${results.modifiedCount}" expired outbox events`);
   }
 
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results.modifiedCount} dead outbox events`);
+      logger.info(`Updated "${results.modifiedCount}" dead outbox events`);
   }
 
   async processResubmittedEvents() {
     const results = await updateResubmittedEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results.modifiedCount} resubmitted outbox events`);
+      logger.info(
+        `Updated "${results.modifiedCount}" resubmitted outbox events`,
+      );
   }
 
   async processFailedEvents() {
     const results = await updateFailedEvents();
     results?.modifiedCount &&
-      logger.info(`Updated ${results.modifiedCount} failed outbox events`);
+      logger.info(`Updated "${results.modifiedCount}" failed outbox events`);
   }
 
   async markEventUnsent(event) {
     const claimedBy = this.asyncLocalStorage.getStore();
     event.markAsFailed();
     await update(event, claimedBy);
-    logger.info(`Marked outbox event unsent ${event._id}`);
+    logger.info(`Marked outbox event unsent "${event._id}"`);
   }
 
   async markEventComplete(event) {
     const claimedBy = this.asyncLocalStorage.getStore();
     event.markAsComplete();
     await update(event, claimedBy);
-    logger.info(`Marked outbox event as complete: ${event._id}`);
+    logger.info(`Marked outbox event as complete: "${event._id}"`);
   }
 
   async sendEvent(event) {
     const { target: topic, event: data } = event;
-    logger.info(`Send outbox event to ${topic}`);
+    logger.info(`Send outbox event to "${topic}"`);
     try {
       await publish(topic, data);
       await this.markEventComplete(event);
     } catch (ex) {
-      logger.error(ex, `Error sending outbox event to topic ${topic}`);
+      logger.error(ex, `Error sending outbox event to topic "${topic}"`);
       this.markEventUnsent(event);
     }
   }

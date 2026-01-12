@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import {
   buildBanner,
   buildLinks,
@@ -171,9 +170,9 @@ export const mapWorkflowCommentDef = (workflowTask) => {
 };
 
 export const findCaseByIdUseCase = async (caseId, user, request) => {
-  const kase = await findById(caseId);
+  logger.info(`Finding case by id "${caseId}"`);
 
-  logger.info(`Finding case by id ${caseId}`);
+  const kase = await findById(caseId);
 
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
@@ -193,7 +192,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
   const caseStage = kase.getStage();
   const assignedUser = userMap.get(kase.assignedUser?.id);
 
-  logger.info(`Finished: Finding case by id ${caseId}`);
+  logger.info(`Finished: Finding case by id "${caseId}"`);
 
   return {
     _id: kase._id,
@@ -230,8 +229,7 @@ const createUserMap = async (userIds, user) => {
   const users = await findAll({ ids });
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  const authenticatedUser = getAuthenticatedUser(user);
-  userMap.set(authenticatedUser.id, authenticatedUser);
+  userMap.set(user.id, user);
 
   return userMap;
 };

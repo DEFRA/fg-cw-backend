@@ -1,4 +1,3 @@
-import { logger } from "../../common/logger.js";
 import { findRolesResponseSchema } from "../schemas/responses/find-roles-response.schema.js";
 import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
 
@@ -13,9 +12,6 @@ export const findRolesRoute = {
     },
   },
   async handler() {
-    logger.info("Finding roles");
-    const roles = await findRolesUseCase();
-    logger.info("Finished: Finding roles");
-    return roles;
+    return await findRolesUseCase();
   },
 };
