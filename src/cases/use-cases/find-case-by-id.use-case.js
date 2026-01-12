@@ -100,19 +100,21 @@ const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
     return [];
   }
 
-  return commentRefs.map((commentRef) => {
-    const comment = findCommentByRef(comments, commentRef.ref);
-    const statusOption = findStatusOptionByCode(
-      statusOptions,
-      commentRef.status,
-    );
-    return mapCommentRefToNoteHistory(
-      commentRef,
-      comment,
-      statusOption,
-      userMap,
-    );
-  });
+  return commentRefs
+    .map((commentRef) => {
+      const comment = findCommentByRef(comments, commentRef.ref);
+      const statusOption = findStatusOptionByCode(
+        statusOptions,
+        commentRef.status,
+      );
+      return mapCommentRefToNoteHistory(
+        commentRef,
+        comment,
+        statusOption,
+        userMap,
+      );
+    })
+    .filter((entry) => entry.date !== null);
 };
 
 const mapTasks = async (

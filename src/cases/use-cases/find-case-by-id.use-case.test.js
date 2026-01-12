@@ -968,7 +968,7 @@ describe("findCaseByIdUseCase", () => {
       });
     });
 
-    it("handles orphaned commentRef where comment is not found", async () => {
+    it("skips orphaned commentRef where comment is not found", async () => {
       const mockUser = User.createMock();
       const mockWorkflow = Workflow.createMock();
       const mockCase = Case.createMock();
@@ -985,13 +985,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.notesHistory).toHaveLength(1);
-      expect(task.notesHistory[0]).toEqual({
-        date: null,
-        outcome: "Status option 1",
-        note: null,
-        addedBy: null,
-      });
+      expect(task.notesHistory).toEqual([]);
     });
 
     it("falls back to status code when statusOption is not found", async () => {
