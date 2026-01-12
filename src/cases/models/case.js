@@ -455,8 +455,7 @@ export class Case {
                       code: "TASK_1",
                       status: "PENDING",
                       completed: false,
-                      // this should be refactored to use null
-                      commentRef: undefined,
+                      commentRefs: [],
                       updatedAt: undefined,
                       updatedBy: undefined,
                     }),

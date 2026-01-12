@@ -72,7 +72,58 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
+const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
+
+const findStatusOptionByCode = (statusOptions, code) =>
+  statusOptions.find((opt) => opt.code === code);
+
+const getCommentDate = (comment) => comment?.createdAt ?? null;
+const getCommentText = (comment) => comment?.text ?? null;
+const getCommentCreatedBy = (comment) => comment?.createdBy;
+const getOutcomeName = (statusOption, fallback) =>
+  statusOption?.name ?? fallback;
+
+const mapCommentRefToNoteHistory = (
+  commentRef,
+  comment,
+  statusOption,
+  userMap,
+) => ({
+  date: getCommentDate(comment),
+  outcome: getOutcomeName(statusOption, commentRef.status),
+  note: getCommentText(comment),
+  addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
+});
+
+const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
+  if (!commentRefs?.length) {
+    return [];
+  }
+
+  return commentRefs
+    .map((commentRef) => {
+      const comment = findCommentByRef(comments, commentRef.ref);
+      const statusOption = findStatusOptionByCode(
+        statusOptions,
+        commentRef.status,
+      );
+      return mapCommentRefToNoteHistory(
+        commentRef,
+        comment,
+        statusOption,
+        userMap,
+      );
+    })
+    .filter((entry) => entry.date !== null);
+};
+
+const mapTasks = async (
+  caseTaskGroup,
+  workflowTaskGroup,
+  userMap,
+  root,
+  comments,
+) =>
   Promise.all(
     caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
       const workflowTaskGroupTask = workflowTaskGroup.findTask(
@@ -82,6 +133,13 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
       const selectedStatus = mapSelectedStatusOption(
         caseTaskGroupTask.status,
         workflowTaskGroupTask.statusOptions,
+      );
+
+      const notesHistory = mapNotesHistory(
+        caseTaskGroupTask.commentRefs,
+        comments,
+        workflowTaskGroupTask.statusOptions,
+        userMap,
       );
 
       return {
@@ -95,7 +153,8 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
         commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
-        commentRef: caseTaskGroupTask.commentRef,
+        commentRefs: caseTaskGroupTask.commentRefs,
+        notesHistory,
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
         requiredRoles: workflowTaskGroupTask.requiredRoles,
@@ -243,6 +302,7 @@ const mapTaskGroups = async (
   workflowStage,
   userMap,
   caseWorkflowContext,
+  comments,
 ) => {
   return await Promise.all(
     caseStage.taskGroups.map(async (caseTaskGroup) => {
@@ -256,6 +316,7 @@ const mapTaskGroups = async (
           workflowTaskGroup,
           userMap,
           caseWorkflowContext,
+          comments,
         ),
       };
     }),
@@ -281,6 +342,7 @@ const mapStageData = async (
       workflowStage,
       userMap,
       caseWorkflowContext,
+      kase.comments,
     ),
     actions: kase.getPermittedActions(workflow).map((a) => ({
       code: a.code,
