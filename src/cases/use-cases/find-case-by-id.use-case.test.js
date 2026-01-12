@@ -930,6 +930,119 @@ describe("findCaseByIdUseCase", () => {
       expect(task.completed).toBe(false);
     });
   });
+
+  describe("notesHistory", () => {
+    it("maps commentRefs to notesHistory with resolved comments", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "STATUS_OPTION_1", ref: commentRef },
+      ];
+
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "This is a test note",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0]).toEqual({
+        date: "2025-09-25T14:30:00.000Z",
+        outcome: "Status option 1",
+        note: "This is a test note",
+        addedBy: mockUser.name,
+      });
+    });
+
+    it("handles orphaned commentRef where comment is not found", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "STATUS_OPTION_1", ref: "nonexistent-ref" },
+      ];
+      mockCase.comments = [];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0]).toEqual({
+        date: null,
+        outcome: "Status option 1",
+        note: null,
+        addedBy: null,
+      });
+    });
+
+    it("falls back to status code when statusOption is not found", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "UNKNOWN_STATUS", ref: commentRef },
+      ];
+
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "Note with unknown status",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS");
+    });
+
+    it("returns empty notesHistory when commentRefs is undefined", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs =
+        undefined;
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toEqual([]);
+    });
+  });
 });
 
 describe("mapSelectedStatusOption", () => {
