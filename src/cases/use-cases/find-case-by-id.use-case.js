@@ -73,23 +73,46 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
+const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
+
+const findStatusOptionByCode = (statusOptions, code) =>
+  statusOptions.find((opt) => opt.code === code);
+
+const getCommentDate = (comment) => comment?.createdAt ?? null;
+const getCommentText = (comment) => comment?.text ?? null;
+const getCommentCreatedBy = (comment) => comment?.createdBy;
+const getOutcomeName = (statusOption, fallback) =>
+  statusOption?.name ?? fallback;
+
+const mapCommentRefToNoteHistory = (
+  commentRef,
+  comment,
+  statusOption,
+  userMap,
+) => ({
+  date: getCommentDate(comment),
+  outcome: getOutcomeName(statusOption, commentRef.status),
+  note: getCommentText(comment),
+  addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
+});
+
 const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
-  if (!commentRefs || commentRefs.length === 0) {
+  if (!commentRefs?.length) {
     return [];
   }
 
   return commentRefs.map((commentRef) => {
-    const comment = comments.find((c) => c.ref === commentRef.ref);
-    const statusOption = statusOptions.find(
-      (opt) => opt.code === commentRef.status,
+    const comment = findCommentByRef(comments, commentRef.ref);
+    const statusOption = findStatusOptionByCode(
+      statusOptions,
+      commentRef.status,
     );
-
-    return {
-      date: comment?.createdAt || null,
-      outcome: statusOption?.name || commentRef.status,
-      note: comment?.text || null,
-      addedBy: mapUserIdToName(comment?.createdBy, userMap),
-    };
+    return mapCommentRefToNoteHistory(
+      commentRef,
+      comment,
+      statusOption,
+      userMap,
+    );
   });
 };
 
