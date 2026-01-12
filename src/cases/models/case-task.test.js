@@ -47,16 +47,37 @@ describe("CaseTask", () => {
     );
   });
 
-  it("should not create a task with an invalid commentRef", () => {
+  it("should create a task with empty commentRefs by default", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+    });
+
+    expect(task.commentRefs).toEqual([]);
+  });
+
+  it("should create a task with commentRefs array", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+      commentRefs: [{ status: "ACCEPTED", ref: "abc123def456" }],
+    });
+
+    expect(task.commentRefs).toEqual([
+      { status: "ACCEPTED", ref: "abc123def456" },
+    ]);
+  });
+
+  it("should not create a task with invalid commentRefs ref", () => {
     expect(
       () =>
         new CaseTask({
           code: "TASK_1",
           status: "PENDING",
-          commentRef: "invalid_id",
+          commentRefs: [{ status: "ACCEPTED", ref: "INVALID_REF" }],
         }),
     ).toThrow(
-      'Invalid Task: "commentRef" with value "invalid_id" fails to match the required pattern: /^[a-z0-9-]+$/',
+      'Invalid Task: "UrlSafeId" with value "INVALID_REF" fails to match the required pattern: /^[a-z0-9-]+$/',
     );
   });
 
@@ -183,5 +204,80 @@ describe("CaseTask", () => {
     });
 
     expect(task.status).toBe(null);
+  });
+
+  it("should append comment ref when updating status with comment", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+    });
+
+    task.updateStatus({
+      status: "ACCEPTED",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      comment: { ref: "abc123def456" },
+    });
+
+    expect(task.commentRefs).toEqual([
+      { status: "ACCEPTED", ref: "abc123def456" },
+    ]);
+  });
+
+  it("should append multiple comment refs when updating status multiple times", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+    });
+
+    task.updateStatus({
+      status: "RFI",
+      completed: false,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      comment: { ref: "abc123def456" },
+    });
+
+    task.updateStatus({
+      status: "ACCEPTED",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+      comment: { ref: "xyz789ghi012" },
+    });
+
+    expect(task.commentRefs).toEqual([
+      { status: "RFI", ref: "abc123def456" },
+      { status: "ACCEPTED", ref: "xyz789ghi012" },
+    ]);
+  });
+
+  it("should not append comment ref when no comment is provided", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+    });
+
+    task.updateStatus({
+      status: "ACCEPTED",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+    });
+
+    expect(task.commentRefs).toEqual([]);
+  });
+
+  it("should preserve existing commentRefs when updating without comment", () => {
+    const task = new CaseTask({
+      code: "TASK_1",
+      status: "PENDING",
+      commentRefs: [{ status: "RFI", ref: "abc123def456" }],
+    });
+
+    task.updateStatus({
+      status: "ACCEPTED",
+      completed: true,
+      updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
+    });
+
+    expect(task.commentRefs).toEqual([{ status: "RFI", ref: "abc123def456" }]);
   });
 });

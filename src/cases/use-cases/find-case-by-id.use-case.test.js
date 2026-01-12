@@ -369,7 +369,8 @@ describe("findCaseByIdUseCase", () => {
                 status: "PENDING",
                 updatedAt: undefined,
                 updatedBy: null,
-                commentRef: undefined,
+                commentRefs: [],
+                notesHistory: [],
                 completed: false,
                 commentInputDef: {
                   helpText:

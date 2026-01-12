@@ -73,7 +73,33 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
+const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
+  if (!commentRefs || commentRefs.length === 0) {
+    return [];
+  }
+
+  return commentRefs.map((commentRef) => {
+    const comment = comments.find((c) => c.ref === commentRef.ref);
+    const statusOption = statusOptions.find(
+      (opt) => opt.code === commentRef.status,
+    );
+
+    return {
+      date: comment?.createdAt || null,
+      outcome: statusOption?.name || commentRef.status,
+      note: comment?.text || null,
+      addedBy: mapUserIdToName(comment?.createdBy, userMap),
+    };
+  });
+};
+
+const mapTasks = async (
+  caseTaskGroup,
+  workflowTaskGroup,
+  userMap,
+  root,
+  comments,
+) =>
   Promise.all(
     caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
       const workflowTaskGroupTask = workflowTaskGroup.findTask(
@@ -83,6 +109,13 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
       const selectedStatus = mapSelectedStatusOption(
         caseTaskGroupTask.status,
         workflowTaskGroupTask.statusOptions,
+      );
+
+      const notesHistory = mapNotesHistory(
+        caseTaskGroupTask.commentRefs,
+        comments,
+        workflowTaskGroupTask.statusOptions,
+        userMap,
       );
 
       return {
@@ -96,7 +129,8 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
         commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
-        commentRef: caseTaskGroupTask.commentRef,
+        commentRefs: caseTaskGroupTask.commentRefs,
+        notesHistory,
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
         requiredRoles: workflowTaskGroupTask.requiredRoles,
@@ -245,6 +279,7 @@ const mapTaskGroups = async (
   workflowStage,
   userMap,
   caseWorkflowContext,
+  comments,
 ) => {
   return await Promise.all(
     caseStage.taskGroups.map(async (caseTaskGroup) => {
@@ -258,6 +293,7 @@ const mapTaskGroups = async (
           workflowTaskGroup,
           userMap,
           caseWorkflowContext,
+          comments,
         ),
       };
     }),
@@ -283,6 +319,7 @@ const mapStageData = async (
       workflowStage,
       userMap,
       caseWorkflowContext,
+      kase.comments,
     ),
     actions: kase.getPermittedActions(workflow).map((a) => ({
       code: a.code,
