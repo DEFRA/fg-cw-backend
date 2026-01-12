@@ -1,5 +1,4 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
 import {
   buildBanner,
   buildLinks,
@@ -287,8 +286,7 @@ const createUserMap = async (userIds, user) => {
   const users = await findAll({ ids });
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  const authenticatedUser = getAuthenticatedUser(user);
-  userMap.set(authenticatedUser.id, authenticatedUser);
+  userMap.set(user.id, user);
 
   return userMap;
 };

@@ -1,4 +1,3 @@
-import { getAuthenticatedUserRoles } from "../../common/auth.js";
 import { logger } from "../../common/logger.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
@@ -37,16 +36,15 @@ export const createUserRolesFilter = (userRoles, extrafilters = {}) => {
   };
 };
 
-export const findCasesUseCase = async () => {
-  const userRoles = Object.keys(getAuthenticatedUserRoles());
+export const findCasesUseCase = async (user) => {
   const cases = await findAll();
 
-  logger.info(`Finding cases for app roles: "${userRoles.join(", ")}"`);
+  logger.info(`Finding cases for User ${user.id}`);
 
   const assignedUserIds = cases.map((c) => c.assignedUser?.id).filter(Boolean);
   const workflowCodes = cases.map((c) => c.workflowCode);
 
-  const workflowFilter = createUserRolesFilter(userRoles, {
+  const workflowFilter = createUserRolesFilter(user.getRoles(), {
     codes: Array.from(new Set(workflowCodes)),
   });
 
@@ -94,7 +92,7 @@ export const findCasesUseCase = async () => {
     return acc;
   }, []);
 
-  logger.info(`Finished: Finding cases for app roles: ${userRoles.join(", ")}`);
+  logger.info(`Finished: Finding cases for User ${user.id}`);
 
   return casesUserCanAccess;
 };

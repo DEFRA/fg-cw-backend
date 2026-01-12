@@ -224,6 +224,90 @@ describe("User", () => {
     });
   });
 
+  describe("getRoles", () => {
+    it("returns array of active role names", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ACTIVE_1: new AppRole({
+            name: "ROLE_ACTIVE_1",
+            startDate: "2025-01-01",
+            endDate: "2100-12-31",
+          }),
+          ROLE_ACTIVE_2: new AppRole({
+            name: "ROLE_ACTIVE_2",
+            startDate: "2025-01-01",
+            endDate: "2100-12-31",
+          }),
+        },
+      });
+
+      const roles = user.getRoles();
+
+      expect(roles).toEqual(["ROLE_ACTIVE_1", "ROLE_ACTIVE_2"]);
+    });
+
+    it("returns empty array when no active roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EXPIRED: new AppRole({
+            name: "ROLE_EXPIRED",
+            startDate: "2024-01-01",
+            endDate: "2024-12-31",
+          }),
+          ROLE_NOT_STARTED: new AppRole({
+            name: "ROLE_NOT_STARTED",
+            startDate: "2026-01-01",
+            endDate: "2100-12-31",
+          }),
+        },
+      });
+
+      const roles = user.getRoles();
+
+      expect(roles).toEqual([]);
+    });
+
+    it("filters out inactive roles and returns only active ones", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_ACTIVE: new AppRole({
+            name: "ROLE_ACTIVE",
+            startDate: "2025-01-01",
+            endDate: "2100-12-31",
+          }),
+          ROLE_EXPIRED: new AppRole({
+            name: "ROLE_EXPIRED",
+            startDate: "2024-01-01",
+            endDate: "2024-12-31",
+          }),
+          ROLE_NOT_STARTED: new AppRole({
+            name: "ROLE_NOT_STARTED",
+            startDate: "2026-01-01",
+            endDate: "2100-12-31",
+          }),
+        },
+      });
+
+      const roles = user.getRoles();
+
+      expect(roles).toEqual(["ROLE_ACTIVE"]);
+    });
+
+    it("returns empty array when appRoles is empty object", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {},
+      });
+
+      const roles = user.getRoles();
+
+      expect(roles).toEqual([]);
+    });
+  });
+
   describe("hasActiveRole", () => {
     it("returns true when user has active role", () => {
       const user = new User({
@@ -232,7 +316,7 @@ describe("User", () => {
           ROLE_ACTIVE: new AppRole({
             name: "ROLE_ACTIVE",
             startDate: "2025-01-01",
-            endDate: "2025-12-31",
+            endDate: "2100-12-31",
           }),
         },
       });
@@ -262,7 +346,7 @@ describe("User", () => {
           ROLE_ACTIVE: new AppRole({
             name: "ROLE_ACTIVE",
             startDate: "2025-01-01",
-            endDate: "2025-12-31",
+            endDate: "2100-12-31",
           }),
         },
       });
@@ -342,7 +426,7 @@ describe("User", () => {
         },
         ROLE_ADMIN: {
           startDate: "2025-06-01",
-          endDate: "2025-12-31",
+          endDate: "2100-12-31",
         },
       };
 
@@ -469,13 +553,13 @@ describe("User", () => {
       user.setName("Updated Name");
       user.assignIdpRoles(["NEW_ROLE1", "NEW_ROLE2"]);
       user.assignAppRoles({
-        APP_ROLE: { startDate: "2025-01-01", endDate: "2025-12-31" },
+        APP_ROLE: { startDate: "2025-01-01", endDate: "2100-12-31" },
       });
 
       expect(user.name).toBe("Updated Name");
       expect(user.idpRoles).toEqual(["NEW_ROLE1", "NEW_ROLE2"]);
       expect(user.appRoles).toEqual({
-        APP_ROLE: { startDate: "2025-01-01", endDate: "2025-12-31" },
+        APP_ROLE: { startDate: "2025-01-01", endDate: "2100-12-31" },
       });
       expect(user.updatedAt).toBe("2025-01-15T10:30:00.000Z");
     });
