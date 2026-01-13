@@ -473,7 +473,7 @@ describe("Case", () => {
       const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
 
       expect(task.status).toBe("PENDING");
-      expect(task.commentRef).toBeUndefined();
+      expect(task.commentRefs).toEqual([]);
 
       kase.setTaskStatus({
         phaseCode: "PHASE_1",
@@ -487,7 +487,9 @@ describe("Case", () => {
       });
 
       expect(task.status).toBe("COMPLETE");
-      expect(task.commentRef).toBeDefined();
+      expect(task.commentRefs).toHaveLength(1);
+      expect(task.commentRefs[0].status).toBe("COMPLETE");
+      expect(task.commentRefs[0].ref).toBeDefined();
     });
 
     it("should create TASK_UPDATED timeline event when task is not completed", () => {
@@ -700,7 +702,7 @@ describe("Case", () => {
                       completed: true,
                       updatedAt: null,
                       updatedBy: null,
-                      commentRef: null,
+                      commentRefs: [],
                     }),
                   ],
                 }),
