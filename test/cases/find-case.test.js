@@ -89,7 +89,8 @@ describe("GET /cases/{caseId}", () => {
                   label: "Explain this outcome",
                   mandatory: true,
                 },
-                commentRef: null,
+                commentRefs: [],
+                notesHistory: [],
                 updatedAt: null,
                 updatedBy: null,
                 requiredRoles: {

@@ -5,6 +5,11 @@ import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 
 export const TaskStatus = Joi.string().allow(null);
 
+const CommentRefSchema = Joi.object({
+  status: TaskStatus.required(),
+  ref: UrlSafeId.required(),
+}).label("CommentRef");
+
 export class CaseTask {
   static validationSchema = Joi.object({
     code: Code.required(),
@@ -12,7 +17,7 @@ export class CaseTask {
     completed: Joi.boolean(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
-    commentRef: UrlSafeId.optional().allow(null, "").label("commentRef"),
+    commentRefs: Joi.array().items(CommentRefSchema).optional().default([]),
   });
 
   constructor(props) {
@@ -30,7 +35,7 @@ export class CaseTask {
     this.code = value.code;
     this.status = value.status;
     this.completed = value.completed;
-    this.commentRef = value.commentRef;
+    this.commentRefs = value.commentRefs;
     this.updatedAt = value.updatedAt;
     this.updatedBy = value.updatedBy;
   }
@@ -51,7 +56,14 @@ export class CaseTask {
     this.completed = completed;
     this.updatedBy = updatedBy;
     this.updatedAt = new Date().toISOString();
-    this.commentRef = comment?.ref ?? null;
+
+    // Append new comment ref to the array if a comment was provided
+    if (comment?.ref) {
+      this.commentRefs = [
+        ...this.commentRefs,
+        { status: value, ref: comment.ref },
+      ];
+    }
   }
 
   getUserIds() {

@@ -806,6 +806,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
                   "action": {
                     "code": "START_REVIEW",
                     "name": "Start",
@@ -824,6 +825,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
+                  "checkTasks": false,
                   "action": {
                     "code": "APPROVE_APPLICATION",
                     "name": "Approve",
@@ -837,6 +839,7 @@
                 },
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
+                  "checkTasks": false,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
@@ -850,6 +853,7 @@
                 },
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
+                  "checkTasks": false,
                   "action": {
                     "code": "PUT_ON_HOLD",
                     "name": "Put on Hold",
@@ -872,6 +876,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
+                  "checkTasks": false,
                   "action": null
                 }
               ]
@@ -885,6 +890,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
                   "action": {
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
@@ -901,12 +907,13 @@
             {
               "code": "ON_HOLD",
               "name": "On Hold",
-              "theme": "WARN",
+              "theme": "NOTICE",
               "description": "Application is on hold pending more information",
               "interactive": true,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
                   "action": {
                     "code": "RESUME",
                     "name": "Resume",
@@ -1441,6 +1448,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "checkTasks": false,
                   "action": {
                     "code": "AGREEMENT_SENT",
                     "name": "Agreement sent",
@@ -1450,6 +1458,7 @@
                 },
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:APPLICATION_REJECTED",
+                  "checkTasks": false,
                   "action": {
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
@@ -1472,6 +1481,7 @@
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
+                  "checkTasks": false,
                   "action": {
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
@@ -1648,6 +1658,7 @@
               "transitions": [
                 {
                   "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
+                  "checkTasks": false,
                   "action": null
                 }
               ]

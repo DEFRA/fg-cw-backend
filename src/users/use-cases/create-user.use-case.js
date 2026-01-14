@@ -4,9 +4,9 @@ import { User } from "../models/user.js";
 import { save } from "../repositories/user.repository.js";
 
 export const createUserUseCase = async (props) => {
-  const createdAt = new Date().toISOString();
+  logger.info(`Creating User with idpId "${props.idpId}"`);
 
-  logger.info(`Creating user: ${props.name}`);
+  const createdAt = new Date().toISOString();
 
   const appRoles = Object.entries(props.appRoles).reduce(
     (acc, [code, value]) => {
@@ -28,6 +28,7 @@ export const createUserUseCase = async (props) => {
 
   await save(user);
 
-  logger.info(`Finished: Creating user: ${user.id}`);
+  logger.info(`Finished: Creating User with idpId "${props.idpId}"`);
+
   return user;
 };

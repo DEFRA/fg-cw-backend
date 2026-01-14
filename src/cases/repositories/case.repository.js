@@ -16,7 +16,7 @@ const toCaseTask = (t) =>
     code: t.code,
     status: t.status,
     completed: t.completed,
-    commentRef: t.commentRef,
+    commentRefs: t.commentRefs || [],
     updatedAt: t.updatedAt,
     updatedBy: t.updatedBy,
     requiredRoles: t.requiredRoles,

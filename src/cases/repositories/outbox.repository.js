@@ -41,7 +41,7 @@ export const claimEvents = async (claimedBy) => {
   const documents = docs.filter((d) => d !== null);
 
   documents?.length &&
-    logger.info(`Found ${documents.length} outbox documents to process.`);
+    logger.info(`Found "${documents.length}" outbox documents to process.`);
 
   return documents.map((doc) => Outbox.fromDocument(doc));
 };

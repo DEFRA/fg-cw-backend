@@ -27,7 +27,7 @@ export const performPageActionUseCase = async ({
     user,
   });
 
-  logger.info(`Performing page action: ${actionCode} for case: ${caseId}`);
+  logger.info(`Performing page action: "${actionCode}" for case: "${caseId}"`);
 
   const response = await externalActionUseCase({
     actionCode,
@@ -41,7 +41,7 @@ export const performPageActionUseCase = async ({
     storeResponseInSupplementaryData(kase, externalAction, response);
     caseUpdated = true;
     logger.debug(
-      `Successfully stored response in supplementaryData for action: ${actionCode} for case: ${caseId}`,
+      `Successfully stored response in supplementaryData for action: "${actionCode}" for case: "${caseId}"`,
     );
   }
 
@@ -58,7 +58,7 @@ export const performPageActionUseCase = async ({
   }
 
   logger.info(
-    `Finished: Performing page action: ${actionCode} for case: ${caseId}`,
+    `Finished: Performing page action: "${actionCode}" for case: "${caseId}"`,
   );
 
   return response;
