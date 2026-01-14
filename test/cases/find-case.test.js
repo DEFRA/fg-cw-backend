@@ -22,7 +22,9 @@ afterAll(async () => {
 
 describe("GET /cases/{caseId}", () => {
   beforeEach(async () => {
-    await createAdminUser({ idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite] });
+    await createAdminUser({
+      idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite, IdpRoles.Read],
+    });
     await createWorkflow();
   });
 
