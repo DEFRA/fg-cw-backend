@@ -28,7 +28,6 @@ const messagePmf = {
   data: {
     caseRef: Math.random().toString(30).substring(2, 9),
     workflowCode: "pigs-might-fly",
-    status: "NEW",
     payload: {
       createdAt: "2025-03-27T10:34:52.000Z",
       submittedAt: "2025-03-28T11:30:52.000Z",
@@ -39,20 +38,10 @@ const messagePmf = {
         defraId: "DEFRA0001",
       },
       answers: {
-        scheme: "SFI",
-        year: 2025,
-        hasCheckedLandIsUpToDate: true,
-        actionApplications: [
-          {
-            parcelId: "9238",
-            sheetId: "SX0679",
-            code: "CSAM1",
-            appliedFor: {
-              unit: "ha",
-              quantity: 20.23,
-            },
-          },
-        ],
+        isPigFarmer: true,
+        totalPigs: 4,
+        whitePigsCount: 2,
+        britishLandracePigsCount: 2,
       },
     },
   },
@@ -69,7 +58,6 @@ const messageFrps = {
   data: {
     caseRef: Math.random().toString(30).substring(2, 9),
     workflowCode: "frps-private-beta",
-    status: "NEW",
     payload: {
       createdAt: "2025-11-28T15:32:43.054Z",
       submittedAt: "2025-11-28T15:32:42.983Z",
@@ -335,7 +323,7 @@ await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
     MessageBody: JSON.stringify(
-      process.argv[2] === "pmf" ? messagePmf : messageFrps,
+      process.argv[2] === "pigs-might-fly" ? messagePmf : messageFrps,
     ),
     DelaySeconds: 0,
   }),
