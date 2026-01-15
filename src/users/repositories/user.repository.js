@@ -26,6 +26,7 @@ const toUser = (doc) => {
     appRoles,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
+    lastLoginAt: doc.lastLoginAt?.toISOString(),
   });
 };
 
