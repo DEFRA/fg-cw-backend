@@ -1,8 +1,8 @@
 import Boom from "@hapi/boom";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { AppRole } from "../../users/models/app-role.js";
-import { IdpRoles } from "../../users/models/idp-roles.js";
-import { User } from "../../users/models/user.js";
+import { AppRole } from "../users/models/app-role.js";
+import { IdpRoles } from "../users/models/idp-roles.js";
+import { User } from "../users/models/user.js";
 import { AccessControl } from "./access-control.js";
 
 describe("AccessControl", () => {
