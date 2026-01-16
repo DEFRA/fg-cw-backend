@@ -1,5 +1,5 @@
-import { AccessControl } from "../../cases/models/access-control.js";
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
+import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../models/idp-roles.js";
 import { Role } from "../models/role.js";

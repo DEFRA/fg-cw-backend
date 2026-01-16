@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { AccessControl } from "../models/access-control.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
