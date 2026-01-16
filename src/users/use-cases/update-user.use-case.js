@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
 import { AppRole } from "../models/app-role.js";
+import { IdpRoles } from "../models/idp-roles.js";
 import { update } from "../repositories/user.repository.js";
 import { findUserByIdUseCase } from "./find-user-by-id.use-case.js";
 
@@ -11,11 +12,7 @@ export const updateUserUseCase = async ({
 }) => {
   logger.info(`Updating User "${userId}"`);
 
-  if (authenticatedUser.id !== userId) {
-    throw Boom.forbidden(
-      `User ${authenticatedUser.id} cannot update another's details`,
-    );
-  }
+  authoriseUpdateUser(authenticatedUser, userId, props);
 
   const user = await findUserByIdUseCase(userId);
 
@@ -26,6 +23,46 @@ export const updateUserUseCase = async ({
   logger.info(`Finished: Updating User "${userId}"`);
 
   return user;
+};
+
+const authoriseUpdateUser = (authenticatedUser, userId, props) => {
+  if (authenticatedUser.id === userId) {
+    authoriseAdminSelfRoleUpdate(authenticatedUser, props);
+    return;
+  }
+
+  authoriseUpdateOtherUser(authenticatedUser);
+};
+
+const authoriseAdminSelfRoleUpdate = (authenticatedUser, props) => {
+  if (!hasAdminIdpRole(authenticatedUser)) {
+    return;
+  }
+
+  if (!props.idpRoles && !props.appRoles) {
+    return;
+  }
+
+  throw Boom.forbidden(
+    `Admin user ${authenticatedUser.id} cannot update roles`,
+  );
+};
+
+const hasAdminIdpRole = (authenticatedUser) => {
+  const idpRoles = authenticatedUser.idpRoles || [];
+  return idpRoles.includes(IdpRoles.Admin);
+};
+
+const authoriseUpdateOtherUser = (authenticatedUser) => {
+  const idpRoles = authenticatedUser.idpRoles || [];
+
+  if (idpRoles.includes(IdpRoles.Admin)) {
+    return;
+  }
+
+  throw Boom.forbidden(
+    `User ${authenticatedUser.id} cannot update another's details`,
+  );
 };
 
 const applyUpdates = (user, props) => {

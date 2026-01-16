@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRoles } from "../../../test/helpers/appRoles.js";
+import { IdpRoles } from "../models/idp-roles.js";
 import { User } from "../models/user.js";
 import { findById, update } from "../repositories/user.repository.js";
 import { updateUserUseCase } from "./update-user.use-case.js";
@@ -116,6 +117,77 @@ describe("updateUserUseCase", () => {
         updatedAt: expect.any(String),
       }),
     );
+  });
+
+  it("allows admin to update another user", async () => {
+    const userId = "user-123";
+    const idpId = "5de72998-417c-4b7c-815b-62bb77c25d82";
+
+    const user = User.createMock({
+      id: userId,
+      idpId,
+    });
+
+    findById.mockResolvedValue(user);
+
+    await updateUserUseCase({
+      authenticatedUser: {
+        id: "admin-user-123",
+        idpRoles: [IdpRoles.Admin],
+      },
+      userId,
+      props: {
+        name: "Name",
+      },
+    });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: userId,
+        name: "Name",
+      }),
+    );
+  });
+
+  it("throws forbidden when admin updates their own idpRoles", async () => {
+    await expect(() =>
+      updateUserUseCase({
+        authenticatedUser: {
+          id: "admin-user-123",
+          idpRoles: [IdpRoles.Admin],
+        },
+        userId: "admin-user-123",
+        props: {
+          idpRoles: ["FCP.Casework.Read"],
+        },
+      }),
+    ).rejects.toThrow("Admin user admin-user-123 cannot update roles");
+
+    expect(findById).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("throws forbidden when admin updates their own appRoles", async () => {
+    await expect(() =>
+      updateUserUseCase({
+        authenticatedUser: {
+          id: "admin-user-123",
+          idpRoles: [IdpRoles.Admin],
+        },
+        userId: "admin-user-123",
+        props: {
+          appRoles: {
+            ROLE_ADMIN: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
+          },
+        },
+      }),
+    ).rejects.toThrow("Admin user admin-user-123 cannot update roles");
+
+    expect(findById).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("throws forbidden when updating another user", async () => {

@@ -8,6 +8,7 @@ export class RoleDocument {
 
     this.code = props.code;
     this.description = props.description;
+    this.assignable = props.assignable;
     this.createdAt = new Date(props.createdAt);
     this.updatedAt = new Date(props.updatedAt);
   }
@@ -16,6 +17,7 @@ export class RoleDocument {
     return new RoleDocument({
       code: "ROLE_RPA_CASES_APPROVE",
       description: "Approve case applications",
+      assignable: true,
       createdAt: "2025-01-01T00:00:00.000Z",
       updatedAt: "2025-01-01T00:00:00.000Z",
       ...props,
