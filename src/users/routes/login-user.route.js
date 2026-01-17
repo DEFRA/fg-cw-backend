@@ -17,6 +17,6 @@ export const loginUserRoute = {
   },
   async handler(request, h) {
     const user = await loginUserUseCase(request.payload);
-    return h.response(user).code(200);
+    return h.response(user);
   },
 };

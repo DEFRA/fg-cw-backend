@@ -13,9 +13,7 @@ export class UserDocument {
     this.appRoles = props.appRoles;
     this.createdAt = new Date(props.createdAt);
     this.updatedAt = new Date(props.updatedAt);
-    this.lastLoginAt = props.lastLoginAt
-      ? new Date(props.lastLoginAt)
-      : undefined; // when user is created, lastLoginAt is not set yet till the update-login request is made
+    this.lastLoginAt = props.lastLoginAt ? new Date(props.lastLoginAt) : null;
   }
 
   static createMock(props) {
