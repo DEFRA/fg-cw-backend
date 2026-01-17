@@ -23,6 +23,7 @@ export const findUserResponseSchema = Joi.object({
       endDate: Joi.date().format("YYYY-MM-DD").optional(),
     }).optional(),
   ),
+  lastLoginAt: Joi.date().iso().optional(),
 })
   .options({
     presence: "required",
