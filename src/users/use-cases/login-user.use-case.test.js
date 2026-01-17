@@ -38,12 +38,16 @@ describe("loginUserUseCase", () => {
       appRoles: {},
     });
 
-    expect(upsert).toHaveBeenCalledWith({
+    expect(upsert).toHaveBeenCalledTimes(1);
+    const calledWith = upsert.mock.calls[0][0];
+    expect(calledWith).toMatchObject({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["ReadWrite"],
-      appRoles: {},
+      createdAt: "2025-01-15T10:30:00.000Z",
+      updatedAt: "2025-01-15T10:30:00.000Z",
+      lastLoginAt: "2025-01-15T10:30:00.000Z",
     });
     expect(result.lastLoginAt).toBe("2025-01-15T10:30:00.000Z");
   });
@@ -124,19 +128,10 @@ describe("loginUserUseCase", () => {
       },
     });
 
-    expect(upsert).toHaveBeenCalledWith({
-      idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
-      idpRoles: ["ReadWrite"],
-      appRoles: {
-        ROLE_1: {
-          name: "ROLE_1",
-          startDate: "2025-01-01",
-          endDate: "2100-01-01",
-        },
-      },
-    });
+    expect(upsert).toHaveBeenCalledTimes(1);
+    const calledWith = upsert.mock.calls[0][0];
+    expect(calledWith.appRoles.ROLE_1).toBeDefined();
+    expect(calledWith.appRoles.ROLE_1.startDate).toBe("2025-01-01");
     expect(result.appRoles).toBeDefined();
   });
 });

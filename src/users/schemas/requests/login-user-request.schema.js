@@ -13,13 +13,14 @@ export const loginUserRequestSchema = Joi.object({
   idpRoles: Joi.array().items(idpRoleSchema).required(),
   appRoles: Joi.object()
     .pattern(codeSchema, userRoleObjectSchema.optional())
+    .optional()
+    .default({})
     .options({
       stripUnknown: true,
     })
     .label("UserRoleSchema"),
 })
   .options({
-    presence: "required",
     stripUnknown: true,
   })
   .label("LoginUserRequest");
