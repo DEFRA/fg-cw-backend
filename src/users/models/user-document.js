@@ -13,6 +13,7 @@ export class UserDocument {
     this.appRoles = props.appRoles;
     this.createdAt = new Date(props.createdAt);
     this.updatedAt = new Date(props.updatedAt);
+    this.lastLoginAt = props.lastLoginAt ? new Date(props.lastLoginAt) : null;
   }
 
   static createMock(props) {
