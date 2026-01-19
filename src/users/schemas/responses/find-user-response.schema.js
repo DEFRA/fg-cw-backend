@@ -19,8 +19,8 @@ export const findUserResponseSchema = Joi.object({
   appRoles: Joi.object().pattern(
     codeSchema,
     Joi.object({
-      startDate: Joi.date().format("YYYY-MM-DD").optional(),
-      endDate: Joi.date().format("YYYY-MM-DD").optional(),
+      startDate: Joi.date().format("YYYY-MM-DD").allow(null).optional(),
+      endDate: Joi.date().format("YYYY-MM-DD").allow(null).optional(),
     }).optional(),
   ),
   lastLoginAt: Joi.date().iso().optional(),
