@@ -12,6 +12,7 @@ export class User {
     this.appRoles = props.appRoles;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+    this.lastLoginAt = props.lastLoginAt;
   }
 
   setName(value) {
