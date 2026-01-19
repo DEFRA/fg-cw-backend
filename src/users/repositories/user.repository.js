@@ -125,14 +125,22 @@ export const findById = async (userId) => {
 
 export const upsert = async (user) => {
   const userDocument = new UserDocument(user);
-  const { _id, createdAt, ...updateFields } = userDocument;
 
   const result = await db.collection(collection).findOneAndUpdate(
     { idpId: userDocument.idpId },
     {
-      $set: updateFields,
+      $set: {
+        // Fields to update on both create and update
+        idpRoles: userDocument.idpRoles,
+        name: userDocument.name,
+        updatedAt: userDocument.updatedAt,
+        lastLoginAt: userDocument.lastLoginAt,
+      },
       $setOnInsert: {
+        // Fields to set only on creation
         createdAt: userDocument.createdAt,
+        email: userDocument.email,
+        appRoles: userDocument.appRoles,
       },
     },
     {

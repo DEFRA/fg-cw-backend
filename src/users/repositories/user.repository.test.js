@@ -408,16 +408,16 @@ describe("upsert", () => {
     expect(findOneAndUpdate).toHaveBeenCalledWith(
       { idpId: userDocument.idpId },
       expect.objectContaining({
-        $set: expect.objectContaining({
+        $set: {
           name: userDocument.name,
-          email: userDocument.email,
           idpRoles: userDocument.idpRoles,
-          appRoles: userDocument.appRoles,
           updatedAt: userDocument.updatedAt,
           lastLoginAt: userDocument.lastLoginAt,
-        }),
+        },
         $setOnInsert: {
           createdAt: userDocument.createdAt,
+          email: userDocument.email,
+          appRoles: userDocument.appRoles,
         },
       }),
       {

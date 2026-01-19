@@ -32,11 +32,11 @@ export const loginUserUseCase = async (props) => {
     lastLoginAt: createdAt,
   });
 
-  await upsert(user);
+  const upsertedUser = await upsert(user);
 
   logger.info(
     `Finished: Processing login for User with idpId "${props.idpId}"`,
   );
 
-  return user;
+  return upsertedUser;
 };
