@@ -1,7 +1,7 @@
 import Boom from "@hapi/boom";
 import { JSONPath } from "jsonpath-plus";
-import { AccessControl } from "../cases/models/access-control.js";
 import { IdpRoles } from "../users/models/idp-roles.js";
+import { AccessControl } from "./access-control.js";
 import { populateUrlTemplate, resolveJSONPath } from "./resolve-json.js";
 
 export const createCaseWorkflowContext = ({

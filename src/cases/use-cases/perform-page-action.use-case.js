@@ -1,8 +1,8 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { AccessControl } from "../models/access-control.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";

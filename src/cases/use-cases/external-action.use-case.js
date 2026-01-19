@@ -1,9 +1,9 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { callExternalEndpoint } from "../../common/external-endpoint-client.js";
 import { logger } from "../../common/logger.js";
 import { extractEndpointParameters } from "../../common/parameter-resolver.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { AccessControl } from "../models/access-control.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 
 export const externalActionUseCase = async ({
