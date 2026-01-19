@@ -123,7 +123,7 @@ export const findById = async (userId) => {
   return userDocument && toUser(userDocument);
 };
 
-export const upsert = async (user) => {
+export const upsertLogin = async (user) => {
   const userDocument = new UserDocument(user);
 
   const result = await db.collection(collection).findOneAndUpdate(

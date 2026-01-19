@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { upsert } from "../repositories/user.repository.js";
+import { upsertLogin } from "../repositories/user.repository.js";
 import { loginUserUseCase } from "./login-user.use-case.js";
 
 vi.mock("../repositories/user.repository.js");
@@ -28,7 +28,7 @@ describe("loginUserUseCase", () => {
       lastLoginAt: "2025-01-15T10:30:00.000Z",
     };
 
-    upsert.mockResolvedValue(mockUser);
+    upsertLogin.mockResolvedValue(mockUser);
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
@@ -38,8 +38,8 @@ describe("loginUserUseCase", () => {
       appRoles: {},
     });
 
-    expect(upsert).toHaveBeenCalledTimes(1);
-    const calledWith = upsert.mock.calls[0][0];
+    expect(upsertLogin).toHaveBeenCalledTimes(1);
+    const calledWith = upsertLogin.mock.calls[0][0];
     expect(calledWith).toMatchObject({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
       name: "Bob Bill",
@@ -65,7 +65,7 @@ describe("loginUserUseCase", () => {
       lastLoginAt: "2025-01-15T10:30:00.000Z",
     };
 
-    upsert.mockResolvedValue(mockUser);
+    upsertLogin.mockResolvedValue(mockUser);
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
@@ -90,7 +90,7 @@ describe("loginUserUseCase", () => {
       "User with IDP id '6a232710-1c66-4f8b-967d-41d41ae38478' has no 'roles'",
     );
 
-    expect(upsert).not.toHaveBeenCalled();
+    expect(upsertLogin).not.toHaveBeenCalled();
   });
 
   it("handles appRoles when provided", async () => {
@@ -112,7 +112,7 @@ describe("loginUserUseCase", () => {
       lastLoginAt: "2025-01-15T10:30:00.000Z",
     };
 
-    upsert.mockResolvedValue(mockUser);
+    upsertLogin.mockResolvedValue(mockUser);
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
@@ -128,8 +128,8 @@ describe("loginUserUseCase", () => {
       },
     });
 
-    expect(upsert).toHaveBeenCalledTimes(1);
-    const calledWith = upsert.mock.calls[0][0];
+    expect(upsertLogin).toHaveBeenCalledTimes(1);
+    const calledWith = upsertLogin.mock.calls[0][0];
     expect(calledWith.appRoles.ROLE_1).toBeDefined();
     expect(calledWith.appRoles.ROLE_1.startDate).toBe("2025-01-01");
     expect(result.appRoles).toBeDefined();

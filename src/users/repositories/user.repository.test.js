@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { UserDocument } from "../models/user-document.js";
 import { User } from "../models/user.js";
-import { findAll, findById, save, update, upsert } from "./user.repository.js";
+import {
+  findAll,
+  findById,
+  save,
+  update,
+  upsertLogin,
+} from "./user.repository.js";
 
 vi.mock("../../common/mongo-client.js");
 
@@ -402,7 +408,7 @@ describe("upsert", () => {
       findOneAndUpdate,
     });
 
-    const result = await upsert(user);
+    const result = await upsertLogin(user);
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(findOneAndUpdate).toHaveBeenCalledWith(
@@ -450,7 +456,7 @@ describe("upsert", () => {
       findOneAndUpdate,
     });
 
-    const result = await upsert(user);
+    const result = await upsertLogin(user);
 
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(findOneAndUpdate).toHaveBeenCalledWith(
@@ -475,7 +481,7 @@ describe("upsert", () => {
       findOneAndUpdate,
     });
 
-    await expect(upsert(user)).rejects.toThrow(
+    await expect(upsertLogin(user)).rejects.toThrow(
       Boom.internal("User could not be created or updated"),
     );
   });
