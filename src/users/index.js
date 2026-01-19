@@ -1,3 +1,4 @@
+import { adminFindUserByIdRoute } from "./routes/admin-find-user-by-id.route.js";
 import { adminFindUsersRoute } from "./routes/admin-find-users.route.js";
 import { createRoleRoute } from "./routes/create-role.route.js";
 import { createUserRoute } from "./routes/create-user.route.js";
@@ -18,6 +19,7 @@ export const users = {
       findUserByIdRoute,
       findUsersRoute,
       adminFindUsersRoute,
+      adminFindUserByIdRoute,
       findAssigneesRoute,
       createRoleRoute,
       findRolesRoute,
