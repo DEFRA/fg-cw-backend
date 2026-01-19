@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import {
   buildBanner,
   buildLinks,
@@ -8,7 +9,6 @@ import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAll } from "../../users/repositories/user.repository.js";
-import { AccessControl } from "../models/access-control.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
 import { findById } from "../repositories/case.repository.js";
