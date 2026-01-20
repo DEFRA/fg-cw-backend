@@ -93,7 +93,7 @@ const messageFrps = {
             email: {
               address: "texelshirecontractingg@gnitcartnocerihslexeto.com.test",
             },
-            phone: { mobile: "01234816251" },
+            phone: "01234816251",
             name: "Texels Hire & Contracting",
             address: {
               line1: "Benbrigge House",
