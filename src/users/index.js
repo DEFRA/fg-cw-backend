@@ -5,6 +5,7 @@ import { findAssigneesRoute } from "./routes/find-assignees.route.js";
 import { findRoleByCodeRoute } from "./routes/find-role-by-code.route.js";
 import { findRolesRoute } from "./routes/find-roles.route.js";
 import { loginUserRoute } from "./routes/login-user.route.js";
+import { updateUserRoute } from "./routes/update-user.route.js";
 
 export const users = {
   name: "users",
@@ -12,6 +13,7 @@ export const users = {
     server.route([
       adminFindUsersRoute,
       adminFindUserByIdRoute,
+      updateUserRoute,
       findAssigneesRoute,
       createRoleRoute,
       findRolesRoute,
