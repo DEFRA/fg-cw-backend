@@ -70,6 +70,24 @@ export class Inbox {
       claimExpiresAt: doc.claimExpiresAt,
     });
   }
+
+  static createMock(obj) {
+    return new Inbox({
+      _id: "1234",
+      publicationDate: new Date(Date.now()),
+      traceparent: "mock-trace-parent",
+      source: "CW",
+      type: "type",
+      messageId: "message-id",
+      event: {
+        time: new Date().toISOString(),
+      },
+      completionAttempts: 1,
+      status: "PUBLISHED",
+      eventTime: new Date().toISOString(),
+      ...obj,
+    });
+  }
 }
 
 export const InboxStatus = {

@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers/promises";
 import {
   afterAll,
   afterEach,
@@ -110,6 +111,33 @@ describe("inbox.subscriber", () => {
   });
 
   describe("processEvents", () => {
+    it("should process events in correct order", async () => {
+      const events = [
+        Inbox.createMock({
+          _id: "1",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+        Inbox.createMock({
+          _id: "2",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+      ];
+
+      claimEvents.mockResolvedValue(events);
+      const subscriber = new InboxSubscriber();
+      const spy1 = vi
+        .spyOn(subscriber, "handleEvent")
+        .mockImplementationOnce(async () => {
+          return setTimeout(500);
+        })
+        .mockImplementationOnce(async () => setTimeout(500));
+      await subscriber.processEvents(events);
+      expect(spy1).toHaveBeenCalledTimes(2);
+
+      expect(subscriber.handleEvent.mock.calls[0][0]).toEqual(events[0]);
+      expect(subscriber.handleEvent.mock.calls[1][0]).toEqual(events[1]);
+    });
+
     it("should use use-cases if mapped", async () => {
       const mockEventData = {
         foo: "barr",

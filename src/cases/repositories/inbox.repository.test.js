@@ -17,23 +17,38 @@ import {
 
 vi.mock("../../common/mongo-client.js");
 
+const createMockInbox = (id, time) => {
+  return Inbox.createMock({
+    _id: id,
+    event: {
+      time,
+    },
+  });
+};
+
 describe("inbox.repository", () => {
   it("should claim events", async () => {
     const claimedBy = randomUUID();
-    const mockDocument = {};
+    const mockDocuments = [
+      createMockInbox("1", new Date(Date.now() - 1000).toISOString()),
+      createMockInbox("3", new Date(Date.now() - 2000).toISOString()),
+    ];
 
     const findOneAndUpdate = vi.fn();
     findOneAndUpdate
-      .mockResolvedValueOnce(mockDocument)
-      .mockResolvedValueOnce(null);
+      .mockResolvedValueOnce(mockDocuments[0])
+      .mockResolvedValueOnce(mockDocuments[1]);
 
     db.collection.mockReturnValue({
       findOneAndUpdate,
     });
 
     const results = await claimEvents(claimedBy);
-    expect(results).toHaveLength(1);
+    expect(results).toHaveLength(2);
     expect(results[0]).toBeInstanceOf(Inbox);
+    expect(results[1]).toBeInstanceOf(Inbox);
+    expect(results[0]._id).toBe("1");
+    expect(results[1]._id).toBe("3");
   });
 
   it("should insert many", async () => {
@@ -165,7 +180,7 @@ describe("inbox.repository", () => {
     );
   });
 
-  it("should finsByMessageId", async () => {
+  it("should findByMessageId", async () => {
     const id = randomUUID();
     const mockDoc = { _id: id };
     const findOneMock = vi.fn().mockResolvedValue(mockDoc);
