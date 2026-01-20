@@ -10,6 +10,7 @@ let inbox;
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
+  await inbox?.deleteMany({});
 });
 
 afterAll(async () => {

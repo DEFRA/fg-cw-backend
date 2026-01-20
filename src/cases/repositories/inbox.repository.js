@@ -7,22 +7,13 @@ const MAX_RETRIES = parseInt(config.get("inbox.inboxMaxRetries"));
 const NUMBER_OF_RECORDS = parseInt(config.get("inbox.inboxClaimMaxRecords"));
 const EXPIRES_IN_MS = parseInt(config.get("inbox.inboxExpiresMs"));
 
-// eslint-disable-next-line func-style
-async function* asyncGenerator(limit) {
-  let i = 0;
-  while (i < limit) {
-    yield i++;
-  }
-}
-
 export const claimEvents = async (
   claimedBy,
   numRecords = NUMBER_OF_RECORDS,
 ) => {
   const docs = [];
 
-  // eslint-disable-next-line no-unused-vars
-  for await (const _ of asyncGenerator(numRecords)) {
+  for (let i = 0; i < numRecords; i++) {
     const document = await db.collection(collection).findOneAndUpdate(
       {
         status: { $eq: InboxStatus.PUBLISHED },
