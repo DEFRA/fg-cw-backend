@@ -49,7 +49,7 @@ describe("inbox.subscriber", () => {
   });
 
   it("should poll on start()", async () => {
-    claimEvents.mockResolvedValue([new Inbox({})]);
+    claimEvents.mockResolvedValue([Inbox.createMock()]);
     const subscriber = new InboxSubscriber();
     subscriber.start();
     expect(claimEvents).toHaveBeenCalled();
@@ -100,7 +100,11 @@ describe("inbox.subscriber", () => {
   });
 
   it("should stop polling after stop()", async () => {
-    claimEvents.mockResolvedValue([new Inbox({})]);
+    claimEvents.mockResolvedValue([
+      Inbox.createMock({
+        event: { time: new Date().toISOString() },
+      }),
+    ]);
     const subscriber = new InboxSubscriber();
     subscriber.start();
     expect(claimEvents).toHaveBeenCalledTimes(1);

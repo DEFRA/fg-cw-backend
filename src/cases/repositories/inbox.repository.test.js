@@ -55,7 +55,7 @@ describe("inbox.repository", () => {
     const insertMany = vi.fn().mockResolvedValueOnce({ modifiedCount: 1 });
     db.collection.mockReturnValue({ insertMany });
 
-    const events = [new Inbox({}), new Inbox({})];
+    const events = [Inbox.createMock(), Inbox.createMock()];
 
     const mockSession = vi.fn();
     await insertMany(events, mockSession);
@@ -159,7 +159,7 @@ describe("inbox.repository", () => {
     const session = {};
 
     const events = [
-      new Inbox({
+      Inbox.createMock({
         event: {
           some_data_bar: "foo",
         },
@@ -195,7 +195,7 @@ describe("inbox.repository", () => {
     const insertOneMock = vi.fn();
     db.collection.mockReturnValue({ insertOne: insertOneMock });
     const session = {};
-    const doc = new Inbox({
+    const doc = Inbox.createMock({
       _id: id,
     });
     await insertOne(doc, session);
@@ -209,7 +209,7 @@ describe("inbox.repository", () => {
 
   it("should update a document", async () => {
     const id = randomUUID();
-    const inbox = new Inbox({ _id: id });
+    const inbox = Inbox.createMock({ _id: id });
     vi.spyOn(inbox, "toDocument").mockReturnValue({
       _id: id,
       someOtherValue: "foo",
