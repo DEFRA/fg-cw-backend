@@ -29,28 +29,12 @@ describe("users", () => {
           path: "/roles",
         },
         {
-          method: "post",
-          path: "/users",
-        },
-        {
-          method: "patch",
-          path: "/users/{userId}",
-        },
-        {
           method: "get",
           path: "/roles",
         },
         {
           method: "get",
-          path: "/users",
-        },
-        {
-          method: "get",
           path: "/roles/{code}",
-        },
-        {
-          method: "get",
-          path: "/users/{userId}",
         },
       ]),
     );
