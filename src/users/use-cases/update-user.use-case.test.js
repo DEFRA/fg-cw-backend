@@ -193,9 +193,10 @@ describe("updateUserUseCase", () => {
   it("throws forbidden when updating another user", async () => {
     await expect(() =>
       updateUserUseCase({
-        authenticatedUser: {
+        authenticatedUser: User.createMock({
           id: "different-user",
-        },
+          idpRoles: [IdpRoles.Admin],
+        }),
         userId: "user-123",
         props: {
           name: "Name",
