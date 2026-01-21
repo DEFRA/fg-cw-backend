@@ -1,5 +1,12 @@
 {
   "code": "pigs-might-fly",
+  "requiredRoles": {
+    "allOf": [],
+    "anyOf": []
+  },
+  "definitions": {},
+  "endpoints": [],
+  "externalActions": [],
   "pages": {
     "cases": {
       "details": {
@@ -29,49 +36,84 @@
         },
         "tabs": {
           "case-details": {
+            "link": {
+              "id": "case-details",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/case-details",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Applicant Details",
+              "index": 1
+            },
             "content": [
               {
-                "title": "Applicant Details",
-                "type": "object",
-                "component": "summary-list",
-                "rows": [
+                "component": "heading",
+                "text": "Applicant Details",
+                "level": 2,
+                "classes": "govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+              },
+              {
+                "id": "submittedDate",
+                "component": "container",
+                "classes": "govuk-body",
+                "items": [
                   {
-                    "text": "$.payload.answers.isPigFarmer",
-                    "type": "boolean",
-                    "label": "Are you a pig farmer?",
-                    "format": "yesNo"
+                    "text": "Application submitted:",
+                    "classes": "govuk-!-font-weight-regular"
+                  },
+                  {
+                    "text": "$.payload.submittedAt",
+                    "classes": "govuk-!-font-weight-bold",
+                    "format": "formatDate"
                   }
                 ]
               },
               {
                 "title": "Pig Stock Details",
-                "type": "object",
                 "component": "summary-list",
                 "rows": [
                   {
-                    "text": "$.payload.answers.totalPigs",
-                    "type": "number",
-                    "label": "Total Pigs"
+                    "label": "Are you a pig farmer?",
+                    "text": "$.payload.answers.isPigFarmer",
+                    "format": "yesNo"
                   },
                   {
-                    "text": "$.payload.answers.whitePigsCount",
-                    "type": "number",
-                    "label": "How many White pigs do you have?"
+                    "label": "Total Pigs",
+                    "text": "$.payload.answers.totalPigs"
                   },
                   {
-                    "text": "$.payload.answers.britishLandracePigsCount",
-                    "type": "number",
-                    "label": "How many British Landrace pigs do you have?"
+                    "component": "conditional",
+                    "condition": "$.payload.answers.whitePigsCount",
+                    "whenTrue": {
+                      "label": "How many White pigs do you have?",
+                      "text": "$.payload.answers.whitePigsCount"
+                    }
                   },
                   {
-                    "text": "$.payload.answers.berkshirePigsCount",
-                    "type": "number",
-                    "label": "How many Berkshire pigs do you have?"
+                    "component": "conditional",
+                    "condition": "$.payload.answers.britishLandracePigsCount",
+                    "whenTrue": {
+                      "label": "How many British Landrace pigs do you have?",
+                      "text": "$.payload.answers.britishLandracePigsCount"
+                    }
                   },
                   {
-                    "text": "$.payload.answers.otherPigsCount",
-                    "type": "number",
-                    "label": "How many Other pigs do you have?"
+                    "component": "conditional",
+                    "condition": "$.payload.answers.berkshirePigsCount",
+                    "whenTrue": {
+                      "label": "How many Berkshire pigs do you have?",
+                      "text": "$.payload.answers.berkshirePigsCount"
+                    }
+                  },
+                  {
+                    "component": "conditional",
+                    "condition": "$.payload.answers.otherPigsCount",
+                    "whenTrue": {
+                      "label": "How many Other pigs do you have?",
+                      "text": "$.payload.answers.otherPigsCount"
+                    }
                   }
                 ]
               }
@@ -83,149 +125,266 @@
   },
   "phases": [
     {
-      "code": "DEFAULT",
-      "name": "Default Phase",
+      "code": "PRE_AWARD",
+      "name": "Pre-award",
       "stages": [
         {
-          "code": "application-received",
-          "name": "Application Received",
-          "description": "Application received",
-          "statuses": [],
-          "taskGroups": [
+          "code": "REVIEW_APPLICATION",
+          "name": "Tasks",
+          "description": "Review the application for eligibility",
+          "statuses": [
             {
-              "code": "review-automated-checks",
-              "name": "Review Automated Checks",
-              "description": "Task group description",
-              "tasks": [
+              "code": "APPLICATION_RECEIVED",
+              "name": "Application Received",
+              "theme": "NEUTRAL",
+              "description": "Application received and pending review",
+              "interactive": false,
+              "transitions": [
                 {
-                  "code": "review-application-data",
-                  "name": "Review application data",
-                  "description": null,
-                  "statusOptions": []
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "START_REVIEW",
+                    "name": "Start",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                }
+              ]
+            },
+            {
+              "code": "IN_REVIEW",
+              "name": "In Review",
+              "theme": "INFO",
+              "description": "Application is being reviewed",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:FINAL_APPROVAL:APPLICATION_APPROVED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "APPROVE_APPLICATION",
+                    "name": "Approve",
+                    "checkTasks": true,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "PUT_ON_HOLD",
+                    "name": "Put on Hold",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_REJECTED",
+              "name": "Rejected",
+              "theme": "ERROR",
+              "description": "Application has been rejected",
+              "interactive": false,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REINSTATE_APPLICATION",
+                    "name": "Reinstate Application",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "ON_HOLD",
+              "name": "On Hold",
+              "theme": "NOTICE",
+              "description": "Application is on hold pending more information",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "RESUME",
+                    "name": "Resume",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
                 }
               ]
             }
           ],
-          "actionsTitle": "Decision",
-          "actions": [
-            {
-              "code": "approve",
-              "name": "Approve",
-              "comment": {
-                "label": "Approval reason note",
-                "helpText": "All notes will be saved for auditing purposes",
-                "type": "REQUIRED"
-              }
-            },
-            {
-              "code": "on-hold",
-              "name": "Put on hold",
-              "comment": {
-                "label": "Note (optional)",
-                "helpText": "All notes will be saved for auditing purposes",
-                "type": "OPTIONAL"
-              }
-            },
-            {
-              "code": "reject",
-              "name": "Reject",
-              "comment": null
-            }
-          ]
-        },
-        {
-          "code": "assessment",
-          "name": "Assessment",
-          "description": "Application assessment",
-          "statuses": [],
           "taskGroups": [
             {
-              "code": "check-application",
-              "name": "Check Application",
-              "description": "Task group description",
+              "code": "PIG_STOCK_REVIEW_TASKS",
+              "name": "Pig stock review tasks",
+              "description": "Tasks to be completed during the review of pig stock details",
               "tasks": [
                 {
-                  "code": "check-application-and-documents",
-                  "name": "Check application and documents",
-                  "description": null,
-                  "statusOptions": []
+                  "code": "VERIFY_PIG_FARMER_STATUS",
+                  "name": "Verify pig farmer status",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Verify pig farmer status",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Check the applicant has confirmed they are a pig farmer.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
                 },
                 {
-                  "code": "check-find-farm-and-land-payment-data",
-                  "name": "Check on Find farm and land payment data",
-                  "description": null,
-                  "statusOptions": []
-                },
-                {
-                  "code": "check-rps-dual-funding",
-                  "name": "Check on RPS (Dual Funding)",
-                  "description": null,
-                  "statusOptions": []
+                  "code": "CHECK_PIG_STOCK_NUMBERS",
+                  "name": "Check pig stock numbers",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Check pig stock numbers",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Verify the total pig count matches the sum of individual breed counts.",
+                      "classes": "govuk-body"
+                    },
+                    {
+                      "component": "ordered-list",
+                      "classes": "govuk-list govuk-list--number govuk-!-margin-bottom-6",
+                      "items": [
+                        {
+                          "component": "text",
+                          "text": "Check the total pigs figure in the application"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Add together the White, British Landrace, Berkshire, and Other pig counts"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Confirm the total matches the declared total"
+                        }
+                      ]
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
+                      "completes": false
+                    },
+                    {
+                      "code": "CANNOT_COMPLETE",
+                      "name": "Cannot complete",
+                      "theme": "ERROR",
+                      "altName": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
                 }
               ]
-            },
-            {
-              "code": "registration-checks",
-              "name": "Registration checks",
-              "description": "Task group description",
-              "tasks": [
-                {
-                  "code": "confirm-farm-has-cph",
-                  "name": "Confirm farm has a CPH",
-                  "description": null,
-                  "statusOptions": []
-                },
-                {
-                  "code": "confirm-apha-registration",
-                  "name": "Confirm APHA registration",
-                  "description": null,
-                  "statusOptions": []
-                }
-              ]
-            }
-          ],
-          "actions": [
-            {
-              "code": "approve",
-              "name": "Confirm Approval",
-              "comment": null
-            },
-            {
-              "code": "confirm-rejection",
-              "name": "Confirm Rejection",
-              "comment": null
             }
           ]
         },
         {
-          "code": "contracted",
-          "name": "Contracted",
-          "description": "Awaiting agreement",
-          "statuses": [],
-          "taskGroups": [],
-          "actions": []
+          "code": "FINAL_APPROVAL",
+          "name": "Final Approval",
+          "description": "Final approval stage for approved applications",
+          "statuses": [
+            {
+              "code": "APPLICATION_APPROVED",
+              "name": "Approved",
+              "theme": "SUCCESS",
+              "description": "Application has been approved",
+              "interactive": false,
+              "transitions": []
+            },
+            {
+              "code": "APPLICATION_WITHDRAWN",
+              "name": "Withdrawn",
+              "theme": "WARN",
+              "description": "Application has been withdrawn",
+              "interactive": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": []
         }
       ]
     }
-  ],
-  "requiredRoles": {
-    "allOf": ["ROLE_RPA_ADMIN"],
-    "anyOf": ["ROLE_RPA_ADMIN"]
-  },
-  "externalActions": [
-    {
-      "code": "RECALCULATE_RULES",
-      "name": "Run calculations again",
-      "description": "Rerun the business rules validation",
-      "endpoint": "landGrantsRulesRerun",
-      "display": true,
-      "target": {
-        "position": "PRE_AWARD:REVIEW_APPLICATION:IN_PROGRESS",
-        "targetNode": "landGrantsRulesRun",
-        "dataType": "ARRAY",
-        "place": "append"
-      }
-    }
-  ],
-  "endpoints": []
+  ]
 }
