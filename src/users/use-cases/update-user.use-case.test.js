@@ -195,7 +195,7 @@ describe("updateUserUseCase", () => {
       updateUserUseCase({
         authenticatedUser: User.createMock({
           id: "different-user",
-          idpRoles: [IdpRoles.Admin],
+          idpRoles: [IdpRoles.ReadWrite],
         }),
         userId: "user-123",
         props: {
