@@ -8,7 +8,7 @@ export const updateUserRoute = {
   method: "PATCH",
   path: "/users/{userId}",
   options: {
-    description: "Update a user",
+    description: "Update a user (admin only)",
     tags: ["api"],
     validate: {
       params: Joi.object({

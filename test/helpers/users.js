@@ -25,7 +25,7 @@ export const TestUser = {
 };
 
 export const createUser = async (payload = {}) => {
-  const response = await wreck.post("/users", {
+  const response = await wreck.post("/users/login", {
     payload: {
       idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
       name: "Name",

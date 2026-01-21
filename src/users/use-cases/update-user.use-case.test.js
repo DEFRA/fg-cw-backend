@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRoles } from "../../../test/helpers/appRoles.js";
+import { IdpRoles } from "../models/idp-roles.js";
 import { User } from "../models/user.js";
 import { findById, update } from "../repositories/user.repository.js";
 import { updateUserUseCase } from "./update-user.use-case.js";
@@ -121,9 +122,10 @@ describe("updateUserUseCase", () => {
   it("throws forbidden when updating another user", async () => {
     await expect(() =>
       updateUserUseCase({
-        authenticatedUser: {
+        authenticatedUser: User.createMock({
           id: "different-user",
-        },
+          idpRoles: [IdpRoles.Admin],
+        }),
         userId: "user-123",
         props: {
           name: "Name",
