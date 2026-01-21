@@ -16,12 +16,12 @@ afterAll(async () => {
 
 describe("PATCH /users/{userId}", () => {
   it("updates mutable properties", async () => {
-    const createUserResponse = await wreck.post("/users", {
+    const createUserResponse = await wreck.post("/users/login", {
       payload: {
         idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Name",
         email: "name.surname@defra.gov.uk",
-        idpRoles: ["defra-idp"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
             startDate: "2025-07-01",
@@ -37,7 +37,7 @@ describe("PATCH /users/{userId}", () => {
       payload: {
         name: "Updated Name",
         email: "NA",
-        idpRoles: ["updated-idp", "replaces-all-roles"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
             startDate: "2025-07-01",
@@ -60,7 +60,7 @@ describe("PATCH /users/{userId}", () => {
         idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
-        idpRoles: ["updated-idp", "replaces-all-roles"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
             startDate: "2025-07-01",
@@ -73,10 +73,11 @@ describe("PATCH /users/{userId}", () => {
         },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        lastLoginAt: expect.any(String),
       },
     });
 
-    const findUserByIdResponse = await wreck.get(`/users/${userId}`);
+    const findUserByIdResponse = await wreck.get(`/admin/users/${userId}`);
 
     expect(findUserByIdResponse).toEqual({
       res: expect.objectContaining({
@@ -87,7 +88,7 @@ describe("PATCH /users/{userId}", () => {
         idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
-        idpRoles: ["updated-idp", "replaces-all-roles"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
             startDate: "2025-07-01",
@@ -100,17 +101,18 @@ describe("PATCH /users/{userId}", () => {
         },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        lastLoginAt: expect.any(String),
       },
     });
   });
 
   it("does not update other properties", async () => {
-    const createUserResponse = await wreck.post("/users", {
+    const createUserResponse = await wreck.post("/users/login", {
       payload: {
         idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
         name: "Name",
         email: "name.surname@defra.gov.uk",
-        idpRoles: ["defra-idp"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
             startDate: "2025-07-01",
@@ -129,7 +131,7 @@ describe("PATCH /users/{userId}", () => {
       },
     });
 
-    const findUserByIdResponse = await wreck.get(`/users/${userId}`);
+    const findUserByIdResponse = await wreck.get(`/admin/users/${userId}`);
 
     expect(findUserByIdResponse).toEqual({
       res: expect.objectContaining({
@@ -140,7 +142,7 @@ describe("PATCH /users/{userId}", () => {
         idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1", // not updated
         name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
-        idpRoles: ["defra-idp"],
+        idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
             startDate: "2025-07-01",
@@ -149,6 +151,7 @@ describe("PATCH /users/{userId}", () => {
         },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        lastLoginAt: expect.any(String),
       },
     });
   });
