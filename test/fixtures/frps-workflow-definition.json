@@ -208,7 +208,7 @@
                               },
                               {
                                 "component": "text",
-                                "text": "$.payload.answers.applicant.business.phone.mobile"
+                                "text": "$.payload.answers.applicant.business.phone"
                               }
                             ]
                           }

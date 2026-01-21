@@ -30,9 +30,7 @@
           "email": {
             "address": "meadow@example.test"
           },
-          "phone": {
-            "mobile": "01632 960020"
-          },
+          "phone": "01632 960020",
           "address": {
             "line1": "3 Example Lane",
             "line2": "Example Village",
