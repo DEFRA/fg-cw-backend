@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser, updateUser } from "../helpers/users.js";
+import { createAdminUser, upsertLoginUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -27,7 +27,10 @@ describe("POST /cases/{caseId}/notes", () => {
     user = await createAdminUser();
     await createWorkflow();
 
-    await updateUser(user.payload.id, {
+    await upsertLoginUser({
+      idpId: user.payload.idpId,
+      name: user.payload.name,
+      email: user.payload.email,
       idpRoles: [IdpRoles.ReadWrite],
       appRoles: user.payload.appRoles,
     });
@@ -93,8 +96,12 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   it("returns 403 when user does not have ReadWrite idp role", async () => {
-    await updateUser(user.payload.id, {
+    await upsertLoginUser({
+      idpId: user.payload.idpId,
+      name: user.payload.name,
+      email: user.payload.email,
       idpRoles: [IdpRoles.Read],
+      appRoles: user.payload.appRoles,
     });
 
     const kase = await createCase(cases);
@@ -107,7 +114,11 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   it("returns 403 when user does not have required workflow app roles", async () => {
-    await updateUser(user.payload.id, {
+    await upsertLoginUser({
+      idpId: user.payload.idpId,
+      name: user.payload.name,
+      email: user.payload.email,
+      idpRoles: user.payload.idpRoles,
       appRoles: {},
     });
 

@@ -1,6 +1,11 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  adminUpdateUser,
+  createAdminUser,
+  createUser,
+} from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -14,39 +19,48 @@ afterAll(async () => {
   await client.close(true);
 });
 
-describe("PATCH /users/{userId}", () => {
-  it("updates mutable properties", async () => {
-    const createUserResponse = await wreck.post("/users/login", {
-      payload: {
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-        name: "Name",
-        email: "name.surname@defra.gov.uk",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+describe("PATCH /users/{userId} (admin only)", () => {
+  it("allows admin to update another user's properties", async () => {
+    // Create an admin user to run the test
+    await createAdminUser({
+      name: "Admin User",
+      email: "admin@t.gov.uk",
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
+    });
+
+    // Create a separate user to be updated by the admin.
+    const createUserResponse = await createUser({
+      idpId: "00000000-0000-0000-0000-000000000001",
+      name: "Name",
+      email: "name.surname@defra.gov.uk",
+      idpRoles: ["FCP.Casework.Read"],
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
 
     const userId = createUserResponse.payload.id;
 
-    const updateUserResponse = await wreck.patch(`/users/${userId}`, {
-      payload: {
-        name: "Updated Name",
-        email: "NA",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_1: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_2: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+    const updateUserResponse = await adminUpdateUser(userId, {
+      name: "Updated Name",
+      email: "NA",
+      idpRoles: ["FCP.Casework.Admin"],
+      appRoles: {
+        ROLE_RPA_1: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+        ROLE_RPA_2: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
@@ -57,7 +71,7 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+        idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["FCP.Casework.Admin"],
@@ -85,7 +99,7 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+        idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
         email: "name.surname@defra.gov.uk",
         idpRoles: ["FCP.Casework.Admin"],
@@ -107,28 +121,35 @@ describe("PATCH /users/{userId}", () => {
   });
 
   it("does not update other properties", async () => {
-    const createUserResponse = await wreck.post("/users/login", {
-      payload: {
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-        name: "Name",
-        email: "name.surname@defra.gov.uk",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+    await createAdminUser({
+      name: "Admin User",
+      email: "admin@t.gov.uk",
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
+        },
+      },
+    });
+
+    const createUserResponse = await createUser({
+      idpId: "00000000-0000-0000-0000-000000000002",
+      name: "Name",
+      email: "name.surname@defra.gov.uk",
+      idpRoles: ["FCP.Casework.Read"],
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
 
     const userId = createUserResponse.payload.id;
 
-    await wreck.patch(`/users/${userId}`, {
-      payload: {
-        idpId: "new-idp-id",
-        email: "new.value@defra.gov.uk",
-      },
+    await adminUpdateUser(userId, {
+      idpId: "new-idp-id",
+      email: "new.value@defra.gov.uk",
     });
 
     const findUserByIdResponse = await wreck.get(`/admin/users/${userId}`);
@@ -139,10 +160,10 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1", // not updated
+        idpId: "00000000-0000-0000-0000-000000000002", // not updated
         name: "Name",
         email: "name.surname@defra.gov.uk", // not updated
-        idpRoles: ["FCP.Casework.Admin"],
+        idpRoles: ["FCP.Casework.Read"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
             startDate: "2025-07-01",

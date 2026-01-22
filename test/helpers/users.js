@@ -24,39 +24,45 @@ export const TestUser = {
   },
 };
 
-export const createUser = async (payload = {}) => {
-  const response = await wreck.post("/users/login", {
+const defaultUserPayload = {
+  idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+  name: "Name",
+  email: "name.surname@defra.gov.uk",
+  idpRoles: ["FCP.Casework.ReadWrite"],
+  appRoles: {
+    ROLE_1: {
+      startDate: "2025-07-01",
+      endDate: "2100-01-01",
+    },
+    ROLE_2: {
+      startDate: "2025-07-02",
+      endDate: "2100-01-02",
+    },
+    ROLE_3: {
+      startDate: "2025-07-03",
+      endDate: "2100-01-03",
+    },
+  },
+};
+
+export const upsertLoginUser = async (payload = {}) => {
+  return await wreck.post("/users/login", {
     payload: {
-      idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-      name: "Name",
-      email: "name.surname@defra.gov.uk",
-      idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: {
-        ROLE_1: {
-          startDate: "2025-07-01",
-          endDate: "2100-01-01",
-        },
-        ROLE_2: {
-          startDate: "2025-07-02",
-          endDate: "2100-01-02",
-        },
-        ROLE_3: {
-          startDate: "2025-07-03",
-          endDate: "2100-01-03",
-        },
-      },
+      ...defaultUserPayload,
       ...payload,
     },
   });
+};
 
-  return response;
+export const createUser = async (payload = {}) => {
+  return await upsertLoginUser(payload);
 };
 
 export const createAdminUser = async (payload = {}) => {
   return createUser({ ...TestUser.Admin, ...payload });
 };
 
-export const updateUser = async (userId, payload) => {
+export const adminUpdateUser = async (userId, payload) => {
   return await wreck.patch(`/users/${userId}`, {
     payload,
   });
