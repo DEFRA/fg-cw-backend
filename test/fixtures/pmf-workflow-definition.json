@@ -1,9 +1,6 @@
 {
   "code": "pigs-might-fly",
-  "requiredRoles": {
-    "allOf": [],
-    "anyOf": []
-  },
+  "requiredRoles": { "allOf": ["ROLE_PMF"], "anyOf": [] },
   "definitions": {},
   "endpoints": [],
   "externalActions": [],
@@ -11,10 +8,7 @@
     "cases": {
       "details": {
         "banner": {
-          "title": {
-            "text": "$.payload.businessName",
-            "type": "string"
-          },
+          "title": { "text": "$.payload.businessName", "type": "string" },
           "summary": {
             "reference": {
               "label": "Reference",
@@ -40,9 +34,7 @@
               "id": "case-details",
               "href": {
                 "urlTemplate": "/cases/{caseId}/case-details",
-                "params": {
-                  "caseId": "$._id"
-                }
+                "params": { "caseId": "$._id" }
               },
               "text": "Applicant Details",
               "index": 1
