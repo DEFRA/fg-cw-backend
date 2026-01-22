@@ -416,13 +416,13 @@ describe("upsert", () => {
       expect.objectContaining({
         $set: {
           name: userDocument.name,
+          email: userDocument.email,
           idpRoles: userDocument.idpRoles,
           updatedAt: userDocument.updatedAt,
           lastLoginAt: userDocument.lastLoginAt,
         },
         $setOnInsert: {
           createdAt: userDocument.createdAt,
-          email: userDocument.email,
           appRoles: userDocument.appRoles,
         },
       }),
@@ -443,6 +443,7 @@ describe("upsert", () => {
     const user = User.createMock({
       idpId: "existing-idp-id",
       name: "Updated Name",
+      email: "updated.name@defra.gov.uk",
     });
 
     const existingDoc = UserDocument.createMock({

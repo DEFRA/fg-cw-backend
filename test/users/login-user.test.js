@@ -47,14 +47,15 @@ describe("POST /users/login", () => {
 
   it("updates user details on subsequent login", async () => {
     const idpId = randomUUID();
-    const email = "test-update@example.com";
+    const originalEmail = "test-update-original@example.com";
+    const updatedEmail = "test-update-updated@example.com";
 
     // First login
     await wreck.post("/users/login", {
       payload: {
         idpId,
         name: "Original Name",
-        email,
+        email: originalEmail,
         idpRoles: ["Role1"],
       },
     });
@@ -64,7 +65,7 @@ describe("POST /users/login", () => {
       payload: {
         idpId,
         name: "Updated Name",
-        email,
+        email: updatedEmail,
         idpRoles: ["Role1", "Role2"],
       },
     });
@@ -76,7 +77,7 @@ describe("POST /users/login", () => {
       payload: expect.objectContaining({
         id: expect.any(String),
         idpId,
-        email,
+        email: updatedEmail,
         name: "Updated Name",
         idpRoles: ["Role1", "Role2"],
         lastLoginAt: expect.stringMatching(ISO_DATE_REGEX),

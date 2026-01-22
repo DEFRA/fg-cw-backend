@@ -133,13 +133,13 @@ export const upsertLogin = async (user) => {
         // Fields to update on both create and update
         idpRoles: userDocument.idpRoles,
         name: userDocument.name,
+        email: userDocument.email,
         updatedAt: userDocument.updatedAt,
         lastLoginAt: userDocument.lastLoginAt,
       },
       $setOnInsert: {
         // Fields to set only on creation
         createdAt: userDocument.createdAt,
-        email: userDocument.email,
         appRoles: userDocument.appRoles,
       },
     },
