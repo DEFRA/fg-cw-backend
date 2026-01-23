@@ -47,9 +47,9 @@ describe("createRoleRoute", () => {
       user: {
         id: "user-123",
       },
-      assignable: true,
       code: "ROLE_RPA_CASES_APPROVE",
       description: "Test role description",
+      assignable: true,
     });
   });
 

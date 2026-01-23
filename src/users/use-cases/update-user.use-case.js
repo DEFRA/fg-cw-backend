@@ -26,43 +26,35 @@ export const updateUserUseCase = async ({
 };
 
 const authoriseUpdateUser = (authenticatedUser, userId, props) => {
-  if (authenticatedUser.id === userId) {
-    authoriseAdminSelfRoleUpdate(authenticatedUser, props);
-    return;
+  const isSelf = authenticatedUser.id === userId;
+  const isAdmin = hasAdminIdpRole(authenticatedUser);
+
+  if (!isSelf && !isAdmin) {
+    throw Boom.forbidden(
+      `User ${authenticatedUser.id} cannot update another's details`,
+    );
   }
 
-  authoriseUpdateOtherUser(authenticatedUser);
+  if (props.appRoles) {
+    authoriseAppRoleUpdate(authenticatedUser, isSelf, isAdmin);
+  }
 };
 
-const authoriseAdminSelfRoleUpdate = (authenticatedUser, props) => {
-  if (!hasAdminIdpRole(authenticatedUser)) {
-    return;
+const authoriseAppRoleUpdate = (authenticatedUser, isSelf, isAdmin) => {
+  if (!isAdmin) {
+    throw Boom.forbidden("Only admins can update app roles");
   }
 
-  if (!props.idpRoles && !props.appRoles) {
-    return;
+  if (isSelf) {
+    throw Boom.forbidden(
+      `Admin user ${authenticatedUser.id} cannot update their own app roles`,
+    );
   }
-
-  throw Boom.forbidden(
-    `Admin user ${authenticatedUser.id} cannot update roles`,
-  );
 };
 
 const hasAdminIdpRole = (authenticatedUser) => {
   const idpRoles = authenticatedUser.idpRoles || [];
   return idpRoles.includes(IdpRoles.Admin);
-};
-
-const authoriseUpdateOtherUser = (authenticatedUser) => {
-  const idpRoles = authenticatedUser.idpRoles || [];
-
-  if (idpRoles.includes(IdpRoles.Admin)) {
-    return;
-  }
-
-  throw Boom.forbidden(
-    `User ${authenticatedUser.id} cannot update another's details`,
-  );
 };
 
 const applyUpdates = (user, props) => {

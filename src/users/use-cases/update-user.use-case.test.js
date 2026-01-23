@@ -21,7 +21,8 @@ describe("updateUserUseCase", () => {
 
     const updatedUser = await updateUserUseCase({
       authenticatedUser: {
-        id: userId,
+        id: "admin-user",
+        idpRoles: [IdpRoles.Admin],
       },
       userId,
       props: {
@@ -73,6 +74,39 @@ describe("updateUserUseCase", () => {
     );
   });
 
+  it("throws forbidden when regular user updates appRoles", async () => {
+    const userId = "user-123";
+    const idpId = "5de72998-417c-4b7c-815b-62bb77c25d82";
+
+    const user = User.createMock({
+      id: userId,
+      idpId,
+      idpRoles: [IdpRoles.Read],
+    });
+
+    findById.mockResolvedValue(user);
+
+    await expect(() =>
+      updateUserUseCase({
+        authenticatedUser: {
+          id: userId,
+          idpRoles: [IdpRoles.Read],
+        },
+        userId,
+        props: {
+          appRoles: {
+            ROLE_ADMIN: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
+          },
+        },
+      }),
+    ).rejects.toThrow("Only admins can update app roles");
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("does not update immutable props", async () => {
     const userId = "user-123";
     const idpId = "5de72998-417c-4b7c-815b-62bb77c25d82";
@@ -93,7 +127,8 @@ describe("updateUserUseCase", () => {
 
     await updateUserUseCase({
       authenticatedUser: {
-        id: userId,
+        id: "admin-user",
+        idpRoles: [IdpRoles.Admin],
       },
       userId,
       props: {
@@ -149,22 +184,35 @@ describe("updateUserUseCase", () => {
     );
   });
 
-  it("throws forbidden when admin updates their own idpRoles", async () => {
-    await expect(() =>
-      updateUserUseCase({
-        authenticatedUser: {
-          id: "admin-user-123",
-          idpRoles: [IdpRoles.Admin],
-        },
-        userId: "admin-user-123",
-        props: {
-          idpRoles: ["FCP.Casework.Read"],
-        },
-      }),
-    ).rejects.toThrow("Admin user admin-user-123 cannot update roles");
+  it("allows admin to update their own idpRoles", async () => {
+    const userId = "admin-user-123";
+    const idpId = "5de72998-417c-4b7c-815b-62bb77c25d82";
 
-    expect(findById).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
+    const user = User.createMock({
+      id: userId,
+      idpId,
+      idpRoles: [IdpRoles.Admin],
+    });
+
+    findById.mockResolvedValue(user);
+
+    await updateUserUseCase({
+      authenticatedUser: {
+        id: userId,
+        idpRoles: [IdpRoles.Admin],
+      },
+      userId,
+      props: {
+        idpRoles: [IdpRoles.Read],
+      },
+    });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: userId,
+        idpRoles: [IdpRoles.Read],
+      }),
+    );
   });
 
   it("throws forbidden when admin updates their own appRoles", async () => {
@@ -184,7 +232,9 @@ describe("updateUserUseCase", () => {
           },
         },
       }),
-    ).rejects.toThrow("Admin user admin-user-123 cannot update roles");
+    ).rejects.toThrow(
+      "Admin user admin-user-123 cannot update their own app roles",
+    );
 
     expect(findById).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
