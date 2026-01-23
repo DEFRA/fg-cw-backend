@@ -96,7 +96,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
           specversion: "1.0",
           time: expect.any(String),
           data: {
-            caseRef: expect.stringContaining("APPLICATION-REF-1"),
+            caseRef: "APPLICATION-REF-1",
             currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
             previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
             workflowCode: "frps-private-beta",

@@ -2,17 +2,15 @@ import { findById } from "../../src/cases/repositories/case.repository.js";
 import { wreck } from "./wreck.js";
 
 export const createCase = async (cases, payload = {}) => {
-  const caseRef = payload.caseRef || `APPLICATION-REF-${Date.now()}`;
-
   const kase = {
     workflowCode: "frps-private-beta",
-    caseRef,
+    caseRef: "APPLICATION-REF-1",
     currentPhase: "DEFAULT",
     currentStage: "APPLICATION_RECEIPT",
     currentStatus: "AWAITING_REVIEW",
     dateReceived: new Date("2025-03-27T11:34:52.000Z"),
     payload: {
-      clientRef: caseRef,
+      clientRef: "APPLICATION-REF-1",
       code: "frps-private-beta",
       createdAt: "2025-03-27T10:34:52.000Z",
       submittedAt: "2025-03-28T11:30:52.000Z",
@@ -38,7 +36,6 @@ export const createCase = async (cases, payload = {}) => {
           },
         ],
       },
-      ...(payload.payload || {}),
     },
     timeline: [],
     phases: [
