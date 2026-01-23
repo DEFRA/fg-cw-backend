@@ -18,16 +18,7 @@ afterAll(async () => {
 describe("PATCH /users/{userId} (admin only)", () => {
   it("allows admin to update another user's properties", async () => {
     // Create an admin user to run the test
-    await createAdminUser({
-      name: "Admin User",
-      email: "admin@t.gov.uk",
-      appRoles: {
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-      },
-    });
+    await createAdminUser();
 
     // Create a separate user to be updated by the admin.
     const testUser = await createUser({
@@ -35,12 +26,6 @@ describe("PATCH /users/{userId} (admin only)", () => {
       name: "Name",
       email: "name.surname@defra.gov.uk",
       idpRoles: ["FCP.Casework.Read"],
-      appRoles: {
-        ROLE_RPA_CASES_APPROVE: {
-          startDate: "2025-07-01",
-          endDate: "2025-08-02",
-        },
-      },
     });
 
     const userId = testUser.id;
@@ -71,7 +56,7 @@ describe("PATCH /users/{userId} (admin only)", () => {
         id: userId,
         idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
-        email: "name.surname@defra.gov.uk",
+        email: "new.email@example.com",
         idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
@@ -99,7 +84,7 @@ describe("PATCH /users/{userId} (admin only)", () => {
         id: userId,
         idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
-        email: "name.surname@defra.gov.uk",
+        email: "new.email@example.com",
         idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {

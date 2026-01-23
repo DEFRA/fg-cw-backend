@@ -58,27 +58,34 @@ const hasAdminIdpRole = (authenticatedUser) => {
 };
 
 const applyUpdates = (user, props) => {
+  updateProfile(user, props);
+  updateRoles(user, props);
+};
+
+const updateProfile = (user, props) => {
   if (props.name) {
     user.setName(props.name);
   }
 
+  if (props.email) {
+    user.setEmail(props.email);
+  }
+};
+
+const updateRoles = (user, props) => {
   if (props.idpRoles) {
     user.assignIdpRoles(props.idpRoles);
   }
 
   if (props.appRoles) {
-    const appRoles = Object.entries(props.appRoles).reduce(
-      (acc, [code, value]) => {
-        acc[code] = new AppRole(value);
-        return acc;
-      },
-      {},
-    );
-
-    logger.debug(
-      `Assigning app roles "${Object.keys(appRoles)}" to User "${user.id}"`,
-    );
-
+    const appRoles = mapToAppRoles(props.appRoles);
     user.assignAppRoles(appRoles);
   }
+};
+
+const mapToAppRoles = (appRolesProps) => {
+  return Object.entries(appRolesProps).reduce((acc, [code, value]) => {
+    acc[code] = new AppRole(value);
+    return acc;
+  }, {});
 };

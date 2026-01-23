@@ -74,6 +74,28 @@ describe("updateUserUseCase", () => {
     );
   });
 
+  it("updates email when provided", async () => {
+    const userId = "user-123";
+    const user = User.createMock({ id: userId });
+
+    findById.mockResolvedValue(user);
+
+    await updateUserUseCase({
+      authenticatedUser: { id: userId },
+      userId,
+      props: {
+        email: "new.email@defra.gov.uk",
+      },
+    });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: userId,
+        email: "new.email@defra.gov.uk",
+      }),
+    );
+  });
+
   it("throws forbidden when regular user updates appRoles", async () => {
     const userId = "user-123";
     const idpId = "5de72998-417c-4b7c-815b-62bb77c25d82";
@@ -133,7 +155,6 @@ describe("updateUserUseCase", () => {
       userId,
       props: {
         ipdId: "new-idp-id",
-        email: "new.email@defra.gov.uk",
         createdAt: "2025-01-01T00:00:00.000Z",
         updatedAt: "2025-01-01T00:00:00.000Z",
         appRoles: roleProps,
