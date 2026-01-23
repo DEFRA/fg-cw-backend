@@ -18,9 +18,7 @@ describe("save", () => {
       insertOne,
     });
 
-    const role = Role.createMock({
-      assignable: true,
-    });
+    const role = Role.createMock();
 
     await save(role);
 
@@ -40,9 +38,7 @@ describe("save", () => {
       insertOne: vi.fn().mockRejectedValue(error),
     });
 
-    const role = Role.createMock({
-      assignable: true,
-    });
+    const role = Role.createMock();
 
     await expect(save(role)).rejects.toThrow(
       Boom.conflict(`Role with code ${role.code} already exists`),
@@ -58,9 +54,7 @@ describe("save", () => {
       insertOne,
     });
 
-    const role = Role.createMock({
-      assignable: true,
-    });
+    const role = Role.createMock();
 
     await expect(save(role)).rejects.toThrow(
       Boom.internal(
@@ -78,9 +72,7 @@ describe("save", () => {
       insertOne,
     });
 
-    const role = Role.createMock({
-      assignable: true,
-    });
+    const role = Role.createMock();
 
     await expect(save(role)).rejects.toThrow(error);
   });
@@ -124,9 +116,7 @@ describe("findAll", () => {
 
 describe("findByCode", () => {
   it("finds a role by code", async () => {
-    const roleDocument = RoleDocument.createMock({
-      assignable: false,
-    });
+    const roleDocument = RoleDocument.createMock({ assignable: false });
     const roleCode = "ROLE_RPA_CASES_APPROVE";
 
     const findOne = vi.fn().mockReturnValue(roleDocument);
