@@ -166,7 +166,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       taskCode: "SIMPLE_REVIEW",
     });
 
-    await removeUserAppRoles(user.id);
+    await removeUserAppRoles(user);
 
     await expect(
       wreck.patch(`/cases/${kase._id}/stage/outcome`, {

@@ -76,7 +76,7 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
   });
 
   it("returns 403 when user does not have required workflow roles", async () => {
-    await removeUserAppRoles(user.id);
+    await removeUserAppRoles(user);
 
     const createdUser = await createUser();
     const kase = await createCase(cases);

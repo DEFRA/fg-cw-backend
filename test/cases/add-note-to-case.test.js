@@ -106,7 +106,7 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   it("returns 403 when user does not have required workflow app roles", async () => {
-    await removeUserAppRoles(user.id);
+    await removeUserAppRoles(user);
 
     const kase = await createCase(cases);
 

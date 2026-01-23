@@ -62,12 +62,16 @@ export const createAdminUser = async (payload = {}) => {
   };
   const user = await createUser(mergedPayload);
 
-  await updateAppRoles(user, mergedPayload.appRoles);
+  await changeUserAppRoles(user, mergedPayload.appRoles);
 
   return { ...user, appRoles: mergedPayload.appRoles };
 };
 
-const updateAppRoles = async (user, appRoles) => {
+export const removeUserAppRoles = async (user) => {
+  return await changeUserAppRoles(user, {});
+};
+
+export const changeUserAppRoles = async (user, appRoles) => {
   // Direct MongoDB update to force set appRoles, API does not allow admin to update their own appRoles
   const client = new MongoClient(env.MONGO_URI);
   try {
@@ -79,16 +83,7 @@ const updateAppRoles = async (user, appRoles) => {
   } finally {
     await client.close();
   }
-};
-
-export const removeUserAppRoles = async (userId) => {
-  return await changeUserAppRoles(userId, {});
-};
-
-export const changeUserAppRoles = async (userId, appRoles) => {
-  return await wreck.patch(`/users/${userId}`, {
-    payload: { appRoles },
-  });
+  return { ...user, appRoles };
 };
 
 export const changeUserIdpRoles = async (user, idpRoles) => {

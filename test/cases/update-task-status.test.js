@@ -91,7 +91,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
   });
 
   it("returns 403 when user does not have required task roles", async () => {
-    await removeUserAppRoles(user.id);
+    await removeUserAppRoles(user);
 
     const kase = await createCase(cases);
 
