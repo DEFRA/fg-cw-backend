@@ -1,4 +1,5 @@
 import Wreck from "@hapi/wreck";
+import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
@@ -45,27 +46,59 @@ const defaultUserPayload = {
   },
 };
 
-export const upsertLoginUser = async (payload = {}) => {
-  return await wreck.post("/users/login", {
-    payload: {
-      ...defaultUserPayload,
-      ...payload,
-    },
-  });
-};
-
 export const createUser = async (payload = {}) => {
-  return await upsertLoginUser(payload);
+  const response = await wreck.post(`/users/login`, {
+    payload: { ...defaultUserPayload, ...payload },
+  });
+
+  return response.payload;
 };
 
 export const createAdminUser = async (payload = {}) => {
-  return createUser({ ...TestUser.Admin, ...payload });
+  const mergedPayload = {
+    ...defaultUserPayload,
+    ...TestUser.Admin,
+    ...payload,
+  };
+  const user = await createUser(mergedPayload);
+
+  await updateAppRoles(user, mergedPayload.appRoles);
+
+  return { ...user, appRoles: mergedPayload.appRoles };
 };
 
-export const adminUpdateUser = async (userId, payload) => {
+const updateAppRoles = async (user, appRoles) => {
+  // Direct MongoDB update to force set appRoles, API does not allow admin to update their own appRoles
+  const client = new MongoClient(env.MONGO_URI);
+  try {
+    await client.connect();
+    const db = client.db();
+    await db
+      .collection("users")
+      .updateOne({ idpId: user.idpId }, { $set: { appRoles } });
+  } finally {
+    await client.close();
+  }
+};
+
+export const removeUserAppRoles = async (userId) => {
+  return await changeUserAppRoles(userId, {});
+};
+
+export const changeUserAppRoles = async (userId, appRoles) => {
   return await wreck.patch(`/users/${userId}`, {
-    payload,
+    payload: { appRoles },
   });
+};
+
+export const changeUserIdpRoles = async (user, idpRoles) => {
+  const { idpId, name, email } = user;
+
+  const response = await wreck.post("/users/login", {
+    payload: { idpId, name, email, idpRoles },
+  });
+
+  return response;
 };
 
 export const getTokenFor = async (username) => {

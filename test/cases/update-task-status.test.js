@@ -4,7 +4,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser, updateUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -27,9 +31,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     user = await createAdminUser();
     await createWorkflow();
 
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.ReadWrite],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("updates task status successfully", async () => {
@@ -75,9 +77,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
   });
 
   it("returns 403 when user does not have ReadWrite role", async () => {
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.Read],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
 
     const kase = await createCase(cases);
 
@@ -91,9 +91,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
   });
 
   it("returns 403 when user does not have required task roles", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {},
-    });
+    await removeUserAppRoles(user.id);
 
     const kase = await createCase(cases);
 

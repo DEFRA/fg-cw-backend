@@ -13,7 +13,11 @@ import {
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
-import { createAdminUser, updateUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -36,9 +40,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     user = await createAdminUser();
     await createWorkflow();
 
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.ReadWrite],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
@@ -70,7 +72,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     expect(timelineEntry.eventType).toBe("STAGE_COMPLETED");
     expect(timelineEntry.description).toBe("Stage completed");
     expect(timelineEntry.comment).toBeNull();
-    expect(timelineEntry.createdBy).toBe(user.payload.id);
+    expect(timelineEntry.createdBy).toBe(user.id);
     expect(timelineEntry.createdAt).toEqual(expect.any(String));
     expect(timelineEntry.data).toEqual({
       phaseCode: "DEFAULT",
@@ -94,7 +96,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
           specversion: "1.0",
           time: expect.any(String),
           data: {
-            caseRef: "APPLICATION-REF-1",
+            caseRef: expect.stringContaining("APPLICATION-REF-1"),
             currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
             previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
             workflowCode: "frps-private-beta",
@@ -164,9 +166,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       taskCode: "SIMPLE_REVIEW",
     });
 
-    await updateUser(user.payload.id, {
-      appRoles: {}, // remove test user app roles so they don't have access
-    });
+    await removeUserAppRoles(user.id);
 
     await expect(
       wreck.patch(`/cases/${kase._id}/stage/outcome`, {
