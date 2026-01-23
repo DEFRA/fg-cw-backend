@@ -15,7 +15,7 @@ afterAll(async () => {
   await client.close(true);
 });
 
-describe("PATCH /users/{userId} (admin only)", () => {
+describe("PATCH /admin/users/{userId} (admin only)", () => {
   it("allows admin to update another user's properties", async () => {
     // Create an admin user to run the test
     await createAdminUser();
@@ -30,7 +30,7 @@ describe("PATCH /users/{userId} (admin only)", () => {
 
     const userId = testUser.id;
 
-    const updateUserResponse = await wreck.patch(`/users/${userId}`, {
+    const updateUserResponse = await wreck.patch(`/admin/users/${userId}`, {
       payload: {
         name: "Updated Name",
         email: "new.email@example.com",
@@ -118,7 +118,7 @@ describe("PATCH /users/{userId} (admin only)", () => {
     });
 
     await expect(
-      wreck.patch(`/users/${adminUser.id}`, {
+      wreck.patch(`/admin/users/${adminUser.id}`, {
         payload: {
           appRoles: {
             ROLE_MONEY_TRANSFER_APPROVE: {
