@@ -90,10 +90,8 @@ const messageFrps = {
         applicant: {
           business: {
             reference: "1101091126",
-            email: {
-              address: "texelshirecontractingg@gnitcartnocerihslexeto.com.test",
-            },
-            phone: { mobile: "01234816251" },
+            email: "texelshirecontractingg@gnitcartnocerihslexeto.com.test",
+            mobilePhoneNumber: "01234816251",
             name: "Texels Hire & Contracting",
             address: {
               line1: "Benbrigge House",
