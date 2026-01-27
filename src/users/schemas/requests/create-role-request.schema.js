@@ -5,6 +5,7 @@ import { descriptionSchema } from "../roles/description.schema.js";
 export const createRoleRequestSchema = Joi.object({
   code: codeSchema,
   description: descriptionSchema,
+  assignable: Joi.boolean(),
 })
   .options({
     presence: "required",

@@ -13,7 +13,11 @@ import {
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser, updateUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -62,6 +66,7 @@ describe("POST /cases/{caseId}/page-action", () => {
     );
 
     user = await createAdminUser();
+
     await createWorkflow({
       externalActions: [
         {
@@ -96,10 +101,7 @@ describe("POST /cases/{caseId}/page-action", () => {
       ],
     });
 
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.ReadWrite],
-      appRoles: user.payload.appRoles,
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   afterEach(async () => {
@@ -145,9 +147,7 @@ describe("POST /cases/{caseId}/page-action", () => {
   });
 
   it("returns 403 when user does not have ReadWrite role", async () => {
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.Read],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
 
     const kase = await createCase(cases);
 
@@ -161,9 +161,7 @@ describe("POST /cases/{caseId}/page-action", () => {
   });
 
   it("returns 403 when user does not have required workflow roles", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {},
-    });
+    await removeUserAppRoles(user);
 
     const kase = await createCase(cases);
 

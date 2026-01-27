@@ -62,7 +62,7 @@ Authorization: Bearer {{generateToken.response.body.access_token}}
 
 # @name assignPmfRoles
 
-PATCH {{host}}/users/690b7c3695aa9f0ba1f2f5bc HTTP/1.1
+PATCH {{host}}/admin/users/690b7c3695aa9f0ba1f2f5bc HTTP/1.1
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{generateToken.response.body.access_token}}

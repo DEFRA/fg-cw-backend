@@ -5,7 +5,12 @@ import { IdpRoles } from "../models/idp-roles.js";
 import { Role } from "../models/role.js";
 import { save } from "../repositories/role.repository.js";
 
-export const createRoleUseCase = async ({ user, code, description }) => {
+export const createRoleUseCase = async ({
+  user,
+  code,
+  description,
+  assignable,
+}) => {
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.Admin],
     appRoles: RequiredAppRoles.None,
@@ -17,6 +22,7 @@ export const createRoleUseCase = async ({ user, code, description }) => {
   const role = new Role({
     code,
     description,
+    assignable,
     createdAt,
     updatedAt: createdAt,
   });

@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRole } from "../helpers/roles.js";
 import {
   createAdminUser,
   createUser,
@@ -24,11 +25,10 @@ describe("POST /roles", () => {
   it("creates a role", async () => {
     await createAdminUser();
 
-    const createRoleResponse = await wreck.post("/roles", {
-      payload: {
-        code: "ROLE_RPA_CASES_APPROVE",
-        description: "Approve case applications",
-      },
+    const createRoleResponse = await createRole({
+      code: "ROLE_RPA_CASES_APPROVE",
+      description: "Approve case applications",
+      assignable: true,
     });
 
     expect(createRoleResponse).toEqual({
@@ -50,6 +50,7 @@ describe("POST /roles", () => {
         id: expect.any(String),
         code: "ROLE_RPA_CASES_APPROVE",
         description: "Approve case applications",
+        assignable: true,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },
@@ -69,6 +70,7 @@ describe("POST /roles", () => {
         payload: {
           code: "ROLE_SHOULD_NOT_CREATE",
           description: "Should not be created",
+          assignable: true,
         },
       }),
     ).rejects.toThrow("Response Error: 403 Forbidden");
@@ -80,6 +82,7 @@ describe("POST /roles", () => {
     const payload = {
       code: "ROLE_RPA_CASES_APPROVE",
       description: "Approve case applications",
+      assignable: true,
     };
 
     await wreck.post("/roles", {

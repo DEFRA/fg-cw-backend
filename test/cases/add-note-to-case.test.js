@@ -4,7 +4,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createAdminUser, updateUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -27,10 +31,7 @@ describe("POST /cases/{caseId}/notes", () => {
     user = await createAdminUser();
     await createWorkflow();
 
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.ReadWrite],
-      appRoles: user.payload.appRoles,
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("adds a note to a case successfully", async () => {
@@ -93,9 +94,7 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   it("returns 403 when user does not have ReadWrite idp role", async () => {
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.Read],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
 
     const kase = await createCase(cases);
 
@@ -107,9 +106,7 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   it("returns 403 when user does not have required workflow app roles", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {},
-    });
+    await removeUserAppRoles(user);
 
     const kase = await createCase(cases);
 

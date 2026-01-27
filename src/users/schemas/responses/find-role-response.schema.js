@@ -7,6 +7,7 @@ export const findRoleResponseSchema = Joi.object({
   id: idSchema,
   code: codeSchema,
   description: descriptionSchema,
+  assignable: Joi.boolean(),
   createdAt: Joi.string().isoDate(),
   updatedAt: Joi.string().isoDate(),
 })

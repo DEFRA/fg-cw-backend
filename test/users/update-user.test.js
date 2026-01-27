@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createAdminUser, createUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -14,29 +15,25 @@ afterAll(async () => {
   await client.close(true);
 });
 
-describe("PATCH /users/{userId}", () => {
-  it("updates mutable properties", async () => {
-    const createUserResponse = await wreck.post("/users/login", {
-      payload: {
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-        name: "Name",
-        email: "name.surname@defra.gov.uk",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-      },
+describe("PATCH /admin/users/{userId} (admin only)", () => {
+  it("allows admin to update another user's properties", async () => {
+    // Create an admin user to run the test
+    await createAdminUser();
+
+    // Create a separate user to be updated by the admin.
+    const testUser = await createUser({
+      idpId: "00000000-0000-0000-0000-000000000001",
+      name: "Name",
+      email: "name.surname@defra.gov.uk",
+      idpRoles: ["FCP.Casework.Read"],
     });
 
-    const userId = createUserResponse.payload.id;
+    const userId = testUser.id;
 
-    const updateUserResponse = await wreck.patch(`/users/${userId}`, {
+    const updateUserResponse = await wreck.patch(`/admin/users/${userId}`, {
       payload: {
         name: "Updated Name",
-        email: "NA",
+        email: "new.email@example.com",
         idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
@@ -57,9 +54,9 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+        idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
-        email: "name.surname@defra.gov.uk",
+        email: "new.email@example.com",
         idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
@@ -85,9 +82,9 @@ describe("PATCH /users/{userId}", () => {
       }),
       payload: {
         id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
+        idpId: "00000000-0000-0000-0000-000000000001",
         name: "Updated Name",
-        email: "name.surname@defra.gov.uk",
+        email: "new.email@example.com",
         idpRoles: ["FCP.Casework.Admin"],
         appRoles: {
           ROLE_RPA_1: {
@@ -106,53 +103,31 @@ describe("PATCH /users/{userId}", () => {
     });
   });
 
-  it("does not update other properties", async () => {
-    const createUserResponse = await wreck.post("/users/login", {
-      payload: {
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-        name: "Name",
-        email: "name.surname@defra.gov.uk",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+  it("admin cannot update their own appRoles", async () => {
+    // Create an admin user to run the test
+
+    const adminUser = await createAdminUser({
+      name: "Admin User",
+      email: "admin@t.gov.uk",
+      appRoles: {
+        ROLE_RPA_CASES_APPROVE: {
+          startDate: "2025-07-01",
+          endDate: "2025-08-02",
         },
       },
     });
 
-    const userId = createUserResponse.payload.id;
-
-    await wreck.patch(`/users/${userId}`, {
-      payload: {
-        idpId: "new-idp-id",
-        email: "new.value@defra.gov.uk",
-      },
-    });
-
-    const findUserByIdResponse = await wreck.get(`/admin/users/${userId}`);
-
-    expect(findUserByIdResponse).toEqual({
-      res: expect.objectContaining({
-        statusCode: 200,
+    await expect(
+      wreck.patch(`/admin/users/${adminUser.id}`, {
+        payload: {
+          appRoles: {
+            ROLE_MONEY_TRANSFER_APPROVE: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
+          },
+        },
       }),
-      payload: {
-        id: userId,
-        idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1", // not updated
-        name: "Name",
-        email: "name.surname@defra.gov.uk", // not updated
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_CASES_APPROVE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
-        lastLoginAt: expect.any(String),
-      },
-    });
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 });

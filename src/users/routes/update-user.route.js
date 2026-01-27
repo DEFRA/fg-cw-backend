@@ -6,7 +6,7 @@ import { updateUserUseCase } from "../use-cases/update-user.use-case.js";
 
 export const updateUserRoute = {
   method: "PATCH",
-  path: "/users/{userId}",
+  path: "/admin/users/{userId}",
   options: {
     description: "Update a user (admin only)",
     tags: ["api"],

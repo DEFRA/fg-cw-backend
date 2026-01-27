@@ -20,6 +20,11 @@ export class User {
     this.updatedAt = new Date().toISOString();
   }
 
+  setEmail(value) {
+    this.email = value;
+    this.updatedAt = new Date().toISOString();
+  }
+
   getRoles() {
     return Object.keys(this.appRoles).filter((roleName) =>
       this.hasActiveRole(roleName),
