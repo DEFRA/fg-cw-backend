@@ -26,7 +26,7 @@ describe("users", () => {
       expect.arrayContaining([
         {
           method: "patch",
-          path: "/users/{userId}",
+          path: "/admin/users/{userId}",
         },
         {
           method: "post",

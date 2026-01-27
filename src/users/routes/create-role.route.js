@@ -13,8 +13,8 @@ export const createRoleRoute = {
   },
   async handler(request, h) {
     const { user } = request.auth.credentials;
-    const { code, description } = request.payload;
-    await createRoleUseCase({ user, code, description });
+    const { code, description, assignable } = request.payload;
+    await createRoleUseCase({ user, code, description, assignable });
 
     return h.response().code(204);
   },
