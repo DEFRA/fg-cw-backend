@@ -90,10 +90,8 @@ const messageFrps = {
         applicant: {
           business: {
             reference: "9000000202",
-            email: {
-              address: "vale@example.test",
-            },
-            phone: { mobile: "02079460903" },
+            email: "vale@example.test",
+            mobilePhoneNumber: "02079460903",
             name: "Example Vale Contracting",
             address: {
               line1: "5 Example Lane",
