@@ -7,33 +7,33 @@ const MAX_RETRIES = parseInt(config.get("inbox.inboxMaxRetries"));
 const NUMBER_OF_RECORDS = parseInt(config.get("inbox.inboxClaimMaxRecords"));
 const EXPIRES_IN_MS = parseInt(config.get("inbox.inboxExpiresMs"));
 
-export const claimEvents = async (claimedBy) => {
-  const promises = [];
+export const claimEvents = async (
+  claimedBy,
+  numRecords = NUMBER_OF_RECORDS,
+) => {
+  const docs = [];
 
-  for (let i = 0; i < NUMBER_OF_RECORDS; i++) {
-    promises.push(
-      db.collection(collection).findOneAndUpdate(
-        {
-          status: { $eq: InboxStatus.PUBLISHED },
-          claimedBy: { $eq: null },
-          completionAttempts: { $lte: MAX_RETRIES },
+  for (let i = 0; i < numRecords; i++) {
+    const document = await db.collection(collection).findOneAndUpdate(
+      {
+        status: { $eq: InboxStatus.PUBLISHED },
+        claimedBy: { $eq: null },
+        completionAttempts: { $lte: MAX_RETRIES },
+      },
+      {
+        $set: {
+          status: InboxStatus.PROCESSING,
+          claimedBy,
+          claimedAt: new Date(),
+          claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
         },
-        {
-          $set: {
-            status: InboxStatus.PROCESSING,
-            claimedBy,
-            claimedAt: new Date(),
-            claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
-          },
-        },
-        { sort: { publicationDate: 1 }, returnDocument: "after" },
-      ),
+      },
+      { sort: { eventTime: 1 }, returnDocument: "after" },
     );
+    docs.push(document);
   }
 
-  const docs = await Promise.all(promises);
   const documents = docs.filter((d) => d !== null);
-
   return documents.map((doc) => Inbox.fromDocument(doc));
 };
 

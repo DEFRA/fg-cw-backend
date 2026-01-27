@@ -1,5 +1,7 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
@@ -10,9 +12,7 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  logger.info(
-    `Updating task status use case started - caseId: ${command.caseId}`,
-  );
+  logger.info(`Updating task status of case "${command.caseId}"`);
 
   const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
     command;
@@ -25,11 +25,11 @@ export const updateTaskStatusUseCase = async (command) => {
 
   const workflow = await findByCode(kase.workflowCode);
 
-  // Check if the current status is interactive
   const currentStatus = workflow.getStatus(kase.position);
+
   if (currentStatus.interactive === false) {
     throw Boom.badRequest(
-      `Cannot update task status. The current stage status "${currentStatus.name}" is not interactive.`,
+      `The task ${taskGroupCode}/${taskCode} cannot be modified while case is in ${kase.position}`,
     );
   }
 
@@ -39,6 +39,12 @@ export const updateTaskStatusUseCase = async (command) => {
     taskGroupCode,
     taskCode,
   });
+
+  AccessControl.authorise(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: task.getRequiredRoles(),
+  });
+
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
   const taskCompleted = mapCompleted({ task, status, completed });
@@ -52,29 +58,27 @@ export const updateTaskStatusUseCase = async (command) => {
     updatedBy: user.id,
   });
 
-  logger.info(
-    `Finished: Updating task status use case started - caseId: ${command.caseId}`,
-  );
+  logger.info(`Finished: Updating task status of case "${command.caseId}"`);
 
   return update(kase);
 };
 
 const mapCompleted = ({ task, status, completed }) => {
-  if (hasStatusOptions(task)) {
-    const selectedOption = task.statusOptions.find(
-      (option) => option.code === status,
-    );
-
-    if (!selectedOption) {
-      throw Boom.badRequest(
-        `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
-      );
-    }
-
-    return selectedOption.completes;
-  } else {
+  if (!hasStatusOptions(task)) {
     return completed;
   }
+
+  const selectedOption = task.statusOptions.find(
+    (option) => option.code === status,
+  );
+
+  if (!selectedOption) {
+    throw Boom.badRequest(
+      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
+    );
+  }
+
+  return selectedOption.completes;
 };
 
 const hasStatusOptions = (task) =>

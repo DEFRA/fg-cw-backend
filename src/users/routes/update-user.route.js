@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { logger } from "../../common/logger.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { updateUserRequestSchema } from "../schemas/requests/update-user-request.schema.js";
 import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
@@ -7,9 +6,9 @@ import { updateUserUseCase } from "../use-cases/update-user.use-case.js";
 
 export const updateUserRoute = {
   method: "PATCH",
-  path: "/users/{userId}",
+  path: "/admin/users/{userId}",
   options: {
-    description: "Update a user",
+    description: "Update a user (admin only)",
     tags: ["api"],
     validate: {
       params: Joi.object({
@@ -22,12 +21,12 @@ export const updateUserRoute = {
     },
   },
   async handler(request) {
-    logger.info(`Updating user: ${request.params.userId}`);
-    const user = await updateUserUseCase({
+    const { user: authenticatedUser } = request.auth.credentials;
+
+    return await updateUserUseCase({
+      authenticatedUser,
       userId: request.params.userId,
       props: request.payload,
     });
-    logger.info(`Finished: Updating user: ${request.params.userId}`);
-    return user;
   },
 };

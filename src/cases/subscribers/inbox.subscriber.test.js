@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers/promises";
 import {
   afterAll,
   afterEach,
@@ -13,7 +14,7 @@ import { withTraceParent } from "../../common/trace-parent.js";
 import { Inbox } from "../models/inbox.js";
 import { claimEvents } from "../repositories/inbox.repository.js";
 import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
-import { handleAgreementStatusUpdateUseCase } from "../use-cases/handle-agreement-status-update.use-case.js";
+import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
 vi.mock("../use-cases/create-case.use-case.js");
@@ -21,7 +22,7 @@ vi.mock("../../common/trace-parent.js");
 vi.mock("../use-cases/approve-application.use-case.js");
 vi.mock("../repositories/inbox.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
-vi.mock("../use-cases/handle-agreement-status-update.use-case.js");
+vi.mock("../use-cases/handle-case-status-update.use-case.js");
 vi.mock("../../common/logger.js");
 
 describe("inbox.subscriber", () => {
@@ -48,7 +49,7 @@ describe("inbox.subscriber", () => {
   });
 
   it("should poll on start()", async () => {
-    claimEvents.mockResolvedValue([new Inbox({})]);
+    claimEvents.mockResolvedValue([Inbox.createMock()]);
     const subscriber = new InboxSubscriber();
     subscriber.start();
     expect(claimEvents).toHaveBeenCalled();
@@ -99,7 +100,11 @@ describe("inbox.subscriber", () => {
   });
 
   it("should stop polling after stop()", async () => {
-    claimEvents.mockResolvedValue([new Inbox({})]);
+    claimEvents.mockResolvedValue([
+      Inbox.createMock({
+        event: { time: new Date().toISOString() },
+      }),
+    ]);
     const subscriber = new InboxSubscriber();
     subscriber.start();
     expect(claimEvents).toHaveBeenCalledTimes(1);
@@ -110,6 +115,33 @@ describe("inbox.subscriber", () => {
   });
 
   describe("processEvents", () => {
+    it("should process events in correct order", async () => {
+      const events = [
+        Inbox.createMock({
+          _id: "1",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+        Inbox.createMock({
+          _id: "2",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+      ];
+
+      claimEvents.mockResolvedValue(events);
+      const subscriber = new InboxSubscriber();
+      const spy1 = vi
+        .spyOn(subscriber, "handleEvent")
+        .mockImplementationOnce(async () => {
+          return setTimeout(500);
+        })
+        .mockImplementationOnce(async () => setTimeout(500));
+      await subscriber.processEvents(events);
+      expect(spy1).toHaveBeenCalledTimes(2);
+
+      expect(subscriber.handleEvent.mock.calls[0][0]).toEqual(events[0]);
+      expect(subscriber.handleEvent.mock.calls[1][0]).toEqual(events[1]);
+    });
+
     it("should use use-cases if mapped", async () => {
       const mockEventData = {
         foo: "barr",
@@ -178,7 +210,7 @@ describe("inbox.subscriber", () => {
       const mockEventData = {
         foo: "barr",
       };
-      handleAgreementStatusUpdateUseCase.mockResolvedValue("COMPLETE");
+      handleCaseStatusUpdateUseCase.mockResolvedValue("COMPLETE");
 
       withTraceParent.mockImplementationOnce((_, fn) => fn());
       const mockEvent = {

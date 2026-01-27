@@ -1,7 +1,9 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
 import { findById, update } from "../repositories/case.repository.js";
@@ -9,9 +11,8 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
-  logger.info(
-    `Updating stage outcome use case started - caseId: ${command.caseId}`,
-  );
+  logger.info(`Updating stage outcome of case "${command.caseId}"`);
+
   return await withTransaction(async (session) => {
     const { caseId, actionCode, comment, user } = command;
     const kase = await findById(caseId);
@@ -21,6 +22,11 @@ export const updateStageOutcomeUseCase = async (command) => {
     }
 
     const workflow = await findByCode(kase.workflowCode);
+
+    AccessControl.authorise(user, {
+      idpRoles: [IdpRoles.ReadWrite],
+      appRoles: workflow.requiredRoles,
+    });
 
     workflow.validateStageActionComment({
       actionCode,
@@ -56,8 +62,6 @@ export const updateStageOutcomeUseCase = async (command) => {
       session,
     );
 
-    logger.info(
-      `Finished: Updating stage outcome use case started - caseId: ${command.caseId}`,
-    );
+    logger.info(`Finished: Updating stage outcome of case "${command.caseId}"`);
   });
 };

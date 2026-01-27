@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { UserDocument } from "../models/user-document.js";
 import { User } from "../models/user.js";
-import { findAll, findById, save, update } from "./user.repository.js";
+import {
+  findAll,
+  findById,
+  save,
+  update,
+  upsertLogin,
+} from "./user.repository.js";
 
 vi.mock("../../common/mongo-client.js");
 
@@ -197,23 +203,10 @@ describe("findAll", () => {
   });
 
   it("returns a list of users filtered by allAppRoles", async () => {
-    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
+    const allAppRoles = ["ROLE_1", "ROLE_2"];
     const anyAppRoles = [];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: {
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -230,12 +223,12 @@ describe("findAll", () => {
       ...expectedNameFilter,
       $and: [
         {
-          "appRoles.ROLE_RPA_ADMIN": {
+          "appRoles.ROLE_1": {
             $exists: true,
           },
         },
         {
-          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+          "appRoles.ROLE_2": {
             $exists: true,
           },
         },
@@ -245,42 +238,15 @@ describe("findAll", () => {
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: {
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
       }),
     ]);
   });
 
   it("returns a list of users filtered by anyAppRoles", async () => {
     const allAppRoles = [];
-    const anyAppRoles = ["ANY_APP_ROLE"];
+    const anyAppRoles = ["ROLE_3"];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: {
-          ANY_APP_ROLE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -295,39 +261,21 @@ describe("findAll", () => {
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
       ...expectedNameFilter,
-      $or: [{ "appRoles.ANY_APP_ROLE": { $exists: true } }],
+      $or: [{ "appRoles.ROLE_3": { $exists: true } }],
     });
 
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: {
-          ANY_APP_ROLE: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-          ROLE_RPA_SUPER_ADMIN: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
-        },
       }),
     ]);
   });
 
   it("returns a list of users filtered by allAppRoles and anyAppRoles", async () => {
-    const allAppRoles = ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN"];
-    const anyAppRoles = ["ANY_APP_ROLE"];
+    const allAppRoles = ["ROLE_1", "ROLE_2"];
+    const anyAppRoles = ["ROLE_3"];
 
-    const docs = [
-      UserDocument.createMock({
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
-      }),
-    ];
+    const docs = [UserDocument.createMock()];
 
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue(docs),
@@ -344,19 +292,19 @@ describe("findAll", () => {
       ...expectedNameFilter,
       $and: [
         {
-          "appRoles.ROLE_RPA_ADMIN": {
+          "appRoles.ROLE_1": {
             $exists: true,
           },
         },
         {
-          "appRoles.ROLE_RPA_SUPER_ADMIN": {
+          "appRoles.ROLE_2": {
             $exists: true,
           },
         },
       ],
       $or: [
         {
-          "appRoles.ANY_APP_ROLE": {
+          "appRoles.ROLE_3": {
             $exists: true,
           },
         },
@@ -366,7 +314,6 @@ describe("findAll", () => {
     expect(result).toEqual([
       User.createMock({
         id: docs[0]._id.toString(),
-        appRoles: ["ROLE_RPA_ADMIN", "ROLE_RPA_SUPER_ADMIN", "ANY_APP_ROLE"],
       }),
     ]);
   });
@@ -445,5 +392,98 @@ describe("findById", () => {
     const result = await findById(userId);
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("upsert", () => {
+  it("creates a new user when idpId does not exist", async () => {
+    const user = User.createMock();
+    const userDocument = new UserDocument(user);
+
+    const findOneAndUpdate = vi
+      .fn()
+      .mockResolvedValue(UserDocument.createMock({ id: user.id }));
+
+    db.collection.mockReturnValue({
+      findOneAndUpdate,
+    });
+
+    const result = await upsertLogin(user);
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      { idpId: userDocument.idpId },
+      expect.objectContaining({
+        $set: {
+          name: userDocument.name,
+          email: userDocument.email,
+          idpRoles: userDocument.idpRoles,
+          updatedAt: userDocument.updatedAt,
+          lastLoginAt: userDocument.lastLoginAt,
+        },
+        $setOnInsert: {
+          createdAt: userDocument.createdAt,
+          appRoles: userDocument.appRoles,
+        },
+      }),
+      {
+        upsert: true,
+        returnDocument: "after",
+      },
+    );
+
+    expect(result).toEqual(
+      User.createMock({
+        id: user.id,
+      }),
+    );
+  });
+
+  it("updates an existing user when idpId exists", async () => {
+    const user = User.createMock({
+      idpId: "existing-idp-id",
+      name: "Updated Name",
+      email: "updated.name@defra.gov.uk",
+    });
+
+    const existingDoc = UserDocument.createMock({
+      idpId: "existing-idp-id",
+      name: "Updated Name",
+    });
+
+    const findOneAndUpdate = vi.fn().mockResolvedValue(existingDoc);
+
+    db.collection.mockReturnValue({
+      findOneAndUpdate,
+    });
+
+    const result = await upsertLogin(user);
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      { idpId: user.idpId },
+      expect.any(Object),
+      {
+        upsert: true,
+        returnDocument: "after",
+      },
+    );
+
+    expect(result.idpId).toBe("existing-idp-id");
+    expect(result.name).toBe("Updated Name");
+  });
+
+  it("throws when findOneAndUpdate returns null", async () => {
+    const user = User.createMock();
+
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    db.collection.mockReturnValue({
+      findOneAndUpdate,
+    });
+
+    await expect(upsertLogin(user)).rejects.toThrow(
+      Boom.internal("User could not be created or updated"),
+    );
   });
 });

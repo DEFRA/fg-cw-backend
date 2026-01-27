@@ -173,7 +173,7 @@ describe("SqsSubscriber", () => {
       .poll(() => logger.error)
       .toHaveBeenCalledWith(
         new Error("Processing error"),
-        "Error processing SQS message 19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+        'Error processing SQS message "19dd0b57-b21e-4ac1-bd88-01bbb068cb78"',
       );
   });
 });

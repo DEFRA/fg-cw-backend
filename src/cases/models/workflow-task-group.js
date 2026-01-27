@@ -1,5 +1,5 @@
 import Boom from "@hapi/boom";
-import { Permissions } from "./permissions.js";
+import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 
@@ -41,7 +41,7 @@ export class WorkflowTaskGroup {
             }),
           ],
           comment: null,
-          requiredRoles: new Permissions({
+          requiredRoles: new RequiredAppRoles({
             allOf: ["ROLE_1"],
             anyOf: ["ROLE_2"],
           }),

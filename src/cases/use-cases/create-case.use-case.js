@@ -44,7 +44,7 @@ export const createCaseUseCase = async (message) => {
     const { caseRef, workflowCode, payload } = data;
 
     logger.info(
-      `Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+      `Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
     );
 
     const workflow = await findWorkflowByCodeUseCase(workflowCode);
@@ -60,7 +60,7 @@ export const createCaseUseCase = async (message) => {
     });
 
     logger.info(
-      `Finished: Creating case use case started with caseRef "${caseRef}" and workflowCode "${workflowCode}" to database.`,
+      `Finished: Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
     );
 
     await save(kase, session);

@@ -34,7 +34,6 @@ services:
     command: ["mongod", "--replSet", "mongoRepl", "--bind_ip", "0.0.0.0"]
     volumes:
       - mongodb-data:/data
-    restart: always
 
   mongo-ready:
     image: mongo:6.0.13

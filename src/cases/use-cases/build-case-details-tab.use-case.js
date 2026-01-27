@@ -18,10 +18,11 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
 
   logger.info(
-    `Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+    `Building case details tab for case ${request.params.caseId} and tab ${request.params.tabId}`,
   );
 
   const { caseId, tabId } = request.params;
+  const user = request.user ?? null;
 
   const kase = await findById(caseId);
 
@@ -35,7 +36,13 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
   }
 
-  const root = await createRootContext({ kase, workflow, request, tabId });
+  const root = await createRootContext({
+    kase,
+    workflow,
+    request,
+    tabId,
+    user,
+  });
 
   const workflowStage = workflow.getStage(kase.position);
 
@@ -47,7 +54,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   ]);
 
   logger.info(
-    `Finished: Building case details tab use case started - caseId: ${request.params.caseId}, tabId: ${request.params.tabId}`,
+    `Finished: Building case details tab for case ${request.params.caseId} and tab ${request.params.tabId}`,
   );
 
   return {
@@ -61,11 +68,18 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   };
 };
 
-export const createRootContext = async ({ kase, workflow, request, tabId }) => {
+export const createRootContext = async ({
+  kase,
+  workflow,
+  request,
+  tabId,
+  user,
+}) => {
   const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
     request,
+    user,
   });
 
   const tabDefinition = await getTabDefinition({

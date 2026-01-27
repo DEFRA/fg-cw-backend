@@ -80,7 +80,10 @@ describe("save", () => {
 
 describe("findAll", () => {
   it("returns all roles", async () => {
-    const docs = [RoleDocument.createMock(), RoleDocument.createMock()];
+    const docs = [
+      RoleDocument.createMock({ assignable: true }),
+      RoleDocument.createMock({ assignable: false }),
+    ];
 
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
@@ -94,6 +97,8 @@ describe("findAll", () => {
     expect(result).toHaveLength(2);
     expect(result[0]).toBeInstanceOf(Role);
     expect(result[1]).toBeInstanceOf(Role);
+    expect(result[0].assignable).toBe(true);
+    expect(result[1].assignable).toBe(false);
   });
 
   it("returns an empty array when no roles exist", async () => {
@@ -111,7 +116,7 @@ describe("findAll", () => {
 
 describe("findByCode", () => {
   it("finds a role by code", async () => {
-    const roleDocument = RoleDocument.createMock();
+    const roleDocument = RoleDocument.createMock({ assignable: false });
     const roleCode = "ROLE_RPA_CASES_APPROVE";
 
     const findOne = vi.fn().mockReturnValue(roleDocument);
@@ -128,6 +133,7 @@ describe("findByCode", () => {
     });
     expect(result).toBeInstanceOf(Role);
     expect(result.code).toBe(roleDocument.code);
+    expect(result.assignable).toBe(false);
   });
 
   it("returns null when role not found", async () => {

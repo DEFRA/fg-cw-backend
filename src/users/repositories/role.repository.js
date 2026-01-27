@@ -10,6 +10,7 @@ const toRole = (doc) =>
     id: doc._id.toHexString(),
     code: doc.code,
     description: doc.description,
+    assignable: doc.assignable,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   });

@@ -121,4 +121,58 @@ describe("WorkflowTask", () => {
       expect(task.description).toHaveLength(2);
     });
   });
+
+  describe("getRequiredRoles", () => {
+    const createTask = (overrides = {}) => {
+      return new WorkflowTask({
+        code: "TASK_1",
+        name: "Test Task",
+        mandatory: true,
+        description: "A test task",
+        statusOptions: [
+          new WorkflowTaskStatusOption({
+            code: "COMPLETE",
+            name: "Complete",
+            theme: "SUCCESS",
+            completes: true,
+          }),
+        ],
+        ...overrides,
+      });
+    };
+
+    it("returns requiredRoles when set", () => {
+      const task = createTask({
+        requiredRoles: {
+          allOf: ["ROLE_1"],
+          anyOf: ["ROLE_2"],
+        },
+      });
+
+      expect(task.getRequiredRoles()).toEqual({
+        allOf: ["ROLE_1"],
+        anyOf: ["ROLE_2"],
+      });
+    });
+
+    it("returns empty roles when requiredRoles is null", () => {
+      const task = createTask({
+        requiredRoles: null,
+      });
+
+      expect(task.getRequiredRoles()).toEqual({
+        allOf: [],
+        anyOf: [],
+      });
+    });
+
+    it("returns empty roles when requiredRoles is undefined", () => {
+      const task = createTask();
+
+      expect(task.getRequiredRoles()).toEqual({
+        allOf: [],
+        anyOf: [],
+      });
+    });
+  });
 });

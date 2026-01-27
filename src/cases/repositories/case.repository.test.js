@@ -227,6 +227,29 @@ describe("findById", () => {
 
     expect(result).toEqual(null);
   });
+
+  it("maps task commentRefs from database document", async () => {
+    const doc = CaseDocument.createMock();
+    const caseId = doc._id.toString();
+
+    // Add commentRefs to the task in the document
+    doc.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+      { status: "ACCEPTED", ref: "abc123def456" },
+    ];
+
+    const findOne = vi.fn().mockReturnValue(doc);
+
+    db.collection.mockReturnValue({
+      findOne,
+    });
+
+    const result = await findById(caseId);
+
+    const task = result.phases[0].stages[0].taskGroups[0].tasks[0];
+    expect(task.commentRefs).toEqual([
+      { status: "ACCEPTED", ref: "abc123def456" },
+    ]);
+  });
 });
 
 describe("updateStage", () => {

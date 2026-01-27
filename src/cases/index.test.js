@@ -43,9 +43,11 @@ describe("cases", () => {
 
     expect(logger.info).toHaveBeenCalledWith("Running migrations");
     expect(logger.info).toHaveBeenCalledWith(
-      "Migrated: 001-initial-migration.js",
+      'Migrated: "001-initial-migration.js"',
     );
-    expect(logger.info).toHaveBeenCalledWith("Migrated: 002-add-some-data.js");
+    expect(logger.info).toHaveBeenCalledWith(
+      'Migrated: "002-add-some-data.js"',
+    );
     expect(logger.info).toHaveBeenCalledWith("Finished running migrations");
   });
 

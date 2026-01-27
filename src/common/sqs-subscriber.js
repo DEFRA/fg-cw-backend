@@ -31,19 +31,19 @@ export class SqsSubscriber {
   }
 
   async poll() {
-    logger.info(`Started polling SQS queue: ${this.queueUrl}`);
+    logger.info(`Started polling SQS queue: "${this.queueUrl}"`);
 
     while (this.isRunning) {
       try {
         const messages = await this.getMessages();
         await Promise.all(messages.map((m) => this.processMessage(m)));
       } catch (err) {
-        logger.error(err, `Error polling SQS queue ${this.queueUrl}`);
+        logger.error(err, `Error polling SQS queue "${this.queueUrl}"`);
         await setTimeout(this.delayOnErrorMs);
       }
     }
 
-    logger.info(`Stopped polling SQS queue: ${this.queueUrl}`);
+    logger.info(`Stopped polling SQS queue: "${this.queueUrl}"`);
   }
 
   async processMessage(message) {
@@ -54,7 +54,7 @@ export class SqsSubscriber {
     } catch (err) {
       logger.error(
         err,
-        `Error parsing SQS message body for message ${message.MessageId}`,
+        `Error parsing SQS message body for message "${message.MessageId}"`,
       );
       return;
     }
@@ -62,12 +62,15 @@ export class SqsSubscriber {
     const traceparent = body.traceparent || message.MessageId;
 
     await withTraceParent(traceparent, async () => {
-      logger.info(`Processing SQS message ${message.MessageId}`);
+      logger.info(`Processing SQS message "${message.MessageId}"`);
       try {
         await this.onMessage(body);
         await this.deleteMessage(message);
       } catch (err) {
-        logger.error(err, `Error processing SQS message ${message.MessageId}`);
+        logger.error(
+          err,
+          `Error processing SQS message "${message.MessageId}"`,
+        );
       }
     });
   }

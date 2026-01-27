@@ -10,9 +10,14 @@ import {
   vi,
 } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
-import { createUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -32,14 +37,10 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
   });
 
   beforeEach(async () => {
+    user = await createAdminUser();
     await createWorkflow();
 
-    user = await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("updates stage outcome and transitions to next stage", async () => {
@@ -71,7 +72,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     expect(timelineEntry.eventType).toBe("STAGE_COMPLETED");
     expect(timelineEntry.description).toBe("Stage completed");
     expect(timelineEntry.comment).toBeNull();
-    expect(timelineEntry.createdBy).toBe(user.payload.id);
+    expect(timelineEntry.createdBy).toBe(user.id);
     expect(timelineEntry.createdAt).toEqual(expect.any(String));
     expect(timelineEntry.data).toEqual({
       phaseCode: "DEFAULT",
@@ -154,6 +155,27 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
         },
       }),
     ).rejects.toThrow("Bad Request");
+  });
+
+  it("returns 403 when user does not have access", async () => {
+    const kase = await createCase(cases);
+
+    await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    await removeUserAppRoles(user);
+
+    await expect(
+      wreck.patch(`/cases/${kase._id}/stage/outcome`, {
+        payload: {
+          actionCode: "APPROVE",
+          comment: null,
+        },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 for invalid action code", async () => {

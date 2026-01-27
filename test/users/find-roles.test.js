@@ -1,6 +1,8 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRole } from "../helpers/roles.js";
+import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -16,18 +18,18 @@ afterAll(async () => {
 
 describe("GET /roles", () => {
   it("returns all roles", async () => {
-    await wreck.post("/roles", {
-      payload: {
-        code: "TEST_ROLE_1",
-        description: "Test role one",
-      },
+    await createAdminUser();
+
+    await createRole({
+      code: "TEST_ROLE_1",
+      description: "Test role one",
+      assignable: true,
     });
 
-    await wreck.post("/roles", {
-      payload: {
-        code: "TEST_ROLE_2",
-        description: "Test role two",
-      },
+    await createRole({
+      code: "TEST_ROLE_2",
+      description: "Test role two",
+      assignable: false,
     });
 
     const findRolesResponse = await wreck.get("/roles");
@@ -41,6 +43,7 @@ describe("GET /roles", () => {
           id: expect.any(String),
           code: "TEST_ROLE_1",
           description: "Test role one",
+          assignable: true,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         }),
@@ -48,6 +51,7 @@ describe("GET /roles", () => {
           id: expect.any(String),
           code: "TEST_ROLE_2",
           description: "Test role two",
+          assignable: false,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         }),

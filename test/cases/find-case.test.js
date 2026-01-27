@@ -1,8 +1,9 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { caseData1, caseData2 } from "../fixtures/case.js";
-import { createUser } from "../helpers/users.js";
+import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -21,28 +22,10 @@ afterAll(async () => {
 
 describe("GET /cases/{caseId}", () => {
   beforeEach(async () => {
-    await createWorkflow();
-
-    await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-      appRoles: {
-        ROLE_1: {
-          startDate: "2025-01-01",
-          endDate: "2100-12-31",
-        },
-        ROLE_2: {
-          startDate: "2025-01-01",
-          endDate: "2100-12-31",
-        },
-        ROLE_3: {
-          startDate: "2025-01-01",
-          endDate: "2100-12-31",
-        },
-      },
+    await createAdminUser({
+      idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite, IdpRoles.Read],
     });
+    await createWorkflow();
   });
 
   it("finds a case by id", async () => {
@@ -72,6 +55,7 @@ describe("GET /cases/{caseId}", () => {
         name: "Application Receipt",
         description: "Application received",
         interactive: true,
+        canPerformActions: true,
         taskGroups: [
           {
             code: "APPLICATION_RECEIPT_TASKS",
@@ -105,9 +89,10 @@ describe("GET /cases/{caseId}", () => {
                   helpText:
                     "You must include an explanation for auditing purposes.",
                   label: "Explain this outcome",
-                  mandatory: false,
+                  mandatory: true,
                 },
-                commentRef: null,
+                commentRefs: [],
+                notesHistory: [],
                 updatedAt: null,
                 updatedBy: null,
                 requiredRoles: {
@@ -167,22 +152,26 @@ describe("GET /cases/{caseId}", () => {
         {
           href: `/cases/${caseId}`,
           id: "tasks",
+          index: 0,
           text: "Tasks",
         },
         {
           href: `/cases/${caseId}/case-details`,
           id: "case-details",
+          index: 1,
           text: "Application",
-        },
-        {
-          href: `/cases/${caseId}/notes`,
-          id: "notes",
-          text: "Notes",
         },
         {
           href: `/cases/${caseId}/timeline`,
           id: "timeline",
+          index: 3,
           text: "Timeline",
+        },
+        {
+          href: `/cases/${caseId}/notes`,
+          id: "notes",
+          index: 4,
+          text: "Notes",
         },
       ],
       comments: [],

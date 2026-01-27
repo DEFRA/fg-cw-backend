@@ -25,9 +25,18 @@ describe("createRoleRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "POST",
       url: "/roles",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+          },
+        },
+      },
       payload: {
         code: "ROLE_RPA_CASES_APPROVE",
         description: "Test role description",
+        assignable: true,
       },
     });
 
@@ -35,8 +44,12 @@ describe("createRoleRoute", () => {
     expect(result).toEqual(null);
 
     expect(createRoleUseCase).toHaveBeenCalledWith({
+      user: {
+        id: "user-123",
+      },
       code: "ROLE_RPA_CASES_APPROVE",
       description: "Test role description",
+      assignable: true,
     });
   });
 

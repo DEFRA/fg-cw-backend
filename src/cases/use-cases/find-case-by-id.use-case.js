@@ -1,5 +1,5 @@
 import Boom from "@hapi/boom";
-import { getAuthenticatedUser } from "../../common/auth.js";
+import { AccessControl } from "../../common/access-control.js";
 import {
   buildBanner,
   buildLinks,
@@ -7,6 +7,7 @@ import {
 } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
@@ -72,7 +73,58 @@ export const formatTimelineItemDescription = (tl, workflow) => {
   }
 };
 
-const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
+const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
+
+const findStatusOptionByCode = (statusOptions, code) =>
+  statusOptions.find((opt) => opt.code === code);
+
+const getCommentDate = (comment) => comment?.createdAt ?? null;
+const getCommentText = (comment) => comment?.text ?? null;
+const getCommentCreatedBy = (comment) => comment?.createdBy;
+const getOutcomeName = (statusOption, fallback) =>
+  statusOption?.name ?? fallback;
+
+const mapCommentRefToNoteHistory = (
+  commentRef,
+  comment,
+  statusOption,
+  userMap,
+) => ({
+  date: getCommentDate(comment),
+  outcome: getOutcomeName(statusOption, commentRef.status),
+  note: getCommentText(comment),
+  addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
+});
+
+const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
+  if (!commentRefs?.length) {
+    return [];
+  }
+
+  return commentRefs
+    .map((commentRef) => {
+      const comment = findCommentByRef(comments, commentRef.ref);
+      const statusOption = findStatusOptionByCode(
+        statusOptions,
+        commentRef.status,
+      );
+      return mapCommentRefToNoteHistory(
+        commentRef,
+        comment,
+        statusOption,
+        userMap,
+      );
+    })
+    .filter((entry) => entry.date !== null);
+};
+
+const mapTasks = async (
+  caseTaskGroup,
+  workflowTaskGroup,
+  userMap,
+  root,
+  comments,
+) =>
   Promise.all(
     caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
       const workflowTaskGroupTask = workflowTaskGroup.findTask(
@@ -82,6 +134,13 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
       const selectedStatus = mapSelectedStatusOption(
         caseTaskGroupTask.status,
         workflowTaskGroupTask.statusOptions,
+      );
+
+      const notesHistory = mapNotesHistory(
+        caseTaskGroupTask.commentRefs,
+        comments,
+        workflowTaskGroupTask.statusOptions,
+        userMap,
       );
 
       return {
@@ -95,13 +154,15 @@ const mapTasks = async (caseTaskGroup, workflowTaskGroup, userMap, root) =>
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
         commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
-        commentRef: caseTaskGroupTask.commentRef,
+        commentRefs: caseTaskGroupTask.commentRefs,
+        notesHistory,
         updatedAt: caseTaskGroupTask.updatedAt,
         updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
         requiredRoles: workflowTaskGroupTask.requiredRoles,
-        canComplete: workflowTaskGroupTask.requiredRoles.isAuthorised(
-          root.user.appRoles,
-        ),
+        canComplete: AccessControl.canAccess(root.user, {
+          idpRoles: [],
+          appRoles: workflowTaskGroupTask.requiredRoles,
+        }),
       };
     }),
   );
@@ -160,7 +221,7 @@ export const mapWorkflowCommentDef = (workflowTask) => {
   const DEFAULT_COMMENT = {
     label: "Explain this outcome",
     helpText: "You must include an explanation for auditing purposes.",
-    mandatory: false,
+    mandatory: true,
   };
 
   return workflowTask?.comment
@@ -169,12 +230,14 @@ export const mapWorkflowCommentDef = (workflowTask) => {
 };
 
 export const findCaseByIdUseCase = async (caseId, user, request) => {
+  logger.info(`Finding case by id "${caseId}"`);
+
   const kase = await findById(caseId);
 
-  logger.info(`Finding case by id ${caseId}`);
   if (!kase) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
+
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
   const caseWorkflowContext = createCaseWorkflowContext({
     kase,
@@ -189,7 +252,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
   const caseStage = kase.getStage();
   const assignedUser = userMap.get(kase.assignedUser?.id);
 
-  logger.info(`Finished:Finding case by id ${caseId}`);
+  logger.info(`Finished: Finding case by id "${caseId}"`);
 
   return {
     _id: kase._id,
@@ -226,8 +289,7 @@ const createUserMap = async (userIds, user) => {
   const users = await findAll({ ids });
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  const authenticatedUser = getAuthenticatedUser(user);
-  userMap.set(authenticatedUser.id, authenticatedUser);
+  userMap.set(user.id, user);
 
   return userMap;
 };
@@ -241,6 +303,7 @@ const mapTaskGroups = async (
   workflowStage,
   userMap,
   caseWorkflowContext,
+  comments,
 ) => {
   return await Promise.all(
     caseStage.taskGroups.map(async (caseTaskGroup) => {
@@ -254,10 +317,29 @@ const mapTaskGroups = async (
           workflowTaskGroup,
           userMap,
           caseWorkflowContext,
+          comments,
         ),
       };
     }),
   );
+};
+
+const canPerformStageActions = (user, workflow) => {
+  return AccessControl.canAccess(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: workflow.requiredRoles,
+  });
+};
+
+const mapStageActions = (kase, workflow, canPerformActions) => {
+  if (!canPerformActions) {
+    return [];
+  }
+  return kase.getPermittedActions(workflow).map((a) => ({
+    code: a.code,
+    name: a.name,
+    comment: a.comment,
+  }));
 };
 
 const mapStageData = async (
@@ -269,22 +351,25 @@ const mapStageData = async (
   userMap,
   caseWorkflowContext,
 ) => {
+  const canPerformActions = canPerformStageActions(
+    caseWorkflowContext.user,
+    workflow,
+  );
+
   return {
     code: workflowStage.code,
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    canPerformActions,
     taskGroups: await mapTaskGroups(
       caseStage,
       workflowStage,
       userMap,
       caseWorkflowContext,
+      kase.comments,
     ),
-    actions: kase.getPermittedActions(workflow).map((a) => ({
-      code: a.code,
-      name: a.name,
-      comment: a.comment,
-    })),
+    actions: mapStageActions(kase, workflow, canPerformActions),
     outcome: caseStage.outcome && {
       ...caseStage.outcome,
       comment: kase.findComment(caseStage.outcome?.commentRef)?.text,

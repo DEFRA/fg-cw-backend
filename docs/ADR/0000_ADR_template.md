@@ -97,7 +97,6 @@ Negative:
 ## Alternatives Considered
 
 1. PostgreSQL
-
    - More rigid schema
    - Better for complex transactions
    - Not chosen due to need for schema flexibility

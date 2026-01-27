@@ -143,6 +143,14 @@ export class Case {
     return timelineEvent.comment;
   }
 
+  addExternalActionTimelineEvent({ actionName, createdBy }) {
+    const timelineEvent = TimelineEvent.createExternalActionTriggered({
+      actionName,
+      createdBy,
+    });
+    this.#addTimelineEvent(timelineEvent);
+  }
+
   getSupplementaryDataNode(targetNode, dataType) {
     if (this.supplementaryData[targetNode]) {
       return this.supplementaryData[targetNode];
@@ -447,8 +455,7 @@ export class Case {
                       code: "TASK_1",
                       status: "PENDING",
                       completed: false,
-                      // this should be refactored to use null
-                      commentRef: undefined,
+                      commentRefs: [],
                       updatedAt: undefined,
                       updatedBy: undefined,
                     }),

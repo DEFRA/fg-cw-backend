@@ -1,7 +1,9 @@
 import Boom from "@hapi/boom";
+import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
-import { Permissions } from "../models/permissions.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { Position } from "../models/position.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
 import { WorkflowAction } from "../models/workflow-action.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
@@ -123,7 +125,7 @@ const createWorkflowTask = (task) =>
     name: task.name,
     mandatory: task.mandatory,
     description: task.description,
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: task.requiredRoles?.allOf,
       anyOf: task.requiredRoles?.anyOf,
     }),
@@ -206,7 +208,12 @@ const createWorkflowPhase = (phase, phases) =>
   });
 
 export const createWorkflowUseCase = async (createWorkflowCommand) => {
-  logger.info(`Creating workflow with code '${createWorkflowCommand.code}'`);
+  logger.info(`Creating workflow with code "${createWorkflowCommand.code}"`);
+
+  AccessControl.authorise(createWorkflowCommand.user, {
+    idpRoles: [IdpRoles.Admin],
+    appRoles: { allOf: [], anyOf: [] },
+  });
 
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
@@ -214,7 +221,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
     phases: createWorkflowCommand.phases.map((phase) =>
       createWorkflowPhase(phase, createWorkflowCommand.phases),
     ),
-    requiredRoles: new Permissions({
+    requiredRoles: new RequiredAppRoles({
       allOf: createWorkflowCommand.requiredRoles.allOf,
       anyOf: createWorkflowCommand.requiredRoles.anyOf,
     }),
@@ -225,7 +232,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   await save(workflow);
 
-  logger.info(`Finished: Workflow created with code '${workflow.code}'`);
+  logger.info(`Finished: Creating workflow with code "${workflow.code}"`);
 
   return workflow;
 };

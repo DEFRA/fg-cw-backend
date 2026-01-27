@@ -2,14 +2,20 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
-import { createUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
 describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status", () => {
   let cases;
   let client;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -22,14 +28,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
   });
 
   beforeEach(async () => {
+    user = await createAdminUser();
     await createWorkflow();
 
-    await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("updates task status successfully", async () => {
@@ -72,6 +74,34 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     const comment = updatedCase.comments[0];
 
     expect(comment.text).toEqual("Task reviewed and approved");
+  });
+
+  it("returns 403 when user does not have ReadWrite role", async () => {
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
+
+    const kase = await createCase(cases);
+
+    await expect(
+      completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when user does not have required task roles", async () => {
+    await removeUserAppRoles(user);
+
+    const kase = await createCase(cases);
+
+    await expect(
+      completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 when case does not exist", async () => {

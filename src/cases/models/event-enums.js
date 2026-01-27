@@ -9,6 +9,7 @@ export const EventEnums = {
     STAGE_COMPLETED: "STAGE_COMPLETED",
     CASE_STATUS_CHANGED: "CASE_STATUS_CHANGED",
     NOTE_ADDED: "NOTE_ADDED",
+    EXTERNAL_ACTION_TRIGGERED: "EXTERNAL_ACTION_TRIGGERED",
   },
   eventDescriptions: {
     CASE_CREATED: "Case received",
@@ -20,6 +21,7 @@ export const EventEnums = {
     STAGE_COMPLETED: "Stage completed",
     CASE_STATUS_CHANGED: "Case status changed",
     NOTE_ADDED: "General note added",
+    EXTERNAL_ACTION_TRIGGERED: "External action triggered",
   },
   noteDescriptions: {
     NOTE_ADDED: "General",

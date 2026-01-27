@@ -2,14 +2,20 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { createCase, findCaseById } from "../helpers/cases.js";
-import { createUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
 describe("POST /cases/{caseId}/notes", () => {
   let cases;
   let client;
+  let user;
 
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
@@ -22,14 +28,10 @@ describe("POST /cases/{caseId}/notes", () => {
   });
 
   beforeEach(async () => {
+    user = await createAdminUser();
     await createWorkflow();
 
-    await createUser({
-      idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
-      name: "Test Admin",
-      email: "admin@t.gov.uk",
-      idpRoles: ["FCP.Casework.Admin"],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("adds a note to a case successfully", async () => {
@@ -89,6 +91,30 @@ describe("POST /cases/{caseId}/notes", () => {
     expect(notes).toHaveLength(2);
     expect(notes.map((n) => n.text)).toContain("First note");
     expect(notes.map((n) => n.text)).toContain("Second note");
+  });
+
+  it("returns 403 when user does not have ReadWrite idp role", async () => {
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/notes`, {
+        payload: { text: "This note should fail" },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+
+  it("returns 403 when user does not have required workflow app roles", async () => {
+    await removeUserAppRoles(user);
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/notes`, {
+        payload: { text: "This note should fail" },
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
   it("returns 404 when case does not exist", async () => {

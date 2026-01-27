@@ -1,6 +1,8 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createRole } from "../helpers/roles.js";
+import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -16,11 +18,12 @@ afterAll(async () => {
 
 describe("GET /roles/{code}", () => {
   it("returns a role by code", async () => {
-    await wreck.post("/roles", {
-      payload: {
-        code: "ROLE_RPA_CASES_APPROVE",
-        description: "Approve case applications",
-      },
+    await createAdminUser();
+
+    await createRole({
+      code: "ROLE_RPA_CASES_APPROVE",
+      description: "Approve case applications",
+      assignable: true,
     });
 
     const findRoleResponse = await wreck.get("/roles/ROLE_RPA_CASES_APPROVE");
@@ -33,6 +36,7 @@ describe("GET /roles/{code}", () => {
         id: expect.any(String),
         code: "ROLE_RPA_CASES_APPROVE",
         description: "Approve case applications",
+        assignable: true,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       },

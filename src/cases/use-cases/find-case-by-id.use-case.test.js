@@ -1,11 +1,13 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
+import { AppRole } from "../../users/models/app-role.js";
+import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
-import { Permissions } from "../models/permissions.js";
+import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
@@ -265,16 +267,14 @@ describe("mapDescription", () => {
 
 describe("findCaseByIdUseCase", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
     email: "test.user@example.com",
-    idpRoles: ["user"],
-    appRoles: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   it("finds case by id", async () => {
     const mockUser = User.createMock();
@@ -328,22 +328,26 @@ describe("findCaseByIdUseCase", () => {
         {
           href: `/cases/${kase._id}`,
           id: "tasks",
+          index: 0,
           text: "Tasks",
         },
         {
           href: `/cases/${kase._id}/case-details`,
           id: "case-details",
+          index: 1,
           text: "Application",
-        },
-        {
-          href: `/cases/${kase._id}/notes`,
-          id: "notes",
-          text: "Notes",
         },
         {
           href: `/cases/${kase._id}/timeline`,
           id: "timeline",
+          index: 3,
           text: "Timeline",
+        },
+        {
+          href: `/cases/${kase._id}/notes`,
+          id: "notes",
+          index: 4,
+          text: "Notes",
         },
       ],
       stage: {
@@ -351,6 +355,7 @@ describe("findCaseByIdUseCase", () => {
         description: "Stage 1 description",
         name: "Stage 1",
         interactive: true,
+        canPerformActions: true,
         outcome: undefined,
         actions: [],
         taskGroups: [
@@ -364,15 +369,16 @@ describe("findCaseByIdUseCase", () => {
                 name: "Task 1",
                 mandatory: true,
                 status: "PENDING",
-                completed: false,
                 updatedAt: undefined,
                 updatedBy: null,
-                commentRef: undefined,
+                commentRefs: [],
+                notesHistory: [],
+                completed: false,
                 commentInputDef: {
                   helpText:
                     "You must include an explanation for auditing purposes.",
                   label: "Explain this outcome",
-                  mandatory: false,
+                  mandatory: true,
                 },
                 description: [
                   {
@@ -381,11 +387,11 @@ describe("findCaseByIdUseCase", () => {
                     text: "Task 1 description",
                   },
                 ],
-                requiredRoles: {
+                requiredRoles: new RequiredAppRoles({
                   allOf: ["ROLE_1"],
                   anyOf: ["ROLE_2"],
-                },
-                canComplete: false,
+                }),
+                canComplete: true,
                 statusOptions: [
                   {
                     code: "STATUS_OPTION_1",
@@ -428,7 +434,7 @@ describe("findCaseByIdUseCase", () => {
 
     // Set task requiredRoles to have empty arrays (simulating null in database)
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: [],
         anyOf: [],
       });
@@ -453,7 +459,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: ["ROLE_RPA_ADMIN"],
         anyOf: [],
       });
@@ -473,15 +479,25 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    const authenticatedUserWithRoles = {
-      ...mockAuthUser,
+    const authenticatedUserWithRoles = User.createMock({
+      id: mockAuthUser.id,
+      idpId: mockAuthUser.idpId,
+      name: mockAuthUser.name,
+      email: mockAuthUser.email,
+      idpRoles: mockAuthUser.idpRoles,
       appRoles: {
-        ROLE_RPA_ADMIN: true,
+        ROLE_RPA_ADMIN: new AppRole({
+          name: "ROLE_RPA_ADMIN",
+          startDate: "1960-01-01",
+          endDate: "2100-01-01",
+        }),
       },
-    };
+      createdAt: mockAuthUser.createdAt,
+      updatedAt: mockAuthUser.updatedAt,
+    });
 
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
-      new Permissions({
+      new RequiredAppRoles({
         allOf: ["ROLE_RPA_ADMIN"],
         anyOf: [],
       });
@@ -513,6 +529,67 @@ describe("findCaseByIdUseCase", () => {
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
 
+    expect(result.stage.canPerformActions).toBe(true);
+    expect(result.stage.actions).toEqual([
+      {
+        code: "ACTION_1",
+        name: "Action 1",
+        comment: {
+          helpText: "Action help text",
+          label: "Action label 1",
+          mandatory: true,
+        },
+      },
+    ]);
+  });
+
+  it("returns empty actions when user lacks ReadWrite IDP role", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    // Complete tasks to ensure actions would normally be available
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    // User with only Read role (not ReadWrite)
+    const readOnlyUser = User.createMock({
+      id: new ObjectId().toHexString(),
+      idpRoles: [IdpRoles.Read],
+    });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", readOnlyUser);
+
+    expect(result.stage.canPerformActions).toBe(false);
+    expect(result.stage.actions).toEqual([]);
+  });
+
+  it("returns actions when user has ReadWrite IDP role", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    // Complete tasks to ensure actions are available
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+
+    // User with ReadWrite role
+    const readWriteUser = User.createMock({
+      id: new ObjectId().toHexString(),
+      idpRoles: [IdpRoles.ReadWrite],
+    });
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", readWriteUser);
+
+    expect(result.stage.canPerformActions).toBe(true);
     expect(result.stage.actions).toEqual([
       {
         code: "ACTION_1",
@@ -916,6 +993,113 @@ describe("findCaseByIdUseCase", () => {
       expect(task.completed).toBe(false);
     });
   });
+
+  describe("notesHistory", () => {
+    it("maps commentRefs to notesHistory with resolved comments", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "STATUS_OPTION_1", ref: commentRef },
+      ];
+
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "This is a test note",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0]).toEqual({
+        date: "2025-09-25T14:30:00.000Z",
+        outcome: "Status option 1",
+        note: "This is a test note",
+        addedBy: mockUser.name,
+      });
+    });
+
+    it("skips orphaned commentRef where comment is not found", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "STATUS_OPTION_1", ref: "nonexistent-ref" },
+      ];
+      mockCase.comments = [];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toEqual([]);
+    });
+
+    it("falls back to status code when statusOption is not found", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
+        { status: "UNKNOWN_STATUS", ref: commentRef },
+      ];
+
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "Note with unknown status",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS");
+    });
+
+    it("returns empty notesHistory when commentRefs is undefined", async () => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs =
+        undefined;
+
+      findAll.mockResolvedValue([mockUser]);
+      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      findById.mockResolvedValue(mockCase);
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toEqual([]);
+    });
+  });
 });
 
 describe("mapSelectedStatusOption", () => {
@@ -1132,7 +1316,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1162,7 +1346,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1172,7 +1356,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1190,7 +1374,7 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Custom Label",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 
@@ -1226,21 +1410,21 @@ describe("mapWorkflowCommentDef", () => {
     expect(result).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
-      mandatory: false,
+      mandatory: true,
     });
   });
 });
 
 describe("beforeContent", () => {
   const authenticatedUserId = new ObjectId().toHexString();
-  const mockAuthUser = {
+  const mockAuthUser = User.createMock({
     id: authenticatedUserId,
     idpId: new ObjectId().toHexString(),
     name: "Test User",
     email: "test.user@example.com",
     idpRoles: ["user"],
     appRoles: {},
-  };
+  });
 
   it("returns empty array when stage has no beforeContent", async () => {
     const mockUser = User.createMock();
