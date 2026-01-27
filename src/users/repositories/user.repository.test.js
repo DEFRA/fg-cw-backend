@@ -186,7 +186,8 @@ describe("findAll", () => {
     const result = await findAll({ idpId });
 
     expect(db.collection).toHaveBeenCalledWith("users");
-    expect(find).toHaveBeenCalledWith({ ...expectedNameFilter, idpId });
+    // HOTFIX: name filter is removed when querying by idpId to avoid 409 error on login
+    expect(find).toHaveBeenCalledWith({ idpId });
 
     expect(result).toEqual([
       User.createMock({
