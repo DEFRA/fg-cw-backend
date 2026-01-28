@@ -9,5 +9,7 @@ export const findRolesUseCase = async ({ user }) => {
     appRoles: RequiredAppRoles.None,
   });
 
-  return await findAll();
+  const roles = await findAll();
+
+  return roles.sort((a, b) => a.code.localeCompare(b.code));
 };

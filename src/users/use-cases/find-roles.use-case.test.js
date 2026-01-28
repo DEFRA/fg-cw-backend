@@ -32,4 +32,22 @@ describe("findRolesUseCase", () => {
     expect(result).toEqual(roles);
     expect(findAll).toHaveBeenCalled();
   });
+
+  it("returns roles sorted by code", async () => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin"],
+    });
+
+    const unsortedRoles = [
+      Role.createMock({ code: "Z-Role" }),
+      Role.createMock({ code: "A-Role" }),
+      Role.createMock({ code: "M-Role" }),
+    ];
+    findAll.mockResolvedValue(unsortedRoles);
+
+    const result = await findRolesUseCase({ user });
+
+    expect(result.map((r) => r.code)).toEqual(["A-Role", "M-Role", "Z-Role"]);
+    expect(findAll).toHaveBeenCalled();
+  });
 });
