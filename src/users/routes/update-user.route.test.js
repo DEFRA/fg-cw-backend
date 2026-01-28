@@ -34,6 +34,7 @@ describe("updateUserRoute", () => {
         credentials: {
           user: {
             id: user.id,
+            idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
           },
         },
       },
@@ -51,11 +52,18 @@ describe("updateUserRoute", () => {
 
     expect(statusCode).toEqual(200);
 
-    expect(result).toEqual(user);
+    expect(result.data).toEqual(user);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
 
     expect(updateUserUseCase).toHaveBeenCalledWith({
       authenticatedUser: {
         id: user.id,
+        idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
       },
       userId: user.id,
       props: {

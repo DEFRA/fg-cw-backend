@@ -4,7 +4,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { Role } from "../models/role.js";
 import { User } from "../models/user.js";
-import { findRolesResponseSchema } from "../schemas/responses/find-roles-response.schema.js";
 import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
 import { findRolesRoute } from "./find-roles.route.js";
 
@@ -43,7 +42,7 @@ describe("findRolesRoute", () => {
   it("returns all roles when user is admin", async () => {
     const roles = [Role.createMock(), Role.createMock()];
     const admin = User.createMock({
-      idpRoles: ["FCP.Casework.Admin"],
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
 
     findRolesUseCase.mockResolvedValue(roles);
@@ -60,15 +59,15 @@ describe("findRolesRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(roles);
+    expect(result.data).toEqual(roles);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
     expect(findRolesUseCase).toHaveBeenCalledWith({
       user: admin,
     });
-  });
-
-  it("validates response using findRolesResponseSchema", () => {
-    expect(findRolesRoute.options.response.schema).toBe(
-      findRolesResponseSchema,
-    );
   });
 });

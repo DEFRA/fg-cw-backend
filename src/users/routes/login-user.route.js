@@ -1,5 +1,4 @@
 import { loginUserRequestSchema } from "../schemas/requests/login-user-request.schema.js";
-import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
 import { loginUserUseCase } from "../use-cases/login-user.use-case.js";
 
 export const loginUserRoute = {
@@ -10,9 +9,6 @@ export const loginUserRoute = {
     tags: ["api"],
     validate: {
       payload: loginUserRequestSchema,
-    },
-    response: {
-      schema: findUserResponseSchema,
     },
   },
   async handler(request, h) {

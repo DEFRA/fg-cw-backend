@@ -53,24 +53,32 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
         statusCode: 200,
       }),
       payload: {
-        id: userId,
-        idpId: "00000000-0000-0000-0000-000000000001",
-        name: "Updated Name",
-        email: "new.email@example.com",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_1: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
+        data: {
+          id: userId,
+          idpId: "00000000-0000-0000-0000-000000000001",
+          name: "Updated Name",
+          email: "new.email@example.com",
+          idpRoles: ["FCP.Casework.Admin"],
+          appRoles: {
+            ROLE_RPA_1: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
+            ROLE_RPA_2: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
           },
-          ROLE_RPA_2: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+          lastLoginAt: expect.any(String),
         },
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
-        lastLoginAt: expect.any(String),
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
       },
     });
 
@@ -81,24 +89,32 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
         statusCode: 200,
       }),
       payload: {
-        id: userId,
-        idpId: "00000000-0000-0000-0000-000000000001",
-        name: "Updated Name",
-        email: "new.email@example.com",
-        idpRoles: ["FCP.Casework.Admin"],
-        appRoles: {
-          ROLE_RPA_1: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
+        data: {
+          id: userId,
+          idpId: "00000000-0000-0000-0000-000000000001",
+          name: "Updated Name",
+          email: "new.email@example.com",
+          idpRoles: ["FCP.Casework.Admin"],
+          appRoles: {
+            ROLE_RPA_1: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
+            ROLE_RPA_2: {
+              startDate: "2025-07-01",
+              endDate: "2025-08-02",
+            },
           },
-          ROLE_RPA_2: {
-            startDate: "2025-07-01",
-            endDate: "2025-08-02",
-          },
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+          lastLoginAt: expect.any(String),
         },
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
-        lastLoginAt: expect.any(String),
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
       },
     });
   });

@@ -1,7 +1,7 @@
 import Joi from "joi";
+import { createPageResponse } from "../../common/create-page-response.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { updateUserRequestSchema } from "../schemas/requests/update-user-request.schema.js";
-import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
 import { updateUserUseCase } from "../use-cases/update-user.use-case.js";
 
 export const updateUserRoute = {
@@ -16,17 +16,16 @@ export const updateUserRoute = {
       }),
       payload: updateUserRequestSchema,
     },
-    response: {
-      schema: findUserResponseSchema,
-    },
   },
   async handler(request) {
     const { user: authenticatedUser } = request.auth.credentials;
 
-    return await updateUserUseCase({
+    const data = await updateUserUseCase({
       authenticatedUser,
       userId: request.params.userId,
       props: request.payload,
     });
+
+    return createPageResponse({ user: authenticatedUser, data });
   },
 };
