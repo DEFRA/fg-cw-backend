@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createRole } from "../helpers/roles.js";
 import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
@@ -17,9 +17,11 @@ afterAll(async () => {
 });
 
 describe("GET /roles", () => {
-  it("returns all roles", async () => {
+  beforeEach(async () => {
     await createAdminUser();
+  });
 
+  it("returns all roles", async () => {
     await createRole({
       code: "TEST_ROLE_1",
       description: "Test role one",
