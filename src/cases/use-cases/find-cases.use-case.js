@@ -1,4 +1,5 @@
 import { logger } from "../../common/logger.js";
+import { PageViewModel } from "../../common/view-models/page.view-model.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findAll } from "../repositories/case.repository.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
@@ -94,5 +95,8 @@ export const findCasesUseCase = async (user) => {
 
   logger.info(`Finished: Finding cases for User ${user.id}`);
 
-  return casesUserCanAccess;
+  return new PageViewModel({
+    user,
+    data: casesUserCanAccess,
+  });
 };

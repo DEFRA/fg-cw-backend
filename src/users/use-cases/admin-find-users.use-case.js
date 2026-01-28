@@ -1,5 +1,6 @@
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
+import { PageViewModel } from "../../common/view-models/page.view-model.js";
 import { IdpRoles } from "../models/idp-roles.js";
 import { findAll } from "../repositories/user.repository.js";
 
@@ -9,5 +10,10 @@ export const adminFindUsersUseCase = async ({ user, query = {} }) => {
     appRoles: RequiredAppRoles.None,
   });
 
-  return findAll(query);
+  const users = await findAll(query);
+
+  return new PageViewModel({
+    user,
+    data: users,
+  });
 };

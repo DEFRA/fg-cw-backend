@@ -1,6 +1,5 @@
 import Joi from "joi";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
-import { findRoleResponseSchema } from "../schemas/responses/find-role-response.schema.js";
 import { findRoleByCodeUseCase } from "../use-cases/find-role-by-code.use-case.js";
 
 export const findRoleByCodeRoute = {
@@ -13,9 +12,6 @@ export const findRoleByCodeRoute = {
       params: Joi.object({
         code: codeSchema,
       }),
-    },
-    response: {
-      schema: findRoleResponseSchema,
     },
   },
   async handler(request) {

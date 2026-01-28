@@ -1,5 +1,3 @@
-import Joi from "joi";
-
 import { adminAccessCheckUseCase } from "../use-cases/admin-access-check.use-case.js";
 
 export const adminAccessCheckRoute = {
@@ -8,11 +6,6 @@ export const adminAccessCheckRoute = {
   options: {
     description: "Check if user has admin access",
     tags: ["api"],
-    response: {
-      schema: Joi.object({
-        ok: Joi.boolean().required(),
-      }),
-    },
   },
   async handler(request) {
     return adminAccessCheckUseCase({

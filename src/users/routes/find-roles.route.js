@@ -1,4 +1,3 @@
-import { findRolesResponseSchema } from "../schemas/responses/find-roles-response.schema.js";
 import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
 
 export const findRolesRoute = {
@@ -7,9 +6,6 @@ export const findRolesRoute = {
   options: {
     description: "Find roles",
     tags: ["api"],
-    response: {
-      schema: findRolesResponseSchema,
-    },
   },
   async handler() {
     return await findRolesUseCase();

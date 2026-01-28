@@ -1,5 +1,6 @@
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
+import { PageViewModel } from "../../common/view-models/page.view-model.js";
 import { IdpRoles } from "../models/idp-roles.js";
 
 export const adminAccessCheckUseCase = ({ user }) => {
@@ -8,5 +9,7 @@ export const adminAccessCheckUseCase = ({ user }) => {
     appRoles: RequiredAppRoles.None,
   });
 
-  return { ok: true };
+  return new PageViewModel({
+    user,
+  });
 };

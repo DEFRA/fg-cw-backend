@@ -9,6 +9,7 @@ import {
 } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
+import { PageViewModel } from "../../common/view-models/page.view-model.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { buildBeforeContent } from "./build-before-content.js";
@@ -57,15 +58,18 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     `Finished: Building case details tab for case ${request.params.caseId} and tab ${request.params.tabId}`,
   );
 
-  return {
-    caseId,
-    caseRef: kase.caseRef,
-    tabId,
-    banner,
-    links,
-    content,
-    beforeContent,
-  };
+  return new PageViewModel({
+    user,
+    data: {
+      caseId,
+      caseRef: kase.caseRef,
+      tabId,
+      banner,
+      links,
+      content,
+      beforeContent,
+    },
+  });
 };
 
 export const createRootContext = async ({

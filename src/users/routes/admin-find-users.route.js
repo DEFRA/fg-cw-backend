@@ -2,7 +2,6 @@ import Joi from "joi";
 
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
-import { findUsersResponseSchema } from "../schemas/responses/find-users-response.schema.js";
 import { idpIdSchema } from "../schemas/user/idp-id.schema.js";
 import { adminFindUsersUseCase } from "../use-cases/admin-find-users.use-case.js";
 
@@ -19,9 +18,6 @@ export const adminFindUsersRoute = {
         allAppRoles: Joi.array().items(codeSchema).single().default([]),
         anyAppRoles: Joi.array().items(codeSchema).single().default([]),
       }),
-    },
-    response: {
-      schema: findUsersResponseSchema,
     },
   },
   async handler(request) {

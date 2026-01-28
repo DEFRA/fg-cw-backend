@@ -7,6 +7,7 @@ import {
 } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
+import { PageViewModel } from "../../common/view-models/page.view-model.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
@@ -254,34 +255,40 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
 
   logger.info(`Finished: Finding case by id "${caseId}"`);
 
-  return {
-    _id: kase._id,
-    caseRef: kase.caseRef,
-    workflowCode: kase.workflowCode,
-    currentStatus: kase.position.statusCode,
-    stage: await mapStageData(
-      kase,
-      workflow,
-      workflowStage,
-      currentStatus,
-      caseStage,
-      userMap,
-      caseWorkflowContext,
-    ),
-    dateReceived: kase.dateReceived,
-    payload: kase.payload,
-    supplementaryData: kase.supplementaryData,
-    assignedUser: assignedUser ? { name: assignedUser.name } : null,
-    banner: await buildBanner(caseWorkflowContext),
-    requiredRoles: {
-      allOf: workflow.requiredRoles.allOf,
-      anyOf: workflow.requiredRoles.anyOf,
+  return new PageViewModel({
+    user,
+    data: {
+      _id: kase._id,
+      caseRef: kase.caseRef,
+      workflowCode: kase.workflowCode,
+      currentStatus: kase.position.statusCode,
+      stage: await mapStageData(
+        kase,
+        workflow,
+        workflowStage,
+        currentStatus,
+        caseStage,
+        userMap,
+        caseWorkflowContext,
+      ),
+      dateReceived: kase.dateReceived,
+      payload: kase.payload,
+      supplementaryData: kase.supplementaryData,
+      assignedUser: assignedUser ? { name: assignedUser.name } : null,
+      banner: await buildBanner(caseWorkflowContext),
+      requiredRoles: {
+        allOf: workflow.requiredRoles.allOf,
+        anyOf: workflow.requiredRoles.anyOf,
+      },
+      links: await buildLinks(caseWorkflowContext),
+      comments: mapCommentsWithUsers(kase.comments, userMap),
+      timeline: mapTimelineWithUsers(kase.timeline, workflow, userMap),
+      beforeContent: await buildBeforeContent(
+        workflowStage,
+        caseWorkflowContext,
+      ),
     },
-    links: await buildLinks(caseWorkflowContext),
-    comments: mapCommentsWithUsers(kase.comments, userMap),
-    timeline: mapTimelineWithUsers(kase.timeline, workflow, userMap),
-    beforeContent: await buildBeforeContent(workflowStage, caseWorkflowContext),
-  };
+  });
 };
 
 const createUserMap = async (userIds, user) => {
