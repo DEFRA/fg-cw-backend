@@ -50,3 +50,5 @@ jobs:
         uses: DEFRA/cdp-build-action/build-hotfix@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CUSTOM_TAG: 1.57.3
