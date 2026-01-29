@@ -5,13 +5,15 @@ export const findRolesRoute = {
   method: "GET",
   path: "/roles",
   options: {
-    description: "Find roles",
+    description: "Find roles (admin only)",
     tags: ["api"],
     response: {
       schema: findRolesResponseSchema,
     },
   },
-  async handler() {
-    return await findRolesUseCase();
+  async handler(request) {
+    return await findRolesUseCase({
+      user: request.auth.credentials.user,
+    });
   },
 };
