@@ -91,6 +91,7 @@ const createFilter = (query) => {
 
   if (query.idpId) {
     filter.idpId = query.idpId;
+    delete filter.name; // HOTFIX: the 'placeholder' filter is causing 409 error on login
   }
 
   if (query.allAppRoles?.length) {
