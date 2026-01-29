@@ -186,7 +186,9 @@ describe("findAll", () => {
     const result = await findAll({ idpId });
 
     expect(db.collection).toHaveBeenCalledWith("users");
-    expect(find).toHaveBeenCalledWith({ ...expectedNameFilter, idpId });
+
+    // HOTFIX removes the name filter
+    expect(find).toHaveBeenCalledWith({ idpId });
 
     expect(result).toEqual([
       User.createMock({
