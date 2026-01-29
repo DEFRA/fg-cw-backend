@@ -25,32 +25,20 @@ describe("users", () => {
     expect(routes).toEqual(
       expect.arrayContaining([
         {
-          method: "post",
-          path: "/roles",
-        },
-        {
-          method: "post",
-          path: "/users",
-        },
-        {
           method: "patch",
-          path: "/users/{userId}",
+          path: "/admin/users/{userId}",
         },
         {
-          method: "get",
+          method: "post",
           path: "/roles",
         },
         {
           method: "get",
-          path: "/users",
+          path: "/roles",
         },
         {
           method: "get",
           path: "/roles/{code}",
-        },
-        {
-          method: "get",
-          path: "/users/{userId}",
         },
       ]),
     );

@@ -1,0 +1,86 @@
+###
+
+@host = http://localhost:3001
+
+
+### Generate token
+
+# @name generateToken
+
+POST http://localhost:3010/sign HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "clientId": "client1",
+  "username": "admin@t.gov.uk"
+}
+
+
+### Create User in CW
+
+# @name createRwUser
+
+POST {{host}}/users HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{generateToken.response.body.access_token}}
+
+{
+  "appRoles": {},
+  "email": "readerwriter@t.gov.uk",
+  "idpId": "df20f4bd-d009-4bf4-b499-46e93e0f005a",
+  "idpRoles": [
+    "FCP.Casework.ReadWrite"
+  ],
+  "name": "Test ReaderWriter"
+}
+
+
+### Create pigs-might-fly workflow
+
+# @name createPmfWorkflow
+
+POST {{host}}/workflows HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{generateToken.response.body.access_token}}
+
+< ./test/fixtures/pmf-workflow-definition.json
+
+
+### Get workflow by code
+
+# @name getWorkflowByCode
+
+GET {{host}}/workflows/pigs-might-fly HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{generateToken.response.body.access_token}}
+
+
+### Assign pigs-might-fly roles to R/W user
+
+# @name assignPmfRoles
+
+PATCH {{host}}/admin/users/690b7c3695aa9f0ba1f2f5bc HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{generateToken.response.body.access_token}}
+
+{
+  "appRoles": {
+    "ROLE_PMF_CASEWORKER": {
+      "endDate": "2100-01-01",
+      "startDate": "2000-01-01"
+    }
+  }
+}
+
+
+### Get cases
+
+# @name getCases
+
+GET {{host}}/cases HTTP/1.1
+Accept: application/json
+Authorization: Bearer {{generateToken.response.body.access_token}}

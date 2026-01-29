@@ -28,7 +28,7 @@ describe("updateUserRoute", () => {
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/users/${user.id}`,
+      url: `/admin/users/${user.id}`,
       auth: {
         strategy: "entra",
         credentials: {
@@ -77,7 +77,7 @@ describe("updateUserRoute", () => {
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/users/${userId}`,
+      url: `/admin/users/${userId}`,
       payload: {
         idpRoles: [1],
       },

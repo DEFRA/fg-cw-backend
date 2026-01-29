@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { caseData1, caseData2 } from "../fixtures/case.js";
 import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
@@ -21,7 +22,9 @@ afterAll(async () => {
 
 describe("GET /cases/{caseId}", () => {
   beforeEach(async () => {
-    await createAdminUser();
+    await createAdminUser({
+      idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite, IdpRoles.Read],
+    });
     await createWorkflow();
   });
 
@@ -52,6 +55,7 @@ describe("GET /cases/{caseId}", () => {
         name: "Application Receipt",
         description: "Application received",
         interactive: true,
+        canPerformActions: true,
         taskGroups: [
           {
             code: "APPLICATION_RECEIPT_TASKS",

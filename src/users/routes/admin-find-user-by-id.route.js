@@ -1,13 +1,14 @@
 import Joi from "joi";
+
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { findUserResponseSchema } from "../schemas/responses/find-user-response.schema.js";
-import { findUserByIdUseCase } from "../use-cases/find-user-by-id.use-case.js";
+import { adminFindUserByIdUseCase } from "../use-cases/admin-find-user-by-id.use-case.js";
 
-export const findUserByIdRoute = {
+export const adminFindUserByIdRoute = {
   method: "GET",
-  path: "/users/{userId}",
+  path: "/admin/users/{userId}",
   options: {
-    description: "Find a user by id",
+    description: "Find a user by id (admin only)",
     tags: ["api"],
     validate: {
       params: Joi.object({
@@ -20,6 +21,10 @@ export const findUserByIdRoute = {
   },
   async handler(request) {
     const { userId } = request.params;
-    return await findUserByIdUseCase(userId);
+
+    return await adminFindUserByIdUseCase({
+      user: request.auth.credentials.user,
+      userId,
+    });
   },
 };

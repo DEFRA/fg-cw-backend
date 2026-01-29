@@ -8,7 +8,12 @@ import {
   createCase,
   findCaseById,
 } from "../helpers/cases.js";
-import { createAdminUser, createUser, updateUser } from "../helpers/users.js";
+import {
+  changeUserIdpRoles,
+  createAdminUser,
+  createUser,
+  removeUserAppRoles,
+} from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 
 describe("PATCH /cases/{caseId}/assigned-user", () => {
@@ -31,18 +36,18 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     user = await createAdminUser();
     await createWorkflow();
 
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.ReadWrite],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.ReadWrite]);
   });
 
   it("assigns a user to a case", async () => {
-    const createUserResponse = await createUser();
+    const createdUser = await createAdminUser();
+    await changeUserIdpRoles(createdUser, [IdpRoles.ReadWrite]);
+
     const kase = await createCase(cases);
 
     const assignUserToCaseResponse = await assignUserToCase(
       kase._id,
-      createUserResponse.payload.id,
+      createdUser.id,
     );
 
     expect(assignUserToCaseResponse).toEqual({
@@ -55,61 +60,57 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
     const findCaseByIdResponse = await findCaseById(kase._id);
 
     expect(findCaseByIdResponse.assignedUser).toEqual({
-      id: createUserResponse.payload.id,
+      id: createdUser.id,
     });
   });
 
   it("returns 403 when actor does not have ReadWrite role", async () => {
-    await updateUser(user.payload.id, {
-      idpRoles: [IdpRoles.Read],
-    });
+    await changeUserIdpRoles(user, [IdpRoles.Read]);
 
-    const createUserResponse = await createUser();
+    const createdUser = await createUser();
     const kase = await createCase(cases);
 
-    await expect(
-      assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Response Error: 403 Forbidden");
+    await expect(assignUserToCase(kase._id, createdUser.id)).rejects.toThrow(
+      "Response Error: 403 Forbidden",
+    );
   });
 
-  it("returns 403 when actor does not have required workflow roles", async () => {
-    await updateUser(user.payload.id, {
-      appRoles: {},
-    });
+  it("returns 403 when user does not have required workflow roles", async () => {
+    await removeUserAppRoles(user);
 
-    const createUserResponse = await createUser();
+    const createdUser = await createUser();
     const kase = await createCase(cases);
 
-    await expect(
-      assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Response Error: 403 Forbidden");
+    await expect(assignUserToCase(kase._id, createdUser.id)).rejects.toThrow(
+      "Response Error: 403 Forbidden",
+    );
   });
 
   it("returns 404 not found when case does not exist", async () => {
-    const createUserResponse = await createUser();
+    const createdUser = await createUser();
     const caseIdDoesNotExist = "507f1f77bcf86cd799439011";
 
     await expect(
-      assignUserToCase(caseIdDoesNotExist, createUserResponse.payload.id),
+      assignUserToCase(caseIdDoesNotExist, createdUser.id),
     ).rejects.toThrow("Response Error: 404 Not Found");
   });
 
   it("returns 400 bad request for invalid case id", async () => {
-    const createUserResponse = await createUser();
+    const createdUser = await createUser();
     const invalidCaseId = "invalid-case-id";
 
     await expect(
-      assignUserToCase(invalidCaseId, createUserResponse.payload.id),
+      assignUserToCase(invalidCaseId, createdUser.id),
     ).rejects.toThrow("Bad Request");
   });
 
   it("returns 400 bad request for empty case id", async () => {
-    const createUserResponse = await createUser();
+    const createdUser = await createUser();
     const emptyCaseId = "";
 
-    await expect(
-      assignUserToCase(emptyCaseId, createUserResponse.payload.id),
-    ).rejects.toThrow("Not Found");
+    await expect(assignUserToCase(emptyCaseId, createdUser.id)).rejects.toThrow(
+      "Not Found",
+    );
   });
 
   it("returns 404 not found when user does not exist", async () => {
@@ -132,7 +133,7 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
 
   it("returns 401 unauthorised for user missing required allOf roles", async () => {
     const kase = await createCase(cases);
-    const createUserResponse = await createUser({
+    const createdUser = await createUser({
       appRoles: {
         ROLE_1: {
           startDate: "2025-07-01",
@@ -141,14 +142,14 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
       },
     });
 
-    await expect(
-      assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Response Error: 401 Unauthorized");
+    await expect(assignUserToCase(kase._id, createdUser.id)).rejects.toThrow(
+      "Response Error: 401 Unauthorized",
+    );
   });
 
   it("returns 401 unauthorised for user missing required anyOf roles", async () => {
     const kase = await createCase(cases);
-    const createUserResponse = await createUser({
+    const createdUser = await createUser({
       appRoles: {
         ROLE_1: {
           startDate: "2025-07-01",
@@ -161,24 +162,24 @@ describe("PATCH /cases/{caseId}/assigned-user", () => {
       }, // Missing ROLE_3 from anyOf
     });
 
-    await expect(
-      assignUserToCase(kase._id, createUserResponse.payload.id),
-    ).rejects.toThrow("Response Error: 401 Unauthorized");
+    await expect(assignUserToCase(kase._id, createdUser.id)).rejects.toThrow(
+      "Response Error: 401 Unauthorized",
+    );
   });
 
   it("unassigns a user when assignedUserId is set to null", async () => {
-    const createUserResponse = await createUser();
+    const createdUser = await createAdminUser();
+    await changeUserIdpRoles(createdUser, [IdpRoles.ReadWrite]);
+
     const kase = await createCase(cases);
 
     // First assign a user to the case
-    await assignUserToCase(kase._id, createUserResponse.payload.id);
+    await assignUserToCase(kase._id, createdUser.id);
 
     // Verify user is assigned
     const findCaseAfterAssignResponse = await findCaseById(kase._id);
 
-    expect(findCaseAfterAssignResponse.assignedUser.id).toEqual(
-      createUserResponse.payload.id,
-    );
+    expect(findCaseAfterAssignResponse.assignedUser.id).toEqual(createdUser.id);
 
     // Now unassign the user by setting assignedUserId to null
     const { res } = await assignUserToCase(kase._id, null);

@@ -26,6 +26,7 @@ const toUser = (doc) => {
     appRoles,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
+    lastLoginAt: doc.lastLoginAt?.toISOString(),
   });
 };
 
@@ -120,4 +121,37 @@ export const findById = async (userId) => {
   });
 
   return userDocument && toUser(userDocument);
+};
+
+export const upsertLogin = async (user) => {
+  const userDocument = new UserDocument(user);
+
+  const result = await db.collection(collection).findOneAndUpdate(
+    { idpId: userDocument.idpId },
+    {
+      $set: {
+        // Fields to update on both create and update
+        idpRoles: userDocument.idpRoles,
+        name: userDocument.name,
+        email: userDocument.email,
+        updatedAt: userDocument.updatedAt,
+        lastLoginAt: userDocument.lastLoginAt,
+      },
+      $setOnInsert: {
+        // Fields to set only on creation
+        createdAt: userDocument.createdAt,
+        appRoles: userDocument.appRoles,
+      },
+    },
+    {
+      upsert: true,
+      returnDocument: "after",
+    },
+  );
+
+  if (!result) {
+    throw Boom.internal("User could not be created or updated");
+  }
+
+  return toUser(result);
 };
