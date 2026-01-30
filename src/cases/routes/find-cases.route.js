@@ -1,3 +1,4 @@
+import { createPageResponse } from "../../common/create-page-response.js";
 import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
 
 export const findCasesRoute = {
@@ -9,6 +10,7 @@ export const findCasesRoute = {
   },
   async handler(request) {
     const { user } = request.auth.credentials;
-    return await findCasesUseCase(user);
+    const data = await findCasesUseCase(user);
+    return createPageResponse({ user, data });
   },
 };

@@ -45,7 +45,13 @@ describe("GET /cases/{caseId}", () => {
     const response = await wreck.get(`/cases/${caseId}`);
 
     expect(response.res.statusCode).toBe(200);
-    expect(response.payload).toEqual({
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data).toEqual({
       _id: caseId,
       caseRef: caseData2.caseRef,
       workflowCode: caseData2.workflowCode,

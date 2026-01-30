@@ -1,4 +1,4 @@
-import { findRolesResponseSchema } from "../schemas/responses/find-roles-response.schema.js";
+import { createPageResponse } from "../../common/create-page-response.js";
 import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
 
 export const findRolesRoute = {
@@ -7,13 +7,10 @@ export const findRolesRoute = {
   options: {
     description: "Find roles (admin only)",
     tags: ["api"],
-    response: {
-      schema: findRolesResponseSchema,
-    },
   },
   async handler(request) {
-    return await findRolesUseCase({
-      user: request.auth.credentials.user,
-    });
+    const { user } = request.auth.credentials;
+    const data = await findRolesUseCase({ user });
+    return createPageResponse({ user, data });
   },
 };

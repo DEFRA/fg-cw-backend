@@ -40,8 +40,13 @@ describe("GET /cases", () => {
     const response = await wreck.get("/cases");
 
     expect(response.res.statusCode).toBe(200);
-
-    expect(response.payload).toEqual([
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data).toEqual([
       {
         _id: expect.any(String),
         caseRef: caseData1.caseRef,
@@ -114,12 +119,18 @@ describe("GET /cases", () => {
     const response = await wreck.get("/cases");
 
     expect(response.res.statusCode).toBe(200);
-    expect(response.payload.length).toBe(2);
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data.length).toBe(2);
 
-    expect(response.payload[0].caseRef).toBe("UNRESTRCITED-CASE");
-    expect(response.payload[0].workflowCode).toBe("WF-1");
+    expect(response.payload.data[0].caseRef).toBe("UNRESTRCITED-CASE");
+    expect(response.payload.data[0].workflowCode).toBe("WF-1");
 
-    expect(response.payload[1].caseRef).toBe("AUTHORIZED-CASE");
-    expect(response.payload[1].workflowCode).toBe("WF-3");
+    expect(response.payload.data[1].caseRef).toBe("AUTHORIZED-CASE");
+    expect(response.payload.data[1].workflowCode).toBe("WF-3");
   });
 });

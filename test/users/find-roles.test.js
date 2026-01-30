@@ -40,24 +40,32 @@ describe("GET /roles", () => {
       res: expect.objectContaining({
         statusCode: 200,
       }),
-      payload: expect.arrayContaining([
-        expect.objectContaining({
-          id: expect.any(String),
-          code: "TEST_ROLE_1",
-          description: "Test role one",
-          assignable: true,
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-        }),
-        expect.objectContaining({
-          id: expect.any(String),
-          code: "TEST_ROLE_2",
-          description: "Test role two",
-          assignable: false,
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-        }),
-      ]),
+      payload: {
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            code: "TEST_ROLE_1",
+            description: "Test role one",
+            assignable: true,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            code: "TEST_ROLE_2",
+            description: "Test role two",
+            assignable: false,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          }),
+        ]),
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
+      },
     });
   });
 
@@ -68,7 +76,15 @@ describe("GET /roles", () => {
       res: expect.objectContaining({
         statusCode: 200,
       }),
-      payload: [],
+      payload: {
+        data: [],
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
+      },
     });
   });
 });

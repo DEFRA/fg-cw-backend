@@ -7,7 +7,10 @@ import { findCaseByIdTabIdRoute } from "./find-case-by-id-tab-id.route.js";
 vi.mock("../use-cases/build-case-details-tab.use-case.js");
 
 describe("findCaseByIdTabIdRoute", () => {
-  const mockAuthUser = { id: "user-123" };
+  const mockAuthUser = {
+    id: "user-123",
+    idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+  };
 
   let server;
 
@@ -83,7 +86,13 @@ describe("findCaseByIdTabIdRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(mockTabData);
+    expect(result.data).toEqual(mockTabData);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
     expect(buildCaseDetailsTabUseCase).toHaveBeenCalledWith({
       params: { caseId, tabId },
       query: {},

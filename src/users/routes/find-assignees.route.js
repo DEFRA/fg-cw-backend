@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-import { findAssigneesResponseSchema } from "../schemas/responses/find-assignees-response.schema.js";
 import { findAssigneesUseCase } from "../use-cases/find-assignees.use-case.js";
 
 export const findAssigneesRoute = {
@@ -17,9 +16,6 @@ export const findAssigneesRoute = {
         allowUnknown: true,
         stripUnknown: true,
       }),
-    },
-    response: {
-      schema: findAssigneesResponseSchema,
     },
   },
   async handler(request) {
