@@ -7,7 +7,6 @@ const snsClient = new SNSClient({
 });
 
 export const publish = async (topic, data, messageGroupId) => {
-  console.log({topic, data, messageGroupId})
   await snsClient.send(
     new PublishCommand({
       TopicArn: topic,
