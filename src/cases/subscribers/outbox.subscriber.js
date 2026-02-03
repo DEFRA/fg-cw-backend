@@ -12,7 +12,6 @@ import {
   updateFailedEvents,
   updateResubmittedEvents,
 } from "../repositories/outbox.repository.js";
-
 export class OutboxSubscriber {
   asyncLocalStorage = new AsyncLocalStorage();
 
@@ -88,10 +87,11 @@ export class OutboxSubscriber {
   }
 
   async sendEvent(event) {
-    const { target: topic, event: data } = event;
+    const { target: topic, event: data, messageGroupId } = event;
     logger.info(`Send outbox event to "${topic}"`);
+    console.log({event})
     try {
-      await publish(topic, data);
+      await publish(this.topicStringToFifo(topic), data, this.getMessageGroupId(messageGroupId, data));
       await this.markEventComplete(event);
     } catch (ex) {
       logger.error(ex, `Error sending outbox event to topic "${topic}"`);
@@ -101,6 +101,33 @@ export class OutboxSubscriber {
 
   async processEvents(events) {
     await Promise.all(events.map((event) => this.sendEvent(event)));
+  }
+
+  // TODO: remove once there are no more standard events
+  // temp while we transition to fifo
+  getMessageGroupId(id, data) {
+    console.log("get message group id", {id, data, });
+    if (!id) {
+      console.log("no id", {data})
+      if (data.data.clientRef) {
+        return `${data.data.clientRef}-${data.data.grantCode}`;
+      }
+      if (data.data.caseRef) {
+        return `${data.data.caseRef}-${data.data.workflowCode}`;
+      }
+    }
+
+    return id;
+  }
+
+  // TODO: remove once there are no more standard events
+  // temp while we transition to fifo
+  topicStringToFifo(topic) {
+    if (topic.search(/_fifo.fifo$/) === -1) {
+      return `${topic}_fifo.fifo`;
+    }
+
+    return topic;
   }
 
   async start() {

@@ -20,6 +20,7 @@ export class Outbox {
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
+    this.messageGroupId = props.messageGroupId;
   }
 
   markAsComplete() {
@@ -51,6 +52,7 @@ export class Outbox {
       claimedAt: this.claimedAt,
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
+      messageGroupId: this.messageGroupId,
     };
   }
 
@@ -67,6 +69,7 @@ export class Outbox {
       claimedAt: doc.claimedAt,
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
+      messageGroupId: doc.messageGroupId,
     });
   }
 }

@@ -6,11 +6,13 @@ const snsClient = new SNSClient({
   endpoint: config.get("aws.endpointUrl"),
 });
 
-export const publish = async (topic, data) => {
+export const publish = async (topic, data, messageGroupId) => {
+  console.log({topic, data, messageGroupId})
   await snsClient.send(
     new PublishCommand({
       TopicArn: topic,
       Message: JSON.stringify(data),
+      MessageGroupId: messageGroupId,
     }),
   );
 };
