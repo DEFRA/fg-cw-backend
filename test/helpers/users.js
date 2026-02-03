@@ -1,4 +1,5 @@
 import Wreck from "@hapi/wreck";
+import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
@@ -8,7 +9,7 @@ export const TestUser = {
     idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
     name: "Test Admin",
     email: "admin@t.gov.uk",
-    idpRoles: [IdpRoles.Admin],
+    idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite],
   },
   ReadWrite: {
     idpId: "df20f4bd-d009-4bf4-b499-46e93e0f005a",
@@ -24,42 +25,75 @@ export const TestUser = {
   },
 };
 
-export const createUser = async (payload = {}) => {
-  const response = await wreck.post("/users/login", {
-    payload: {
-      idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
-      name: "Name",
-      email: "name.surname@defra.gov.uk",
-      idpRoles: ["FCP.Casework.ReadWrite"],
-      appRoles: {
-        ROLE_1: {
-          startDate: "2025-07-01",
-          endDate: "2100-01-01",
-        },
-        ROLE_2: {
-          startDate: "2025-07-02",
-          endDate: "2100-01-02",
-        },
-        ROLE_3: {
-          startDate: "2025-07-03",
-          endDate: "2100-01-03",
-        },
-      },
-      ...payload,
+const defaultUserPayload = {
+  idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
+  name: "Name",
+  email: "name.surname@defra.gov.uk",
+  idpRoles: ["FCP.Casework.ReadWrite"],
+  appRoles: {
+    ROLE_1: {
+      startDate: "2025-07-01",
+      endDate: "2100-01-01",
     },
+    ROLE_2: {
+      startDate: "2025-07-02",
+      endDate: "2100-01-02",
+    },
+    ROLE_3: {
+      startDate: "2025-07-03",
+      endDate: "2100-01-03",
+    },
+  },
+};
+
+export const createUser = async (payload = {}) => {
+  const response = await wreck.post(`/users/login`, {
+    payload: { ...defaultUserPayload, ...payload },
   });
 
-  return response;
+  return response.payload;
 };
 
 export const createAdminUser = async (payload = {}) => {
-  return createUser({ ...TestUser.Admin, ...payload });
+  const mergedPayload = {
+    ...defaultUserPayload,
+    ...TestUser.Admin,
+    ...payload,
+  };
+  const user = await createUser(mergedPayload);
+
+  await changeUserAppRoles(user, mergedPayload.appRoles);
+
+  return { ...user, appRoles: mergedPayload.appRoles };
 };
 
-export const updateUser = async (userId, payload) => {
-  return await wreck.patch(`/users/${userId}`, {
-    payload,
+export const removeUserAppRoles = async (user) => {
+  return await changeUserAppRoles(user, {});
+};
+
+export const changeUserAppRoles = async (user, appRoles) => {
+  // Direct MongoDB update to force set appRoles, API does not allow admin to update their own appRoles
+  const client = new MongoClient(env.MONGO_URI);
+  try {
+    await client.connect();
+    const db = client.db();
+    await db
+      .collection("users")
+      .updateOne({ idpId: user.idpId }, { $set: { appRoles } });
+  } finally {
+    await client.close();
+  }
+  return { ...user, appRoles };
+};
+
+export const changeUserIdpRoles = async (user, idpRoles) => {
+  const { idpId, name, email } = user;
+
+  const response = await wreck.post("/users/login", {
+    payload: { idpId, name, email, idpRoles },
   });
+
+  return response;
 };
 
 export const getTokenFor = async (username) => {

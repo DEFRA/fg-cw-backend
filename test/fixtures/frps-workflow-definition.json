@@ -200,15 +200,40 @@
                             "label": "Contact details",
                             "text": [
                               {
-                                "component": "text",
-                                "text": "$.payload.answers.applicant.business.email.address"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.email",
+                                "whenTrue": {
+                                  "component": "container",
+                                  "items": [
+                                    {
+                                      "component": "text",
+                                      "text": "$.payload.answers.applicant.business.email"
+                                    },
+                                    { "component": "line-break" }
+                                  ]
+                                }
                               },
                               {
-                                "component": "line-break"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.landlinePhoneNumber",
+                                "whenTrue": {
+                                  "component": "container",
+                                  "items": [
+                                    {
+                                      "component": "text",
+                                      "text": "$.payload.answers.applicant.business.landlinePhoneNumber"
+                                    },
+                                    { "component": "line-break" }
+                                  ]
+                                }
                               },
                               {
-                                "component": "text",
-                                "text": "$.payload.answers.applicant.business.phone"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.mobilePhoneNumber",
+                                "whenTrue": {
+                                  "component": "text",
+                                  "text": "$.payload.answers.applicant.business.mobilePhoneNumber"
+                                }
                               }
                             ]
                           }

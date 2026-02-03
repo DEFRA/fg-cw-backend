@@ -49,7 +49,10 @@ describe("findCaseByIdRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(kase);
+    expect(result.data).toEqual(kase);
+    expect(result.header).toEqual({
+      navItems: [],
+    });
     expect(findCaseByIdUseCase).toHaveBeenCalledWith(caseId, mockAuthUser, {
       params: { caseId, tabId: undefined },
     });

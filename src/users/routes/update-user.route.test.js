@@ -28,12 +28,13 @@ describe("updateUserRoute", () => {
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/users/${user.id}`,
+      url: `/admin/users/${user.id}`,
       auth: {
         strategy: "entra",
         credentials: {
           user: {
             id: user.id,
+            idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
           },
         },
       },
@@ -51,11 +52,18 @@ describe("updateUserRoute", () => {
 
     expect(statusCode).toEqual(200);
 
-    expect(result).toEqual(user);
+    expect(result.data).toEqual(user);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
 
     expect(updateUserUseCase).toHaveBeenCalledWith({
       authenticatedUser: {
         id: user.id,
+        idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
       },
       userId: user.id,
       props: {
@@ -77,7 +85,7 @@ describe("updateUserRoute", () => {
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/users/${userId}`,
+      url: `/admin/users/${userId}`,
       payload: {
         idpRoles: [1],
       },

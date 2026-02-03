@@ -34,7 +34,6 @@ describe("loginUserRoute", () => {
         name: "Bob Bill",
         email: "bob.bill@defra.gov.uk",
         idpRoles: ["ReadWrite"],
-        appRoles: {},
       },
     });
 
@@ -45,7 +44,6 @@ describe("loginUserRoute", () => {
       name: "Bob Bill",
       email: "bob.bill@defra.gov.uk",
       idpRoles: ["ReadWrite"],
-      appRoles: {},
     });
   });
 

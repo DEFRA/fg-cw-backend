@@ -2,19 +2,18 @@ import Boom from "@hapi/boom";
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { Role } from "../models/role.js";
 import { User } from "../models/user.js";
-import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
-import { findRolesRoute } from "./find-roles.route.js";
+import { adminAccessCheckUseCase } from "../use-cases/admin-access-check.use-case.js";
+import { adminAccessCheckRoute } from "./admin-access-check.route.js";
 
-vi.mock("../use-cases/find-roles.use-case.js");
+vi.mock("../use-cases/admin-access-check.use-case.js");
 
-describe("findRolesRoute", () => {
+describe("adminAccessCheckRoute", () => {
   let server;
 
   beforeAll(async () => {
     server = hapi.server();
-    server.route(findRolesRoute);
+    server.route(adminAccessCheckRoute);
     await server.initialize();
   });
 
@@ -23,11 +22,13 @@ describe("findRolesRoute", () => {
   });
 
   it("returns 403 when user is not admin", async () => {
-    findRolesUseCase.mockRejectedValue(Boom.forbidden("Forbidden"));
+    adminAccessCheckUseCase.mockImplementation(() => {
+      throw Boom.forbidden("Forbidden");
+    });
 
     const { statusCode } = await server.inject({
       method: "GET",
-      url: "/roles",
+      url: "/admin/access-check",
       auth: {
         strategy: "entra",
         credentials: {
@@ -39,17 +40,16 @@ describe("findRolesRoute", () => {
     expect(statusCode).toEqual(403);
   });
 
-  it("returns all roles when user is admin", async () => {
-    const roles = [Role.createMock(), Role.createMock()];
+  it("returns 200 when user is admin", async () => {
     const admin = User.createMock({
       idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
 
-    findRolesUseCase.mockResolvedValue(roles);
+    adminAccessCheckUseCase.mockReturnValue({ ok: true });
 
     const { statusCode, result } = await server.inject({
       method: "GET",
-      url: "/roles",
+      url: "/admin/access-check",
       auth: {
         strategy: "entra",
         credentials: {
@@ -59,14 +59,14 @@ describe("findRolesRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result.data).toEqual(roles);
+    expect(result.data).toEqual({ ok: true });
     expect(result.header).toEqual({
       navItems: [
         { title: "Admin", href: "/admin" },
         { title: "Casework", href: "/cases" },
       ],
     });
-    expect(findRolesUseCase).toHaveBeenCalledWith({
+    expect(adminAccessCheckUseCase).toHaveBeenCalledWith({
       user: admin,
     });
   });

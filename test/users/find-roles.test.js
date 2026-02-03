@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createRole } from "../helpers/roles.js";
 import { createAdminUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -16,21 +17,21 @@ afterAll(async () => {
 });
 
 describe("GET /roles", () => {
-  it("returns all roles", async () => {
+  beforeEach(async () => {
     await createAdminUser();
+  });
 
-    await wreck.post("/roles", {
-      payload: {
-        code: "TEST_ROLE_1",
-        description: "Test role one",
-      },
+  it("returns all roles", async () => {
+    await createRole({
+      code: "TEST_ROLE_1",
+      description: "Test role one",
+      assignable: true,
     });
 
-    await wreck.post("/roles", {
-      payload: {
-        code: "TEST_ROLE_2",
-        description: "Test role two",
-      },
+    await createRole({
+      code: "TEST_ROLE_2",
+      description: "Test role two",
+      assignable: false,
     });
 
     const findRolesResponse = await wreck.get("/roles");
@@ -39,22 +40,32 @@ describe("GET /roles", () => {
       res: expect.objectContaining({
         statusCode: 200,
       }),
-      payload: expect.arrayContaining([
-        expect.objectContaining({
-          id: expect.any(String),
-          code: "TEST_ROLE_1",
-          description: "Test role one",
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-        }),
-        expect.objectContaining({
-          id: expect.any(String),
-          code: "TEST_ROLE_2",
-          description: "Test role two",
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
-        }),
-      ]),
+      payload: {
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            code: "TEST_ROLE_1",
+            description: "Test role one",
+            assignable: true,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            code: "TEST_ROLE_2",
+            description: "Test role two",
+            assignable: false,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          }),
+        ]),
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
+      },
     });
   });
 
@@ -65,7 +76,15 @@ describe("GET /roles", () => {
       res: expect.objectContaining({
         statusCode: 200,
       }),
-      payload: [],
+      payload: {
+        data: [],
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
+      },
     });
   });
 });

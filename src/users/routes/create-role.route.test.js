@@ -36,6 +36,7 @@ describe("createRoleRoute", () => {
       payload: {
         code: "ROLE_RPA_CASES_APPROVE",
         description: "Test role description",
+        assignable: true,
       },
     });
 
@@ -48,6 +49,7 @@ describe("createRoleRoute", () => {
       },
       code: "ROLE_RPA_CASES_APPROVE",
       description: "Test role description",
+      assignable: true,
     });
   });
 

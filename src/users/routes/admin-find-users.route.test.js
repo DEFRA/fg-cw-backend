@@ -41,7 +41,7 @@ describe("adminFindUsersRoute", () => {
   it("returns users when user is admin", async () => {
     const users = [User.createMock(), User.createMock()];
     const admin = User.createMock({
-      idpRoles: ["FCP.Casework.Admin"],
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
 
     adminFindUsersUseCase.mockResolvedValue(users);
@@ -58,7 +58,13 @@ describe("adminFindUsersRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(users);
+    expect(result.data).toEqual(users);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
     expect(adminFindUsersUseCase).toHaveBeenCalledWith({
       user: admin,
       query: {
@@ -72,7 +78,7 @@ describe("adminFindUsersRoute", () => {
   it("passes query parameters to adminFindUsersUseCase", async () => {
     const users = [User.createMock()];
     const admin = User.createMock({
-      idpRoles: ["FCP.Casework.Admin"],
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
 
     adminFindUsersUseCase.mockResolvedValue(users);

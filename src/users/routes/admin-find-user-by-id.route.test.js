@@ -41,7 +41,7 @@ describe("adminFindUserByIdRoute", () => {
   it("returns a user matching userId when user is admin", async () => {
     const userId = User.createMock().id;
     const admin = User.createMock({
-      idpRoles: ["FCP.Casework.Admin"],
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
     const user = User.createMock({
       id: userId,
@@ -61,7 +61,13 @@ describe("adminFindUserByIdRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(user);
+    expect(result.data).toEqual(user);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
     expect(adminFindUserByIdUseCase).toHaveBeenCalledWith({
       user: admin,
       userId,
