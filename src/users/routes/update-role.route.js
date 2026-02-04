@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { HttpCodes } from "../../common/schemas/http-codes.js";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { updateRoleRequestSchema } from "../schemas/requests/update-role-request.schema.js";
 import { updateRoleUseCase } from "../use-cases/update-role.use-case.js";
@@ -28,6 +29,6 @@ export const updateRoleRoute = {
       assignable,
     });
 
-    return h.response().code(204);
+    return h.response().code(HttpCodes.NoContent);
   },
 };
