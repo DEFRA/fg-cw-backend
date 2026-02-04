@@ -8,9 +8,13 @@ describe("CloudEvent", () => {
     const event = await withTraceParent(
       "1234-0987",
       async () =>
-        new CloudEvent("test.type", {
-          key: "value",
-        }),
+        new CloudEvent(
+          "test.type",
+          {
+            key: "value",
+          },
+          "message-group-id",
+        ),
     );
 
     expect(event).toEqual({
@@ -24,6 +28,7 @@ describe("CloudEvent", () => {
       data: {
         key: "value",
       },
+      messageGroupId: "message-group-id",
     });
   });
 });

@@ -12,7 +12,15 @@ import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import { Inbox } from "../models/inbox.js";
-import { claimEvents } from "../repositories/inbox.repository.js";
+import {
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "../repositories/fifo-lock.repository.js";
+import {
+  claimEvents,
+  findNextMessage,
+} from "../repositories/inbox.repository.js";
 import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
@@ -21,9 +29,18 @@ vi.mock("../use-cases/create-case.use-case.js");
 vi.mock("../../common/trace-parent.js");
 vi.mock("../use-cases/approve-application.use-case.js");
 vi.mock("../repositories/inbox.repository.js");
+vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
 vi.mock("../use-cases/handle-case-status-update.use-case.js");
 vi.mock("../../common/logger.js");
+
+const createInbox = (doc) =>
+  new Inbox({
+    event: {
+      time: new Date().toISOString(),
+    },
+    ...doc,
+  });
 
 describe("inbox.subscriber", () => {
   let cdpEnv;
@@ -49,10 +66,20 @@ describe("inbox.subscriber", () => {
   });
 
   it("should poll on start()", async () => {
+    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
     claimEvents.mockResolvedValue([Inbox.createMock()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue();
+    freeFifoLock.mockResolvedValue();
+    vi.spyOn(InboxSubscriber.prototype, "processEvents").mockResolvedValue();
     const subscriber = new InboxSubscriber();
     subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalled();
+    expect(setFifoLock).toHaveBeenCalledWith("ref_1");
+    expect(freeFifoLock).toHaveBeenCalledWith("ref_1");
     expect(subscriber.running).toBeTruthy();
   });
 
@@ -66,6 +93,11 @@ describe("inbox.subscriber", () => {
       traceparent: "test-trace",
       event: { data: { foo: "bar" } },
     });
+    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
+    claimEvents.mockResolvedValue([createInbox()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue();
+    freeFifoLock.mockResolvedValue();
 
     claimEvents
       .mockRejectedValueOnce(error)
@@ -100,6 +132,11 @@ describe("inbox.subscriber", () => {
   });
 
   it("should stop polling after stop()", async () => {
+    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
+    claimEvents.mockResolvedValue([createInbox()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue();
+    freeFifoLock.mockResolvedValue();
     claimEvents.mockResolvedValue([
       Inbox.createMock({
         event: { time: new Date().toISOString() },
@@ -107,11 +144,53 @@ describe("inbox.subscriber", () => {
     ]);
     const subscriber = new InboxSubscriber();
     subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalledTimes(1);
     subscriber.stop();
     vi.advanceTimersByTime(500);
     expect(subscriber.running).toBeFalsy();
     expect(claimEvents).toHaveBeenCalledTimes(1);
+  });
+
+  describe("available segregation Ref", () => {
+    it("should claim next available message", async () => {
+      const events = [
+        Inbox.createMock({
+          _id: "1",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-1",
+        }),
+        Inbox.createMock({
+          _id: "2",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-1",
+        }),
+        Inbox.createMock({
+          _id: "3",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-2",
+        }),
+      ];
+
+      const spy1 = vi.spyOn(InboxSubscriber.prototype, "processEvents");
+      spy1.mockResolvedValue();
+      setFifoLock.mockResolvedValue();
+      freeFifoLock.mockResolvedValue();
+      getFifoLocks.mockResolvedValue([]);
+      findNextMessage.mockResolvedValue({ segregationRef: "ref-2" });
+
+      claimEvents.mockResolvedValue([events[2]]);
+      const subscriber = new InboxSubscriber();
+
+      subscriber.start();
+      await vi.waitFor(() => {
+        expect(spy1).toBeCalled();
+      });
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy1.mock.calls[0][0][0]._id).toEqual("3");
+    });
   });
 
   describe("processEvents", () => {

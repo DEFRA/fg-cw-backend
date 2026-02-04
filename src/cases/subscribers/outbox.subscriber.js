@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import { config } from "../../common/config.js";
+import { getMessageGroupId } from "../../common/getMessageGroupId.js";
 import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
 import {
@@ -87,7 +88,11 @@ export class OutboxSubscriber {
   }
 
   async sendEvent(event) {
-    const { target: topic, event: data, messageGroupId } = event;
+    const {
+      target: topic,
+      event: data,
+      event: { messageGroupId },
+    } = event;
     logger.info(`Send outbox event to "${topic}"`);
     try {
       await publish(
@@ -106,23 +111,10 @@ export class OutboxSubscriber {
     await Promise.all(events.map((event) => this.sendEvent(event)));
   }
 
-  // TODO: remove once there are no more standard events
-  // temp while we transition to fifo
   getMessageGroupId(id, data) {
-    if (!id) {
-      if (data.data.clientRef) {
-        return `${data.data.clientRef}-${data.data.grantCode}`;
-      }
-      if (data.data.caseRef) {
-        return `${data.data.caseRef}-${data.data.workflowCode}`;
-      }
-    }
-
-    return id;
+    return getMessageGroupId(id, data);
   }
 
-  // TODO: remove once there are no more standard events
-  // temp while we transition to fifo
   topicStringToFifo(topic) {
     if (topic.search(/_fifo.fifo$/) === -1) {
       return `${topic}_fifo.fifo`;

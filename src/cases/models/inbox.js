@@ -16,6 +16,7 @@ export class Inbox {
     this.claimedAt = null;
     this.claimExpiresAt = null;
     this.eventTime = props.event.time;
+    this.segregationRef = props.segregationRef;
   }
 
   markAsComplete() {
@@ -51,6 +52,7 @@ export class Inbox {
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
       eventTime: this.eventTime,
+      segregationRef: this.segregationRef,
     };
   }
 
@@ -71,6 +73,7 @@ export class Inbox {
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
       eventTime: doc.eventTime,
+      segregationRef: doc.segregationRef,
     });
   }
 
