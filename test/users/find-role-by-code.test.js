@@ -7,16 +7,16 @@ import { wreck } from "../helpers/wreck.js";
 
 let client;
 
-beforeAll(async () => {
-  client = new MongoClient(env.MONGO_URI);
-  await client.connect();
-});
-
-afterAll(async () => {
-  await client.close(true);
-});
-
 describe("GET /roles/{code}", () => {
+  beforeAll(async () => {
+    client = new MongoClient(env.MONGO_URI);
+    await client.connect();
+  });
+
+  afterAll(async () => {
+    await client.close(true);
+  });
+
   it("returns a role by code", async () => {
     await createAdminUser();
 
@@ -52,6 +52,8 @@ describe("GET /roles/{code}", () => {
   });
 
   it("returns 404 when role not found", async () => {
+    await createAdminUser();
+
     const nonExistentCode = "ROLE_NON_EXISTENT";
 
     await expect(wreck.get(`/roles/${nonExistentCode}`)).rejects.toThrow(

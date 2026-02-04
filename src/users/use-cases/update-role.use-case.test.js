@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IdpRoles } from "../models/idp-roles.js";
 import { Role } from "../models/role.js";
 import { User } from "../models/user.js";
-import { findByCode, save } from "../repositories/role.repository.js";
+import { findByCode, update } from "../repositories/role.repository.js";
 import { updateRoleUseCase } from "./update-role.use-case.js";
 
 vi.mock("../repositories/role.repository.js");
@@ -33,7 +33,7 @@ describe("updateRoleUseCase", () => {
     expect(result.assignable).toBe(true);
     expect(result.updatedAt).toBeDefined();
 
-    expect(save).toHaveBeenCalledWith(
+    expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         code: role.code,
         description: "Updated description",
@@ -59,7 +59,7 @@ describe("updateRoleUseCase", () => {
     );
 
     expect(findByCode).not.toHaveBeenCalled();
-    expect(save).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("throws not found when role does not exist", async () => {
@@ -78,6 +78,6 @@ describe("updateRoleUseCase", () => {
       }),
     ).rejects.toThrow("Role with code ROLE_MISSING not found");
 
-    expect(save).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 });

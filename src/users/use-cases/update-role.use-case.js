@@ -3,7 +3,7 @@ import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../models/idp-roles.js";
-import { findByCode, save } from "../repositories/role.repository.js";
+import { findByCode, update } from "../repositories/role.repository.js";
 
 export const updateRoleUseCase = async ({
   user,
@@ -28,7 +28,7 @@ export const updateRoleUseCase = async ({
   role.assignable = assignable;
   role.updatedAt = new Date().toISOString();
 
-  await save(role);
+  await update(role);
 
   logger.info(`Finished: Updating role: "${code}"`);
 

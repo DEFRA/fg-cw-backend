@@ -17,9 +17,10 @@ export const findRoleByCodeRoute = {
   },
   async handler(request) {
     const { user } = request.auth.credentials;
+    const { code } = request.params;
     const data = await findRoleByCodeUseCase({
       user,
-      code: request.params.code,
+      code,
     });
     return createPageResponse({ user, data });
   },

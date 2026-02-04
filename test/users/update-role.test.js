@@ -52,12 +52,20 @@ describe("PUT /roles/{code}", () => {
         statusCode: 200,
       }),
       payload: {
-        id: expect.any(String),
-        code: "ROLE_RPA_CASES_APPROVE",
-        description: "Updated description",
-        assignable: false,
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        data: {
+          id: expect.any(String),
+          code: "ROLE_RPA_CASES_APPROVE",
+          description: "Updated description",
+          assignable: false,
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        },
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
       },
     });
   });
