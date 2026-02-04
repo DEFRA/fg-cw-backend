@@ -33,12 +33,20 @@ describe("GET /roles/{code}", () => {
         statusCode: 200,
       }),
       payload: {
-        id: expect.any(String),
-        code: "ROLE_RPA_CASES_APPROVE",
-        description: "Approve case applications",
-        assignable: true,
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        data: {
+          id: expect.any(String),
+          code: "ROLE_RPA_CASES_APPROVE",
+          description: "Approve case applications",
+          assignable: true,
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        },
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
       },
     });
   });
