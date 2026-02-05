@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import { config } from "../../common/config.js";
-import { getMessageGroupId } from "../../common/getMessageGroupId.js";
+import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
 import {

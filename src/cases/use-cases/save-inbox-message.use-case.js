@@ -1,4 +1,4 @@
-import { getMessageGroupId } from "../../common/getMessageGroupId.js";
+import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { Inbox } from "../models/inbox.js";
 import {
