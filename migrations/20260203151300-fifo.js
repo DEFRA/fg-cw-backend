@@ -4,6 +4,8 @@ export const up = async (db) => {
   fifoLock.drop().catch(() => {});
   fifoLock.createIndex({ segregationRef: 1 }, { unique: true });
   fifoLock.createIndex({ locked: 1, segregationRef: 1, lockedAt: 1 });
+  fifoLock.createIndex({ locked: 1, segregationRef: 1, actor: 1 });
+  fifoLock.createIndex({ segregationRef: 1, actor: 1 });
 
   db.collection("inbox").createIndex({
     segregationRef: 1,

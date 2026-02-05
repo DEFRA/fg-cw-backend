@@ -13,7 +13,13 @@ import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
 import { Outbox } from "../models/outbox.js";
 import {
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "../repositories/fifo-lock.repository.js";
+import {
   claimEvents,
+  findNextMessage,
   update,
   updateDeadEvents,
   updateExpiredEvents,
@@ -23,7 +29,16 @@ import {
 import { OutboxSubscriber } from "./outbox.subscriber.js";
 
 vi.mock("../../common/sns-client.js");
+vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../repositories/outbox.repository.js");
+
+const createOutbox = (doc) =>
+  new Outbox({
+    event: {
+      time: new Date().toISOString(),
+    },
+    ...doc,
+  });
 
 describe("outbox.subscriber", () => {
   beforeEach(() => {
@@ -33,6 +48,13 @@ describe("outbox.subscriber", () => {
     updateExpiredEvents.mockResolvedValue({ modifiedCount: 0 });
     publish.mockResolvedValue(1);
     claimEvents.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(
+      createOutbox({ segregationRef: "ref_1" }),
+    );
+    claimEvents.mockResolvedValue([Outbox.createMock()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue();
+    freeFifoLock.mockResolvedValue();
   });
 
   afterEach(() => {
@@ -52,16 +74,24 @@ describe("outbox.subscriber", () => {
 
   it("should start polling on start()", async () => {
     claimEvents.mockResolvedValue([new Outbox({})]);
+    vi.spyOn(OutboxSubscriber.prototype, "processEvents").mockResolvedValue();
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalled();
     expect(subscriber.running).toBeTruthy();
   });
 
-  it("should stop polling after stop()", () => {
+  it("should stop polling after stop()", async () => {
     claimEvents.mockResolvedValue([new Outbox({})]);
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalledTimes(1);
     subscriber.stop();
     expect(subscriber.running).toBeFalsy();
@@ -87,6 +117,10 @@ describe("outbox.subscriber", () => {
 
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
 
     await vi.waitFor(() => {
       expect(logger.error).toHaveBeenCalledWith(error, "Error polling outbox");
