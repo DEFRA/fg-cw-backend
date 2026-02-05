@@ -27,6 +27,7 @@ const toUser = (doc) => {
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
     lastLoginAt: doc.lastLoginAt?.toISOString(),
+    createdManually: doc.createdManually || false,
   });
 };
 
@@ -154,4 +155,12 @@ export const upsertLogin = async (user) => {
   }
 
   return toUser(result);
+};
+
+export const findByEmail = async (email) => {
+  const userDocument = await db.collection(collection).findOne({
+    email: { $regex: new RegExp(`^${email}$`, "i") },
+  });
+
+  return userDocument && toUser(userDocument);
 };
