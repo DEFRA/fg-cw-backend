@@ -70,7 +70,7 @@ function create_topic_and_queue() {
 
 
 create_topic_and_queue "cw__sns__case_created_fifo.fifo" "cw__sqs__case_created_fifo.fifo" &
-create_topic_and_queue "cw__sns__case_status_updated" "gas__sqs__update_status" &
+create_topic_and_queue "cw__sns__case_status_updated_fifo.fifo" "gas__sqs__update_status_fifo.fifo" &
 
 create_topic_and_queue "agreement_status_updated_fifo.fifo" "gas__sqs__update_agreement_status_fifo.fifo" &
 create_topic_and_queue "gas__sns__grant_application_created_fifo.fifo" "gas__sqs__grant_application_created_fifo.fifo" &
