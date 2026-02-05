@@ -41,7 +41,9 @@ describe("inbox.repository", () => {
       {
         status: { $eq: InboxStatus.PUBLISHED },
         claimedBy: { $eq: null },
-        completionAttempts: { $lte: config.inbox.inboxMaxRetries },
+        completionAttempts: {
+          $lte: parseInt(config.get("inbox.inboxMaxRetries")),
+        },
         segregationRef: { $nin: lockIds },
       },
       { sort: { eventTime: 1 } },
