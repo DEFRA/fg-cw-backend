@@ -12,7 +12,7 @@ import { wreck } from "../helpers/wreck.js";
 
 let client;
 
-describe("POST /roles", () => {
+describe("PUT /roles/{code}", () => {
   beforeAll(async () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
@@ -22,7 +22,7 @@ describe("POST /roles", () => {
     await client.close(true);
   });
 
-  it("creates a role", async () => {
+  it("updates a role", async () => {
     await createAdminUser();
 
     const createRoleResponse = await createRole({
@@ -31,18 +31,23 @@ describe("POST /roles", () => {
       assignable: true,
     });
 
-    expect(createRoleResponse).toEqual({
-      res: expect.objectContaining({
-        statusCode: 204,
-      }),
-      payload: expect.any(Object),
-    });
+    expect(createRoleResponse.res.statusCode).toEqual(204);
 
-    const findRoleByIdResponse = await wreck.get(
+    const updateRoleResponse = await wreck.put(
       "/roles/ROLE_RPA_CASES_APPROVE",
+      {
+        payload: {
+          description: "Updated description",
+          assignable: false,
+        },
+      },
     );
 
-    expect(findRoleByIdResponse).toEqual({
+    expect(updateRoleResponse.res.statusCode).toEqual(204);
+
+    const findRoleResponse = await wreck.get("/roles/ROLE_RPA_CASES_APPROVE");
+
+    expect(findRoleResponse).toEqual({
       res: expect.objectContaining({
         statusCode: 200,
       }),
@@ -50,8 +55,8 @@ describe("POST /roles", () => {
         data: {
           id: expect.any(String),
           code: "ROLE_RPA_CASES_APPROVE",
-          description: "Approve case applications",
-          assignable: true,
+          description: "Updated description",
+          assignable: false,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -71,36 +76,40 @@ describe("POST /roles", () => {
     const token = await getTokenFor(TestUser.ReadOnly.email);
 
     await expect(
-      wreck.post("/roles", {
+      wreck.put("/roles/ROLE_SHOULD_NOT_UPDATE", {
         headers: {
           authorization: `Bearer ${token}`,
         },
         payload: {
-          code: "ROLE_SHOULD_NOT_CREATE",
-          description: "Should not be created",
-          assignable: true,
+          description: "Updated description",
+          assignable: false,
         },
       }),
     ).rejects.toThrow("Response Error: 403 Forbidden");
   });
 
-  it("does not create roles with the same code", async () => {
+  it("returns 404 when role does not exist", async () => {
     await createAdminUser();
 
-    const payload = {
-      code: "ROLE_RPA_CASES_APPROVE",
-      description: "Approve case applications",
-      assignable: true,
-    };
+    await expect(
+      wreck.put("/roles/ROLE_DOES_NOT_EXIST", {
+        payload: {
+          description: "Updated description",
+          assignable: false,
+        },
+      }),
+    ).rejects.toThrow("Response Error: 404 Not Found");
+  });
 
-    await wreck.post("/roles", {
-      payload,
-    });
+  it("returns 400 when payload is incomplete", async () => {
+    await createAdminUser();
 
     await expect(
-      wreck.post("/roles", {
-        payload,
+      wreck.put("/roles/ROLE_RPA_CASES_APPROVE", {
+        payload: {
+          description: "Updated description",
+        },
       }),
-    ).rejects.toThrow("Response Error: 409 Conflict");
+    ).rejects.toThrow("Response Error: 400 Bad Request");
   });
 });
