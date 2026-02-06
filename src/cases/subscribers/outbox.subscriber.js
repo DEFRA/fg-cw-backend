@@ -45,7 +45,7 @@ export class OutboxSubscriber {
         const claimToken = randomUUID();
         const availableSegregationRef = await this.getNextAvailable();
         if (availableSegregationRef) {
-          this.processWithLock(claimToken, availableSegregationRef);
+          await this.processWithLock(claimToken, availableSegregationRef);
         }
         await this.processResubmittedEvents();
         await this.processFailedEvents();
