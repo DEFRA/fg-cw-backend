@@ -5,6 +5,7 @@ import {
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
+import { randomUUID } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import { env } from "process";
 
@@ -33,6 +34,7 @@ export const ensureQueues = async (queueUrls, attempt = 1) => {
   );
 
   const found = getQueueNames(data.QueueUrls || []);
+
   const allExist = queues.every((url) => found.includes(url));
 
   if (allExist) {
@@ -61,6 +63,7 @@ export const sendMessage = async (queueUrl, message) =>
       QueueUrl: queueUrl,
       MessageBody: JSON.stringify(message),
       DelaySeconds: 0,
+      MessageGroupId: randomUUID(),
     }),
   );
 

@@ -95,6 +95,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
           source: "fg-cw-backend",
           specversion: "1.0",
           time: expect.any(String),
+          messageGroupId: expect.any(String),
           data: {
             caseRef: "APPLICATION-REF-1",
             currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",

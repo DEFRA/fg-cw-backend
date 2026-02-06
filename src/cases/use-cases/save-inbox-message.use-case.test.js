@@ -13,7 +13,12 @@ describe("save inbox message", () => {
   it("saves a message", async () => {
     insertOne.mockResolvedValue(true);
     findByMessageId.mockResolvedValue(null);
-    const message = {};
+    const message = {
+      data: {
+        caseRef: "caseref-1234",
+        workflowCode: "workflow-1",
+      },
+    };
     await saveInboxMessageUseCase(message, "Gas");
     expect(findByMessageId).toHaveBeenCalledTimes(1);
     expect(insertOne).toHaveBeenCalledWith(expect.any(Inbox));
