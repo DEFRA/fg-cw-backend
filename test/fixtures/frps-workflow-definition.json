@@ -177,6 +177,20 @@
                               },
                               {
                                 "component": "text",
+                                "text": "$.payload.answers.applicant.business.address.line4"
+                              },
+                              {
+                                "component": "line-break"
+                              },
+                              {
+                                "component": "text",
+                                "text": "$.payload.answers.applicant.business.address.line5"
+                              },
+                              {
+                                "component": "line-break"
+                              },
+                              {
+                                "component": "text",
                                 "text": "$.payload.answers.applicant.business.address.street"
                               },
                               {
