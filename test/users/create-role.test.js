@@ -12,16 +12,16 @@ import { wreck } from "../helpers/wreck.js";
 
 let client;
 
-beforeAll(async () => {
-  client = new MongoClient(env.MONGO_URI);
-  await client.connect();
-});
-
-afterAll(async () => {
-  await client.close(true);
-});
-
 describe("POST /roles", () => {
+  beforeAll(async () => {
+    client = new MongoClient(env.MONGO_URI);
+    await client.connect();
+  });
+
+  afterAll(async () => {
+    await client.close(true);
+  });
+
   it("creates a role", async () => {
     await createAdminUser();
 
@@ -47,12 +47,20 @@ describe("POST /roles", () => {
         statusCode: 200,
       }),
       payload: {
-        id: expect.any(String),
-        code: "ROLE_RPA_CASES_APPROVE",
-        description: "Approve case applications",
-        assignable: true,
-        createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        data: {
+          id: expect.any(String),
+          code: "ROLE_RPA_CASES_APPROVE",
+          description: "Approve case applications",
+          assignable: true,
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
+        },
+        header: {
+          navItems: [
+            { title: "Admin", href: "/admin" },
+            { title: "Casework", href: "/cases" },
+          ],
+        },
       },
     });
   });

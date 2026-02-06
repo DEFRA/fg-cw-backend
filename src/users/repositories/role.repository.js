@@ -49,3 +49,21 @@ export const findByCode = async (code) => {
 
   return roleDocument && toRole(roleDocument);
 };
+
+export const update = async (role) => {
+  const roleDocument = new RoleDocument(role);
+
+  const result = await db
+    .collection(collection)
+    .updateOne({ code: roleDocument.code }, { $set: roleDocument });
+
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Role with code ${role.code} not found`);
+  }
+
+  if (!result.acknowledged) {
+    throw Boom.internal(
+      `Role with code ${role.code} could not be updated, the operation was not acknowledged`,
+    );
+  }
+};
