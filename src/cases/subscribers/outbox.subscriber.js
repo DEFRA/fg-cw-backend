@@ -6,6 +6,7 @@ import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
 import {
+  cleanupStaleLocks,
   freeFifoLock,
   getFifoLocks,
   setFifoLock,
@@ -36,7 +37,6 @@ export class OutboxSubscriber {
     return available?.segregationRef;
   }
 
-  // eslint-disable-next-line complexity
   async poll() {
     while (this.running) {
       logger.trace("Outbox checking for events.");
@@ -51,6 +51,7 @@ export class OutboxSubscriber {
         await this.processFailedEvents();
         await this.processDeadEvents();
         await this.processExpiredEvents();
+        await cleanupStaleLocks(OutboxSubscriber.ACTOR);
       } catch (error) {
         logger.error(error, "Error polling outbox");
       }

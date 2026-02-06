@@ -5,6 +5,7 @@ import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import {
+  cleanupStaleLocks,
   freeFifoLock,
   getFifoLocks,
   setFifoLock,
@@ -49,6 +50,7 @@ export class InboxSubscriber {
         await this.processFailedEvents();
         await this.processDeadEvents();
         await this.processExpiredEvents();
+        await cleanupStaleLocks(InboxSubscriber.ACTOR);
       } catch (error) {
         logger.error(error, "Error polling inbox");
       }
