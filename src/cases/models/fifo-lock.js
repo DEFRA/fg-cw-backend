@@ -32,7 +32,7 @@ export class FifoLock {
       _id: "1234",
       locked: true,
       segregationRef: "5678",
-      lockedAt: new Date(Date.now),
+      lockedAt: new Date(Date.now()),
       actor: "INBOX",
       ...obj,
     });

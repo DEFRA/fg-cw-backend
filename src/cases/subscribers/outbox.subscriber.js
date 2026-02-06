@@ -45,14 +45,7 @@ export class OutboxSubscriber {
         const claimToken = randomUUID();
         const availableSegregationRef = await this.getNextAvailable();
         if (availableSegregationRef) {
-          await setFifoLock(OutboxSubscriber.ACTOR, availableSegregationRef);
-          const events = await claimEvents(claimToken, availableSegregationRef);
-          if (events?.length > 0) {
-            await this.asyncLocalStorage.run(claimToken, async () =>
-              this.processEvents(events),
-            );
-          }
-          await freeFifoLock(OutboxSubscriber.ACTOR, availableSegregationRef);
+          this.processWithLock(claimToken, availableSegregationRef);
         }
         await this.processResubmittedEvents();
         await this.processFailedEvents();
@@ -63,6 +56,20 @@ export class OutboxSubscriber {
       }
 
       await setTimeout(this.interval);
+    }
+  }
+
+  async processWithLock(claimToken, segregationRef) {
+    await setFifoLock(OutboxSubscriber.ACTOR, segregationRef);
+    try {
+      const events = await claimEvents(claimToken, segregationRef);
+      if (events?.length > 0) {
+        await this.asyncLocalStorage.run(claimToken, async () =>
+          this.processEvents(events),
+        );
+      }
+    } finally {
+      await freeFifoLock(OutboxSubscriber.ACTOR, segregationRef);
     }
   }
 
@@ -127,7 +134,9 @@ export class OutboxSubscriber {
   }
 
   async processEvents(events) {
-    await Promise.all(events.map((event) => this.sendEvent(event)));
+    for (const event of events) {
+      await this.sendEvent(event);
+    }
   }
 
   getMessageGroupId(id, data) {
@@ -135,7 +144,7 @@ export class OutboxSubscriber {
   }
 
   topicStringToFifo(topic) {
-    if (topic.search(/_fifo.fifo$/) === -1) {
+    if (topic.search(/_fifo\.fifo$/) === -1) {
       return `${topic}_fifo.fifo`;
     }
 

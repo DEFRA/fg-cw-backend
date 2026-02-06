@@ -45,4 +45,10 @@ describe("getMessageGroupId", () => {
 
     expect(result).toBe("fallback-id");
   });
+
+  it("throws when no id and data has no matching fields", () => {
+    expect(() => getMessageGroupId(null, { foo: "bar" })).toThrow(
+      "Unable to derive MessageGroupId",
+    );
+  });
 });

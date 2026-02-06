@@ -10,6 +10,10 @@ export const getMessageGroupId = (id, data) => {
     if (data.caseRef) {
       return `${data.caseRef}-${data.workflowCode}`;
     }
+
+    throw new Error(
+      "Unable to derive MessageGroupId: no id provided and data does not contain clientRef, caseRef, or expected code fields",
+    );
   }
 
   return id;

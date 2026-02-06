@@ -22,35 +22,34 @@ export const findNextMessage = async (lockIds) => {
   return doc;
 };
 
-export const claimEvents = async (claimedBy) => {
-  const promises = [];
+export const claimEvents = async (claimedBy, segregationRef) => {
+  const docs = [];
   for (let i = 0; i < NUMBER_OF_RECORDS; i++) {
-    promises.push(
-      db.collection(collection).findOneAndUpdate(
-        {
-          status: {
-            $eq: OutboxStatus.PUBLISHED,
-          },
-          claimedBy: {
-            $eq: null,
-          },
-          completionAttempts: {
-            $lte: MAX_RETRIES,
-          },
+    const document = await db.collection(collection).findOneAndUpdate(
+      {
+        status: {
+          $eq: OutboxStatus.PUBLISHED,
         },
-        {
-          $set: {
-            status: OutboxStatus.PROCESSING,
-            claimedBy,
-            claimedAt: new Date(),
-            claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
-          },
+        claimedBy: {
+          $eq: null,
         },
-        { sort: { publicationDate: 1 }, returnDocument: "after" },
-      ),
+        completionAttempts: {
+          $lte: MAX_RETRIES,
+        },
+        segregationRef,
+      },
+      {
+        $set: {
+          status: OutboxStatus.PROCESSING,
+          claimedBy,
+          claimedAt: new Date(),
+          claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
+        },
+      },
+      { sort: { publicationDate: 1 }, returnDocument: "after" },
     );
+    docs.push(document);
   }
-  const docs = await Promise.all(promises);
   const documents = docs.filter((d) => d !== null);
 
   documents?.length &&

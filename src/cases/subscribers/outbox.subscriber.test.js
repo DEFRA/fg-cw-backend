@@ -104,7 +104,7 @@ describe("outbox.subscriber", () => {
 
     const mockEvent = new Outbox({
       target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
-      event: { data: { foo: "bar" } },
+      event: { data: { foo: "bar" }, messageGroupId: "group-1" },
     });
     mockEvent.markAsComplete = vi.fn();
 
@@ -147,7 +147,7 @@ describe("outbox.subscriber", () => {
     publish.mockRejectedValue(1);
     const mockEvent = {
       target: "arn:some:value",
-      event: {},
+      event: { messageGroupId: "group-1" },
       markAsFailed: vi.fn(),
     };
     const outbox = new OutboxSubscriber();
@@ -160,7 +160,7 @@ describe("outbox.subscriber", () => {
 
     const mockEvent = {
       target: "arn:some:value",
-      event: {},
+      event: { messageGroupId: "group-1" },
       markAsComplete: vi.fn(),
     };
     const outbox = new OutboxSubscriber();

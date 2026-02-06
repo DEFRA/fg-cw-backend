@@ -14,7 +14,7 @@ export const up = async (db) => {
   });
 
   await withTransaction(async (session) => {
-    await await db.collection("inbox").updateMany(
+    await db.collection("inbox").updateMany(
       {},
       [
         {
@@ -41,7 +41,7 @@ export const up = async (db) => {
       { session },
     );
 
-    db.collection("outbox").updateMany(
+    await db.collection("outbox").updateMany(
       {},
       [
         {
