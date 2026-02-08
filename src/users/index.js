@@ -7,6 +7,7 @@ import { findAssigneesRoute } from "./routes/find-assignees.route.js";
 import { findRoleByCodeRoute } from "./routes/find-role-by-code.route.js";
 import { findRolesRoute } from "./routes/find-roles.route.js";
 import { loginUserRoute } from "./routes/login-user.route.js";
+import { updateRoleRoute } from "./routes/update-role.route.js";
 import { updateUserRoute } from "./routes/update-user.route.js";
 
 export const users = {
@@ -20,6 +21,7 @@ export const users = {
       updateUserRoute,
       findAssigneesRoute,
       createRoleRoute,
+      updateRoleRoute,
       findRolesRoute,
       findRoleByCodeRoute,
       loginUserRoute,
