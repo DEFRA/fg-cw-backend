@@ -34,9 +34,11 @@ vi.mock("../repositories/outbox.repository.js");
 
 const createOutbox = (doc) =>
   new Outbox({
+    target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
     event: {
       time: new Date().toISOString(),
     },
+    segregationRef: "test-segregation-ref",
     ...doc,
   });
 
@@ -53,7 +55,7 @@ describe("outbox.subscriber", () => {
     );
     claimEvents.mockResolvedValue([Outbox.createMock()]);
     getFifoLocks.mockResolvedValue([]);
-    setFifoLock.mockResolvedValue();
+    setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     freeFifoLock.mockResolvedValue();
   });
 
@@ -73,7 +75,13 @@ describe("outbox.subscriber", () => {
   });
 
   it("should start polling on start()", async () => {
-    claimEvents.mockResolvedValue([new Outbox({})]);
+    claimEvents.mockResolvedValue([
+      new Outbox({
+        target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+        event: {},
+        segregationRef: "test-segregation-ref",
+      }),
+    ]);
     vi.spyOn(OutboxSubscriber.prototype, "processEvents").mockResolvedValue();
     const subscriber = new OutboxSubscriber();
     subscriber.start();
@@ -85,7 +93,13 @@ describe("outbox.subscriber", () => {
   });
 
   it("should stop polling after stop()", async () => {
-    claimEvents.mockResolvedValue([new Outbox({})]);
+    claimEvents.mockResolvedValue([
+      new Outbox({
+        target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+        event: {},
+        segregationRef: "test-segregation-ref",
+      }),
+    ]);
     const subscriber = new OutboxSubscriber();
     subscriber.start();
 
@@ -105,6 +119,7 @@ describe("outbox.subscriber", () => {
     const mockEvent = new Outbox({
       target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
       event: { data: { foo: "bar" }, messageGroupId: "group-1" },
+      segregationRef: "test-segregation-ref",
     });
     mockEvent.markAsComplete = vi.fn();
 

@@ -60,8 +60,16 @@ export class OutboxSubscriber {
     }
   }
 
+  // eslint-disable-next-line complexity
   async processWithLock(claimToken, segregationRef) {
-    await setFifoLock(OutboxSubscriber.ACTOR, segregationRef);
+    const lock = await setFifoLock(OutboxSubscriber.ACTOR, segregationRef);
+
+    if (lock.modifiedCount === 0 && lock.matchCount === 0) {
+      logger.info(
+        `Inbox unable to process lock for segregationRef ${segregationRef}`,
+      );
+      return;
+    }
     try {
       const events = await claimEvents(claimToken, segregationRef);
       if (events?.length > 0) {

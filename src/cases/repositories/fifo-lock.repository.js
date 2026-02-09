@@ -14,14 +14,14 @@ export const getFifoLocks = async (actor) => {
 
 export const setFifoLock = async (actor, segregationRef) => {
   await db.collection(collection).updateOne(
-    { segregationRef, actor },
+    { segregationRef, actor, locked: false },
     {
       $set: {
         lockedAt: new Date(Date.now()),
         locked: true,
       },
     },
-    { upsert: true },
+    { upsert: true, returnDocument: "after" },
   );
 };
 

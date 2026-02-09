@@ -1,6 +1,26 @@
+import Boom from "@hapi/boom";
+import Joi from "joi";
+
 export class Inbox {
+  static validationSchema = Joi.object({
+    source: Joi.string().required(),
+    event: Joi.object().required(),
+    segregationRef: Joi.string().required(),
+  });
+
   // eslint-disable-next-line complexity
   constructor(props) {
+    const { error } = Inbox.validationSchema.validate(props, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    if (error) {
+      throw Boom.badRequest(
+        `Invalid Inbox: ${error.details.map((d) => d.message).join(", ")}`,
+      );
+    }
+
     this._id = props._id;
     this.publicationDate = props.publicationDate || new Date().toISOString();
     this.traceparent = props.traceparent;
@@ -91,6 +111,8 @@ export class Inbox {
       completionAttempts: 1,
       status: "PUBLISHED",
       eventTime: new Date().toISOString(),
+      messageGroupId: "mock-group-id",
+      segregationRef: "foo",
       ...obj,
     });
   }

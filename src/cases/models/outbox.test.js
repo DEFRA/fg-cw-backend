@@ -18,6 +18,7 @@ describe("Outbox model", () => {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     expect(obj.target).toBe("arn:some:target");
@@ -59,6 +60,7 @@ describe("Outbox model", () => {
       claimedAt: null,
       claimedBy: null,
       claimExpiresAt: null,
+      segregationRef: "test-segregation-ref",
     };
     const out = Outbox.fromDocument(doc);
     expect(out).toBeInstanceOf(Outbox);
@@ -78,6 +80,7 @@ describe("Outbox model", () => {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     obj.markAsFailed();
@@ -90,6 +93,7 @@ describe("Outbox model", () => {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     obj.markAsComplete();

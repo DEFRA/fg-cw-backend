@@ -66,10 +66,12 @@ describe("inbox.subscriber", () => {
   });
 
   it("should poll on start()", async () => {
-    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    );
     claimEvents.mockResolvedValue([Inbox.createMock()]);
     getFifoLocks.mockResolvedValue([]);
-    setFifoLock.mockResolvedValue();
+    setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     freeFifoLock.mockResolvedValue();
     vi.spyOn(InboxSubscriber.prototype, "processEvents").mockResolvedValue();
     const subscriber = new InboxSubscriber();
@@ -91,12 +93,18 @@ describe("inbox.subscriber", () => {
     const mockEvent = new Inbox({
       type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
       traceparent: "test-trace",
+      source: "GAS",
+      segregationRef: "re_1",
       event: { data: { foo: "bar" } },
     });
-    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
-    claimEvents.mockResolvedValue([createInbox()]);
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    );
+    claimEvents.mockResolvedValue([
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    ]);
     getFifoLocks.mockResolvedValue([]);
-    setFifoLock.mockResolvedValue();
+    setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     freeFifoLock.mockResolvedValue();
 
     claimEvents
@@ -132,14 +140,18 @@ describe("inbox.subscriber", () => {
   });
 
   it("should stop polling after stop()", async () => {
-    findNextMessage.mockResolvedValue(createInbox({ segregationRef: "ref_1" }));
-    claimEvents.mockResolvedValue([createInbox()]);
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "CW" }),
+    );
+    claimEvents.mockResolvedValue([
+      createInbox({ segregationRef: "ref_1", source: "CW" }),
+    ]);
     getFifoLocks.mockResolvedValue([]);
-    setFifoLock.mockResolvedValue();
+    setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     freeFifoLock.mockResolvedValue();
     claimEvents.mockResolvedValue([
       Inbox.createMock({
-        event: { time: new Date().toISOString() },
+        event: { time: new Date().toISOString(), messageGroupId: "1" },
       }),
     ]);
     const subscriber = new InboxSubscriber();
@@ -176,7 +188,7 @@ describe("inbox.subscriber", () => {
 
       const spy1 = vi.spyOn(InboxSubscriber.prototype, "processEvents");
       spy1.mockResolvedValue();
-      setFifoLock.mockResolvedValue();
+      setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
       freeFifoLock.mockResolvedValue();
       getFifoLocks.mockResolvedValue([]);
       findNextMessage.mockResolvedValue({ segregationRef: "ref-2" });
