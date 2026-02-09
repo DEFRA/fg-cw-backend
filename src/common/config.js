@@ -106,6 +106,14 @@ export const config = convict({
       env: "MONGO_DATABASE",
     },
   },
+  fifoLock: {
+    ttlMs: {
+      doc: "Fifo lock time to live",
+      format: String,
+      default: null,
+      env: "FIFO_LOCK_TTL_MS",
+    },
+  },
   aws: {
     endpointUrl: {
       doc: "AWS Endpoint URL used for LocalStack",
