@@ -213,6 +213,64 @@ describe("outbox.subscriber", () => {
     expect(update).toHaveBeenCalledWith(mockEvent, "1234");
   });
 
+  it("should skip processing when lock is not acquired", async () => {
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchCount: 0 });
+
+    const subscriber = new OutboxSubscriber();
+    const processEventsSpy = vi
+      .spyOn(subscriber, "processEvents")
+      .mockResolvedValue();
+
+    await subscriber.processWithLock("claim-token", "ref_1");
+
+    expect(setFifoLock).toHaveBeenCalledWith("OUTBOX", "ref_1");
+    expect(claimEvents).not.toHaveBeenCalled();
+    expect(processEventsSpy).not.toHaveBeenCalled();
+  });
+
+  it("should append _fifo.fifo to topic string", () => {
+    const subscriber = new OutboxSubscriber();
+    expect(subscriber.topicStringToFifo("arn:aws:sns:topic")).toBe(
+      "arn:aws:sns:topic_fifo.fifo",
+    );
+  });
+
+  it("should not double-append _fifo.fifo", () => {
+    const subscriber = new OutboxSubscriber();
+    expect(subscriber.topicStringToFifo("arn:aws:sns:topic_fifo.fifo")).toBe(
+      "arn:aws:sns:topic_fifo.fifo",
+    );
+  });
+
+  it("should processExpiredEvents", async () => {
+    updateExpiredEvents.mockResolvedValue({ modifiedCount: 2 });
+    const subscriber = new OutboxSubscriber();
+    await subscriber.processExpiredEvents();
+    expect(updateExpiredEvents).toHaveBeenCalled();
+  });
+
+  it("should getNextAvailable", async () => {
+    const mockLock = { segregationRef: "locked-ref" };
+    getFifoLocks.mockResolvedValue([mockLock]);
+    findNextMessage.mockResolvedValue({ segregationRef: "available-ref" });
+
+    const subscriber = new OutboxSubscriber();
+    const result = await subscriber.getNextAvailable();
+
+    expect(getFifoLocks).toHaveBeenCalledWith("OUTBOX");
+    expect(findNextMessage).toHaveBeenCalledWith(["locked-ref"]);
+    expect(result).toBe("available-ref");
+  });
+
+  it("should return undefined when no next available", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(null);
+
+    const subscriber = new OutboxSubscriber();
+    const result = await subscriber.getNextAvailable();
+    expect(result).toBeUndefined();
+  });
+
   it("should processFailedEvents", async () => {
     claimEvents.mockResolvedValue([]);
     updateFailedEvents.mockResolvedValue({ modifiedCount: 1 });

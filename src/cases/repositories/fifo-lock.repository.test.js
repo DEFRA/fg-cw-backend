@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
+import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
 import { FifoLock } from "../models/fifo-lock.js";
-import { getFifoLocks, setFifoLock } from "./fifo-lock.repository.js";
+import {
+  cleanupStaleLocks,
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "./fifo-lock.repository.js";
 
 vi.mock("../../common/mongo-client.js");
 
@@ -26,6 +32,49 @@ describe("fifo-lock.repository", () => {
       },
       { upsert: true, returnDocument: "after" },
     );
+  });
+
+  it("should free a FifoLock", async () => {
+    const updateOne = vi.fn();
+    db.collection.mockReturnValue({ updateOne });
+
+    await freeFifoLock(ACTOR, "5678");
+
+    expect(updateOne).toHaveBeenCalledWith(
+      { segregationRef: "5678", actor: ACTOR },
+      {
+        $set: {
+          lockedAt: null,
+          locked: false,
+        },
+      },
+    );
+  });
+
+  it("should cleanup stale locks", async () => {
+    const ttlMs = parseInt(config.get("fifoLock.ttlMs"));
+    const mockDate = new Date(2026, 1, 1);
+    vi.setSystemTime(mockDate);
+
+    const updateMany = vi.fn().mockResolvedValue({ modifiedCount: 2 });
+    db.collection.mockReturnValue({ updateMany });
+
+    const result = await cleanupStaleLocks(ACTOR);
+
+    expect(updateMany).toHaveBeenCalledWith(
+      {
+        locked: true,
+        lockedAt: { $lt: new Date(mockDate.getTime() - ttlMs) },
+        actor: ACTOR,
+      },
+      {
+        $set: {
+          lockedAt: null,
+          locked: false,
+        },
+      },
+    );
+    expect(result.modifiedCount).toBe(2);
   });
 
   it("should getFifoLocks", async () => {

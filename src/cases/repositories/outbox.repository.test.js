@@ -5,6 +5,7 @@ import { db } from "../../common/mongo-client.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
   claimEvents,
+  findNextMessage,
   insertMany,
   update,
   updateDeadEvents,
@@ -16,6 +17,31 @@ import {
 vi.mock("../../common/mongo-client.js");
 
 describe("outbox.repository", () => {
+  describe("findNextMessage", () => {
+    it("should find next message excluding locked segregationRefs", async () => {
+      const lockIds = ["ref-a", "ref-b"];
+      const mockDoc = { _id: "1", segregationRef: "ref-c" };
+      const findOne = vi.fn().mockResolvedValue(mockDoc);
+
+      db.collection.mockReturnValue({ findOne });
+
+      const result = await findNextMessage(lockIds);
+
+      expect(findOne).toHaveBeenCalledWith(
+        {
+          status: { $eq: OutboxStatus.PUBLISHED },
+          claimedBy: { $eq: null },
+          completionAttempts: {
+            $lte: parseInt(config.get("outbox.outboxMaxRetries")),
+          },
+          segregationRef: { $nin: lockIds },
+        },
+        { sort: { publicationDate: 1 } },
+      );
+      expect(result).toBe(mockDoc);
+    });
+  });
+
   describe("insertMany", () => {
     it("should insert events", async () => {
       const mockInsertMany = vi.fn().mockResolvedValueOnce({

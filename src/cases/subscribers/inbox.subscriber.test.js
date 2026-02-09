@@ -166,6 +166,39 @@ describe("inbox.subscriber", () => {
     expect(claimEvents).toHaveBeenCalledTimes(1);
   });
 
+  it("should skip processing when lock is not acquired", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue({ segregationRef: "ref_1" });
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchCount: 0 });
+
+    const subscriber = new InboxSubscriber();
+    const processEventsSpy = vi
+      .spyOn(subscriber, "processEvents")
+      .mockResolvedValue();
+
+    await subscriber.processWithLock("claim-token", "ref_1");
+
+    expect(setFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
+    expect(claimEvents).not.toHaveBeenCalled();
+    expect(processEventsSpy).not.toHaveBeenCalled();
+  });
+
+  it("should skip polling when no available segregationRef", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(null);
+    claimEvents.mockResolvedValue([]);
+
+    const subscriber = new InboxSubscriber();
+    subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(findNextMessage).toHaveBeenCalled();
+    });
+
+    expect(setFifoLock).not.toHaveBeenCalled();
+    subscriber.stop();
+  });
+
   describe("available segregation Ref", () => {
     it("should claim next available message", async () => {
       const events = [

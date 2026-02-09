@@ -91,6 +91,14 @@ describe("inbox model", () => {
     expect(doc.messageId).toBe(obj.messageId);
   });
 
+  it("should throw on invalid props", () => {
+    expect(() => new Inbox({ event: null })).toThrow("Invalid Inbox");
+  });
+
+  it("should throw with all validation errors", () => {
+    expect(() => new Inbox({})).toThrow(/source/);
+  });
+
   it("should create model from doc", () => {
     const doc = {
       _id: "09909-popopo",
