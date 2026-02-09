@@ -47,7 +47,7 @@ export default defineConfig({
       RULES_ENGINE_URL:
         "https://ephemeral-protected.api.dev.cdp-int.defra.cloud/land-grants-api",
       RULES_ENGINE_HEADERS: "x-api-key: fake-key",
-      FIFO_LOCK_TTL: 5000,
+      FIFO_LOCK_TTL_MS: 5000,
     },
     hookTimeout: 30000,
   },
