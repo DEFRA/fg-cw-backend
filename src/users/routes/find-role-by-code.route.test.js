@@ -26,11 +26,34 @@ describe("findRoleByCodeRoute", () => {
     const { statusCode, result } = await server.inject({
       method: "GET",
       url: `/roles/${role.code}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: {
+            id: "user-123",
+            idpRoles: ["FCP.Casework.Admin", "FCP.Casework.Read"],
+          },
+        },
+      },
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(role);
+    expect(result).toEqual({
+      data: role,
+      header: {
+        navItems: [
+          { title: "Admin", href: "/admin" },
+          { title: "Casework", href: "/cases" },
+        ],
+      },
+    });
 
-    expect(findRoleByCodeUseCase).toHaveBeenCalledWith(role.code);
+    expect(findRoleByCodeUseCase).toHaveBeenCalledWith({
+      user: {
+        id: "user-123",
+        idpRoles: ["FCP.Casework.Admin", "FCP.Casework.Read"],
+      },
+      code: role.code,
+    });
   });
 });

@@ -3,10 +3,15 @@ import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../models/idp-roles.js";
-import { findByCode } from "../repositories/role.repository.js";
+import { findByCode, update } from "../repositories/role.repository.js";
 
-export const findRoleByCodeUseCase = async ({ user, code }) => {
-  logger.info(`Finding role with code "${code}"`);
+export const updateRoleUseCase = async ({
+  user,
+  code,
+  description,
+  assignable,
+}) => {
+  logger.info(`Updating role: "${code}"`);
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.Admin],
@@ -19,7 +24,13 @@ export const findRoleByCodeUseCase = async ({ user, code }) => {
     throw Boom.notFound(`Role with code ${code} not found`);
   }
 
-  logger.info(`Finished: Finding role by code "${code}"`);
+  role.description = description;
+  role.assignable = assignable;
+  role.updatedAt = new Date().toISOString();
+
+  await update(role);
+
+  logger.info(`Finished: Updating role: "${code}"`);
 
   return role;
 };
