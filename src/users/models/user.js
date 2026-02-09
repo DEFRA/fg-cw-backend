@@ -13,6 +13,7 @@ export class User {
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.lastLoginAt = props.lastLoginAt;
+    this.createdManually = props.createdManually || false;
   }
 
   setName(value) {
