@@ -14,6 +14,7 @@ export class UserDocument {
     this.createdAt = new Date(props.createdAt);
     this.updatedAt = new Date(props.updatedAt);
     this.lastLoginAt = props.lastLoginAt ? new Date(props.lastLoginAt) : null;
+    this.createdManually = props.createdManually || false;
   }
 
   static createMock(props) {

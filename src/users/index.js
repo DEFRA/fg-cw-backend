@@ -1,4 +1,5 @@
 import { adminAccessCheckRoute } from "./routes/admin-access-check.route.js";
+import { adminCreateUserRoute } from "./routes/admin-create-user.route.js";
 import { adminFindUserByIdRoute } from "./routes/admin-find-user-by-id.route.js";
 import { adminFindUsersRoute } from "./routes/admin-find-users.route.js";
 import { createRoleRoute } from "./routes/create-role.route.js";
@@ -14,6 +15,7 @@ export const users = {
   async register(server) {
     server.route([
       adminAccessCheckRoute,
+      adminCreateUserRoute,
       adminFindUsersRoute,
       adminFindUserByIdRoute,
       updateUserRoute,
