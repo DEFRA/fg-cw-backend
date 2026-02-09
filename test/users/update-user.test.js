@@ -72,6 +72,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
           lastLoginAt: expect.any(String),
+          createdManually: false,
         },
         header: {
           navItems: [
@@ -108,6 +109,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
           lastLoginAt: expect.any(String),
+          createdManually: false,
         },
         header: {
           navItems: [

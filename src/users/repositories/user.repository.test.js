@@ -6,6 +6,7 @@ import { UserDocument } from "../models/user-document.js";
 import { User } from "../models/user.js";
 import {
   findAll,
+  findByEmail,
   findById,
   save,
   update,
@@ -485,5 +486,42 @@ describe("upsert", () => {
     await expect(upsertLogin(user)).rejects.toThrow(
       Boom.internal("User could not be created or updated"),
     );
+  });
+});
+
+describe("findByEmail", () => {
+  it("returns a user by email (case insensitive)", async () => {
+    const userDocument = UserDocument.createMock();
+    const userId = userDocument._id.toString();
+
+    const findOne = vi.fn().mockReturnValue(userDocument);
+
+    db.collection.mockReturnValue({
+      findOne,
+    });
+
+    const result = await findByEmail("Bob.Bill@defra.gov.uk");
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+
+    expect(findOne).toHaveBeenCalledWith({
+      email: { $regex: expect.any(RegExp) },
+    });
+
+    expect(result).toEqual(
+      User.createMock({
+        id: userId,
+      }),
+    );
+  });
+
+  it("returns null when no user is found", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+
+    const result = await findByEmail("nonexistent@example.com");
+
+    expect(result).toEqual(null);
   });
 });
