@@ -70,6 +70,7 @@ describe("inbox fifo", () => {
     await inbox.deleteMany({});
     await fifo.insertOne({
       segregationRef: "ref_1",
+      actor: "INBOX",
       locked: true,
       lockedAt: new Date(Date.now()),
     });

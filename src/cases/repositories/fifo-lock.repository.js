@@ -13,7 +13,7 @@ export const getFifoLocks = async (actor) => {
 };
 
 export const setFifoLock = async (actor, segregationRef) => {
-  await db.collection(collection).updateOne(
+  return db.collection(collection).updateOne(
     { segregationRef, actor, locked: false },
     {
       $set: {
