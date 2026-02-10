@@ -214,7 +214,7 @@ describe("outbox.subscriber", () => {
   });
 
   it("should skip processing when lock is not acquired", async () => {
-    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchCount: 0 });
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchedCount: 0 });
 
     const subscriber = new OutboxSubscriber();
     const processEventsSpy = vi

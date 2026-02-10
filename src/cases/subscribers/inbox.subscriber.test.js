@@ -169,7 +169,7 @@ describe("inbox.subscriber", () => {
   it("should skip processing when lock is not acquired", async () => {
     getFifoLocks.mockResolvedValue([]);
     findNextMessage.mockResolvedValue({ segregationRef: "ref_1" });
-    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchCount: 0 });
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchedCount: 0 });
 
     const subscriber = new InboxSubscriber();
     const processEventsSpy = vi

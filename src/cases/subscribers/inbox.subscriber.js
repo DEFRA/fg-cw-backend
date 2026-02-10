@@ -61,7 +61,7 @@ export class InboxSubscriber {
 
   async processWithLock(claimToken, segregationRef) {
     const lock = await setFifoLock(InboxSubscriber.ACTOR, segregationRef);
-    if (lock.upsertedCount === 0 && lock.matchCount === 0) {
+    if (lock.upsertedCount === 0 && lock.matchedCount === 0) {
       logger.info(
         `Inbox unable to process lock for segregationRef ${segregationRef}`,
       );
