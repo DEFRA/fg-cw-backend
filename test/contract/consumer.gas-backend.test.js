@@ -110,6 +110,63 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
         });
     });
+
+    it("should accept a create new case command without optional fields", async () => {
+      await messagePact
+        .expectsToReceive(
+          "a create new case command from GAS without optional fields",
+        )
+        .withContent({
+          // CloudEvent fields
+          id: uuid("12345678-1234-1234-1234-123456789003"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.create",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.create$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("CASE-REF-002"),
+            workflowCode: like("frps-private-beta"),
+            payload: {
+              createdAt: iso8601DateTimeWithMillis("2025-02-09T11:00:00.000Z"),
+              submittedAt: iso8601DateTimeWithMillis(
+                "2025-02-09T12:00:00.000Z",
+              ),
+              identifiers: {
+                sbi: like("SBI002"),
+                frn: like("FIRM0002"),
+                crn: like("CUST0002"),
+              },
+              answers: like({
+                scheme: "SFI",
+                year: 2025,
+                hasCheckedLandIsUpToDate: true,
+              }),
+            },
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.payload).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.sbi).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.frn).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.defraId).toBeUndefined();
+          expect(cloudEvent.data.payload.metadata).toBeUndefined();
+        });
+    });
   });
 
   describe("UpdateCaseStatusCommand Message", () => {
@@ -186,6 +243,54 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           if (cloudEvent.data.supplementaryData) {
             expect(cloudEvent.data.supplementaryData).toBeTypeOf("object");
           }
+        });
+    });
+
+    it("should accept a case status update command without supplementary data array fields", async () => {
+      await messagePact
+        .expectsToReceive(
+          "a case status update command from GAS without supplementary data array fields",
+        )
+        .withContent({
+          // CloudEvent fields
+          id: uuid("12345678-1234-1234-1234-123456789004"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.update.status",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.update\\.status$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("CASE-REF-002"),
+            workflowCode: like("frps-private-beta"),
+            newStatus: term({
+              generate: "PRE_AWARD:ASSESSMENT:IN_REVIEW",
+              matcher: "^[A-Z_]+:[A-Z_]+:[A-Z_]+$",
+            }),
+            supplementaryData: like({
+              phase: "PRE_AWARD",
+              stage: "ASSESSMENT",
+            }),
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.newStatus).toBeDefined();
+          expect(cloudEvent.data.supplementaryData).toBeDefined();
+          expect(cloudEvent.data.supplementaryData.targetNode).toBeUndefined();
+          expect(cloudEvent.data.supplementaryData.dataType).toBeUndefined();
+          expect(cloudEvent.data.supplementaryData.data).toBeUndefined();
         });
     });
   });
