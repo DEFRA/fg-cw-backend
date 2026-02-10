@@ -98,6 +98,35 @@ pact broker publish --merge tmp/pacts/*.json \
 npm run test:contract
 ```
 
+This runs all contract tests (consumer and provider) and fetches pacts from the broker by default.
+
+### Run Tests in Local Mode
+
+```bash
+npm run test:contract:local
+```
+
+This runs tests using local pact files from `tmp/pacts/` instead of fetching from the broker. Useful for local development when you want to test against locally generated pacts.
+
+**Environment Variables**:
+
+- `PACT_USE_LOCAL=true` - Use local pact files instead of broker
+- `PACT_LOCAL_DIR` - Custom directory for local pacts (default: `tmp/pacts`)
+- `PACT_BROKER_BASE_URL` - Pact broker URL (default: `https://ffc-pact-broker.azure.defra.cloud`)
+- `PACT_USER` - Broker username
+- `PACT_PASS` - Broker password
+- `PACT_PUBLISH_VERIFICATION` - Publish verification results to broker (default: `false`)
+
+### Provider Tests
+
+Provider tests verify that CW sends messages matching GAS expectations. The test uses `MessageProviderPact` and fetches pacts from the broker by default:
+
+**File**: `provider.gas-backend.test.js`
+
+- In CI: Fetches from broker using `PACT_USER` and `PACT_PASS`
+- Locally: Set `PACT_USE_LOCAL=true` to test against local pact files
+- Configuration: `messageVerifierConfig.js` handles broker vs local mode
+
 ## Pact Broker
 
 **URL**: https://ffc-pact-broker.azure.defra.cloud

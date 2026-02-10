@@ -14,6 +14,7 @@
     "test:integration": "vitest --config test/vitest.config.js --dir test",
     "test:integration:verbose": "PRINT_LOGS=1 npm run test:integration",
     "test:contract": "vitest --config test/contract/vitest.config.js --dir test/contract",
+    "test:contract:local": "PACT_USE_LOCAL=true vitest --config test/contract/vitest.config.js --dir test/contract",
     "dev": "nodemon --env-file .env src/main.js",
     "publish:case:new": "node scripts/publish-create-new-case.js",
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
