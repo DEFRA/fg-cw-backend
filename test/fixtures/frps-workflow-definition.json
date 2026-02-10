@@ -166,28 +166,44 @@
                                 "text": "$.payload.answers.applicant.business.address.line2"
                               },
                               {
-                                "component": "line-break"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.address.line2",
+                                "whenTrue": {
+                                  "component": "line-break"
+                                }
                               },
                               {
                                 "component": "text",
                                 "text": "$.payload.answers.applicant.business.address.line3"
                               },
                               {
-                                "component": "line-break"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.address.line3",
+                                "whenTrue": {
+                                  "component": "line-break"
+                                }
                               },
                               {
                                 "component": "text",
                                 "text": "$.payload.answers.applicant.business.address.line4"
                               },
                               {
-                                "component": "line-break"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.address.line4",
+                                "whenTrue": {
+                                  "component": "line-break"
+                                }
                               },
                               {
                                 "component": "text",
                                 "text": "$.payload.answers.applicant.business.address.line5"
                               },
                               {
-                                "component": "line-break"
+                                "component": "conditional",
+                                "condition": "$.payload.answers.applicant.business.address.line5",
+                                "whenTrue": {
+                                  "component": "line-break"
+                                }
                               },
                               {
                                 "component": "text",
