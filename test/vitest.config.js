@@ -28,8 +28,8 @@ export default defineConfig({
       AWS_ACCESS_KEY_ID: "test",
       AWS_SECRET_ACCESS_KEY: "test",
       CW__SQS__CREATE_NEW_CASE_URL: `${SQS_URL}/cw__sqs__create_new_case_fifo.fifo`,
-      CW__SQS__UPDATE_STATUS_URL: `${SQS_URL}/cw__sqs__update_case_status_fifo.fifo`,
-      GAS__SQS__UPDATE_STATUS: `${SQS_URL}/gas__sqs__update_status_fifo.fifo`,
+      CW__SQS__UPDATE_STATUS_URL: `${SQS_URL}/cw__sqs__update_status_fifo.fifo`,
+      GAS__SQS__UPDATE_STATUS: `${SQS_URL}/gas__sqs__update_status_fifo.fifo`, // required for varification purposes only
       OIDC_JWKS_URI: `http://localhost:${ENTRA_PORT}/jwks`,
       OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",
