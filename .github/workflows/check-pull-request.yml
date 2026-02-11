@@ -56,29 +56,6 @@ jobs:
     runs-on: self-hosted
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
     steps:
-      - name: Debug runner context
-        run: |
-          echo "Runner name: ${RUNNER_NAME}"
-          echo "Runner OS: ${RUNNER_OS}"
-          echo "Runner arch: ${RUNNER_ARCH}"
-          echo "Job: ${GITHUB_JOB}"
-          echo "Workflow: ${GITHUB_WORKFLOW}"
-          echo "Event: ${GITHUB_EVENT_NAME}"
-          echo "Repository: ${GITHUB_REPOSITORY}"
-
-      - name: Debug pact credentials presence
-        run: |
-          if [ -z "${PACT_USER}" ]; then
-            echo "PACT_USER is not set on runner environment."
-          else
-            echo "PACT_USER is set."
-          fi
-          if [ -z "${PACT_PASS}" ]; then
-            echo "PACT_PASS is not set on runner environment."
-          else
-            echo "PACT_PASS is set."
-          fi
-
       - name: Mask secrets
         run: |
           echo "::add-mask::$PACT_USER"
