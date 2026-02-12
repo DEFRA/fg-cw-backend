@@ -47,6 +47,7 @@ describe("CW Provider (sends messages to GAS)", () => {
 
       // Verify against the pact file from broker (or local if PACT_USE_LOCAL=true)
       const verifyOpts = buildMessageVerifierOptions({
+        providerName: "fg-cw-backend",
         consumerName: "fg-gas-backend",
       });
 
