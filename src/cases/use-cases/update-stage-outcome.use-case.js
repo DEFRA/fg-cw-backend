@@ -57,6 +57,7 @@ export const updateStageOutcomeUseCase = async (command) => {
         new Outbox({
           event: caseStatusEvent,
           target: config.get("aws.sns.caseStatusUpdatedTopicArn"),
+          segregationRef: Outbox.getSegregationRef(caseStatusEvent),
         }),
       ],
       session,

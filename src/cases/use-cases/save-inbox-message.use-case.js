@@ -1,3 +1,4 @@
+import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { Inbox } from "../models/inbox.js";
 import {
@@ -7,6 +8,11 @@ import {
 
 export const messageSource = {
   Gas: "GAS",
+};
+
+export const getSegregationRef = (event) => {
+  const { data } = event;
+  return getMessageGroupId(null, data);
 };
 
 export const saveInboxMessageUseCase = async (message, source) => {
@@ -27,6 +33,7 @@ export const saveInboxMessageUseCase = async (message, source) => {
     messageId: message.id,
     type: message.type,
     source,
+    segregationRef: getSegregationRef(message),
   });
 
   await insertOne(inbox);
