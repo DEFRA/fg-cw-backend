@@ -13,7 +13,13 @@ import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
 import { Outbox } from "../models/outbox.js";
 import {
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "../repositories/fifo-lock.repository.js";
+import {
   claimEvents,
+  findNextMessage,
   update,
   updateDeadEvents,
   updateExpiredEvents,
@@ -23,7 +29,18 @@ import {
 import { OutboxSubscriber } from "./outbox.subscriber.js";
 
 vi.mock("../../common/sns-client.js");
+vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../repositories/outbox.repository.js");
+
+const createOutbox = (doc) =>
+  new Outbox({
+    target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+    event: {
+      time: new Date().toISOString(),
+    },
+    segregationRef: "test-segregation-ref",
+    ...doc,
+  });
 
 describe("outbox.subscriber", () => {
   beforeEach(() => {
@@ -33,6 +50,13 @@ describe("outbox.subscriber", () => {
     updateExpiredEvents.mockResolvedValue({ modifiedCount: 0 });
     publish.mockResolvedValue(1);
     claimEvents.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(
+      createOutbox({ segregationRef: "ref_1" }),
+    );
+    claimEvents.mockResolvedValue([Outbox.createMock()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    freeFifoLock.mockResolvedValue();
   });
 
   afterEach(() => {
@@ -51,17 +75,37 @@ describe("outbox.subscriber", () => {
   });
 
   it("should start polling on start()", async () => {
-    claimEvents.mockResolvedValue([new Outbox({})]);
+    claimEvents.mockResolvedValue([
+      new Outbox({
+        target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+        event: {},
+        segregationRef: "test-segregation-ref",
+      }),
+    ]);
+    vi.spyOn(OutboxSubscriber.prototype, "processEvents").mockResolvedValue();
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalled();
     expect(subscriber.running).toBeTruthy();
   });
 
-  it("should stop polling after stop()", () => {
-    claimEvents.mockResolvedValue([new Outbox({})]);
+  it("should stop polling after stop()", async () => {
+    claimEvents.mockResolvedValue([
+      new Outbox({
+        target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+        event: {},
+        segregationRef: "test-segregation-ref",
+      }),
+    ]);
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
     expect(claimEvents).toHaveBeenCalledTimes(1);
     subscriber.stop();
     expect(subscriber.running).toBeFalsy();
@@ -74,7 +118,8 @@ describe("outbox.subscriber", () => {
 
     const mockEvent = new Outbox({
       target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
-      event: { data: { foo: "bar" } },
+      event: { data: { foo: "bar" }, messageGroupId: "group-1" },
+      segregationRef: "test-segregation-ref",
     });
     mockEvent.markAsComplete = vi.fn();
 
@@ -87,6 +132,10 @@ describe("outbox.subscriber", () => {
 
     const subscriber = new OutboxSubscriber();
     subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
 
     await vi.waitFor(() => {
       expect(logger.error).toHaveBeenCalledWith(error, "Error polling outbox");
@@ -113,7 +162,7 @@ describe("outbox.subscriber", () => {
     publish.mockRejectedValue(1);
     const mockEvent = {
       target: "arn:some:value",
-      event: {},
+      event: { messageGroupId: "group-1" },
       markAsFailed: vi.fn(),
     };
     const outbox = new OutboxSubscriber();
@@ -126,7 +175,7 @@ describe("outbox.subscriber", () => {
 
     const mockEvent = {
       target: "arn:some:value",
-      event: {},
+      event: { messageGroupId: "group-1" },
       markAsComplete: vi.fn(),
     };
     const outbox = new OutboxSubscriber();
@@ -162,6 +211,64 @@ describe("outbox.subscriber", () => {
     await outbox.markEventUnsent(mockEvent);
     expect(mockEvent.markAsFailed).toHaveBeenCalled();
     expect(update).toHaveBeenCalledWith(mockEvent, "1234");
+  });
+
+  it("should skip processing when lock is not acquired", async () => {
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchedCount: 0 });
+
+    const subscriber = new OutboxSubscriber();
+    const processEventsSpy = vi
+      .spyOn(subscriber, "processEvents")
+      .mockResolvedValue();
+
+    await subscriber.processWithLock("claim-token", "ref_1");
+
+    expect(setFifoLock).toHaveBeenCalledWith("OUTBOX", "ref_1");
+    expect(claimEvents).not.toHaveBeenCalled();
+    expect(processEventsSpy).not.toHaveBeenCalled();
+  });
+
+  it("should append _fifo.fifo to topic string", () => {
+    const subscriber = new OutboxSubscriber();
+    expect(subscriber.topicStringToFifo("arn:aws:sns:topic")).toBe(
+      "arn:aws:sns:topic_fifo.fifo",
+    );
+  });
+
+  it("should not double-append _fifo.fifo", () => {
+    const subscriber = new OutboxSubscriber();
+    expect(subscriber.topicStringToFifo("arn:aws:sns:topic_fifo.fifo")).toBe(
+      "arn:aws:sns:topic_fifo.fifo",
+    );
+  });
+
+  it("should processExpiredEvents", async () => {
+    updateExpiredEvents.mockResolvedValue({ modifiedCount: 2 });
+    const subscriber = new OutboxSubscriber();
+    await subscriber.processExpiredEvents();
+    expect(updateExpiredEvents).toHaveBeenCalled();
+  });
+
+  it("should getNextAvailable", async () => {
+    const mockLock = { segregationRef: "locked-ref" };
+    getFifoLocks.mockResolvedValue([mockLock]);
+    findNextMessage.mockResolvedValue({ segregationRef: "available-ref" });
+
+    const subscriber = new OutboxSubscriber();
+    const result = await subscriber.getNextAvailable();
+
+    expect(getFifoLocks).toHaveBeenCalledWith("OUTBOX");
+    expect(findNextMessage).toHaveBeenCalledWith(["locked-ref"]);
+    expect(result).toBe("available-ref");
+  });
+
+  it("should return undefined when no next available", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(null);
+
+    const subscriber = new OutboxSubscriber();
+    const result = await subscriber.getNextAvailable();
+    expect(result).toBeUndefined();
   });
 
   it("should processFailedEvents", async () => {

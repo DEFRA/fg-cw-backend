@@ -5,7 +5,14 @@ import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import {
+  cleanupStaleLocks,
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "../repositories/fifo-lock.repository.js";
+import {
   claimEvents,
+  findNextMessage,
   processExpiredEvents,
   update,
   updateDeadEvents,
@@ -22,6 +29,7 @@ export const useCaseMap = {
 };
 
 export class InboxSubscriber {
+  static ACTOR = "INBOX";
   constructor() {
     this.interval = parseInt(config.get("inbox.inboxPollMs"));
     this.running = false;
@@ -33,18 +41,45 @@ export class InboxSubscriber {
 
       try {
         const claimToken = randomUUID();
-        const events = await claimEvents(claimToken);
-        await this.processEvents(events);
+        const availableSegregationRef = await this.getNextAvailable();
+        if (availableSegregationRef) {
+          await this.processWithLock(claimToken, availableSegregationRef);
+        }
+
         await this.processResubmittedEvents();
         await this.processFailedEvents();
         await this.processDeadEvents();
         await this.processExpiredEvents();
+        await cleanupStaleLocks(InboxSubscriber.ACTOR);
       } catch (error) {
         logger.error(error, "Error polling inbox");
       }
 
       await setTimeout(this.interval);
     }
+  }
+
+  async processWithLock(claimToken, segregationRef) {
+    const lock = await setFifoLock(InboxSubscriber.ACTOR, segregationRef);
+    if (lock.upsertedCount === 0 && lock.matchedCount === 0) {
+      logger.info(
+        `Inbox unable to process lock for segregationRef ${segregationRef}`,
+      );
+      return;
+    }
+    try {
+      const events = await claimEvents(claimToken, segregationRef);
+      await this.processEvents(events);
+    } finally {
+      await freeFifoLock(InboxSubscriber.ACTOR, segregationRef);
+    }
+  }
+
+  async getNextAvailable() {
+    const locks = await getFifoLocks(InboxSubscriber.ACTOR);
+    const lockIds = locks.map((lock) => lock.segregationRef);
+    const available = await findNextMessage(lockIds);
+    return available?.segregationRef;
   }
 
   async processExpiredEvents() {
@@ -112,7 +147,9 @@ export class InboxSubscriber {
   }
 
   async processEvents(events) {
-    await Promise.all(events.map((event) => this.handleEvent(event)));
+    for (const event of events) {
+      await this.handleEvent(event);
+    }
   }
 
   start() {

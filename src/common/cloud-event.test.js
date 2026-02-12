@@ -8,9 +8,13 @@ describe("CloudEvent", () => {
     const event = await withTraceParent(
       "1234-0987",
       async () =>
-        new CloudEvent("test.type", {
-          key: "value",
-        }),
+        new CloudEvent(
+          "test.type",
+          {
+            key: "value",
+          },
+          "message-group-id",
+        ),
     );
 
     expect(event).toEqual({
@@ -24,6 +28,19 @@ describe("CloudEvent", () => {
       data: {
         key: "value",
       },
+      messageGroupId: "message-group-id",
     });
+  });
+
+  it("requires type, data and messageGroupId", () => {
+    expect(() => new CloudEvent()).toThrow("CloudEvent requires input 'type'");
+
+    expect(() => new CloudEvent("test.type")).toThrow(
+      "CloudEvent requires input 'data'",
+    );
+
+    expect(() => new CloudEvent("test.type", { key: "value" })).toThrow(
+      "CloudEvent requires input 'messageGroupId'",
+    );
   });
 });

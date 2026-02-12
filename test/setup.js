@@ -28,6 +28,7 @@ export const setup = async ({ globalConfig }) => {
   await ensureQueues([
     env.CW__SQS__CREATE_NEW_CASE_URL,
     env.CW__SQS__UPDATE_STATUS_URL,
+    env.GAS__SQS__UPDATE_STATUS,
   ]);
 
   if (env.PRINT_LOGS) {
