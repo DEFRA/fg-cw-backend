@@ -5,6 +5,7 @@ import { db } from "../../common/mongo-client.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
   claimEvents,
+  findNextMessage,
   insertMany,
   update,
   updateDeadEvents,
@@ -16,6 +17,31 @@ import {
 vi.mock("../../common/mongo-client.js");
 
 describe("outbox.repository", () => {
+  describe("findNextMessage", () => {
+    it("should find next message excluding locked segregationRefs", async () => {
+      const lockIds = ["ref-a", "ref-b"];
+      const mockDoc = { _id: "1", segregationRef: "ref-c" };
+      const findOne = vi.fn().mockResolvedValue(mockDoc);
+
+      db.collection.mockReturnValue({ findOne });
+
+      const result = await findNextMessage(lockIds);
+
+      expect(findOne).toHaveBeenCalledWith(
+        {
+          status: { $eq: OutboxStatus.PUBLISHED },
+          claimedBy: { $eq: null },
+          completionAttempts: {
+            $lte: parseInt(config.get("outbox.outboxMaxRetries")),
+          },
+          segregationRef: { $nin: lockIds },
+        },
+        { sort: { publicationDate: 1 } },
+      );
+      expect(result).toBe(mockDoc);
+    });
+  });
+
   describe("insertMany", () => {
     it("should insert events", async () => {
       const mockInsertMany = vi.fn().mockResolvedValueOnce({
@@ -31,12 +57,14 @@ describe("outbox.repository", () => {
           event: {
             clientRef: "1234-7778",
           },
+          segregationRef: "test-segregation-ref-1",
         }),
         new Outbox({
           target: "arn:some:other:value",
           event: {
             clientRef: "0987-1234",
           },
+          segregationRef: "test-segregation-ref-2",
         }),
       ];
 
@@ -62,6 +90,7 @@ describe("outbox.repository", () => {
         },
         completionAttempts: 1,
         status: OutboxStatus.PUBLISHED,
+        segregationRef: "test-segregation-ref",
       };
       const findOneAndUpdateMock = vi.fn();
       findOneAndUpdateMock
@@ -93,6 +122,7 @@ describe("outbox.repository", () => {
         target: "arn:foo:bar",
         completionAttempts: 1,
         status: OutboxStatus.PROCESSING,
+        segregationRef: "test-segregation-ref",
       });
 
       await update(outboxEvent, claimedBy);
@@ -113,6 +143,7 @@ describe("outbox.repository", () => {
             publicationDate: expect.any(Date),
             status: "PROCESSING",
             target: "arn:foo:bar",
+            segregationRef: expect.any(String),
           },
         },
       );
