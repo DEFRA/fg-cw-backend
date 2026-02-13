@@ -32,11 +32,11 @@ describe("GET /cases/{caseId}", () => {
     const { insertedIds } = await cases.insertMany([
       {
         ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData2,
-        dateReceived: new Date(caseData2.dateReceived),
+        createdAt: new Date(caseData2.createdAt),
       },
     ]);
 
@@ -118,7 +118,7 @@ describe("GET /cases/{caseId}", () => {
           },
         ],
       },
-      dateReceived: new Date(caseData2.dateReceived).toISOString(),
+      createdAt: new Date(caseData2.createdAt).toISOString(),
       payload: caseData2.payload,
       supplementaryData: caseData2.supplementaryData,
       assignedUser: null,
