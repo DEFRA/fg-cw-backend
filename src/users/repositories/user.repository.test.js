@@ -401,18 +401,38 @@ describe("upsert", () => {
     const user = User.createMock();
     const userDocument = new UserDocument(user);
 
+    const findOne = vi.fn().mockResolvedValue(null);
     const findOneAndUpdate = vi
       .fn()
-      .mockResolvedValue(UserDocument.createMock({ id: user.id }));
+      .mockResolvedValueOnce(null) // First attempt: no idpId match
+      .mockResolvedValueOnce(UserDocument.createMock({ id: user.id })); // Third attempt: upsert success
 
     db.collection.mockReturnValue({
+      findOne,
       findOneAndUpdate,
     });
 
     const result = await upsertLogin(user);
 
     expect(db.collection).toHaveBeenCalledWith("users");
-    expect(findOneAndUpdate).toHaveBeenCalledWith(
+
+    // 1. Try update by idpId
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      { idpId: userDocument.idpId },
+      expect.objectContaining({ $set: expect.any(Object) }),
+      { returnDocument: "after" },
+    );
+
+    // 2. Check for manual user
+    expect(findOne).toHaveBeenCalledWith({
+      email: { $regex: expect.any(RegExp) },
+      createdManually: true,
+    });
+
+    // 3. Perform upsert
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      2,
       { idpId: userDocument.idpId },
       expect.objectContaining({
         $set: {
@@ -461,13 +481,13 @@ describe("upsert", () => {
     const result = await upsertLogin(user);
 
     expect(db.collection).toHaveBeenCalledWith("users");
+
+    // Should only call findOneAndUpdate once and not call findOne
+    expect(findOneAndUpdate).toHaveBeenCalledTimes(1);
     expect(findOneAndUpdate).toHaveBeenCalledWith(
       { idpId: user.idpId },
       expect.any(Object),
-      {
-        upsert: true,
-        returnDocument: "after",
-      },
+      { returnDocument: "after" },
     );
 
     expect(result.idpId).toBe("existing-idp-id");
@@ -477,14 +497,122 @@ describe("upsert", () => {
   it("throws when findOneAndUpdate returns null", async () => {
     const user = User.createMock();
 
+    const findOne = vi.fn().mockResolvedValue(null);
     const findOneAndUpdate = vi.fn().mockResolvedValue(null);
 
     db.collection.mockReturnValue({
+      findOne,
       findOneAndUpdate,
     });
 
     await expect(upsertLogin(user)).rejects.toThrow(
       Boom.internal("User could not be created or updated"),
+    );
+  });
+
+  it("links manually-created user on first Entra ID login", async () => {
+    const user = User.createMock({
+      idpId: "new-entra-id",
+      email: "manual@defra.gov.uk",
+    });
+
+    const manualUserDoc = UserDocument.createMock({
+      _id: new ObjectId(),
+      email: "manual@defra.gov.uk",
+      createdManually: true,
+    });
+
+    const findOne = vi.fn().mockResolvedValue(manualUserDoc);
+    const findOneAndUpdate = vi
+      .fn()
+      .mockResolvedValueOnce(null) // 1. idpId match fails
+      .mockResolvedValueOnce({
+        ...manualUserDoc,
+        idpId: "new-entra-id",
+        createdManually: false,
+        updatedAt: new Date(),
+        lastLoginAt: new Date(),
+      }); // 2. Linking success
+
+    db.collection.mockReturnValue({
+      findOne,
+      findOneAndUpdate,
+    });
+
+    const result = await upsertLogin(user);
+
+    // 1. Try update by idpId
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      { idpId: user.idpId },
+      expect.any(Object),
+      { returnDocument: "after" },
+    );
+
+    // 2. Check for manual user
+    expect(findOne).toHaveBeenCalledWith({
+      email: { $regex: expect.any(RegExp) },
+      createdManually: true,
+    });
+
+    // 3. Link manual user
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      2,
+      { _id: manualUserDoc._id },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          idpId: "new-entra-id",
+          createdManually: false,
+        }),
+      }),
+      { returnDocument: "after" },
+    );
+
+    expect(result.idpId).toBe("new-entra-id");
+    expect(result.createdManually).toBe(false);
+  });
+
+  it("does not link if user was not created manually", async () => {
+    const user = User.createMock({
+      idpId: "new-entra-id",
+      email: "existing@defra.gov.uk",
+    });
+
+    const findOne = vi.fn().mockResolvedValue(null);
+    const findOneAndUpdate = vi
+      .fn()
+      .mockResolvedValueOnce(null) // 1. idpId match fails
+      .mockResolvedValueOnce(
+        UserDocument.createMock({ idpId: "new-entra-id" }),
+      ); // 3. Upsert success
+
+    db.collection.mockReturnValue({
+      findOne,
+      findOneAndUpdate,
+    });
+
+    await upsertLogin(user);
+
+    // 1. Try update by idpId
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      { idpId: "new-entra-id" },
+      expect.any(Object),
+      { returnDocument: "after" },
+    );
+
+    // 2. Check for manual user
+    expect(findOne).toHaveBeenCalledWith({
+      email: { $regex: expect.any(RegExp) },
+      createdManually: true,
+    });
+
+    // 3. Final upsert
+    expect(findOneAndUpdate).toHaveBeenNthCalledWith(
+      2,
+      { idpId: "new-entra-id" },
+      expect.any(Object),
+      { upsert: true, returnDocument: "after" },
     );
   });
 });
