@@ -1,16 +1,14 @@
 /**
- * Migration: Add unique index on email field
- *
- * This migration adds a unique constraint on the email field in the users collection.
- * Since emails are now normalized to lowercase before storage, this ensures:
- * 1. No duplicate users can be created with the same email address
- * 2. Database-level enforcement of email uniqueness (not just application-level)
- *
- * Prerequisites:
- * - All existing emails should already be lowercase (no production data yet)
- * - If running against existing data, ensure no duplicate emails exist first
+ * Normalizes existing emails to lowercase and adds unique index on email field.
+ * Ensures no duplicate users with same email (case-insensitive).
  */
 export const up = async (db) => {
   const users = db.collection("users");
+
+  // Normalize existing emails to lowercase in case there are production users
+  await users.updateMany({ email: { $exists: true, $ne: null } }, [
+    { $set: { email: { $toLower: "$email" } } },
+  ]);
+
   await users.createIndex({ email: 1 }, { unique: true });
 };
