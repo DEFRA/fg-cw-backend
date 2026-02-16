@@ -19,6 +19,11 @@ const getLatestGitTagOrFallback = () => {
  */
 export const buildMessageVerifierOptions = ({ providerName, consumerName }) => {
   const useLocal = env.PACT_USE_LOCAL === "true";
+  // Log mode without exposing credentials.
+  // eslint-disable-next-line no-console
+  console.log(
+    `pact verifier mode=${useLocal ? "local" : "broker"}, brokerUrlSet=${Boolean(env.PACT_BROKER_BASE_URL)}`,
+  );
 
   const baseOpts = {
     provider: providerName,
