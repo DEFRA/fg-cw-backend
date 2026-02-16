@@ -7,6 +7,20 @@ import { User } from "../models/user.js";
 
 const collection = "users";
 
+/**
+ * Handles MongoDB duplicate key errors (code 11000) for user operations.
+ * Throws appropriate Boom.conflict errors based on which unique constraint was violated.
+ */
+const handleDuplicateKeyError = (error) => {
+  if (error.code === 11000) {
+    if (error.keyPattern?.email) {
+      throw Boom.conflict("A user with this email address already exists");
+    }
+    throw Boom.conflict("User with the same idpId already exists");
+  }
+  throw error;
+};
+
 const toUser = (doc) => {
   const appRoles = {};
   for (const [roleName, roleData] of Object.entries(doc.appRoles)) {
@@ -39,10 +53,7 @@ export const save = async (user) => {
   try {
     result = await db.collection(collection).insertOne(userDocument);
   } catch (error) {
-    if (error.code === 11000) {
-      throw Boom.conflict(`User with the same idpId already exists`);
-    }
-    throw error;
+    handleDuplicateKeyError(error);
   }
 
   if (!result.acknowledged) {
@@ -125,7 +136,7 @@ export const findById = async (userId) => {
 };
 
 /**
- * Logic Flow for User Login Upsert (after ticket FGP-903: Manual account lnking):
+ * Logic Flow for User Login Upsert (after ticket FGP-903: Manual account linking):
  *
  * 1. RETURNING USER: Try updating by 'idpId' first.
  *    - If found, this is a standard returning user (most common path).
@@ -169,10 +180,11 @@ export const upsertLogin = async (user) => {
 };
 
 const firstTimeLogin = async (userDocument, loginFields) => {
-  // First-time login - check if this email has a manually-created user
-  // This handles the case where admin created a user before they logged in via Entra ID
+  // First-time login - check if this email has a manually-created user.
+  // This handles the case where admin created a user before they logged in via Entra ID.
+  // Uses exact match since userDocument.email is already normalized to lowercase.
   const manualUser = await db.collection(collection).findOne({
-    email: { $regex: new RegExp(`^${userDocument.email}$`, "i") },
+    email: userDocument.email,
     createdManually: true,
   });
 
@@ -180,21 +192,28 @@ const firstTimeLogin = async (userDocument, loginFields) => {
     return linkManualUser(manualUser, userDocument, loginFields);
   }
 
-  // Create new user (or final fallback upsert)
-  const result = await db.collection(collection).findOneAndUpdate(
-    { idpId: userDocument.idpId },
-    {
-      $set: loginFields,
-      $setOnInsert: {
-        createdAt: userDocument.createdAt,
-        appRoles: userDocument.appRoles,
+  // Create new user (or final fallback upsert).
+  // Wrapped in try/catch to handle race condition where two users with the same
+  // email but different idpIds attempt to register simultaneously.
+  let result;
+  try {
+    result = await db.collection(collection).findOneAndUpdate(
+      { idpId: userDocument.idpId },
+      {
+        $set: loginFields,
+        $setOnInsert: {
+          createdAt: userDocument.createdAt,
+          appRoles: userDocument.appRoles,
+        },
       },
-    },
-    {
-      upsert: true,
-      returnDocument: "after",
-    },
-  );
+      {
+        upsert: true,
+        returnDocument: "after",
+      },
+    );
+  } catch (error) {
+    handleDuplicateKeyError(error);
+  }
 
   if (!result) {
     throw Boom.internal("User could not be created or updated");
@@ -225,8 +244,15 @@ const linkManualUser = async (manualUser, userDocument, loginFields) => {
 };
 
 export const findByEmail = async (email) => {
+  // Guard against null/undefined to prevent TypeError on toLowerCase()
+  if (!email || typeof email !== "string") {
+    return null;
+  }
+
+  // Use exact match on lowercase email since emails are stored normalized.
+  // This avoids regex injection issues with special characters like + or .
   const userDocument = await db.collection(collection).findOne({
-    email: { $regex: new RegExp(`^${email}$`, "i") },
+    email: email.toLowerCase(),
   });
 
   return userDocument && toUser(userDocument);

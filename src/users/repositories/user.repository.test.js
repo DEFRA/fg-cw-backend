@@ -41,6 +41,7 @@ describe("save", () => {
   it("throws Boom.conflict when idpId exists", async () => {
     const error = new MongoServerError("E11000 duplicate key error collection");
     error.code = 11000;
+    error.keyPattern = { idpId: 1 };
 
     db.collection.mockReturnValue({
       insertOne: vi.fn().mockRejectedValue(error),
@@ -49,7 +50,23 @@ describe("save", () => {
     const user = User.createMock();
 
     await expect(save(user)).rejects.toThrow(
-      Boom.conflict(`User with the same idpId already exists`),
+      Boom.conflict("User with the same idpId already exists"),
+    );
+  });
+
+  it("throws Boom.conflict when email exists", async () => {
+    const error = new MongoServerError("E11000 duplicate key error collection");
+    error.code = 11000;
+    error.keyPattern = { email: 1 };
+
+    db.collection.mockReturnValue({
+      insertOne: vi.fn().mockRejectedValue(error),
+    });
+
+    const user = User.createMock();
+
+    await expect(save(user)).rejects.toThrow(
+      Boom.conflict("A user with this email address already exists"),
     );
   });
 
@@ -424,9 +441,9 @@ describe("upsert", () => {
       { returnDocument: "after" },
     );
 
-    // 2. Check for manual user
+    // 2. Check for manual user (using exact lowercase email, not regex)
     expect(findOne).toHaveBeenCalledWith({
-      email: { $regex: expect.any(RegExp) },
+      email: userDocument.email,
       createdManually: true,
     });
 
@@ -510,6 +527,32 @@ describe("upsert", () => {
     );
   });
 
+  it("throws Boom.conflict when duplicate email race condition occurs", async () => {
+    const user = User.createMock({
+      idpId: "new-entra-id",
+      email: "duplicate@defra.gov.uk",
+    });
+
+    const error = new MongoServerError("E11000 duplicate key error");
+    error.code = 11000;
+    error.keyPattern = { email: 1 };
+
+    const findOne = vi.fn().mockResolvedValue(null); // No manual user found
+    const findOneAndUpdate = vi
+      .fn()
+      .mockResolvedValueOnce(null) // 1. idpId match fails
+      .mockRejectedValueOnce(error); // 2. Upsert fails due to duplicate email
+
+    db.collection.mockReturnValue({
+      findOne,
+      findOneAndUpdate,
+    });
+
+    await expect(upsertLogin(user)).rejects.toThrow(
+      Boom.conflict("A user with this email address already exists"),
+    );
+  });
+
   it("links manually-created user on first Entra ID login", async () => {
     const user = User.createMock({
       idpId: "new-entra-id",
@@ -549,9 +592,9 @@ describe("upsert", () => {
       { returnDocument: "after" },
     );
 
-    // 2. Check for manual user
+    // 2. Check for manual user (exact match on normalized email)
     expect(findOne).toHaveBeenCalledWith({
-      email: { $regex: expect.any(RegExp) },
+      email: "manual@defra.gov.uk",
       createdManually: true,
     });
 
@@ -601,9 +644,9 @@ describe("upsert", () => {
       { returnDocument: "after" },
     );
 
-    // 2. Check for manual user
+    // 2. Check for manual user (exact match on normalized email)
     expect(findOne).toHaveBeenCalledWith({
-      email: { $regex: expect.any(RegExp) },
+      email: "existing@defra.gov.uk",
       createdManually: true,
     });
 
@@ -618,7 +661,7 @@ describe("upsert", () => {
 });
 
 describe("findByEmail", () => {
-  it("returns a user by email (case insensitive)", async () => {
+  it("returns a user by email (normalizes to lowercase)", async () => {
     const userDocument = UserDocument.createMock();
     const userId = userDocument._id.toString();
 
@@ -628,12 +671,14 @@ describe("findByEmail", () => {
       findOne,
     });
 
+    // Input has mixed case, but query should use lowercase
     const result = await findByEmail("Bob.Bill@defra.gov.uk");
 
     expect(db.collection).toHaveBeenCalledWith("users");
 
+    // Should query with exact lowercase email, not regex
     expect(findOne).toHaveBeenCalledWith({
-      email: { $regex: expect.any(RegExp) },
+      email: "bob.bill@defra.gov.uk",
     });
 
     expect(result).toEqual(
@@ -649,6 +694,24 @@ describe("findByEmail", () => {
     });
 
     const result = await findByEmail("nonexistent@example.com");
+
+    expect(result).toEqual(null);
+  });
+
+  it("returns null when email is null", async () => {
+    const result = await findByEmail(null);
+
+    expect(result).toEqual(null);
+  });
+
+  it("returns null when email is undefined", async () => {
+    const result = await findByEmail(undefined);
+
+    expect(result).toEqual(null);
+  });
+
+  it("returns null when email is not a string", async () => {
+    const result = await findByEmail(123);
 
     expect(result).toEqual(null);
   });
