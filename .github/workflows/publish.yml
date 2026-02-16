@@ -80,6 +80,7 @@ jobs:
           if [ -z "${PACT_PASS}" ]; then echo "PACT_PASS is not set"; else echo "PACT_PASS is set"; fi
           npm ci --ignore-scripts
           npm run test:contract -- test/contract/consumer.gas-backend.test.js
+          npm run test:contract -- test/contract/consumer.land-grants-api.test.js
 
       - name: Setup Pact CLI for message verification
         run: |
