@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
 export class UserDocument {
+  // eslint-disable-next-line complexity
   constructor(props) {
     this._id = props.id
       ? ObjectId.createFromHexString(props.id)
