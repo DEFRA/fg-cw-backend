@@ -35,11 +35,9 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
 
   describe("CreateNewCaseCommand Message", () => {
     // Note: The realistic payload defined in these tests is verified to process through
-    // CW's case creation logic via local provider verification testing. The GAS provider
-    // test (fg-gas-backend/test/contract/provider.cw-backend.test.js) uses this same
-    // realistic structure, and local verification confirms both sides are compatible.
-    // CW's createCaseUseCase stores the entire payload object without structure validation,
-    // so pact acceptance proves case creation will succeed.
+    // CW's case creation logic in test/contract/realistic-payload.integration.test.js
+    // That integration test proves Case.new() can accept the realistic payload structure
+    // without throwing errors, addressing the "danger area" of payload processing.
     it("should accept a create new case command from GAS", async () => {
       await messagePact
         .expectsToReceive("a create new case command from GAS")
