@@ -19,3 +19,5 @@ pact/
 
 .env
 .env.test
+COORDINATION_MESSAGE_LAND_GRANTS_API.md
+test/contract/README-LAND-GRANTS-API.md
