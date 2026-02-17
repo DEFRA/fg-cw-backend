@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
 export class UserDocument {
+  // eslint-disable-next-line complexity
   constructor(props) {
     this._id = props.id
       ? ObjectId.createFromHexString(props.id)
@@ -8,7 +9,9 @@ export class UserDocument {
 
     this.idpId = props.idpId;
     this.name = props.name;
-    this.email = props.email;
+    // Normalize email to lowercase for consistent storage and querying.
+    // This ensures case-insensitive uniqueness and avoids regex-based lookups.
+    this.email = props.email?.toLowerCase();
     this.idpRoles = props.idpRoles;
     this.appRoles = props.appRoles;
     this.createdAt = new Date(props.createdAt);
