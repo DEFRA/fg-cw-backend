@@ -20,9 +20,9 @@
               "text": "$.currentStatusName",
               "type": "string"
             },
-            "dateReceived": {
-              "label": "Date Received",
-              "text": "$.dateReceived",
+            "createdAt": {
+              "label": "Created At",
+              "text": "$.createdAt",
               "type": "date",
               "format": "formatDate"
             }

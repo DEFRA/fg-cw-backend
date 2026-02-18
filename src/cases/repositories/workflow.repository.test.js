@@ -3,7 +3,7 @@ import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
-import { createUserRolesFilter } from "../use-cases/find-cases.use-case.js";
+import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
@@ -192,7 +192,7 @@ describe("findAll", () => {
 
     db.collection.mockReturnValue({ find });
 
-    const query = createUserRolesFilter(["ROLE_1", "ROLE_3"]);
+    const query = createRoleFilter(["ROLE_1", "ROLE_3"]);
     const result = await findAll(query);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");

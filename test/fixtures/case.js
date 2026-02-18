@@ -4,7 +4,7 @@ export const caseData1 = {
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
-  dateReceived: "2025-03-27T11:34:52.000Z",
+  createdAt: "2025-03-27T11:34:52.000Z",
   payload: {
     clientRef: "APPLICATION-REF-1",
     createdAt: "2025-03-27T10:34:52.000Z",
@@ -90,7 +90,7 @@ export const caseData2 = {
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
-  dateReceived: "2025-03-27T11:34:52Z",
+  createdAt: "2025-03-27T11:34:52Z",
   payload: {
     clientRef: "APPLICATION-REF-2",
     createdAt: "2025-03-27T10:34:52.000Z",
@@ -176,7 +176,7 @@ export const caseData3Document = {
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
-  dateReceived: "2025-03-27T11:34:52.000Z",
+  createdAt: "2025-03-27T11:34:52.000Z",
   payload: {
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
