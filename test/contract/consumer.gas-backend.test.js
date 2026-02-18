@@ -22,6 +22,10 @@
 import { MatchersV2, MessageConsumerPact } from "@pact-foundation/pact";
 import path from "path";
 import { describe, expect, it } from "vitest";
+import {
+  minimalFrpsPayload,
+  realisticFrpsPayload,
+} from "../fixtures/realistic-frps-payload.js";
 
 const { like, uuid, iso8601DateTimeWithMillis, term } = MatchersV2;
 
@@ -34,6 +38,10 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
   });
 
   describe("CreateNewCaseCommand Message", () => {
+    // Note: The realistic payload defined in these tests is verified to process through
+    // CW's case creation logic in test/contract/realistic-payload.integration.test.js
+    // That integration test proves Case.new() can accept the realistic payload structure
+    // without throwing errors, addressing the "danger area" of payload processing.
     it("should accept a create new case command from GAS", async () => {
       await messagePact
         .expectsToReceive("a create new case command from GAS")
@@ -83,11 +91,8 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
 
               // Application form answers - flexible structure
               // Validated against workflow schema, not in pact
-              answers: like({
-                scheme: "SFI",
-                year: 2025,
-                hasCheckedLandIsUpToDate: true,
-              }),
+              // Using realistic frps-private-beta payload from shared fixture
+              answers: like(realisticFrpsPayload.answers),
 
               // Optional metadata
               metadata: like({}),
@@ -143,11 +148,7 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
                 frn: like("FIRM0002"),
                 crn: like("CUST0002"),
               },
-              answers: like({
-                scheme: "SFI",
-                year: 2025,
-                hasCheckedLandIsUpToDate: true,
-              }),
+              answers: like(minimalFrpsPayload.answers),
             },
           },
         })
