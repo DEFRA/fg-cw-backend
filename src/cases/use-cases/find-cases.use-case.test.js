@@ -1,19 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
-import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findAll } from "../repositories/case.repository.js";
-import {
-  createUserRolesFilter,
-  findCasesUseCase,
-} from "./find-cases.use-case.js";
+import { createRoleFilter, findCasesUseCase } from "./find-cases.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflows.use-case.js");
 vi.mock("../../common/auth.js");
+
+const defaultQuery = { direction: "forward", createdAt: "desc" };
+
+const mockFindAllResult = (data) => ({
+  data,
+  pagination: {
+    startCursor: null,
+    endCursor: null,
+    hasNextPage: false,
+    hasPreviousPage: false,
+    totalCount: data.length,
+  },
+});
 
 describe("filters", () => {
   const userRoles = ["ROLE_1", "ROLE_3", "ROLE_APP_1"];
@@ -49,54 +58,10 @@ describe("filters", () => {
               },
             ],
           },
-          {},
         ],
       },
     };
-    expect(createUserRolesFilter(userRoles)).toEqual(expectedFilters);
-  });
-
-  it("adds additional filters if passed", () => {
-    const expectedFilters = {
-      $expr: {
-        $and: [
-          {
-            $or: [
-              {
-                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
-              },
-              {
-                $setIsSubset: ["$requiredRoles.allOf", userRoles],
-              },
-            ],
-          },
-          {
-            $or: [
-              {
-                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
-              },
-              {
-                $gt: [
-                  {
-                    $size: {
-                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                    },
-                  },
-                  0,
-                ],
-              },
-            ],
-          },
-          {
-            codes: ["workflow-code-1"],
-          },
-        ],
-      },
-    };
-
-    expect(
-      createUserRolesFilter(userRoles, { codes: ["workflow-code-1"] }),
-    ).toEqual(expectedFilters);
+    expect(createRoleFilter(userRoles)).toEqual(expectedFilters);
   });
 });
 
@@ -105,6 +70,7 @@ describe("findCasesUseCase", () => {
 
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
+    findAll.mockResolvedValue(mockFindAllResult([]));
   });
 
   it("finds cases without assigned users", async () => {
@@ -120,45 +86,76 @@ describe("findCasesUseCase", () => {
     ];
 
     const casesWithoutUsers = [
-      Case.createMock({ workflowCode: "WORKFLOW_1", assignedUser: null }),
-      Case.createMock({ workflowCode: "WORKFLOW_2", assignedUser: null }),
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
+        workflowCode: "WORKFLOW_1",
+        assignedUserId: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-2",
+        caseRef: "case-ref",
+        workflowCode: "WORKFLOW_2",
+        assignedUserId: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
-    findAll.mockResolvedValue(casesWithoutUsers);
+    findAll.mockResolvedValue(mockFindAllResult(casesWithoutUsers));
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue(workflows);
 
-    const result = await findCasesUseCase(user);
+    const result = await findCasesUseCase({ user, query: defaultQuery });
 
-    expect(findAll).toHaveBeenCalledWith();
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: ["WORKFLOW_1", "WORKFLOW_2"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 20,
+    });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
-      createUserRolesFilter(user.getRoles(), {
-        codes: ["WORKFLOW_1", "WORKFLOW_2"],
-      }),
+      createRoleFilter(user.getRoles()),
     );
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [] });
-    expect(result).toEqual([
-      {
-        _id: casesWithoutUsers[0]._id,
-        assignedUser: null,
-        caseRef: "case-ref",
-        currentStatus: "Stage status 1",
-        currentStatusTheme: "INFO",
-        dateReceived: "2025-01-01T00:00:00.000Z",
-        payload: {},
-        workflowCode: "WORKFLOW_1",
-      },
-      {
-        _id: casesWithoutUsers[1]._id,
-        assignedUser: null,
-        caseRef: "case-ref",
-        currentStatus: "Stage status 1",
-        currentStatusTheme: "INFO",
-        dateReceived: "2025-01-01T00:00:00.000Z",
-        payload: {},
-        workflowCode: "WORKFLOW_2",
-      },
-    ]);
+    expect(result).toEqual({
+      pagination: mockFindAllResult(casesWithoutUsers).pagination,
+      cases: [
+        {
+          _id: "id-1",
+          assignedUser: null,
+          caseRef: "case-ref",
+          currentStatus: "Stage status 1",
+          currentStatusTheme: "INFO",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          payload: {},
+          workflowCode: "WORKFLOW_1",
+        },
+        {
+          _id: "id-2",
+          assignedUser: null,
+          caseRef: "case-ref",
+          currentStatus: "Stage status 1",
+          currentStatusTheme: "INFO",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          payload: {},
+          workflowCode: "WORKFLOW_2",
+        },
+      ],
+    });
   });
 
   it("finds cases with assigned users and populates user", async () => {
@@ -167,22 +164,45 @@ describe("findCasesUseCase", () => {
     const users = [user1, user2];
 
     const casesWithUsers = [
-      Case.createMock({ assignedUser: { id: user1.id } }),
-      Case.createMock({ assignedUser: { id: user2.id } }),
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-2",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user2.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
-    findAll.mockResolvedValue(casesWithUsers);
+    findAll.mockResolvedValue(mockFindAllResult(casesWithUsers));
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
-    const result = await findCasesUseCase(user);
+    const result = await findCasesUseCase({ user, query: defaultQuery });
 
-    expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(result[0].assignedUser.name).toBe(user1.name);
-    expect(result[1].assignedUser.name).toBe(user2.name);
+    expect(result.cases[0].assignedUser.name).toBe(user1.name);
+    expect(result.cases[1].assignedUser.name).toBe(user2.name);
   });
 
   it("finds cases with and without assigned users", async () => {
@@ -191,26 +211,73 @@ describe("findCasesUseCase", () => {
     const users = [user1, user2];
 
     const mixedCases = [
-      Case.createMock({ assignedUser: null }),
-      Case.createMock({ assignedUser: { id: user1.id } }),
-      Case.createMock({ assignedUser: null }),
-      Case.createMock({ assignedUser: { id: user2.id } }),
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-2",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-3",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-4",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user2.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
-    findAll.mockResolvedValue(mixedCases);
+    findAll.mockResolvedValue(mockFindAllResult(mixedCases));
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
-    const result = await findCasesUseCase(user);
+    const result = await findCasesUseCase({ user, query: defaultQuery });
 
-    expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(result[0].assignedUser).toBeNull();
-    expect(result[1].assignedUser.name).toBe(user1.name);
-    expect(result[2].assignedUser).toBeNull();
-    expect(result[3].assignedUser.name).toBe(user2.name);
+    expect(result.cases[0].assignedUser).toBeNull();
+    expect(result.cases[1].assignedUser.name).toBe(user1.name);
+    expect(result.cases[2].assignedUser).toBeNull();
+    expect(result.cases[3].assignedUser.name).toBe(user2.name);
   });
 
   it("handles cases where assigned user is not found", async () => {
@@ -218,62 +285,79 @@ describe("findCasesUseCase", () => {
     const users = [user1];
 
     const casesWithUsers = [
-      Case.createMock({ assignedUser: { id: user1.id } }),
-      Case.createMock({ assignedUser: { id: "user-missing" } }),
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-2",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: "user-missing",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
-    findAll.mockResolvedValue(casesWithUsers);
+    findAll.mockResolvedValue(mockFindAllResult(casesWithUsers));
     findUsersUseCase.mockResolvedValue(users);
     findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
-    const result = await findCasesUseCase(user);
+    const result = await findCasesUseCase({ user, query: defaultQuery });
 
-    expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, "user-missing"],
     });
 
-    expect(result[0].assignedUser.name).toBe(user1.name);
-    expect(result[1].assignedUser).toBeNull();
+    expect(result.cases[0].assignedUser.name).toBe(user1.name);
+    expect(result.cases[1].assignedUser).toBeNull();
   });
 
   it("throws when user lookup fails", async () => {
     const user1 = User.createMock({ id: "user-1", name: "John Smith" });
     const casesWithUsers = [
-      Case.createMock({ assignedUser: { id: user1.id } }),
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
+        workflowCode: "workflow-code",
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
     const userError = new Error("Find users error");
 
-    findAll.mockResolvedValue(casesWithUsers);
+    findAll.mockResolvedValue(mockFindAllResult(casesWithUsers));
     findUsersUseCase.mockRejectedValue(userError);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
 
-    await expect(findCasesUseCase(user)).rejects.toThrow("Find users error");
+    await expect(
+      findCasesUseCase({ user, query: defaultQuery }),
+    ).rejects.toThrow("Find users error");
 
-    expect(findAll).toHaveBeenCalledWith();
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
   });
 
-  it("extracts workflow codes correctly from cases", async () => {
-    const casesWithWorkflowCodes = [
-      Case.createMock({ workflowCode: "CODE_1", assignedUser: null }),
-      Case.createMock({ workflowCode: "CODE_2", assignedUser: null }),
-      Case.createMock({ workflowCode: "CODE_3", assignedUser: null }),
-    ];
-
-    findAll.mockResolvedValue(casesWithWorkflowCodes);
-    findUsersUseCase.mockResolvedValue([]);
-    findWorkflowsUseCase.mockResolvedValue([]);
-
-    await findCasesUseCase(user);
-
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
-      createUserRolesFilter(user.getRoles(), {
-        codes: ["CODE_1", "CODE_2", "CODE_3"],
-      }),
-    );
-  });
-
-  it("calls both findUsersUseCase and findWorkflowsUseCase with correct parameters", async () => {
+  it("calls findWorkflowsUseCase with role filter only", async () => {
     const user1 = User.createMock({ id: "user-1" });
     const user2 = User.createMock({ id: "user-2" });
 
@@ -288,116 +372,110 @@ describe("findCasesUseCase", () => {
     });
 
     const cases = [
-      Case.createMock({
-        assignedUser: { id: user1.id },
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
         workflowCode: "WORKFLOW_A",
-      }),
-      Case.createMock({
-        assignedUser: { id: user2.id },
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-2",
+        caseRef: "case-ref",
         workflowCode: "WORKFLOW_B",
-      }),
-      Case.createMock({
-        assignedUser: null,
+        assignedUserId: user2.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
+      {
+        _id: "id-3",
+        caseRef: "case-ref",
         workflowCode: "WORKFLOW_A",
-      }),
+        assignedUserId: null,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
-    findAll.mockResolvedValue(cases);
+    findAll.mockResolvedValue(mockFindAllResult(cases));
     findUsersUseCase.mockResolvedValue([user1, user2]);
     findWorkflowsUseCase.mockResolvedValue([workflow1, workflow2]);
 
-    await findCasesUseCase(user);
+    await findCasesUseCase({ user, query: defaultQuery });
 
     expect(findUsersUseCase).toHaveBeenCalledWith({
       ids: [user1.id, user2.id],
     });
-    expect(findWorkflowsUseCase).toHaveBeenCalledWith({
-      $expr: {
-        $and: [
-          {
-            $or: [
-              { $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []] },
-              {
-                $setIsSubset: [
-                  "$requiredRoles.allOf",
-                  ["ROLE_1", "ROLE_2", "ROLE_3"],
-                ],
-              },
-            ],
-          },
-          {
-            $or: [
-              { $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []] },
-              {
-                $gt: [
-                  {
-                    $size: {
-                      $setIntersection: [
-                        "$requiredRoles.anyOf",
-                        ["ROLE_1", "ROLE_2", "ROLE_3"],
-                      ],
-                    },
-                  },
-                  0,
-                ],
-              },
-            ],
-          },
-          { codes: ["WORKFLOW_A", "WORKFLOW_B"] },
-        ],
-      },
-    });
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createRoleFilter(user.getRoles()),
+    );
   });
 
   it("throws when find user use cases fails", async () => {
     const user1 = User.createMock({ id: "user-1" });
+
+    const workflow1 = Workflow.createMock({ code: "WORKFLOW_A" });
+
+    findWorkflowsUseCase.mockResolvedValue([workflow1]);
+
     const cases = [
-      Case.createMock({
-        assignedUser: { id: user1.id },
+      {
+        _id: "id-1",
+        caseRef: "case-ref",
         workflowCode: "WORKFLOW_A",
-      }),
+        assignedUserId: user1.id,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        payload: {},
+        position: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+        },
+      },
     ];
 
     const userError = new Error("User use case failed");
 
-    findAll.mockResolvedValue(cases);
+    findAll.mockResolvedValue(mockFindAllResult(cases));
     findUsersUseCase.mockRejectedValue(userError);
-    findWorkflowsUseCase.mockResolvedValue([]);
 
-    await expect(findCasesUseCase(user)).rejects.toThrow(
-      "User use case failed",
-    );
+    await expect(
+      findCasesUseCase({ user, query: defaultQuery }),
+    ).rejects.toThrow("User use case failed");
 
-    // Both use cases should have been called despite one failing
     expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
-      createUserRolesFilter(user.getRoles(), { codes: ["WORKFLOW_A"] }),
+      createRoleFilter(user.getRoles()),
     );
   });
 
   it("throws when find workflow use case fails", async () => {
-    const user1 = User.createMock({ id: "user-1" });
-    const cases = [
-      Case.createMock({
-        assignedUser: { id: user1.id },
-        workflowCode: "WORKFLOW_A",
-      }),
-    ];
-
     const workflowError = new Error("Workflow use case failed");
 
-    findAll.mockResolvedValue(cases);
-    findUsersUseCase.mockResolvedValue([user1]);
     findWorkflowsUseCase.mockRejectedValue(workflowError);
 
-    await expect(findCasesUseCase(user)).rejects.toThrow(
-      "Workflow use case failed",
-    );
+    await expect(
+      findCasesUseCase({ user, query: defaultQuery }),
+    ).rejects.toThrow("Workflow use case failed");
 
-    expect(findAll).toHaveBeenCalledWith();
-    expect(findUsersUseCase).toHaveBeenCalledWith({ ids: [user1.id] });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
-      createUserRolesFilter(user.getRoles(), { codes: ["WORKFLOW_A"] }),
+      createRoleFilter(user.getRoles()),
     );
   });
 });

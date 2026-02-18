@@ -5,7 +5,7 @@
   "workflowCode": "pigs-might-fly",
   "caseRef": "PMF-REF-1",
   "status": "NEW",
-  "dateReceived": "2025-03-27T11:34:52Z",
+  "createdAt": "2025-03-27T11:34:52Z",
   "payload": {
     "createdAt": "2025-03-27T10:34:52.000Z",
     "submittedAt": "2025-03-28T11:30:52.000Z",
