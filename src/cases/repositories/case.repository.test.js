@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
@@ -15,6 +16,7 @@ import {
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("../../common/paginate.js");
 
 describe("save", () => {
   it("creates a case and returns it", async () => {
@@ -146,31 +148,138 @@ describe("update", () => {
 });
 
 describe("findAll", () => {
-  it("returns a list of cases", async () => {
-    const cases = [CaseDocument.createMock(), CaseDocument.createMock()];
+  it("calls paginate with correct options", async () => {
+    const mockCollection = {};
+    db.collection.mockReturnValue(mockCollection);
 
-    db.collection.mockReturnValue({
-      find: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(cases),
-      }),
+    const paginateResult = { data: [], pagination: { totalCount: 0 } };
+    paginate.mockResolvedValue(paginateResult);
+
+    const result = await findAll({
+      workflowCodes: ["WORKFLOW_1"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 20,
     });
 
-    const result = await findAll();
-
     expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(paginate).toHaveBeenCalledWith(
+      mockCollection,
+      expect.objectContaining({
+        filter: { workflowCode: { $in: ["WORKFLOW_1"] } },
+        cursor: undefined,
+        direction: "forward",
+        pageSize: 20,
+      }),
+    );
+    expect(result).toEqual(paginateResult);
+  });
 
-    expect(result).toEqual([
-      Case.createMock({
-        _id: cases[0]._id.toString(),
-        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
-        requiredRoles: undefined,
+  it("passes codecs that correctly encode and decode cursor values", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { codecs } = paginate.mock.calls[0][1];
+
+    // caseRef codec is identity
+    expect(codecs.caseRef.encode("REF-001")).toBe("REF-001");
+    expect(codecs.caseRef.decode("REF-001")).toBe("REF-001");
+
+    // createdAt codec converts Date <-> ISO string
+    const date = new Date("2025-06-01T12:00:00.000Z");
+    expect(codecs.createdAt.encode(date)).toBe("2025-06-01T12:00:00.000Z");
+    expect(codecs.createdAt.decode("2025-06-01T12:00:00.000Z")).toEqual(date);
+
+    // _id codec converts ObjectId <-> hex string
+    const oid = ObjectId.createFromHexString("6800c9feb76f8f854ebf901a");
+    expect(codecs._id.encode(oid)).toBe("6800c9feb76f8f854ebf901a");
+    expect(codecs._id.decode("6800c9feb76f8f854ebf901a")).toEqual(oid);
+  });
+
+  it("passes mapDocument that maps case documents correctly", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { mapDocument } = paginate.mock.calls[0][1];
+
+    const oid = new ObjectId();
+    const createdAt = new Date("2025-01-01T00:00:00.000Z");
+    const doc = {
+      _id: oid,
+      caseRef: "REF-001",
+      workflowCode: "WF",
+      currentPhase: "PHASE_1",
+      currentStage: "STAGE_1",
+      currentStatus: "STATUS_1",
+      assignedUserId: "user-123",
+      payload: { foo: "bar" },
+      createdAt,
+    };
+
+    const mapped = mapDocument(doc);
+
+    expect(mapped).toEqual({
+      _id: oid,
+      caseRef: "REF-001",
+      workflowCode: "WF",
+      position: expect.objectContaining({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
       }),
-      Case.createMock({
-        _id: cases[1]._id.toString(),
-        assignedUser: { id: "64c88faac1f56f71e1b89a33" },
-        requiredRoles: undefined,
-      }),
-    ]);
+      assignedUserId: "user-123",
+      payload: { foo: "bar" },
+      createdAt,
+    });
+  });
+
+  it("converts sort directions to MongoDB sort flags", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc", caseRef: "asc" },
+      pageSize: 10,
+    });
+
+    const { sort } = paginate.mock.calls[0][1];
+    expect(sort).toEqual({ createdAt: -1, caseRef: 1 });
+  });
+
+  it("filters out undefined sort values", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc", caseRef: undefined },
+      pageSize: 10,
+    });
+
+    const { sort } = paginate.mock.calls[0][1];
+    expect(sort).toEqual({ createdAt: -1 });
   });
 });
 

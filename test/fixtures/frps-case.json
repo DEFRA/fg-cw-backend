@@ -2,7 +2,7 @@
   "workflowCode": "frps-private-beta",
   "caseRef": "CASE-REF-2",
   "status": "NEW",
-  "dateReceived": "2025-03-27T11:34:52Z",
+  "createdAt": "2025-03-27T11:34:52Z",
   "currentPhase": "PRE_AWARD",
   "currentStage": "REVIEW_APPLICATION",
   "currentStatus": "APPLICATION_RECEIVED",
