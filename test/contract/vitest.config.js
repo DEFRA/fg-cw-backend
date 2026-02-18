@@ -1,4 +1,5 @@
 /* eslint-disable import-x/no-default-export */
+import path from "path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -13,5 +14,6 @@ export default defineConfig({
       concurrent: false,
     },
     fileParallelism: false,
+    setupFiles: [path.resolve(__dirname, "setup.js")],
   },
 });
