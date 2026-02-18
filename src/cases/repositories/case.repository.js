@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
@@ -51,8 +52,7 @@ const toCase = (doc) => {
       stageCode: doc.currentStage,
       statusCode: doc.currentStatus,
     }),
-    dateReceived: doc.dateReceived.toISOString(),
-    createdAt: doc.createdAt,
+    createdAt: doc.createdAt.toISOString(),
     phases: doc.phases.map(toCasePhase),
     comments: doc.comments,
     timeline: doc.timeline,
@@ -110,9 +110,73 @@ export const update = async (kase) => {
   return kase;
 };
 
-export const findAll = async () => {
-  const caseDocuments = await db.collection(collection).find().toArray();
-  return caseDocuments.map(toCase);
+const cursorCodecs = {
+  caseRef: {
+    encode: (v) => v,
+    decode: (v) => v,
+  },
+  createdAt: {
+    encode: (v) => v.toISOString(),
+    decode: (v) => new Date(v),
+  },
+  _id: {
+    encode: (v) => v.toHexString(),
+    decode: (v) => new ObjectId(v),
+  },
+};
+
+const toDir = (d) => (d === "asc" ? 1 : -1);
+
+const ascDescToFlags = (sort) =>
+  Object.fromEntries(
+    Object.entries(sort)
+      .filter(([_, v]) => !!v)
+      .map(([k, v]) => [k, toDir(v)]),
+  );
+
+export const findAll = ({
+  workflowCodes,
+  cursor,
+  direction,
+  sort,
+  pageSize,
+}) => {
+  const cases = db.collection(collection);
+
+  return paginate(cases, {
+    filter: {
+      workflowCode: { $in: workflowCodes },
+    },
+    cursor,
+    direction,
+    sort: ascDescToFlags(sort),
+    pageSize,
+    codecs: cursorCodecs,
+    project: {
+      _id: 1,
+      caseRef: 1,
+      workflowCode: 1,
+      currentPhase: 1,
+      currentStage: 1,
+      currentStatus: 1,
+      assignedUserId: 1,
+      createdAt: 1,
+      payload: 1,
+    },
+    mapDocument: (doc) => ({
+      _id: doc._id,
+      caseRef: doc.caseRef,
+      workflowCode: doc.workflowCode,
+      position: new Position({
+        phaseCode: doc.currentPhase,
+        stageCode: doc.currentStage,
+        statusCode: doc.currentStatus,
+      }),
+      assignedUserId: doc.assignedUserId,
+      payload: doc.payload,
+      createdAt: doc.createdAt,
+    }),
+  });
 };
 
 export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {

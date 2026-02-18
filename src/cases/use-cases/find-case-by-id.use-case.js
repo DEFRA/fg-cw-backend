@@ -268,7 +268,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
       userMap,
       caseWorkflowContext,
     ),
-    dateReceived: kase.dateReceived,
+    createdAt: kase.createdAt,
     payload: kase.payload,
     supplementaryData: kase.supplementaryData,
     assignedUser: assignedUser ? { name: assignedUser.name } : null,

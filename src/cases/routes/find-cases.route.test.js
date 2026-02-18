@@ -38,7 +38,10 @@ describe("findCasesRoute", () => {
       },
     });
 
-    expect(findCasesUseCase).toHaveBeenCalledWith(user);
+    expect(findCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: { direction: "forward" },
+    });
 
     expect(statusCode).toEqual(200);
     expect(result.data).toEqual(cases);

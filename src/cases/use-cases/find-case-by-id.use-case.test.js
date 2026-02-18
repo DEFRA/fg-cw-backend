@@ -298,7 +298,7 @@ describe("findCaseByIdUseCase", () => {
       comments: [],
       currentStatus: "STATUS_1",
       workflowCode: "workflow-code",
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
       requiredRoles: {

@@ -22,7 +22,7 @@ export class Case {
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.dateReceived = props.dateReceived;
+    this.createdAt = props.createdAt;
     this.position = props.position;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
@@ -413,7 +413,7 @@ export class Case {
       caseRef,
       workflowCode,
       position,
-      dateReceived: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       payload,
       supplementaryData: {},
       timeline: [
@@ -438,7 +438,7 @@ export class Case {
         stageCode: "STAGE_1",
         statusCode: "STATUS_1",
       }),
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
       phases: [

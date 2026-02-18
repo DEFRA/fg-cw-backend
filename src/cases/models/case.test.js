@@ -26,7 +26,7 @@ describe("Case", () => {
       stageCode: "STAGE_1",
       statusCode: "STATUS_1",
     }),
-    dateReceived: "2025-01-01T00:00:00.000Z",
+    createdAt: "2025-01-01T00:00:00.000Z",
     assignedUser: { id: validUserId, name: "Test User" },
     payload: { data: "test" },
     phases: [
@@ -66,7 +66,7 @@ describe("Case", () => {
           statusCode: "STATUS_1",
         }),
       );
-      expect(caseInstance.dateReceived).toBe("2025-01-01T00:00:00.000Z");
+      expect(caseInstance.createdAt).toBe("2025-01-01T00:00:00.000Z");
       expect(caseInstance.assignedUser).toEqual({
         id: validUserId,
         name: "Test User",
@@ -421,7 +421,7 @@ describe("Case", () => {
       const caseInstance = createTestCase({
         caseRef: "TEST-001",
         workflowCode: "FRPS",
-        dateReceived: "2025-01-01T00:00:00.000Z",
+        createdAt: "2025-01-01T00:00:00.000Z",
         currentPhase: "PHASE_1",
         currentStage: "STAGE_1",
         currentStatus: "NEW",
@@ -1437,7 +1437,7 @@ describe("Case", () => {
       expect(kase.payload).toEqual(payload);
       expect(kase.phases).toEqual(phases);
       expect(kase.supplementaryData).toEqual({});
-      expect(kase.dateReceived).toBeDefined();
+      expect(kase.createdAt).toBeDefined();
     });
 
     it("creates CASE_CREATED timeline event", () => {
@@ -1461,7 +1461,7 @@ describe("Case", () => {
       expect(kase.timeline[0].data.caseRef).toBe(caseRef);
     });
 
-    it("sets dateReceived to current timestamp", () => {
+    it("sets createdAt to current timestamp", () => {
       const mockDate = new Date("2025-06-15T10:30:00.000Z");
       vi.setSystemTime(mockDate);
 
@@ -1473,7 +1473,7 @@ describe("Case", () => {
         phases: [],
       });
 
-      expect(kase.dateReceived).toBe("2025-06-15T10:30:00.000Z");
+      expect(kase.createdAt).toBe("2025-06-15T10:30:00.000Z");
     });
 
     it("initializes supplementaryData as empty object", () => {
