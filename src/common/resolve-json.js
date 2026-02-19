@@ -276,17 +276,7 @@ const resolveOptionalContentArray = async ({ root, path, row }) => {
     row,
   });
 
-  return normalizeToArray(resolved);
-};
-
-const normalizeToArray = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-  if (value === undefined || value === null) {
-    return [];
-  }
-  return [value];
+  return toArray(resolved);
 };
 
 const resolveTemplateComponent = async ({ path, root, row }) => {
