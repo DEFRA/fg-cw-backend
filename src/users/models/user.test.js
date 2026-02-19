@@ -370,6 +370,20 @@ describe("User", () => {
 
       expect(user.hasActiveRole("ANY_ROLE")).toBe(false);
     });
+
+    it("returns true when role has wildcard startDate and future endDate", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_WILDCARD_START: new AppRole({
+            name: "ROLE_WILDCARD_START",
+            endDate: "2100-12-31",
+          }),
+        },
+      });
+
+      expect(user.hasActiveRole("ROLE_WILDCARD_START")).toBe(true);
+    });
   });
 
   describe("hasIdpRole", () => {
