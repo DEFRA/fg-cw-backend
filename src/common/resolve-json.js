@@ -233,10 +233,22 @@ const resolveAccordionSection = async ({ path, root, row }) => {
 };
 
 const resolveRepeatComponent = async ({ path, root, row }) => {
-  const { itemsRef, items } = path;
+  const { itemsRef, items, beforeContent, emptyContent } = path;
   const dataItems = await resolveDataRef({ root, path: itemsRef, row });
 
-  const repeatedItems = [];
+  if (!dataItems.length) {
+    return await resolveOptionalContentArray({
+      root,
+      path: emptyContent,
+      row,
+    });
+  }
+
+  const repeatedItems = await resolveOptionalContentArray({
+    root,
+    path: beforeContent,
+    row,
+  });
   for await (const itemData of dataItems) {
     const resolved = await resolveJSONPath({
       root,
@@ -251,6 +263,30 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
   }
 
   return repeatedItems;
+};
+
+const resolveOptionalContentArray = async ({ root, path, row }) => {
+  if (path === undefined) {
+    return [];
+  }
+
+  const resolved = await resolveJSONPath({
+    root,
+    path,
+    row,
+  });
+
+  return normalizeToArray(resolved);
+};
+
+const normalizeToArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (value === undefined || value === null) {
+    return [];
+  }
+  return [value];
 };
 
 const resolveTemplateComponent = async ({ path, root, row }) => {

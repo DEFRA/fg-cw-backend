@@ -2438,6 +2438,109 @@ describe("conditional component resolution", () => {
     ]);
   });
 
+  it("should render repeat beforeContent when items exist", async () => {
+    const root = {
+      payload: {
+        answers: {
+          pigs: [{ totalPigs: 14 }, { totalPigs: 24 }],
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      beforeContent: [
+        {
+          component: "heading",
+          text: "Pig Caveats",
+          level: 3,
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Pig Caveats",
+        level: 3,
+      },
+      {
+        label: "Total Pigs",
+        text: 14,
+      },
+      {
+        label: "Total Pigs",
+        text: 24,
+      },
+    ]);
+  });
+
+  it("should render repeat emptyContent when itemsRef resolves to no items", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      emptyContent: [
+        {
+          component: "inset-text",
+          text: "No pig caveats available",
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "inset-text",
+        text: "No pig caveats available",
+      },
+    ]);
+  });
+
+  it("should return empty array for repeat when no items and no emptyContent", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([]);
+  });
+
   it("should resolve template component for singular usage with dataRef", async () => {
     const mockRootWithTemplate = {
       payload: {
