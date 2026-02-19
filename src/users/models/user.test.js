@@ -306,6 +306,29 @@ describe("User", () => {
 
       expect(roles).toEqual([]);
     });
+
+    it("includes wildcard date roles and excludes future-start roles", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_WILDCARD_START: new AppRole({
+            name: "ROLE_WILDCARD_START",
+            endDate: "2100-12-31",
+          }),
+          ROLE_WILDCARD_BOTH: new AppRole({
+            name: "ROLE_WILDCARD_BOTH",
+          }),
+          ROLE_NOT_STARTED: new AppRole({
+            name: "ROLE_NOT_STARTED",
+            startDate: "2026-01-01",
+          }),
+        },
+      });
+
+      const roles = user.getRoles();
+
+      expect(roles).toEqual(["ROLE_WILDCARD_START", "ROLE_WILDCARD_BOTH"]);
+    });
   });
 
   describe("hasActiveRole", () => {
@@ -383,6 +406,19 @@ describe("User", () => {
       });
 
       expect(user.hasActiveRole("ROLE_WILDCARD_START")).toBe(true);
+    });
+
+    it("returns true when role has both startDate and endDate wildcarded", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_WILDCARD_BOTH: new AppRole({
+            name: "ROLE_WILDCARD_BOTH",
+          }),
+        },
+      });
+
+      expect(user.hasActiveRole("ROLE_WILDCARD_BOTH")).toBe(true);
     });
   });
 
