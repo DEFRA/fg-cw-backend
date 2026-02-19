@@ -126,6 +126,7 @@ const toWorkflow = (doc) =>
       anyOf: doc.requiredRoles.anyOf,
     }),
     definitions: doc.definitions,
+    templates: doc.templates,
     externalActions: doc.externalActions,
     endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
   });

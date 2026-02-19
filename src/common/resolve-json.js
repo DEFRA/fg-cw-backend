@@ -44,8 +44,8 @@ const shouldSpreadArray = (item, resolved) => {
     return false;
   }
 
-  // Spread if the item itself is a repeat or component-container
-  if (isRepeat(item) || isComponentContainer(item)) {
+  // Spread if the item itself is a repeat, template, or component-container
+  if (isRepeat(item) || isTemplate(item) || isComponentContainer(item)) {
     return true;
   }
 
@@ -104,6 +104,9 @@ const handleSpecialCases = async ({ path, root, row }) => {
   if (isRepeat(path)) {
     return resolveRepeatComponent({ path, root, row });
   }
+  if (isTemplate(path)) {
+    return resolveTemplateComponent({ path, root, row });
+  }
   if (isComponentContainer(path)) {
     return resolveComponentContainer({ path, root, row });
   }
@@ -126,6 +129,8 @@ const isAccordion = (path) =>
   path.component === "accordion" && path.itemsRef && path.items;
 const isRepeat = (path) =>
   path.component === "repeat" && path.itemsRef && path.items;
+const isTemplate = (path) =>
+  path.component === "template" && path.templateRef && path.templateKey;
 const isComponentContainer = (path) =>
   path.component === "component-container" && path.contentRef;
 const hasConditionalBranch = (path) =>
@@ -246,6 +251,39 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
   }
 
   return repeatedItems;
+};
+
+const resolveTemplateComponent = async ({ path, root, row }) => {
+  const dataRow = resolveTemplateDataRow({ path, root, row });
+  const templateGroup = await resolveJSONPath({
+    root,
+    path: path.templateRef,
+    row,
+  });
+  const templateKey = await resolveJSONPath({
+    root,
+    path: path.templateKey,
+    row,
+  });
+  const templateContent = templateGroup?.[templateKey]?.content;
+
+  if (!Array.isArray(templateContent)) {
+    return [];
+  }
+
+  return await resolveJSONPath({
+    root,
+    path: templateContent,
+    row: dataRow,
+  });
+};
+
+const resolveTemplateDataRow = ({ path, root, row }) => {
+  if (!path.dataRef) {
+    return row;
+  }
+
+  return jp({ root, path: path.dataRef, row });
 };
 
 const resolveComponentContainer = async ({ path, root, row }) => {
