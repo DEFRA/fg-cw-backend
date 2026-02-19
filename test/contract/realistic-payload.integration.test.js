@@ -2,7 +2,7 @@
 // can be processed through CW's case creation logic
 //
 // This test addresses the "danger area" - proving that the payload structure
-// defined in the pact contract can actually be processed by createCaseUseCase,
+// defined in the pact contract can actually be processed by Case.new(),
 // not just pass pact matchers.
 
 import { describe, expect, it } from "vitest";
@@ -19,7 +19,6 @@ describe("Realistic Payload Processing", () => {
       // Using realistic payload from shared fixture
       // This is the exact structure from the consumer pact test
       // Verify Case.new can accept this realistic payload without throwing
-      // This is what createCaseUseCase does internally (src/cases/use-cases/create-case.use-case.js:53)
       expect(() => {
         const kase = Case.new({
           caseRef: "CASE-REF-001",
