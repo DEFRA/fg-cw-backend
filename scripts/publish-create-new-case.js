@@ -15,7 +15,7 @@ const sqs = new SQSClient({
 });
 
 const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
+  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case_fifo.fifo";
 
 const messagePmf = {
   id: randomUUID(),
@@ -323,6 +323,8 @@ await sqs.send(
     MessageBody: JSON.stringify(
       process.argv[2] === "pigs-might-fly" ? messagePmf : messageFrps,
     ),
+    MessageGroupId: "cw-create-new-case",
+    MessageDeduplicationId: randomUUID(),
     DelaySeconds: 0,
   }),
 );
