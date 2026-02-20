@@ -44,8 +44,8 @@ const shouldSpreadArray = (item, resolved) => {
     return false;
   }
 
-  // Spread if the item itself is a repeat or component-container
-  if (isRepeat(item) || isComponentContainer(item)) {
+  // Spread if the item itself is a repeat, template, or component-container
+  if (isRepeat(item) || isTemplate(item) || isComponentContainer(item)) {
     return true;
   }
 
@@ -104,6 +104,9 @@ const handleSpecialCases = async ({ path, root, row }) => {
   if (isRepeat(path)) {
     return resolveRepeatComponent({ path, root, row });
   }
+  if (isTemplate(path)) {
+    return resolveTemplateComponent({ path, root, row });
+  }
   if (isComponentContainer(path)) {
     return resolveComponentContainer({ path, root, row });
   }
@@ -126,6 +129,8 @@ const isAccordion = (path) =>
   path.component === "accordion" && path.itemsRef && path.items;
 const isRepeat = (path) =>
   path.component === "repeat" && path.itemsRef && path.items;
+const isTemplate = (path) =>
+  path.component === "template" && path.templateRef && path.templateKey;
 const isComponentContainer = (path) =>
   path.component === "component-container" && path.contentRef;
 const hasConditionalBranch = (path) =>
@@ -228,10 +233,22 @@ const resolveAccordionSection = async ({ path, root, row }) => {
 };
 
 const resolveRepeatComponent = async ({ path, root, row }) => {
-  const { itemsRef, items } = path;
+  const { itemsRef, items, beforeContent, emptyContent } = path;
   const dataItems = await resolveDataRef({ root, path: itemsRef, row });
 
-  const repeatedItems = [];
+  if (!dataItems.length) {
+    return await resolveOptionalContentArray({
+      root,
+      path: emptyContent,
+      row,
+    });
+  }
+
+  const repeatedItems = await resolveOptionalContentArray({
+    root,
+    path: beforeContent,
+    row,
+  });
   for await (const itemData of dataItems) {
     const resolved = await resolveJSONPath({
       root,
@@ -246,6 +263,58 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
   }
 
   return repeatedItems;
+};
+
+const resolveOptionalContentArray = async ({ root, path, row }) => {
+  if (path === undefined) {
+    return [];
+  }
+
+  const resolved = await resolveJSONPath({
+    root,
+    path,
+    row,
+  });
+
+  return toArray(resolved);
+};
+
+const resolveTemplateComponent = async ({ path, root, row }) => {
+  const dataRow = await resolveTemplateDataRow({ path, root, row });
+  const templateGroup = await resolveJSONPath({
+    root,
+    path: path.templateRef,
+    row,
+  });
+  const templateKey = await resolveJSONPath({
+    root,
+    path: path.templateKey,
+    row,
+  });
+  const templateContent = templateGroup?.[templateKey]?.content;
+
+  if (!Array.isArray(templateContent)) {
+    return [];
+  }
+
+  return await resolveJSONPath({
+    root,
+    path: templateContent,
+    row: dataRow,
+  });
+};
+
+const resolveTemplateDataRow = async ({ path, root, row }) => {
+  if (!path.dataRef) {
+    return row;
+  }
+
+  const [resolvedRow = ""] = await resolveDataRef({
+    root,
+    path: path.dataRef,
+    row,
+  });
+  return resolvedRow;
 };
 
 const resolveComponentContainer = async ({ path, root, row }) => {
