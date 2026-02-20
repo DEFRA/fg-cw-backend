@@ -2610,6 +2610,68 @@ describe("conditional component resolution", () => {
     ]);
   });
 
+  it("should resolve template component with JSONata dataRef", async () => {
+    const mockRootWithTemplate = {
+      payload: {
+        answers: {
+          totalPigs: 100,
+          whitePigsCount: 45,
+          groups: [
+            { code: "groupA", pigs: { totalPigs: 7, whitePigsCount: 2 } },
+          ],
+        },
+      },
+      templates: {
+        "pmf-template": {
+          "pmf-example": {
+            content: [
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Total Pigs",
+                    text: "@.totalPigs",
+                  },
+                  {
+                    label: "White Pigs",
+                    text: "@.whitePigsCount",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "template",
+        dataRef: "jsonata:$.payload.answers.groups[code='groupA'].pigs",
+        templateRef: "$.templates.pmf-template",
+        templateKey: "pmf-example",
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithTemplate, path });
+
+    expect(result).toEqual([
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Total Pigs",
+            text: 7,
+          },
+          {
+            label: "White Pigs",
+            text: 2,
+          },
+        ],
+      },
+    ]);
+  });
+
   it("should resolve template component inside repeat using row templateKey", async () => {
     const mockRootWithRepeatTemplate = {
       payload: {

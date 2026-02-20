@@ -280,7 +280,7 @@ const resolveOptionalContentArray = async ({ root, path, row }) => {
 };
 
 const resolveTemplateComponent = async ({ path, root, row }) => {
-  const dataRow = resolveTemplateDataRow({ path, root, row });
+  const dataRow = await resolveTemplateDataRow({ path, root, row });
   const templateGroup = await resolveJSONPath({
     root,
     path: path.templateRef,
@@ -304,12 +304,17 @@ const resolveTemplateComponent = async ({ path, root, row }) => {
   });
 };
 
-const resolveTemplateDataRow = ({ path, root, row }) => {
+const resolveTemplateDataRow = async ({ path, root, row }) => {
   if (!path.dataRef) {
     return row;
   }
 
-  return jp({ root, path: path.dataRef, row });
+  const [resolvedRow = ""] = await resolveDataRef({
+    root,
+    path: path.dataRef,
+    row,
+  });
+  return resolvedRow;
 };
 
 const resolveComponentContainer = async ({ path, root, row }) => {
