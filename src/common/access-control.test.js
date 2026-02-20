@@ -117,6 +117,90 @@ describe("AccessControl", () => {
       expect(result).toBe(true);
     });
 
+    it("returns true when required app role has wildcard startDate", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            endDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR"],
+        },
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false when wildcard startDate role has past endDate", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            endDate: "2025-07-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns false when wildcard endDate role has future startDate", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+            startDate: "2025-08-01",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR"],
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("returns true when required app role has both dates wildcarded", () => {
+      const user = new User({
+        idpId: "test-idp-id",
+        appRoles: {
+          ROLE_EDITOR: new AppRole({
+            name: "ROLE_EDITOR",
+          }),
+        },
+      });
+
+      const result = AccessControl.canAccess(user, {
+        idpRoles: [],
+        appRoles: {
+          allOf: [],
+          anyOf: ["ROLE_EDITOR"],
+        },
+      });
+      expect(result).toBe(true);
+    });
+
     it("returns false when user has none of the app anyOf roles", () => {
       const user = new User({
         idpId: "test-idp-id",

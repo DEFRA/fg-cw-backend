@@ -244,7 +244,7 @@ describe("AppRole", () => {
       expect(result).toBe(true);
     });
 
-    it("returns false when startDate is missing", () => {
+    it("returns true when startDate is missing and endDate is in the future", () => {
       const role = new AppRole({
         name: "ROLE_NO_START",
         endDate: "2025-12-31",
@@ -253,10 +253,10 @@ describe("AppRole", () => {
       vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
       const result = role.isActive();
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
-    it("returns false when endDate is missing", () => {
+    it("returns true when endDate is missing and startDate is in the past", () => {
       const role = new AppRole({
         name: "ROLE_NO_END",
         startDate: "2025-01-01",
@@ -265,12 +265,36 @@ describe("AppRole", () => {
       vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
       const result = role.isActive();
 
+      expect(result).toBe(true);
+    });
+
+    it("returns true when both dates are missing", () => {
+      const role = new AppRole({
+        name: "ROLE_NO_DATES",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
+      expect(result).toBe(true);
+    });
+
+    it("returns false when startDate is missing and endDate is in the past", () => {
+      const role = new AppRole({
+        name: "ROLE_EXPIRED_NO_START",
+        endDate: "2025-01-01",
+      });
+
+      vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
+      const result = role.isActive();
+
       expect(result).toBe(false);
     });
 
-    it("returns false when both dates are missing", () => {
+    it("returns false when endDate is missing and startDate is in the future", () => {
       const role = new AppRole({
-        name: "ROLE_NO_DATES",
+        name: "ROLE_FUTURE_NO_END",
+        startDate: "2025-02-01",
       });
 
       vi.setSystemTime(new Date("2025-01-15T10:30:00.000Z"));
