@@ -7,6 +7,30 @@ import { User } from "../models/user.js";
 
 const collection = "users";
 
+const createActiveAppRoleFilter = (role, today) => {
+  const rolePath = `appRoles.${role}`;
+  const roleStartDatePath = `${rolePath}.startDate`;
+  const roleEndDatePath = `${rolePath}.endDate`;
+
+  return {
+    $and: [
+      { [rolePath]: { $exists: true } },
+      {
+        $or: [
+          { [roleStartDatePath]: null },
+          { [roleStartDatePath]: { $lte: today } },
+        ],
+      },
+      {
+        $or: [
+          { [roleEndDatePath]: null },
+          { [roleEndDatePath]: { $gte: today } },
+        ],
+      },
+    ],
+  };
+};
+
 /**
  * Handles MongoDB duplicate key errors (code 11000) for user operations.
  * Throws appropriate Boom.conflict errors based on which unique constraint was violated.
@@ -91,6 +115,7 @@ export const findAll = async (query = {}) => {
 
 // eslint-disable-next-line complexity
 const createFilter = (query) => {
+  const today = new Date().toISOString().slice(0, 10);
   const filter = {
     // Exclude users without valid names (null, undefined, empty, or "placeholder")
     // We seem to have some users with a name of "placeholder" in the database, so we need to exclude them.
@@ -107,15 +132,15 @@ const createFilter = (query) => {
   }
 
   if (query.allAppRoles?.length) {
-    filter.$and = query.allAppRoles.map((role) => ({
-      [`appRoles.${role}`]: { $exists: true },
-    }));
+    filter.$and = query.allAppRoles.map((role) =>
+      createActiveAppRoleFilter(role, today),
+    );
   }
 
   if (query.anyAppRoles?.length) {
-    filter.$or = query.anyAppRoles.map((role) => ({
-      [`appRoles.${role}`]: { $exists: true },
-    }));
+    filter.$or = query.anyAppRoles.map((role) =>
+      createActiveAppRoleFilter(role, today),
+    );
   }
 
   if (query.ids?.length) {

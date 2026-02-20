@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { UserDocument } from "../models/user-document.js";
 import { User } from "../models/user.js";
@@ -167,7 +167,66 @@ const expectedNameFilter = {
   },
 };
 
+const now = new Date("2026-02-19T12:00:00.000Z");
+const today = "2026-02-19";
+
+const createExpectedActiveAppRoleFilter = (role) => ({
+  $and: [
+    {
+      [`appRoles.${role}`]: {
+        $exists: true,
+      },
+    },
+    {
+      $or: [
+        {
+          [`appRoles.${role}.startDate`]: null,
+        },
+        {
+          [`appRoles.${role}.startDate`]: {
+            $lte: today,
+          },
+        },
+      ],
+    },
+    {
+      $or: [
+        {
+          [`appRoles.${role}.endDate`]: null,
+        },
+        {
+          [`appRoles.${role}.endDate`]: {
+            $gte: today,
+          },
+        },
+      ],
+    },
+  ],
+});
+
 describe("findAll", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const setupFindMock = () => {
+    const docs = [UserDocument.createMock()];
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+
+    return find;
+  };
+
   it("returns a list of users", async () => {
     const docs = [UserDocument.createMock(), UserDocument.createMock()];
 
@@ -240,16 +299,8 @@ describe("findAll", () => {
     expect(find).toHaveBeenCalledWith({
       ...expectedNameFilter,
       $and: [
-        {
-          "appRoles.ROLE_1": {
-            $exists: true,
-          },
-        },
-        {
-          "appRoles.ROLE_2": {
-            $exists: true,
-          },
-        },
+        createExpectedActiveAppRoleFilter("ROLE_1"),
+        createExpectedActiveAppRoleFilter("ROLE_2"),
       ],
     });
 
@@ -279,7 +330,7 @@ describe("findAll", () => {
     expect(db.collection).toHaveBeenCalledWith("users");
     expect(find).toHaveBeenCalledWith({
       ...expectedNameFilter,
-      $or: [{ "appRoles.ROLE_3": { $exists: true } }],
+      $or: [createExpectedActiveAppRoleFilter("ROLE_3")],
     });
 
     expect(result).toEqual([
@@ -309,24 +360,10 @@ describe("findAll", () => {
     expect(find).toHaveBeenCalledWith({
       ...expectedNameFilter,
       $and: [
-        {
-          "appRoles.ROLE_1": {
-            $exists: true,
-          },
-        },
-        {
-          "appRoles.ROLE_2": {
-            $exists: true,
-          },
-        },
+        createExpectedActiveAppRoleFilter("ROLE_1"),
+        createExpectedActiveAppRoleFilter("ROLE_2"),
       ],
-      $or: [
-        {
-          "appRoles.ROLE_3": {
-            $exists: true,
-          },
-        },
-      ],
+      $or: [createExpectedActiveAppRoleFilter("ROLE_3")],
     });
 
     expect(result).toEqual([
@@ -334,6 +371,65 @@ describe("findAll", () => {
         id: docs[0]._id.toString(),
       }),
     ]);
+  });
+
+  it("includes null startDate wildcard in app role validity filter", async () => {
+    const find = setupFindMock();
+
+    await findAll({ allAppRoles: ["ROLE_1"] });
+
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      $and: [createExpectedActiveAppRoleFilter("ROLE_1")],
+    });
+  });
+
+  it("includes null endDate wildcard in app role validity filter", async () => {
+    const find = setupFindMock();
+
+    await findAll({ anyAppRoles: ["ROLE_2"] });
+
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      $or: [createExpectedActiveAppRoleFilter("ROLE_2")],
+    });
+  });
+
+  it("uses startDate <= today guard for future-role exclusion", async () => {
+    const find = setupFindMock();
+
+    await findAll({ allAppRoles: ["ROLE_3"] });
+
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      $and: [createExpectedActiveAppRoleFilter("ROLE_3")],
+    });
+  });
+
+  it("uses endDate >= today guard for expired-role exclusion", async () => {
+    const find = setupFindMock();
+
+    await findAll({ anyAppRoles: ["ROLE_4"] });
+
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      $or: [createExpectedActiveAppRoleFilter("ROLE_4")],
+    });
+  });
+
+  it("contains both null wildcard branches so roles with no dates are valid", async () => {
+    const find = setupFindMock();
+
+    await findAll({ allAppRoles: ["ROLE_5"] });
+
+    const roleFilter = find.mock.calls[0][0].$and[0];
+
+    expect(roleFilter.$and[1].$or).toContainEqual({
+      "appRoles.ROLE_5.startDate": null,
+    });
+    expect(roleFilter.$and[2].$or).toContainEqual({
+      "appRoles.ROLE_5.endDate": null,
+    });
   });
 
   it("returns a list of users filtered by ids", async () => {
