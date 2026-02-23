@@ -335,11 +335,20 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
   if (!canPerformActions) {
     return [];
   }
-  return kase.getPermittedActions(workflow).map((a) => ({
-    code: a.code,
-    name: a.name,
-    comment: a.comment,
-  }));
+  const currentStatus = workflow.getStatus(kase.position);
+  return kase.getPermittedActions(workflow).map((a) => {
+    const transition = currentStatus.getTransition(a.code);
+    const targetStatus = transition
+      ? workflow.getStatus(transition.targetPosition)
+      : null;
+    return {
+      code: a.code,
+      name: a.name,
+      comment: a.comment,
+      confirm: a.confirm,
+      targetStatusName: targetStatus?.name,
+    };
+  });
 };
 
 const mapStageData = async (
