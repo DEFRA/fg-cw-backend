@@ -115,6 +115,7 @@ describe("GET /cases/{caseId}", () => {
             code: "APPROVE",
             name: "Approve",
             comment: null,
+            targetStatusName: "Awaiting Agreement",
           },
         ],
       },

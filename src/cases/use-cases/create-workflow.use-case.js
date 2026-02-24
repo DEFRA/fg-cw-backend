@@ -153,6 +153,7 @@ const createWorkflowAction = (action) =>
           mandatory: action.comment.mandatory,
         })
       : null,
+    confirm: action.confirm,
   });
 
 const createWorkflowTransition = (transition, context, phases) =>

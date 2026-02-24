@@ -11,11 +11,28 @@ const componentSchema = Joi.object({
 
 export const Code = Joi.string().pattern(/^[A-Z0-9_]+$/);
 
+const ConfirmOption = Joi.alternatives()
+  .try(Joi.string(), componentSchema)
+  .allow(null)
+  .label("ConfirmOption");
+
+const Confirm = Joi.alternatives()
+  .try(
+    Joi.boolean(),
+    Joi.object({
+      details: Joi.array().items(componentSchema).allow(null).optional(),
+      yes: ConfirmOption.optional(),
+      no: ConfirmOption.optional(),
+    }),
+  )
+  .label("Confirm");
+
 const Action = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
   comment: comment.allow(null).required(),
   checkTasks: Joi.boolean().required(),
+  confirm: Confirm.optional(),
 }).label("Action");
 
 const Transition = Joi.object({

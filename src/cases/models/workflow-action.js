@@ -4,5 +4,6 @@ export class WorkflowAction {
     this.name = props.name;
     this.checkTasks = props.checkTasks;
     this.comment = props.comment;
+    this.confirm = props.confirm;
   }
 }
