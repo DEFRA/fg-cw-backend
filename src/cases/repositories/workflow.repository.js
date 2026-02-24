@@ -30,6 +30,7 @@ const toWorkflowAction = (a) =>
           mandatory: a.comment.mandatory,
         })
       : null,
+    confirm: a.confirm,
   });
 
 const toWorkflowTransition = (t) =>
