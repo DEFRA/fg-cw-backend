@@ -16,9 +16,9 @@ import { describe, expect, it } from "vitest";
 
 const { like, eachLike, integer, boolean } = MatchersV3;
 
-// TODO: Re-enable once land-grants-api implements provider side (Andy Timney's team)
-// See COORDINATION_MESSAGE_LAND_GRANTS_API.md for implementation instructions
-describe.skip("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => {
+// Consumer tests for land-grants-api HTTP endpoints
+// Provider implementation completed by Andy Timney's team
+describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => {
   const provider = new PactV3({
     consumer: "fg-cw-backend",
     provider: "land-grants-api",
