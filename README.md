@@ -3,6 +3,7 @@
 ## Documentation
 
 - [External Services Configuration](./docs/EXTERNAL_SERVICES.md) - How to configure and call external APIs
+- [Workflow Components](./docs/WORKFLOW_COMPONENTS.md) - Workflow component reference
 
 ## Coding standards
 

@@ -14,6 +14,7 @@ export class Workflow {
     this.phases = props.phases;
     this.requiredRoles = props.requiredRoles;
     this.definitions = props.definitions;
+    this.templates = props.templates;
     this.externalActions = props.externalActions;
     this.endpoints = props.endpoints;
   }
@@ -141,6 +142,13 @@ export class Workflow {
       }),
       definitions: {
         key1: "value1",
+      },
+      templates: {
+        testTemplateGroup: {
+          testTemplate: {
+            content: [{ component: "text", text: "Template content" }],
+          },
+        },
       },
       endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
