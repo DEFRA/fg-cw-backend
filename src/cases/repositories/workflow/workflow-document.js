@@ -15,6 +15,7 @@ export class WorkflowDocument {
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.requiredRoles = new RequiredRolesDocument(props.requiredRoles);
     this.definitions = props.definitions;
+    this.templates = props.templates;
     this.endpoints = mapEndpoints(props.endpoints);
 
     // Only include externalActions if it's defined and not null
@@ -34,6 +35,13 @@ export class WorkflowDocument {
       },
       definitions: {
         key1: "value1",
+      },
+      templates: {
+        testTemplateGroup: {
+          testTemplate: {
+            content: [{ component: "text", text: "Template content" }],
+          },
+        },
       },
       endpoints: [EndpointDocument.createMock()],
       externalActions: [

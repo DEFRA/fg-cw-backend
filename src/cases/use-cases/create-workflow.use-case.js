@@ -227,6 +227,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
       anyOf: createWorkflowCommand.requiredRoles.anyOf,
     }),
     definitions: createWorkflowCommand.definitions,
+    templates: createWorkflowCommand.templates,
     externalActions: createWorkflowCommand.externalActions,
     endpoints: createWorkflowCommand.endpoints?.map(createWorkflowEndpoint),
   });

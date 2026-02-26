@@ -2,6 +2,35 @@
   "code": "pigs-might-fly",
   "requiredRoles": { "allOf": ["ROLE_PMF"], "anyOf": [] },
   "definitions": {},
+  "templates": {
+    "pmf-template": {
+      "pmf-example": {
+        "content": [
+          {
+            "id": "title",
+            "component": "heading",
+            "text": "PMF Template",
+            "level": 2,
+            "classes": "govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+          },
+          {
+            "id": "totalPigs",
+            "component": "summary-list",
+            "rows": [
+              {
+                "label": "Total Pigs",
+                "text": "@.totalPigs"
+              },
+              {
+                "label": "White Pigs",
+                "text": "@.whitePigsCount"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "endpoints": [],
   "externalActions": [],
   "pages": {
@@ -108,6 +137,12 @@
                     }
                   }
                 ]
+              },
+              {
+                "component": "template",
+                "dataRef": "$.payload.answers",
+                "templateRef": "$.templates.pmf-template",
+                "templateKey": "pmf-example"
               }
             ]
           }

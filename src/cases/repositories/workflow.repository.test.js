@@ -93,6 +93,8 @@ describe("findAll", () => {
     expect(result[1]).toBeInstanceOf(Workflow);
     expect(result[0]._id.toString()).toEqual(workflows[0]._id.toString());
     expect(result[1]._id.toString()).toEqual(workflows[1]._id.toString());
+    expect(result[0].templates).toEqual(workflows[0].templates);
+    expect(result[1].templates).toEqual(workflows[1].templates);
   });
 
   it("returns workflows filtered by single code", async () => {
@@ -220,6 +222,7 @@ describe("findByCode", () => {
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(findOne).toHaveBeenCalledWith({ code });
     expect(result._id.toString()).toEqual(workflowDocument._id.toString());
+    expect(result.templates).toEqual(workflowDocument.templates);
   });
 
   it("returns null when no workflow is found", async () => {
