@@ -10,5 +10,12 @@ export const up = async (db) => {
     { $set: { email: { $toLower: "$email" } } },
   ]);
 
-  await users.createIndex({ email: 1 }, { unique: true });
+  const existingIndexes = await users.indexes();
+  const emailIndexExists = existingIndexes.some(
+    (index) => index.key && index.key.email === 1,
+  );
+
+  if (!emailIndexExists) {
+    await users.createIndex({ email: 1 }, { unique: true });
+  }
 };
