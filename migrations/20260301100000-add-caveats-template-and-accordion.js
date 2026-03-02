@@ -1,15 +1,14 @@
 const statutoryConsentRequirementsAccordionItem = {
-  component: "repeat",
+  component: "conditional",
   id: "statutory-consent-requirements",
-  itemsRef:
-    'jsonata:$.payload.answers.rulesCalculations.caveats[0] ? [{ "caveats": $.payload.answers.rulesCalculations.caveats }] : []',
-  items: {
+  condition: "$.payload.answers.rulesCalculations.caveats[0]",
+  whenTrue: {
     heading: [{ text: "Statutory Consent Requirements" }],
     content: [
       {
         component: "repeat",
         id: "caveats-inner",
-        itemsRef: "@.caveats[*]",
+        itemsRef: "$.payload.answers.rulesCalculations.caveats[*]",
         items: [
           {
             component: "template",
@@ -52,11 +51,11 @@ const caveatsTemplates = {
             },
             {
               label: "Overlap %",
-              text: "jsonata:$string(@.metadata.percentageOverlap)",
+              text: "@.metadata.percentageOverlap",
             },
             {
               label: "Overlap area",
-              text: "jsonata:$string(@.metadata.overlapAreaHectares) & ' Ha'",
+              text: "@.metadata.overlapAreaHectares Ha",
             },
           ],
         },
