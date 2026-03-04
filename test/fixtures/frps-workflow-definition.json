@@ -1264,21 +1264,19 @@
                   "description": [
                     {
                       "component": "heading",
-                      "text": "Check if any land parcels are within a site of special scientific interest (SSSI)",
-                      "level": 2,
-                      "classes": "govuk-!-margin-bottom-3"
+                      "text": "Check notice of planned activity for site of special scientific interest (SSSI) has been requested",
+                      "level": 2
                     },
                     {
-                      "component": "container",
-                      "classes": "govuk-!-margin-bottom-6 govuk-body",
+                      "component": "paragraph",
                       "items": [
                         {
                           "component": "text",
-                          "text": "You can find the land parcels listed in the "
+                          "text": "Land parcels within this application intersect with at least one SSSI. You can see which land parcels in the "
                         },
                         {
                           "component": "url",
-                          "text": "Application",
+                          "text": "application",
                           "href": {
                             "urlTemplate": "/cases/{caseId}/case-details",
                             "params": {
@@ -1289,39 +1287,24 @@
                         },
                         {
                           "component": "text",
-                          "text": ". You can check for SSSIs using SITI Agri or other data sources."
+                          "text": "."
                         }
                       ]
                     },
                     {
-                      "component": "heading",
-                      "text": "If no land parcels in this application are on an SSSI",
-                      "level": 3,
-                      "classes": "govuk-!-margin-bottom-4"
+                      "component": "paragraph",
+                      "text": "Check if a notice of planned activity has been submitted to Natural England."
                     },
                     {
                       "component": "paragraph",
-                      "text": "You can accept the details provided.",
-                      "classes": "govuk-!-margin-bottom-4"
-                    },
-                    {
-                      "component": "heading",
-                      "text": "If any land parcel is on an SSSI",
-                      "level": 3,
-                      "classes": "govuk-!-margin-bottom-4"
+                      "text": "Consent does not have to be issued to accept. The notice of planned activity only has to have been received by Natural England."
                     },
                     {
                       "component": "paragraph",
-                      "text": "Confirm if a request for planned activity on an SSSI has been made. Consent does not have to be confirmed, only requested.",
-                      "classes": "govuk-!-margin-bottom-4"
-                    },
-                    {
-                      "component": "container",
-                      "classes": "govuk-!-margin-bottom-6 govuk-body",
                       "items": [
                         {
                           "component": "url",
-                          "text": "View SSSI request spreadsheet (opens in new tab)",
+                          "text": "View SSSI tracker spreadsheet",
                           "href": "https://defra.sharepoint.com/:x:/r/teams/Team1512/SFI%2024%20expanded%20offer/SSSI/SFI%2024%20Expanded%20offer%20SSSI%20Shared%20Spreadsheet%20V1.xlsm?d=wda46d49f73e44fdb8da1777b927c2b92&csf=1&web=1&e=FtxaTy",
                           "target": "_blank",
                           "rel": "noopener"
