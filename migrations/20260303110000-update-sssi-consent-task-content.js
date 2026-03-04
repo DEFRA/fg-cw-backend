@@ -3,11 +3,9 @@ const sssiConsentRequestedDescription = [
     component: "heading",
     text: "Check notice of planned activity for site of special scientific interest (SSSI) has been requested",
     level: 2,
-    classes: "govuk-!-margin-bottom-6",
   },
   {
-    component: "container",
-    classes: "govuk-!-margin-bottom-6 govuk-body",
+    component: "paragraph",
     items: [
       {
         component: "text",
@@ -33,16 +31,13 @@ const sssiConsentRequestedDescription = [
   {
     component: "paragraph",
     text: "Check if a notice of planned activity has been submitted to Natural England.",
-    classes: "govuk-!-margin-bottom-6",
   },
   {
     component: "paragraph",
     text: "Consent does not have to be issued to accept. The notice of planned activity only has to have been received by Natural England.",
-    classes: "govuk-!-margin-bottom-6",
   },
   {
-    component: "container",
-    classes: "govuk-!-margin-bottom-6 govuk-body",
+    component: "paragraph",
     items: [
       {
         component: "url",
