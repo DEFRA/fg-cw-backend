@@ -26,11 +26,7 @@ describe("replaceCaseUseCase", () => {
   it.skip("creates a new case, finds the series, updates it and saves", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
-    const mockSeries = CaseSeries.new({
-      workflowCode: "wf-001",
-      latestCaseId: "old-id",
-      latestCaseRef: "TEST-001",
-    });
+    const mockSeries = CaseSeries.new("wf-001", "TEST-001", "old-id");
     const addCaseRefSpy = vi.spyOn(mockSeries, "addCaseRef");
     findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
 
@@ -63,11 +59,7 @@ describe("replaceCaseUseCase", () => {
   it("throws 409 if the previous case is not closed", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
-    const mockSeries = CaseSeries.new({
-      workflowCode: "wf-001",
-      latestCaseId: "old-id",
-      latestCaseRef: "TEST-001",
-    });
+    const mockSeries = CaseSeries.new("wf-001", "TEST-001", "old-id");
     findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
 
     const message = {

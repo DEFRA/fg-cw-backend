@@ -10,12 +10,7 @@ import {
 
 vi.mock("../../common/mongo-client.js");
 
-const createMockSeries = () =>
-  CaseSeries.new({
-    workflowCode: "wf-001",
-    latestCaseId: "abc123",
-    latestCaseRef: "TEST-001",
-  });
+const createMockSeries = () => CaseSeries.new("wf-001", "TEST-001", "abc123");
 
 describe("case-series.repository", () => {
   describe("save", () => {
@@ -67,7 +62,7 @@ describe("case-series.repository", () => {
         findByCaseRefAndWorkflowCode("TEST-999", "wf-001", {}),
       ).rejects.toThrow(
         Boom.notFound(
-          `Case Series with currentCaseRef "TEST-999" and workflowCode "wf-001" not found.`,
+          `Case Series with latestCaseRef "TEST-999" and workflowCode "wf-001" not found.`,
         ),
       );
     });

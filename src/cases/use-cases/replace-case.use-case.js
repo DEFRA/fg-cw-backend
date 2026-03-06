@@ -3,7 +3,7 @@ import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import {
   findByCaseRefAndWorkflowCode,
-  save,
+  update,
 } from "../repositories/case-series.repository.js";
 import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
@@ -30,12 +30,12 @@ export const replaceCaseUseCase = async (message) => {
       const kaseId = await newCaseUseCase(message, session);
       // update series
       const caseSeries = await findByCaseRefAndWorkflowCode(
-        caseRef,
+        previousCaseRef,
         workflowCode,
         session,
       );
       caseSeries.addCaseRef(caseRef, kaseId.toString());
-      await save(caseSeries, session);
+      await update(caseSeries, session);
     } else {
       throw Boom.conflict(
         `Can not replace existing Case with caseRef: ${previousCaseRef} with new caseRef: ${caseRef} - replacement is not allowed`,

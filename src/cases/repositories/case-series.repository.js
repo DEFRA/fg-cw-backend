@@ -19,11 +19,11 @@ export const findByCaseRefAndWorkflowCode = async (
 ) => {
   const doc = await db
     .collection(collection)
-    .findOne({ latestClientRef: caseRef, workflowCode }, { session });
+    .findOne({ latestCaseRef: caseRef, workflowCode }, { session });
 
   if (doc === null) {
     throw Boom.notFound(
-      `Case Series with currentCaseRef "${caseRef}" and workflowCode "${workflowCode}" not found.`,
+      `Case Series with latestCaseRef "${caseRef}" and workflowCode "${workflowCode}" not found.`,
     );
   }
 
