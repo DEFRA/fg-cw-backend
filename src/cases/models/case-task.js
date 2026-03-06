@@ -1,7 +1,19 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
+import { JSONPath } from "jsonpath-plus";
 import { Code } from "../schemas/task.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
+
+const evaluateCondition = (conditional, kase) => {
+  if (!conditional) {
+    return true;
+  }
+  const result = JSONPath({ json: kase, path: conditional });
+  if (Array.isArray(result)) {
+    return result.length > 0 && Boolean(result[0]);
+  }
+  return Boolean(result);
+};
 
 export const TaskStatus = Joi.string().allow(null);
 
@@ -70,8 +82,15 @@ export class CaseTask {
     return this.updatedBy ? [this.updatedBy] : [];
   }
 
-  isComplete(workflowTask) {
+  isComplete(workflowTask, kase) {
     if (!workflowTask.mandatory) {
+      return true;
+    }
+
+    if (
+      workflowTask.conditional &&
+      !evaluateCondition(workflowTask.conditional, kase)
+    ) {
       return true;
     }
 
