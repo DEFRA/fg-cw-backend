@@ -280,4 +280,122 @@ describe("CaseTask", () => {
 
     expect(task.commentRefs).toEqual([{ status: "RFI", ref: "abc123def456" }]);
   });
+
+  describe("isComplete", () => {
+    it("should return true for non-mandatory tasks regardless of completion status", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = { mandatory: false };
+      const kase = { payload: { answers: {} } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+
+    it("should return true for mandatory task when completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "ACCEPTED",
+        completed: true,
+      });
+      const workflowTask = { mandatory: true };
+      const kase = { payload: { answers: {} } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+
+    it("should return false for mandatory task when not completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = { mandatory: true };
+      const kase = { payload: { answers: {} } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(false);
+    });
+
+    it("should return true for conditional task when condition is not met (falsy)", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = {
+        mandatory: true,
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      };
+      const kase = { payload: { answers: { whitePigsCount: 2 } } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+
+    it("should return false for conditional task when condition is met but task not completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = {
+        mandatory: true,
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      };
+      const kase = { payload: { answers: { whitePigsCount: 5 } } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(false);
+    });
+
+    it("should return true for conditional task when condition is met and task is completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "ACCEPTED",
+        completed: true,
+      });
+      const workflowTask = {
+        mandatory: true,
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      };
+      const kase = { payload: { answers: { whitePigsCount: 5 } } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+
+    it("should return true for conditional task when whitePigsCount equals 3 (not > 3)", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = {
+        mandatory: true,
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      };
+      const kase = { payload: { answers: { whitePigsCount: 3 } } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+
+    it("should return true for conditional task when whitePigsCount is 0", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = {
+        mandatory: true,
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      };
+      const kase = { payload: { answers: { whitePigsCount: 0 } } };
+
+      expect(task.isComplete(workflowTask, kase)).toBe(true);
+    });
+  });
 });

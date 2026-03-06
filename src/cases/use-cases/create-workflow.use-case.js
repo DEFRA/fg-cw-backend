@@ -121,6 +121,7 @@ const createWorkflowTaskStatusOption = (statusOption) =>
 
 const createWorkflowTask = (task) =>
   new WorkflowTask({
+    conditional: task.conditional,
     code: task.code,
     name: task.name,
     mandatory: task.mandatory,

@@ -21,11 +21,11 @@ export class CaseStage {
     return this.taskGroups.flatMap((tg) => tg.getUserIds());
   }
 
-  areTasksComplete(workflowStage) {
+  areTasksComplete(workflowStage, kase) {
     for (const workflowTaskGroup of workflowStage.taskGroups) {
       const caseTaskGroup = this.findTaskGroup(workflowTaskGroup.code);
 
-      if (!caseTaskGroup.isComplete(workflowTaskGroup)) {
+      if (!caseTaskGroup.isComplete(workflowTaskGroup, kase)) {
         return false;
       }
     }

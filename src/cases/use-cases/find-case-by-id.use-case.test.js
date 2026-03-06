@@ -4,6 +4,7 @@ import { AppRole } from "../../users/models/app-role.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
+import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
@@ -1629,5 +1630,143 @@ describe("beforeContent", () => {
         level: 2,
       },
     ]);
+  });
+
+  it("filters out conditional tasks when condition is not met (whitePigsCount <= 3)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.payload = { answers: { whitePigsCount: 2 } };
+
+    const conditionalTask = {
+      conditional:
+        "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      code: "CONDITIONAL_TASK",
+      name: "Conditional Task",
+      mandatory: true,
+      description: "A conditional task",
+      statusOptions: [
+        { code: "ACCEPTED", name: "Accept", theme: "NONE", completes: true },
+      ],
+      requiredRoles: null,
+    };
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(conditionalTask);
+
+    mockCase.phases[0].stages[0].taskGroups[0].tasks.push(
+      new CaseTask({
+        code: "CONDITIONAL_TASK",
+        status: null,
+        completed: false,
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    const taskCodes = result.stage.taskGroups[0].tasks.map((t) => t.code);
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
+  });
+
+  it("includes conditional tasks when condition is met (whitePigsCount > 3)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.payload = { answers: { whitePigsCount: 5 } };
+
+    const conditionalTask = {
+      conditional:
+        "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      code: "CONDITIONAL_TASK",
+      name: "Conditional Task",
+      mandatory: true,
+      description: "A conditional task",
+      statusOptions: [
+        { code: "ACCEPTED", name: "Accept", theme: "NONE", completes: true },
+      ],
+      requiredRoles: { allOf: [], anyOf: [] },
+    };
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(conditionalTask);
+
+    mockCase.phases[0].stages[0].taskGroups[0].tasks.push(
+      new CaseTask({
+        code: "CONDITIONAL_TASK",
+        status: null,
+        completed: false,
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    const taskCodes = result.stage.taskGroups[0].tasks.map((t) => t.code);
+    expect(taskCodes).toContain("CONDITIONAL_TASK");
+  });
+
+  it("includes tasks without conditional attribute", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.payload = { answers: { whitePigsCount: 2 } };
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    const taskCodes = result.stage.taskGroups[0].tasks.map((t) => t.code);
+    expect(taskCodes).toContain("TASK_1");
+  });
+
+  it("filters out conditional task when whitePigsCount equals 3 (boundary)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.payload = { answers: { whitePigsCount: 3 } };
+
+    const conditionalTask = {
+      conditional:
+        "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      code: "CONDITIONAL_TASK",
+      name: "Conditional Task",
+      mandatory: true,
+      description: "A conditional task",
+      statusOptions: [
+        { code: "ACCEPTED", name: "Accept", theme: "NONE", completes: true },
+      ],
+      requiredRoles: null,
+    };
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(conditionalTask);
+
+    mockCase.phases[0].stages[0].taskGroups[0].tasks.push(
+      new CaseTask({
+        code: "CONDITIONAL_TASK",
+        status: null,
+        completed: false,
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    const taskCodes = result.stage.taskGroups[0].tasks.map((t) => t.code);
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
   });
 });

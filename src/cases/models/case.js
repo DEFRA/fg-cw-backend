@@ -334,7 +334,7 @@ export class Case {
     const workflowStage = workflow.getStage(this.position);
     const caseStage = this.getStage();
 
-    return caseStage.areTasksComplete(workflowStage);
+    return caseStage.areTasksComplete(workflowStage, this);
   }
 
   #canPerformAction(workflow, actionCode) {
