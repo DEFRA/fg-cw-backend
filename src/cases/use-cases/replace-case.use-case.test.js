@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
@@ -21,7 +22,8 @@ describe("replaceCaseUseCase", () => {
     withTransaction.mockImplementation((cb) => cb(session));
   });
 
-  it("creates a new case, finds the series, updates it and saves", async () => {
+  // TODO re-instate once we have the case closed status FGP-815
+  it.skip("creates a new case, finds the series, updates it and saves", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
     const mockSeries = CaseSeries.new({
@@ -55,6 +57,33 @@ describe("replaceCaseUseCase", () => {
     expect(addCaseRefSpy).toHaveBeenCalledWith(
       "TEST-001",
       "123333333344455555666666",
+    );
+  });
+
+  it("throws 409 if the previous case is not closed", async () => {
+    newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
+
+    const mockSeries = CaseSeries.new({
+      workflowCode: "wf-001",
+      latestCaseId: "old-id",
+      latestCaseRef: "TEST-001",
+    });
+    findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
+
+    const message = {
+      event: {
+        data: {
+          caseRef: "TEST-001",
+          previousCaseRef: "TEST-000",
+          workflowCode: "wf-001",
+        },
+      },
+    };
+
+    await expect(replaceCaseUseCase(message)).rejects.toThrow(
+      Boom.conflict(
+        "Can not replace existing Case with caseRef: TEST-000 with new caseRef: TEST-001 - replacement is not allowed",
+      ),
     );
   });
 });
