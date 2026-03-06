@@ -181,11 +181,18 @@ export const findAll = ({
   });
 };
 
-export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
-  const caseDocument = await db.collection(collection).findOne({
-    caseRef,
-    workflowCode,
-  });
+export const findByCaseRefAndWorkflowCode = async (
+  caseRef,
+  workflowCode,
+  session,
+) => {
+  const caseDocument = await db.collection(collection).findOne(
+    {
+      caseRef,
+      workflowCode,
+    },
+    { session },
+  );
   return caseDocument && toCase(caseDocument);
 };
 

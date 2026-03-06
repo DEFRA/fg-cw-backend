@@ -5,6 +5,7 @@ import {
   findByCaseRefAndWorkflowCode,
   save,
 } from "../repositories/case-series.repository.js";
+import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
 
 const isReplacementAllowed = (kase) => {
@@ -23,11 +24,7 @@ export const replaceCaseUseCase = async (message) => {
       `Replacing case with previousCaseRef ${previousCaseRef} and workflowCode ${workflowCode}`,
     );
 
-    const previousCase = await findByCaseRefAndWorkflowCode(
-      previousCaseRef,
-      workflowCode,
-      session,
-    );
+    const previousCase = await findCase(previousCaseRef, workflowCode, session);
 
     if (isReplacementAllowed(previousCase)) {
       const kaseId = await newCaseUseCase(message, session);
