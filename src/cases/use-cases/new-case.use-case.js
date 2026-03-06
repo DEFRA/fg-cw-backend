@@ -1,5 +1,4 @@
 import { logger } from "../../common/logger.js";
-import { withTransaction } from "../../common/with-transaction.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
@@ -30,39 +29,39 @@ const createCaseStage = (stage) =>
     taskGroups: stage.taskGroups.map(createCaseTaskGroup),
   });
 
-const createCasePhase = (phase) =>
+export const createCasePhase = (phase) =>
   new CasePhase({
     code: phase.code,
     stages: phase.stages.map(createCaseStage),
   });
 
-export const createCaseUseCase = async (message) => {
-  return await withTransaction(async (session) => {
-    const {
-      event: { data },
-    } = message;
-    const { caseRef, workflowCode, payload } = data;
+export const newCaseUseCase = async (message, session) => {
+  const {
+    event: { data },
+  } = message;
+  const { caseRef, workflowCode, payload } = data;
 
-    logger.info(
-      `Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
-    );
+  logger.info(
+    `Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
+  );
 
-    const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  const workflow = await findWorkflowByCodeUseCase(workflowCode);
 
-    const position = workflow.getInitialPosition();
+  const position = workflow.getInitialPosition();
 
-    const kase = Case.new({
-      caseRef,
-      workflowCode,
-      position,
-      payload,
-      phases: workflow.phases.map(createCasePhase),
-    });
-
-    logger.info(
-      `Finished: Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
-    );
-
-    await save(kase, session);
+  const kase = Case.new({
+    caseRef,
+    workflowCode,
+    position,
+    payload,
+    phases: workflow.phases.map(createCasePhase),
   });
+
+  const { insertedId } = await save(kase, session);
+
+  logger.info(
+    `Finished: Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
+  );
+
+  return insertedId;
 };

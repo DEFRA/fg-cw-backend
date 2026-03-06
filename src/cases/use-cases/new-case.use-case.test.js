@@ -1,17 +1,17 @@
+import { ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { withTransaction } from "../../common/with-transaction.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
-import { createCaseUseCase } from "./create-case.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { newCaseUseCase } from "./new-case.use-case.js";
 
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 
-describe("createCaseUseCase", () => {
+describe("newCaseUseCase", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-01-01T00:00:00.000Z"));
@@ -22,9 +22,7 @@ describe("createCaseUseCase", () => {
   });
 
   it("creates a case", async () => {
-    const mockSession = {};
-    withTransaction.mockImplementation(async (cb) => cb(mockSession));
-
+    save.mockResolvedValue(new ObjectId("888888888888888999999998"));
     findWorkflowByCodeUseCase.mockResolvedValue(
       new Workflow({
         code: "wf-001",
@@ -53,7 +51,7 @@ describe("createCaseUseCase", () => {
 
     findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
 
-    await createCaseUseCase({
+    await newCaseUseCase({
       event: {
         data: {
           workflowCode: "workflow-code",
@@ -68,6 +66,6 @@ describe("createCaseUseCase", () => {
       },
     });
 
-    expect(save).toHaveBeenCalledWith(expect.any(Case), mockSession);
+    expect(save.mock.calls[0][0]).toBeInstanceOf(Case);
   });
 });

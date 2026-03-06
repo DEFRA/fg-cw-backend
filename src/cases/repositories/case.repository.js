@@ -88,6 +88,8 @@ export const save = async (kase, session) => {
       `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" could not be created, the operation was not acknowledged`,
     );
   }
+
+  return result;
 };
 
 export const update = async (kase) => {
@@ -179,11 +181,18 @@ export const findAll = ({
   });
 };
 
-export const findByCaseRefAndWorkflowCode = async (caseRef, workflowCode) => {
-  const caseDocument = await db.collection(collection).findOne({
-    caseRef,
-    workflowCode,
-  });
+export const findByCaseRefAndWorkflowCode = async (
+  caseRef,
+  workflowCode,
+  session,
+) => {
+  const caseDocument = await db.collection(collection).findOne(
+    {
+      caseRef,
+      workflowCode,
+    },
+    { session },
+  );
   return caseDocument && toCase(caseDocument);
 };
 
