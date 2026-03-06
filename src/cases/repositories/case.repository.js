@@ -88,6 +88,8 @@ export const save = async (kase, session) => {
       `Case with caseRef "${kase.caseRef}" and workflowCode "${kase.workflowCode}" could not be created, the operation was not acknowledged`,
     );
   }
+
+  return result;
 };
 
 export const update = async (kase) => {
