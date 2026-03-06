@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CaseSeries } from "./case-series.js";
 
 const validProps = () => ({
@@ -71,6 +71,8 @@ describe("CaseSeries", () => {
       vi.setSystemTime(new Date("2025-01-01T00:00:00.000Z"));
     });
 
+    afterEach(() => vi.useRealTimers());
+
     it("creates a new CaseSeries with the provided values", () => {
       const series = CaseSeries.new({
         workflowCode: "wf-001",
@@ -83,10 +85,6 @@ describe("CaseSeries", () => {
       expect(series.latestCaseRef).toBe("TEST-001");
       expect(series.caseRefs.has("TEST-001")).toBe(true);
       expect(series.createdAt).toBe("2025-01-01T00:00:00.000Z");
-    });
-
-    it("uses real timers after test", () => {
-      vi.useRealTimers();
     });
   });
 
