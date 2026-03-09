@@ -20,15 +20,22 @@ export class CaseTaskGroup {
     return this.tasks.flatMap((t) => t.getUserIds());
   }
 
-  isComplete(workflowTaskGroup, kase) {
+  isComplete(workflowTaskGroup) {
     for (const workflowTask of workflowTaskGroup.tasks) {
+      if (!this.hasTask(workflowTask.code)) {
+        continue;
+      }
       const caseTask = this.findTask(workflowTask.code);
 
-      if (!caseTask.isComplete(workflowTask, kase)) {
+      if (!caseTask.isComplete(workflowTask)) {
         return false;
       }
     }
 
     return true;
+  }
+
+  hasTask(taskCode) {
+    return this.tasks.some((t) => t.code === taskCode);
   }
 }

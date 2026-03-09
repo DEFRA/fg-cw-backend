@@ -1,3 +1,4 @@
+import { JSONPath } from "jsonpath-plus";
 import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CasePhase } from "../models/case-phase.js";
@@ -7,6 +8,17 @@ import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+
+const evaluateCondition = (conditional, payload) => {
+  if (!conditional) {
+    return true;
+  }
+  const result = JSONPath({ json: { payload }, path: conditional });
+  if (Array.isArray(result)) {
+    return result.length > 0 && Boolean(result[0]);
+  }
+  return Boolean(result);
+};
 
 const createCaseTask = (task) =>
   new CaseTask({
@@ -18,22 +30,24 @@ const createCaseTask = (task) =>
     updatedBy: null,
   });
 
-const createCaseTaskGroup = (taskGroup) =>
+const createCaseTaskGroup = (taskGroup, payload) =>
   new CaseTaskGroup({
     code: taskGroup.code,
-    tasks: taskGroup.tasks.map(createCaseTask),
+    tasks: taskGroup.tasks
+      .filter((task) => evaluateCondition(task.conditional, payload))
+      .map(createCaseTask),
   });
 
-const createCaseStage = (stage) =>
+const createCaseStage = (stage, payload) =>
   new CaseStage({
     code: stage.code,
-    taskGroups: stage.taskGroups.map(createCaseTaskGroup),
+    taskGroups: stage.taskGroups.map((tg) => createCaseTaskGroup(tg, payload)),
   });
 
-const createCasePhase = (phase) =>
+const createCasePhase = (phase, payload) =>
   new CasePhase({
     code: phase.code,
-    stages: phase.stages.map(createCaseStage),
+    stages: phase.stages.map((s) => createCaseStage(s, payload)),
   });
 
 export const createCaseUseCase = async (message) => {
@@ -56,7 +70,7 @@ export const createCaseUseCase = async (message) => {
       workflowCode,
       position,
       payload,
-      phases: workflow.phases.map(createCasePhase),
+      phases: workflow.phases.map((phase) => createCasePhase(phase, payload)),
     });
 
     logger.info(

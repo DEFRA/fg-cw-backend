@@ -6,10 +6,7 @@ import {
   createCaseWorkflowContext,
 } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
-import {
-  evaluateTaskCondition,
-  resolveJSONPath,
-} from "../../common/resolve-json.js";
+import { resolveJSONPath } from "../../common/resolve-json.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
@@ -127,21 +124,12 @@ const mapTasks = async (
   userMap,
   root,
   comments,
-) => {
-  const mappedTasks = await Promise.all(
+) =>
+  Promise.all(
     caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
       const workflowTaskGroupTask = workflowTaskGroup.findTask(
         caseTaskGroupTask.code,
       );
-
-      const shouldInclude = await evaluateTaskCondition({
-        condition: workflowTaskGroupTask.conditional,
-        root,
-      });
-
-      if (!shouldInclude) {
-        return null;
-      }
 
       const selectedStatus = mapSelectedStatusOption(
         caseTaskGroupTask.status,
@@ -178,9 +166,6 @@ const mapTasks = async (
       };
     }),
   );
-
-  return mappedTasks.filter((task) => task !== null);
-};
 
 export const mapStatusOptions = (statusOptions) =>
   statusOptions.map((option) => ({

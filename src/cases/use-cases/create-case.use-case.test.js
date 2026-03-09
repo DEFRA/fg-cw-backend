@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
 import { Case } from "../models/case.js";
+import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseUseCase } from "./create-case.use-case.js";
@@ -25,32 +26,6 @@ describe("createCaseUseCase", () => {
     const mockSession = {};
     withTransaction.mockImplementation(async (cb) => cb(mockSession));
 
-    findWorkflowByCodeUseCase.mockResolvedValue(
-      new Workflow({
-        code: "wf-001",
-        stages: [
-          {
-            code: "STAGE_1",
-            taskGroups: [
-              {
-                code: "TASK_GROUP_1",
-                tasks: [
-                  {
-                    code: "TASK_1",
-                    type: "task-type-1",
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-        requiredRoles: {
-          allOf: ["ROLE_1", "ROLE_2"],
-          anyOf: ["ROLE_3"],
-        },
-      }),
-    );
-
     findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
 
     await createCaseUseCase({
@@ -69,5 +44,279 @@ describe("createCaseUseCase", () => {
     });
 
     expect(save).toHaveBeenCalledWith(expect.any(Case), mockSession);
+  });
+
+  it("excludes conditional tasks when condition is not met", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-002",
+          payload: {
+            answers: { whitePigsCount: 2 },
+          },
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
+  });
+
+  it("includes conditional tasks when condition is met", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-003",
+          payload: {
+            answers: { whitePigsCount: 5 },
+          },
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).toContain("CONDITIONAL_TASK");
+  });
+
+  it("excludes conditional task at boundary value whitePigsCount = 3", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-004",
+          payload: {
+            answers: { whitePigsCount: 3 },
+          },
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
+  });
+
+  it("includes conditional task at boundary value whitePigsCount = 4", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-005",
+          payload: {
+            answers: { whitePigsCount: 4 },
+          },
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).toContain("CONDITIONAL_TASK");
+  });
+
+  it("excludes conditional task when whitePigsCount is absent from payload.answers", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-006",
+          payload: {
+            answers: { otherField: "value" },
+          },
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
+  });
+
+  it("excludes conditional task when payload.answers is missing entirely", async () => {
+    const mockSession = {};
+    withTransaction.mockImplementation(async (cb) => cb(mockSession));
+
+    const mockWorkflow = Workflow.createMock();
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        conditional:
+          "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+        code: "CONDITIONAL_TASK",
+        name: "Conditional Task",
+        mandatory: true,
+        description: "Only when whitePigsCount > 3",
+        statusOptions: [
+          {
+            code: "ACCEPTED",
+            name: "Accept",
+            theme: "NONE",
+            completes: true,
+          },
+        ],
+      }),
+    );
+
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+
+    await createCaseUseCase({
+      event: {
+        data: {
+          workflowCode: "workflow-code",
+          caseRef: "TEST-007",
+          payload: {},
+        },
+      },
+    });
+
+    const savedCase = save.mock.calls[0][0];
+    const taskCodes = savedCase.phases[0].stages[0].taskGroups[0].tasks.map(
+      (t) => t.code,
+    );
+    expect(taskCodes).toContain("TASK_1");
+    expect(taskCodes).not.toContain("CONDITIONAL_TASK");
   });
 });
