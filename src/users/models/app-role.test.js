@@ -101,16 +101,14 @@ describe("AppRole", () => {
       );
     });
 
-    it("throws error when endDate equals startDate", () => {
+    it("allows endDate to equal startDate", () => {
       const props = {
         name: "ROLE_SAME_DATE",
         startDate: "2025-07-01",
         endDate: "2025-07-01",
       };
 
-      expect(() => new AppRole(props)).toThrow(
-        "endDate must be greater than startDate for role ROLE_SAME_DATE.",
-      );
+      expect(() => new AppRole(props)).not.toThrow();
     });
   });
 
@@ -140,21 +138,14 @@ describe("AppRole", () => {
       );
     });
 
-    it("throws Boom.badRequest when endDate equals startDate", () => {
+    it("validates successfully when endDate equals startDate", () => {
       const appRole = new AppRole({
         name: "ROLE_EQUAL_DATES",
       });
       appRole.startDate = "2025-06-15";
       appRole.endDate = "2025-06-15";
 
-      expect(() => appRole.validateRole()).toThrow();
-
-      try {
-        appRole.validateRole();
-      } catch (error) {
-        expect(error.isBoom).toBe(true);
-        expect(error.output.statusCode).toBe(400);
-      }
+      expect(() => appRole.validateRole()).not.toThrow();
     });
 
     it("handles different date formats correctly", () => {

@@ -11,7 +11,7 @@ export class AppRole {
   }
 
   validateRole(name) {
-    if (this.endDate <= this.startDate) {
+    if (this.endDate < this.startDate) {
       throw Boom.badRequest(
         `endDate must be greater than startDate for role ${name}.`,
       );
