@@ -24,7 +24,7 @@ const DEFAULT_CONNECTION_STRING =
 const user =
   process.argv.length > 2 ? users[process.argv[2]] : users[DEFAULT_USER];
 const connection =
-  process.argv.length > 3 ? users[process.argv[3]] : DEFAULT_CONNECTION_STRING;
+  process.argv.length > 3 ? process.argv[3] : DEFAULT_CONNECTION_STRING;
 
 if (!user) {
   console.error(
