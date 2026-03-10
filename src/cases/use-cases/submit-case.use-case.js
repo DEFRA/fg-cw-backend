@@ -17,11 +17,11 @@ export const submitCaseUseCase = async (message) => {
     await withTransaction(async (session) => {
       const kaseId = await newCaseUseCase(message, session);
 
-      const caseSeries = CaseSeries.new(
+      const caseSeries = CaseSeries.new({
         workflowCode,
         caseRef,
-        kaseId.toString(),
-      );
+        caseId: kaseId.toString(),
+      });
 
       await saveSeries(caseSeries, session);
     });

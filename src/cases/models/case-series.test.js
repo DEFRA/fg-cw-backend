@@ -74,7 +74,11 @@ describe("CaseSeries", () => {
     afterEach(() => vi.useRealTimers());
 
     it("creates a new CaseSeries with the provided values", () => {
-      const series = CaseSeries.new("wf-001", "TEST-001", "abc123");
+      const series = CaseSeries.new({
+        workflowCode: "wf-001",
+        caseRef: "TEST-001",
+        caseId: "abc123",
+      });
       expect(series).toBeInstanceOf(CaseSeries);
       expect(series.workflowCode).toBe("wf-001");
       expect(series.latestCaseId).toBe("abc123");

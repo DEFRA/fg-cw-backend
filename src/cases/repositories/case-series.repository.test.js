@@ -10,7 +10,12 @@ import {
 
 vi.mock("../../common/mongo-client.js");
 
-const createMockSeries = () => CaseSeries.new("wf-001", "TEST-001", "abc123");
+const createMockSeries = () =>
+  CaseSeries.new({
+    workflowCode: "wf-001",
+    caseRef: "TEST-001",
+    caseId: "abc123",
+  });
 
 describe("case-series.repository", () => {
   describe("save", () => {

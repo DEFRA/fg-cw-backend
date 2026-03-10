@@ -47,7 +47,7 @@ export class CaseSeries {
     this.updatedAt = new Date(Date.now()).toISOString();
   }
 
-  static new(workflowCode, caseRef, caseId) {
+  static new({ workflowCode, caseRef, caseId }) {
     const date = new Date(Date.now()).toISOString();
     return new CaseSeries({
       caseRefs: [caseRef],
