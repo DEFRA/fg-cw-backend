@@ -17,6 +17,7 @@ beforeEach(async () => {
     db.collection("fifo_locks").deleteMany({}),
     db.collection("inbox").deleteMany({}),
     db.collection("outbox").deleteMany({}),
+    db.collection("case_series").deleteMany({}),
   ]);
 
   await purgeQueues([
