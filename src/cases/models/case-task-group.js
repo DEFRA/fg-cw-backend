@@ -22,6 +22,9 @@ export class CaseTaskGroup {
 
   isComplete(workflowTaskGroup) {
     for (const workflowTask of workflowTaskGroup.tasks) {
+      if (!this.hasTask(workflowTask.code)) {
+        continue;
+      }
       const caseTask = this.findTask(workflowTask.code);
 
       if (!caseTask.isComplete(workflowTask)) {
@@ -30,5 +33,9 @@ export class CaseTaskGroup {
     }
 
     return true;
+  }
+
+  hasTask(taskCode) {
+    return this.tasks.some((t) => t.code === taskCode);
   }
 }

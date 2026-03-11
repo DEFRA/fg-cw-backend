@@ -70,6 +70,7 @@ const toWorkflowTaskComment = (tc) =>
 
 const toWorkflowTask = (t) =>
   new WorkflowTask({
+    conditional: t.conditional,
     code: t.code,
     name: t.name,
     mandatory: t.mandatory,

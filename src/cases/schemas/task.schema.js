@@ -65,6 +65,7 @@ export const StatusOption = Joi.object({
 }).label("StatusOption");
 
 export const Task = Joi.object({
+  conditional: Joi.string().optional().allow(null),
   code: Code.required(),
   name: Joi.string().required(),
   mandatory: Joi.boolean().required(),

@@ -12,6 +12,7 @@ export class WorkflowTask {
       "WorkflowTask",
     );
 
+    this.conditional = value.conditional;
     this.code = value.code;
     this.name = value.name;
     this.description = value.description;
@@ -32,6 +33,7 @@ export class WorkflowTask {
 }
 
 WorkflowTask.validationSchema = Joi.object({
+  conditional: Joi.string().optional().allow(null),
   code: Code.required(),
   mandatory: Joi.boolean().required(),
   name: Joi.string().required(),

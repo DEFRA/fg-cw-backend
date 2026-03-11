@@ -470,3 +470,11 @@ export const populateUrlTemplate = (template, params) =>
   template.replace(/\{([^}]{0,100})}/g, (_, key) =>
     encodeURIComponent(params[key] ?? ""),
   );
+
+export const evaluateTaskCondition = async ({ condition, root }) => {
+  if (!condition) {
+    return true;
+  }
+  const conditionResult = await resolveDataRef({ root, path: condition });
+  return evaluateConditionResult(conditionResult);
+};
