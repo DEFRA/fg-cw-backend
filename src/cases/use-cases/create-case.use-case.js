@@ -1,5 +1,5 @@
-import { JSONPath } from "jsonpath-plus";
 import { logger } from "../../common/logger.js";
+import { evaluateTaskCondition } from "../../common/resolve-json.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
@@ -8,17 +8,6 @@ import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
-
-const evaluateCondition = (conditional, payload) => {
-  if (!conditional) {
-    return true;
-  }
-  const result = JSONPath({ json: { payload }, path: conditional });
-  if (Array.isArray(result)) {
-    return result.length > 0 && Boolean(result[0]);
-  }
-  return Boolean(result);
-};
 
 const createCaseTask = (task) =>
   new CaseTask({
@@ -30,24 +19,33 @@ const createCaseTask = (task) =>
     updatedBy: null,
   });
 
-const createCaseTaskGroup = (taskGroup, payload) =>
-  new CaseTaskGroup({
-    code: taskGroup.code,
-    tasks: taskGroup.tasks
-      .filter((task) => evaluateCondition(task.conditional, payload))
-      .map(createCaseTask),
-  });
+const createCaseTaskGroup = async (taskGroup, root) => {
+  const tasks = await taskGroup.tasks.reduce(async (accPromise, task) => {
+    const acc = await accPromise;
+    const include = await evaluateTaskCondition({
+      condition: task.conditional,
+      root,
+    });
+    return include ? [...acc, createCaseTask(task)] : acc;
+  }, Promise.resolve([]));
 
-const createCaseStage = (stage, payload) =>
+  return new CaseTaskGroup({ code: taskGroup.code, tasks });
+};
+
+const createCaseStage = async (stage, root) =>
   new CaseStage({
     code: stage.code,
-    taskGroups: stage.taskGroups.map((tg) => createCaseTaskGroup(tg, payload)),
+    taskGroups: await Promise.all(
+      stage.taskGroups.map((tg) => createCaseTaskGroup(tg, root)),
+    ),
   });
 
-const createCasePhase = (phase, payload) =>
+const createCasePhase = async (phase, root) =>
   new CasePhase({
     code: phase.code,
-    stages: phase.stages.map((s) => createCaseStage(s, payload)),
+    stages: await Promise.all(
+      phase.stages.map((s) => createCaseStage(s, root)),
+    ),
   });
 
 export const createCaseUseCase = async (message) => {
@@ -65,12 +63,17 @@ export const createCaseUseCase = async (message) => {
 
     const position = workflow.getInitialPosition();
 
+    const root = { payload };
+    const phases = await Promise.all(
+      workflow.phases.map((phase) => createCasePhase(phase, root)),
+    );
+
     const kase = Case.new({
       caseRef,
       workflowCode,
       position,
       payload,
-      phases: workflow.phases.map((phase) => createCasePhase(phase, payload)),
+      phases,
     });
 
     logger.info(
