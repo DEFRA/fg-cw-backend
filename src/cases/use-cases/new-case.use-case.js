@@ -1,6 +1,5 @@
 import { logger } from "../../common/logger.js";
 import { evaluateTaskCondition } from "../../common/resolve-json.js";
-import { withTransaction } from "../../common/with-transaction.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
@@ -48,38 +47,38 @@ const createCasePhase = async (phase, root) =>
     ),
   });
 
-export const createCaseUseCase = async (message) => {
-  return await withTransaction(async (session) => {
-    const {
-      event: { data },
-    } = message;
-    const { caseRef, workflowCode, payload } = data;
+export const newCaseUseCase = async (message, session) => {
+  const {
+    event: { data },
+  } = message;
+  const { caseRef, workflowCode, payload } = data;
 
-    logger.info(
-      `Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
-    );
+  logger.info(
+    `Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
+  );
 
-    const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  const workflow = await findWorkflowByCodeUseCase(workflowCode);
 
-    const position = workflow.getInitialPosition();
+  const position = workflow.getInitialPosition();
 
-    const root = { payload };
-    const phases = await Promise.all(
-      workflow.phases.map((phase) => createCasePhase(phase, root)),
-    );
+  const root = { payload };
+  const phases = await Promise.all(
+    workflow.phases.map((phase) => createCasePhase(phase, root)),
+  );
 
-    const kase = Case.new({
-      caseRef,
-      workflowCode,
-      position,
-      payload,
-      phases,
-    });
-
-    logger.info(
-      `Finished: Creating case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
-    );
-
-    await save(kase, session);
+  const kase = Case.new({
+    caseRef,
+    workflowCode,
+    position,
+    payload,
+    phases,
   });
+
+  const { insertedId } = await save(kase, session);
+
+  logger.info(
+    `Finished: Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
+  );
+
+  return insertedId;
 };
