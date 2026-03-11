@@ -40,7 +40,7 @@ const messagePmf = {
       answers: {
         isPigFarmer: true,
         totalPigs: 4,
-        whitePigsCount: 2,
+        whitePigsCount: 5,
         britishLandracePigsCount: 2,
       },
     },
