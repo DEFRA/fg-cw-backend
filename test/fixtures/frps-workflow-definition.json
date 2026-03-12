@@ -5,39 +5,46 @@
     "anyOf": []
   },
   "templates": {
+    "caveatGroups": {
+      "ne-consent-required": {
+        "order": 1,
+        "content": [
+          {
+            "component": "heading",
+            "text": "SSSI consent",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "A SSSI consent is required from Natural England"
+          }
+        ]
+      }
+    },
     "caveats": {
       "ne-consent-required": {
         "content": [
           {
-            "id": "title",
             "component": "heading",
             "text": "Land parcel: @.metadata.sheetId @.metadata.parcelId",
-            "level": 2,
-            "classes": "govuk-heading-m govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+            "level": 3,
+            "classes": "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1"
           },
           {
-            "id": "landParcel",
             "component": "summary-list",
             "rows": [
-              {
-                "label": "Description",
-                "text": "@.description"
-              },
               {
                 "label": "Action code",
                 "text": "@.metadata.actionCode"
               },
               {
-                "label": "Land parcel",
-                "text": "@.metadata.sheetId @.metadata.parcelId"
-              },
-              {
-                "label": "Overlap %",
-                "text": "jsonata:$string(@.metadata.percentageOverlap)"
-              },
-              {
                 "label": "Overlap area",
-                "text": "jsonata:$string(@.metadata.overlapAreaHectares) & ' Ha'"
+                "text": "@.metadata.overlapAreaHectares Ha"
+              },
+              {
+                "label": "Overlap",
+                "text": "@.metadata.percentageOverlap %"
               }
             ]
           }
@@ -175,10 +182,10 @@
                 "id": "case-events",
                 "items": [
                   {
-                    "component": "repeat",
+                    "component": "conditional",
                     "id": "statutory-consent-requirements",
-                    "itemsRef": "jsonata:$.payload.answers.rulesCalculations.caveats[0] ? [{ \"caveats\": $.payload.answers.rulesCalculations.caveats }] : []",
-                    "items": {
+                    "condition": "$.payload.answers.rulesCalculations.caveats[0]",
+                    "whenTrue": {
                       "heading": [
                         {
                           "text": "Statutory Consent Requirements"
@@ -187,13 +194,25 @@
                       "content": [
                         {
                           "component": "repeat",
-                          "id": "caveats-inner",
-                          "itemsRef": "@.caveats[*]",
+                          "id": "caveat-groups",
+                          "itemsRef": "jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {\"code\": $code, \"order\": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, \"caveats\": $caveats[code = $code]}); $sort($groups, function($l, $r) { $l.order > $r.order }))",
                           "items": [
                             {
                               "component": "template",
-                              "templateRef": "$.templates.caveats",
+                              "templateRef": "$.templates.caveatGroups",
                               "templateKey": "@.code"
+                            },
+                            {
+                              "component": "repeat",
+                              "id": "caveats-inner",
+                              "itemsRef": "@.caveats[*]",
+                              "items": [
+                                {
+                                  "component": "template",
+                                  "templateRef": "$.templates.caveats",
+                                  "templateKey": "@.code"
+                                }
+                              ]
                             }
                           ]
                         }
