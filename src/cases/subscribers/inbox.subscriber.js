@@ -19,11 +19,11 @@ import {
   updateFailedEvents,
   updateResubmittedEvents,
 } from "../repositories/inbox.repository.js";
-import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
+import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 
 export const useCaseMap = {
-  "cloud.defra.ENV.fg-gas-backend.case.create": createCaseUseCase,
+  "cloud.defra.ENV.fg-gas-backend.case.create": submitCaseUseCase,
   "cloud.defra.ENV.fg-gas-backend.case.update.status":
     handleCaseStatusUpdateUseCase,
 };
