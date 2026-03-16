@@ -73,6 +73,19 @@ const messageFrps = {
           message: "Application validated successfully",
           valid: true,
           date: "2025-11-28T15:32:42.983Z",
+          caveats: [
+            {
+              code: "ne-consent-required",
+              description: "SSSI consent required for land parcel",
+              metadata: {
+                sheetId: "SK0971",
+                parcelId: "LP1",
+                actionCode: "CMOR1",
+                percentageOverlap: 45.5,
+                overlapAreaHectares: 2.35,
+              },
+            },
+          ],
         },
         scheme: "SFI",
         applicant: {
