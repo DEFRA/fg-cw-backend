@@ -164,7 +164,7 @@ describe("outbox.repository", () => {
           claimExpiresAt: {
             $lt: expect.any(Date),
           },
-          status: { $ne: OutboxStatus.DEAD_LETTER },
+          status: { $nin: [OutboxStatus.COMPLETED, OutboxStatus.DEAD_LETTER] },
         },
         {
           $set: {

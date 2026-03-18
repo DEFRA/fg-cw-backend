@@ -99,7 +99,7 @@ describe("inbox.repository", () => {
         claimExpiresAt: {
           $lt: expect.any(Date),
         },
-        status: { $ne: InboxStatus.DEAD_LETTER },
+        status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
       },
       {
         $set: {
