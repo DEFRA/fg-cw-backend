@@ -99,6 +99,7 @@ describe("inbox.repository", () => {
         claimExpiresAt: {
           $lt: expect.any(Date),
         },
+        status: { $ne: InboxStatus.DEAD_LETTER },
       },
       {
         $set: {
@@ -122,6 +123,7 @@ describe("inbox.repository", () => {
         completionAttempts: {
           $gte: parseInt(config.get("inbox.inboxMaxRetries")),
         },
+        status: { $ne: InboxStatus.DEAD_LETTER },
       },
       {
         $set: {
