@@ -4,16 +4,15 @@ const returnToCustomerConfirmation = {
       component: "heading",
       text: "Are you sure you want to return this application to the customer?",
       level: 1,
-      classes: "govuk-heading-xl govuk-!-margin-bottom-6",
+      classes: "govuk-heading-l",
     },
     {
       component: "paragraph",
       text: "Returning an application to the customer will:",
-      classes: "govuk-body govuk-!-margin-bottom-4",
     },
     {
       component: "unordered-list",
-      classes: "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+      classes: "govuk-list govuk-list--bullet",
       items: [
         {
           component: "text",
@@ -67,22 +66,19 @@ const applicationAmendContent = [
     component: "heading",
     text: "Application returned to customer for amending",
     level: 2,
-    classes: "govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-4",
+    classes: "govuk-heading-m",
   },
   {
     component: "paragraph",
     text: "Application $.caseRef has been cancelled. However, you can still review the notes and timeline for this application.",
-    classes: "govuk-body",
   },
   {
     component: "paragraph",
     text: "A new, linked application will be submitted after amendments have been made by the customer.",
-    classes: "govuk-body",
   },
   {
     component: "paragraph",
     text: "All review tasks will need to be started again once the amended application is submitted.",
-    classes: "govuk-body",
   },
 ];
 
