@@ -6,9 +6,12 @@ describe("inbox model", () => {
   it("creates an inbox model", () => {
     const messageId = randomUUID();
     const obj = new Inbox({
-      event: {},
+      event: { time: new Date().toISOString() },
       messageId,
       type: "io.onsite.some.value.or.another",
+      source: "source-system",
+      messageGroupId: "some-group-id",
+      segregationRef: "some-segregation-ref",
     });
 
     expect(obj).toBeInstanceOf(Inbox);
@@ -16,7 +19,7 @@ describe("inbox model", () => {
 
   it("should mark a document as complete", async () => {
     const messageId = randomUUID();
-    const obj = new Inbox({
+    const obj = Inbox.createMock({
       event: {
         data: {
           foo: "barr",
@@ -48,6 +51,8 @@ describe("inbox model", () => {
       },
       messageId,
       type: "io.onsite.some.value.or.another",
+      segregationRef: "134",
+      source: "gas",
     });
 
     obj.claimedBy = randomUUID();
@@ -72,6 +77,8 @@ describe("inbox model", () => {
       },
       messageId,
       type: "io.onsite.some.value.or.another",
+      source: "AS",
+      segregationRef: "1234",
     });
 
     obj.claimedBy = randomUUID();
@@ -82,6 +89,14 @@ describe("inbox model", () => {
     expect(doc.publicationDate).toBe(obj.publicationDate);
     expect(doc.status).toBe(obj.status);
     expect(doc.messageId).toBe(obj.messageId);
+  });
+
+  it("should throw on invalid props", () => {
+    expect(() => new Inbox({ event: null })).toThrow("Invalid Inbox");
+  });
+
+  it("should throw with all validation errors", () => {
+    expect(() => new Inbox({})).toThrow(/source/);
   });
 
   it("should create model from doc", () => {
@@ -96,12 +111,15 @@ describe("inbox model", () => {
         data: {
           foo: "barr",
         },
+        messageGroupId: "mgid",
       },
       lastResubmissionDate: null,
       messageId: "d2868709-7232-4f08-8375-d367901cdadf",
       publicationDate: "2025-10-27T13:46:53.876Z",
       status: "PUBLISHED",
       type: "io.onsite.some.value.or.another",
+      segregationRef: "ppp",
+      source: "AS",
     };
 
     const model = Inbox.fromDocument(doc);

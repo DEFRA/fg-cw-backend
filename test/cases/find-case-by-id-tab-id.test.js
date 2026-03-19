@@ -63,10 +63,18 @@ describe("GET /cases/{caseId}/tabs/{tabId}", () => {
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload).toBeDefined();
-    expect(response.payload.content).toBeDefined();
-    expect(Array.isArray(response.payload.content)).toBe(true);
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data.content).toBeDefined();
+    expect(Array.isArray(response.payload.data.content)).toBe(true);
 
-    const contentTypes = response.payload.content.map((item) => item.component);
+    const contentTypes = response.payload.data.content.map(
+      (item) => item.component,
+    );
     expect(contentTypes).toContain("heading");
     expect(contentTypes).toContain("list");
     expect(contentTypes).toContain("table");
@@ -92,8 +100,14 @@ describe("GET /cases/{caseId}/tabs/{tabId}", () => {
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload).toBeDefined();
-    expect(response.payload.content).toBeDefined();
-    expect(Array.isArray(response.payload.content)).toBe(true);
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data.content).toBeDefined();
+    expect(Array.isArray(response.payload.data.content)).toBe(true);
   });
 
   it("returns 404 when case does not exist", async () => {

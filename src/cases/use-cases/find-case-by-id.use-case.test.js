@@ -298,7 +298,7 @@ describe("findCaseByIdUseCase", () => {
       comments: [],
       currentStatus: "STATUS_1",
       workflowCode: "workflow-code",
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
       requiredRoles: {
@@ -534,11 +534,13 @@ describe("findCaseByIdUseCase", () => {
       {
         code: "ACTION_1",
         name: "Action 1",
-        comment: {
+        comment: expect.objectContaining({
           helpText: "Action help text",
           label: "Action label 1",
           mandatory: true,
-        },
+        }),
+        confirm: undefined,
+        targetStatusName: "Stage status 2",
       },
     ]);
   });
@@ -594,11 +596,13 @@ describe("findCaseByIdUseCase", () => {
       {
         code: "ACTION_1",
         name: "Action 1",
-        comment: {
+        comment: expect.objectContaining({
           helpText: "Action help text",
           label: "Action label 1",
           mandatory: true,
-        },
+        }),
+        confirm: undefined,
+        targetStatusName: "Stage status 2",
       },
     ]);
   });

@@ -30,6 +30,7 @@ const toWorkflowAction = (a) =>
           mandatory: a.comment.mandatory,
         })
       : null,
+    confirm: a.confirm,
   });
 
 const toWorkflowTransition = (t) =>
@@ -69,6 +70,7 @@ const toWorkflowTaskComment = (tc) =>
 
 const toWorkflowTask = (t) =>
   new WorkflowTask({
+    conditional: t.conditional,
     code: t.code,
     name: t.name,
     mandatory: t.mandatory,
@@ -126,6 +128,7 @@ const toWorkflow = (doc) =>
       anyOf: doc.requiredRoles.anyOf,
     }),
     definitions: doc.definitions,
+    templates: doc.templates,
     externalActions: doc.externalActions,
     endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
   });

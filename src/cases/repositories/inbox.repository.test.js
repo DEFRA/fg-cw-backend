@@ -6,6 +6,7 @@ import { Inbox, InboxStatus } from "../models/inbox.js";
 import {
   claimEvents,
   findByMessageId,
+  findNextMessage,
   insertMany,
   insertOne,
   processExpiredEvents,
@@ -27,6 +28,29 @@ const createMockInbox = (id, time) => {
 };
 
 describe("inbox.repository", () => {
+  it("should find next message excluding locked segregationRefs", async () => {
+    const lockIds = ["ref-1", "ref-2"];
+    const mockDoc = { _id: "1" };
+    const findOne = vi.fn().mockResolvedValue(mockDoc);
+
+    db.collection.mockReturnValue({ findOne });
+
+    const result = await findNextMessage(lockIds);
+
+    expect(findOne).toHaveBeenCalledWith(
+      {
+        status: { $eq: InboxStatus.PUBLISHED },
+        claimedBy: { $eq: null },
+        completionAttempts: {
+          $lte: parseInt(config.get("inbox.inboxMaxRetries")),
+        },
+        segregationRef: { $nin: lockIds },
+      },
+      { sort: { eventTime: 1 } },
+    );
+    expect(result).toBe(mockDoc);
+  });
+
   it("should claim events", async () => {
     const claimedBy = randomUUID();
     const mockDocuments = [
@@ -75,6 +99,7 @@ describe("inbox.repository", () => {
         claimExpiresAt: {
           $lt: expect.any(Date),
         },
+        status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
       },
       {
         $set: {
@@ -98,10 +123,11 @@ describe("inbox.repository", () => {
         completionAttempts: {
           $gte: parseInt(config.get("inbox.inboxMaxRetries")),
         },
+        status: { $ne: InboxStatus.DEAD_LETTER },
       },
       {
         $set: {
-          status: InboxStatus.DEAD,
+          status: InboxStatus.DEAD_LETTER,
           claimedAt: null,
           claimExpiresAt: null,
           claimedBy: null,

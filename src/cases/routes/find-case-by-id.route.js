@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { createPageResponse } from "../../common/create-page-response.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 
 export const findCaseByIdRoute = {
@@ -18,8 +19,10 @@ export const findCaseByIdRoute = {
     const tabId = request.query.tabId;
     const { user } = request.auth.credentials;
 
-    return await findCaseByIdUseCase(caseId, user, {
+    const data = await findCaseByIdUseCase(caseId, user, {
       params: { caseId, tabId },
     });
+
+    return createPageResponse({ user, data });
   },
 };

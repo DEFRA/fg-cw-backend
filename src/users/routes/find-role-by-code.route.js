@@ -1,6 +1,6 @@
 import Joi from "joi";
+import { createPageResponse } from "../../common/create-page-response.js";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
-import { findRoleResponseSchema } from "../schemas/responses/find-role-response.schema.js";
 import { findRoleByCodeUseCase } from "../use-cases/find-role-by-code.use-case.js";
 
 export const findRoleByCodeRoute = {
@@ -14,11 +14,14 @@ export const findRoleByCodeRoute = {
         code: codeSchema,
       }),
     },
-    response: {
-      schema: findRoleResponseSchema,
-    },
   },
   async handler(request) {
-    return await findRoleByCodeUseCase(request.params.code);
+    const { user } = request.auth.credentials;
+    const { code } = request.params;
+    const data = await findRoleByCodeUseCase({
+      user,
+      code,
+    });
+    return createPageResponse({ user, data });
   },
 };

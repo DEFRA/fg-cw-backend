@@ -32,11 +32,11 @@ describe("GET /cases/{caseId}", () => {
     const { insertedIds } = await cases.insertMany([
       {
         ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData2,
-        dateReceived: new Date(caseData2.dateReceived),
+        createdAt: new Date(caseData2.createdAt),
       },
     ]);
 
@@ -45,7 +45,13 @@ describe("GET /cases/{caseId}", () => {
     const response = await wreck.get(`/cases/${caseId}`);
 
     expect(response.res.statusCode).toBe(200);
-    expect(response.payload).toEqual({
+    expect(response.payload.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
+    expect(response.payload.data).toEqual({
       _id: caseId,
       caseRef: caseData2.caseRef,
       workflowCode: caseData2.workflowCode,
@@ -109,10 +115,11 @@ describe("GET /cases/{caseId}", () => {
             code: "APPROVE",
             name: "Approve",
             comment: null,
+            targetStatusName: "Awaiting Agreement",
           },
         ],
       },
-      dateReceived: new Date(caseData2.dateReceived).toISOString(),
+      createdAt: new Date(caseData2.createdAt).toISOString(),
       payload: caseData2.payload,
       supplementaryData: caseData2.supplementaryData,
       assignedUser: null,

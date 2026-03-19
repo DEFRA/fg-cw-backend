@@ -16,6 +16,7 @@ export const createCaseWorkflowContext = ({
     ...kase,
     workflow,
     definitions: { ...workflow.definitions },
+    templates: getWorkflowTemplates(workflow),
     currentStatusName: status.name,
     ...(workflow.externalActions && {
       externalActions: workflow.externalActions.filter(
@@ -25,6 +26,10 @@ export const createCaseWorkflowContext = ({
     request: { ...request },
     user,
   };
+};
+
+const getWorkflowTemplates = (workflow) => {
+  return workflow.templates || {};
 };
 
 export const assertPathExists = async (root, path) => {

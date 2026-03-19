@@ -106,6 +106,14 @@ export const config = convict({
       env: "MONGO_DATABASE",
     },
   },
+  fifoLock: {
+    ttlMs: {
+      doc: "Fifo lock time to live",
+      format: String,
+      default: null,
+      env: "FIFO_LOCK_TTL_MS",
+    },
+  },
   aws: {
     endpointUrl: {
       doc: "AWS Endpoint URL used for LocalStack",
@@ -124,14 +132,15 @@ export const config = convict({
       caseCreatedTopicArn: {
         doc: "ARN of the SNS topic to publish case created events",
         format: String,
-        default: "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_created",
+        default:
+          "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_created_fifo.fifo",
         env: "CW__SNS__CASE_CREATED_TOPIC_ARN",
       },
       caseStatusUpdatedTopicArn: {
         doc: "ARN of the SNS topic to publish case status updated events",
         format: String,
         default:
-          "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+          "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated_fifo.fifo",
         env: "CW__SNS__CASE_STATUS_UPDATED_TOPIC_ARN",
       },
     },
@@ -140,14 +149,14 @@ export const config = convict({
         doc: "URL of the SQS queue for case creation commands",
         format: String,
         default:
-          "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case",
+          "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case_fifo.fifo",
         env: "CW__SQS__CREATE_NEW_CASE_URL",
       },
       updateStatusUrl: {
         doc: "URL of the SQS queue for case status update commands",
         format: String,
         default:
-          "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_case_status",
+          "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_status_fifo.fifo",
         env: "CW__SQS__UPDATE_STATUS_URL",
       },
     },

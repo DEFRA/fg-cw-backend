@@ -1,3 +1,7 @@
+import Boom from "@hapi/boom";
+import Joi from "joi";
+import { getMessageGroupId } from "../../common/get-message-group-id.js";
+
 export const OutboxStatus = {
   PUBLISHED: "PUBLISHED",
   PROCESSING: "PROCESSING",
@@ -8,7 +12,25 @@ export const OutboxStatus = {
 };
 
 export class Outbox {
+  static validationSchema = Joi.object({
+    target: Joi.string().required(),
+    event: Joi.object().required(),
+    segregationRef: Joi.string().required(),
+  });
+
+  // eslint-disable-next-line complexity
   constructor(props) {
+    const { error } = Outbox.validationSchema.validate(props, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    if (error) {
+      throw Boom.badRequest(
+        `Invalid Outbox: ${error.details.map((d) => d.message).join(", ")}`,
+      );
+    }
+
     this._id = props._id;
     this.publicationDate = props.publicationDate || new Date();
     this.target = props.target;
@@ -20,6 +42,7 @@ export class Outbox {
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
+    this.segregationRef = props.segregationRef;
   }
 
   markAsComplete() {
@@ -51,7 +74,13 @@ export class Outbox {
       claimedAt: this.claimedAt,
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
+      segregationRef: this.segregationRef,
     };
+  }
+
+  static getSegregationRef(event) {
+    const { data } = event;
+    return getMessageGroupId(null, data);
   }
 
   static fromDocument(doc) {
@@ -67,6 +96,18 @@ export class Outbox {
       claimedAt: doc.claimedAt,
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
+      segregationRef: doc.segregationRef,
+    });
+  }
+
+  static createMock(doc) {
+    return new Outbox({
+      target: "foo:barr",
+      event: {
+        messageGroupId: "foo-barr",
+      },
+      segregationRef: "1234",
+      ...doc,
     });
   }
 }

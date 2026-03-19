@@ -18,6 +18,7 @@ describe("Outbox model", () => {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     expect(obj.target).toBe("arn:some:target");
@@ -59,6 +60,7 @@ describe("Outbox model", () => {
       claimedAt: null,
       claimedBy: null,
       claimExpiresAt: null,
+      segregationRef: "test-segregation-ref",
     };
     const out = Outbox.fromDocument(doc);
     expect(out).toBeInstanceOf(Outbox);
@@ -72,12 +74,28 @@ describe("Outbox model", () => {
     expect(newDoc.event).toBe(out.event);
   });
 
+  it("should throw on invalid props", () => {
+    expect(() => new Outbox({ event: null })).toThrow("Invalid Outbox");
+  });
+
+  it("should throw with all validation errors", () => {
+    expect(() => new Outbox({})).toThrow(/target/);
+  });
+
+  it("should get segregation ref from event data", () => {
+    const ref = Outbox.getSegregationRef({
+      data: { clientRef: "cr-1", code: "gc-1" },
+    });
+    expect(ref).toBe("cr-1-gc-1");
+  });
+
   it("should mark outbox as failed", () => {
     const obj = new Outbox({
       event: {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     obj.markAsFailed();
@@ -90,6 +108,7 @@ describe("Outbox model", () => {
         clientRef: "1234",
       },
       target: "arn:some:target",
+      segregationRef: "test-segregation-ref",
     });
     expect(obj).toBeInstanceOf(Outbox);
     obj.markAsComplete();

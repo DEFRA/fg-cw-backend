@@ -7,6 +7,44 @@ import { User } from "../models/user.js";
 
 const collection = "users";
 
+const createActiveAppRoleFilter = (role, today) => {
+  const rolePath = `appRoles.${role}`;
+  const roleStartDatePath = `${rolePath}.startDate`;
+  const roleEndDatePath = `${rolePath}.endDate`;
+
+  return {
+    $and: [
+      { [rolePath]: { $exists: true } },
+      {
+        $or: [
+          { [roleStartDatePath]: null },
+          { [roleStartDatePath]: { $lte: today } },
+        ],
+      },
+      {
+        $or: [
+          { [roleEndDatePath]: null },
+          { [roleEndDatePath]: { $gte: today } },
+        ],
+      },
+    ],
+  };
+};
+
+/**
+ * Handles MongoDB duplicate key errors (code 11000) for user operations.
+ * Throws appropriate Boom.conflict errors based on which unique constraint was violated.
+ */
+const handleDuplicateKeyError = (error) => {
+  if (error.code === 11000) {
+    if (error.keyPattern?.email) {
+      throw Boom.conflict("A user with this email address already exists");
+    }
+    throw Boom.conflict("User with the same idpId already exists");
+  }
+  throw error;
+};
+
 const toUser = (doc) => {
   const appRoles = {};
   for (const [roleName, roleData] of Object.entries(doc.appRoles)) {
@@ -27,6 +65,7 @@ const toUser = (doc) => {
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
     lastLoginAt: doc.lastLoginAt?.toISOString(),
+    createdManually: doc.createdManually || false,
   });
 };
 
@@ -38,10 +77,7 @@ export const save = async (user) => {
   try {
     result = await db.collection(collection).insertOne(userDocument);
   } catch (error) {
-    if (error.code === 11000) {
-      throw Boom.conflict(`User with the same idpId already exists`);
-    }
-    throw error;
+    handleDuplicateKeyError(error);
   }
 
   if (!result.acknowledged) {
@@ -79,6 +115,7 @@ export const findAll = async (query = {}) => {
 
 // eslint-disable-next-line complexity
 const createFilter = (query) => {
+  const today = new Date().toISOString().slice(0, 10);
   const filter = {
     // Exclude users without valid names (null, undefined, empty, or "placeholder")
     // We seem to have some users with a name of "placeholder" in the database, so we need to exclude them.
@@ -95,15 +132,15 @@ const createFilter = (query) => {
   }
 
   if (query.allAppRoles?.length) {
-    filter.$and = query.allAppRoles.map((role) => ({
-      [`appRoles.${role}`]: { $exists: true },
-    }));
+    filter.$and = query.allAppRoles.map((role) =>
+      createActiveAppRoleFilter(role, today),
+    );
   }
 
   if (query.anyAppRoles?.length) {
-    filter.$or = query.anyAppRoles.map((role) => ({
-      [`appRoles.${role}`]: { $exists: true },
-    }));
+    filter.$or = query.anyAppRoles.map((role) =>
+      createActiveAppRoleFilter(role, today),
+    );
   }
 
   if (query.ids?.length) {
@@ -123,35 +160,125 @@ export const findById = async (userId) => {
   return userDocument && toUser(userDocument);
 };
 
+/**
+ * Logic Flow for User Login Upsert (after ticket FGP-903: Manual account linking):
+ *
+ * 1. RETURNING USER: Try updating by 'idpId' first.
+ *    - If found, this is a standard returning user (most common path).
+ *    - Update their login fields and return immediately.
+ *
+ * 2. FIRST-TIME LOGIN (Manual Account Linking):
+ *    - If no 'idpId' match, check if a user with this email exists AND was 'createdManually'.
+ *    - If found, link this Entra ID identity to the existing manual account.
+ *    - Update 'idpId', set 'createdManually' to false, and return.
+ *
+ * 3. NEW USER REGISTRATION:
+ *    - If no 'idpId' match and no manual account match, create a brand new user.
+ *    - Use 'upsert: true'.
+ */
+
 export const upsertLogin = async (user) => {
   const userDocument = new UserDocument(user);
 
-  const result = await db.collection(collection).findOneAndUpdate(
-    { idpId: userDocument.idpId },
-    {
-      $set: {
-        // Fields to update on both create and update
-        idpRoles: userDocument.idpRoles,
-        name: userDocument.name,
-        email: userDocument.email,
-        updatedAt: userDocument.updatedAt,
-        lastLoginAt: userDocument.lastLoginAt,
+  const loginFields = {
+    idpRoles: userDocument.idpRoles,
+    name: userDocument.name,
+    email: userDocument.email,
+    updatedAt: userDocument.updatedAt,
+    lastLoginAt: userDocument.lastLoginAt,
+  };
+
+  // Try to update existing user by idpId (most common case - returning user - keeps it simple)
+  const existingUser = await db
+    .collection(collection)
+    .findOneAndUpdate(
+      { idpId: userDocument.idpId },
+      { $set: loginFields },
+      { returnDocument: "after" },
+    );
+
+  if (existingUser) {
+    return toUser(existingUser);
+  }
+
+  return firstTimeLogin(userDocument, loginFields);
+};
+
+const firstTimeLogin = async (userDocument, loginFields) => {
+  // First-time login - check if this email has a manually-created user.
+  // This handles the case where admin created a user before they logged in via Entra ID.
+  // Uses exact match since userDocument.email is already normalized to lowercase.
+  const manualUser = await db.collection(collection).findOne({
+    email: userDocument.email,
+    createdManually: true,
+  });
+
+  if (manualUser) {
+    return linkManualUser(manualUser, userDocument, loginFields);
+  }
+
+  // Create new user (or final fallback upsert).
+  // Wrapped in try/catch to handle race condition where two users with the same
+  // email but different idpIds attempt to register simultaneously.
+  let result;
+  try {
+    result = await db.collection(collection).findOneAndUpdate(
+      { idpId: userDocument.idpId },
+      {
+        $set: loginFields,
+        $setOnInsert: {
+          createdAt: userDocument.createdAt,
+          appRoles: userDocument.appRoles,
+        },
       },
-      $setOnInsert: {
-        // Fields to set only on creation
-        createdAt: userDocument.createdAt,
-        appRoles: userDocument.appRoles,
+      {
+        upsert: true,
+        returnDocument: "after",
       },
-    },
-    {
-      upsert: true,
-      returnDocument: "after",
-    },
-  );
+    );
+  } catch (error) {
+    handleDuplicateKeyError(error);
+  }
 
   if (!result) {
     throw Boom.internal("User could not be created or updated");
   }
 
   return toUser(result);
+};
+
+const linkManualUser = async (manualUser, userDocument, loginFields) => {
+  // Link the manually-created user to the Entra ID by updating their idpId
+  const result = await db.collection(collection).findOneAndUpdate(
+    { _id: manualUser._id },
+    {
+      $set: {
+        ...loginFields,
+        idpId: userDocument.idpId,
+        createdManually: false, // No longer manually created
+      },
+    },
+    { returnDocument: "after" },
+  );
+
+  if (!result) {
+    throw Boom.internal("User could not be updated");
+  }
+
+  return toUser(result);
+};
+
+export const findByEmail = async (email) => {
+  // Guard against null/undefined to prevent TypeError on toLowerCase()
+  if (!email || typeof email !== "string") {
+    return null;
+  }
+
+  // Use exact match on lowercase email since emails are stored normalized.
+  // This avoids regex injection issues with special characters like + or .
+  const userDocument = await db.collection(collection).findOne({
+    email: email.toLowerCase(),
+  });
+
+  return userDocument && toUser(userDocument);
 };

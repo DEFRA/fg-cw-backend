@@ -68,6 +68,7 @@ describe("buildViewModel", () => {
           apiUrl: "https://api.example.com",
           testKey: "testValue",
         },
+        templates: {},
         currentStatusName: "Status One",
         request: {},
         user: null,
@@ -91,6 +92,7 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         user: null,
@@ -115,6 +117,7 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         user: null,
@@ -147,6 +150,7 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         externalActions: [
@@ -193,6 +197,7 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         externalActions: [
@@ -238,6 +243,7 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         externalActions: [
@@ -285,9 +291,35 @@ describe("buildViewModel", () => {
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
         definitions: {},
+        templates: {},
         currentStatusName: "Status Name",
         request: {},
         user,
+      });
+    });
+
+    it("should include templates from workflow", async () => {
+      const workflow = {
+        code: "test-workflow",
+        definitions: {},
+        templates: {
+          caveats: {
+            CAV001: {
+              content: [{ component: "text", text: "Caveat 1" }],
+            },
+          },
+        },
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow });
+
+      expect(result.templates).toEqual({
+        caveats: {
+          CAV001: {
+            content: [{ component: "text", text: "Caveat 1" }],
+          },
+        },
       });
     });
   });

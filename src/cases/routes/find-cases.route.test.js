@@ -20,7 +20,9 @@ describe("findCasesRoute", () => {
   });
 
   it("returns cases", async () => {
-    const user = User.createMock();
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
     const cases = [{}];
 
     findCasesUseCase.mockResolvedValue(cases);
@@ -36,9 +38,18 @@ describe("findCasesRoute", () => {
       },
     });
 
-    expect(findCasesUseCase).toHaveBeenCalledWith(user);
+    expect(findCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: { direction: "forward" },
+    });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual(cases);
+    expect(result.data).toEqual(cases);
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
   });
 });

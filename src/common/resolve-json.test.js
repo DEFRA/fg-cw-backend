@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { jp, populateUrlTemplate, resolveJSONPath } from "./resolve-json.js";
+import {
+  evaluateTaskCondition,
+  jp,
+  populateUrlTemplate,
+  resolveJSONPath,
+} from "./resolve-json.js";
 
 describe("resolveJSONPath", () => {
   const mockRoot = {
@@ -2436,5 +2441,395 @@ describe("conditional component resolution", () => {
         ],
       },
     ]);
+  });
+
+  it("should render repeat beforeContent when items exist", async () => {
+    const root = {
+      payload: {
+        answers: {
+          pigs: [{ totalPigs: 14 }, { totalPigs: 24 }],
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      beforeContent: [
+        {
+          component: "heading",
+          text: "Pig Caveats",
+          level: 3,
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Pig Caveats",
+        level: 3,
+      },
+      {
+        label: "Total Pigs",
+        text: 14,
+      },
+      {
+        label: "Total Pigs",
+        text: 24,
+      },
+    ]);
+  });
+
+  it("should render repeat emptyContent when itemsRef resolves to no items", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      emptyContent: [
+        {
+          component: "inset-text",
+          text: "No pig caveats available",
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "inset-text",
+        text: "No pig caveats available",
+      },
+    ]);
+  });
+
+  it("should return empty array for repeat when no items and no emptyContent", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([]);
+  });
+
+  it("should resolve template component for singular usage with dataRef", async () => {
+    const mockRootWithTemplate = {
+      payload: {
+        answers: {
+          totalPigs: 100,
+          whitePigsCount: 45,
+        },
+      },
+      templates: {
+        "pmf-template": {
+          "pmf-example": {
+            content: [
+              {
+                component: "heading",
+                text: "PMF Template",
+                level: 2,
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Total Pigs",
+                    text: "@.totalPigs",
+                  },
+                  {
+                    label: "White Pigs",
+                    text: "@.whitePigsCount",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "template",
+        dataRef: "$.payload.answers",
+        templateRef: "$.templates.pmf-template",
+        templateKey: "pmf-example",
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithTemplate, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "PMF Template",
+        level: 2,
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Total Pigs",
+            text: 100,
+          },
+          {
+            label: "White Pigs",
+            text: 45,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should resolve template component with JSONata dataRef", async () => {
+    const mockRootWithTemplate = {
+      payload: {
+        answers: {
+          totalPigs: 100,
+          whitePigsCount: 45,
+          groups: [
+            { code: "groupA", pigs: { totalPigs: 7, whitePigsCount: 2 } },
+          ],
+        },
+      },
+      templates: {
+        "pmf-template": {
+          "pmf-example": {
+            content: [
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Total Pigs",
+                    text: "@.totalPigs",
+                  },
+                  {
+                    label: "White Pigs",
+                    text: "@.whitePigsCount",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "template",
+        dataRef: "jsonata:$.payload.answers.groups[code='groupA'].pigs",
+        templateRef: "$.templates.pmf-template",
+        templateKey: "pmf-example",
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithTemplate, path });
+
+    expect(result).toEqual([
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Total Pigs",
+            text: 7,
+          },
+          {
+            label: "White Pigs",
+            text: 2,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should resolve template component inside repeat using row templateKey", async () => {
+    const mockRootWithRepeatTemplate = {
+      payload: {
+        answers: {
+          rulesCalculations: {
+            caveats: [{ code: "CAV001" }, { code: "CAV002" }],
+          },
+        },
+      },
+      templates: {
+        caveats: {
+          CAV001: {
+            content: [{ component: "text", text: "Caveat 1" }],
+          },
+          CAV002: {
+            content: [{ component: "text", text: "Caveat 2" }],
+          },
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.rulesCalculations.caveats[*]",
+      items: [
+        {
+          component: "template",
+          templateRef: "$.templates.caveats",
+          templateKey: "@.code",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithRepeatTemplate,
+      path,
+    });
+
+    expect(result).toEqual([
+      { component: "text", text: "Caveat 1" },
+      { component: "text", text: "Caveat 2" },
+    ]);
+  });
+
+  it("should handle repeat template when itemsRef does not exist", async () => {
+    const mockRootWithMissingItemsRef = {
+      templates: {
+        caveats: {
+          CAV001: {
+            content: [{ component: "text", text: "Caveat 1" }],
+          },
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.rulesCalculations.caveats[*]",
+      items: [
+        {
+          component: "template",
+          templateRef: "$.templates.caveats",
+          templateKey: "@.code",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithMissingItemsRef,
+      path,
+    });
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("evaluateTaskCondition", () => {
+  it("should return true when condition is null", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const result = await evaluateTaskCondition({ condition: null, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true when condition is undefined", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const result = await evaluateTaskCondition({ condition: undefined, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true when JSONPath condition matches", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false when JSONPath condition does not match", async () => {
+    const root = { payload: { answers: { whitePigsCount: 2 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return false when whitePigsCount equals 3 (boundary test)", async () => {
+    const root = { payload: { answers: { whitePigsCount: 3 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return true when whitePigsCount equals 4 (boundary test)", async () => {
+    const root = { payload: { answers: { whitePigsCount: 4 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true for simple JSONPath that returns truthy value", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false for simple JSONPath that returns 0", async () => {
+    const root = { payload: { answers: { whitePigsCount: 0 } } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return false when property does not exist", async () => {
+    const root = { payload: { answers: {} } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return true for jsonata expression that evaluates to true", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false for jsonata expression that evaluates to false", async () => {
+    const root = { payload: { answers: { whitePigsCount: 2 } } };
+    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
   });
 });

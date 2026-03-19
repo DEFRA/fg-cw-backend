@@ -9,35 +9,47 @@ const MAX_RETRIES = parseInt(config.get("outbox.outboxMaxRetries"));
 const EXPIRES_IN_MS = parseInt(config.get("outbox.outboxExpiresMs"));
 const NUMBER_OF_RECORDS = parseInt(config.get("outbox.outboxClaimMaxRecords"));
 
-export const claimEvents = async (claimedBy) => {
-  const promises = [];
+export const findNextMessage = async (lockIds) => {
+  const doc = await db.collection(collection).findOne(
+    {
+      status: { $eq: OutboxStatus.PUBLISHED },
+      claimedBy: { $eq: null },
+      completionAttempts: { $lte: MAX_RETRIES },
+      segregationRef: { $nin: lockIds },
+    },
+    { sort: { publicationDate: 1 } },
+  );
+  return doc;
+};
+
+export const claimEvents = async (claimedBy, segregationRef) => {
+  const docs = [];
   for (let i = 0; i < NUMBER_OF_RECORDS; i++) {
-    promises.push(
-      db.collection(collection).findOneAndUpdate(
-        {
-          status: {
-            $eq: OutboxStatus.PUBLISHED,
-          },
-          claimedBy: {
-            $eq: null,
-          },
-          completionAttempts: {
-            $lte: MAX_RETRIES,
-          },
+    const document = await db.collection(collection).findOneAndUpdate(
+      {
+        status: {
+          $eq: OutboxStatus.PUBLISHED,
         },
-        {
-          $set: {
-            status: OutboxStatus.PROCESSING,
-            claimedBy,
-            claimedAt: new Date(),
-            claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
-          },
+        claimedBy: {
+          $eq: null,
         },
-        { sort: { publicationDate: 1 }, returnDocument: "after" },
-      ),
+        completionAttempts: {
+          $lte: MAX_RETRIES,
+        },
+        segregationRef,
+      },
+      {
+        $set: {
+          status: OutboxStatus.PROCESSING,
+          claimedBy,
+          claimedAt: new Date(),
+          claimExpiresAt: new Date(Date.now() + EXPIRES_IN_MS),
+        },
+      },
+      { sort: { publicationDate: 1 }, returnDocument: "after" },
     );
+    docs.push(document);
   }
-  const docs = await Promise.all(promises);
   const documents = docs.filter((d) => d !== null);
 
   documents?.length &&
@@ -66,6 +78,7 @@ export const updateExpiredEvents = async () => {
   const results = await db.collection(collection).updateMany(
     {
       claimExpiresAt: { $lt: new Date() },
+      status: { $nin: [OutboxStatus.COMPLETED, OutboxStatus.DEAD_LETTER] },
     },
     {
       $set: {
@@ -118,6 +131,7 @@ export const updateDeadEvents = async () => {
   const results = await db.collection(collection).updateMany(
     {
       completionAttempts: { $gte: MAX_RETRIES },
+      status: { $ne: OutboxStatus.DEAD_LETTER },
     },
     {
       $set: {

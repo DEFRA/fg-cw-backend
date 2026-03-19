@@ -2,6 +2,35 @@
   "code": "pigs-might-fly",
   "requiredRoles": { "allOf": ["ROLE_PMF"], "anyOf": [] },
   "definitions": {},
+  "templates": {
+    "pmf-template": {
+      "pmf-example": {
+        "content": [
+          {
+            "id": "title",
+            "component": "heading",
+            "text": "PMF Template",
+            "level": 2,
+            "classes": "govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+          },
+          {
+            "id": "totalPigs",
+            "component": "summary-list",
+            "rows": [
+              {
+                "label": "Total Pigs",
+                "text": "@.totalPigs"
+              },
+              {
+                "label": "White Pigs",
+                "text": "@.whitePigsCount"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "endpoints": [],
   "externalActions": [],
   "pages": {
@@ -20,9 +49,9 @@
               "text": "$.currentStatusName",
               "type": "string"
             },
-            "dateReceived": {
-              "label": "Date Received",
-              "text": "$.dateReceived",
+            "createdAt": {
+              "label": "Created At",
+              "text": "$.createdAt",
               "type": "date",
               "format": "formatDate"
             }
@@ -108,6 +137,12 @@
                     }
                   }
                 ]
+              },
+              {
+                "component": "template",
+                "dataRef": "$.payload.answers",
+                "templateRef": "$.templates.pmf-template",
+                "templateKey": "pmf-example"
               }
             ]
           }
@@ -176,6 +211,50 @@
                       "label": "Explain this decision",
                       "helpText": "You must include an explanation for auditing purposes.",
                       "mandatory": true
+                    },
+                    "confirm": {
+                      "details": [
+                        {
+                          "component": "heading",
+                          "text": "Are you sure you want to reject this application?",
+                          "level": 2,
+                          "classes": "govuk-!-margin-bottom-3"
+                        },
+                        {
+                          "component": "paragraph",
+                          "text": "Rejecting an application will:",
+                          "classes": "govuk-body"
+                        },
+                        {
+                          "component": "unordered-list",
+                          "classes": "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+                          "items": [
+                            {
+                              "component": "text",
+                              "text": "close the application permanently"
+                            },
+                            {
+                              "component": "text",
+                              "text": "notify the applicant of the rejection"
+                            }
+                          ]
+                        }
+                      ],
+                      "yes": {
+                        "component": "container",
+                        "items": [
+                          {
+                            "component": "text",
+                            "text": "Yes, I want to reject this application"
+                          },
+                          {
+                            "component": "paragraph",
+                            "text": "This action cannot be undone.",
+                            "classes": "govuk-hint"
+                          }
+                        ]
+                      },
+                      "no": "No, I do not want to reject this application"
                     }
                   }
                 },
@@ -190,6 +269,11 @@
                       "label": "Explain this decision",
                       "helpText": "You must include an explanation for auditing purposes.",
                       "mandatory": true
+                    },
+                    "confirm": {
+                      "details": null,
+                      "yes": null,
+                      "no": null
                     }
                   }
                 }
@@ -344,6 +428,41 @@
                       "name": "Cannot complete",
                       "theme": "ERROR",
                       "altName": "Cannot complete",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "conditional": "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+                  "code": "CHECK_WHITE_PIGS",
+                  "name": "Check number of White Pigs",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Check number of White Pigs",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Review the number of White Pigs declared in the application when the count exceeds 3.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "ACCEPTED",
+                      "name": "Accepted",
+                      "theme": "NONE",
+                      "altName": "Accept",
+                      "completes": true
+                    },
+                    {
+                      "code": "RFI",
+                      "name": "Information requested",
+                      "theme": "NOTICE",
+                      "altName": "Request information from customer",
                       "completes": false
                     }
                   ]

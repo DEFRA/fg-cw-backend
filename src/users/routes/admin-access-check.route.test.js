@@ -42,7 +42,7 @@ describe("adminAccessCheckRoute", () => {
 
   it("returns 200 when user is admin", async () => {
     const admin = User.createMock({
-      idpRoles: ["FCP.Casework.Admin"],
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
 
     adminAccessCheckUseCase.mockReturnValue({ ok: true });
@@ -59,7 +59,13 @@ describe("adminAccessCheckRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result).toEqual({ ok: true });
+    expect(result.data).toEqual({ ok: true });
+    expect(result.header).toEqual({
+      navItems: [
+        { title: "Admin", href: "/admin" },
+        { title: "Casework", href: "/cases" },
+      ],
+    });
     expect(adminAccessCheckUseCase).toHaveBeenCalledWith({
       user: admin,
     });

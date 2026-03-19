@@ -3,7 +3,7 @@ import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
-import { createUserRolesFilter } from "../use-cases/find-cases.use-case.js";
+import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
@@ -93,6 +93,8 @@ describe("findAll", () => {
     expect(result[1]).toBeInstanceOf(Workflow);
     expect(result[0]._id.toString()).toEqual(workflows[0]._id.toString());
     expect(result[1]._id.toString()).toEqual(workflows[1]._id.toString());
+    expect(result[0].templates).toEqual(workflows[0].templates);
+    expect(result[1].templates).toEqual(workflows[1].templates);
   });
 
   it("returns workflows filtered by single code", async () => {
@@ -192,7 +194,7 @@ describe("findAll", () => {
 
     db.collection.mockReturnValue({ find });
 
-    const query = createUserRolesFilter(["ROLE_1", "ROLE_3"]);
+    const query = createRoleFilter(["ROLE_1", "ROLE_3"]);
     const result = await findAll(query);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
@@ -220,6 +222,7 @@ describe("findByCode", () => {
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(findOne).toHaveBeenCalledWith({ code });
     expect(result._id.toString()).toEqual(workflowDocument._id.toString());
+    expect(result.templates).toEqual(workflowDocument.templates);
   });
 
   it("returns null when no workflow is found", async () => {

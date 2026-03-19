@@ -15,7 +15,7 @@ const sqs = new SQSClient({
 });
 
 const queueUrl =
-  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case";
+  "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/cw__sqs__create_new_case_fifo.fifo";
 
 const messagePmf = {
   id: randomUUID(),
@@ -40,7 +40,7 @@ const messagePmf = {
       answers: {
         isPigFarmer: true,
         totalPigs: 4,
-        whitePigsCount: 2,
+        whitePigsCount: 5,
         britishLandracePigsCount: 2,
       },
     },
@@ -73,15 +73,26 @@ const messageFrps = {
           message: "Application validated successfully",
           valid: true,
           date: "2025-11-28T15:32:42.983Z",
+          caveats: [
+            {
+              code: "ne-consent-required",
+              description: "SSSI consent required for land parcel",
+              metadata: {
+                sheetId: "SK0971",
+                parcelId: "LP1",
+                actionCode: "CMOR1",
+                percentageOverlap: 45.5,
+                overlapAreaHectares: 2.35,
+              },
+            },
+          ],
         },
         scheme: "SFI",
         applicant: {
           business: {
             reference: "1101091126",
-            email: {
-              address: "texelshirecontractingg@gnitcartnocerihslexeto.com.test",
-            },
-            phone: "01234816251",
+            email: "texelshirecontractingg@gnitcartnocerihslexeto.com.test",
+            mobilePhoneNumber: "01234816251",
             name: "Texels Hire & Contracting",
             address: {
               line1: "Benbrigge House",
@@ -325,6 +336,8 @@ await sqs.send(
     MessageBody: JSON.stringify(
       process.argv[2] === "pigs-might-fly" ? messagePmf : messageFrps,
     ),
+    MessageGroupId: "cw-create-new-case",
+    MessageDeduplicationId: randomUUID(),
     DelaySeconds: 0,
   }),
 );
