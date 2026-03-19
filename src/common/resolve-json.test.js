@@ -2765,6 +2765,10 @@ describe("conditional component resolution", () => {
                 level: 2,
                 classes: "govuk-heading-m",
               },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
+              },
             ],
           },
           "hefer-consent-required": {
@@ -2775,6 +2779,10 @@ describe("conditional component resolution", () => {
                 text: "Historic England consent",
                 level: 2,
                 classes: "govuk-heading-m",
+              },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
               },
             ],
           },
@@ -2793,10 +2801,6 @@ describe("conditional component resolution", () => {
           },
           "hefer-consent-required": {
             content: [
-              {
-                component: "paragraph",
-                text: "@.description",
-              },
               {
                 component: "heading",
                 text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
@@ -2829,19 +2833,23 @@ describe("conditional component resolution", () => {
 
     const groups = await resolveJSONPath({
       root: mockRootWithGroupedCaveatTemplates,
-      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": $caveats[code = $code]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
     });
 
     expect(groups.map((group) => group.code)).toEqual([
       "ne-consent-required",
       "hefer-consent-required",
     ]);
+    expect(Array.isArray(groups[0].caveats)).toBe(true);
+    expect(groups[0].caveats).toHaveLength(1);
 
     const result = await resolveJSONPath({
       root: mockRootWithGroupedCaveatTemplates,
       path: [
         {
           component: "template",
+          dataRef:
+            'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats[code=\'hefer-consent-required\']; {"code": "hefer-consent-required", "caveats": $caveats})',
           templateRef: "$.templates.caveatGroups",
           templateKey: "hefer-consent-required",
         },
@@ -2856,6 +2864,87 @@ describe("conditional component resolution", () => {
     });
 
     expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
+    ]);
+
+    const fullGroupedResult = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: {
+        component: "repeat",
+        id: "caveat-groups",
+        itemsRef:
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+        items: [
+          {
+            component: "template",
+            templateRef: "$.templates.caveatGroups",
+            templateKey: "@.code",
+          },
+          {
+            component: "repeat",
+            id: "caveats-inner",
+            itemsRef: "@.caveats[*]",
+            items: [
+              {
+                component: "template",
+                templateRef: "$.templates.caveats",
+                templateKey: "@.code",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(fullGroupedResult).toEqual([
+      {
+        component: "heading",
+        text: "SSSI consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "Ignored by template",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SE1234 5678",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
       {
         component: "heading",
         text: "Historic England consent",

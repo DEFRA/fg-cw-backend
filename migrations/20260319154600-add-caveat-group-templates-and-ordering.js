@@ -11,7 +11,7 @@ const statutoryConsentRequirementsAccordionItem = {
         component: "repeat",
         id: "caveat-groups",
         itemsRef:
-          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": $caveats[code = $code]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
         items: [
           {
             component: "template",
@@ -48,7 +48,7 @@ const caveatGroupTemplates = {
       },
       {
         component: "paragraph",
-        text: "A SSSI consent is required from Natural England",
+        text: "jsonata:@.caveats[0].description",
       },
     ],
   },
@@ -60,6 +60,10 @@ const caveatGroupTemplates = {
         text: "Historic England consent",
         level: 2,
         classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "jsonata:@.caveats[0].description",
       },
     ],
   },
@@ -95,10 +99,6 @@ const caveatTemplates = {
   },
   "hefer-consent-required": {
     content: [
-      {
-        component: "paragraph",
-        text: "@.description",
-      },
       {
         component: "heading",
         text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
