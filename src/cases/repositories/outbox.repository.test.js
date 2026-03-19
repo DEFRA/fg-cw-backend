@@ -164,6 +164,7 @@ describe("outbox.repository", () => {
           claimExpiresAt: {
             $lt: expect.any(Date),
           },
+          status: { $nin: [OutboxStatus.COMPLETED, OutboxStatus.DEAD_LETTER] },
         },
         {
           $set: {
@@ -240,6 +241,7 @@ describe("outbox.repository", () => {
       expect(updateMany).toBeCalledWith(
         {
           completionAttempts: { $gte: MAX_RETRIES },
+          status: { $ne: OutboxStatus.DEAD_LETTER },
         },
         {
           $set: {
