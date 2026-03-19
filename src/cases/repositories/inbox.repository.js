@@ -77,7 +77,7 @@ export const updateDeadEvents = async () => {
     },
     {
       $set: {
-        status: InboxStatus.DEAD,
+        status: InboxStatus.DEAD_LETTER,
         claimedAt: null,
         claimExpiresAt: null,
         claimedBy: null,
