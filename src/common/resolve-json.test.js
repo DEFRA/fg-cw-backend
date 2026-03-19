@@ -2721,6 +2721,177 @@ describe("conditional component resolution", () => {
     ]);
   });
 
+  it("should resolve grouped statutory consent caveats with ordered groups and hefer description from caveat data", async () => {
+    const mockRootWithGroupedCaveatTemplates = {
+      payload: {
+        answers: {
+          rulesCalculations: {
+            caveats: [
+              {
+                code: "hefer-consent-required",
+                description:
+                  "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+                metadata: {
+                  sheetId: "SX0679",
+                  parcelId: "9238",
+                  actionCode: "CSAM1",
+                  overlapAreaHectares: "2.35",
+                  percentageOverlap: "41.2",
+                },
+              },
+              {
+                code: "ne-consent-required",
+                description: "Ignored by template",
+                metadata: {
+                  sheetId: "SE1234",
+                  parcelId: "5678",
+                  actionCode: "UPL1",
+                  overlapAreaHectares: "1.05",
+                  percentageOverlap: "10.5",
+                },
+              },
+            ],
+          },
+        },
+      },
+      templates: {
+        caveatGroups: {
+          "ne-consent-required": {
+            order: 1,
+            content: [
+              {
+                component: "heading",
+                text: "SSSI consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+            ],
+          },
+          "hefer-consent-required": {
+            order: 2,
+            content: [
+              {
+                component: "heading",
+                text: "Historic England consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+            ],
+          },
+        },
+        caveats: {
+          "ne-consent-required": {
+            content: [
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+            ],
+          },
+          "hefer-consent-required": {
+            content: [
+              {
+                component: "paragraph",
+                text: "@.description",
+              },
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Action code",
+                    text: "@.metadata.actionCode",
+                  },
+                  {
+                    label: "Overlap area",
+                    text: "@.metadata.overlapAreaHectares Ha",
+                  },
+                  {
+                    label: "Overlap",
+                    text: "@.metadata.percentageOverlap %",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const groups = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": $caveats[code = $code]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+    });
+
+    expect(groups.map((group) => group.code)).toEqual([
+      "ne-consent-required",
+      "hefer-consent-required",
+    ]);
+
+    const result = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: [
+        {
+          component: "template",
+          templateRef: "$.templates.caveatGroups",
+          templateKey: "hefer-consent-required",
+        },
+        {
+          component: "template",
+          dataRef:
+            "jsonata:$.payload.answers.rulesCalculations.caveats[code='hefer-consent-required'][0]",
+          templateRef: "$.templates.caveats",
+          templateKey: "hefer-consent-required",
+        },
+      ],
+    });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
+    ]);
+  });
+
   it("should handle repeat template when itemsRef does not exist", async () => {
     const mockRootWithMissingItemsRef = {
       templates: {

@@ -52,11 +52,53 @@ const caveatGroupTemplates = {
       },
     ],
   },
+  "hefer-consent-required": {
+    order: 2,
+    content: [
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+    ],
+  },
 };
 
 const caveatTemplates = {
   "ne-consent-required": {
     content: [
+      {
+        component: "heading",
+        text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "@.metadata.actionCode",
+          },
+          {
+            label: "Overlap area",
+            text: "@.metadata.overlapAreaHectares Ha",
+          },
+          {
+            label: "Overlap",
+            text: "@.metadata.percentageOverlap %",
+          },
+        ],
+      },
+    ],
+  },
+  "hefer-consent-required": {
+    content: [
+      {
+        component: "paragraph",
+        text: "@.description",
+      },
       {
         component: "heading",
         text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
