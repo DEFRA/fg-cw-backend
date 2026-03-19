@@ -30,6 +30,7 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.supplementaryData = props.supplementaryData || {};
+    this.closed = props.closed;
   }
 
   get objectId() {
@@ -278,6 +279,8 @@ export class Case {
       position,
     );
 
+    const shouldClose = workflow.canClose(position);
+
     if (!transition) {
       throw Boom.preconditionFailed(
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: transition does not exist`,
@@ -327,6 +330,10 @@ export class Case {
       }),
     );
 
+    if (shouldClose) {
+      this.closedAt = new Date(Date.now());
+      this.closed = true;
+    }
     this.position = position;
   }
 
@@ -416,6 +423,7 @@ export class Case {
       createdAt: new Date().toISOString(),
       payload,
       supplementaryData: {},
+      closed: false,
       timeline: [
         new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
@@ -440,6 +448,7 @@ export class Case {
       }),
       createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
+      closed: false,
       supplementaryData: {},
       phases: [
         new CasePhase({

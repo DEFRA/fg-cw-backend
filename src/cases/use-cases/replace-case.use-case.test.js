@@ -3,10 +3,12 @@ import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
 import { CaseSeries } from "../models/case-series.js";
+import { Case } from "../models/case.js";
 import {
   findByCaseRefAndWorkflowCode,
   save,
 } from "../repositories/case-series.repository.js";
+import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
 import { replaceCaseUseCase } from "./replace-case.use-case.js";
 
@@ -63,12 +65,15 @@ describe("replaceCaseUseCase", () => {
   it("throws 409 if the previous case is not closed", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
+    const mockCase = Case.createMock();
+
     const mockSeries = CaseSeries.new({
       workflowCode: "wf-001",
       caseRef: "TEST-001",
       caseId: "old-id",
     });
     findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
+    findCase.mockResolvedValue(mockCase);
 
     const message = {
       event: {
