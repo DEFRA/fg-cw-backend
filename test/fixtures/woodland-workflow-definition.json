@@ -1,0 +1,908 @@
+{
+  "code": "woodland",
+  "requiredRoles": {
+    "allOf": ["ROLE_WOODLAND"],
+    "anyOf": []
+  },
+  "templates": {},
+  "definitions": {
+    "agreementsService": {
+      "internalUrl": "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}"
+    }
+  },
+  "endpoints": [],
+  "externalActions": [],
+  "pages": {
+    "cases": {
+      "details": {
+        "banner": {
+          "title": {
+            "text": "$.payload.answers.applicant.business.name",
+            "type": "string"
+          },
+          "summary": {
+            "scheme": {
+              "label": "Scheme",
+              "text": "$.payload.answers.scheme",
+              "type": "string"
+            },
+            "applicationId": {
+              "label": "Application ID",
+              "text": "$.caseRef",
+              "type": "string"
+            },
+            "sbi": {
+              "label": "SBI",
+              "text": "$.payload.identifiers.sbi",
+              "type": "string"
+            },
+            "status": {
+              "label": "Status",
+              "text": "$.currentStatusName",
+              "type": "string"
+            }
+          }
+        },
+        "tabs": {
+          "case-details": {
+            "link": {
+              "id": "case-details",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/case-details",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Application",
+              "index": 1
+            },
+            "content": [
+              {
+                "component": "heading",
+                "text": "Applicant Details",
+                "level": 2,
+                "classes": "govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+              }
+            ]
+          },
+          "agreements": {
+            "link": {
+              "id": "agreements",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/agreements",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Agreements",
+              "index": 2
+            },
+            "renderIf": "$.supplementaryData.agreements[0]",
+            "content": [
+              {
+                "id": "title",
+                "component": "heading",
+                "text": "Funding agreement",
+                "level": 2,
+                "classes": "govuk-!-margin-top-6"
+              },
+              {
+                "component": "summary-list",
+                "rows": [
+                  {
+                    "label": "Agreement status",
+                    "text": [
+                      {
+                        "component": "status",
+                        "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
+                        "themeMap": {
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "AGREEMENT_GENERATING": "INFO",
+                          "WITHDRAWN": "WARN",
+                          "REJECTED": "ERROR"
+                        },
+                        "labelsMap": {
+                          "AGREEMENT_GENERATING": "Agreement generating",
+                          "AGREEMENT_DRAFTED": "Agreement drafted",
+                          "OFFERED": "Offered",
+                          "ACCEPTED": "Accepted",
+                          "WITHDRAWN": "Withdrawn",
+                          "REJECTED": "Rejected"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Reference",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                  },
+                  {
+                    "label": "Date created",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
+                    "format": "formatDate"
+                  },
+                  {
+                    "label": "Date accepted",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus = 'ACCEPTED' ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].acceptedAt), '[D] [MNn] [Y]') : 'Not accepted'"
+                  },
+                  {
+                    "label": "Start date",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate), '[D] [MNn] [Y]') : 'Not started'"
+                  },
+                  {
+                    "label": "View",
+                    "text": [
+                      {
+                        "component": "url",
+                        "text": "View agreement",
+                        "href": {
+                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                          "params": {
+                            "agreementRef": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                          }
+                        },
+                        "target": "_blank",
+                        "rel": "noopener"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "component": "conditional",
+                "condition": "jsonata:$count($.supplementaryData.agreements) > 1",
+                "whenTrue": {
+                  "component": "container",
+                  "items": [
+                    {
+                      "id": "version-history-title",
+                      "component": "heading",
+                      "text": "Version history",
+                      "level": 3,
+                      "classes": "govuk-!-margin-top-6"
+                    },
+                    {
+                      "type": "array",
+                      "component": "table",
+                      "rowsRef": "jsonata:$filter($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt }), function($v, $i) { $i > 0 })",
+                      "rows": [
+                        {
+                          "label": "Reference",
+                          "text": "@.agreementRef"
+                        },
+                        {
+                          "label": "Date",
+                          "text": "@.createdAt",
+                          "format": "formatDate"
+                        },
+                        {
+                          "label": "Status",
+                          "component": "status",
+                          "text": "@.agreementStatus",
+                          "themeMap": {
+                            "OFFERED": "NOTICE",
+                            "ACCEPTED": "INFO",
+                            "AGREEMENT_DRAFTED": "INFO",
+                            "AGREEMENT_GENERATING": "INFO",
+                            "WITHDRAWN": "WARN",
+                            "REJECTED": "ERROR"
+                          },
+                          "labelsMap": {
+                            "AGREEMENT_GENERATING": "Agreement generating",
+                            "AGREEMENT_DRAFTED": "Agreement drafted",
+                            "OFFERED": "Offered",
+                            "ACCEPTED": "Accepted",
+                            "WITHDRAWN": "Withdrawn",
+                            "REJECTED": "Rejected"
+                          }
+                        },
+                        {
+                          "label": "",
+                          "component": "url",
+                          "text": "View this version",
+                          "href": {
+                            "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                            "params": {
+                              "agreementRef": "@.agreementRef"
+                            }
+                          },
+                          "target": "_blank",
+                          "rel": "noopener"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "phases": [
+    {
+      "code": "PRE_AWARD",
+      "name": "Pre-award",
+      "stages": [
+        {
+          "code": "REVIEW_APPLICATION",
+          "name": "Tasks",
+          "description": "Review the woodland application for eligibility",
+          "statuses": [
+            {
+              "code": "APPLICATION_RECEIVED",
+              "name": "Application Received",
+              "theme": "NEUTRAL",
+              "description": "Application received and pending review",
+              "interactive": false,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "START_REVIEW",
+                    "name": "Start",
+                    "checkTasks": false,
+                    "comment": null
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:WITHDRAWAL_REQUESTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_WITHDRAWAL",
+                    "name": "Request Withdrawal",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "IN_REVIEW",
+              "name": "In Review",
+              "theme": "INFO",
+              "description": "Application is being reviewed",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPROVED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "APPROVE_APPLICATION",
+                    "name": "Approve",
+                    "checkTasks": true,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_REJECTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REJECT_APPLICATION",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:ON_HOLD",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "PUT_ON_HOLD",
+                    "name": "Put on Hold",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:WITHDRAWAL_REQUESTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_WITHDRAWAL",
+                    "name": "Request Withdrawal",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "ON_HOLD",
+              "name": "On Hold",
+              "theme": "NOTICE",
+              "description": "Application is on hold pending more information",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "RESUME",
+                    "name": "Resume",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:WITHDRAWAL_REQUESTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_WITHDRAWAL",
+                    "name": "Request Withdrawal",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_REJECTED",
+              "name": "Rejected",
+              "theme": "ERROR",
+              "description": "Application has been rejected",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REINSTATE_APPLICATION",
+                    "name": "Reinstate Application",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "APPROVED",
+              "name": "Approved",
+              "theme": "SUCCESS",
+              "description": "Application has been approved",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:SENT_TO_FC",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "SEND_TO_FC",
+                    "name": "Send to Forestry Commission",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "WITHDRAWAL_REQUESTED",
+              "name": "Withdrawal Requested",
+              "theme": "WARN",
+              "description": "Application withdrawal has been requested",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_WITHDRAWN",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_WITHDRAWN",
+              "name": "Withdrawn",
+              "theme": "WARN",
+              "description": "Application has been withdrawn",
+              "interactive": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": [
+            {
+              "code": "MANUAL_REVIEW_TASKS",
+              "name": "Application review tasks",
+              "description": "Tasks to be completed during the initial review of the application",
+              "tasks": [
+                {
+                  "code": "FORWARD_TO_FC",
+                  "name": "Forward application to Forestry Commission",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Forward application to Forestry Commission",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "ordered-list",
+                      "classes": "govuk-list govuk-list--number govuk-!-margin-bottom-6",
+                      "items": [
+                        {
+                          "component": "text",
+                          "text": "Forward the application details to the Forestry Commission using the external CRM system."
+                        },
+                        {
+                          "component": "text",
+                          "text": "Come back to this page and confirm the application has been sent."
+                        }
+                      ]
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "NOT_SENT",
+                      "name": "Not sent",
+                      "theme": "NOTICE",
+                      "altName": "Not sent",
+                      "completes": false
+                    },
+                    {
+                      "code": "SENT",
+                      "name": "Sent",
+                      "theme": "NONE",
+                      "altName": "Sent",
+                      "completes": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "FC_REVIEW",
+          "name": "Forestry Commission Review",
+          "description": "Forestry Commission external review of the application",
+          "statuses": [
+            {
+              "code": "SENT_TO_FC",
+              "name": "Sent to Forestry Commission",
+              "theme": "INFO",
+              "description": "Application has been sent to the Forestry Commission for review",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:FC_APPROVED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "APPROVE_FC_REVIEW",
+                    "name": "Approve",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:FC_REJECTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REJECT_FC_REVIEW",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:APPLICATION_AMEND",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_AMEND",
+                    "name": "Request Amendment",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:WITHDRAWAL_REQUESTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_WITHDRAWAL",
+                    "name": "Request Withdrawal",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "FC_APPROVED",
+              "name": "FC Approved",
+              "theme": "SUCCESS",
+              "description": "Forestry Commission has approved the application",
+              "interactive": false,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_GENERATING",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "FC_REJECTED",
+              "name": "FC Rejected",
+              "theme": "ERROR",
+              "description": "Forestry Commission has rejected the application",
+              "interactive": false,
+              "transitions": []
+            },
+            {
+              "code": "APPLICATION_AMEND",
+              "name": "Application Amendment",
+              "theme": "NOTICE",
+              "description": "Application amendment has been requested by the Forestry Commission",
+              "interactive": false,
+              "transitions": []
+            },
+            {
+              "code": "WITHDRAWAL_REQUESTED",
+              "name": "Withdrawal Requested",
+              "theme": "WARN",
+              "description": "Application withdrawal has been requested",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:FC_REVIEW:APPLICATION_WITHDRAWN",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_WITHDRAWN",
+              "name": "Withdrawn",
+              "theme": "WARN",
+              "description": "Application has been withdrawn",
+              "interactive": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": []
+        },
+        {
+          "code": "REVIEW_OFFER",
+          "name": "Tasks",
+          "description": "Draft agreement is live and can be accepted by the customer.",
+          "statuses": [
+            {
+              "code": "AGREEMENT_GENERATING",
+              "name": "Agreement Generating",
+              "theme": "NEUTRAL",
+              "description": "Agreement is being generated",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "AGREEMENT_DRAFTED",
+              "name": "Agreement Drafted",
+              "theme": "INFO",
+              "description": "Agreement has been drafted and is ready for review",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "AGREEMENT_SENT",
+                    "name": "Agreement sent",
+                    "checkTasks": true,
+                    "comment": null
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:OFFER_REJECTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REJECT_OFFER",
+                    "name": "Reject",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                },
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:WITHDRAWAL_REQUESTED",
+                  "checkTasks": false,
+                  "action": {
+                    "code": "REQUEST_WITHDRAWAL",
+                    "name": "Request Withdrawal",
+                    "checkTasks": false,
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "code": "OFFER_REJECTED",
+              "name": "Offer Rejected",
+              "theme": "ERROR",
+              "description": "The agreement offer has been rejected",
+              "interactive": false,
+              "transitions": []
+            },
+            {
+              "code": "WITHDRAWAL_REQUESTED",
+              "name": "Withdrawal Requested",
+              "theme": "WARN",
+              "description": "Application withdrawal has been requested",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:APPLICATION_WITHDRAWN",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "APPLICATION_WITHDRAWN",
+              "name": "Withdrawn",
+              "theme": "WARN",
+              "description": "Application has been withdrawn",
+              "interactive": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": [
+            {
+              "code": "DRAFT_AGREEMENT_REVIEW_TASKS",
+              "name": "Draft agreement review tasks",
+              "description": "Tasks to be completed during the review of the agreement offer",
+              "tasks": [
+                {
+                  "code": "REVIEW_OFFER_DOCUMENT",
+                  "name": "Check draft funding agreement",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Check funding agreement",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "container",
+                      "classes": "govuk-!-margin-bottom-6 govuk-body",
+                      "items": [
+                        {
+                          "component": "text",
+                          "text": "Check the "
+                        },
+                        {
+                          "component": "url",
+                          "text": "agreement",
+                          "href": {
+                            "urlTemplate": "/cases/{caseId}/agreements",
+                            "params": {
+                              "caseId": "$._id"
+                            }
+                          },
+                          "target": "_self"
+                        },
+                        {
+                          "component": "text",
+                          "text": " is accurate."
+                        }
+                      ]
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "CONFIRM",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
+                      "completes": true
+                    },
+                    {
+                      "code": "PROBLEM_FOUND",
+                      "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
+                      "completes": false
+                    }
+                  ]
+                },
+                {
+                  "code": "OFFER_AGREEMENT",
+                  "name": "Notify customer that agreement is ready",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Notify customer that agreement is ready",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Tell the customer their agreement is ready to review.",
+                      "classes": "govuk-!-margin-bottom-6"
+                    }
+                  ],
+                  "statusOptions": [
+                    {
+                      "code": "CONFIRM",
+                      "name": "Confirmed",
+                      "theme": "NONE",
+                      "altName": "Confirm",
+                      "completes": true
+                    },
+                    {
+                      "code": "PROBLEM_FOUND",
+                      "name": "There's a problem",
+                      "theme": "ERROR",
+                      "altName": "There's a problem",
+                      "completes": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "CUSTOMER_AGREEMENT_REVIEW",
+          "name": "Customer Agreement Review",
+          "description": "Customer reviews the agreement offer",
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_OFFERED'",
+              "content": [
+                {
+                  "component": "alert",
+                  "variant": "success",
+                  "title": "Agreement sent",
+                  "text": "There is nothing more you need to do.",
+                  "showTitleAsHeading": true
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You can still withdraw the agreement until the customer has accepted or rejected."
+                },
+                {
+                  "component": "heading",
+                  "text": "Agreement with customer for review",
+                  "level": 3
+                },
+                {
+                  "component": "paragraph",
+                  "text": "There are no tasks to complete."
+                },
+                {
+                  "component": "heading",
+                  "text": "You can still withdraw this agreement",
+                  "level": 3
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You may want to withdraw this agreement if:"
+                },
+                {
+                  "component": "unordered-list",
+                  "items": [
+                    {
+                      "text": "the customer needs to update their application"
+                    },
+                    {
+                      "text": "the customer has not responded to the agreement offer within 10 working days"
+                    },
+                    {
+                      "text": "there is an error in the agreement"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "statuses": [
+            {
+              "code": "AGREEMENT_OFFERED",
+              "name": "Agreement Offered",
+              "theme": "INFO",
+              "description": "Agreement offer has been made to the applicant",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:OFFER_ACCEPTED",
+                  "checkTasks": false,
+                  "action": null
+                },
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:OFFER_REJECTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ]
+            },
+            {
+              "code": "OFFER_ACCEPTED",
+              "name": "Offer Accepted",
+              "theme": "SUCCESS",
+              "description": "Customer has accepted the agreement offer",
+              "interactive": false,
+              "transitions": []
+            },
+            {
+              "code": "OFFER_REJECTED",
+              "name": "Offer Rejected",
+              "theme": "ERROR",
+              "description": "Customer has rejected the agreement offer",
+              "interactive": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": []
+        }
+      ]
+    }
+  ]
+}
