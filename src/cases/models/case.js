@@ -262,6 +262,8 @@ export class Case {
 
     this.#addTimelineEvent(timelineEvent);
 
+    this.#attemptClose(workflow, position);
+
     this.position = position;
   }
 
@@ -278,8 +280,6 @@ export class Case {
       this.position,
       position,
     );
-
-    const shouldClose = workflow.canClose(position);
 
     if (!transition) {
       throw Boom.preconditionFailed(
@@ -330,11 +330,16 @@ export class Case {
       }),
     );
 
-    if (shouldClose) {
+    this.#attemptClose(workflow, position);
+
+    this.position = position;
+  }
+
+  #attemptClose(workflow, position) {
+    if (position && workflow?.canClose(position)) {
       this.closedAt = new Date(Date.now());
       this.closed = true;
     }
-    this.position = position;
   }
 
   #areTasksComplete(workflow) {

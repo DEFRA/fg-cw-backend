@@ -1,6 +1,13 @@
 import { withTransaction } from "../src/common/with-transaction.js";
 
 export const up = async (db) => {
+  const closes = [
+    "APPLICATION_WITHDRAWN",
+    "APPLICATION_REJECTED",
+    "APPLICATION_AMEND",
+    "AGREEMENT_TERMINATED",
+  ];
+
   await withTransaction(async (session) => {
     await db.collection("cases").updateMany(
       {},
@@ -24,7 +31,7 @@ export const up = async (db) => {
           stage.statuses = stage.statuses.map((status) => {
             return {
               ...status,
-              closes: false,
+              closes: closes.includes(status.code),
             };
           });
         }

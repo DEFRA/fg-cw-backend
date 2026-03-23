@@ -6,7 +6,7 @@ import { CaseSeries } from "../models/case-series.js";
 import { Case } from "../models/case.js";
 import {
   findByCaseRefAndWorkflowCode,
-  save,
+  update,
 } from "../repositories/case-series.repository.js";
 import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
@@ -24,8 +24,7 @@ describe("replaceCaseUseCase", () => {
     withTransaction.mockImplementation((cb) => cb(session));
   });
 
-  // TODO re-instate once we have the case closed status FGP-815
-  it.skip("creates a new case, finds the series, updates it and saves", async () => {
+  it("creates a new case, finds the series, updates it and saves", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
     const mockSeries = CaseSeries.new({
@@ -35,6 +34,10 @@ describe("replaceCaseUseCase", () => {
     });
     const addCaseRefSpy = vi.spyOn(mockSeries, "addCaseRef");
     findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
+
+    const mockPreviousCase = Case.createMock();
+    mockPreviousCase.closed = true;
+    findCase.mockResolvedValue(mockPreviousCase);
 
     const message = {
       event: {
@@ -50,9 +53,9 @@ describe("replaceCaseUseCase", () => {
 
     expect(withTransaction).toHaveBeenCalled();
     expect(newCaseUseCase).toHaveBeenCalledWith(message, session);
-    expect(save.mock.calls[0][0]).toBeInstanceOf(CaseSeries);
+    expect(update.mock.calls[0][0]).toBeInstanceOf(CaseSeries);
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
-      "TEST-001",
+      "TEST-000",
       "wf-001",
       session,
     );
