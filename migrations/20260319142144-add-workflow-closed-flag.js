@@ -9,15 +9,17 @@ export const up = async (db) => {
   ];
 
   await withTransaction(async (session) => {
+    const now = new Date(Date.now());
+
     await db.collection("cases").updateMany(
       {},
       [
         {
           $set: {
-            closed: {
-              $ifNull: ["$closed", false],
+            closed: { $in: ["$currentStatus", closes] },
+            closedAt: {
+              $cond: [{ $in: ["$currentStatus", closes] }, now, null],
             },
-            closedAt: null,
           },
         },
       ],
