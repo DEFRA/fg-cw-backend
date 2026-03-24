@@ -1,8 +1,11 @@
 /**
  * PERFORMANCE TEST DATA SEEDING
  *
- * This function clears and seeds test data for performance testing.
+ * This function clears test data for performance testing.
  * Only runs when PERF_TEST_SEED=true environment variable is set.
+ *
+ * Cases are NOT created here - they will be created automatically when
+ * GAS backend sends CreateNewCaseCommand messages via SQS.
  *
  * Branch: hotfix/perf-test-seed (DO NOT MERGE TO MAIN)
  */
@@ -28,7 +31,7 @@ const clearCollections = async (db) => {
   logger.info("   ✓ Cleared inbox");
 };
 
-const generateTestData = () => {
+const createTestUsers = async (db) => {
   const testUsers = [
     {
       _id: "perf-test-user-1",
@@ -50,54 +53,8 @@ const generateTestData = () => {
     },
   ];
 
-  const testCases = [];
-  for (let i = 0; i < 100; i++) {
-    const clientRef = `perf-test-${String(i).padStart(3, "0")}`;
-    const caseId = `case-${clientRef}`;
-
-    testCases.push({
-      _id: caseId,
-      caseRef: clientRef,
-      workflowCode: "frps-private-beta",
-      currentPhase: "PRE_AWARD",
-      currentStage: "REVIEW_APPLICATION",
-      currentStatus: "APPLICATION_RECEIVED",
-      assignedTo: "perf-test-user-1",
-      identifiers: {
-        sbi: `${107000000 + i}`,
-        frn: `${1100000000 + i}`,
-        crn: `${1100000000 + i}`,
-      },
-      data: {
-        clientRef,
-        eligibility: "yes",
-        landArea: 100 + i,
-      },
-      history: [],
-      notes: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-  }
-
-  return { testUsers, testCases };
-};
-
-const insertTestData = async (db, testUsers, testCases) => {
-  logger.info("📝 Seeding test data...");
-
   await db.collection("users").insertMany(testUsers);
-  logger.info(`   ✓ Inserted ${testUsers.length} test users`);
-
-  await db.collection("cases").insertMany(testCases);
-  logger.info(`   ✓ Inserted ${testCases.length} test cases`);
-
-  logger.info("✅ Performance test data seeding complete!");
-  logger.info(`   Total cases: ${testCases.length}`);
-  logger.info(
-    `   Case refs: perf-test-000 to perf-test-${String(testCases.length - 1).padStart(3, "0")}`,
-  );
-  logger.info(`   Test users: ${testUsers.length}`);
+  logger.info(`   ✓ Created ${testUsers.length} test users`);
 };
 
 export const seedPerfTestData = async (db) => {
@@ -107,8 +64,8 @@ export const seedPerfTestData = async (db) => {
 
   // Check if data already seeded (prevents race conditions with multiple pods)
   const existing = await db
-    .collection("cases")
-    .countDocuments({ caseRef: /^perf-test-/ });
+    .collection("users")
+    .countDocuments({ _id: /^perf-test-user-/ });
 
   if (existing > 0) {
     logger.info(
@@ -124,8 +81,16 @@ export const seedPerfTestData = async (db) => {
   logger.info("   - workflows");
   logger.info("   - outbox");
   logger.info("   - inbox");
+  logger.info("");
+  logger.info(
+    "ℹ️  Cases will be created automatically via SQS from GAS backend",
+  );
 
   await clearCollections(db);
-  const { testUsers, testCases } = generateTestData();
-  await insertTestData(db, testUsers, testCases);
+  await createTestUsers(db);
+
+  logger.info("✅ Performance test data seeding complete!");
+  logger.info(
+    "   Waiting for cases to be created via SQS from GAS applications...",
+  );
 };
