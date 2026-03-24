@@ -21,9 +21,6 @@ const clearCollections = async (db) => {
   await db.collection("users").deleteMany({ _id: /^perf-test-user-/ });
   logger.info("   ✓ Cleared test users (kept service accounts)");
 
-  await db.collection("workflows").deleteMany({});
-  logger.info("   ✓ Cleared workflows");
-
   await db.collection("outbox").deleteMany({});
   logger.info("   ✓ Cleared outbox");
 
@@ -78,7 +75,6 @@ export const seedPerfTestData = async (db) => {
   logger.info("⚠️  This will CLEAR ALL DATA in the following collections:");
   logger.info("   - cases");
   logger.info("   - users (test users only, keeps service accounts)");
-  logger.info("   - workflows");
   logger.info("   - outbox");
   logger.info("   - inbox");
   logger.info("");
