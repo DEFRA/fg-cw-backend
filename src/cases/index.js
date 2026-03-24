@@ -1,6 +1,7 @@
 import { up } from "migrate-mongo";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
+import { seedPerfTestData } from "./perf-test-seed.js";
 
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
@@ -27,6 +28,9 @@ export const cases = {
 
     migrated.forEach((fileName) => logger.info(`Migrated: "${fileName}"`));
     logger.info("Finished running migrations");
+
+    // Seed performance test data (only when PERF_TEST_SEED=true)
+    await seedPerfTestData(db);
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();
