@@ -25,7 +25,7 @@ export const up = async (db) => {
   console.log("🧹 Starting performance test data seeding...");
   console.log("⚠️  This will CLEAR ALL DATA in the following collections:");
   console.log("   - cases");
-  console.log("   - users");
+  console.log("   - users (test users only, keeps service accounts)");
   console.log("   - workflows");
   console.log("   - outbox");
   console.log("   - inbox");
@@ -36,8 +36,8 @@ export const up = async (db) => {
   await db.collection("cases").deleteMany({});
   console.log("   ✓ Cleared cases");
 
-  await db.collection("users").deleteMany({});
-  console.log("   ✓ Cleared users");
+  await db.collection("users").deleteMany({ _id: /^perf-test-user-/ });
+  console.log("   ✓ Cleared test users (kept service accounts)");
 
   await db.collection("workflows").deleteMany({});
   console.log("   ✓ Cleared workflows");
