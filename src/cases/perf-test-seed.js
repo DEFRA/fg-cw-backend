@@ -28,6 +28,26 @@ const clearCollections = async (db) => {
   logger.info("   ✓ Cleared inbox");
 };
 
+const cleanupIncompleteWorkflow = async (db) => {
+  const workflow = await db
+    .collection("workflows")
+    .findOne({ code: "frps-private-beta" });
+
+  if (!workflow) {
+    return;
+  }
+
+  const workflowStr = JSON.stringify(workflow);
+  const hasTheme = workflowStr.includes('"theme"');
+
+  if (!hasTheme) {
+    logger.info("🔧 Removing incomplete workflow (missing themes)...");
+    await db.collection("workflows").deleteOne({ code: "frps-private-beta" });
+    await db.collection("changelog").deleteMany({ fileName: /frps/ });
+    logger.info("   ✓ Incomplete workflow removed, migrations will re-run");
+  }
+};
+
 const createTestUsers = async (db) => {
   const testUsers = [
     {
@@ -58,6 +78,9 @@ export const seedPerfTestData = async (db) => {
   if (process.env.PERF_TEST_SEED !== "true") {
     return;
   }
+
+  // One-time cleanup: Delete incomplete workflow if it exists without themes
+  await cleanupIncompleteWorkflow(db);
 
   // Check if data already seeded (prevents race conditions with multiple pods)
   const existing = await db
