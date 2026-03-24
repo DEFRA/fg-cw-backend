@@ -12,22 +12,6 @@
 
 import { logger } from "../common/logger.js";
 
-const clearCollections = async (db) => {
-  logger.info("🗑️  Clearing collections...");
-
-  await db.collection("cases").deleteMany({});
-  logger.info("   ✓ Cleared cases");
-
-  await db.collection("users").deleteMany({ _id: /^perf-test-user-/ });
-  logger.info("   ✓ Cleared test users (kept service accounts)");
-
-  await db.collection("outbox").deleteMany({});
-  logger.info("   ✓ Cleared outbox");
-
-  await db.collection("inbox").deleteMany({});
-  logger.info("   ✓ Cleared inbox");
-};
-
 const cleanupIncompleteWorkflow = async (db) => {
   const workflow = await db
     .collection("workflows")
@@ -109,17 +93,27 @@ export const seedPerfTestData = async (db) => {
   // One-time cleanup: Delete incomplete workflow if it exists without themes
   await cleanupIncompleteWorkflow(db);
 
+  // Always clear cases/outbox/inbox to ensure clean slate for new SQS messages
+  logger.info("🗑️  Clearing test data collections...");
+  await db.collection("cases").deleteMany({});
+  await db.collection("outbox").deleteMany({});
+  await db.collection("inbox").deleteMany({});
+  logger.info("   ✓ Cleared cases, outbox, inbox");
+
   const targetCount = 2; // Number of test users
   const existing = await db
     .collection("users")
     .countDocuments({ _id: /^perf-test-user-/ });
 
   if (shouldSkipSeeding(existing, targetCount)) {
+    logger.info(
+      "   Waiting for cases to be created via SQS from GAS applications...",
+    );
     return;
   }
 
   logSeedingStart(existing, targetCount);
-  await clearCollections(db);
+  await db.collection("users").deleteMany({ _id: /^perf-test-user-/ });
   await createTestUsers(db);
 
   logger.info("✅ Performance test data seeding complete!");
