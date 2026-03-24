@@ -74,27 +74,22 @@ const createTestUsers = async (db) => {
   logger.info(`   ✓ Created ${testUsers.length} test users`);
 };
 
-export const seedPerfTestData = async (db) => {
-  if (process.env.PERF_TEST_SEED !== "true") {
-    return;
-  }
-
-  // One-time cleanup: Delete incomplete workflow if it exists without themes
-  await cleanupIncompleteWorkflow(db);
-
-  // Check if data already seeded (prevents race conditions with multiple pods)
-  const existing = await db
-    .collection("users")
-    .countDocuments({ _id: /^perf-test-user-/ });
-
-  if (existing > 0) {
+const shouldSkipSeeding = (existing, targetCount) => {
+  if (existing === targetCount) {
     logger.info(
-      "⏭️  Perf test data already seeded, skipping (found existing data)",
+      `⏭️  Perf test data already seeded with ${targetCount} test users, skipping`,
     );
-    return;
+    return true;
   }
+  return false;
+};
 
-  logger.info("🧹 Starting performance test data seeding...");
+const logSeedingStart = (existing, targetCount) => {
+  const action = existing > 0 ? "re-seed" : "seed";
+  logger.info(`🧹 Starting performance test data ${action}...`);
+  if (existing > 0) {
+    logger.info(`   Found ${existing} test users, target is ${targetCount}`);
+  }
   logger.info("⚠️  This will CLEAR ALL DATA in the following collections:");
   logger.info("   - cases");
   logger.info("   - users (test users only, keeps service accounts)");
@@ -104,7 +99,26 @@ export const seedPerfTestData = async (db) => {
   logger.info(
     "ℹ️  Cases will be created automatically via SQS from GAS backend",
   );
+};
 
+export const seedPerfTestData = async (db) => {
+  if (process.env.PERF_TEST_SEED !== "true") {
+    return;
+  }
+
+  // One-time cleanup: Delete incomplete workflow if it exists without themes
+  await cleanupIncompleteWorkflow(db);
+
+  const targetCount = 2; // Number of test users
+  const existing = await db
+    .collection("users")
+    .countDocuments({ _id: /^perf-test-user-/ });
+
+  if (shouldSkipSeeding(existing, targetCount)) {
+    return;
+  }
+
+  logSeedingStart(existing, targetCount);
   await clearCollections(db);
   await createTestUsers(db);
 
