@@ -1159,32 +1159,6 @@ describe("Case", () => {
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
-      workflow.phases.push(
-        new CasePhase({
-          code: "PHASE_2",
-          stages: [
-            new CaseStage({
-              code: "STAGE_3",
-              statuses: [
-                new WorkflowStageStatus({
-                  code: "STATUS_3",
-                  name: "Stage status 3",
-                  description: "Stage status 3 description",
-                  interactive: true,
-                }),
-                new WorkflowStageStatus({
-                  code: "STATUS_2",
-                  name: "Stage status 2",
-                  description: "Stage status 2 description",
-                  interactive: true,
-                }),
-              ],
-              taskGroups: [],
-            }),
-          ],
-        }),
-      );
-
       workflow.phases[0].stages[0].statuses[0].transitions.push(
         new WorkflowTransition({
           targetPosition: Position.from("PHASE_2:STAGE_3:STATUS_3"),
@@ -1227,6 +1201,43 @@ describe("Case", () => {
       expect(eventTypes).toContain(EventEnums.eventTypes.CASE_STATUS_CHANGED);
     });
 
+    it("updates position, updates closed and closedAt after successful transition", () => {
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock();
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
+      workflow.phases[0].stages[0].statuses[1].closes = true;
+
+      kase.phases.push(
+        new CasePhase({
+          code: "PHASE_2",
+          stages: [
+            new CaseStage({
+              code: "STAGE_2",
+              taskGroups: [],
+            }),
+          ],
+        }),
+      );
+
+      const newPosition = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_2",
+      });
+
+      kase.progressTo({
+        position: newPosition,
+        workflow,
+        createdBy: validUserId,
+      });
+
+      expect(kase.position).toEqual(newPosition);
+      expect(kase.closed).toBeTruthy();
+      expect(kase.closedAt).toBeInstanceOf(Date);
+    });
+
     it("updates position after successful transition", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
@@ -1260,6 +1271,8 @@ describe("Case", () => {
       });
 
       expect(kase.position).toEqual(newPosition);
+      expect(kase.closed).toBeFalsy();
+      expect(kase.closedAt).toBeUndefined();
     });
 
     it("does not create PHASE_COMPLETED event when staying in same phase", () => {
@@ -1327,32 +1340,6 @@ describe("Case", () => {
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
-
-      workflow.phases.push(
-        new CasePhase({
-          code: "PHASE_2",
-          stages: [
-            new CaseStage({
-              code: "STAGE_2",
-              statuses: [
-                new WorkflowStageStatus({
-                  code: "STATUS_2",
-                  name: "Stage status 2",
-                  description: "Stage status 2 description",
-                  interactive: true,
-                }),
-                new WorkflowStageStatus({
-                  code: "STATUS_3",
-                  name: "Stage status 3",
-                  description: "Stage status 3 description",
-                  interactive: true,
-                }),
-              ],
-              taskGroups: [],
-            }),
-          ],
-        }),
-      );
 
       workflow.phases[0].stages[0].statuses[0].transitions.push(
         new WorkflowTransition({

@@ -163,6 +163,36 @@ describe("Workflow", () => {
     });
   };
 
+  describe("canClose", () => {
+    it("returns false when closes equals false", () => {
+      const workflow = Workflow.createMock({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+      });
+      workflow.phases[0].stages[0].statuses[0].closes = false;
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
+      });
+      expect(workflow.canClose(position)).toBeFalsy();
+    });
+
+    it("returns true when closes equals true", () => {
+      const workflow = Workflow.createMock({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+      });
+      workflow.phases[0].stages[0].statuses[0].closes = true;
+      const position = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
+      });
+      expect(workflow.canClose(position)).toBeTruthy();
+    });
+  });
+
   describe("isMissingRequiredComment", () => {
     it("returns true when required comment is missing", () => {
       const workflow = createMockWorkflow();
