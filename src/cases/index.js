@@ -11,6 +11,7 @@ import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { createWorkflowRoute } from "./routes/create-workflow.route.js";
 import { findCaseByIdTabIdRoute } from "./routes/find-case-by-id-tab-id.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
+import { findCaseIdByRefRoute } from "./routes/find-case-id-by-ref.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
@@ -55,6 +56,7 @@ export const cases = {
     server.route([
       findCasesRoute,
       findCaseByIdRoute,
+      findCaseIdByRefRoute,
       updateStageOutcomeRoute,
       assignUserToCaseRoute,
       addNoteToCaseRoute,
