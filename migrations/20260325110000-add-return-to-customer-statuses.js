@@ -106,6 +106,7 @@ const reviewApplicationStatuses = [
     theme: "NEUTRAL",
     description: "Application received and pending review",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -125,6 +126,7 @@ const reviewApplicationStatuses = [
     theme: "INFO",
     description: "Application is being reviewed",
     interactive: true,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
@@ -202,6 +204,7 @@ const reviewApplicationStatuses = [
     description:
       "Application has been approved and agreement is being generated",
     interactive: true,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
@@ -254,6 +257,7 @@ const reviewApplicationStatuses = [
     theme: "NOTICE",
     description: "Application is on hold pending more information",
     interactive: true,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -297,6 +301,7 @@ const reviewApplicationStatuses = [
     theme: "WARN",
     description: "Application withdrawal has been requested",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_WITHDRAWN",
@@ -323,6 +328,7 @@ const reviewOfferStatuses = [
     theme: "INFO",
     description: "Offer is under review",
     interactive: true,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
@@ -382,6 +388,7 @@ const reviewOfferStatuses = [
     description:
       "The return of the application to the customer for amendment has been requested",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_OFFER:APPLICATION_AMEND",
@@ -405,6 +412,7 @@ const reviewOfferStatuses = [
     theme: "WARN",
     description: "Application withdrawal has been requested",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_OFFER:APPLICATION_WITHDRAWN",
@@ -455,6 +463,7 @@ const customerAgreementReviewStatuses = [
     theme: "INFO",
     description: "Offer has been made to the applicant",
     interactive: true,
+    closes: false,
     transitions: [
       {
         targetPosition:
@@ -498,6 +507,7 @@ const customerAgreementReviewStatuses = [
     description:
       "The return of the application to the customer for amendment has been requested",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition: "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_AMEND",
@@ -521,6 +531,7 @@ const customerAgreementReviewStatuses = [
     theme: "WARN",
     description: "Application withdrawal has been requested",
     interactive: false,
+    closes: false,
     transitions: [
       {
         targetPosition:
