@@ -6,18 +6,18 @@ export const up = async (db) => {
       { code: "frps-private-beta" },
       {
         $pull: {
-          "phases.0.stages.0.statuses.$[status].transitions": {
+          "phases.0.stages.0.statuses.$[s1].transitions": {
             "action.code": "REINSTATE_APPLICATION",
           },
-          "phases.0.stages.1.statuses.$[status].transitions": {
+          "phases.0.stages.1.statuses.$[s2].transitions": {
             "action.code": "REINSTATE_APPLICATION",
           },
         },
       },
       {
         arrayFilters: [
-          { "status.code": "APPLICATION_REJECTED" },
-          { "status.code": "APPLICATION_REJECTED" },
+          { "s1.code": "APPLICATION_REJECTED" },
+          { "s2.code": "APPLICATION_REJECTED" },
         ],
         session,
       },
