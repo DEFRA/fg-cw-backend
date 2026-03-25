@@ -6,6 +6,7 @@ export class WorkflowStageStatus {
     this.description = props.description;
     this.interactive = props.interactive;
     this.transitions = props.transitions;
+    this.closes = props.closes;
   }
 
   getActions() {
