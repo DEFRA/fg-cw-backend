@@ -9,8 +9,7 @@ import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.r
 import { newCaseUseCase } from "./new-case.use-case.js";
 
 const isReplacementAllowed = (kase) => {
-  // TODO: this will be filled when we have case "closed" status FGP-815
-  return false;
+  return kase.closed;
 };
 
 export const replaceCaseUseCase = async (message) => {

@@ -24,10 +24,10 @@ export class WorkflowPhase {
     return stage;
   }
 
-  static createMock() {
+  static createMock(num = 1) {
     return new WorkflowPhase({
-      code: "PHASE_1",
-      name: "Phase 1",
+      code: "PHASE_" + num,
+      name: "Phase " + num,
       stages: [
         new WorkflowStage({
           code: "STAGE_1",
@@ -40,6 +40,7 @@ export class WorkflowPhase {
               theme: "INFO",
               description: "Stage status 1 description",
               interactive: true,
+              closes: false,
               transitions: [
                 new WorkflowTransition({
                   targetPosition: Position.from("PHASE_1:STAGE_1:STATUS_2"),
@@ -71,6 +72,7 @@ export class WorkflowPhase {
               theme: "INFO",
               description: "Stage status 2 description",
               interactive: true,
+              closes: false,
               transitions: [],
             }),
           ],
@@ -80,14 +82,43 @@ export class WorkflowPhase {
           code: "STAGE_2",
           name: "Stage 2",
           description: "Stage 2 description",
-          statuses: [],
+          statuses: [
+            new WorkflowStageStatus({
+              code: "STATUS_1",
+              name: "Stage status 1",
+              theme: "INFO",
+              description: "Stage status 1 description",
+              interactive: true,
+              closes: false,
+              transitions: [],
+            }),
+            new WorkflowStageStatus({
+              code: "STATUS_3",
+              name: "Stage status 3",
+              theme: "INFO",
+              description: "Stage status 3 description",
+              interactive: true,
+              closes: false,
+              transitions: [],
+            }),
+          ],
           taskGroups: [],
         }),
         new WorkflowStage({
           code: "STAGE_3",
           name: "Stage 3",
           description: "Stage 3 description",
-          statuses: [],
+          statuses: [
+            new WorkflowStageStatus({
+              code: "STATUS_3",
+              name: "Stage status 3",
+              theme: "INFO",
+              description: "Stage status 3 description",
+              interactive: true,
+              closes: false,
+              transitions: [],
+            }),
+          ],
           taskGroups: [],
         }),
       ],

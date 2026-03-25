@@ -42,6 +42,7 @@ const toWorkflowTransition = (t) =>
 
 const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
+    closes: s.closes,
     code: s.code,
     name: s.name,
     theme: s.theme,

@@ -319,6 +319,7 @@ describe("findById", () => {
     expect(result).toEqual(
       Case.createMock({
         _id: caseId,
+        closed: false,
         assignedUser: { id: "64c88faac1f56f71e1b89a33" },
         requiredRoles: undefined,
       }),

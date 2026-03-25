@@ -47,6 +47,7 @@ const toCase = (doc) => {
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
     payload: doc.payload,
+    closed: doc.closed,
     position: new Position({
       phaseCode: doc.currentPhase,
       stageCode: doc.currentStage,
