@@ -1132,22 +1132,7 @@
               "theme": "ERROR",
               "description": "Application has been rejected",
               "interactive": false,
-              "transitions": [
-                {
-                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
-                  "checkTasks": true,
-                  "action": {
-                    "code": "REINSTATE_APPLICATION",
-                    "name": "Reinstate Application",
-                    "checkTasks": false,
-                    "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "You must include an explanation for auditing purposes.",
-                      "mandatory": true
-                    }
-                  }
-                }
-              ]
+              "transitions": []
             },
             {
               "code": "ON_HOLD",
@@ -1946,22 +1931,7 @@
               "theme": "ERROR",
               "description": "Application has been rejected",
               "interactive": false,
-              "transitions": [
-                {
-                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
-                  "checkTasks": true,
-                  "action": {
-                    "code": "REINSTATE_APPLICATION",
-                    "name": "Reinstate Application",
-                    "checkTasks": false,
-                    "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "You must include an explanation for auditing purposes.",
-                      "mandatory": false
-                    }
-                  }
-                }
-              ]
+              "transitions": []
             }
           ],
           "taskGroups": [
