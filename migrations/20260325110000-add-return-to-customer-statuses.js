@@ -230,6 +230,7 @@ const reviewApplicationStatuses = [
     theme: "ERROR",
     description: "Application has been rejected",
     interactive: false,
+    closes: true,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -287,6 +288,7 @@ const reviewApplicationStatuses = [
     theme: "WARN",
     description: "The application has been returned to the customer",
     interactive: false,
+    closes: true,
     transitions: [],
   },
   {
@@ -309,6 +311,7 @@ const reviewApplicationStatuses = [
     theme: "WARN",
     description: "Application has been withdrawn",
     interactive: false,
+    closes: true,
     transitions: [],
   },
 ];
@@ -393,6 +396,7 @@ const reviewOfferStatuses = [
     theme: "WARN",
     description: "The application has been returned to the customer",
     interactive: false,
+    closes: true,
     transitions: [],
   },
   {
@@ -415,6 +419,7 @@ const reviewOfferStatuses = [
     theme: "WARN",
     description: "Application has been withdrawn",
     interactive: false,
+    closes: true,
     transitions: [],
   },
   {
@@ -423,6 +428,7 @@ const reviewOfferStatuses = [
     theme: "ERROR",
     description: "Application has been rejected",
     interactive: false,
+    closes: true,
     transitions: [
       {
         targetPosition: "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
@@ -506,6 +512,7 @@ const customerAgreementReviewStatuses = [
     theme: "WARN",
     description: "The application has been returned to the customer",
     interactive: false,
+    closes: true,
     transitions: [],
   },
   {
@@ -529,6 +536,7 @@ const customerAgreementReviewStatuses = [
     theme: "WARN",
     description: "Application has been withdrawn",
     interactive: false,
+    closes: true,
     transitions: [],
   },
 ];
