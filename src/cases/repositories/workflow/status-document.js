@@ -2,6 +2,7 @@ import { TransitionDocument } from "./transition-document.js";
 
 export class StatusDocument {
   constructor(props) {
+    this.closes = props.closes;
     this.code = props.code;
     this.name = props.name;
     this.theme = props.theme;

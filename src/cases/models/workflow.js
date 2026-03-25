@@ -78,6 +78,10 @@ export class Workflow {
     return targetTransition;
   }
 
+  canClose(targetPosition) {
+    return this.getStatus(targetPosition).closes;
+  }
+
   validateComment({ phaseCode, stageCode, actionCode, action, comment }) {
     if (this.isMissingRequiredComment(action, comment)) {
       throw Boom.badRequest(
@@ -135,7 +139,7 @@ export class Workflow {
     return new Workflow({
       code: "workflow-code",
       pages: createPagesMock(),
-      phases: [WorkflowPhase.createMock()],
+      phases: [WorkflowPhase.createMock(1), WorkflowPhase.createMock(2)],
       requiredRoles: new RequiredAppRoles({
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
