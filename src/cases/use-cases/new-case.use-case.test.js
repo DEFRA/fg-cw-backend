@@ -48,6 +48,53 @@ describe("newCaseUseCase", () => {
     expect(save.mock.calls[0][0]).toBeInstanceOf(Case);
   });
 
+  it("maps temporary caveat sources from code before saving the case", async () => {
+    save.mockResolvedValue({
+      insertedId: new ObjectId("888888888888888999999998"),
+    });
+    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+
+    await newCaseUseCase(
+      {
+        event: {
+          data: {
+            workflowCode: "workflow-code",
+            caseRef: "TEST-001A",
+            payload: {
+              answers: {
+                rulesCalculations: {
+                  caveats: [
+                    { code: "hefer-consent-required" },
+                    { code: "ne-consent-required" },
+                    { code: "other-code", source: "existing-source" },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      {},
+    );
+
+    expect(
+      save.mock.calls[0][0].payload.answers.rulesCalculations.caveats,
+    ).toEqual([
+      {
+        code: "hefer-consent-required",
+        source: "historic-england",
+      },
+      {
+        code: "ne-consent-required",
+        source: "natural-england",
+      },
+      {
+        code: "other-code",
+        source: "existing-source",
+      },
+    ]);
+  });
+
   it("excludes conditional tasks when condition is not met", async () => {
     save.mockResolvedValue({
       insertedId: new ObjectId("888888888888888999999998"),

@@ -2682,16 +2682,16 @@ describe("conditional component resolution", () => {
       payload: {
         answers: {
           rulesCalculations: {
-            caveats: [{ code: "CAV001" }, { code: "CAV002" }],
+            caveats: [{ source: "source1" }, { source: "source2" }],
           },
         },
       },
       templates: {
         caveats: {
-          CAV001: {
+          source1: {
             content: [{ component: "text", text: "Caveat 1" }],
           },
-          CAV002: {
+          source2: {
             content: [{ component: "text", text: "Caveat 2" }],
           },
         },
@@ -2705,7 +2705,7 @@ describe("conditional component resolution", () => {
         {
           component: "template",
           templateRef: "$.templates.caveats",
-          templateKey: "@.code",
+          templateKey: "@.source",
         },
       ],
     };
@@ -2718,6 +2718,268 @@ describe("conditional component resolution", () => {
     expect(result).toEqual([
       { component: "text", text: "Caveat 1" },
       { component: "text", text: "Caveat 2" },
+    ]);
+  });
+
+  it("should resolve grouped statutory consent caveats with ordered groups and hefer description from caveat data", async () => {
+    const mockRootWithGroupedCaveatTemplates = {
+      payload: {
+        answers: {
+          rulesCalculations: {
+            caveats: [
+              {
+                code: "hefer-consent-required",
+                source: "historic-england",
+                description:
+                  "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+                metadata: {
+                  sheetId: "SX0679",
+                  parcelId: "9238",
+                  actionCode: "CSAM1",
+                  overlapAreaHectares: "2.35",
+                  percentageOverlap: "41.2",
+                },
+              },
+              {
+                code: "ne-consent-required",
+                source: "natural-england",
+                description: "Ignored by template",
+                metadata: {
+                  sheetId: "SE1234",
+                  parcelId: "5678",
+                  actionCode: "UPL1",
+                  overlapAreaHectares: "1.05",
+                  percentageOverlap: "10.5",
+                },
+              },
+            ],
+          },
+        },
+      },
+      templates: {
+        caveatGroups: {
+          "natural-england": {
+            order: 1,
+            content: [
+              {
+                component: "heading",
+                text: "SSSI consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
+              },
+            ],
+          },
+          "historic-england": {
+            order: 2,
+            content: [
+              {
+                component: "heading",
+                text: "Historic England consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
+              },
+            ],
+          },
+        },
+        caveats: {
+          "natural-england": {
+            content: [
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+            ],
+          },
+          "historic-england": {
+            content: [
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Action code",
+                    text: "@.metadata.actionCode",
+                  },
+                  {
+                    label: "Overlap area",
+                    text: "@.metadata.overlapAreaHectares Ha",
+                  },
+                  {
+                    label: "Overlap",
+                    text: "@.metadata.percentageOverlap %",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const groups = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+    });
+
+    expect(groups.map((group) => group.source)).toEqual([
+      "natural-england",
+      "historic-england",
+    ]);
+    expect(Array.isArray(groups[0].caveats)).toBe(true);
+    expect(groups[0].caveats).toHaveLength(1);
+
+    const result = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: [
+        {
+          component: "template",
+          dataRef:
+            'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats[source=\'historic-england\']; {"source": "historic-england", "caveats": $caveats})',
+          templateRef: "$.templates.caveatGroups",
+          templateKey: "historic-england",
+        },
+        {
+          component: "template",
+          dataRef:
+            "jsonata:$.payload.answers.rulesCalculations.caveats[source='historic-england'][0]",
+          templateRef: "$.templates.caveats",
+          templateKey: "historic-england",
+        },
+      ],
+    });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
+    ]);
+
+    const fullGroupedResult = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: {
+        component: "repeat",
+        id: "caveat-groups",
+        itemsRef:
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+        items: [
+          {
+            component: "template",
+            templateRef: "$.templates.caveatGroups",
+            templateKey: "@.source",
+          },
+          {
+            component: "repeat",
+            id: "caveats-inner",
+            itemsRef: "@.caveats[*]",
+            items: [
+              {
+                component: "template",
+                templateRef: "$.templates.caveats",
+                templateKey: "@.source",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(fullGroupedResult).toEqual([
+      {
+        component: "heading",
+        text: "SSSI consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "Ignored by template",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SE1234 5678",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
     ]);
   });
 
@@ -2739,7 +3001,7 @@ describe("conditional component resolution", () => {
         {
           component: "template",
           templateRef: "$.templates.caveats",
-          templateKey: "@.code",
+          templateKey: "@.source",
         },
       ],
     };
