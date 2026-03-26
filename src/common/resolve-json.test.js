@@ -2682,16 +2682,16 @@ describe("conditional component resolution", () => {
       payload: {
         answers: {
           rulesCalculations: {
-            caveats: [{ code: "CAV001" }, { code: "CAV002" }],
+            caveats: [{ source: "source1" }, { source: "source2" }],
           },
         },
       },
       templates: {
         caveats: {
-          CAV001: {
+          source1: {
             content: [{ component: "text", text: "Caveat 1" }],
           },
-          CAV002: {
+          source2: {
             content: [{ component: "text", text: "Caveat 2" }],
           },
         },
@@ -2705,7 +2705,7 @@ describe("conditional component resolution", () => {
         {
           component: "template",
           templateRef: "$.templates.caveats",
-          templateKey: "@.code",
+          templateKey: "@.source",
         },
       ],
     };
@@ -2729,6 +2729,7 @@ describe("conditional component resolution", () => {
             caveats: [
               {
                 code: "hefer-consent-required",
+                source: "historic-england",
                 description:
                   "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
                 metadata: {
@@ -2741,6 +2742,7 @@ describe("conditional component resolution", () => {
               },
               {
                 code: "ne-consent-required",
+                source: "natural-england",
                 description: "Ignored by template",
                 metadata: {
                   sheetId: "SE1234",
@@ -2756,7 +2758,7 @@ describe("conditional component resolution", () => {
       },
       templates: {
         caveatGroups: {
-          "ne-consent-required": {
+          "natural-england": {
             order: 1,
             content: [
               {
@@ -2771,7 +2773,7 @@ describe("conditional component resolution", () => {
               },
             ],
           },
-          "hefer-consent-required": {
+          "historic-england": {
             order: 2,
             content: [
               {
@@ -2788,7 +2790,7 @@ describe("conditional component resolution", () => {
           },
         },
         caveats: {
-          "ne-consent-required": {
+          "natural-england": {
             content: [
               {
                 component: "heading",
@@ -2799,7 +2801,7 @@ describe("conditional component resolution", () => {
               },
             ],
           },
-          "hefer-consent-required": {
+          "historic-england": {
             content: [
               {
                 component: "heading",
@@ -2833,12 +2835,12 @@ describe("conditional component resolution", () => {
 
     const groups = await resolveJSONPath({
       root: mockRootWithGroupedCaveatTemplates,
-      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
     });
 
-    expect(groups.map((group) => group.code)).toEqual([
-      "ne-consent-required",
-      "hefer-consent-required",
+    expect(groups.map((group) => group.source)).toEqual([
+      "natural-england",
+      "historic-england",
     ]);
     expect(Array.isArray(groups[0].caveats)).toBe(true);
     expect(groups[0].caveats).toHaveLength(1);
@@ -2849,16 +2851,16 @@ describe("conditional component resolution", () => {
         {
           component: "template",
           dataRef:
-            'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats[code=\'hefer-consent-required\']; {"code": "hefer-consent-required", "caveats": $caveats})',
+            'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats[source=\'historic-england\']; {"source": "historic-england", "caveats": $caveats})',
           templateRef: "$.templates.caveatGroups",
-          templateKey: "hefer-consent-required",
+          templateKey: "historic-england",
         },
         {
           component: "template",
           dataRef:
-            "jsonata:$.payload.answers.rulesCalculations.caveats[code='hefer-consent-required'][0]",
+            "jsonata:$.payload.answers.rulesCalculations.caveats[source='historic-england'][0]",
           templateRef: "$.templates.caveats",
-          templateKey: "hefer-consent-required",
+          templateKey: "historic-england",
         },
       ],
     });
@@ -2905,12 +2907,12 @@ describe("conditional component resolution", () => {
         component: "repeat",
         id: "caveat-groups",
         itemsRef:
-          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
         items: [
           {
             component: "template",
             templateRef: "$.templates.caveatGroups",
-            templateKey: "@.code",
+            templateKey: "@.source",
           },
           {
             component: "repeat",
@@ -2920,7 +2922,7 @@ describe("conditional component resolution", () => {
               {
                 component: "template",
                 templateRef: "$.templates.caveats",
-                templateKey: "@.code",
+                templateKey: "@.source",
               },
             ],
           },
@@ -2999,7 +3001,7 @@ describe("conditional component resolution", () => {
         {
           component: "template",
           templateRef: "$.templates.caveats",
-          templateKey: "@.code",
+          templateKey: "@.source",
         },
       ],
     };

@@ -11,12 +11,12 @@ const statutoryConsentRequirementsAccordionItem = {
         component: "repeat",
         id: "caveat-groups",
         itemsRef:
-          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {"code": $code, "order": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, "caveats": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
         items: [
           {
             component: "template",
             templateRef: "$.templates.caveatGroups",
-            templateKey: "@.code",
+            templateKey: "@.source",
           },
           {
             component: "repeat",
@@ -26,7 +26,7 @@ const statutoryConsentRequirementsAccordionItem = {
               {
                 component: "template",
                 templateRef: "$.templates.caveats",
-                templateKey: "@.code",
+                templateKey: "@.source",
               },
             ],
           },
@@ -37,7 +37,7 @@ const statutoryConsentRequirementsAccordionItem = {
 };
 
 const caveatGroupTemplates = {
-  "ne-consent-required": {
+  "natural-england": {
     order: 1,
     content: [
       {
@@ -52,7 +52,7 @@ const caveatGroupTemplates = {
       },
     ],
   },
-  "hefer-consent-required": {
+  "historic-england": {
     order: 2,
     content: [
       {
@@ -70,7 +70,7 @@ const caveatGroupTemplates = {
 };
 
 const caveatTemplates = {
-  "ne-consent-required": {
+  "natural-england": {
     content: [
       {
         component: "heading",
@@ -97,7 +97,7 @@ const caveatTemplates = {
       },
     ],
   },
-  "hefer-consent-required": {
+  "historic-england": {
     content: [
       {
         component: "heading",
