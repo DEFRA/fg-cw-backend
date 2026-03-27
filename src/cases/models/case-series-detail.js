@@ -6,7 +6,6 @@ export class CaseSeriesDetail {
     caseRef: Joi.string().required(),
     dateReceived: Joi.string().required(),
     closed: Joi.boolean().required(),
-    dateClosed: Joi.string().optional().allow(null),
     status: Joi.string().required(),
     link: Joi.object({
       text: Joi.string().required(),
@@ -38,9 +37,9 @@ export class CaseSeriesDetail {
     const status = workflow.getStatus(caseDoc.position);
     return new CaseSeriesDetail({
       caseRef: caseDoc.caseRef,
-      dateReceived: caseDoc.createdAt.toISOString(),
+      dateReceived: caseDoc.createdAt,
       closed: !!caseDoc.closed,
-      dateClosed: caseDoc.closedAt?.toISOString(),
+      dateClosed: caseDoc.closedAt,
       status: status.name,
       link:
         currentCaseRef === caseDoc.caseRef

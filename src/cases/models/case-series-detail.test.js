@@ -69,7 +69,7 @@ describe("CaseSeriesDetail", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: new Date(),
+        createdAt: "2025-01-01T00:00:00.000Z",
         closed: false,
         closedAt: undefined,
         position: {},
@@ -95,7 +95,7 @@ describe("CaseSeriesDetail", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: new Date(),
+        createdAt: "2025-01-01T00:00:00.000Z",
         closed: false,
         position: {},
       };
@@ -113,9 +113,9 @@ describe("CaseSeriesDetail", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: new Date(),
+        createdAt: "2025-01-01T00:00:00.000Z",
         closed: true,
-        closedAt: new Date(),
+        closedAt: "2025-06-01T00:00:00.000Z",
         position: {},
       };
 
