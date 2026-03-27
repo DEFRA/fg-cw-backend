@@ -29,8 +29,12 @@ describe("findCaseSeries", () => {
     const caseRefs = new Set([{}, {}]);
     const mockCase1 = Case.createMock({
       caseRef: "1234",
+      createdAt: new Date(),
     });
-    const mockCase2 = Case.createMock({ caseRef: "2345" });
+    const mockCase2 = Case.createMock({
+      caseRef: "2345",
+      createdAt: new Date(),
+    });
     const mockWorkflow = Workflow.createMock();
     findByCode.mockResolvedValueOnce(mockWorkflow);
     findCasesByCaseRefsAndWorkflowCode.mockResolvedValueOnce([

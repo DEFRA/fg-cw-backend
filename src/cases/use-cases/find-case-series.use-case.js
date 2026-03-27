@@ -5,11 +5,7 @@ import { findByCode } from "../repositories/workflow.repository.js";
 
 const TIMELINE = "timeline";
 
-export const getCaseDetailsForSeries = async (
-  currentCaseRef,
-  caseRefs,
-  workflow,
-) => {
+const getCaseDetailsForSeries = async (currentCaseRef, caseRefs, workflow) => {
   const caseDocs = await findCasesByCaseRefsAndWorkflowCode(
     caseRefs,
     workflow.code,

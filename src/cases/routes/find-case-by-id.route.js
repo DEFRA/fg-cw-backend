@@ -30,6 +30,8 @@ export const findCaseByIdRoute = {
       workflowCode: data.workflowCode,
     });
 
+    let links = data.links;
+
     if (caseSeries.length > 1) {
       const newLinks = data.links.map((link) => {
         if (link.id === "timeline") {
@@ -41,8 +43,8 @@ export const findCaseByIdRoute = {
         }
         return link;
       });
-      data.links = newLinks;
+      links = newLinks;
     }
-    return createPageResponse({ user, data: { ...data, caseSeries } });
+    return createPageResponse({ user, data: { ...data, links, caseSeries } });
   },
 };

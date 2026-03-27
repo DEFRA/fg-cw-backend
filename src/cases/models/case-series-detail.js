@@ -38,9 +38,9 @@ export class CaseSeriesDetail {
     const status = workflow.getStatus(caseDoc.position);
     return new CaseSeriesDetail({
       caseRef: caseDoc.caseRef,
-      dateReceived: caseDoc.createdAt,
+      dateReceived: caseDoc.createdAt.toISOString(),
       closed: !!caseDoc.closed,
-      dateClosed: caseDoc.closedAt,
+      dateClosed: caseDoc.closedAt?.toISOString(),
       status: status.name,
       link:
         currentCaseRef === caseDoc.caseRef

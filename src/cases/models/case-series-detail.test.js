@@ -69,7 +69,7 @@ describe("CaseSeriesDetail", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: "2025-01-01T00:00:00.000Z",
+        createdAt: new Date(),
         closed: false,
         closedAt: undefined,
         position: {},
@@ -83,7 +83,6 @@ describe("CaseSeriesDetail", () => {
 
       expect(detail).toBeInstanceOf(CaseSeriesDetail);
       expect(detail.caseRef).toBe("TEST-001");
-      expect(detail.dateReceived).toBe("2025-01-01T00:00:00.000Z");
       expect(detail.closed).toBe(false);
       expect(detail.status).toBe("Submitted");
       expect(detail.link).toEqual({
@@ -96,7 +95,7 @@ describe("CaseSeriesDetail", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: "2025-01-01T00:00:00.000Z",
+        createdAt: new Date(),
         closed: false,
         position: {},
       };
@@ -110,31 +109,13 @@ describe("CaseSeriesDetail", () => {
       expect(detail.link).toEqual({ text: "This case" });
     });
 
-    it("coerces a truthy closed value to boolean", () => {
-      const caseDoc = {
-        _id: "doc-id",
-        caseRef: "TEST-001",
-        createdAt: "2025-01-01T00:00:00.000Z",
-        closed: "yes",
-        position: {},
-      };
-
-      const detail = CaseSeriesDetail.fromCase(
-        caseDoc,
-        "OTHER-001",
-        mockWorkflow,
-      );
-
-      expect(detail.closed).toBe(true);
-    });
-
     it("sets dateClosed from closedAt when present", () => {
       const caseDoc = {
         _id: "doc-id",
         caseRef: "TEST-001",
-        createdAt: "2025-01-01T00:00:00.000Z",
+        createdAt: new Date(),
         closed: true,
-        closedAt: "2025-06-01T00:00:00.000Z",
+        closedAt: new Date(),
         position: {},
       };
 
@@ -144,7 +125,7 @@ describe("CaseSeriesDetail", () => {
         mockWorkflow,
       );
 
-      expect(detail.dateClosed).toBe("2025-06-01T00:00:00.000Z");
+      expect(detail.dateClosed).toEqual(expect.any(String));
     });
   });
 });

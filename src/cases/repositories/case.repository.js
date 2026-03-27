@@ -124,7 +124,7 @@ const cursorCodecs = {
     decode: (v) => new Date(v),
   },
   closedAt: {
-    encode: (v) => v.toISOString(),
+    encode: (v) => v?.toISOString(),
     decode: (v) => new Date(v),
   },
   _id: {

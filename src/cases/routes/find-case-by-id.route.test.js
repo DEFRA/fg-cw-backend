@@ -113,7 +113,16 @@ describe("findCaseByIdRoute", () => {
     });
 
     expect(statusCode).toEqual(200);
-    expect(result.data).toEqual({ ...kase, caseSeries: mockSeries });
+    expect(result.data).toEqual({
+      ...kase,
+      links: [
+        {
+          id: "timeline",
+          text: "Timeline (2)",
+        },
+      ],
+      caseSeries: mockSeries,
+    });
     expect(result.header).toEqual({
       navItems: [],
     });
