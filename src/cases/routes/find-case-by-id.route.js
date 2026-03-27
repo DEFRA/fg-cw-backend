@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { createPageResponse } from "../../common/create-page-response.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
+import { findCaseSeries } from "../use-cases/find-case-series.use-case.js";
 
 export const findCaseByIdRoute = {
   method: "GET",
@@ -23,6 +24,25 @@ export const findCaseByIdRoute = {
       params: { caseId, tabId },
     });
 
-    return createPageResponse({ user, data });
+    const caseSeries = await findCaseSeries({
+      tabId,
+      caseRef: data.caseRef,
+      workflowCode: data.workflowCode,
+    });
+
+    if (caseSeries.length > 1) {
+      const newLinks = data.links.map((link) => {
+        if (link.id === "timeline") {
+          const timelineLink = {
+            ...link,
+            text: `Timeline (${caseSeries.length})`,
+          };
+          return timelineLink;
+        }
+        return link;
+      });
+      data.links = newLinks;
+    }
+    return createPageResponse({ user, data: { ...data, caseSeries } });
   },
 };

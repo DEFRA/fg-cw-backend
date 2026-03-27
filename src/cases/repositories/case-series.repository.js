@@ -12,6 +12,16 @@ export const save = async (series, session) => {
   return result;
 };
 
+export const findInCaseRefsAndWorkflowCode = async (caseRef, workflowCode) => {
+  const doc = await db
+    .collection(collection)
+    .findOne({ caseRefs: caseRef, workflowCode });
+  if (doc === null) {
+    throw Boom.notFound();
+  }
+  return CaseSeries.fromDocument(doc);
+};
+
 export const findByCaseRefAndWorkflowCode = async (
   caseRef,
   workflowCode,
