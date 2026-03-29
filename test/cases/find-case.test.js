@@ -61,6 +61,7 @@ describe("GET /cases/{caseId}", () => {
         name: "Application Receipt",
         description: "Application received",
         interactive: true,
+        hideTaskGroups: false,
         canPerformActions: true,
         taskGroups: [
           {
