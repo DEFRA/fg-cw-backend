@@ -48,6 +48,7 @@ const toWorkflowStageStatus = (s) =>
     theme: s.theme,
     description: s.description,
     interactive: s.interactive,
+    hideTaskGroups: s.hideTaskGroups,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 

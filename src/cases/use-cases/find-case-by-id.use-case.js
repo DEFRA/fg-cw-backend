@@ -370,6 +370,7 @@ const mapStageData = async (
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    hideTaskGroups: currentStatus.hideTaskGroups,
     canPerformActions,
     taskGroups: await mapTaskGroups(
       caseStage,
