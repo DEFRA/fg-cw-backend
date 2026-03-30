@@ -3,6 +3,24 @@ import { createPageResponse } from "../../common/create-page-response.js";
 import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
 import { findCaseSeries } from "../use-cases/find-case-series.use-case.js";
 
+const constructLinksForCaseSeries = (links, caseSeriesLength) => {
+  if (caseSeriesLength > 1) {
+    const newLinks = links.map((link) => {
+      if (link.id === "timeline") {
+        const timelineLink = {
+          ...link,
+          text: `Timeline (${caseSeriesLength})`,
+        };
+        return timelineLink;
+      }
+      return link;
+    });
+    return newLinks;
+  }
+
+  return links;
+};
+
 export const findCaseByIdRoute = {
   method: "GET",
   path: "/cases/{caseId}",
@@ -30,21 +48,7 @@ export const findCaseByIdRoute = {
       workflowCode: data.workflowCode,
     });
 
-    let links = data.links;
-
-    if (caseSeries.length > 1) {
-      const newLinks = data.links.map((link) => {
-        if (link.id === "timeline") {
-          const timelineLink = {
-            ...link,
-            text: `Timeline (${caseSeries.length})`,
-          };
-          return timelineLink;
-        }
-        return link;
-      });
-      links = newLinks;
-    }
+    const links = constructLinksForCaseSeries(data.links, caseSeries.length);
     return createPageResponse({ user, data: { ...data, links, caseSeries } });
   },
 };
