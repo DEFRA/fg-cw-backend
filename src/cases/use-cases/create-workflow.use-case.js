@@ -147,6 +147,7 @@ const createWorkflowAction = (action) =>
     code: action.code,
     name: action.name,
     checkTasks: action.checkTasks,
+    classes: action.classes,
     comment: action.comment
       ? new WorkflowActionComment({
           label: action.comment.label,

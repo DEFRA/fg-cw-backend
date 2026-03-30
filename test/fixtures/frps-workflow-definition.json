@@ -909,7 +909,8 @@
                           "AGREEMENT_DRAFTED": "INFO",
                           "AGREEMENT_GENERATING": "INFO",
                           "WITHDRAWN": "WARN",
-                          "REJECTED": "ERROR"
+                          "REJECTED": "ERROR",
+                          "TERMINATED": "ERROR"
                         },
                         "labelsMap": {
                           "AGREEMENT_GENERATING": "Agreement generating",
@@ -917,7 +918,8 @@
                           "OFFERED": "Offered",
                           "ACCEPTED": "Accepted",
                           "WITHDRAWN": "Withdrawn",
-                          "REJECTED": "Rejected"
+                          "REJECTED": "Rejected",
+                          "TERMINATED": "Terminated"
                         }
                       }
                     ]
@@ -995,7 +997,8 @@
                             "AGREEMENT_DRAFTED": "INFO",
                             "AGREEMENT_GENERATING": "INFO",
                             "WITHDRAWN": "WARN",
-                            "REJECTED": "ERROR"
+                            "REJECTED": "ERROR",
+                            "TERMINATED": "ERROR"
                           },
                           "labelsMap": {
                             "AGREEMENT_GENERATING": "Agreement generating",
@@ -1003,7 +1006,8 @@
                             "OFFERED": "Offered",
                             "ACCEPTED": "Accepted",
                             "WITHDRAWN": "Withdrawn",
-                            "REJECTED": "Rejected"
+                            "REJECTED": "Rejected",
+                            "TERMINATED": "Terminated"
                           }
                         },
                         {
@@ -2434,6 +2438,7 @@
                   "action": {
                     "code": "INITIATE_TERMINATION",
                     "name": "Terminate",
+                    "classes": "govuk-button--secondary",
                     "checkTasks": false,
                     "confirm": null,
                     "comment": {
@@ -2538,7 +2543,8 @@
                   "checkTasks": false,
                   "action": {
                     "code": "CANCEL_TERMINATION",
-                    "name": "End termination process",
+                    "name": "Cancel termination",
+                    "classes": "govuk-button--secondary",
                     "checkTasks": false,
                     "confirm": null,
                     "comment": null

@@ -23,6 +23,7 @@ const toWorkflowAction = (a) =>
     code: a.code,
     name: a.name,
     checkTasks: a.checkTasks,
+    classes: a.classes,
     comment: a.comment
       ? new WorkflowActionComment({
           label: a.comment.label,

@@ -47,6 +47,7 @@ const terminateAgreementComment = {
 };
 
 const initiateTerminationComment = {
+  label: "Reason for termination",
   helpText: "You must include an explanation for auditing purposes.",
   mandatory: true,
 };
@@ -158,6 +159,7 @@ const agreementAcceptedStatus = {
       action: {
         code: "INITIATE_TERMINATION",
         name: "Terminate",
+        classes: "govuk-button--secondary",
         checkTasks: false,
         confirm: null,
         comment: initiateTerminationComment,
@@ -212,7 +214,8 @@ const agreementTerminationStatuses = [
         checkTasks: false,
         action: {
           code: "CANCEL_TERMINATION",
-          name: "End termination process",
+          name: "Cancel termination",
+          classes: "govuk-button--secondary",
           checkTasks: false,
           confirm: null,
           comment: null,
@@ -346,7 +349,14 @@ const agreementTerminationStage = {
 export const up = async (db) => {
   const workflowQuery = { code: "frps-private-beta" };
 
-  // First update: Add pageFragment and update MONITORING stage
+  // First, remove any existing AGREEMENT_TERMINATION stages to make migration idempotent
+  await db.collection("workflows").updateOne(workflowQuery, {
+    $pull: {
+      "phases.1.stages": { code: "AGREEMENT_TERMINATION" },
+    },
+  });
+
+  // Second update: Add pageFragment and update MONITORING stage
   await db.collection("workflows").updateOne(workflowQuery, {
     $set: {
       "templates.pageFragments.AGREEMENT_TERMINATED":
@@ -358,10 +368,24 @@ export const up = async (db) => {
     },
   });
 
-  // Second update: Add AGREEMENT_TERMINATION stage
+  // Third update: Add AGREEMENT_TERMINATION stage (only once since we removed duplicates above)
   await db.collection("workflows").updateOne(workflowQuery, {
     $push: {
       "phases.1.stages": agreementTerminationStage,
+    },
+  });
+
+  // Fourth update: Add TERMINATED status to agreements tab mappings
+  await db.collection("workflows").updateOne(workflowQuery, {
+    $set: {
+      "pages.cases.details.tabs.agreements.content.1.rows.0.text.0.themeMap.TERMINATED":
+        "ERROR",
+      "pages.cases.details.tabs.agreements.content.1.rows.0.text.0.labelsMap.TERMINATED":
+        "Terminated",
+      "pages.cases.details.tabs.agreements.content.2.whenTrue.items.1.rows.2.themeMap.TERMINATED":
+        "ERROR",
+      "pages.cases.details.tabs.agreements.content.2.whenTrue.items.1.rows.2.labelsMap.TERMINATED":
+        "Terminated",
     },
   });
 };
