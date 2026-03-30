@@ -48,6 +48,7 @@ const toCase = (doc) => {
     workflowCode: doc.workflowCode,
     payload: doc.payload,
     closed: doc.closed,
+    closedAt: doc.closedAt,
     position: new Position({
       phaseCode: doc.currentPhase,
       stageCode: doc.currentStage,
@@ -122,6 +123,10 @@ const cursorCodecs = {
     encode: (v) => v.toISOString(),
     decode: (v) => new Date(v),
   },
+  closedAt: {
+    encode: (v) => v?.toISOString(),
+    decode: (v) => new Date(v),
+  },
   _id: {
     encode: (v) => v.toHexString(),
     decode: (v) => new ObjectId(v),
@@ -180,6 +185,21 @@ export const findAll = ({
       createdAt: doc.createdAt,
     }),
   });
+};
+
+export const findCasesByCaseRefsAndWorkflowCode = async (
+  caseRefs,
+  workflowCode,
+) => {
+  const docs = await db
+    .collection(collection)
+    .find({
+      caseRef: { $in: caseRefs },
+      workflowCode,
+    })
+    .toArray();
+
+  return docs.map(toCase);
 };
 
 export const findByCaseRefAndWorkflowCode = async (

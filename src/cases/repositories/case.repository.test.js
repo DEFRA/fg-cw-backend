@@ -9,6 +9,7 @@ import {
   findAll,
   findByCaseRefAndWorkflowCode,
   findById,
+  findCasesByCaseRefsAndWorkflowCode,
   save,
   update,
   updateStage,
@@ -280,6 +281,24 @@ describe("findAll", () => {
 
     const { sort } = paginate.mock.calls[0][1];
     expect(sort).toEqual({ createdAt: -1 });
+  });
+});
+
+describe("findCasesByCaseRefsAndWorkflowCode", () => {
+  it("finds case in a list of caseRefs", async () => {
+    const doc = CaseDocument.createMock();
+    const ref = doc.caseRef;
+    const find = vi.fn().mockReturnValueOnce({ toArray: () => [doc] });
+
+    db.collection.mockReturnValue({
+      find,
+    });
+    const result = await findCasesByCaseRefsAndWorkflowCode(
+      ["case-ref-1", ref],
+      "workflow-code",
+    );
+    expect(find).toHaveBeenCalledTimes(1);
+    expect(result[0].caseRef).toBe(ref);
   });
 });
 
