@@ -31,6 +31,7 @@ export class Case {
     this.timeline = timeline;
     this.supplementaryData = props.supplementaryData || {};
     this.closed = props.closed;
+    this.closedAt = props.closedAt;
   }
 
   get objectId() {
