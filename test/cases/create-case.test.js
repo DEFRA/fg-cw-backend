@@ -57,6 +57,7 @@ describe("On CreateNewCase event", () => {
         ...caseData3Document,
         _id: expect.any(ObjectId),
         createdAt: expect.any(Date),
+        closedAt: null,
         timeline: [
           {
             commentRef: null,
