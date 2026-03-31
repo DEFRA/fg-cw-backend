@@ -8,10 +8,12 @@ import { wreck } from "../helpers/wreck.js";
 
 let client;
 let cases;
+let caseSeries;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
+  caseSeries = client.db().collection("case_series");
 });
 
 afterAll(async () => {
@@ -37,6 +39,26 @@ describe("GET /cases", () => {
       },
     ]);
 
+    const now = new Date().toISOString();
+    await caseSeries.insertMany([
+      {
+        caseRefs: [caseData1.caseRef],
+        workflowCode: caseData1.workflowCode,
+        latestCaseRef: caseData1.caseRef,
+        latestCaseId: "case-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: [caseData2.caseRef],
+        workflowCode: caseData2.workflowCode,
+        latestCaseRef: caseData2.caseRef,
+        latestCaseId: "case-2",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+
     const response = await wreck.get("/cases");
 
     expect(response.res.statusCode).toBe(200);
@@ -55,6 +77,7 @@ describe("GET /cases", () => {
         createdAt: new Date(caseData2.createdAt).toISOString(),
         currentStatus: "Awaiting Review",
         currentStatusTheme: "INFO",
+        hasLinkedCases: false,
         assignedUser: null,
         payload: caseData2.payload,
       },
@@ -65,6 +88,7 @@ describe("GET /cases", () => {
         createdAt: new Date(caseData1.createdAt).toISOString(),
         currentStatus: "Awaiting Review",
         currentStatusTheme: "INFO",
+        hasLinkedCases: false,
         assignedUser: null,
         payload: caseData1.payload,
       },
@@ -117,6 +141,34 @@ describe("GET /cases", () => {
       },
     ]);
 
+    const now = new Date().toISOString();
+    await caseSeries.insertMany([
+      {
+        caseRefs: ["UNRESTRCITED-CASE"],
+        workflowCode: "WF-1",
+        latestCaseRef: "UNRESTRCITED-CASE",
+        latestCaseId: "case-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: ["UNAUTHORIZED-CASE"],
+        workflowCode: "WF-2",
+        latestCaseRef: "UNAUTHORIZED-CASE",
+        latestCaseId: "case-2",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: ["AUTHORIZED-CASE"],
+        workflowCode: "WF-3",
+        latestCaseRef: "AUTHORIZED-CASE",
+        latestCaseId: "case-3",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+
     const response = await wreck.get("/cases");
 
     expect(response.res.statusCode).toBe(200);
@@ -131,6 +183,7 @@ describe("GET /cases", () => {
     expect(response.payload.data.cases[0].caseRef).toBe("AUTHORIZED-CASE");
     expect(response.payload.data.cases[0].workflowCode).toBe("WF-3");
 
+    expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
     expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
     expect(response.payload.data.cases[1].workflowCode).toBe("WF-1");
   });
