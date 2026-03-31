@@ -19,6 +19,7 @@ export class CaseDocument {
     this.createdAt = new Date(props.createdAt);
     this.payload = props.payload;
     this.closed = props.closed;
+    this.closedAt = props.closedAt;
     this.assignedUserId = props.assignedUser?.id || null;
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.comments = props.comments;
