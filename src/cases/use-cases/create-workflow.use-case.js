@@ -147,6 +147,7 @@ const createWorkflowAction = (action) =>
     code: action.code,
     name: action.name,
     checkTasks: action.checkTasks,
+    classes: action.classes,
     comment: action.comment
       ? new WorkflowActionComment({
           label: action.comment.label,
@@ -175,6 +176,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
     theme: status.theme,
     description: status.description,
     interactive: status.interactive,
+    hideTaskGroups: status.hideTaskGroups,
     transitions: status.transitions.map((transition) =>
       createWorkflowTransition(
         transition,

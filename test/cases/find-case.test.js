@@ -73,6 +73,7 @@ describe("GET /cases/{caseId}", () => {
         name: "Application Receipt",
         description: "Application received",
         interactive: true,
+        hideTaskGroups: false,
         canPerformActions: true,
         taskGroups: [
           {
@@ -126,7 +127,9 @@ describe("GET /cases/{caseId}", () => {
           {
             code: "APPROVE",
             name: "Approve",
+            classes: null,
             comment: null,
+            confirm: null,
             targetStatusName: "Awaiting Agreement",
           },
         ],

@@ -346,6 +346,7 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
       name: a.name,
       comment: a.comment,
       confirm: a.confirm,
+      classes: a.classes,
       targetStatusName: targetStatus?.name,
     };
   });
@@ -370,6 +371,7 @@ const mapStageData = async (
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    hideTaskGroups: currentStatus.hideTaskGroups,
     canPerformActions,
     taskGroups: await mapTaskGroups(
       caseStage,
