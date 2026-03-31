@@ -99,7 +99,10 @@ describe("update", () => {
       replaceOne,
     });
 
-    const caseMock = Case.createMock();
+    const caseMock = Case.createMock({
+      closed: true,
+      closedAt: new Date(),
+    });
 
     const result = await update(caseMock);
 
