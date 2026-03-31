@@ -7,6 +7,7 @@ export const up = async (db) => {
           {
             OFFERED: "NOTICE",
             ACCEPTED: "INFO",
+            AGREEMENT_GENERATING: "INFO",
             AGREEMENT_DRAFTED: "INFO",
             WITHDRAWN: "WARN",
             REJECTED: "ERROR",
@@ -15,6 +16,7 @@ export const up = async (db) => {
           },
         "pages.cases.details.tabs.agreements.content.1.rows.0.text.0.labelsMap":
           {
+            AGREEMENT_GENERATING: "Agreement generating",
             AGREEMENT_DRAFTED: "Agreement drafted",
             OFFERED: "Offered",
             ACCEPTED: "Accepted",
@@ -27,8 +29,8 @@ export const up = async (db) => {
           {
             OFFERED: "NOTICE",
             ACCEPTED: "INFO",
-            AGREEMENT_DRAFTED: "INFO",
             AGREEMENT_GENERATING: "INFO",
+            AGREEMENT_DRAFTED: "INFO",
             WITHDRAWN: "WARN",
             REJECTED: "ERROR",
             TERMINATED: "ERROR",
@@ -36,6 +38,7 @@ export const up = async (db) => {
           },
         "pages.cases.details.tabs.agreements.content.2.whenTrue.items.1.rows.2.labelsMap":
           {
+            AGREEMENT_GENERATING: "Agreement generating",
             AGREEMENT_DRAFTED: "Agreement drafted",
             OFFERED: "Offered",
             ACCEPTED: "Accepted",
