@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Workflow } from "../models/workflow.js";
+import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
 import { createRoleFilter, findCasesUseCase } from "./find-cases.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
+vi.mock("../repositories/case-series.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflows.use-case.js");
 vi.mock("../../common/auth.js");
@@ -71,6 +73,9 @@ describe("findCasesUseCase", () => {
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
     findAll.mockResolvedValue(mockFindAllResult([]));
+    findInCaseRefsAndWorkflowCode.mockResolvedValue({
+      caseRefs: new Set(["case-ref"]),
+    });
   });
 
   it("finds cases without assigned users", async () => {
@@ -140,6 +145,7 @@ describe("findCasesUseCase", () => {
           caseRef: "case-ref",
           currentStatus: "Stage status 1",
           currentStatusTheme: "INFO",
+          hasLinkedCases: false,
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_1",
@@ -150,6 +156,7 @@ describe("findCasesUseCase", () => {
           caseRef: "case-ref",
           currentStatus: "Stage status 1",
           currentStatusTheme: "INFO",
+          hasLinkedCases: false,
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_2",
