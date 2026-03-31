@@ -2628,11 +2628,11 @@
                 },
                 {
                   "code": "NOTIFY_CUSTOMER",
-                  "name": "Notify customer that draft agreement is ready",
+                  "name": "Notify customer of agreement termination",
                   "description": [
                     {
                       "component": "heading",
-                      "text": "Notify customer that draft agreement is ready",
+                      "text": "Notify customer of agreement termination",
                       "level": 2,
                       "classes": "govuk-heading-l"
                     },
