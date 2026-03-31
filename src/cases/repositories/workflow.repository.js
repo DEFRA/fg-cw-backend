@@ -23,6 +23,7 @@ const toWorkflowAction = (a) =>
     code: a.code,
     name: a.name,
     checkTasks: a.checkTasks,
+    classes: a.classes,
     comment: a.comment
       ? new WorkflowActionComment({
           label: a.comment.label,
@@ -48,6 +49,7 @@ const toWorkflowStageStatus = (s) =>
     theme: s.theme,
     description: s.description,
     interactive: s.interactive,
+    hideTaskGroups: s.hideTaskGroups,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
