@@ -1335,6 +1335,7 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
+              "hideTaskGroups": true,
               "transitions": []
             },
             {
@@ -2002,6 +2003,7 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
+              "hideTaskGroups": true,
               "transitions": []
             },
             {
@@ -2339,6 +2341,7 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
+              "hideTaskGroups": true,
               "transitions": []
             },
             {
