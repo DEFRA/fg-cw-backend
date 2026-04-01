@@ -352,6 +352,27 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
   });
 };
 
+const mapVisibleTaskGroups = async (
+  currentStatus,
+  caseStage,
+  workflowStage,
+  userMap,
+  caseWorkflowContext,
+  comments,
+) => {
+  if (currentStatus.hideTaskGroups) {
+    return [];
+  }
+
+  return mapTaskGroups(
+    caseStage,
+    workflowStage,
+    userMap,
+    caseWorkflowContext,
+    comments,
+  );
+};
+
 const mapStageData = async (
   kase,
   workflow,
@@ -373,7 +394,8 @@ const mapStageData = async (
     interactive: currentStatus.interactive,
     hideTaskGroups: currentStatus.hideTaskGroups,
     canPerformActions,
-    taskGroups: await mapTaskGroups(
+    taskGroups: await mapVisibleTaskGroups(
+      currentStatus,
       caseStage,
       workflowStage,
       userMap,
