@@ -173,6 +173,7 @@ export const mapStatusOptions = (statusOptions) =>
     name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
+    comment: option.comment,
   }));
 
 export const mapSelectedStatusOption = (statusCode, statusOptions) => {

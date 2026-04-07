@@ -132,4 +132,50 @@ describe("Task Schema", () => {
     const { error } = Task.validate(task);
     expect(error).toBeUndefined();
   });
+
+  it("should allow status option comment object", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      statusOptions: [
+        {
+          code: "COMPLETE",
+          name: "Complete",
+          theme: "SUCCESS",
+          completes: true,
+          comment: {
+            label: "Reason",
+            helpText: "Provide reason",
+            mandatory: true,
+          },
+        },
+      ],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should allow null status option comment", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      statusOptions: [
+        {
+          code: "COMPLETE",
+          name: "Complete",
+          theme: "SUCCESS",
+          completes: true,
+          comment: null,
+        },
+      ],
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
 });
