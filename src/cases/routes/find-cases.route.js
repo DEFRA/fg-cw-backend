@@ -13,6 +13,7 @@ export const findCasesRoute = {
         cursor: Joi.string(),
         direction: Joi.string().valid("forward", "backward").default("forward"),
         caseRef: Joi.string().valid("asc", "desc"),
+        workflowCode: Joi.string().valid("asc", "desc"),
         createdAt: Joi.string().valid("asc", "desc"),
       }),
     },
