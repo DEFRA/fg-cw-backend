@@ -60,6 +60,7 @@ const toWorkflowTaskStatusOption = (so) =>
     theme: so.theme,
     altName: so.altName,
     completes: so.completes,
+    comment: so.comment,
   });
 
 const toWorkflowTaskComment = (tc) =>
