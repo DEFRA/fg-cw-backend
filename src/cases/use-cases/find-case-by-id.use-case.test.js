@@ -1258,7 +1258,7 @@ describe("mapStatusOptions", () => {
         name: "Accept",
         theme: "NONE",
         completes: true,
-        comment: {
+        commentInputDef: {
           label: "Explain accepted",
           helpText: "Add acceptance notes",
           mandatory: true,
@@ -1269,7 +1269,7 @@ describe("mapStatusOptions", () => {
         name: "Request information from customer",
         theme: "NOTICE",
         completes: false,
-        comment: null,
+        commentInputDef: null,
       },
     ]);
   });
