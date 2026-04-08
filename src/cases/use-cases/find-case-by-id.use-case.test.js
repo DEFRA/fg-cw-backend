@@ -1234,6 +1234,11 @@ describe("mapStatusOptions", () => {
         altName: "Accept",
         theme: "NONE",
         completes: true,
+        comment: {
+          label: "Explain accepted",
+          helpText: "Add acceptance notes",
+          mandatory: true,
+        },
       },
       {
         code: "RFI",
@@ -1241,6 +1246,7 @@ describe("mapStatusOptions", () => {
         altName: "Request information from customer",
         theme: "NOTICE",
         completes: false,
+        comment: null,
       },
     ];
 
@@ -1252,12 +1258,18 @@ describe("mapStatusOptions", () => {
         name: "Accept",
         theme: "NONE",
         completes: true,
+        commentInputDef: {
+          label: "Explain accepted",
+          helpText: "Add acceptance notes",
+          mandatory: true,
+        },
       },
       {
         code: "RFI",
         name: "Request information from customer",
         theme: "NOTICE",
         completes: false,
+        commentInputDef: null,
       },
     ]);
   });
