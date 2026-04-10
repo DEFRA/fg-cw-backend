@@ -5,40 +5,8 @@
     "anyOf": []
   },
   "templates": {
-    "caveatGroups": {
-      "ne-consent-required": {
-        "order": 1,
-        "content": [
-          {
-            "component": "heading",
-            "text": "SSSI consent",
-            "level": 2,
-            "classes": "govuk-heading-m"
-          },
-          {
-            "component": "paragraph",
-            "text": "jsonata:@.caveats[0].description"
-          }
-        ]
-      },
-      "hefer-consent-required": {
-        "order": 2,
-        "content": [
-          {
-            "component": "heading",
-            "text": "Historic England consent",
-            "level": 2,
-            "classes": "govuk-heading-m"
-          },
-          {
-            "component": "paragraph",
-            "text": "jsonata:@.caveats[0].description"
-          }
-        ]
-      }
-    },
     "caveats": {
-      "ne-consent-required": {
+      "natural-england": {
         "content": [
           {
             "component": "heading",
@@ -65,7 +33,7 @@
           }
         ]
       },
-      "hefer-consent-required": {
+      "historic-england": {
         "content": [
           {
             "component": "heading",
@@ -100,7 +68,7 @@
             "component": "heading",
             "text": "Application returned to customer for amending",
             "level": 2,
-            "classes": "govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-4"
+            "classes": "govuk-heading-m"
           },
           {
             "component": "paragraph",
@@ -146,9 +114,45 @@
               },
               {
                 "component": "text",
+                "text": "Any payment recovery actions will have been initiated"
+              },
+              {
+                "component": "text",
                 "text": "The agreement is locked and can't be updated or reopened."
               }
             ]
+          }
+        ]
+      }
+    },
+    "caveatGroups": {
+      "natural-england": {
+        "order": 1,
+        "content": [
+          {
+            "component": "heading",
+            "text": "SSSI consent",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "jsonata:@.caveats[0].description"
+          }
+        ]
+      },
+      "historic-england": {
+        "order": 2,
+        "content": [
+          {
+            "component": "heading",
+            "text": "Historic England consent",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "jsonata:@.caveats[0].description"
           }
         ]
       }
@@ -297,12 +301,12 @@
                         {
                           "component": "repeat",
                           "id": "caveat-groups",
-                          "itemsRef": "jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.code).($code := $; {\"code\": $code, \"order\": $lookup($defs, $code).order ? $lookup($defs, $code).order : 9999, \"caveats\": [$caveats[code = $code]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))",
+                          "itemsRef": "jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {\"source\": $source, \"order\": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, \"caveats\": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))",
                           "items": [
                             {
                               "component": "template",
                               "templateRef": "$.templates.caveatGroups",
-                              "templateKey": "@.code"
+                              "templateKey": "@.source"
                             },
                             {
                               "component": "repeat",
@@ -312,7 +316,7 @@
                                 {
                                   "component": "template",
                                   "templateRef": "$.templates.caveats",
-                                  "templateKey": "@.code"
+                                  "templateKey": "@.source"
                                 }
                               ]
                             }
@@ -427,7 +431,9 @@
                                       "component": "text",
                                       "text": "$.payload.answers.applicant.business.email"
                                     },
-                                    { "component": "line-break" }
+                                    {
+                                      "component": "line-break"
+                                    }
                                   ]
                                 }
                               },
@@ -441,7 +447,9 @@
                                       "component": "text",
                                       "text": "$.payload.answers.applicant.business.landlinePhoneNumber"
                                     },
-                                    { "component": "line-break" }
+                                    {
+                                      "component": "line-break"
+                                    }
                                   ]
                                 }
                               },
@@ -741,17 +749,6 @@
             ]
           },
           "calculations": {
-            "link": {
-              "id": "calculations",
-              "href": {
-                "urlTemplate": "/cases/{caseId}/calculations",
-                "params": {
-                  "caseId": "$._id"
-                }
-              },
-              "text": "Calculations",
-              "index": 2
-            },
             "action": {
               "rulesData": "FETCH_RULES"
             },
@@ -775,7 +772,19 @@
                     {
                       "text": "jsonata:$sort([$.payload.answers.rulesCalculations] ~> $append($.supplementaryData.rulesCalculations), function($l, $r) { $l.date < $r.date })[0].date",
                       "format": "formatDateTime",
-                      "classes": "govuk-body"
+                      "classes": "govuk-body",
+                      "items": {
+                        "0": {
+                          "rows": {
+                            "1": {
+                              "themeMap": {
+                                "Yes": "SUCCESS",
+                                "No": "ERROR"
+                              }
+                            }
+                          }
+                        }
+                      }
                     },
                     {
                       "component": "details",
@@ -815,9 +824,9 @@
                               "component": "status",
                               "text": "@.valid",
                               "format": "yesNo",
-                              "themeMap": {
-                                "Yes": "SUCCESS",
-                                "No": "ERROR"
+                              "classesMap": {
+                                "Yes": "govuk-tag--green",
+                                "No": "govuk-tag--red"
                               },
                               "labelsMap": {
                                 "Yes": "Passed",
@@ -871,20 +880,20 @@
                   "text": "Failed to fetch the current land parcel calculations"
                 }
               }
-            ]
-          },
-          "agreements": {
+            ],
             "link": {
-              "id": "agreements",
+              "id": "calculations",
               "href": {
-                "urlTemplate": "/cases/{caseId}/agreements",
+                "urlTemplate": "/cases/{caseId}/calculations",
                 "params": {
                   "caseId": "$._id"
                 }
               },
-              "text": "Agreements",
-              "index": 5
-            },
+              "text": "Calculations",
+              "index": 2
+            }
+          },
+          "agreements": {
             "renderIf": "$.supplementaryData.agreements[0]",
             "content": [
               {
@@ -903,23 +912,16 @@
                       {
                         "component": "status",
                         "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
-                        "themeMap": {
-                          "OFFERED": "NOTICE",
-                          "ACCEPTED": "INFO",
-                          "AGREEMENT_DRAFTED": "INFO",
-                          "AGREEMENT_GENERATING": "INFO",
-                          "WITHDRAWN": "WARN",
-                          "REJECTED": "ERROR",
-                          "TERMINATED": "ERROR"
-                        },
                         "labelsMap": {
-                          "AGREEMENT_GENERATING": "Agreement generating",
                           "AGREEMENT_DRAFTED": "Agreement drafted",
                           "OFFERED": "Offered",
                           "ACCEPTED": "Accepted",
                           "WITHDRAWN": "Withdrawn",
                           "REJECTED": "Rejected",
                           "TERMINATED": "Terminated"
+                        },
+                        "themeMap": {
+                          "TERMINATED": "ERROR"
                         }
                       }
                     ]
@@ -929,17 +931,16 @@
                     "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
                   },
                   {
-                    "label": "Date created",
-                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
-                    "format": "formatDate"
-                  },
-                  {
                     "label": "Date accepted",
-                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus = 'ACCEPTED' ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].acceptedAt), '[D] [MNn] [Y]') : 'Not accepted'"
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate)), '[D] [MNn,*-3] [Y]') : 'Not accepted'"
                   },
                   {
                     "label": "Start date",
-                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate ? $formatTime($toMillis($sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].startDate), '[D] [MNn] [Y]') : 'Not started'"
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
+                  },
+                  {
+                    "label": "End date",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(endDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(endDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
                   },
                   {
                     "label": "View",
@@ -991,6 +992,14 @@
                           "label": "Status",
                           "component": "status",
                           "text": "@.agreementStatus",
+                          "labelsMap": {
+                            "AGREEMENT_DRAFTED": "Agreement drafted",
+                            "OFFERED": "Offered",
+                            "ACCEPTED": "Accepted",
+                            "WITHDRAWN": "Withdrawn",
+                            "REJECTED": "Rejected",
+                            "TERMINATED": "Terminated"
+                          },
                           "themeMap": {
                             "OFFERED": "NOTICE",
                             "ACCEPTED": "INFO",
@@ -999,15 +1008,6 @@
                             "WITHDRAWN": "WARN",
                             "REJECTED": "ERROR",
                             "TERMINATED": "ERROR"
-                          },
-                          "labelsMap": {
-                            "AGREEMENT_GENERATING": "Agreement generating",
-                            "AGREEMENT_DRAFTED": "Agreement drafted",
-                            "OFFERED": "Offered",
-                            "ACCEPTED": "Accepted",
-                            "WITHDRAWN": "Withdrawn",
-                            "REJECTED": "Rejected",
-                            "TERMINATED": "Terminated"
                           }
                         },
                         {
@@ -1028,7 +1028,18 @@
                   ]
                 }
               }
-            ]
+            ],
+            "link": {
+              "id": "agreements",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/agreements",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Agreements",
+              "index": 5
+            }
           }
         }
       }
@@ -1050,6 +1061,7 @@
               "theme": "NEUTRAL",
               "description": "Application received and pending review",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -1069,6 +1081,7 @@
               "theme": "INFO",
               "description": "Application is being reviewed",
               "interactive": true,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
@@ -1125,16 +1138,15 @@
                           "component": "heading",
                           "text": "Are you sure you want to return this application to the customer?",
                           "level": 1,
-                          "classes": "govuk-heading-xl govuk-!-margin-bottom-6"
+                          "classes": "govuk-heading-l"
                         },
                         {
                           "component": "paragraph",
-                          "text": "Returning an application to the customer will:",
-                          "classes": "govuk-body govuk-!-margin-bottom-4"
+                          "text": "Returning an application to the customer will:"
                         },
                         {
                           "component": "unordered-list",
-                          "classes": "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+                          "classes": "govuk-list govuk-list--bullet",
                           "items": [
                             {
                               "component": "text",
@@ -1205,6 +1217,7 @@
               "theme": "NEUTRAL",
               "description": "Application has been approved and agreement is being generated",
               "interactive": true,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
@@ -1233,6 +1246,7 @@
               "theme": "ERROR",
               "description": "Application has been rejected",
               "interactive": false,
+              "closes": true,
               "transitions": []
             },
             {
@@ -1241,6 +1255,7 @@
               "theme": "NOTICE",
               "description": "Application is on hold pending more information",
               "interactive": true,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -1269,16 +1284,15 @@
                           "component": "heading",
                           "text": "Are you sure you want to return this application to the customer?",
                           "level": 1,
-                          "classes": "govuk-heading-xl govuk-!-margin-bottom-6"
+                          "classes": "govuk-heading-l"
                         },
                         {
                           "component": "paragraph",
-                          "text": "Returning an application to the customer will:",
-                          "classes": "govuk-body govuk-!-margin-bottom-4"
+                          "text": "Returning an application to the customer will:"
                         },
                         {
                           "component": "unordered-list",
-                          "classes": "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+                          "classes": "govuk-list govuk-list--bullet",
                           "items": [
                             {
                               "component": "text",
@@ -1335,8 +1349,9 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
-              "hideTaskGroups": true,
-              "transitions": []
+              "closes": true,
+              "transitions": [],
+              "hideTaskGroups": true
             },
             {
               "code": "WITHDRAWAL_REQUESTED",
@@ -1344,6 +1359,7 @@
               "theme": "WARN",
               "description": "Application withdrawal has been requested",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:APPLICATION_WITHDRAWN",
@@ -1358,6 +1374,7 @@
               "theme": "WARN",
               "description": "Application has been withdrawn",
               "interactive": false,
+              "closes": true,
               "transitions": []
             }
           ],
@@ -1437,21 +1454,21 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "NONE",
+                      "theme": "SUCCESS",
                       "altName": "Accept",
                       "completes": true
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "NOTICE",
+                      "theme": "INFO",
                       "altName": "Request information from customer",
                       "completes": false
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "NOTICE",
+                      "theme": "WARN",
                       "altName": "Pause for internal investigation",
                       "completes": false
                     },
@@ -1533,30 +1550,30 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Accept",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Request information from customer",
-                      "completes": false
+                      "theme": "INFO"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Pause for internal investigation",
-                      "completes": false
+                      "theme": "WARN"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "Cannot complete",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 },
@@ -1620,30 +1637,30 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Accept",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Request information from customer",
-                      "completes": false
+                      "theme": "INFO"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Pause for internal investigation",
-                      "completes": false
+                      "theme": "WARN"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "Cannot complete",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 },
@@ -1743,30 +1760,30 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Accept",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Request information from customer",
-                      "completes": false
+                      "theme": "INFO"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Pause for internal investigation",
-                      "completes": false
+                      "theme": "WARN"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "Cannot complete",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 },
@@ -1812,30 +1829,30 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Accept",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Request information from customer",
-                      "completes": false
+                      "theme": "INFO"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "NOTICE",
+                      "completes": false,
                       "altName": "Pause for internal investigation",
-                      "completes": false
+                      "theme": "WARN"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "Cannot complete",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 }
@@ -1871,6 +1888,7 @@
               "theme": "INFO",
               "description": "Offer is under review",
               "interactive": true,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
@@ -1909,16 +1927,15 @@
                           "component": "heading",
                           "text": "Are you sure you want to return this application to the customer?",
                           "level": 1,
-                          "classes": "govuk-heading-xl govuk-!-margin-bottom-6"
+                          "classes": "govuk-heading-l"
                         },
                         {
                           "component": "paragraph",
-                          "text": "Returning an application to the customer will:",
-                          "classes": "govuk-body govuk-!-margin-bottom-4"
+                          "text": "Returning an application to the customer will:"
                         },
                         {
                           "component": "unordered-list",
-                          "classes": "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+                          "classes": "govuk-list govuk-list--bullet",
                           "items": [
                             {
                               "component": "text",
@@ -1989,6 +2006,7 @@
               "theme": "WARN",
               "description": "The return of the application to the customer for amendment has been requested",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:APPLICATION_AMEND",
@@ -2003,8 +2021,9 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
-              "hideTaskGroups": true,
-              "transitions": []
+              "closes": true,
+              "transitions": [],
+              "hideTaskGroups": true
             },
             {
               "code": "WITHDRAWAL_REQUESTED",
@@ -2012,6 +2031,7 @@
               "theme": "WARN",
               "description": "Application withdrawal has been requested",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_OFFER:APPLICATION_WITHDRAWN",
@@ -2026,6 +2046,7 @@
               "theme": "WARN",
               "description": "Application has been withdrawn",
               "interactive": false,
+              "closes": true,
               "transitions": []
             },
             {
@@ -2034,6 +2055,7 @@
               "theme": "ERROR",
               "description": "Application has been rejected",
               "interactive": false,
+              "closes": true,
               "transitions": []
             }
           ],
@@ -2084,16 +2106,16 @@
                     {
                       "code": "CONFIRM",
                       "name": "Confirmed",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Confirm",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "There's a problem",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 },
@@ -2118,16 +2140,16 @@
                     {
                       "code": "CONFIRM",
                       "name": "Confirmed",
-                      "theme": "NONE",
+                      "completes": true,
                       "altName": "Confirm",
-                      "completes": true
+                      "theme": "SUCCESS"
                     },
                     {
                       "code": "PROBLEM_FOUND",
                       "name": "There's a problem",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "There's a problem",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 }
@@ -2228,6 +2250,7 @@
               "theme": "INFO",
               "description": "Offer has been made to the applicant",
               "interactive": true,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
@@ -2247,16 +2270,15 @@
                           "component": "heading",
                           "text": "Are you sure you want to return this application to the customer?",
                           "level": 1,
-                          "classes": "govuk-heading-xl govuk-!-margin-bottom-6"
+                          "classes": "govuk-heading-l"
                         },
                         {
                           "component": "paragraph",
-                          "text": "Returning an application to the customer will:",
-                          "classes": "govuk-body govuk-!-margin-bottom-4"
+                          "text": "Returning an application to the customer will:"
                         },
                         {
                           "component": "unordered-list",
-                          "classes": "govuk-list govuk-list--bullet govuk-!-margin-bottom-6",
+                          "classes": "govuk-list govuk-list--bullet",
                           "items": [
                             {
                               "component": "text",
@@ -2327,6 +2349,7 @@
               "theme": "WARN",
               "description": "The return of the application to the customer for amendment has been requested",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_AMEND",
@@ -2341,8 +2364,9 @@
               "theme": "WARN",
               "description": "The application has been returned to the customer",
               "interactive": false,
-              "hideTaskGroups": true,
-              "transitions": []
+              "closes": true,
+              "transitions": [],
+              "hideTaskGroups": true
             },
             {
               "code": "WITHDRAWAL_REQUESTED",
@@ -2350,6 +2374,7 @@
               "theme": "WARN",
               "description": "Application withdrawal has been requested",
               "interactive": false,
+              "closes": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:APPLICATION_WITHDRAWN",
@@ -2364,6 +2389,7 @@
               "theme": "WARN",
               "description": "Application has been withdrawn",
               "interactive": false,
+              "closes": true,
               "transitions": []
             }
           ],
@@ -2379,53 +2405,6 @@
           "code": "MONITORING",
           "name": "Tasks",
           "description": "Monitor the agreement and compliance",
-          "beforeContent": [
-            {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_ACCEPTED'",
-              "content": [
-                {
-                  "component": "heading",
-                  "text": "Post-agreement monitoring and compliance tasks",
-                  "level": 2,
-                  "classes": "govuk-heading-l govuk-!-font-weight-bold"
-                },
-                {
-                  "component": "paragraph",
-                  "text": "There are no tasks to complete."
-                },
-                {
-                  "component": "heading",
-                  "text": "Terminating this agreement",
-                  "level": 2,
-                  "classes": "govuk-heading-m govuk-!-font-weight-bold"
-                },
-                {
-                  "component": "paragraph",
-                  "text": "You may want to terminate this agreement if:"
-                },
-                {
-                  "component": "unordered-list",
-                  "classes": "govuk-list govuk-list--bullet",
-                  "items": [
-                    {
-                      "component": "text",
-                      "text": "the customer needs to change their agreement"
-                    },
-                    {
-                      "component": "text",
-                      "text": "the customer is in breach of the agreement"
-                    }
-                  ]
-                },
-                {
-                  "component": "heading",
-                  "text": "Reason for termination",
-                  "level": 2,
-                  "classes": "govuk-heading-s govuk-!-font-weight-bold"
-                }
-              ]
-            }
-          ],
           "statuses": [
             {
               "code": "AGREEMENT_ACCEPTED",
@@ -2454,7 +2433,54 @@
               ]
             }
           ],
-          "taskGroups": []
+          "taskGroups": [],
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_ACCEPTED'",
+              "content": [
+                {
+                  "component": "heading",
+                  "text": "Post-agreement monitoring and compliance tasks",
+                  "level": 2,
+                  "classes": "govuk-heading-m"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "There are no tasks to complete."
+                },
+                {
+                  "component": "heading",
+                  "text": "Terminating this agreement",
+                  "level": 2,
+                  "classes": "govuk-heading-s"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You may want to terminate this agreement if:"
+                },
+                {
+                  "component": "unordered-list",
+                  "classes": "govuk-list govuk-list--bullet",
+                  "items": [
+                    {
+                      "component": "text",
+                      "text": "the agreement holder has informed us in writing to terminate their agreement"
+                    },
+                    {
+                      "component": "text",
+                      "text": "the agreement holder is in breach of the agreement"
+                    }
+                  ]
+                },
+                {
+                  "component": "heading",
+                  "text": "Reason for termination",
+                  "level": 2,
+                  "classes": "govuk-heading-s govuk-!-font-weight-bold"
+                }
+              ]
+            }
+          ]
         },
         {
           "code": "AGREEMENT_TERMINATION",
@@ -2519,7 +2545,11 @@
                             },
                             {
                               "component": "text",
-                              "text": "close the agreement in the system so no further changes can be made"
+                              "text": "trigger payment recovery actions"
+                            },
+                            {
+                              "component": "text",
+                              "text": "close the agreement in the system so no further changes can be made."
                             }
                           ]
                         }
@@ -2609,7 +2639,12 @@
                       "name": "Confirmed",
                       "theme": "NONE",
                       "altName": "Confirm",
-                      "completes": true
+                      "completes": true,
+                      "comment": {
+                        "label": "Explain what checks have been completed",
+                        "helpText": "You must include an explanation for auditing purposes.",
+                        "mandatory": true
+                      }
                     },
                     {
                       "code": "PROBLEM_FOUND",
@@ -2631,17 +2666,35 @@
                 },
                 {
                   "code": "NOTIFY_CUSTOMER",
-                  "name": "Notify customer of agreement termination",
+                  "name": "Notify Agreement Holder of agreement termination",
                   "description": [
                     {
                       "component": "heading",
-                      "text": "Notify customer of agreement termination",
+                      "text": "Notify Agreement Holder of agreement termination",
                       "level": 2,
                       "classes": "govuk-heading-l"
                     },
                     {
                       "component": "paragraph",
-                      "text": "Tell the customer that their agreement is to be terminated in accordance with the terms of their agreement."
+                      "text": "Tell the agreement holder that their agreement is to be terminated in accordance with the terms and conditions of their agreement. Ensure the following is completed:"
+                    },
+                    {
+                      "component": "unordered-list",
+                      "classes": "govuk-list govuk-list--bullet",
+                      "items": [
+                        {
+                          "component": "text",
+                          "text": "Draft the termination notification letter using the <Early Closure Template>"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Obtain approval for the termination notification letter"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Send the termination notification to the agreement holder"
+                        }
+                      ]
                     }
                   ],
                   "mandatory": true,
