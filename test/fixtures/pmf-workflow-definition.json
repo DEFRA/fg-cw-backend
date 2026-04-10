@@ -1,6 +1,9 @@
 {
   "code": "pigs-might-fly",
-  "requiredRoles": { "allOf": ["ROLE_PMF"], "anyOf": [] },
+  "requiredRoles": {
+    "allOf": ["ROLE_PMF"],
+    "anyOf": ["ROLE_PMF2"]
+  },
   "definitions": {},
   "templates": {
     "pmf-template": {
@@ -10,8 +13,7 @@
             "id": "title",
             "component": "heading",
             "text": "PMF Template",
-            "level": 2,
-            "classes": "govuk-!-margin-top-6 govuk-!-margin-bottom-1"
+            "level": 2
           },
           {
             "id": "totalPigs",
@@ -37,7 +39,10 @@
     "cases": {
       "details": {
         "banner": {
-          "title": { "text": "$.payload.businessName", "type": "string" },
+          "title": {
+            "text": "$.payload.businessName",
+            "type": "string"
+          },
           "summary": {
             "reference": {
               "label": "Reference",
@@ -49,9 +54,9 @@
               "text": "$.currentStatusName",
               "type": "string"
             },
-            "createdAt": {
-              "label": "Created At",
-              "text": "$.createdAt",
+            "dateReceived": {
+              "label": "Date Received",
+              "text": "$.dateReceived",
               "type": "date",
               "format": "formatDate"
             }
@@ -63,7 +68,9 @@
               "id": "case-details",
               "href": {
                 "urlTemplate": "/cases/{caseId}/case-details",
-                "params": { "caseId": "$._id" }
+                "params": {
+                  "caseId": "$._id"
+                }
               },
               "text": "Applicant Details",
               "index": 1
@@ -177,7 +184,8 @@
                     "comment": null
                   }
                 }
-              ]
+              ],
+              "closes": false
             },
             {
               "code": "IN_REVIEW",
@@ -277,7 +285,8 @@
                     }
                   }
                 }
-              ]
+              ],
+              "closes": false
             },
             {
               "code": "APPLICATION_REJECTED",
@@ -300,7 +309,8 @@
                     }
                   }
                 }
-              ]
+              ],
+              "closes": true
             },
             {
               "code": "ON_HOLD",
@@ -323,7 +333,8 @@
                     }
                   }
                 }
-              ]
+              ],
+              "closes": false
             }
           ],
           "taskGroups": [
@@ -371,7 +382,12 @@
                       "altName": "Cannot complete",
                       "completes": false
                     }
-                  ]
+                  ],
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
                 },
                 {
                   "code": "CHECK_PIG_STOCK_NUMBERS",
@@ -430,7 +446,12 @@
                       "altName": "Cannot complete",
                       "completes": false
                     }
-                  ]
+                  ],
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
                 },
                 {
                   "conditional": "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
@@ -482,7 +503,8 @@
               "theme": "SUCCESS",
               "description": "Application has been approved",
               "interactive": false,
-              "transitions": []
+              "transitions": [],
+              "closes": false
             },
             {
               "code": "APPLICATION_WITHDRAWN",
@@ -490,7 +512,8 @@
               "theme": "WARN",
               "description": "Application has been withdrawn",
               "interactive": false,
-              "transitions": []
+              "transitions": [],
+              "closes": true
             }
           ],
           "taskGroups": []
