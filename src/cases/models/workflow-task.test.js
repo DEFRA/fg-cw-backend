@@ -4,6 +4,34 @@ import { WorkflowTask } from "./workflow-task.js";
 
 describe("WorkflowTask", () => {
   describe("validation", () => {
+    it("should preserve status option comment definitions", () => {
+      const task = new WorkflowTask({
+        code: "TASK_1",
+        name: "Test Task",
+        mandatory: true,
+        description: "A test task",
+        statusOptions: [
+          new WorkflowTaskStatusOption({
+            code: "COMPLETE",
+            name: "Complete",
+            theme: "SUCCESS",
+            completes: true,
+            comment: {
+              label: "Explain outcome",
+              helpText: "Provide additional details",
+              mandatory: true,
+            },
+          }),
+        ],
+      });
+
+      expect(task.statusOptions[0].comment).toEqual({
+        label: "Explain outcome",
+        helpText: "Provide additional details",
+        mandatory: true,
+      });
+    });
+
     it("should create a valid task with all required fields", () => {
       const task = new WorkflowTask({
         code: "TASK_1",
