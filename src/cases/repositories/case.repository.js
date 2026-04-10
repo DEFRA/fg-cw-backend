@@ -119,6 +119,10 @@ const cursorCodecs = {
     encode: (v) => v,
     decode: (v) => v,
   },
+  workflowCode: {
+    encode: (v) => v,
+    decode: (v) => v,
+  },
   createdAt: {
     encode: (v) => v.toISOString(),
     decode: (v) => new Date(v),

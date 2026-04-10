@@ -46,6 +46,7 @@ export const findCasesUseCase = async ({ user, query }) => {
     cursor: query.cursor,
     direction: query.direction,
     sort: {
+      workflowCode: query.workflowCode,
       caseRef: query.caseRef,
       createdAt: query.createdAt ?? "desc",
     },

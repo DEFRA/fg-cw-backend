@@ -262,12 +262,29 @@ describe("findAll", () => {
       workflowCodes: ["WF"],
       cursor: undefined,
       direction: "forward",
-      sort: { createdAt: "desc", caseRef: "asc" },
+      sort: { workflowCode: "asc", createdAt: "desc", caseRef: "asc" },
       pageSize: 10,
     });
 
     const { sort } = paginate.mock.calls[0][1];
-    expect(sort).toEqual({ createdAt: -1, caseRef: 1 });
+    expect(sort).toEqual({ workflowCode: 1, createdAt: -1, caseRef: 1 });
+  });
+
+  it("provides cursor codecs for workflowCode sorting", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { workflowCode: "asc" },
+      pageSize: 10,
+    });
+
+    const { codecs } = paginate.mock.calls[0][1];
+    expect(codecs.workflowCode.encode("wf-001")).toBe("wf-001");
+    expect(codecs.workflowCode.decode("wf-001")).toBe("wf-001");
   });
 
   it("filters out undefined sort values", async () => {
@@ -278,7 +295,7 @@ describe("findAll", () => {
       workflowCodes: ["WF"],
       cursor: undefined,
       direction: "forward",
-      sort: { createdAt: "desc", caseRef: undefined },
+      sort: { workflowCode: undefined, createdAt: "desc", caseRef: undefined },
       pageSize: 10,
     });
 
