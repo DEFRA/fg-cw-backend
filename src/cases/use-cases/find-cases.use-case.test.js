@@ -129,7 +129,11 @@ describe("findCasesUseCase", () => {
       workflowCodes: ["WORKFLOW_1", "WORKFLOW_2"],
       cursor: undefined,
       direction: "forward",
-      sort: { createdAt: "desc" },
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
       pageSize: 20,
     });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
@@ -210,6 +214,28 @@ describe("findCasesUseCase", () => {
     });
     expect(result.cases[0].assignedUser.name).toBe(user1.name);
     expect(result.cases[1].assignedUser.name).toBe(user2.name);
+  });
+
+  it("passes workflowCode sort when requested", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", workflowCode: "asc", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: "asc",
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
   });
 
   it("finds cases with and without assigned users", async () => {
