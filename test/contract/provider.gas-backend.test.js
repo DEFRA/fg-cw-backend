@@ -42,6 +42,23 @@ describe("CW Provider (sends messages to GAS)", () => {
               contentType: "application/json",
             });
           },
+
+          // WMG: CaseStatusUpdatedEvent from CW back to GAS
+          // WMG uses PHASE_/STAGE_/STATUS_ prefixed status format
+          "a case status updated event from CW for WMG": () => {
+            const event = new CaseStatusUpdatedEvent({
+              caseRef: "WMP-CASE-001",
+              workflowCode: "woodland",
+              previousStatus:
+                "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_APPLICATION_RECEIVED",
+              currentStatus:
+                "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_IN_REVIEW",
+            });
+
+            return providerWithMetadata(event, {
+              contentType: "application/json",
+            });
+          },
         },
       });
 

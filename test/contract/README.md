@@ -51,23 +51,45 @@ fg-gas-backend (GAS)
 
 **Messages Defined**:
 
-1. **CreateNewCaseCommand** - Event type: `cloud.defra.(test|local|prod).fg-gas-backend.case.create`
-   - Required fields: `id`, `source`, `specVersion`, `datacontenttype`, `time`, `type`, `traceparent`
-   - Data: `caseRef`, `workflowCode`, `payload` (with `identifiers`, `answers`, `createdAt`, `submittedAt`)
-   - **Critical**: `caseRef` is primary key, `identifiers` (sbi, frn, crn) required for case operations
+**FRPS (`workflowCode: "frps-private-beta"`):**
 
-2. **UpdateCaseStatusCommand** - Event type: `cloud.defra.(test|local|prod).fg-gas-backend.case.update.status`
-   - Required fields: `id`, `source`, `specVersion`, `datacontenttype`, `time`, `type`, `traceparent`
-   - Data: `caseRef`, `workflowCode`, `newStatus` (format: "PHASE:STAGE:STATUS")
-   - Optional: `supplementaryData` (for attaching agreements or other data)
-   - **Critical**: `newStatus` must match "PHASE:STAGE:STATUS" format, wrong format will cause validation failure
+1. **CreateNewCaseCommand** (full) - UUID `123456789001`
+   - Full FRPS answers including scheme, applicant, application, payments wrappers
+   - Includes optional `defraId` and `metadata`
+2. **CreateNewCaseCommand** (minimal) - UUID `123456789003`
+   - Minimal FRPS answers (`scheme`, `year`, `hasCheckedLandIsUpToDate` only)
+3. **UpdateCaseStatusCommand** (with supplementary data) - UUID `123456789002`
+   - `newStatus`: e.g. `PRE_AWARD:ASSESSMENT:IN_REVIEW`
+   - `supplementaryData` with `targetNode: "agreements"`, `dataType: "ARRAY"`, `data: [...]`
+4. **UpdateCaseStatusCommand** (minimal supplementary data) - UUID `123456789004`
+   - `supplementaryData` with only `phase` and `stage` (no targetNode/dataType/data)
+
+**WMG — Woodland Management Grant (`workflowCode: "woodland"`):**
+
+5. **CreateNewCaseCommand** (full) - UUID `123456789005`
+   - WMG answers: flat form fields (no scheme/applicant/application/payments wrapper)
+   - Includes optional `defraId` and `metadata`
+   - `appLandHasExistingWmp: true` with `existingWmps` array
+6. **CreateNewCaseCommand** (minimal) - UUID `123456789007`
+   - WMG answers with `appLandHasExistingWmp: false` (no `existingWmps`)
+7. **UpdateCaseStatusCommand** (WMG status) - UUID `123456789006`
+   - `newStatus`: e.g. `PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_IN_REVIEW`
+   - WMG uses `PHASE_`/`STAGE_`/`STATUS_` prefixed format (unlike FRPS's bare names)
+   - Minimal `supplementaryData` (phase/stage only — WMG has no agreements data yet)
+8. **UpdateCaseStatusCommand** (WMG stage transition) - UUID `123456789008`
+   - `newStatus`: e.g. `PHASE_PRE_AWARD:STAGE_AWAITING_FC:STATUS_AWAITING_FC_REVIEW`
+   - Minimal `supplementaryData` (phase/stage only)
 
 **⚠️ Critical Assumptions**:
 
-- `newStatus` values must be in fully qualified format "PHASE:STAGE:STATUS" (e.g., "PRE_AWARD:ASSESSMENT:IN_REVIEW")
+- `newStatus` values must be in fully qualified format "PHASE:STAGE:STATUS" matching regex `^[A-Z_]+:[A-Z_]+:[A-Z_]+$`
+- FRPS uses bare names: `PRE_AWARD:ASSESSMENT:IN_REVIEW`
+- WMG uses prefixed names: `PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_IN_REVIEW`
 - `caseRef` must be unique and match across systems
 - `payload.identifiers` must include at least `sbi`, `frn`, `crn`
-- `supplementaryData` structure, when present, must match expected format (targetNode, dataType, data)
+- WMG `supplementaryData` does not have `targetNode`/`dataType`/`data` (agreements not yet implemented)
+
+**Fixtures**: WMG payloads are in `test/fixtures/realistic-wmg-payload.js`
 
 ## Running Tests
 
@@ -138,7 +160,7 @@ Provider tests verify that CW sends messages matching GAS expectations. The test
    - Provider: fg-gas-backend
    - Type: Message contract
    - Test: `consumer.gas-backend.test.js`
-   - Messages: CreateNewCaseCommand, UpdateCaseStatusCommand
+   - Messages: CreateNewCaseCommand, UpdateCaseStatusCommand (FRPS + WMG)
 
 ## Workflow
 
@@ -272,6 +294,59 @@ CW uses the outbox pattern to reliably publish status updates to GAS:
 
 - `CW__SNS__CASE_STATUS_UPDATED_TOPIC_ARN`: Publishes CaseStatusUpdatedEvent
 
+## WMG (Woodland Management Grant) Contract Notes
+
+**Ticket**: FGP-1011
+
+WMG (`workflowCode: "woodland"`, `referenceNumberPrefix: "WMP"`) was added to consumer and provider tests. Key differences from FRPS:
+
+### WMG Answers Shape
+
+WMG answers are **flat form fields** stored directly in `payload.answers` (no scheme/applicant/application/payments nesting):
+
+```json
+{
+  "businessDetailsUpToDate": true,
+  "guidanceRead": true,
+  "landRegisteredWithRpa": true,
+  "landManagementControl": true,
+  "publicBodyTenant": false,
+  "landHasGrazingRights": false,
+  "appLandHasExistingWmp": true,
+  "existingWmps": ["WMP-2024-001"],
+  "intendToApplyHigherTier": false,
+  "includedAllEligibleWoodland": true,
+  "totalHectaresAppliedFor": 15.0,
+  "hectaresTenOrOverYearsOld": 8.5,
+  "hectaresUnderTenYearsOld": 4.2,
+  "centreGridReference": "SK512347",
+  "fcTeamCode": "YORKSHIRE_AND_NORTH_EAST",
+  "applicationConfirmation": true
+}
+```
+
+`existingWmps` is only present when `appLandHasExistingWmp: true`. Field names come from the AJV schema in `fg-gas-backend` (`woodland.json`), validated with `removeAdditional: true`.
+
+### WMG Status Format
+
+WMG statuses use `PHASE_`/`STAGE_`/`STATUS_` prefixes:
+
+| Phase             | Stage                         | Status                           |
+| ----------------- | ----------------------------- | -------------------------------- |
+| `PHASE_PRE_AWARD` | `STAGE_REVIEWING_APPLICATION` | `STATUS_APPLICATION_RECEIVED`    |
+| `PHASE_PRE_AWARD` | `STAGE_REVIEWING_APPLICATION` | `STATUS_IN_REVIEW`               |
+| `PHASE_PRE_AWARD` | `STAGE_AWAITING_FC`           | `STATUS_AWAITING_FC_REVIEW`      |
+| `PHASE_PRE_AWARD` | `STAGE_AWAITING_FC`           | `STATUS_AGREEMENT_GENERATING`    |
+| `PHASE_PRE_AWARD` | `STAGE_AWAITING_FC`           | `STATUS_REJECTED_BY_FC`          |
+| `PHASE_PRE_AWARD` | `STAGE_AGREEMENT_GENERATED`   | `STATUS_AGREEMENT_GENERATED`     |
+| `PHASE_PRE_AWARD` | `STAGE_SENDING_AGREEMENT`     | `STATUS_AWAITING_SEND_AGREEMENT` |
+| `PHASE_PRE_AWARD` | `STAGE_SENDING_AGREEMENT`     | `STATUS_AGREEMENT_WITH_CUSTOMER` |
+| `PHASE_PRE_AWARD` | `STAGE_REJECTED_BY_APPLICANT` | `STATUS_REJECTED_BY_APPLICANT`   |
+
+### WMG Agreements
+
+WMG does **not** yet have an agreements journey. `UpdateCaseStatusCommand` supplementaryData for WMG contains only `phase` and `stage` — no `targetNode`, `dataType`, or `data`.
+
 ## Related Documentation
 
 - Pact Documentation: https://docs.pact.io/
@@ -280,4 +355,5 @@ CW uses the outbox pattern to reliably publish status updates to GAS:
 
 ---
 
-**Last Updated**: 2026-02-09
+**Last Updated**: 2026-04-14
+**Tickets**: FGP-789, FGP-1011
