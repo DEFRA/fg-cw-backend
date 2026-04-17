@@ -91,6 +91,8 @@ fg-gas-backend (GAS)
 
 **Fixtures**: WMG payloads are in `test/fixtures/realistic-wmg-payload.js`
 
+**Integration test**: WMG payload processing is verified in `test/contract/realistic-payload.integration.test.js` — proves `Case.new()` can accept the WMG payload without throwing (the "danger area" check).
+
 ## Running Tests
 
 ### Run Consumer Tests (Generate Pacts)

@@ -175,6 +175,10 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
   });
 
   describe("WMG CreateNewCaseCommand Message", () => {
+    // Note: The realistic WMG payload defined in these tests is verified to process through
+    // CW's case creation logic in test/contract/realistic-payload.integration.test.js
+    // That integration test proves Case.new() can accept the WMG payload structure
+    // without throwing errors, addressing the "danger area" of payload processing.
     it("should accept a create new case command from GAS for WMG", async () => {
       await messagePact
         .expectsToReceive("a create new case command from GAS for WMG")
