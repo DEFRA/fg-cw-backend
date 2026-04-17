@@ -12,6 +12,10 @@ import {
   minimalFrpsPayload,
   realisticFrpsPayload,
 } from "../fixtures/realistic-frps-payload.js";
+import {
+  minimalWmgPayload,
+  realisticWmgPayload,
+} from "../fixtures/realistic-wmg-payload.js";
 
 describe("Realistic Payload Processing", () => {
   describe("frps-private-beta realistic payload", () => {
@@ -49,6 +53,48 @@ describe("Realistic Payload Processing", () => {
         });
 
         expect(kase.payload).toEqual(minimalFrpsPayload);
+      }).not.toThrow();
+    });
+  });
+
+  describe("woodland (WMG) realistic payload", () => {
+    it("should be processable into a Case object", () => {
+      expect(() => {
+        const kase = Case.new({
+          caseRef: "WMP-CASE-001",
+          workflowCode: "woodland",
+          position: Position.from(
+            "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_APPLICATION_RECEIVED",
+          ),
+          payload: realisticWmgPayload,
+          phases: [],
+        });
+
+        expect(kase.payload).toEqual(realisticWmgPayload);
+        expect(kase.payload.answers.businessDetailsUpToDate).toBe(true);
+        expect(kase.payload.answers.totalHectaresAppliedFor).toBe(15.0);
+        expect(kase.payload.answers.fcTeamCode).toBe(
+          "YORKSHIRE_AND_NORTH_EAST",
+        );
+        expect(kase.payload.answers.existingWmps).toHaveLength(1);
+      }).not.toThrow();
+    });
+
+    it("should handle minimal payload (appLandHasExistingWmp false, no existingWmps)", () => {
+      expect(() => {
+        const kase = Case.new({
+          caseRef: "WMP-CASE-002",
+          workflowCode: "woodland",
+          position: Position.from(
+            "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_APPLICATION_RECEIVED",
+          ),
+          payload: minimalWmgPayload,
+          phases: [],
+        });
+
+        expect(kase.payload).toEqual(minimalWmgPayload);
+        expect(kase.payload.answers.appLandHasExistingWmp).toBe(false);
+        expect(kase.payload.answers.existingWmps).toBeUndefined();
       }).not.toThrow();
     });
   });
