@@ -102,4 +102,54 @@ describe("findCasesRoute", () => {
     });
     expect(statusCode).toEqual(200);
   });
+
+  it("accepts search query parameter", async () => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findCasesUseCase.mockResolvedValue([]);
+
+    const { statusCode } = await server.inject({
+      method: "GET",
+      url: "/cases?search=12345",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user,
+        },
+      },
+    });
+
+    expect(findCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: { direction: "forward", search: "12345" },
+    });
+    expect(statusCode).toEqual(200);
+  });
+
+  it("accepts empty search query parameter", async () => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findCasesUseCase.mockResolvedValue([]);
+
+    const { statusCode } = await server.inject({
+      method: "GET",
+      url: "/cases?search=",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user,
+        },
+      },
+    });
+
+    expect(findCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: { direction: "forward", search: "" },
+    });
+    expect(statusCode).toEqual(200);
+  });
 });
