@@ -10,6 +10,7 @@ export const findCasesRoute = {
     tags: ["api"],
     validate: {
       query: Joi.object({
+        search: Joi.string().allow(""),
         cursor: Joi.string(),
         direction: Joi.string().valid("forward", "backward").default("forward"),
         caseRef: Joi.string().valid("asc", "desc"),
