@@ -302,6 +302,66 @@ describe("findAll", () => {
     const { sort } = paginate.mock.calls[0][1];
     expect(sort).toEqual({ createdAt: -1 });
   });
+
+  it("builds search filter for caseRef and SBI when search is provided", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: "12345",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+      $or: [{ caseRef: "12345" }, { "payload.identifiers.sbi": "12345" }],
+    });
+  });
+
+  it("does not add $or filter when search is not provided", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: undefined,
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+    });
+    expect(filter.$or).toBeUndefined();
+  });
+
+  it("does not add $or filter when search is empty string", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: "",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+    });
+    expect(filter.$or).toBeUndefined();
+  });
 });
 
 describe("findCasesByCaseRefsAndWorkflowCode", () => {

@@ -511,4 +511,50 @@ describe("findCasesUseCase", () => {
       createRoleFilter(user.getRoles()),
     );
   });
+
+  it("passes search parameter to findAll", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", search: "12345", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      search: "12345",
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
+  });
+
+  it("passes undefined search when not provided", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      search: undefined,
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
+  });
 });

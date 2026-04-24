@@ -43,6 +43,7 @@ export const findCasesUseCase = async ({ user, query }) => {
 
   const results = await findAll({
     workflowCodes: workflows.map((w) => w.code),
+    search: query.search,
     cursor: query.cursor,
     direction: query.direction,
     sort: {
