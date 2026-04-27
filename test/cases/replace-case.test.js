@@ -12,7 +12,7 @@ import {
   vi,
 } from "vitest";
 import { caseData3Document } from "../fixtures/case.js";
-import createCaseEvent3 from "../fixtures/create-case-event-3.json";
+import createCaseEvent from "../fixtures/create-case-event-3.json";
 import { sendMessage } from "../helpers/sqs.js";
 import { createAdminUser } from "../helpers/users.js";
 import { waitForDocuments } from "../helpers/wait-for-documents.js";
@@ -32,7 +32,7 @@ afterAll(async () => {
   await client.close(true);
 });
 
-describe("On CreateNewCase event", () => {
+describe("Replaces a case on CreateNewCase event", () => {
   beforeEach(async () => {
     await createAdminUser();
     await createWorkflow();
@@ -44,20 +44,56 @@ describe("On CreateNewCase event", () => {
     vi.useRealTimers();
   });
 
-  it("creates a new case", async () => {
+  it("replaces a case", async () => {
     await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
-      ...createCaseEvent3,
-      id: randomUUID(),
+      ...createCaseEvent,
     });
 
-    const caseDocs = await waitForDocuments(cases);
+    await waitForDocuments(cases);
+
+    await cases.updateOne(
+      { caseRef: "CASE-REF-3", workflowCode: "frps-private-beta" },
+      { $set: { closed: true } },
+    );
+
+    // replace case
+    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
+      ...createCaseEvent,
+      id: randomUUID(),
+      data: {
+        ...createCaseEvent.data,
+        caseRef: "CASE-REF-4",
+        previousCaseRef: "CASE-REF-3",
+      },
+    });
+
+    const caseSeriesDocs = await waitForDocuments(caseSeries, 10, {
+      latestCaseRef: "CASE-REF-4",
+    });
+    expect(caseSeriesDocs).toEqual([
+      {
+        _id: expect.any(ObjectId),
+        caseRefs: ["CASE-REF-3", "CASE-REF-4"],
+        createdAt: expect.any(String),
+        latestCaseId: expect.any(String),
+        latestCaseRef: "CASE-REF-4",
+        updatedAt: expect.any(String),
+        workflowCode: "frps-private-beta",
+      },
+    ]);
+
+    const caseDocs = await waitForDocuments(cases, 10, {
+      caseRef: "CASE-REF-4",
+    });
 
     expect(caseDocs).toEqual([
       {
         ...caseData3Document,
+        caseRef: "CASE-REF-4",
+        closed: false,
+        closedAt: null,
         _id: expect.any(ObjectId),
         createdAt: expect.any(Date),
-        closedAt: null,
         timeline: [
           {
             commentRef: null,
@@ -66,24 +102,11 @@ describe("On CreateNewCase event", () => {
             description: "Case received",
             createdBy: "System",
             data: {
-              caseRef: "CASE-REF-3",
+              caseRef: "CASE-REF-4",
             },
           },
         ],
       },
     ]);
-
-    const caseSeriesDocs = await waitForDocuments(caseSeries);
-    expect(caseSeriesDocs).toEqual([
-      {
-        _id: expect.any(ObjectId),
-        caseRefs: ["CASE-REF-3"],
-        createdAt: expect.any(String),
-        latestCaseId: expect.any(String),
-        latestCaseRef: "CASE-REF-3",
-        updatedAt: expect.any(String),
-        workflowCode: "frps-private-beta",
-      },
-    ]);
-  });
+  }, 7000);
 });

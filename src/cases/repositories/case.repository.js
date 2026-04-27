@@ -47,6 +47,8 @@ const toCase = (doc) => {
     caseRef: doc.caseRef,
     workflowCode: doc.workflowCode,
     payload: doc.payload,
+    closed: doc.closed,
+    closedAt: doc.closedAt,
     position: new Position({
       phaseCode: doc.currentPhase,
       stageCode: doc.currentStage,
@@ -117,8 +119,16 @@ const cursorCodecs = {
     encode: (v) => v,
     decode: (v) => v,
   },
+  workflowCode: {
+    encode: (v) => v,
+    decode: (v) => v,
+  },
   createdAt: {
     encode: (v) => v.toISOString(),
+    decode: (v) => new Date(v),
+  },
+  closedAt: {
+    encode: (v) => v?.toISOString(),
     decode: (v) => new Date(v),
   },
   _id: {
@@ -136,8 +146,21 @@ const ascDescToFlags = (sort) =>
       .map(([k, v]) => [k, toDir(v)]),
   );
 
+const buildSearchFilter = (workflowCodes, search) => {
+  const filter = {
+    workflowCode: { $in: workflowCodes },
+  };
+
+  if (search) {
+    filter.$or = [{ caseRef: search }, { "payload.identifiers.sbi": search }];
+  }
+
+  return filter;
+};
+
 export const findAll = ({
   workflowCodes,
+  search,
   cursor,
   direction,
   sort,
@@ -146,9 +169,7 @@ export const findAll = ({
   const cases = db.collection(collection);
 
   return paginate(cases, {
-    filter: {
-      workflowCode: { $in: workflowCodes },
-    },
+    filter: buildSearchFilter(workflowCodes, search),
     cursor,
     direction,
     sort: ascDescToFlags(sort),
@@ -179,6 +200,21 @@ export const findAll = ({
       createdAt: doc.createdAt,
     }),
   });
+};
+
+export const findCasesByCaseRefsAndWorkflowCode = async (
+  caseRefs,
+  workflowCode,
+) => {
+  const docs = await db
+    .collection(collection)
+    .find({
+      caseRef: { $in: caseRefs },
+      workflowCode,
+    })
+    .toArray();
+
+  return docs.map(toCase);
 };
 
 export const findByCaseRefAndWorkflowCode = async (

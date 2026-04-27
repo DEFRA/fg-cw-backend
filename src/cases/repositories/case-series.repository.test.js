@@ -4,6 +4,7 @@ import { db } from "../../common/mongo-client.js";
 import { CaseSeries } from "../models/case-series.js";
 import {
   findByCaseRefAndWorkflowCode,
+  findInCaseRefsAndWorkflowCode,
   save,
   update,
 } from "./case-series.repository.js";
@@ -31,6 +32,41 @@ describe("case-series.repository", () => {
         session: {},
       });
       expect(result).toEqual({ acknowledged: true });
+    });
+  });
+
+  describe("findInCaseRefsAndWorkflowCode", () => {
+    it("returns a CaseSeries when document is found", async () => {
+      const doc = {
+        _id: "doc-id",
+        caseRefs: ["TEST-001"],
+        workflowCode: "wf-001",
+        latestCaseId: "abc123",
+        latestCaseRef: "TEST-001",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+      };
+      const findOne = vi.fn().mockResolvedValue(doc);
+      db.collection.mockReturnValue({ findOne });
+
+      const result = await findInCaseRefsAndWorkflowCode("TEST-001", "wf-001");
+
+      expect(db.collection).toHaveBeenCalledWith("case_series");
+      expect(findOne).toHaveBeenCalledWith({
+        caseRefs: "TEST-001",
+        workflowCode: "wf-001",
+      });
+      expect(result).toBeInstanceOf(CaseSeries);
+      expect(result.latestCaseRef).toBe("TEST-001");
+    });
+
+    it("throws Boom.notFound when no document is found", async () => {
+      const findOne = vi.fn().mockResolvedValue(null);
+      db.collection.mockReturnValue({ findOne });
+
+      await expect(
+        findInCaseRefsAndWorkflowCode("TEST-999", "wf-001"),
+      ).rejects.toThrow(Boom.notFound());
     });
   });
 

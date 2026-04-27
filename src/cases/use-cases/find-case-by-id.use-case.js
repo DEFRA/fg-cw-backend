@@ -173,6 +173,7 @@ export const mapStatusOptions = (statusOptions) =>
     name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
+    commentInputDef: option.comment,
   }));
 
 export const mapSelectedStatusOption = (statusCode, statusOptions) => {
@@ -346,9 +347,31 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
       name: a.name,
       comment: a.comment,
       confirm: a.confirm,
+      classes: a.classes,
       targetStatusName: targetStatus?.name,
     };
   });
+};
+
+const mapVisibleTaskGroups = async (
+  currentStatus,
+  caseStage,
+  workflowStage,
+  userMap,
+  caseWorkflowContext,
+  comments,
+) => {
+  if (currentStatus.hideTaskGroups) {
+    return [];
+  }
+
+  return mapTaskGroups(
+    caseStage,
+    workflowStage,
+    userMap,
+    caseWorkflowContext,
+    comments,
+  );
 };
 
 const mapStageData = async (
@@ -370,8 +393,10 @@ const mapStageData = async (
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    hideTaskGroups: currentStatus.hideTaskGroups,
     canPerformActions,
-    taskGroups: await mapTaskGroups(
+    taskGroups: await mapVisibleTaskGroups(
+      currentStatus,
       caseStage,
       workflowStage,
       userMap,

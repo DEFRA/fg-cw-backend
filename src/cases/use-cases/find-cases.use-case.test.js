@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { Workflow } from "../models/workflow.js";
+import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
 import { createRoleFilter, findCasesUseCase } from "./find-cases.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
+vi.mock("../repositories/case-series.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflows.use-case.js");
 vi.mock("../../common/auth.js");
@@ -71,6 +73,9 @@ describe("findCasesUseCase", () => {
   beforeEach(() => {
     findWorkflowsUseCase.mockResolvedValue([]);
     findAll.mockResolvedValue(mockFindAllResult([]));
+    findInCaseRefsAndWorkflowCode.mockResolvedValue({
+      caseRefs: new Set(["case-ref"]),
+    });
   });
 
   it("finds cases without assigned users", async () => {
@@ -124,7 +129,11 @@ describe("findCasesUseCase", () => {
       workflowCodes: ["WORKFLOW_1", "WORKFLOW_2"],
       cursor: undefined,
       direction: "forward",
-      sort: { createdAt: "desc" },
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
       pageSize: 20,
     });
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
@@ -140,6 +149,7 @@ describe("findCasesUseCase", () => {
           caseRef: "case-ref",
           currentStatus: "Stage status 1",
           currentStatusTheme: "INFO",
+          hasLinkedCases: false,
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_1",
@@ -150,6 +160,7 @@ describe("findCasesUseCase", () => {
           caseRef: "case-ref",
           currentStatus: "Stage status 1",
           currentStatusTheme: "INFO",
+          hasLinkedCases: false,
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_2",
@@ -203,6 +214,28 @@ describe("findCasesUseCase", () => {
     });
     expect(result.cases[0].assignedUser.name).toBe(user1.name);
     expect(result.cases[1].assignedUser.name).toBe(user2.name);
+  });
+
+  it("passes workflowCode sort when requested", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", workflowCode: "asc", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: "asc",
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
   });
 
   it("finds cases with and without assigned users", async () => {
@@ -477,5 +510,51 @@ describe("findCasesUseCase", () => {
     expect(findWorkflowsUseCase).toHaveBeenCalledWith(
       createRoleFilter(user.getRoles()),
     );
+  });
+
+  it("passes search parameter to findAll", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", search: "12345", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      search: "12345",
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
+  });
+
+  it("passes undefined search when not provided", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowsUseCase.mockResolvedValue([Workflow.createMock()]);
+
+    await findCasesUseCase({
+      user,
+      query: { direction: "forward", createdAt: "desc" },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: [expect.any(String)],
+      search: undefined,
+      cursor: undefined,
+      direction: "forward",
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
   });
 });

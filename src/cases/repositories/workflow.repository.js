@@ -23,6 +23,7 @@ const toWorkflowAction = (a) =>
     code: a.code,
     name: a.name,
     checkTasks: a.checkTasks,
+    classes: a.classes,
     comment: a.comment
       ? new WorkflowActionComment({
           label: a.comment.label,
@@ -42,11 +43,13 @@ const toWorkflowTransition = (t) =>
 
 const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
+    closes: s.closes,
     code: s.code,
     name: s.name,
     theme: s.theme,
     description: s.description,
     interactive: s.interactive,
+    hideTaskGroups: s.hideTaskGroups,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
@@ -57,6 +60,7 @@ const toWorkflowTaskStatusOption = (so) =>
     theme: so.theme,
     altName: so.altName,
     completes: so.completes,
+    comment: so.comment,
   });
 
 const toWorkflowTaskComment = (tc) =>
