@@ -284,11 +284,16 @@ const workflow = {
                           },
                           {
                             component: "conditional",
-                            condition: "$.payload.answers.existingWmps",
+                            condition:
+                              "$.payload.answers.appLandHasExistingWmp",
                             whenTrue: {
-                              label:
-                                "Existing woodland management plan details",
-                              text: "$.payload.answers.existingWmps",
+                              component: "conditional",
+                              condition: "$.payload.answers.existingWmps",
+                              whenTrue: {
+                                label:
+                                  "Existing woodland management plan details",
+                                text: "$.payload.answers.existingWmps",
+                              },
                             },
                           },
                           {
@@ -333,19 +338,19 @@ const workflow = {
                           },
                           {
                             label: "Woodland 10 years or older",
-                            text: "jsonata:$.payload.answers.hectaresTenOrOverYearsOld & ' ha'",
+                            text: "$.payload.answers.hectaresTenOrOverYearsOld ha",
                           },
                           {
                             label: "Woodland under 10 years old",
-                            text: "jsonata:$.payload.answers.hectaresUnderTenYearsOld & ' ha'",
+                            text: "$.payload.answers.hectaresUnderTenYearsOld ha",
                           },
                           {
                             label: "Centre grid reference",
                             text: "$.payload.answers.centreGridReference",
                           },
                           {
-                            label: "Forestry Commission area",
-                            text: 'jsonata:$lookup({"EAST_AND_EAST_MIDLANDS":"East and East Midlands","NORTH_WEST_AND_WEST_MIDLANDS":"North West and West Midlands","SOUTH_EAST_AND_LONDON":"South East and London","SOUTH_WEST":"South West","YORKSHIRE_AND_NORTH_EAST":"Yorkshire and North East"}, $.payload.answers.fcTeamCode)',
+                            label: "Forestry commission team code",
+                            text: "$.payload.answers.fcTeamCode",
                           },
                           {
                             label: "Included all eligible woodland",
@@ -398,8 +403,7 @@ const workflow = {
                     content: [
                       {
                         component: "conditional",
-                        condition:
-                          "jsonata:$count($.payload.answers.payments.agreement) > 0",
+                        condition: "$.payload.answers.payments.agreement[0]",
                         whenTrue: {
                           component: "container",
                           items: [
@@ -429,7 +433,7 @@ const workflow = {
                                     },
                                     {
                                       label: "Quantity in active tier",
-                                      text: "jsonata:@.quantityInActiveTier & ' ' & @.unit",
+                                      text: "@.quantityInActiveTier @.unit",
                                     },
                                     {
                                       label: "Active tier rate",
@@ -512,6 +516,7 @@ const workflow = {
 };
 
 export const up = async (db) => {
+  await db.collection("cases").deleteMany({ workflowCode: "woodland" });
   await db.collection("workflows").deleteOne({ code: "woodland" });
   await db.collection("workflows").insertOne(workflow);
 };
