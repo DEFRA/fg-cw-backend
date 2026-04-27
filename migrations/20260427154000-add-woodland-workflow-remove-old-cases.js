@@ -334,7 +334,7 @@ const workflow = {
                           },
                           {
                             label: "Total woodland area applied for",
-                            text: "jsonata:($.payload.answers.totalHectaresAppliedFor ? $.payload.answers.totalHectaresAppliedFor : $.payload.answers.totalHectaresForSelectedParcels) & ' ha'",
+                            text: "$.payload.answers.totalHectaresAppliedFor ha",
                           },
                           {
                             label: "Woodland 10 years or older",
