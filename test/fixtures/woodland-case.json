@@ -1,0 +1,131 @@
+{
+  "_id": "69ef662d158e4cbaad3dfbf5",
+  "caseRef": "wmp-7yz-pct",
+  "workflowCode": "woodland",
+  "currentPhase": "PHASE_PRE_AWARD",
+  "currentStage": "STAGE_REVIEWING_APPLICATION",
+  "currentStatus": "STATUS_APPLICATION_RECEIVED",
+  "createdAt": "2026-04-27T13:51:37.208+0000",
+  "payload": {
+    "createdAt": "2026-04-27T13:51:35.911Z",
+    "submittedAt": "2026-04-27T13:51:35.865Z",
+    "identifiers": {
+      "sbi": "900000104",
+      "frn": "900000104",
+      "crn": "9000000102"
+    },
+    "metadata": {},
+    "answers": {
+      "businessDetailsUpToDate": true,
+      "landRegisteredWithRpa": true,
+      "landManagementControl": true,
+      "publicBodyTenant": false,
+      "landHasGrazingRights": false,
+      "appLandHasExistingWmp": false,
+      "intendToApplyHigherTier": true,
+      "hectaresTenOrOverYearsOld": 2,
+      "hectaresUnderTenYearsOld": 0,
+      "centreGridReference": "AA 0000 0001",
+      "woodlandName": "Example Meadow",
+      "fcTeamCode": "EAST_AND_EAST_MIDLANDS",
+      "applicant": {
+        "business": {
+          "name": "Example Brook Farm",
+          "reference": "900000104",
+          "email": {
+            "address": "900000104@mrafyebbasatecnepsffilcm.com.test"
+          },
+          "phone": {
+            "mobile": "01632 960020"
+          },
+          "address": {
+            "line1": "8 Example Lane",
+            "line2": "",
+            "line3": null,
+            "line4": null,
+            "line5": null,
+            "street": "Example Lane",
+            "city": "Exampleton",
+            "postalCode": "ZZ99 1ZZ",
+            "uprn": "990000000004",
+            "buildingName": null,
+            "buildingNumberRange": "8",
+            "county": null,
+            "dependentLocality": null,
+            "doubleDependentLocality": null,
+            "flatName": null,
+            "pafOrganisationName": "Example Brook Farm"
+          }
+        },
+        "customer": {
+          "name": {
+            "title": "Miss",
+            "first": "Sam",
+            "middle": "A",
+            "last": "Example"
+          }
+        }
+      },
+      "detailsConfirmedAt": "2026-04-27T13:38:16.582Z",
+      "totalHectaresAppliedFor": 2.1647,
+      "guidanceRead": true,
+      "includedAllEligibleWoodland": true,
+      "applicationConfirmation": true,
+      "landParcels": [
+        {
+          "parcelId": "AA0014-0104",
+          "areaHa": 0.0795
+        },
+        {
+          "parcelId": "AA0015-0105",
+          "areaHa": 2.0852
+        }
+      ],
+      "totalAgreementPaymentPence": 150000,
+      "payments": {
+        "agreement": [
+          {
+            "code": "PA3",
+            "description": "Woodland management plan",
+            "activePaymentTier": 1,
+            "quantityInActiveTier": 2,
+            "activeTierRatePence": 0,
+            "activeTierFlatRatePence": 150000,
+            "quantity": 2,
+            "agreementTotalPence": 150000,
+            "unit": "ha"
+          }
+        ]
+      }
+    }
+  },
+  "assignedUserId": null,
+  "phases": [
+    {
+      "code": "PHASE_PRE_AWARD",
+      "stages": [
+        {
+          "code": "STAGE_REVIEWING_APPLICATION",
+          "outcome": null,
+          "taskGroups": []
+        }
+      ]
+    }
+  ],
+  "comments": [],
+  "timeline": [
+    {
+      "createdAt": "2026-04-27T13:51:37.208Z",
+      "eventType": "CASE_CREATED",
+      "createdBy": "System",
+      "commentRef": null,
+      "description": "Case received",
+      "data": {
+        "caseRef": "wmp-7yz-pct"
+      }
+    }
+  ],
+  "supplementaryData": {},
+  "closed": false,
+  "closedAt": null
+}
