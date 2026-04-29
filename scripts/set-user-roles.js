@@ -20,7 +20,7 @@ const users = {
 const DEFAULT_USER = "readerwriter";
 const DBNAME = "fg-cw-backend";
 const DEFAULT_CONNECTION_STRING =
-  process.env.MONGO_URL || "mongodb://localhost:27017?directConnection=true";
+  process.env.MONGO_URI || "mongodb://localhost:27017?directConnection=true";
 
 const user =
   process.argv.length > 2 ? users[process.argv[2]] : users[DEFAULT_USER];
@@ -47,10 +47,10 @@ const setRoles = async (connection, user, appRoles) => {
     results = await db
       .collection("users")
       .updateOne({ idpId: user.idpId }, { $set: { appRoles } });
-
-    await mongo.close();
   } catch (e) {
     console.error(e);
+  } finally {
+    await mongo.close();
   }
 
   if (results?.modifiedCount === 1) {

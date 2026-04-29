@@ -289,6 +289,8 @@ nvm use
 
 ## Local development
 
+**It's recommended if running with other services to use [fg-grants-core](https://github.com/DEFRA/fg-grants-core)**
+
 ### Setup
 
 Install application dependencies:
