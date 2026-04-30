@@ -8,6 +8,7 @@ import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { updateStageOutcomeUseCase } from "./update-stage-outcome.use-case.js";
 
 vi.mock("../../common/auth.js");
@@ -16,6 +17,7 @@ vi.mock("../repositories/workflow.repository.js");
 vi.mock("../publishers/case-event.publisher.js");
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
+vi.mock("./ensure-case-position.use-case.js");
 
 describe("updateStageOutcomeUseCase", () => {
   describe("successful stage outcome update", () => {
@@ -25,6 +27,11 @@ describe("updateStageOutcomeUseCase", () => {
       const mockCase = Case.createMock();
       const mockWorkflow = Workflow.createMock();
       const mockUser = User.createMock();
+      const targetPosition = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_2",
+        statusCode: "STATUS_1",
+      });
 
       mockCase.currentStage = "STAGE_1";
       mockCase.caseRef = "CASE-123";
@@ -39,6 +46,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(targetPosition);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 
@@ -51,6 +59,11 @@ describe("updateStageOutcomeUseCase", () => {
         position: mockCase.position,
         comment: "Application approved with conditions",
       });
+      expect(ensureCasePosition).toHaveBeenCalledWith(
+        mockCase,
+        mockWorkflow,
+        targetPosition,
+      );
       expect(mockCase.updateStageOutcome).toHaveBeenCalledWith({
         workflow: mockWorkflow,
         actionCode: "APPROVE",
@@ -80,6 +93,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 
@@ -121,6 +135,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn(() => {
         mockCase.currentStage = newStage;
       });
@@ -147,6 +162,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 
@@ -238,6 +254,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockRejectedValue(updateError);
 
@@ -266,6 +283,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 
@@ -291,6 +309,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn(() => {
         throw caseError;
       });
@@ -324,6 +343,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 
@@ -359,6 +379,7 @@ describe("updateStageOutcomeUseCase", () => {
       findById.mockResolvedValue(mockCase);
       findByCode.mockResolvedValue(mockWorkflow);
       mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
       mockCase.updateStageOutcome = vi.fn();
       update.mockResolvedValue(mockCase);
 

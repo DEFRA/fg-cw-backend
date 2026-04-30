@@ -613,6 +613,18 @@ describe("Case", () => {
     });
   });
 
+  describe("hasPhase", () => {
+    it("returns true when phase exists", () => {
+      const kase = Case.createMock();
+      expect(kase.hasPhase("PHASE_1")).toBe(true);
+    });
+
+    it("returns false when phase does not exist", () => {
+      const kase = Case.createMock();
+      expect(kase.hasPhase("PHASE_100")).toBe(false);
+    });
+  });
+
   describe("findPhase", () => {
     it("finds phase", () => {
       const kase = Case.createMock();

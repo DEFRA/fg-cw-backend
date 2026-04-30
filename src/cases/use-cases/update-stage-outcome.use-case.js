@@ -9,6 +9,7 @@ import { Outbox } from "../models/outbox.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
@@ -35,6 +36,9 @@ export const updateStageOutcomeUseCase = async (command) => {
     });
 
     const previousPosition = kase.position;
+
+    const targetPosition = workflow.getNextPosition(kase.position, actionCode);
+    await ensureCasePosition(kase, workflow, targetPosition);
 
     kase.updateStageOutcome({
       workflow,
