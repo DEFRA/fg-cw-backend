@@ -45,7 +45,7 @@ export const createCasePhase = async (phase, root) =>
 
 export const ensureCasePosition = async (kase, workflow, targetPosition) => {
   const { phaseCode, stageCode } = targetPosition;
-  const root = kase;
+  const root = { ...kase, position: targetPosition };
 
   if (!kase.hasPhase(phaseCode)) {
     const workflowPhase = workflow.findPhase(phaseCode);

@@ -254,4 +254,87 @@ describe("ensureCasePosition", () => {
     ]);
     expect(task.updatedBy).toBe("user-1");
   });
+
+  describe("conditional tasks using $.position (evaluates against target position)", () => {
+    const buildWorkflowWithConditionalStage = () => {
+      const conditionalStage = {
+        code: "TARGET_STAGE",
+        taskGroups: [
+          {
+            code: "TG_CONDITIONAL",
+            tasks: [
+              { code: "ALWAYS_INCLUDED" },
+              {
+                code: "POSITION_DEPENDENT",
+                conditional: "$.position.statusCode",
+              },
+            ],
+          },
+        ],
+      };
+
+      return {
+        findPhase: vi.fn(() => ({
+          findStage: vi.fn(() => conditionalStage),
+        })),
+      };
+    };
+
+    it("includes conditional task when target position satisfies the condition", async () => {
+      const existingPhase = new CasePhase({
+        code: "PHASE_A",
+        stages: [new CaseStage({ code: "EXISTING_STAGE", taskGroups: [] })],
+      });
+
+      const kase = buildKase({ phases: [existingPhase] });
+      kase.position = {
+        phaseCode: "PHASE_A",
+        stageCode: "EXISTING_STAGE",
+        statusCode: null,
+      };
+
+      const workflow = buildWorkflowWithConditionalStage();
+      const target = new Position({
+        phaseCode: "PHASE_A",
+        stageCode: "TARGET_STAGE",
+        statusCode: "AGREEMENT_DRAFTED",
+      });
+
+      await ensureCasePosition(kase, workflow, target);
+
+      const newStage = existingPhase.stages[1];
+      expect(newStage.code).toBe("TARGET_STAGE");
+      expect(newStage.taskGroups[0].tasks).toHaveLength(2);
+      expect(newStage.taskGroups[0].tasks[0].code).toBe("ALWAYS_INCLUDED");
+      expect(newStage.taskGroups[0].tasks[1].code).toBe("POSITION_DEPENDENT");
+    });
+
+    it("excludes conditional task when target position does not satisfy the condition", async () => {
+      const existingPhase = new CasePhase({
+        code: "PHASE_A",
+        stages: [new CaseStage({ code: "EXISTING_STAGE", taskGroups: [] })],
+      });
+
+      const kase = buildKase({ phases: [existingPhase] });
+      kase.position = {
+        phaseCode: "PHASE_A",
+        stageCode: "EXISTING_STAGE",
+        statusCode: "IN_REVIEW",
+      };
+
+      const workflow = buildWorkflowWithConditionalStage();
+      const target = new Position({
+        phaseCode: "PHASE_A",
+        stageCode: "TARGET_STAGE",
+        statusCode: null,
+      });
+
+      await ensureCasePosition(kase, workflow, target);
+
+      const newStage = existingPhase.stages[1];
+      expect(newStage.code).toBe("TARGET_STAGE");
+      expect(newStage.taskGroups[0].tasks).toHaveLength(1);
+      expect(newStage.taskGroups[0].tasks[0].code).toBe("ALWAYS_INCLUDED");
+    });
+  });
 });
