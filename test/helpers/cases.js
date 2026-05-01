@@ -57,10 +57,6 @@ export const createCase = async (cases, payload = {}) => {
               },
             ],
           },
-          {
-            code: "CONTRACT",
-            taskGroups: [],
-          },
         ],
       },
     ],

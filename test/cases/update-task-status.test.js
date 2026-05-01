@@ -166,6 +166,32 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
         statusCode: "AWAITING_AGREEMENT",
       },
       currentStage: "CONTRACT",
+      phases: [
+        {
+          code: "DEFAULT",
+          stages: [
+            {
+              code: "APPLICATION_RECEIPT",
+              taskGroups: [
+                {
+                  code: "APPLICATION_RECEIPT_TASKS",
+                  tasks: [
+                    {
+                      code: "SIMPLE_REVIEW",
+                      status: "PENDING",
+                      completed: false,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              code: "CONTRACT",
+              taskGroups: [],
+            },
+          ],
+        },
+      ],
     });
 
     const taskGroupCode = "APPLICATION_RECEIPT_TASKS";

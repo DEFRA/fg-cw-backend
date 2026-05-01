@@ -5,11 +5,13 @@ import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
+import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { progressCaseUseCase } from "./progress-case.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./ensure-case-position.use-case.js");
 
 const testAgreement1 = {
   agreementRef: "agreement-1",
@@ -77,6 +79,15 @@ describe("update supplementary data use case", () => {
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
+    );
+    expect(ensureCasePosition).toHaveBeenCalledWith(
+      kase,
+      workflow,
+      expect.objectContaining({
+        phaseCode: "",
+        stageCode: "",
+        statusCode: "REVIEW",
+      }),
     );
     expect(kase.progressTo).toHaveBeenCalledWith({
       position: expect.objectContaining({

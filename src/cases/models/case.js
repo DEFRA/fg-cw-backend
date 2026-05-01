@@ -46,6 +46,10 @@ export class Case {
     });
   }
 
+  hasPhase(phaseCode) {
+    return this.phases.some((p) => p.code === phaseCode);
+  }
+
   findPhase(phaseCode) {
     const phase = this.phases.find((p) => p.code === phaseCode);
 
