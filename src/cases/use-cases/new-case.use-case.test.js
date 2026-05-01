@@ -45,7 +45,12 @@ describe("newCaseUseCase", () => {
       {},
     );
 
-    expect(save.mock.calls[0][0]).toBeInstanceOf(Case);
+    const savedCase = save.mock.calls[0][0];
+    expect(savedCase).toBeInstanceOf(Case);
+    expect(savedCase.phases).toHaveLength(1);
+    expect(savedCase.phases[0].code).toBe("PHASE_1");
+    expect(savedCase.phases[0].stages).toHaveLength(1);
+    expect(savedCase.phases[0].stages[0].code).toBe("STAGE_1");
   });
 
   it("maps temporary caveat sources from code before saving the case", async () => {

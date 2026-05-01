@@ -6,6 +6,10 @@ export class CasePhase {
     this.stages = props.stages;
   }
 
+  hasStage(stageCode) {
+    return this.stages.some((s) => s.code === stageCode);
+  }
+
   findStage(stageCode) {
     const stage = this.stages.find((s) => s.code === stageCode);
 
@@ -16,12 +20,20 @@ export class CasePhase {
     return stage;
   }
 
+  addStage(caseStage) {
+    this.stages.push(caseStage);
+  }
+
   getUserIds() {
     return this.stages.flatMap((s) => s.getUserIds());
   }
 
   areTasksComplete(workflowPhase) {
     for (const workflowStage of workflowPhase.stages) {
+      if (!this.hasStage(workflowStage.code)) {
+        return false;
+      }
+
       const caseStage = this.findStage(workflowStage.code);
 
       if (!caseStage.areTasksComplete(workflowStage)) {
