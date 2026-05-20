@@ -16,8 +16,10 @@ export class CaseDocument {
     this.currentPhase = props.position.phaseCode;
     this.currentStage = props.position.stageCode;
     this.currentStatus = props.position.statusCode;
-    this.dateReceived = new Date(props.dateReceived);
+    this.createdAt = new Date(props.createdAt);
     this.payload = props.payload;
+    this.closed = props.closed;
+    this.closedAt = props.closedAt;
     this.assignedUserId = props.assignedUser?.id || null;
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.comments = props.comments;
@@ -36,7 +38,8 @@ export class CaseDocument {
         stageCode: "STAGE_1",
         statusCode: "STATUS_1",
       }),
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      closed: false,
+      createdAt: "2025-01-01T00:00:00.000Z",
       supplementaryData: {},
       payload: {},
       phases: [

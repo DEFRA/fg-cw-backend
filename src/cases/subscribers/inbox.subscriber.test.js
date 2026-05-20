@@ -21,11 +21,11 @@ import {
   claimEvents,
   findNextMessage,
 } from "../repositories/inbox.repository.js";
-import { createCaseUseCase } from "../use-cases/create-case.use-case.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
+import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
-vi.mock("../use-cases/create-case.use-case.js");
+vi.mock("../use-cases/submit-case.use-case.js");
 vi.mock("../../common/trace-parent.js");
 vi.mock("../use-cases/approve-application.use-case.js");
 vi.mock("../repositories/inbox.repository.js");
@@ -112,7 +112,7 @@ describe("inbox.subscriber", () => {
       .mockResolvedValueOnce([mockEvent])
       .mockResolvedValue([]);
 
-    createCaseUseCase.mockResolvedValue(true);
+    submitCaseUseCase.mockResolvedValue(true);
     withTraceParent.mockImplementation((_, fn) => fn());
 
     const subscriber = new InboxSubscriber();
@@ -125,7 +125,7 @@ describe("inbox.subscriber", () => {
     await vi.advanceTimersByTimeAsync(subscriber.interval);
 
     await vi.waitFor(() => {
-      expect(createCaseUseCase).toHaveBeenCalled();
+      expect(submitCaseUseCase).toHaveBeenCalled();
     });
 
     await vi.advanceTimersByTimeAsync(subscriber.interval);
@@ -270,7 +270,7 @@ describe("inbox.subscriber", () => {
       const mockEventData = {
         foo: "barr",
       };
-      createCaseUseCase.mockResolvedValue(true);
+      submitCaseUseCase.mockResolvedValue(true);
 
       withTraceParent.mockImplementation((_, fn) => fn());
       const mockEvent = {
@@ -284,7 +284,7 @@ describe("inbox.subscriber", () => {
       const inbox = new InboxSubscriber();
       await inbox.processEvents([mockEvent]);
       expect(withTraceParent).toHaveBeenCalled();
-      expect(createCaseUseCase).toHaveBeenCalled();
+      expect(submitCaseUseCase).toHaveBeenCalled();
       expect(withTraceParent.mock.calls[0][0]).toBe("1234-abcd");
       expect(mockEvent.markAsComplete).toHaveBeenCalled();
     });
