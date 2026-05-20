@@ -73,6 +73,24 @@ describe("Task Schema", () => {
     expect(error.details[0].message).toBe('"comment.mandatory" is required');
   });
 
+  it("should allow object label in comment", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      description: null,
+      mandatory: true,
+      statusOptions: [],
+      comment: {
+        label: { text: "Reason for termination", classes: "govuk-label--s" },
+        helpText: "You must include an explanation for auditing purposes.",
+        mandatory: true,
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
   it("should allow null comment", () => {
     const task = {
       code: "TASK_1",
