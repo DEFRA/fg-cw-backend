@@ -59,13 +59,11 @@ Mitigations:
 ## Alternatives Considered
 
 1. JavaScript with JSDoc types
-
    - Pros: Works in plain .js; no new file types; aligns with permitted toolset.
    - Cons: Verbose comment-based annotations; weaker type expressiveness; higher drift risk; harder to share/refactor types.
    - Not chosen: Research shows significant limitations versus real type syntax, impacting maintainability and safety.
 
 2. Full TypeScript with transpilation (tsc or SWC/ESBuild)
-
    - Pros: Strongest type checking; mature ecosystem; full compiler features.
    - Cons: Conflicts with current RPA policy; introduces build step and emitted artifacts.
    - Not chosen: Currently non-compliant and adds pipeline complexity.
