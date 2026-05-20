@@ -225,6 +225,30 @@ describe("findByCode", () => {
     expect(result.templates).toEqual(workflowDocument.templates);
   });
 
+  it("maps status option comment when present", async () => {
+    const workflowDocument = WorkflowDocument.createMock();
+    workflowDocument.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions[0].comment =
+      {
+        label: "Explain this outcome",
+        helpText: "You must include an explanation for auditing purposes.",
+        mandatory: true,
+      };
+
+    db.collection = vi.fn().mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(workflowDocument),
+    });
+
+    const result = await findByCode("123");
+    const statusOption =
+      result.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions[0];
+
+    expect(statusOption.comment).toEqual({
+      label: "Explain this outcome",
+      helpText: "You must include an explanation for auditing purposes.",
+      mandatory: true,
+    });
+  });
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),

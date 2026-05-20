@@ -5,5 +5,6 @@ export class WorkflowTaskStatusOption {
     this.theme = props.theme;
     this.altName = props.altName;
     this.completes = props.completes;
+    this.comment = props.comment;
   }
 }
