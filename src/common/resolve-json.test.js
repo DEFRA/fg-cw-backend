@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { jp, populateUrlTemplate, resolveJSONPath } from "./resolve-json.js";
+import {
+  evaluateTaskCondition,
+  jp,
+  populateUrlTemplate,
+  resolveJSONPath,
+} from "./resolve-json.js";
 
 describe("resolveJSONPath", () => {
   const mockRoot = {
@@ -2436,5 +2441,657 @@ describe("conditional component resolution", () => {
         ],
       },
     ]);
+  });
+
+  it("should render repeat beforeContent when items exist", async () => {
+    const root = {
+      payload: {
+        answers: {
+          pigs: [{ totalPigs: 14 }, { totalPigs: 24 }],
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      beforeContent: [
+        {
+          component: "heading",
+          text: "Pig Caveats",
+          level: 3,
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Pig Caveats",
+        level: 3,
+      },
+      {
+        label: "Total Pigs",
+        text: 14,
+      },
+      {
+        label: "Total Pigs",
+        text: 24,
+      },
+    ]);
+  });
+
+  it("should render repeat emptyContent when itemsRef resolves to no items", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      emptyContent: [
+        {
+          component: "inset-text",
+          text: "No pig caveats available",
+        },
+      ],
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([
+      {
+        component: "inset-text",
+        text: "No pig caveats available",
+      },
+    ]);
+  });
+
+  it("should return empty array for repeat when no items and no emptyContent", async () => {
+    const root = {
+      payload: {
+        answers: {},
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.pigs[*]",
+      items: [
+        {
+          label: "Total Pigs",
+          text: "@.totalPigs",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({ root, path });
+
+    expect(result).toEqual([]);
+  });
+
+  it("should resolve template component for singular usage with dataRef", async () => {
+    const mockRootWithTemplate = {
+      payload: {
+        answers: {
+          totalPigs: 100,
+          whitePigsCount: 45,
+        },
+      },
+      templates: {
+        "pmf-template": {
+          "pmf-example": {
+            content: [
+              {
+                component: "heading",
+                text: "PMF Template",
+                level: 2,
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Total Pigs",
+                    text: "@.totalPigs",
+                  },
+                  {
+                    label: "White Pigs",
+                    text: "@.whitePigsCount",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "template",
+        dataRef: "$.payload.answers",
+        templateRef: "$.templates.pmf-template",
+        templateKey: "pmf-example",
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithTemplate, path });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "PMF Template",
+        level: 2,
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Total Pigs",
+            text: 100,
+          },
+          {
+            label: "White Pigs",
+            text: 45,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should resolve template component with JSONata dataRef", async () => {
+    const mockRootWithTemplate = {
+      payload: {
+        answers: {
+          totalPigs: 100,
+          whitePigsCount: 45,
+          groups: [
+            { code: "groupA", pigs: { totalPigs: 7, whitePigsCount: 2 } },
+          ],
+        },
+      },
+      templates: {
+        "pmf-template": {
+          "pmf-example": {
+            content: [
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Total Pigs",
+                    text: "@.totalPigs",
+                  },
+                  {
+                    label: "White Pigs",
+                    text: "@.whitePigsCount",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const path = [
+      {
+        component: "template",
+        dataRef: "jsonata:$.payload.answers.groups[code='groupA'].pigs",
+        templateRef: "$.templates.pmf-template",
+        templateKey: "pmf-example",
+      },
+    ];
+
+    const result = await resolveJSONPath({ root: mockRootWithTemplate, path });
+
+    expect(result).toEqual([
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Total Pigs",
+            text: 7,
+          },
+          {
+            label: "White Pigs",
+            text: 2,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should resolve template component inside repeat using row templateKey", async () => {
+    const mockRootWithRepeatTemplate = {
+      payload: {
+        answers: {
+          rulesCalculations: {
+            caveats: [{ source: "source1" }, { source: "source2" }],
+          },
+        },
+      },
+      templates: {
+        caveats: {
+          source1: {
+            content: [{ component: "text", text: "Caveat 1" }],
+          },
+          source2: {
+            content: [{ component: "text", text: "Caveat 2" }],
+          },
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.rulesCalculations.caveats[*]",
+      items: [
+        {
+          component: "template",
+          templateRef: "$.templates.caveats",
+          templateKey: "@.source",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithRepeatTemplate,
+      path,
+    });
+
+    expect(result).toEqual([
+      { component: "text", text: "Caveat 1" },
+      { component: "text", text: "Caveat 2" },
+    ]);
+  });
+
+  it("should resolve grouped statutory consent caveats with ordered groups and hefer description from caveat data", async () => {
+    const mockRootWithGroupedCaveatTemplates = {
+      payload: {
+        answers: {
+          rulesCalculations: {
+            caveats: [
+              {
+                code: "hefer-consent-required",
+                source: "historic-england",
+                description:
+                  "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+                metadata: {
+                  sheetId: "SX0679",
+                  parcelId: "9238",
+                  actionCode: "CSAM1",
+                  overlapAreaHectares: "2.35",
+                  percentageOverlap: "41.2",
+                },
+              },
+              {
+                code: "ne-consent-required",
+                source: "natural-england",
+                description: "Ignored by template",
+                metadata: {
+                  sheetId: "SE1234",
+                  parcelId: "5678",
+                  actionCode: "UPL1",
+                  overlapAreaHectares: "1.05",
+                  percentageOverlap: "10.5",
+                },
+              },
+            ],
+          },
+        },
+      },
+      templates: {
+        caveatGroups: {
+          "natural-england": {
+            order: 1,
+            content: [
+              {
+                component: "heading",
+                text: "SSSI consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
+              },
+            ],
+          },
+          "historic-england": {
+            order: 2,
+            content: [
+              {
+                component: "heading",
+                text: "Historic England consent",
+                level: 2,
+                classes: "govuk-heading-m",
+              },
+              {
+                component: "paragraph",
+                text: "jsonata:@.caveats[0].description",
+              },
+            ],
+          },
+        },
+        caveats: {
+          "natural-england": {
+            content: [
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+            ],
+          },
+          "historic-england": {
+            content: [
+              {
+                component: "heading",
+                text: "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+                level: 3,
+                classes:
+                  "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+              },
+              {
+                component: "summary-list",
+                rows: [
+                  {
+                    label: "Action code",
+                    text: "@.metadata.actionCode",
+                  },
+                  {
+                    label: "Overlap area",
+                    text: "@.metadata.overlapAreaHectares Ha",
+                  },
+                  {
+                    label: "Overlap",
+                    text: "@.metadata.percentageOverlap %",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const groups = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: 'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+    });
+
+    expect(groups.map((group) => group.source)).toEqual([
+      "natural-england",
+      "historic-england",
+    ]);
+    expect(Array.isArray(groups[0].caveats)).toBe(true);
+    expect(groups[0].caveats).toHaveLength(1);
+
+    const result = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: [
+        {
+          component: "template",
+          dataRef:
+            'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats[source=\'historic-england\']; {"source": "historic-england", "caveats": $caveats})',
+          templateRef: "$.templates.caveatGroups",
+          templateKey: "historic-england",
+        },
+        {
+          component: "template",
+          dataRef:
+            "jsonata:$.payload.answers.rulesCalculations.caveats[source='historic-england'][0]",
+          templateRef: "$.templates.caveats",
+          templateKey: "historic-england",
+        },
+      ],
+    });
+
+    expect(result).toEqual([
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
+    ]);
+
+    const fullGroupedResult = await resolveJSONPath({
+      root: mockRootWithGroupedCaveatTemplates,
+      path: {
+        component: "repeat",
+        id: "caveat-groups",
+        itemsRef:
+          'jsonata:($caveats := $.payload.answers.rulesCalculations.caveats; $defs := $.templates.caveatGroups; $groups := $distinct($caveats.source).($source := $; {"source": $source, "order": $lookup($defs, $source).order ? $lookup($defs, $source).order : 9999, "caveats": [$caveats[source = $source]]}); $sort($groups, function($l, $r) { $l.order > $r.order }))',
+        items: [
+          {
+            component: "template",
+            templateRef: "$.templates.caveatGroups",
+            templateKey: "@.source",
+          },
+          {
+            component: "repeat",
+            id: "caveats-inner",
+            itemsRef: "@.caveats[*]",
+            items: [
+              {
+                component: "template",
+                templateRef: "$.templates.caveats",
+                templateKey: "@.source",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(fullGroupedResult).toEqual([
+      {
+        component: "heading",
+        text: "SSSI consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "Ignored by template",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SE1234 5678",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "heading",
+        text: "Historic England consent",
+        level: 2,
+        classes: "govuk-heading-m",
+      },
+      {
+        component: "paragraph",
+        text: "A Historic Environment Farm Environment Record (HEFER) is required from Historic England",
+      },
+      {
+        component: "heading",
+        text: "Land parcel: SX0679 9238",
+        level: 3,
+        classes: "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1",
+      },
+      {
+        component: "summary-list",
+        rows: [
+          {
+            label: "Action code",
+            text: "CSAM1",
+          },
+          {
+            label: "Overlap area",
+            text: "2.35 Ha",
+          },
+          {
+            label: "Overlap",
+            text: "41.2 %",
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should handle repeat template when itemsRef does not exist", async () => {
+    const mockRootWithMissingItemsRef = {
+      templates: {
+        caveats: {
+          CAV001: {
+            content: [{ component: "text", text: "Caveat 1" }],
+          },
+        },
+      },
+    };
+
+    const path = {
+      component: "repeat",
+      itemsRef: "$.payload.answers.rulesCalculations.caveats[*]",
+      items: [
+        {
+          component: "template",
+          templateRef: "$.templates.caveats",
+          templateKey: "@.source",
+        },
+      ],
+    };
+
+    const result = await resolveJSONPath({
+      root: mockRootWithMissingItemsRef,
+      path,
+    });
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("evaluateTaskCondition", () => {
+  it("should return true when condition is null", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const result = await evaluateTaskCondition({ condition: null, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true when condition is undefined", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const result = await evaluateTaskCondition({ condition: undefined, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true when JSONPath condition matches", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false when JSONPath condition does not match", async () => {
+    const root = { payload: { answers: { whitePigsCount: 2 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return false when whitePigsCount equals 3 (boundary test)", async () => {
+    const root = { payload: { answers: { whitePigsCount: 3 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return true when whitePigsCount equals 4 (boundary test)", async () => {
+    const root = { payload: { answers: { whitePigsCount: 4 } } };
+    const condition =
+      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return true for simple JSONPath that returns truthy value", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false for simple JSONPath that returns 0", async () => {
+    const root = { payload: { answers: { whitePigsCount: 0 } } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return false when property does not exist", async () => {
+    const root = { payload: { answers: {} } };
+    const condition = "$.payload.answers.whitePigsCount";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
+  });
+
+  it("should return true for jsonata expression that evaluates to true", async () => {
+    const root = { payload: { answers: { whitePigsCount: 5 } } };
+    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(true);
+  });
+
+  it("should return false for jsonata expression that evaluates to false", async () => {
+    const root = { payload: { answers: { whitePigsCount: 2 } } };
+    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
+    const result = await evaluateTaskCondition({ condition, root });
+    expect(result).toBe(false);
   });
 });

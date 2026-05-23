@@ -121,6 +121,7 @@ const createWorkflowTaskStatusOption = (statusOption) =>
 
 const createWorkflowTask = (task) =>
   new WorkflowTask({
+    conditional: task.conditional,
     code: task.code,
     name: task.name,
     mandatory: task.mandatory,
@@ -146,6 +147,7 @@ const createWorkflowAction = (action) =>
     code: action.code,
     name: action.name,
     checkTasks: action.checkTasks,
+    classes: action.classes,
     comment: action.comment
       ? new WorkflowActionComment({
           label: action.comment.label,
@@ -153,6 +155,7 @@ const createWorkflowAction = (action) =>
           mandatory: action.comment.mandatory,
         })
       : null,
+    confirm: action.confirm,
   });
 
 const createWorkflowTransition = (transition, context, phases) =>
@@ -173,6 +176,7 @@ const createWorkflowStageStatus = (status, context, phases) =>
     theme: status.theme,
     description: status.description,
     interactive: status.interactive,
+    hideTaskGroups: status.hideTaskGroups,
     transitions: status.transitions.map((transition) =>
       createWorkflowTransition(
         transition,
@@ -226,6 +230,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
       anyOf: createWorkflowCommand.requiredRoles.anyOf,
     }),
     definitions: createWorkflowCommand.definitions,
+    templates: createWorkflowCommand.templates,
     externalActions: createWorkflowCommand.externalActions,
     endpoints: createWorkflowCommand.endpoints?.map(createWorkflowEndpoint),
   });

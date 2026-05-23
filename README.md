@@ -1,8 +1,13 @@
 # fg-cw-backend
 
+## Running with other services
+
+If you want to run this service with other farming grants applications see [fg-grants-core](https://github.com/DEFRA/fg-grants-core)
+
 ## Documentation
 
 - [External Services Configuration](./docs/EXTERNAL_SERVICES.md) - How to configure and call external APIs
+- [Workflow Components](./docs/WORKFLOW_COMPONENTS.md) - Workflow component reference
 
 ## Coding standards
 
@@ -283,6 +288,8 @@ nvm use
 ```
 
 ## Local development
+
+**It's recommended if running with other services to use [fg-grants-core](https://github.com/DEFRA/fg-grants-core)**
 
 ### Setup
 

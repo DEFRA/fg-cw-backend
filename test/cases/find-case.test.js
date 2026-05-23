@@ -8,12 +8,14 @@ import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
 let cases;
+let caseSeriesCollection;
 
 let client;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
+  caseSeriesCollection = client.db().collection("case_series");
 });
 
 afterAll(async () => {
@@ -32,15 +34,25 @@ describe("GET /cases/{caseId}", () => {
     const { insertedIds } = await cases.insertMany([
       {
         ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData2,
-        dateReceived: new Date(caseData2.dateReceived),
+        createdAt: new Date(caseData2.createdAt),
       },
     ]);
 
     const caseId = insertedIds[1].toHexString();
+
+    const now = new Date().toISOString();
+    await caseSeriesCollection.insertOne({
+      caseRefs: [caseData2.caseRef],
+      workflowCode: caseData2.workflowCode,
+      latestCaseRef: caseData2.caseRef,
+      latestCaseId: caseId,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     const response = await wreck.get(`/cases/${caseId}`);
 
@@ -61,6 +73,7 @@ describe("GET /cases/{caseId}", () => {
         name: "Application Receipt",
         description: "Application received",
         interactive: true,
+        hideTaskGroups: false,
         canPerformActions: true,
         taskGroups: [
           {
@@ -114,11 +127,14 @@ describe("GET /cases/{caseId}", () => {
           {
             code: "APPROVE",
             name: "Approve",
+            classes: null,
             comment: null,
+            confirm: null,
+            targetStatusName: "Awaiting Agreement",
           },
         ],
       },
-      dateReceived: new Date(caseData2.dateReceived).toISOString(),
+      createdAt: new Date(caseData2.createdAt).toISOString(),
       payload: caseData2.payload,
       supplementaryData: caseData2.supplementaryData,
       assignedUser: null,
@@ -191,6 +207,9 @@ describe("GET /cases/{caseId}", () => {
         },
       ],
       beforeContent: [],
+      caseSeries: {
+        length: 1,
+      },
     });
   });
 });
