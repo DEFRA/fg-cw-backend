@@ -26,6 +26,10 @@ import {
   minimalFrpsPayload,
   realisticFrpsPayload,
 } from "../fixtures/realistic-frps-payload.js";
+import {
+  minimalWmgPayload,
+  realisticWmgPayload,
+} from "../fixtures/realistic-wmg-payload.js";
 
 const { like, uuid, iso8601DateTimeWithMillis, term } = MatchersV2;
 
@@ -166,6 +170,229 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
           expect(cloudEvent.data.payload.identifiers.defraId).toBeUndefined();
           expect(cloudEvent.data.payload.metadata).toBeUndefined();
+        });
+    });
+  });
+
+  describe("WMG CreateNewCaseCommand Message", () => {
+    // Note: The realistic WMG payload defined in these tests is verified to process through
+    // CW's case creation logic in test/contract/realistic-payload.integration.test.js
+    // That integration test proves Case.new() can accept the WMG payload structure
+    // without throwing errors, addressing the "danger area" of payload processing.
+    it("should accept a create new case command from GAS for WMG", async () => {
+      await messagePact
+        .expectsToReceive("a create new case command from GAS for WMG")
+        .withContent({
+          // CloudEvent fields
+          id: uuid("12345678-1234-1234-1234-123456789005"),
+
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.create",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.create$",
+          }),
+
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("WMP-CASE-001"),
+
+            // CRITICAL: workflowCode must be "woodland" for WMG applications
+            workflowCode: like("woodland"),
+
+            payload: {
+              createdAt: iso8601DateTimeWithMillis("2025-02-09T11:00:00.000Z"),
+              submittedAt: iso8601DateTimeWithMillis(
+                "2025-02-09T12:00:00.000Z",
+              ),
+
+              identifiers: {
+                sbi: like("SBI001"),
+                frn: like("FIRM0001"),
+                crn: like("CUST0001"),
+                defraId: like("DEFRA0001"),
+              },
+
+              // WMG answers - direct form fields (no scheme/applicant/application/payments wrapper)
+              answers: like(realisticWmgPayload.answers),
+
+              metadata: like({}),
+            },
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.payload).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.sbi).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.frn).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
+        });
+    });
+
+    it("should accept a create new case command from GAS for WMG without optional fields", async () => {
+      await messagePact
+        .expectsToReceive(
+          "a create new case command from GAS for WMG without optional fields",
+        )
+        .withContent({
+          // CloudEvent fields
+          id: uuid("12345678-1234-1234-1234-123456789007"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.create",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.create$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("WMP-CASE-002"),
+            workflowCode: like("woodland"),
+            payload: {
+              createdAt: iso8601DateTimeWithMillis("2025-02-09T11:00:00.000Z"),
+              submittedAt: iso8601DateTimeWithMillis(
+                "2025-02-09T12:00:00.000Z",
+              ),
+              identifiers: {
+                sbi: like("SBI003"),
+                frn: like("FIRM0003"),
+                crn: like("CUST0003"),
+              },
+              answers: like(minimalWmgPayload.answers),
+            },
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.payload).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.sbi).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.frn).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers.defraId).toBeUndefined();
+          expect(cloudEvent.data.payload.metadata).toBeUndefined();
+        });
+    });
+  });
+
+  describe("WMG UpdateCaseStatusCommand Message", () => {
+    it("should accept a case status update command from GAS for WMG", async () => {
+      await messagePact
+        .expectsToReceive("a case status update command from GAS for WMG")
+        .withContent({
+          id: uuid("12345678-1234-1234-1234-123456789006"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.update.status",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.update\\.status$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("WMP-CASE-001"),
+            workflowCode: like("woodland"),
+
+            // CRITICAL: WMG uses PHASE_/STAGE_/STATUS_ prefixed format
+            newStatus: term({
+              generate:
+                "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_IN_REVIEW",
+              matcher: "^[A-Z_]+:[A-Z_]+:[A-Z_]+$",
+            }),
+
+            // WMG does not use agreements supplementaryData (not yet implemented)
+            supplementaryData: like({
+              phase: "PHASE_PRE_AWARD",
+              stage: "STAGE_REVIEWING_APPLICATION",
+            }),
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.newStatus).toBeDefined();
+          expect(cloudEvent.data.newStatus).toMatch(
+            /^[A-Z_]+:[A-Z_]+:[A-Z_]+$/,
+          );
+
+          if (cloudEvent.data.supplementaryData) {
+            expect(cloudEvent.data.supplementaryData).toBeTypeOf("object");
+          }
+        });
+    });
+
+    it("should accept a case status update command from GAS for WMG without supplementary data array fields", async () => {
+      await messagePact
+        .expectsToReceive(
+          "a case status update command from GAS for WMG without supplementary data array fields",
+        )
+        .withContent({
+          id: uuid("12345678-1234-1234-1234-123456789008"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.update.status",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.update\\.status$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("WMP-CASE-002"),
+            workflowCode: like("woodland"),
+            newStatus: term({
+              generate:
+                "PHASE_PRE_AWARD:STAGE_AWAITING_FC:STATUS_AWAITING_FC_REVIEW",
+              matcher: "^[A-Z_]+:[A-Z_]+:[A-Z_]+$",
+            }),
+            supplementaryData: like({
+              phase: "PHASE_PRE_AWARD",
+              stage: "STAGE_AWAITING_FC",
+            }),
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.newStatus).toBeDefined();
+          expect(cloudEvent.data.supplementaryData).toBeDefined();
+          expect(cloudEvent.data.supplementaryData.targetNode).toBeUndefined();
+          expect(cloudEvent.data.supplementaryData.dataType).toBeUndefined();
+          expect(cloudEvent.data.supplementaryData.data).toBeUndefined();
         });
     });
   });

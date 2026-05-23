@@ -55,11 +55,6 @@ export const caseData1 = {
             },
           ],
         },
-        {
-          code: "CONTRACT",
-          interactive: true,
-          taskGroups: [],
-        },
       ],
     },
   ],
@@ -141,11 +136,6 @@ export const caseData2 = {
             },
           ],
         },
-        {
-          code: "CONTRACT",
-          interactive: true,
-          taskGroups: [],
-        },
       ],
     },
   ],
@@ -177,6 +167,7 @@ export const caseData3Document = {
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
   createdAt: "2025-03-27T11:34:52.000Z",
+  closed: false,
   payload: {
     createdAt: "2025-03-27T10:34:52.000Z",
     submittedAt: "2025-03-28T11:30:52.000Z",
@@ -225,11 +216,6 @@ export const caseData3Document = {
               ],
             },
           ],
-        },
-        {
-          code: "CONTRACT",
-          outcome: null,
-          taskGroups: [],
         },
       ],
     },

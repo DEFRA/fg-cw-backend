@@ -62,9 +62,11 @@ export const StatusOption = Joi.object({
     .required(),
   altName: Joi.string().allow(null),
   completes: Joi.boolean().required(),
+  comment: comment.optional().allow(null),
 }).label("StatusOption");
 
 export const Task = Joi.object({
+  conditional: Joi.string().optional().allow(null),
   code: Code.required(),
   name: Joi.string().required(),
   mandatory: Joi.boolean().required(),
