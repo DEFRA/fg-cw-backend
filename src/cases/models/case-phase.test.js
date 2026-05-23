@@ -28,6 +28,60 @@ describe("CasePhase", () => {
     });
   });
 
+  describe("hasStage", () => {
+    it("should return true when stage exists", () => {
+      const phase = new CasePhase({
+        code: "PHASE_1",
+        stages: [
+          new CaseStage({
+            code: "STAGE_1",
+            taskGroups: [],
+          }),
+        ],
+      });
+
+      expect(phase.hasStage("STAGE_1")).toBe(true);
+    });
+
+    it("should return false when stage does not exist", () => {
+      const phase = new CasePhase({
+        code: "PHASE_1",
+        stages: [
+          new CaseStage({
+            code: "STAGE_1",
+            taskGroups: [],
+          }),
+        ],
+      });
+
+      expect(phase.hasStage("NONEXISTENT_STAGE")).toBe(false);
+    });
+  });
+
+  describe("addStage", () => {
+    it("should append a stage to the phase", () => {
+      const phase = new CasePhase({
+        code: "PHASE_1",
+        stages: [
+          new CaseStage({
+            code: "STAGE_1",
+            taskGroups: [],
+          }),
+        ],
+      });
+
+      const newStage = new CaseStage({
+        code: "STAGE_2",
+        taskGroups: [],
+      });
+
+      phase.addStage(newStage);
+
+      expect(phase.stages).toHaveLength(2);
+      expect(phase.stages[1].code).toBe("STAGE_2");
+    });
+  });
+
   describe("findStage", () => {
     it("should find a stage by code", () => {
       const phase = new CasePhase({
@@ -485,6 +539,76 @@ describe("CasePhase", () => {
       const result = casePhase.areTasksComplete(workflowPhase);
 
       expect(result).toBe(true);
+    });
+
+    it("should return false when a workflow stage has no corresponding case stage", () => {
+      const casePhase = new CasePhase({
+        code: "PHASE_1",
+        stages: [
+          new CaseStage({
+            code: "STAGE_1",
+            taskGroups: [
+              new CaseTaskGroup({
+                code: "TASK_GROUP_1",
+                tasks: [
+                  new CaseTask({
+                    code: "TASK_1",
+                    status: "COMPLETE",
+                    completed: true,
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      });
+
+      const workflowPhase = new WorkflowPhase({
+        code: "PHASE_1",
+        name: "Phase 1",
+        stages: [
+          new WorkflowStage({
+            code: "STAGE_1",
+            name: "Stage 1",
+            description: "Stage 1 description",
+            statuses: [],
+            taskGroups: [
+              new WorkflowTaskGroup({
+                code: "TASK_GROUP_1",
+                name: "Task Group 1",
+                description: "Task Group 1 description",
+                tasks: [
+                  new WorkflowTask({
+                    code: "TASK_1",
+                    name: "Task 1",
+                    description: "Task 1 description",
+                    mandatory: true,
+                    statusOptions: [
+                      new WorkflowTaskStatusOption({
+                        code: "COMPLETE",
+                        name: "Complete",
+                        theme: "SUCCESS",
+                        completes: true,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new WorkflowStage({
+            code: "STAGE_2",
+            name: "Stage 2",
+            description: "Stage 2 description",
+            statuses: [],
+            taskGroups: [],
+          }),
+        ],
+      });
+
+      const result = casePhase.areTasksComplete(workflowPhase);
+
+      expect(result).toBe(false);
     });
   });
 });

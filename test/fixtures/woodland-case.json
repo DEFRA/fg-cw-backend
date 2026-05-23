@@ -1,0 +1,131 @@
+{
+  "_id": "69ef662d158e4cbaad3dfbf5",
+  "caseRef": "wmp-7yz-pct",
+  "workflowCode": "woodland",
+  "currentPhase": "PHASE_PRE_AWARD",
+  "currentStage": "STAGE_REVIEWING_APPLICATION",
+  "currentStatus": "STATUS_APPLICATION_RECEIVED",
+  "createdAt": "2026-04-27T13:51:37.208+0000",
+  "payload": {
+    "createdAt": "2026-04-27T13:51:35.911Z",
+    "submittedAt": "2026-04-27T13:51:35.865Z",
+    "identifiers": {
+      "sbi": "106480734",
+      "frn": "106480734",
+      "crn": "1106298365"
+    },
+    "metadata": {},
+    "answers": {
+      "businessDetailsUpToDate": true,
+      "landRegisteredWithRpa": true,
+      "landManagementControl": true,
+      "publicBodyTenant": false,
+      "landHasGrazingRights": false,
+      "appLandHasExistingWmp": false,
+      "intendToApplyHigherTier": true,
+      "hectaresTenOrOverYearsOld": 2,
+      "hectaresUnderTenYearsOld": 0,
+      "centreGridReference": "SP 4178 2432",
+      "woodlandName": "Bob's Meadow",
+      "fcTeamCode": "EAST_AND_EAST_MIDLANDS",
+      "applicant": {
+        "business": {
+          "name": "T MG MORTIMER AND SON",
+          "reference": "106480734",
+          "email": {
+            "address": "106480734@mrafyebbasatecnepsffilcm.com.test"
+          },
+          "phone": {
+            "mobile": "01234031670"
+          },
+          "address": {
+            "line1": "Higher Greenhead Farm, Gisburn Road",
+            "line2": "",
+            "line3": null,
+            "line4": null,
+            "line5": null,
+            "street": "Gisburn Road",
+            "city": "Clitheroe",
+            "postalCode": "BB7 4LQ",
+            "uprn": "881124619099",
+            "buildingName": null,
+            "buildingNumberRange": "Saxby-All-Saints",
+            "county": null,
+            "dependentLocality": null,
+            "doubleDependentLocality": null,
+            "flatName": null,
+            "pafOrganisationName": "Top Farm Two"
+          }
+        },
+        "customer": {
+          "name": {
+            "title": "Miss",
+            "first": "Josie",
+            "middle": "A",
+            "last": "Duggan"
+          }
+        }
+      },
+      "detailsConfirmedAt": "2026-04-27T13:38:16.582Z",
+      "totalHectaresAppliedFor": 2.1647,
+      "guidanceRead": true,
+      "includedAllEligibleWoodland": true,
+      "applicationConfirmation": true,
+      "landParcels": [
+        {
+          "parcelId": "NT8109-6898",
+          "areaHa": 0.0795
+        },
+        {
+          "parcelId": "NT9009-1023",
+          "areaHa": 2.0852
+        }
+      ],
+      "totalAgreementPaymentPence": 150000,
+      "payments": {
+        "agreement": [
+          {
+            "code": "PA3",
+            "description": "Woodland management plan",
+            "activePaymentTier": 1,
+            "quantityInActiveTier": 2,
+            "activeTierRatePence": 0,
+            "activeTierFlatRatePence": 150000,
+            "quantity": 2,
+            "agreementTotalPence": 150000,
+            "unit": "ha"
+          }
+        ]
+      }
+    }
+  },
+  "assignedUserId": null,
+  "phases": [
+    {
+      "code": "PHASE_PRE_AWARD",
+      "stages": [
+        {
+          "code": "STAGE_REVIEWING_APPLICATION",
+          "outcome": null,
+          "taskGroups": []
+        }
+      ]
+    }
+  ],
+  "comments": [],
+  "timeline": [
+    {
+      "createdAt": "2026-04-27T13:51:37.208Z",
+      "eventType": "CASE_CREATED",
+      "createdBy": "System",
+      "commentRef": null,
+      "description": "Case received",
+      "data": {
+        "caseRef": "wmp-7yz-pct"
+      }
+    }
+  ],
+  "supplementaryData": {},
+  "closed": false,
+  "closedAt": null
+}
