@@ -8,10 +8,12 @@ import { wreck } from "../helpers/wreck.js";
 
 let client;
 let cases;
+let caseSeries;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
+  caseSeries = client.db().collection("case_series");
 });
 
 afterAll(async () => {
@@ -29,11 +31,31 @@ describe("GET /cases", () => {
     await cases.insertMany([
       {
         ...caseData1,
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData2,
-        dateReceived: new Date(caseData2.dateReceived),
+        createdAt: new Date(caseData2.createdAt),
+      },
+    ]);
+
+    const now = new Date().toISOString();
+    await caseSeries.insertMany([
+      {
+        caseRefs: [caseData1.caseRef],
+        workflowCode: caseData1.workflowCode,
+        latestCaseRef: caseData1.caseRef,
+        latestCaseId: "case-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: [caseData2.caseRef],
+        workflowCode: caseData2.workflowCode,
+        latestCaseRef: caseData2.caseRef,
+        latestCaseId: "case-2",
+        createdAt: now,
+        updatedAt: now,
       },
     ]);
 
@@ -46,26 +68,29 @@ describe("GET /cases", () => {
         { title: "Casework", href: "/cases" },
       ],
     });
-    expect(response.payload.data).toEqual([
-      {
-        _id: expect.any(String),
-        caseRef: caseData1.caseRef,
-        workflowCode: caseData1.workflowCode,
-        dateReceived: new Date(caseData1.dateReceived).toISOString(),
-        currentStatus: "Awaiting Review",
-        currentStatusTheme: "INFO",
-        assignedUser: null,
-        payload: caseData1.payload,
-      },
+    expect(response.payload.data.pagination).toBeDefined();
+    expect(response.payload.data.cases).toEqual([
       {
         _id: expect.any(String),
         caseRef: caseData2.caseRef,
         workflowCode: caseData2.workflowCode,
-        dateReceived: new Date(caseData2.dateReceived).toISOString(),
+        createdAt: new Date(caseData2.createdAt).toISOString(),
         currentStatus: "Awaiting Review",
         currentStatusTheme: "INFO",
+        hasLinkedCases: false,
         assignedUser: null,
         payload: caseData2.payload,
+      },
+      {
+        _id: expect.any(String),
+        caseRef: caseData1.caseRef,
+        workflowCode: caseData1.workflowCode,
+        createdAt: new Date(caseData1.createdAt).toISOString(),
+        currentStatus: "Awaiting Review",
+        currentStatusTheme: "INFO",
+        hasLinkedCases: false,
+        assignedUser: null,
+        payload: caseData1.payload,
       },
     ]);
   });
@@ -100,19 +125,47 @@ describe("GET /cases", () => {
         ...caseData1,
         caseRef: "UNRESTRCITED-CASE",
         workflowCode: "WF-1",
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData1,
         caseRef: "UNAUTHORIZED-CASE",
         workflowCode: "WF-2",
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
       },
       {
         ...caseData1,
         caseRef: "AUTHORIZED-CASE",
         workflowCode: "WF-3",
-        dateReceived: new Date(caseData1.dateReceived),
+        createdAt: new Date(caseData1.createdAt),
+      },
+    ]);
+
+    const now = new Date().toISOString();
+    await caseSeries.insertMany([
+      {
+        caseRefs: ["UNRESTRCITED-CASE"],
+        workflowCode: "WF-1",
+        latestCaseRef: "UNRESTRCITED-CASE",
+        latestCaseId: "case-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: ["UNAUTHORIZED-CASE"],
+        workflowCode: "WF-2",
+        latestCaseRef: "UNAUTHORIZED-CASE",
+        latestCaseId: "case-2",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        caseRefs: ["AUTHORIZED-CASE"],
+        workflowCode: "WF-3",
+        latestCaseRef: "AUTHORIZED-CASE",
+        latestCaseId: "case-3",
+        createdAt: now,
+        updatedAt: now,
       },
     ]);
 
@@ -125,12 +178,13 @@ describe("GET /cases", () => {
         { title: "Casework", href: "/cases" },
       ],
     });
-    expect(response.payload.data.length).toBe(2);
+    expect(response.payload.data.cases.length).toBe(2);
 
-    expect(response.payload.data[0].caseRef).toBe("UNRESTRCITED-CASE");
-    expect(response.payload.data[0].workflowCode).toBe("WF-1");
+    expect(response.payload.data.cases[0].caseRef).toBe("AUTHORIZED-CASE");
+    expect(response.payload.data.cases[0].workflowCode).toBe("WF-3");
 
-    expect(response.payload.data[1].caseRef).toBe("AUTHORIZED-CASE");
-    expect(response.payload.data[1].workflowCode).toBe("WF-3");
+    expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
+    expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
+    expect(response.payload.data.cases[1].workflowCode).toBe("WF-1");
   });
 });

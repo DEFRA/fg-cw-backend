@@ -298,7 +298,7 @@ describe("findCaseByIdUseCase", () => {
       comments: [],
       currentStatus: "STATUS_1",
       workflowCode: "workflow-code",
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
       requiredRoles: {
@@ -427,6 +427,23 @@ describe("findCaseByIdUseCase", () => {
     });
   });
 
+  it("omits task groups when the current status hides them", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].statuses[0].hideTaskGroups = true;
+
+    findAll.mockResolvedValue([mockUser]);
+    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.hideTaskGroups).toBe(true);
+    expect(result.stage.taskGroups).toEqual([]);
+  });
+
   it("sets canComplete to true when task has no required roles", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
@@ -534,11 +551,13 @@ describe("findCaseByIdUseCase", () => {
       {
         code: "ACTION_1",
         name: "Action 1",
-        comment: {
+        comment: expect.objectContaining({
           helpText: "Action help text",
           label: "Action label 1",
           mandatory: true,
-        },
+        }),
+        confirm: undefined,
+        targetStatusName: "Stage status 2",
       },
     ]);
   });
@@ -594,11 +613,13 @@ describe("findCaseByIdUseCase", () => {
       {
         code: "ACTION_1",
         name: "Action 1",
-        comment: {
+        comment: expect.objectContaining({
           helpText: "Action help text",
           label: "Action label 1",
           mandatory: true,
-        },
+        }),
+        confirm: undefined,
+        targetStatusName: "Stage status 2",
       },
     ]);
   });
@@ -1213,6 +1234,11 @@ describe("mapStatusOptions", () => {
         altName: "Accept",
         theme: "NONE",
         completes: true,
+        comment: {
+          label: "Explain accepted",
+          helpText: "Add acceptance notes",
+          mandatory: true,
+        },
       },
       {
         code: "RFI",
@@ -1220,6 +1246,7 @@ describe("mapStatusOptions", () => {
         altName: "Request information from customer",
         theme: "NOTICE",
         completes: false,
+        comment: null,
       },
     ];
 
@@ -1231,12 +1258,18 @@ describe("mapStatusOptions", () => {
         name: "Accept",
         theme: "NONE",
         completes: true,
+        commentInputDef: {
+          label: "Explain accepted",
+          helpText: "Add acceptance notes",
+          mandatory: true,
+        },
       },
       {
         code: "RFI",
         name: "Request information from customer",
         theme: "NOTICE",
         completes: false,
+        commentInputDef: null,
       },
     ]);
   });
