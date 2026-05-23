@@ -173,6 +173,7 @@ export const mapStatusOptions = (statusOptions) =>
     name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
+    commentInputDef: option.comment,
   }));
 
 export const mapSelectedStatusOption = (statusCode, statusOptions) => {
@@ -268,7 +269,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
       userMap,
       caseWorkflowContext,
     ),
-    dateReceived: kase.dateReceived,
+    createdAt: kase.createdAt,
     payload: kase.payload,
     supplementaryData: kase.supplementaryData,
     assignedUser: assignedUser ? { name: assignedUser.name } : null,
@@ -335,11 +336,42 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
   if (!canPerformActions) {
     return [];
   }
-  return kase.getPermittedActions(workflow).map((a) => ({
-    code: a.code,
-    name: a.name,
-    comment: a.comment,
-  }));
+  const currentStatus = workflow.getStatus(kase.position);
+  return kase.getPermittedActions(workflow).map((a) => {
+    const transition = currentStatus.getTransition(a.code);
+    const targetStatus = transition
+      ? workflow.getStatus(transition.targetPosition)
+      : null;
+    return {
+      code: a.code,
+      name: a.name,
+      comment: a.comment,
+      confirm: a.confirm,
+      classes: a.classes,
+      targetStatusName: targetStatus?.name,
+    };
+  });
+};
+
+const mapVisibleTaskGroups = async (
+  currentStatus,
+  caseStage,
+  workflowStage,
+  userMap,
+  caseWorkflowContext,
+  comments,
+) => {
+  if (currentStatus.hideTaskGroups) {
+    return [];
+  }
+
+  return mapTaskGroups(
+    caseStage,
+    workflowStage,
+    userMap,
+    caseWorkflowContext,
+    comments,
+  );
 };
 
 const mapStageData = async (
@@ -361,8 +393,10 @@ const mapStageData = async (
     name: workflowStage.name,
     description: workflowStage.description,
     interactive: currentStatus.interactive,
+    hideTaskGroups: currentStatus.hideTaskGroups,
     canPerformActions,
-    taskGroups: await mapTaskGroups(
+    taskGroups: await mapVisibleTaskGroups(
+      currentStatus,
       caseStage,
       workflowStage,
       userMap,

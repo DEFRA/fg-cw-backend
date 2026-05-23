@@ -22,7 +22,7 @@ export class Case {
     this._id = props._id || new ObjectId().toHexString();
     this.caseRef = props.caseRef;
     this.workflowCode = props.workflowCode;
-    this.dateReceived = props.dateReceived;
+    this.createdAt = props.createdAt;
     this.position = props.position;
     this.assignedUser = props.assignedUser || null;
     this.payload = props.payload;
@@ -30,6 +30,8 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.supplementaryData = props.supplementaryData || {};
+    this.closed = props.closed;
+    this.closedAt = props.closedAt;
   }
 
   get objectId() {
@@ -42,6 +44,10 @@ export class Case {
       text,
       createdBy,
     });
+  }
+
+  hasPhase(phaseCode) {
+    return this.phases.some((p) => p.code === phaseCode);
   }
 
   findPhase(phaseCode) {
@@ -261,6 +267,8 @@ export class Case {
 
     this.#addTimelineEvent(timelineEvent);
 
+    this.#attemptClose(workflow, position);
+
     this.position = position;
   }
 
@@ -327,7 +335,16 @@ export class Case {
       }),
     );
 
+    this.#attemptClose(workflow, position);
+
     this.position = position;
+  }
+
+  #attemptClose(workflow, position) {
+    if (position && workflow?.canClose(position)) {
+      this.closedAt = new Date(Date.now());
+      this.closed = true;
+    }
   }
 
   #areTasksComplete(workflow) {
@@ -413,9 +430,10 @@ export class Case {
       caseRef,
       workflowCode,
       position,
-      dateReceived: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       payload,
       supplementaryData: {},
+      closed: false,
       timeline: [
         new TimelineEvent({
           eventType: EventEnums.eventTypes.CASE_CREATED,
@@ -438,8 +456,9 @@ export class Case {
         stageCode: "STAGE_1",
         statusCode: "STATUS_1",
       }),
-      dateReceived: "2025-01-01T00:00:00.000Z",
+      createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
+      closed: false,
       supplementaryData: {},
       phases: [
         new CasePhase({

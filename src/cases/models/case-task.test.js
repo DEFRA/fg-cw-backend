@@ -81,42 +81,6 @@ describe("CaseTask", () => {
     );
   });
 
-  it("should not create a task with an invalid code", () => {
-    expect(
-      () =>
-        new CaseTask({
-          code: "invalid_code",
-          status: "PENDING",
-        }),
-    ).toThrow(
-      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[A-Z0-9_]+$/',
-    );
-  });
-
-  it("should not create a task with an invalid code", () => {
-    expect(
-      () =>
-        new CaseTask({
-          code: "invalid_code",
-          status: "PENDING",
-        }),
-    ).toThrow(
-      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[A-Z0-9_]+$/',
-    );
-  });
-
-  it("should not create a task with an invalid code", () => {
-    expect(
-      () =>
-        new CaseTask({
-          code: "invalid_code",
-          status: "PENDING",
-        }),
-    ).toThrow(
-      'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[A-Z0-9_]+$/',
-    );
-  });
-
   it("should update the status of a task", () => {
     const task = new CaseTask({
       code: "TASK_1",
@@ -279,5 +243,40 @@ describe("CaseTask", () => {
     });
 
     expect(task.commentRefs).toEqual([{ status: "RFI", ref: "abc123def456" }]);
+  });
+
+  describe("isComplete", () => {
+    it("should return true for non-mandatory tasks regardless of completion status", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = { mandatory: false };
+
+      expect(task.isComplete(workflowTask)).toBe(true);
+    });
+
+    it("should return true for mandatory task when completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "ACCEPTED",
+        completed: true,
+      });
+      const workflowTask = { mandatory: true };
+
+      expect(task.isComplete(workflowTask)).toBe(true);
+    });
+
+    it("should return false for mandatory task when not completed", () => {
+      const task = new CaseTask({
+        code: "TASK_1",
+        status: "PENDING",
+        completed: false,
+      });
+      const workflowTask = { mandatory: true };
+
+      expect(task.isComplete(workflowTask)).toBe(false);
+    });
   });
 });

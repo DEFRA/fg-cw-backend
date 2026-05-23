@@ -5,6 +5,7 @@ import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case.repository.js";
+import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 export const progressCaseUseCase = async ({
@@ -27,8 +28,11 @@ export const progressCaseUseCase = async ({
 
   const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
 
+  const targetPosition = Position.from(newStatus);
+  await ensureCasePosition(kase, workflow, targetPosition);
+
   kase.progressTo({
-    position: Position.from(newStatus),
+    position: targetPosition,
     workflow,
     createdBy: "System",
   });

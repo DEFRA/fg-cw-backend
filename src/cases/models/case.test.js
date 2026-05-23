@@ -26,7 +26,7 @@ describe("Case", () => {
       stageCode: "STAGE_1",
       statusCode: "STATUS_1",
     }),
-    dateReceived: "2025-01-01T00:00:00.000Z",
+    createdAt: "2025-01-01T00:00:00.000Z",
     assignedUser: { id: validUserId, name: "Test User" },
     payload: { data: "test" },
     phases: [
@@ -66,7 +66,7 @@ describe("Case", () => {
           statusCode: "STATUS_1",
         }),
       );
-      expect(caseInstance.dateReceived).toBe("2025-01-01T00:00:00.000Z");
+      expect(caseInstance.createdAt).toBe("2025-01-01T00:00:00.000Z");
       expect(caseInstance.assignedUser).toEqual({
         id: validUserId,
         name: "Test User",
@@ -421,7 +421,7 @@ describe("Case", () => {
       const caseInstance = createTestCase({
         caseRef: "TEST-001",
         workflowCode: "FRPS",
-        dateReceived: "2025-01-01T00:00:00.000Z",
+        createdAt: "2025-01-01T00:00:00.000Z",
         currentPhase: "PHASE_1",
         currentStage: "STAGE_1",
         currentStatus: "NEW",
@@ -610,6 +610,18 @@ describe("Case", () => {
       });
       expect(kase.timeline[0].comment).toBeDefined();
       expect(kase.comments[0].text).toBe("Note");
+    });
+  });
+
+  describe("hasPhase", () => {
+    it("returns true when phase exists", () => {
+      const kase = Case.createMock();
+      expect(kase.hasPhase("PHASE_1")).toBe(true);
+    });
+
+    it("returns false when phase does not exist", () => {
+      const kase = Case.createMock();
+      expect(kase.hasPhase("PHASE_100")).toBe(false);
     });
   });
 
@@ -1159,32 +1171,6 @@ describe("Case", () => {
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
-      workflow.phases.push(
-        new CasePhase({
-          code: "PHASE_2",
-          stages: [
-            new CaseStage({
-              code: "STAGE_3",
-              statuses: [
-                new WorkflowStageStatus({
-                  code: "STATUS_3",
-                  name: "Stage status 3",
-                  description: "Stage status 3 description",
-                  interactive: true,
-                }),
-                new WorkflowStageStatus({
-                  code: "STATUS_2",
-                  name: "Stage status 2",
-                  description: "Stage status 2 description",
-                  interactive: true,
-                }),
-              ],
-              taskGroups: [],
-            }),
-          ],
-        }),
-      );
-
       workflow.phases[0].stages[0].statuses[0].transitions.push(
         new WorkflowTransition({
           targetPosition: Position.from("PHASE_2:STAGE_3:STATUS_3"),
@@ -1227,6 +1213,43 @@ describe("Case", () => {
       expect(eventTypes).toContain(EventEnums.eventTypes.CASE_STATUS_CHANGED);
     });
 
+    it("updates position, updates closed and closedAt after successful transition", () => {
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock();
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
+      workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
+      workflow.phases[0].stages[0].statuses[1].closes = true;
+
+      kase.phases.push(
+        new CasePhase({
+          code: "PHASE_2",
+          stages: [
+            new CaseStage({
+              code: "STAGE_2",
+              taskGroups: [],
+            }),
+          ],
+        }),
+      );
+
+      const newPosition = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_2",
+      });
+
+      kase.progressTo({
+        position: newPosition,
+        workflow,
+        createdBy: validUserId,
+      });
+
+      expect(kase.position).toEqual(newPosition);
+      expect(kase.closed).toBeTruthy();
+      expect(kase.closedAt).toBeInstanceOf(Date);
+    });
+
     it("updates position after successful transition", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
@@ -1260,6 +1283,8 @@ describe("Case", () => {
       });
 
       expect(kase.position).toEqual(newPosition);
+      expect(kase.closed).toBeFalsy();
+      expect(kase.closedAt).toBeUndefined();
     });
 
     it("does not create PHASE_COMPLETED event when staying in same phase", () => {
@@ -1327,32 +1352,6 @@ describe("Case", () => {
       kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
-
-      workflow.phases.push(
-        new CasePhase({
-          code: "PHASE_2",
-          stages: [
-            new CaseStage({
-              code: "STAGE_2",
-              statuses: [
-                new WorkflowStageStatus({
-                  code: "STATUS_2",
-                  name: "Stage status 2",
-                  description: "Stage status 2 description",
-                  interactive: true,
-                }),
-                new WorkflowStageStatus({
-                  code: "STATUS_3",
-                  name: "Stage status 3",
-                  description: "Stage status 3 description",
-                  interactive: true,
-                }),
-              ],
-              taskGroups: [],
-            }),
-          ],
-        }),
-      );
 
       workflow.phases[0].stages[0].statuses[0].transitions.push(
         new WorkflowTransition({
@@ -1437,7 +1436,7 @@ describe("Case", () => {
       expect(kase.payload).toEqual(payload);
       expect(kase.phases).toEqual(phases);
       expect(kase.supplementaryData).toEqual({});
-      expect(kase.dateReceived).toBeDefined();
+      expect(kase.createdAt).toBeDefined();
     });
 
     it("creates CASE_CREATED timeline event", () => {
@@ -1461,7 +1460,7 @@ describe("Case", () => {
       expect(kase.timeline[0].data.caseRef).toBe(caseRef);
     });
 
-    it("sets dateReceived to current timestamp", () => {
+    it("sets createdAt to current timestamp", () => {
       const mockDate = new Date("2025-06-15T10:30:00.000Z");
       vi.setSystemTime(mockDate);
 
@@ -1473,7 +1472,7 @@ describe("Case", () => {
         phases: [],
       });
 
-      expect(kase.dateReceived).toBe("2025-06-15T10:30:00.000Z");
+      expect(kase.createdAt).toBe("2025-06-15T10:30:00.000Z");
     });
 
     it("initializes supplementaryData as empty object", () => {

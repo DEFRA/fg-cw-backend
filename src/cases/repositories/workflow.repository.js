@@ -23,6 +23,7 @@ const toWorkflowAction = (a) =>
     code: a.code,
     name: a.name,
     checkTasks: a.checkTasks,
+    classes: a.classes,
     comment: a.comment
       ? new WorkflowActionComment({
           label: a.comment.label,
@@ -30,6 +31,7 @@ const toWorkflowAction = (a) =>
           mandatory: a.comment.mandatory,
         })
       : null,
+    confirm: a.confirm,
   });
 
 const toWorkflowTransition = (t) =>
@@ -41,11 +43,13 @@ const toWorkflowTransition = (t) =>
 
 const toWorkflowStageStatus = (s) =>
   new WorkflowStageStatus({
+    closes: s.closes,
     code: s.code,
     name: s.name,
     theme: s.theme,
     description: s.description,
     interactive: s.interactive,
+    hideTaskGroups: s.hideTaskGroups,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
@@ -56,6 +60,7 @@ const toWorkflowTaskStatusOption = (so) =>
     theme: so.theme,
     altName: so.altName,
     completes: so.completes,
+    comment: so.comment,
   });
 
 const toWorkflowTaskComment = (tc) =>
@@ -69,6 +74,7 @@ const toWorkflowTaskComment = (tc) =>
 
 const toWorkflowTask = (t) =>
   new WorkflowTask({
+    conditional: t.conditional,
     code: t.code,
     name: t.name,
     mandatory: t.mandatory,
@@ -126,6 +132,7 @@ const toWorkflow = (doc) =>
       anyOf: doc.requiredRoles.anyOf,
     }),
     definitions: doc.definitions,
+    templates: doc.templates,
     externalActions: doc.externalActions,
     endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
   });
