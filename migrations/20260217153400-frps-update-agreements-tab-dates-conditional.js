@@ -1,10 +1,8 @@
 export const up = async (db) => {
   // only run if the changelog entry does not exist
-  const changelog = await db
-    .collection("changelog")
-    .findOne({
-      fileName: "20261702153400-frps-update-agreements-tab-dates.js",
-    });
+  const changelog = await db.collection("changelog").findOne({
+    fileName: "20261702153400-frps-update-agreements-tab-dates.js",
+  });
   if (changelog) {
     console.log("Changelog entry already exists, skipping migration");
     return;
