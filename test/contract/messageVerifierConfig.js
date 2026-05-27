@@ -10,6 +10,8 @@ const getLatestGitTagOrFallback = () => {
   }).trim();
 };
 
+const getProviderVersionBranch = () => env.GITHUB_REF_NAME ?? "main";
+
 /**
  * Build verification options for MessageProviderPact
  * @param {Object} config
@@ -28,6 +30,7 @@ export const buildMessageVerifierOptions = ({ providerName, consumerName }) => {
   const baseOpts = {
     provider: providerName,
     providerVersion: getLatestGitTagOrFallback(),
+    providerVersionBranch: getProviderVersionBranch(),
   };
 
   if (useLocal) {
