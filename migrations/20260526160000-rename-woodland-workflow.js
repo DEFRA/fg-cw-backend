@@ -1,0 +1,936 @@
+import { config } from "../src/common/config.js";
+
+const definitionsByEnvironment = {
+  local: {
+    agreementsService: {
+      internalUrl: "http://localhost:3000/agreement/{agreementRef}",
+    },
+  },
+  dev: {
+    agreementsService: {
+      internalUrl:
+        "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}",
+    },
+  },
+  test: {
+    agreementsService: {
+      internalUrl:
+        "https://fg-cw-frontend.test.cdp-int.defra.cloud/agreement/{agreementRef}",
+    },
+  },
+  "perf-test": {
+    agreementsService: {
+      internalUrl:
+        "https://fg-cw-frontend.perf-test.cdp-int.defra.cloud/agreement/{agreementRef}",
+    },
+  },
+  "ext-test": {
+    agreementsService: {
+      internalUrl:
+        "https://fg-cw-frontend.ext-test.cdp-int.defra.cloud/agreement/{agreementRef}",
+    },
+  },
+  prod: {
+    agreementsService: {
+      internalUrl:
+        "https://fg-cw-frontend.prod.cdp-int.defra.cloud/agreement/{agreementRef}",
+    },
+  },
+};
+
+export const up = async (db) => {
+  const environment = config.get("cdpEnvironment");
+  const definitions = definitionsByEnvironment[environment];
+  if (!definitions)
+    throw new Error(
+      `No workflow definitions configured for environment: ${environment}`,
+    );
+  const workflow = {
+    code: "woodland",
+    requiredRoles: {
+      allOf: ["ROLE_WMP"],
+      anyOf: [],
+    },
+    templates: {},
+    definitions: definitions,
+    endpoints: [],
+    externalActions: [],
+    pages: {
+      cases: {
+        details: {
+          banner: {
+            title: {
+              text: "$.payload.answers.applicant.business.name",
+              type: "string",
+            },
+            summary: {
+              scheme: {
+                label: "Scheme",
+                text: "Woodland Management Plan",
+                type: "string",
+              },
+              applicationId: {
+                label: "Application ID",
+                text: "$.caseRef",
+                type: "string",
+              },
+              sbi: {
+                label: "SBI",
+                text: "$.payload.identifiers.sbi",
+                type: "string",
+              },
+              status: {
+                label: "Status",
+                text: "$.currentStatusName",
+                type: "string",
+              },
+            },
+          },
+          tabs: {
+            "case-details": {
+              link: {
+                id: "case-details",
+                href: {
+                  urlTemplate: "/cases/{caseId}/case-details",
+                  params: {
+                    caseId: "$._id",
+                  },
+                },
+                text: "Application",
+                index: 1,
+              },
+              content: [
+                {
+                  id: "title",
+                  component: "heading",
+                  text: "Application",
+                  level: 2,
+                  classes: "govuk-!-margin-top-6 govuk-!-margin-bottom-1",
+                },
+                {
+                  id: "submittedDate",
+                  component: "container",
+                  classes: "govuk-body",
+                  items: [
+                    {
+                      text: "Application submitted:",
+                      classes: "govuk-!-font-weight-regular",
+                    },
+                    {
+                      text: "$.payload.submittedAt",
+                      classes: "govuk-!-font-weight-bold",
+                      format: "formatDate",
+                    },
+                  ],
+                },
+                {
+                  component: "accordion",
+                  id: "case-events",
+                  items: [
+                    {
+                      heading: [
+                        {
+                          text: "Customer details",
+                        },
+                      ],
+                      expanded: true,
+                      content: [
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              label: "Name",
+                              text: "$.payload.answers.applicant.customer.name.title $.payload.answers.applicant.customer.name.first $.payload.answers.applicant.customer.name.middle $.payload.answers.applicant.customer.name.last",
+                            },
+                            {
+                              label: "Business name",
+                              text: "$.payload.answers.applicant.business.name",
+                            },
+                            {
+                              label: "Address",
+                              text: [
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.line1",
+                                },
+                                {
+                                  component: "line-break",
+                                },
+                                {
+                                  component: "conditional",
+                                  condition:
+                                    "$.payload.answers.applicant.business.address.line2",
+                                  whenTrue: {
+                                    component: "container",
+                                    items: [
+                                      {
+                                        component: "text",
+                                        text: "$.payload.answers.applicant.business.address.line2",
+                                      },
+                                      {
+                                        component: "line-break",
+                                      },
+                                    ],
+                                  },
+                                },
+                                {
+                                  component: "conditional",
+                                  condition:
+                                    "$.payload.answers.applicant.business.address.line3",
+                                  whenTrue: {
+                                    component: "container",
+                                    items: [
+                                      {
+                                        component: "text",
+                                        text: "$.payload.answers.applicant.business.address.line3",
+                                      },
+                                      {
+                                        component: "line-break",
+                                      },
+                                    ],
+                                  },
+                                },
+                                {
+                                  component: "conditional",
+                                  condition:
+                                    "$.payload.answers.applicant.business.address.line4",
+                                  whenTrue: {
+                                    component: "container",
+                                    items: [
+                                      {
+                                        component: "text",
+                                        text: "$.payload.answers.applicant.business.address.line4",
+                                      },
+                                      {
+                                        component: "line-break",
+                                      },
+                                    ],
+                                  },
+                                },
+                                {
+                                  component: "conditional",
+                                  condition:
+                                    "$.payload.answers.applicant.business.address.line5",
+                                  whenTrue: {
+                                    component: "container",
+                                    items: [
+                                      {
+                                        component: "text",
+                                        text: "$.payload.answers.applicant.business.address.line5",
+                                      },
+                                      {
+                                        component: "line-break",
+                                      },
+                                    ],
+                                  },
+                                },
+                                {
+                                  component: "conditional",
+                                  condition:
+                                    "$.payload.answers.applicant.business.address.city",
+                                  whenTrue: {
+                                    component: "container",
+                                    items: [
+                                      {
+                                        component: "text",
+                                        text: "$.payload.answers.applicant.business.address.city",
+                                      },
+                                      {
+                                        component: "line-break",
+                                      },
+                                    ],
+                                  },
+                                },
+                                {
+                                  component: "text",
+                                  text: "$.payload.answers.applicant.business.address.postalCode",
+                                },
+                              ],
+                            },
+                            {
+                              label: "SBI number",
+                              text: "$.payload.identifiers.sbi",
+                            },
+                            {
+                              component: "conditional",
+                              condition:
+                                "$.payload.answers.applicant.business.email.address",
+                              whenTrue: {
+                                label: "Email address",
+                                text: "$.payload.answers.applicant.business.email.address",
+                              },
+                            },
+                            {
+                              component: "conditional",
+                              condition:
+                                "$.payload.answers.applicant.business.phone.landline",
+                              whenTrue: {
+                                label: "Telephone",
+                                text: "$.payload.answers.applicant.business.phone.landline",
+                              },
+                            },
+                            {
+                              component: "conditional",
+                              condition:
+                                "$.payload.answers.applicant.business.phone.mobile",
+                              whenTrue: {
+                                label: "Mobile",
+                                text: "$.payload.answers.applicant.business.phone.mobile",
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      heading: [
+                        {
+                          text: "Eligibility declarations",
+                        },
+                      ],
+                      content: [
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              label: "Business details are up to date",
+                              text: "$.payload.answers.businessDetailsUpToDate",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Land is registered with RPA",
+                              text: "$.payload.answers.landRegisteredWithRpa",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Has management control of the land",
+                              text: "$.payload.answers.landManagementControl",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Public body tenant",
+                              text: "$.payload.answers.publicBodyTenant",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Land has grazing rights",
+                              text: "$.payload.answers.landHasGrazingRights",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Guidance read",
+                              text: "$.payload.answers.guidanceRead",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Application declaration confirmed",
+                              text: "$.payload.answers.applicationConfirmation",
+                              format: "yesNo",
+                            },
+                            {
+                              label: "Existing woodland management plan",
+                              text: "$.payload.answers.appLandHasExistingWmp",
+                              format: "yesNo",
+                            },
+                            {
+                              component: "conditional",
+                              condition:
+                                "$.payload.answers.appLandHasExistingWmp",
+                              whenTrue: {
+                                component: "conditional",
+                                condition: "$.payload.answers.existingWmps",
+                                whenTrue: {
+                                  label:
+                                    "Existing woodland management plan details",
+                                  text: "$.payload.answers.existingWmps",
+                                },
+                              },
+                            },
+                            {
+                              label: "Intends to apply for Higher Tier",
+                              text: "$.payload.answers.intendToApplyHigherTier",
+                              format: "yesNo",
+                            },
+                            {
+                              component: "conditional",
+                              condition: "$.payload.answers.detailsConfirmedAt",
+                              whenTrue: {
+                                label: "Details confirmed",
+                                text: "$.payload.answers.detailsConfirmedAt",
+                                format: "formatDateTime",
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      heading: [
+                        {
+                          text: "Woodland details",
+                        },
+                      ],
+                      content: [
+                        {
+                          component: "summary-list",
+                          rows: [
+                            {
+                              component: "conditional",
+                              condition: "$.payload.answers.woodlandName",
+                              whenTrue: {
+                                label: "Woodland name",
+                                text: "$.payload.answers.woodlandName",
+                              },
+                            },
+                            {
+                              label: "Total hectares for selected parcels",
+                              text: "$.payload.answers.totalHectaresForSelectedParcels ha",
+                            },
+                            {
+                              label: "Woodland 10 years or older",
+                              text: "$.payload.answers.hectaresTenOrOverYearsOld ha",
+                            },
+                            {
+                              label: "Woodland under 10 years old",
+                              text: "$.payload.answers.hectaresUnderTenYearsOld ha",
+                            },
+                            {
+                              label: "Centre grid reference",
+                              text: "$.payload.answers.centreGridReference",
+                            },
+                            {
+                              label: "Forestry commission team code",
+                              text: "$.payload.answers.fcTeamCode",
+                            },
+                            {
+                              label: "Included all eligible woodland",
+                              text: "$.payload.answers.includedAllEligibleWoodland",
+                              format: "yesNo",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      heading: [
+                        {
+                          text: "Land parcels",
+                        },
+                      ],
+                      content: [
+                        {
+                          component: "table",
+                          rowsRef: "$.payload.answers.landParcels[*]",
+                          head: [
+                            {
+                              component: "text",
+                              text: "Parcel ID",
+                            },
+                            {
+                              component: "text",
+                              text: "Area (ha)",
+                              format: "numeric",
+                            },
+                          ],
+                          rows: [
+                            {
+                              text: "@.parcelId",
+                            },
+                            {
+                              text: "@.areaHa",
+                              format: "numeric",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      heading: [
+                        {
+                          text: "Payment details",
+                        },
+                      ],
+                      content: [
+                        {
+                          component: "conditional",
+                          condition: "$.payload.answers.payments.agreement[0]",
+                          whenTrue: {
+                            component: "container",
+                            items: [
+                              {
+                                component: "repeat",
+                                itemsRef:
+                                  "$.payload.answers.payments.agreement[*]",
+                                items: [
+                                  {
+                                    component: "heading",
+                                    text: "@.code",
+                                    level: 3,
+                                    classes:
+                                      "govuk-heading-m govuk-!-margin-bottom-1",
+                                  },
+                                  {
+                                    component: "paragraph",
+                                    text: "@.description",
+                                    classes:
+                                      "govuk-body govuk-!-margin-bottom-4",
+                                  },
+                                  {
+                                    component: "summary-list",
+                                    rows: [
+                                      {
+                                        label: "Active payment tier",
+                                        text: "@.activePaymentTier",
+                                      },
+                                      {
+                                        label: "Quantity in active tier",
+                                        text: "@.quantityInActiveTier @.unit",
+                                      },
+                                      {
+                                        label: "Active tier rate",
+                                        text: [
+                                          {
+                                            text: "@.activeTierRatePence",
+                                            format: "penniesToPounds",
+                                          },
+                                          {
+                                            text: " per ",
+                                          },
+                                          {
+                                            text: "@.unit",
+                                          },
+                                        ],
+                                      },
+                                      {
+                                        label: "Active tier flat rate",
+                                        text: "@.activeTierFlatRatePence",
+                                        format: "penniesToPounds",
+                                      },
+                                      {
+                                        label: "Total payment",
+                                        text: "@.agreementTotalPence",
+                                        format: "penniesToPounds",
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                          whenFalse: {
+                            component: "paragraph",
+                            text: "There are no agreement level actions.",
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            agreements: {
+              link: {
+                id: "agreements",
+                href: {
+                  urlTemplate: "/cases/{caseId}/agreements",
+                  params: {
+                    caseId: "$._id",
+                  },
+                },
+                text: "Agreements",
+                index: 2,
+              },
+              renderIf: "$.supplementaryData.agreements[0]",
+              content: [
+                {
+                  id: "title",
+                  component: "heading",
+                  text: "Funding agreement",
+                  level: 2,
+                  classes: "govuk-!-margin-top-6",
+                },
+                {
+                  component: "summary-list",
+                  rows: [
+                    {
+                      label: "Agreement status",
+                      text: [
+                        {
+                          component: "status",
+                          text: "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
+                          themeMap: {
+                            AGREEMENT_GENERATING: "INFO",
+                            AGREEMENT_DRAFTED: "INFO",
+                            OFFERED: "NOTICE",
+                            ACCEPTED: "SUCCESS",
+                            WITHDRAWN: "WARN",
+                            REJECTED: "ERROR",
+                            TERMINATED: "ERROR",
+                            CANCELLED: "WARN",
+                          },
+                          labelsMap: {
+                            AGREEMENT_GENERATING: "Agreement generating",
+                            AGREEMENT_DRAFTED: "Agreement drafted",
+                            OFFERED: "Offered",
+                            ACCEPTED: "Accepted",
+                            WITHDRAWN: "Withdrawn",
+                            REJECTED: "Rejected",
+                            TERMINATED: "Terminated",
+                            CANCELLED: "Cancelled",
+                          },
+                        },
+                      ],
+                    },
+                    {
+                      label: "Reference",
+                      text: "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef",
+                    },
+                    {
+                      label: "Date created",
+                      text: "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
+                      format: "formatDate",
+                    },
+                    {
+                      label: "Date accepted",
+                      text: "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate)), '[D] [MNn,*-3] [Y]') : 'Not accepted'",
+                    },
+                    {
+                      label: "Start date",
+                      text: "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate)), '[D] [MNn,*-3] [Y]') : 'Not started'",
+                    },
+                    {
+                      label: "View",
+                      text: [
+                        {
+                          component: "url",
+                          text: "View agreement",
+                          href: {
+                            urlTemplate:
+                              "$.definitions.agreementsService.internalUrl",
+                            params: {
+                              agreementRef:
+                                "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef",
+                            },
+                          },
+                          target: "_blank",
+                          rel: "noopener",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    phases: [
+      {
+        code: "PHASE_PRE_AWARD",
+        name: "Pre-award",
+        stages: [
+          {
+            code: "STAGE_REVIEWING_APPLICATION",
+            name: "Reviewing Application",
+            description: "Review the woodland management plan application",
+            statuses: [
+              {
+                code: "STATUS_APPLICATION_RECEIVED",
+                name: "Application Received",
+                theme: "NEUTRAL",
+                description: "Application received and pending review",
+                interactive: false,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_APPLICATION_IN_REVIEW",
+                    checkTasks: false,
+                    action: {
+                      code: "ACTION_START_REVIEW",
+                      name: "Start",
+                      checkTasks: false,
+                      comment: null,
+                    },
+                  },
+                ],
+              },
+              {
+                code: "STATUS_APPLICATION_IN_REVIEW",
+                name: "In Review",
+                theme: "INFO",
+                description: "Application is being reviewed",
+                interactive: true,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_REVIEWING_APPLICATION:STATUS_AGREEMENT_GENERATING",
+                    checkTasks: false,
+                    action: {
+                      code: "ACTION_APPROVE_APPLICATION",
+                      name: "Approve",
+                      checkTasks: false,
+                      comment: {
+                        label: "Explain this decision",
+                        helpText: "An explanation for auditing purposes.",
+                        mandatory: false,
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                code: "STATUS_AGREEMENT_GENERATING",
+                name: "Agreement Generating",
+                theme: "NEUTRAL",
+                description: "The agreement is being generated",
+                interactive: false,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_PREPARING_AGREEMENT:STATUS_AGREEMENT_READY_FOR_APPLICANT",
+                    checkTasks: false,
+                    action: null,
+                  },
+                ],
+              },
+            ],
+            taskGroups: [],
+          },
+          {
+            name: "Preparing agreement",
+            code: "STAGE_PREPARING_AGREEMENT",
+            description: "Send the Agreement to applicant",
+            statuses: [
+              {
+                name: "Agreement ready for applicant",
+                code: "STATUS_AGREEMENT_READY_FOR_APPLICANT",
+                theme: "NEUTRAL",
+                description:
+                  "The agreement is ready to be sent to the applicant",
+                interactive: true,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_AGREEMENT_WITH_APPLICANT:STATUS_AGREEMENT_OFFERED",
+                    checkTasks: true,
+                    action: {
+                      code: "ACTION_CONFIRM_AGREEMENT_SENT",
+                      name: "Confirm agreement sent",
+                      checkTasks: true,
+                      comment: {
+                        label: "Add a comment",
+                        helpText: "Add any comments for the applicant.",
+                        mandatory: false,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+            taskGroups: [
+              {
+                name: "Tasks",
+                code: "TASK_GROUP_AGREEMENT_PREPARATION",
+                tasks: [
+                  {
+                    name: "Notify customer that draft agreement is ready",
+                    code: "TASK_AGREEMENT_DELIVERY_TO_APPLICANT",
+                    description:
+                      "Email the applicant with a link to their drafted agreement from the Agreement tab",
+                    mandatory: true,
+                    statusOptions: [
+                      {
+                        name: "Sent",
+                        code: "STATUS_AGREEMENT_SENT_TO_APPLICANT",
+                        theme: "SUCCESS",
+                        altName: "Send",
+                        completes: true,
+                      },
+                      {
+                        name: "Not sent",
+                        code: "STATUS_AGREEMENT_NOT_SENT_TO_APPLICANT",
+                        theme: "ERROR",
+                        altName: "Don't send",
+                        completes: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Agreement with applicant",
+            code: "STAGE_AGREEMENT_WITH_APPLICANT",
+            description: "Awaiting signed agreement back from applicant",
+            taskGroups: [],
+            statuses: [
+              {
+                name: "Agreement offered",
+                code: "STATUS_AGREEMENT_OFFERED",
+                theme: "NEUTRAL",
+                interactive: true,
+                devComment:
+                  "we will have extra transitions below for withdraw and return to customer",
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_AGREEMENT_ACCEPTED:STATUS_AGREEMENT_ACCEPTED",
+                    checkTasks: false,
+                    action: null,
+                    comment: null,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Agreement accepted",
+            code: "STAGE_AGREEMENT_ACCEPTED",
+            description: "Forward to Forestry Commission",
+            statuses: [
+              {
+                name: "Agreement accepted",
+                code: "STATUS_AGREEMENT_ACCEPTED",
+                theme: "NEUTRAL",
+                description: "Ready to forward to Forestry Commission",
+                interactive: true,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_FC_REVIEWING:STATUS_APPLICATION_AWAITING_FC",
+                    checkTasks: true,
+                    action: {
+                      code: "ACTION_FORWARD_TO_FC",
+                      name: "Forward to FC",
+                      checkTasks: true,
+                      comment: {
+                        label: "Add a comment",
+                        helpText:
+                          "Add any comments for the Forestry Commission.",
+                        mandatory: false,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+            taskGroups: [
+              {
+                name: "Create CRM record",
+                code: "TASK_GROUP_CRM_RECORD",
+                tasks: [
+                  {
+                    name: "Create CRM record",
+                    code: "TASK_CRM_RECORD_CREATION",
+                    description: "Create a CRM record for this application",
+                    mandatory: true,
+                    statusOptions: [
+                      {
+                        name: "Create CRM ",
+                        code: "STATUS_CRM_RECORD_CREATED",
+                        theme: "SUCCESS",
+                        altName: "Created",
+                        completes: true,
+                      },
+                      {
+                        name: "There's a problem",
+                        code: "STATUS_CRM_RECORD_NOT_CREATED",
+                        theme: "ERROR",
+                        altName: "Not created",
+                        completes: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Forestry Commission review",
+            code: "STAGE_FC_REVIEWING",
+            description: "Forestry Commission review of the application",
+            statuses: [
+              {
+                name: "Awaiting Forestry Commission review",
+                code: "STATUS_APPLICATION_AWAITING_FC",
+                theme: "NEUTRAL",
+                description:
+                  "The application has been sent to the Forestry Commission for review",
+                interactive: true,
+                transitions: [
+                  {
+                    targetPosition:
+                      "PHASE_PRE_AWARD:STAGE_APPLICATION_COMPLETED:STATUS_APPLICATION_COMPLETED",
+                    checkTasks: true,
+                    action: {
+                      code: "ACTION_APPROVE_FC_REVIEW",
+                      name: "Approve FC review",
+                      checkTasks: true,
+                      comment: {
+                        label: "Add a comment",
+                        helpText:
+                          "Add any comments about the Forestry Commission's decision.",
+                        mandatory: false,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+            taskGroups: [
+              {
+                name: "Forestry Commission review",
+                code: "TASK_GROUP_FC_REVIEW",
+                tasks: [
+                  {
+                    name: "Forestry Commission review completed?",
+                    code: "TASK_FC_REVIEW_OUTCOME",
+                    description:
+                      "The Forestry Commission has completed their review of the application",
+                    mandatory: true,
+                    statusOptions: [
+                      {
+                        name: "Succeeded",
+                        code: "STATUS_FC_REVIEW_SUCCESSFUL",
+                        theme: "SUCCESS",
+                        altName: "Succeed",
+                        completes: true,
+                      },
+                      {
+                        name: "Failed",
+                        code: "STATUS_FC_REVIEW_UNSUCCESSFUL",
+                        theme: "ERROR",
+                        altName: "Fail",
+                        completes: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Application completed",
+            code: "STAGE_APPLICATION_COMPLETED",
+            description: "The application is  complete",
+            statuses: [
+              {
+                name: "Application completed",
+                code: "STATUS_APPLICATION_COMPLETED",
+                theme: "NEUTRAL",
+                description: "The application is complete",
+                interactive: false,
+                transitions: [],
+              },
+            ],
+            taskGroups: [],
+          },
+        ],
+      },
+    ],
+  };
+  await db.collection("workflows").deleteOne({ code: "woodland" });
+  await db.collection("workflows").insertOne(workflow);
+};
