@@ -741,7 +741,7 @@
                       "altName": "Sent to customer",
                       "completes": true,
                       "comment": {
-                        "label": "Reason",
+                        "label": "Explanation",
                         "helpText": "Enter the CRM reference number to confirm the draft agreement has been sent.",
                         "mandatory": true
                       }
@@ -753,7 +753,7 @@
                       "altName": "Could not send to customer",
                       "completes": false,
                       "comment": {
-                        "label": "Reason",
+                        "label": "Explanation",
                         "helpText": "Explain why the draft agreement link could not been sent.",
                         "mandatory": true
                       }
@@ -776,9 +776,49 @@
           ]
         },
         {
-          "name": "Agreement with applicant",
+          "name": "Agreement offered",
           "code": "STAGE_AGREEMENT_WITH_APPLICANT",
-          "description": "Awaiting signed agreement back from applicant",
+          "description": "The id a DESCRIPTION",
+          "beforeContent": [
+            {
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "The agreement has been offered and you don't need to do anything else."
+                },
+                {
+                  "component": "heading",
+                  "level": 4,
+                  "text": "Withdrawing the agreement"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "The agreement can be withdrawn as long as the customer has not already accepted or rejected it."
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You might need to withdraw it if the customer:"
+                },
+                {
+                  "component": "unordered-list",
+                  "items": [
+                    {
+                      "component": "text",
+                      "text": "needs to update their application"
+                    },
+                    {
+                      "component": "text",
+                      "text": "has not responded to the agreement offer within 20 working days"
+                    },
+                    {
+                      "component": "text",
+                      "text": "there is an error in the agreement"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
           "taskGroups": [],
           "statuses": [
             {
@@ -829,13 +869,49 @@
           ],
           "taskGroups": [
             {
-              "name": "Create CRM record",
+              "name": "Tasks",
               "code": "TASK_GROUP_CRM_RECORD",
               "tasks": [
                 {
                   "name": "Create CRM record",
                   "code": "TASK_CRM_RECORD_CREATION",
-                  "description": "Create a CRM record for this application",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Create CRM record",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Follow these steps to create the CRM record:"
+                    },
+                    {
+                      "component": "ordered-list",
+                      "items": [
+                        {
+                          "component": "text",
+                          "text": "Go to the application tab to view the submitted details"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Print or save the application details to a PDF"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Copy the relevant details in to the CRM"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Upload the PDF of the application in to the CRM"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Come back to this page and confirm when the task is complete"
+                        }
+                      ]
+                    }
+                  ],
                   "mandatory": true,
                   "statusOptions": [
                     {
@@ -843,14 +919,24 @@
                       "code": "STATUS_CRM_RECORD_CREATED",
                       "theme": "SUCCESS",
                       "altName": "Created",
-                      "completes": true
+                      "completes": true,
+                      "comment": {
+                        "label": "Enter more information",
+                        "helpText": "You must include the explanation for auditing purposes.",
+                        "mandatory": true
+                      }
                     },
                     {
                       "name": "There's a problem",
                       "code": "STATUS_CRM_RECORD_NOT_CREATED",
                       "theme": "ERROR",
                       "altName": "Not created",
-                      "completes": false
+                      "completes": false,
+                      "comment": {
+                        "label": "Enter more information",
+                        "helpText": "You must include the explanation for auditing purposes.",
+                        "mandatory": true
+                      }
                     }
                   ]
                 }
