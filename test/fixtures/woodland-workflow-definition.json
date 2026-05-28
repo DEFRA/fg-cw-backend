@@ -571,7 +571,7 @@
       "stages": [
         {
           "code": "STAGE_REVIEWING_APPLICATION",
-          "name": "Reviewing Application",
+          "name": "Application received",
           "description": "Review the woodland management plan application",
           "statuses": [
             {
@@ -605,11 +605,11 @@
                   "checkTasks": false,
                   "action": {
                     "code": "ACTION_APPROVE_APPLICATION",
-                    "name": "Approve",
+                    "name": "Continue",
                     "checkTasks": false,
                     "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "An explanation for auditing purposes.",
+                      "label": "",
+                      "helpText": "",
                       "mandatory": false
                     }
                   }
@@ -631,10 +631,54 @@
               ]
             }
           ],
-          "taskGroups": []
+          "taskGroups": [],
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_IN_REVIEW'",
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "Select 'Continue' to generate the draft agreement."
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You'll need to enter further information here for auditing purposes."
+                }
+              ]
+            },
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_RECEIVED'",
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "Select 'Start' to being working on this application."
+                }
+              ]
+            },
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_GENERATING'",
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "The draft agreement is being generated and will appear here when you refresh the page."
+                },
+                {
+                  "component": "url",
+                  "text": "Refresh page",
+                  "href": {
+                    "urlTemplate": "/cases/{caseId}",
+                    "params": {
+                      "caseId": "$._id"
+                    }
+                  },
+                  "classes": "govuk-button"
+                }
+              ]
+            }
+          ]
         },
         {
-          "name": "Preparing agreement",
+          "name": "Agreement ready for applicant",
           "code": "STAGE_PREPARING_AGREEMENT",
           "description": "Send the Agreement to applicant",
           "statuses": [
@@ -670,24 +714,62 @@
                 {
                   "name": "Notify customer that draft agreement is ready",
                   "code": "TASK_AGREEMENT_DELIVERY_TO_APPLICANT",
-                  "description": "Email the applicant with a link to their drafted agreement from the Agreement tab",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Draft agreement status",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Send the draft agreement link to the customer or explain why this is not possible."
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Confirm the draft agreement link has been sent",
+                      "level": 3,
+                      "classes": "govuk-!-margin-bottom-3"
+                    }
+                  ],
                   "mandatory": true,
                   "statusOptions": [
                     {
                       "name": "Sent",
                       "code": "STATUS_AGREEMENT_SENT_TO_APPLICANT",
                       "theme": "SUCCESS",
-                      "altName": "Send",
-                      "completes": true
+                      "altName": "Sent to customer",
+                      "completes": true,
+                      "comment": {
+                        "label": "Reason",
+                        "helpText": "Enter the CRM reference number to confirm the draft agreement has been sent.",
+                        "mandatory": true
+                      }
                     },
                     {
                       "name": "Not sent",
                       "code": "STATUS_AGREEMENT_NOT_SENT_TO_APPLICANT",
                       "theme": "ERROR",
-                      "altName": "Don't send",
-                      "completes": false
+                      "altName": "Could not send to customer",
+                      "completes": false,
+                      "comment": {
+                        "label": "Reason",
+                        "helpText": "Explain why the draft agreement link could not been sent.",
+                        "mandatory": true
+                      }
                     }
                   ]
+                }
+              ]
+            }
+          ],
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_READY_FOR_APPLICANT'",
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "The draft agreement is ready and you need to notify the customer."
                 }
               ]
             }
