@@ -571,7 +571,7 @@
       "stages": [
         {
           "code": "STAGE_REVIEWING_APPLICATION",
-          "name": "Reviewing Application",
+          "name": "Application received",
           "description": "Review the woodland management plan application",
           "statuses": [
             {
@@ -605,11 +605,11 @@
                   "checkTasks": false,
                   "action": {
                     "code": "ACTION_APPROVE_APPLICATION",
-                    "name": "Approve",
+                    "name": "Continue",
                     "checkTasks": false,
                     "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "An explanation for auditing purposes.",
+                      "label": "",
+                      "helpText": "Add comment for auditing purposes.",
                       "mandatory": false
                     }
                   }
@@ -631,10 +631,65 @@
               ]
             }
           ],
-          "taskGroups": []
+          "taskGroups": [],
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_IN_REVIEW'",
+              "content": [
+                {
+                  "component": "heading",
+                  "level": 3,
+                  "text": "Generate draft agreement"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "Select 'Continue' to generate the draft agreement."
+                }
+              ]
+            },
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_RECEIVED'",
+              "content": [
+                {
+                  "component": "heading",
+                  "level": 3,
+                  "text": "Reviewing application"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "Select 'Start' to being working on this application."
+                }
+              ]
+            },
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_GENERATING'",
+              "content": [
+                {
+                  "component": "heading",
+                  "level": 3,
+                  "text": "Generating draft agreement"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "The draft agreement is being generated and will be available when you refresh the page."
+                },
+                {
+                  "component": "url",
+                  "text": "Refresh page",
+                  "href": {
+                    "urlTemplate": "/cases/{caseId}",
+                    "params": {
+                      "caseId": "$._id"
+                    }
+                  },
+                  "classes": "govuk-button"
+                }
+              ]
+            }
+          ]
         },
         {
-          "name": "Preparing agreement",
+          "name": "Agreement ready for applicant",
           "code": "STAGE_PREPARING_AGREEMENT",
           "description": "Send the Agreement to applicant",
           "statuses": [
@@ -653,8 +708,8 @@
                     "name": "Confirm agreement sent",
                     "checkTasks": true,
                     "comment": {
-                      "label": "Add a comment",
-                      "helpText": "Add any comments for the applicant.",
+                      "label": "",
+                      "helpText": "Add comment for auditing purposes.",
                       "mandatory": false
                     }
                   }
@@ -670,24 +725,65 @@
                 {
                   "name": "Notify customer that draft agreement is ready",
                   "code": "TASK_AGREEMENT_DELIVERY_TO_APPLICANT",
-                  "description": "Email the applicant with a link to their drafted agreement from the Agreement tab",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Notify customer that draft agreement is ready",
+                      "level": 2
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Send the draft agreement link to the customer or explain why this is not possible."
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Confirm the draft agreement link has been sent",
+                      "level": 3
+                    }
+                  ],
                   "mandatory": true,
                   "statusOptions": [
                     {
                       "name": "Sent",
                       "code": "STATUS_AGREEMENT_SENT_TO_APPLICANT",
                       "theme": "SUCCESS",
-                      "altName": "Send",
-                      "completes": true
+                      "altName": "Sent to customer",
+                      "completes": true,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Enter the CRM reference number to confirm the draft agreement has been sent.",
+                        "mandatory": true
+                      }
                     },
                     {
                       "name": "Not sent",
                       "code": "STATUS_AGREEMENT_NOT_SENT_TO_APPLICANT",
                       "theme": "ERROR",
-                      "altName": "Don't send",
-                      "completes": false
+                      "altName": "Could not send to customer",
+                      "completes": false,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Explain why the draft agreement link could not been sent.",
+                        "mandatory": true
+                      }
                     }
                   ]
+                }
+              ]
+            }
+          ],
+          "beforeContent": [
+            {
+              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_READY_FOR_APPLICANT'",
+              "content": [
+                {
+                  "component": "heading",
+                  "level": 3,
+                  "text": "Preparing agreement"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "The draft agreement is ready and you need to notify the customer."
                 }
               ]
             }
@@ -696,7 +792,47 @@
         {
           "name": "Agreement with applicant",
           "code": "STAGE_AGREEMENT_WITH_APPLICANT",
-          "description": "Awaiting signed agreement back from applicant",
+          "description": "The id a DESCRIPTION",
+          "beforeContent": [
+            {
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "The agreement has been offered and you don't need to do anything else."
+                },
+                {
+                  "component": "heading",
+                  "level": 3,
+                  "text": "Withdrawing the agreement"
+                },
+                {
+                  "component": "paragraph",
+                  "text": "The agreement can be withdrawn as long as the customer has not already accepted or rejected it."
+                },
+                {
+                  "component": "paragraph",
+                  "text": "You might need to withdraw it if the customer:"
+                },
+                {
+                  "component": "unordered-list",
+                  "items": [
+                    {
+                      "component": "text",
+                      "text": "needs to update their application"
+                    },
+                    {
+                      "component": "text",
+                      "text": "has not responded to the agreement offer within 20 working days"
+                    },
+                    {
+                      "component": "text",
+                      "text": "there is an error in the agreement"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
           "taskGroups": [],
           "statuses": [
             {
@@ -733,11 +869,11 @@
                   "checkTasks": true,
                   "action": {
                     "code": "ACTION_FORWARD_TO_FC",
-                    "name": "Forward to FC",
+                    "name": "Forestry Commission has been notified",
                     "checkTasks": true,
                     "comment": {
-                      "label": "Add a comment",
-                      "helpText": "Add any comments for the Forestry Commission.",
+                      "label": "",
+                      "helpText": "Add comment for auditing purposes.",
                       "mandatory": false
                     }
                   }
@@ -747,28 +883,98 @@
           ],
           "taskGroups": [
             {
-              "name": "Create CRM record",
+              "name": "Tasks",
               "code": "TASK_GROUP_CRM_RECORD",
               "tasks": [
                 {
                   "name": "Create CRM record",
                   "code": "TASK_CRM_RECORD_CREATION",
-                  "description": "Create a CRM record for this application",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Create CRM record",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Follow these steps to create the CRM record:"
+                    },
+                    {
+                      "component": "ordered-list",
+                      "items": [
+                        {
+                          "component": "container",
+                          "items": [
+                            {
+                              "component": "text",
+                              "text": "Go to the "
+                            },
+                            {
+                              "component": "url",
+                              "text": "Application tab",
+                              "href": {
+                                "urlTemplate": "/cases/{caseId}/case-details",
+                                "params": {
+                                  "caseId": "$._id"
+                                }
+                              }
+                            },
+                            {
+                              "component": "text",
+                              "text": " to view submitted details."
+                            }
+                          ]
+                        },
+                        {
+                          "component": "text",
+                          "text": "Print or save the application details to a PDF"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Copy the relevant details in to the CRM"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Upload the PDF of the application in to the CRM"
+                        },
+                        {
+                          "component": "text",
+                          "text": "Come back to this page and confirm when the task is complete"
+                        }
+                      ]
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Confirm CRM record has been created",
+                      "level": 3
+                    }
+                  ],
                   "mandatory": true,
                   "statusOptions": [
                     {
-                      "name": "Create CRM ",
+                      "name": "Created",
                       "code": "STATUS_CRM_RECORD_CREATED",
                       "theme": "SUCCESS",
                       "altName": "Created",
-                      "completes": true
+                      "completes": true,
+                      "comment": {
+                        "label": "Enter more information",
+                        "helpText": "You must include an explanation for auditing purposes.",
+                        "mandatory": true
+                      }
                     },
                     {
-                      "name": "There's a problem",
+                      "name": "Not created",
                       "code": "STATUS_CRM_RECORD_NOT_CREATED",
                       "theme": "ERROR",
                       "altName": "Not created",
-                      "completes": false
+                      "completes": false,
+                      "comment": {
+                        "label": "Enter more information",
+                        "helpText": "You must include an explanation for auditing purposes.",
+                        "mandatory": true
+                      }
                     }
                   ]
                 }
@@ -793,11 +999,11 @@
                   "checkTasks": true,
                   "action": {
                     "code": "ACTION_APPROVE_FC_REVIEW",
-                    "name": "Approve FC review",
+                    "name": "Approve Forestry Commission review",
                     "checkTasks": true,
                     "comment": {
-                      "label": "Add a comment",
-                      "helpText": "Add any comments about the Forestry Commission's decision.",
+                      "label": "",
+                      "helpText": "Add comment for auditing purposes.",
                       "mandatory": false
                     }
                   }
@@ -805,30 +1011,50 @@
               ]
             }
           ],
+          "beforeContent": [
+            {
+              "content": [
+                {
+                  "component": "paragraph",
+                  "text": "The agreement has been offered and you don't need to do anything else."
+                }
+              ]
+            }
+          ],
           "taskGroups": [
             {
-              "name": "Forestry Commission review",
+              "name": "Tasks",
               "code": "TASK_GROUP_FC_REVIEW",
               "tasks": [
                 {
-                  "name": "Forestry Commission review completed?",
+                  "name": "Record Forestry Commission outcome",
                   "code": "TASK_FC_REVIEW_OUTCOME",
-                  "description": "The Forestry Commission has completed their review of the application",
+                  "description": "Record Forestry Commission outcome",
                   "mandatory": true,
                   "statusOptions": [
                     {
-                      "name": "Succeeded",
+                      "name": "Accepted",
                       "code": "STATUS_FC_REVIEW_SUCCESSFUL",
                       "theme": "SUCCESS",
-                      "altName": "Succeed",
-                      "completes": true
+                      "altName": "Accepted",
+                      "completes": true,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Add comment for auditing purposes.",
+                        "mandatory": true
+                      }
                     },
                     {
-                      "name": "Failed",
+                      "name": "Rejected",
                       "code": "STATUS_FC_REVIEW_UNSUCCESSFUL",
                       "theme": "ERROR",
-                      "altName": "Fail",
-                      "completes": false
+                      "altName": "Rejected",
+                      "completes": false,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Add comment for auditing purposes.",
+                        "mandatory": true
+                      }
                     }
                   ]
                 }
