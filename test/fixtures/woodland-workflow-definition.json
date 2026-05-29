@@ -571,7 +571,7 @@
       "stages": [
         {
           "code": "STAGE_REVIEWING_APPLICATION",
-          "name": "Application received",
+          "name": "Reviewing application",
           "description": "Review the woodland management plan application",
           "statuses": [
             {
@@ -855,7 +855,7 @@
                   "checkTasks": true,
                   "action": {
                     "code": "ACTION_FORWARD_TO_FC",
-                    "name": "Forward to FC",
+                    "name": "Forestry Commission has been notified",
                     "checkTasks": true,
                     "comment": {
                       "label": "Add a comment",
