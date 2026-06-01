@@ -17,7 +17,7 @@ COPY --chown=node:node migrate-mongo-config.js ./
 COPY --chown=node:node migrations ./migrations
 
 RUN npm ci --omit=dev \
-  chmod +x scripts/run.sh
+i  && chmod +x scripts/run.sh
 
 COPY --chown=node:node src src
 
