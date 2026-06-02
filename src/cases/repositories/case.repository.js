@@ -146,8 +146,21 @@ const ascDescToFlags = (sort) =>
       .map(([k, v]) => [k, toDir(v)]),
   );
 
+const buildSearchFilter = (workflowCodes, search) => {
+  const filter = {
+    workflowCode: { $in: workflowCodes },
+  };
+
+  if (search) {
+    filter.$or = [{ caseRef: search }, { "payload.identifiers.sbi": search }];
+  }
+
+  return filter;
+};
+
 export const findAll = ({
   workflowCodes,
+  search,
   cursor,
   direction,
   sort,
@@ -156,9 +169,7 @@ export const findAll = ({
   const cases = db.collection(collection);
 
   return paginate(cases, {
-    filter: {
-      workflowCode: { $in: workflowCodes },
-    },
+    filter: buildSearchFilter(workflowCodes, search),
     cursor,
     direction,
     sort: ascDescToFlags(sort),

@@ -103,10 +103,22 @@ npm run test:contract -- test/contract/consumer.gas-backend.test.js
 
 This generates: `tmp/pacts/fg-cw-backend-fg-gas-backend.json`
 
+### Run Provider Tests
+
+Provider tests verify that CW sends messages matching GAS expectations. They fetch pacts directly from the broker.
+
+```bash
+PACT_BROKER_BASE_URL=https://ffc-pact-broker.azure.defra.cloud \
+PACT_USER=<user> \
+PACT_PASS=<pass> \
+npx vitest --config test/contract/vitest.config.js test/contract/provider.gas-backend.test.js
+```
+
+Output will show `pact verifier mode=broker` when running against the broker correctly.
+
 ### Publish Consumer Contracts to Broker
 
 ```bash
-# Publish the pact so GAS team can verify against it
 pact broker publish --merge tmp/pacts/*.json \
   --consumer-app-version=$(git describe --tags --abbrev=0 --always) \
   --broker-base-url=https://ffc-pact-broker.azure.defra.cloud \
@@ -116,40 +128,15 @@ pact broker publish --merge tmp/pacts/*.json \
 
 **Note**: The `--merge` flag allows updating pacts for the same version without conflicts.
 
-### Run All Contract Tests
-
-```bash
-npm run test:contract
-```
-
-This runs all contract tests (consumer and provider) and fetches pacts from the broker by default.
-
-### Run Tests in Local Mode
-
-```bash
-npm run test:contract:local
-```
-
-This runs tests using local pact files from `tmp/pacts/` instead of fetching from the broker. Useful for local development when you want to test against locally generated pacts.
-
 **Environment Variables**:
 
-- `PACT_USE_LOCAL=true` - Use local pact files instead of broker
+- `PACT_USE_LOCAL=true` - Use local pact files instead of broker (for local debugging only)
 - `PACT_LOCAL_DIR` - Custom directory for local pacts (default: `tmp/pacts`)
-- `PACT_BROKER_BASE_URL` - Pact broker URL (default: `https://ffc-pact-broker.azure.defra.cloud`)
+- `PACT_BROKER_BASE_URL` - Pact broker URL
 - `PACT_USER` - Broker username
 - `PACT_PASS` - Broker password
 - `PACT_PUBLISH_VERIFICATION` - Publish verification results to broker (default: `false`)
-
-### Provider Tests
-
-Provider tests verify that CW sends messages matching GAS expectations. The test uses `MessageProviderPact` and fetches pacts from the broker by default:
-
-**File**: `provider.gas-backend.test.js`
-
-- In CI: Fetches from broker using `PACT_USER` and `PACT_PASS`
-- Locally: Set `PACT_USE_LOCAL=true` to test against local pact files
-- Configuration: `messageVerifierConfig.js` handles broker vs local mode
+- `GITHUB_REF_NAME` - Branch name sent to broker as `providerVersionBranch` (set automatically in CI)
 
 ## Pact Broker
 
@@ -164,21 +151,34 @@ Provider tests verify that CW sends messages matching GAS expectations. The test
    - Test: `consumer.gas-backend.test.js`
    - Messages: CreateNewCaseCommand, UpdateCaseStatusCommand (FRPS + WMG)
 
-## Workflow
+## CI/CD Workflow
+
+### GitHub Actions Workflows
+
+| File                       | Trigger                           | What it does                                                                         |
+| -------------------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
+| `check-pull-request.yml`   | PR to main/dev                    | Runs provider verification (`publish-verification: false`)                           |
+| `publish.yml`              | Push to main                      | Publishes consumer pacts + runs provider verification (`publish-verification: true`) |
+| `pact-verify.yml`          | Called by above two               | Reusable: runs `provider.gas-backend.test.js` against broker                         |
+| `pact-webhook.yml`         | Broker webhook (`pact_published`) | Triggered automatically when GAS publishes a pact; runs provider verification        |
+| `create-pact-webhooks.yml` | Manual (`workflow_dispatch`)      | One-time: registers webhook on pact broker                                           |
+
+### Webhook Setup (one-time after deploy)
+
+Run `create-pact-webhooks.yml` manually via GitHub Actions → **Run workflow**. This registers the webhook on the broker so that when `fg-gas-backend` publishes a pact, this repo's provider verification runs automatically.
 
 ### For CW Team (Consumer of Case Commands):
 
 1. Define what messages CW can handle (`consumer.gas-backend.test.js`)
 2. Run consumer tests to generate pact
-3. Publish pact to broker
+3. Publish pact to broker — this automatically triggers GAS provider verification via webhook
 4. GAS team verifies they meet this contract
 
 ### For GAS Team (Provider of Commands):
 
-1. Download CW consumer contract from broker
-2. Write provider verification tests
-3. Verify their message producer meets CW expectations
-4. Publish verification results
+1. CW consumer pact published → broker fires webhook → `pact-webhook.yml` runs automatically
+2. Provider verification results published back to broker
+3. No manual action needed
 
 ## Message Details
 
@@ -357,5 +357,5 @@ WMG does **not** yet have an agreements journey. `UpdateCaseStatusCommand` suppl
 
 ---
 
-**Last Updated**: 2026-04-14
-**Tickets**: FGP-789, FGP-1011
+**Last Updated**: 2026-05-26
+**Tickets**: FGP-789, FGP-1011, FGP-1117
