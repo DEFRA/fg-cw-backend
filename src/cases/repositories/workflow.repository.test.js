@@ -1,16 +1,29 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
-import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
-import { config } from "../../common/config.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
+import {
+  applyOverride,
+  findOverrideDocument,
+} from "./workflow/workflow-override.js";
 
 vi.mock("../../common/mongo-client.js");
-vi.mock("node:fs", () => ({ readFileSync: vi.fn() }));
+vi.mock("./workflow/workflow-override.js", () => ({
+  findOverrideDocument: vi.fn(),
+  applyOverride: vi.fn(),
+}));
+
+// The override logic is exercised in workflow-override.test.js. Here it is mocked
+// to safe no-op defaults so the repository tests stay focused on persistence;
+// individual tests override these to exercise the wiring.
+beforeEach(() => {
+  findOverrideDocument.mockReturnValue(null);
+  applyOverride.mockImplementation((doc) => doc);
+});
 
 describe("save", () => {
   it("creates a workflow and returns it", async () => {
@@ -263,100 +276,31 @@ describe("findByCode", () => {
   });
 });
 
-describe("workflow definition overrides", () => {
-  const MANIFEST_PATH = "/cfg/overrides.json";
-
-  const mockConfig = (cdpEnvironment, workflowOverrides) => {
-    vi.spyOn(config, "get").mockImplementation((key) => {
-      if (key === "cdpEnvironment") {
-        return cdpEnvironment;
-      }
-      if (key === "workflowOverrides") {
-        return workflowOverrides;
-      }
-      return undefined;
-    });
-  };
-
-  const mockFiles = (files) => {
-    readFileSync.mockImplementation((path) => {
-      if (files[path] === undefined) {
-        throw new Error(`unexpected readFileSync: ${path}`);
-      }
-      return files[path];
-    });
-  };
-
-  it("loads the workflow from the override file instead of the database", async () => {
-    mockConfig("local", MANIFEST_PATH);
+describe("workflow definition override wiring", () => {
+  it("returns the override from findByCode without querying the database", async () => {
     const overrideDoc = WorkflowDocument.createMock({ code: "woodland" });
-    delete overrideDoc._id;
-    mockFiles({
-      [MANIFEST_PATH]: JSON.stringify({ woodland: "woodland.json" }),
-      "/cfg/woodland.json": JSON.stringify(overrideDoc),
-    });
+    findOverrideDocument.mockReturnValue(overrideDoc);
     const findOne = vi.fn();
     db.collection.mockReturnValue({ findOne });
 
     const result = await findByCode("woodland");
 
+    expect(findOverrideDocument).toHaveBeenCalledWith("woodland");
     expect(result).toBeInstanceOf(Workflow);
     expect(result.code).toBe("woodland");
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it("falls back to the database when not running locally", async () => {
-    mockConfig("prod", MANIFEST_PATH);
-    const workflowDocument = WorkflowDocument.createMock({ code: "woodland" });
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(workflowDocument),
-    });
-
-    const result = await findByCode("woodland");
-
-    expect(result.code).toBe("woodland");
-    expect(readFileSync).not.toHaveBeenCalled();
-  });
-
-  it("falls back to the database when no override is configured", async () => {
-    mockConfig("local", null);
-    const workflowDocument = WorkflowDocument.createMock({ code: "woodland" });
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(workflowDocument),
-    });
-
-    const result = await findByCode("woodland");
-
-    expect(result.code).toBe("woodland");
-    expect(readFileSync).not.toHaveBeenCalled();
-  });
-
-  it("falls back to the database when the code is not in the manifest", async () => {
-    mockConfig("local", MANIFEST_PATH);
-    mockFiles({ [MANIFEST_PATH]: JSON.stringify({ other: "other.json" }) });
-    const workflowDocument = WorkflowDocument.createMock({ code: "woodland" });
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(workflowDocument),
-    });
-
-    const result = await findByCode("woodland");
-
-    expect(result.code).toBe("woodland");
-  });
-
-  it("replaces matching database workflows with overrides in findAll", async () => {
-    mockConfig("local", MANIFEST_PATH);
-    const overrideDoc = WorkflowDocument.createMock({ code: "woodland" });
-    delete overrideDoc._id;
-    overrideDoc.templates = { caseDetails: "from-override" };
-    mockFiles({
-      [MANIFEST_PATH]: JSON.stringify({ woodland: "woodland.json" }),
-      "/cfg/woodland.json": JSON.stringify(overrideDoc),
-    });
+  it("runs each database document through applyOverride in findAll", async () => {
     const dbDocs = [
       WorkflowDocument.createMock({ code: "woodland" }),
       WorkflowDocument.createMock({ code: "other" }),
     ];
+    const override = WorkflowDocument.createMock({ code: "woodland" });
+    override.templates = { caseDetails: "from-override" };
+    applyOverride.mockImplementation((doc) =>
+      doc.code === "woodland" ? override : doc,
+    );
     db.collection.mockReturnValue({
       find: vi.fn().mockReturnValue({
         toArray: vi.fn().mockResolvedValue(dbDocs),
@@ -365,7 +309,7 @@ describe("workflow definition overrides", () => {
 
     const result = await findAll();
 
-    expect(result[0].code).toBe("woodland");
+    expect(applyOverride).toHaveBeenCalledTimes(2);
     expect(result[0].templates).toEqual({ caseDetails: "from-override" });
     expect(result[1].code).toBe("other");
   });

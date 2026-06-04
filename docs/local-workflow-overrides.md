@@ -40,10 +40,11 @@ migration, no reseed, no restart.
 
 ## What it affects
 
-The override is resolved in the workflow repository
-(`src/cases/repositories/workflow.repository.js`), which is the single point
-through which every workflow load passes. Both `findByCode` (used by all case
-flows) and `findAll` (used by workflow listings) honour it.
+The override logic lives in
+`src/cases/repositories/workflow/workflow-override.js` and is consulted by the
+workflow repository (`src/cases/repositories/workflow.repository.js`), which is
+the single point through which every workflow load passes. Both `findByCode`
+(used by all case flows) and `findAll` (used by workflow listings) honour it.
 
 ### `findAll` only _replaces_ workflows already in the database
 
