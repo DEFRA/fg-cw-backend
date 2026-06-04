@@ -634,7 +634,7 @@
           "taskGroups": [],
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_IN_REVIEW'",
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_APPLICATION_IN_REVIEW'",
               "content": [
                 {
                   "component": "heading",
@@ -648,7 +648,7 @@
               ]
             },
             {
-              "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_RECEIVED'",
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_APPLICATION_RECEIVED'",
               "content": [
                 {
                   "component": "heading",
@@ -662,7 +662,7 @@
               ]
             },
             {
-              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_GENERATING'",
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_AGREEMENT_GENERATING'",
               "content": [
                 {
                   "component": "heading",
@@ -774,7 +774,7 @@
           ],
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_READY_FOR_APPLICANT'",
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_AGREEMENT_READY_FOR_APPLICANT'",
               "content": [
                 {
                   "component": "heading",
@@ -795,6 +795,7 @@
           "description": "The id a DESCRIPTION",
           "beforeContent": [
             {
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_AGREEMENT_OFFERED'",
               "content": [
                 {
                   "component": "paragraph",
@@ -1013,6 +1014,7 @@
           ],
           "beforeContent": [
             {
+              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'STATUS_APPLICATION_AWAITING_FC'",
               "content": [
                 {
                   "component": "paragraph",
