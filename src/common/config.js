@@ -143,6 +143,12 @@ export const config = convict({
           "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated_fifo.fifo",
         env: "CW__SNS__CASE_STATUS_UPDATED_TOPIC_ARN",
       },
+      auditTopicArn: {
+        doc: "ARN of the SNS topic to publish audit events",
+        format: String,
+        default: "arn:aws:sns:eu-west-2:000000000000:cw__sns__audit_fifo.fifo",
+        env: "CW__SNS__AUDIT_TOPIC_ARN",
+      },
     },
     sqs: {
       createNewCaseUrl: {
