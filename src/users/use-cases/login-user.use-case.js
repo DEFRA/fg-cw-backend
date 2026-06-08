@@ -1,10 +1,12 @@
 import Boom from "@hapi/boom";
+import { auditActions, auditEntities } from "../../common/audit-constants.js";
 import { logger } from "../../common/logger.js";
+import { withAuditEvents } from "../../common/with-audit-events.js";
 import { AppRole } from "../models/app-role.js";
 import { User } from "../models/user.js";
 import { upsertLogin } from "../repositories/user.repository.js";
 
-export const loginUserUseCase = async (props) => {
+const loginUser = async (props) => {
   logger.info(`Processing login for user with idpId "${props.idpId}"`);
 
   if (!props.idpRoles) {
@@ -40,3 +42,23 @@ export const loginUserUseCase = async (props) => {
 
   return upsertedUser;
 };
+
+export const loginUserUseCase = withAuditEvents(
+  loginUser,
+  ({ args, result, status }) => ({
+    entities: [
+      {
+        entity: auditEntities.ENTITY_USER,
+        action: auditActions.ACTION_LOGIN_USER,
+        entityid: args[0].idpId,
+      },
+    ],
+    details: {
+      idpId: result.idpId,
+      email: result.email,
+      lastLogin: result.lastLoginAt,
+      status,
+    },
+    messageGroupId: args[0].idpId,
+  }),
+);

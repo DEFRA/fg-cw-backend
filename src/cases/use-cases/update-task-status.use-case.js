@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import { auditActions, auditEntities } from "../../common/audit-constants.js";
 import { logger } from "../../common/logger.js";
+import { withAuditEvents } from "../../common/with-audit-events.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
@@ -11,7 +13,7 @@ export const validatePayloadComment = (comment, required) => {
   }
 };
 
-export const updateTaskStatusUseCase = async (command) => {
+export const updateTaskStatus = async (command) => {
   logger.info(`Updating task status of case "${command.caseId}"`);
 
   const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
@@ -62,6 +64,31 @@ export const updateTaskStatusUseCase = async (command) => {
 
   return update(kase);
 };
+
+export const updateTaskStatusUseCase = withAuditEvents(
+  updateTaskStatus,
+  ({ args, result, status }) => {
+    console.log("update task audit", { args, result, status });
+    return {
+      entities: [
+        {
+          entity: auditEntities.ENTITY_CASE,
+          action: auditActions.ACTION_UPDATE_TASK_STATUS,
+          entityid: args[0].caseId,
+        },
+      ],
+      details: {
+        workflowCode: result.workflowCode,
+        taskGroupCode: args[0].taskGroupCode,
+        taskCode: args[0].taskCode,
+        completed: args[0].completed,
+        status: args[0].status,
+        comment: args[0].comment,
+      },
+      messageGroupId: `${args[0].caseId}-${args[0].taskGroupCode}-${args[0].taskCode}`,
+    };
+  },
+);
 
 const mapCompleted = ({ task, status, completed }) => {
   if (!hasStatusOptions(task)) {
