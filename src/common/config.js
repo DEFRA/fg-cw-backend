@@ -146,7 +146,8 @@ export const config = convict({
       auditTopicArn: {
         doc: "ARN of the SNS topic to publish audit events",
         format: String,
-        default: "arn:aws:sns:eu-west-2:000000000000:cw__sns__audit_fifo.fifo",
+        default:
+          "arn:aws:sns:eu-west-2:000000000000:fcp_audit_fg_cw_backend_fifo.fifo",
         env: "CW__SNS__AUDIT_TOPIC_ARN",
       },
     },

@@ -33,13 +33,14 @@ const getCorrelationId = () => getTraceId() ?? randomUUID();
 const getUser = (context) => context?.user ?? undefined;
 const getSession = (context) => context?.sessionId ?? undefined;
 const getIP = (context) => context?.ip ?? getServiceIp();
+const getConfigValue = (str) => config.get(str);
 
 const buildPayload = (context, { entities, details, status, security }) => ({
   datetime: new Date().toISOString(),
-  version: config.serviceVersion,
-  application: config.serviceName,
-  component: config.serviceName,
-  environment: config.cdpEnvironment,
+  version: getConfigValue("serviceVersion"),
+  application: getConfigValue("serviceName"),
+  component: getConfigValue("serviceName"),
+  environment: getConfigValue("cdpEnvironment"),
   correlationid: getCorrelationId(),
   user: getUser(context),
   sessionid: getSession(context),
@@ -54,6 +55,7 @@ export const writeAuditEvent = async (
 ) => {
   logger.info("Begin write audit event.");
   const context = getRequestContext();
+  console.log("context", context);
   const payload = buildPayload(context, {
     entities,
     details,
@@ -61,8 +63,8 @@ export const writeAuditEvent = async (
     security,
   });
 
-  logger.debug(context, "audit context");
-  logger.debug(payload, "audit payload");
+  logger.info(context, "audit context");
+  logger.info(payload, "audit payload");
   const { valid, errors } = validateAuditEvent(payload);
   if (!valid) {
     logger.warn({ errors }, "Audit event failed validation - not writing");
@@ -72,7 +74,7 @@ export const writeAuditEvent = async (
   const msgGroupId = messageGroupId ?? randomUUID();
   const outboxEntry = new Outbox({
     event: { ...payload, messageGroupId: msgGroupId },
-    target: config.sns.auditTopicArn,
+    target: getConfigValue("aws.sns.auditTopicArn"),
     segregationRef: msgGroupId,
   });
 

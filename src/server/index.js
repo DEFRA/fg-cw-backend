@@ -1,6 +1,10 @@
 import hapi from "@hapi/hapi";
 import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
+import {
+  getRequestContext,
+  withRequestContext,
+} from "../common/request-context.js";
 import { auth } from "./plugins/auth.js";
 import { health } from "./plugins/health.js";
 import { logging } from "./plugins/logging.js";
@@ -48,6 +52,32 @@ export const createServer = async () => {
     shutdown,
     swagger,
   ]);
+
+  server.ext("onRequest", (request, h) => {
+    const context = {
+      user: null,
+      subject: null,
+      sessionId: null,
+      ip: request.info.remoteAddress,
+    };
+    for (const cycle of ["_lifecycle", "_postCycle"]) {
+      const fn = request[cycle].bind(request);
+      request[cycle] = () => withRequestContext(context, fn);
+    }
+    return h.continue;
+  });
+
+  // eslint-disable-next-line complexity
+  server.ext("onPreHandler", (request, h) => {
+    const context = getRequestContext();
+    if (context && request.auth?.credentials) {
+      const { user, raw } = request.auth.credentials;
+      context.user = user?.idpId ?? null;
+      // @julian: check if subject is required for context
+      context.subject = raw?.idpId ?? null;
+    }
+    return h.continue;
+  });
 
   // SonarCloud magic numbers
   const statusCodes = {

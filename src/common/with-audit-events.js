@@ -7,10 +7,11 @@ const attemptWriteAuditEvent = async ({
   status,
   buildAuditEvent,
 }) => {
-  logger.info({ status, args }, "attemp to write audit event");
+  logger.info({ status, args }, "Attempt to write audit event");
 
   const { entities, details, messageGroupId, security, session } =
     buildAuditEvent({ args, result, status });
+
 
   logger.info(
     { entities, details, messageGroupId, security, session },

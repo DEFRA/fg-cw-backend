@@ -43,14 +43,22 @@ const loginUser = async (props) => {
   return upsertedUser;
 };
 
-export const loginUserUseCase = withAuditEvents(loginUser, ({ args }) => ({
-  entities: [
-    {
-      entity: auditEntities.ENTITY_USER,
-      action: auditActions.ACTION_LOGIN_USER,
-      entityid: args[0].idpId,
+export const loginUserUseCase = withAuditEvents(
+  loginUser,
+  ({ args, result, status }) => ({
+    entities: [
+      {
+        entity: auditEntities.ENTITY_USER,
+        action: auditActions.ACTION_LOGIN_USER,
+        entityid: args[0].idpId,
+      },
+    ],
+    details: {
+      idpId: result.idpId,
+      email: result.email,
+      lastLogin: result.lastLoginAt,
+      status,
     },
-  ],
-  details: { email: args[0].email },
-  messageGroupId: args[0].idpId,
-}));
+    messageGroupId: args[0].idpId,
+  }),
+);
