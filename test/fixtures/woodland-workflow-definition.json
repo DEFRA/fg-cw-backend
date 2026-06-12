@@ -644,6 +644,11 @@
                 {
                   "component": "paragraph",
                   "text": "Select 'Continue' to generate the draft agreement."
+                },
+
+                {
+                  "component": "paragraph",
+                  "text": "Select 'Continue' to generate the draft agreement."
                 }
               ]
             },
