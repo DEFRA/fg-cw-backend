@@ -4,6 +4,7 @@ import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseStage } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 const temporaryCaveatSourceMap = {
   "hefer-consent-required": "historic-england",
@@ -33,6 +34,27 @@ const mapCaveatSources = (payload) => {
   };
 };
 
+const resolveWorkflow = async (workflowCode, payload) => {
+  const configVersion = payload?.configVersion;
+
+  if (configVersion) {
+    logger.info(
+      `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,
+    );
+    const result = await resolveAndFetchWorkflowUseCase(
+      workflowCode,
+      configVersion,
+    );
+    return {
+      workflow: result.workflow,
+      resolvedVersion: result.resolvedVersion,
+    };
+  }
+
+  const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  return { workflow, resolvedVersion: null };
+};
+
 export const newCaseUseCase = async (message, session) => {
   const {
     event: { data },
@@ -44,7 +66,10 @@ export const newCaseUseCase = async (message, session) => {
     `Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
   );
 
-  const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflow(
+    workflowCode,
+    payload,
+  );
 
   const position = workflow.getInitialPosition();
 
@@ -66,6 +91,7 @@ export const newCaseUseCase = async (message, session) => {
     position,
     payload,
     phases,
+    configVersion: resolvedVersion,
   });
 
   const { insertedId } = await save(kase, session);

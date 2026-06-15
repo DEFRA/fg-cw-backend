@@ -20,6 +20,8 @@ import {
   updateResubmittedEvents,
 } from "../repositories/inbox.repository.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
+import { processConfigVersionUseCase } from "../use-cases/process-config-version.use-case.js";
+import { messageSource } from "../use-cases/save-inbox-message.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 
 export const useCaseMap = {
@@ -126,14 +128,20 @@ export class InboxSubscriber {
     logger.info(`Handling inbox message "${type}:${source}:${messageId}"`);
 
     try {
-      const eventType = type.replace(config.get("cdpEnvironment"), "ENV");
-      const handler = useCaseMap[eventType];
+      if (source === messageSource.ConfigBroker) {
+        await withTraceParent(traceparent, () =>
+          processConfigVersionUseCase(msg.event.data),
+        );
+      } else {
+        const eventType = type.replace(config.get("cdpEnvironment"), "ENV");
+        const handler = useCaseMap[eventType];
 
-      if (!handler) {
-        throw new Error(`No handler found for event type ${eventType}`);
+        if (!handler) {
+          throw new Error(`No handler found for event type ${eventType}`);
+        }
+
+        await withTraceParent(traceparent, async () => handler(msg));
       }
-
-      await withTraceParent(traceparent, async () => handler(msg));
 
       logger.info(
         `Finished: Handling inbox message "${type}:${source}:${messageId}"`,

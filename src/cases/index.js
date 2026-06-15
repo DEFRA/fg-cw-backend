@@ -2,6 +2,7 @@ import { up } from "migrate-mongo";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 
+import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
@@ -34,6 +35,7 @@ export const cases = {
     server.events.on("start", async () => {
       createNewCaseSubscriber.start();
       createUpdateStatusAgreementConsumer.start();
+      configVersionUpdatedSubscriber?.start();
       outboxSubscriber.start();
       inboxSubscriber.start();
     });
@@ -41,6 +43,7 @@ export const cases = {
     server.events.on("stop", async () => {
       createNewCaseSubscriber.stop();
       createUpdateStatusAgreementConsumer.stop();
+      configVersionUpdatedSubscriber?.stop();
       outboxSubscriber.stop();
       inboxSubscriber.stop();
     });

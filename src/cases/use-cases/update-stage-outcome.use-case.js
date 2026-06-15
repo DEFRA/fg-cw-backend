@@ -54,6 +54,7 @@ export const updateStageOutcomeUseCase = async (command) => {
       workflowCode: kase.workflowCode,
       previousStatus: previousPosition.toString(),
       currentStatus: kase.position.toString(),
+      configVersion: kase.configVersion,
     });
 
     await insertMany(

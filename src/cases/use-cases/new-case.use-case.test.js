@@ -6,10 +6,12 @@ import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 
 describe("newCaseUseCase", () => {
   beforeEach(() => {
@@ -396,5 +398,65 @@ describe("newCaseUseCase", () => {
     );
     expect(taskCodes).toContain("TASK_1");
     expect(taskCodes).not.toContain("CONDITIONAL_TASK");
+  });
+
+  it("resolves workflow via config broker when payload.configVersion is present", async () => {
+    save.mockResolvedValue({
+      insertedId: new ObjectId("888888888888888999999998"),
+    });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: "1.0.3",
+    });
+
+    await newCaseUseCase(
+      {
+        event: {
+          data: {
+            workflowCode: "pigs-might-fly",
+            caseRef: "TEST-CONFIG-001",
+            payload: {
+              configVersion: "1.0.0",
+            },
+          },
+        },
+      },
+      {},
+    );
+
+    expect(resolveAndFetchWorkflowUseCase).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+    expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
+
+    const savedCase = save.mock.calls[0][0];
+    expect(savedCase.configVersion).toBe("1.0.3");
+  });
+
+  it("falls back to findWorkflowByCodeUseCase when configVersion is absent", async () => {
+    save.mockResolvedValue({
+      insertedId: new ObjectId("888888888888888999999998"),
+    });
+    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+
+    await newCaseUseCase(
+      {
+        event: {
+          data: {
+            workflowCode: "workflow-code",
+            caseRef: "TEST-FALLBACK-001",
+            payload: {},
+          },
+        },
+      },
+      {},
+    );
+
+    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("workflow-code");
+    expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
+
+    const savedCase = save.mock.calls[0][0];
+    expect(savedCase.configVersion).toBeNull();
   });
 });

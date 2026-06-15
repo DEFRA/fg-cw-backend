@@ -7,6 +7,7 @@ import { TaskGroupDocument } from "./task-group-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
 
 export class CaseDocument {
+  // eslint-disable-next-line complexity
   constructor(props) {
     this._id = props._id
       ? ObjectId.createFromHexString(props._id)
@@ -27,6 +28,7 @@ export class CaseDocument {
       (timelineProps) => new TimelineEventDocument(timelineProps),
     );
     this.supplementaryData = props.supplementaryData;
+    this.configVersion = props.configVersion ?? null;
   }
 
   static createMock(props) {
