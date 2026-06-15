@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { ConfigVersion } from "../models/config-version.js";
@@ -167,5 +168,105 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     );
 
     expect(result.resolvedVersion).toBe("1.0.3");
+  });
+
+  it("should fetch from S3 when cached workflow is missing", async () => {
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Fetched,
+    });
+    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFetchConfigFile.mockResolvedValue({ code: "pigs-might-fly" });
+    mockSaveFromDefinition.mockResolvedValue(mockWorkflow);
+
+    const result = await resolveAndFetchWorkflowUseCase(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+
+    expect(result.workflow).toEqual(mockWorkflow);
+    expect(mockFetchConfigFile).toHaveBeenCalled();
+  });
+
+  it("should handle concurrent insert by loading existing workflow", async () => {
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Pending,
+    });
+    const conflict = Boom.conflict("already exists");
+    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
+    mockFetchConfigFile.mockResolvedValue({ code: "pigs-might-fly" });
+    mockSaveFromDefinition.mockRejectedValue(conflict);
+
+    const result = await resolveAndFetchWorkflowUseCase(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+
+    expect(result.workflow).toEqual(mockWorkflow);
+    expect(mockFindByCodeAndVersion).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+  });
+
+  it("should throw badGateway on permanent S3 error", async () => {
+    const { S3FetchError } = await import("../../common/s3-client.js");
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Pending,
+    });
+    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFetchConfigFile.mockRejectedValue(
+      new S3FetchError("Not found", { statusCode: 404, key: "k", bucket: "b" }),
+    );
+
+    await expect(
+      resolveAndFetchWorkflowUseCase("pigs-might-fly", "1.0.0"),
+    ).rejects.toThrow("Permanent S3 error");
+
+    expect(mockUpdateFetchStatus).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+      FetchStatus.PermanentError,
+      "Not found",
+    );
+  });
+
+  it("should throw serverUnavailable on transient S3 error", async () => {
+    const { S3FetchError } = await import("../../common/s3-client.js");
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Pending,
+    });
+    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFetchConfigFile.mockRejectedValue(
+      new S3FetchError("Timeout", { statusCode: 503, key: "k", bucket: "b" }),
+    );
+
+    await expect(
+      resolveAndFetchWorkflowUseCase("pigs-might-fly", "1.0.0"),
+    ).rejects.toThrow("Transient S3 error");
+
+    expect(mockUpdateFetchStatus).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+      FetchStatus.TransientError,
+      "Timeout",
+    );
+  });
+
+  it("should rethrow non-S3 fetch errors", async () => {
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Pending,
+    });
+    const error = new Error("Unexpected failure");
+    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFetchConfigFile.mockRejectedValue(error);
+
+    await expect(
+      resolveAndFetchWorkflowUseCase("pigs-might-fly", "1.0.0"),
+    ).rejects.toThrow("Unexpected failure");
   });
 });

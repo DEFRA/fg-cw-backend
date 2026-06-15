@@ -163,6 +163,7 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
+  configVersion: null,
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
