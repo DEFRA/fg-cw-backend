@@ -39,7 +39,9 @@ describe("save", () => {
     const workflow = Workflow.createMock();
 
     await expect(save(workflow)).rejects.toThrow(
-      Boom.conflict(`Workflow with code "${workflow.code}" already exists`),
+      Boom.conflict(
+        `Workflow with code "${workflow.code}" version "${workflow.version}" already exists`,
+      ),
     );
   });
 

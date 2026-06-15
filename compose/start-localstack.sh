@@ -78,6 +78,17 @@ create_topic_and_queue "gas__sns__create_new_case_fifo.fifo" "cw__sqs__create_ne
 create_topic_and_queue "gas__sns__update_case_status_fifo.fifo" "cw__sqs__update_status_fifo.fifo" &
 create_topic_and_queue "gas__sns__create_agreement_fifo.fifo" "create_agreement_fifo.fifo" &
 
+create_topic_and_queue "config_broker__sns__config_version_updated_fifo.fifo" "cw__sqs__config_version_updated_fifo.fifo" &
+
 wait
 
 echo "SNS/SQS ready"
+
+# Create S3 bucket for config broker and seed with sample workflow definition
+if ! awslocal s3api head-bucket --bucket config-broker-local >/dev/null 2>&1; then
+  awslocal s3 mb s3://config-broker-local
+fi
+awslocal s3 cp /etc/localstack/init/ready.d/seed/pigs-might-fly/1.0.0/workflow-definition.json \
+  s3://config-broker-local/pigs-might-fly/1.0.0/workflow-definition.json
+
+echo "S3 config broker bucket ready"

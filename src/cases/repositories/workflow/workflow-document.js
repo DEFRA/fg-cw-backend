@@ -11,6 +11,7 @@ export class WorkflowDocument {
       : new ObjectId();
 
     this.code = props.code;
+    this.version = props.version;
     this.pages = props.pages;
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));
     this.requiredRoles = new RequiredRolesDocument(props.requiredRoles);
@@ -27,6 +28,7 @@ export class WorkflowDocument {
   static createMock(props) {
     return new WorkflowDocument({
       code: "workflow-code",
+      version: "1.0.0",
       pages: createPagesMock(),
       phases: [PhaseDocument.createMock()],
       requiredRoles: {

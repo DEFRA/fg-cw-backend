@@ -64,6 +64,7 @@ const toCase = (doc) => {
         }
       : null,
     supplementaryData: doc.supplementaryData,
+    configVersion: doc.configVersion ?? null,
   });
 };
 
