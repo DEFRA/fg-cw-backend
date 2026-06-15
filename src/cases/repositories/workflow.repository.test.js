@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
-import { findAll, findByCode, save } from "./workflow.repository.js";
+import {
+  findAll,
+  findByCode,
+  findByCodeAndVersion,
+  save,
+  saveFromDefinition,
+} from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -259,5 +265,56 @@ describe("findByCode", () => {
     const result = await findByCode("DOESNT_EXIST");
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("findByCodeAndVersion", () => {
+  it("returns workflow by code and version", async () => {
+    const workflowDocument = WorkflowDocument.createMock();
+
+    const findOne = vi.fn().mockResolvedValue(workflowDocument);
+
+    db.collection.mockReturnValue({ findOne });
+
+    const result = await findByCodeAndVersion("frps-private-beta", "1.0.0");
+
+    expect(findOne).toHaveBeenCalledWith({
+      code: "frps-private-beta",
+      version: "1.0.0",
+    });
+    expect(result._id.toString()).toEqual(workflowDocument._id.toString());
+  });
+
+  it("returns null when no workflow is found", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+
+    const result = await findByCodeAndVersion("DOESNT_EXIST", "1.0.0");
+
+    expect(result).toEqual(null);
+  });
+});
+
+describe("saveFromDefinition", () => {
+  it("creates a workflow from definition with version", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+
+    db.collection.mockReturnValue({ insertOne });
+
+    const workflowDefinition = {
+      code: "pigs-might-fly",
+      pages: {},
+      phases: [],
+      requiredRoles: { allOf: [], anyOf: [] },
+      definitions: {},
+      endpoints: [],
+    };
+
+    const result = await saveFromDefinition(workflowDefinition, "1.0.2");
+
+    expect(insertOne).toHaveBeenCalled();
+    expect(result.code).toBe("pigs-might-fly");
+    expect(result.version).toBe("1.0.2");
   });
 });
