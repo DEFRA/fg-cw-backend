@@ -146,13 +146,27 @@ const ascDescToFlags = (sort) =>
       .map(([k, v]) => [k, toDir(v)]),
   );
 
+export const buildCaseInsensitiveExactRegex = (search) => {
+  // escape special characters with prefix '\'
+  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const caseInsensitiveFlag = "i";
+
+  // wrap in ^...$ anchors so we only match on the entire value
+  return new RegExp(`^${escaped}$`, caseInsensitiveFlag);
+};
+
 const buildSearchFilter = (workflowCodes, search) => {
   const filter = {
     workflowCode: { $in: workflowCodes },
   };
 
-  if (search) {
-    filter.$or = [{ caseRef: search }, { "payload.identifiers.sbi": search }];
+  if (search && typeof search === "string") {
+    const trimmedSearch = search.trim();
+    const searchRegex = buildCaseInsensitiveExactRegex(trimmedSearch);
+    filter.$or = [
+      { caseRef: searchRegex },
+      { "payload.identifiers.sbi": searchRegex },
+    ];
   }
 
   return filter;
