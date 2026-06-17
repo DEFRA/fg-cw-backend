@@ -6,7 +6,6 @@ import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
-  buildCaseInsensitiveExactRegex,
   findAll,
   findByCaseRefAndWorkflowCode,
   findById,
@@ -19,32 +18,6 @@ import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
 vi.mock("../../common/paginate.js");
-
-describe("buildCaseInsensitiveExactRegex", () => {
-  it("matches regardless of case (caseRef)", () => {
-    const regex = buildCaseInsensitiveExactRegex("WMP-F42-WDE");
-    expect(regex.test("WMP-F42-WDE")).toBe(true);
-    expect(regex.test("wmp-f42-wde")).toBe(true);
-    expect(regex.test("WmP-f42-wDE")).toBe(true);
-
-    const lowerCaseRegex = buildCaseInsensitiveExactRegex("wmp-f42-wde");
-    expect(lowerCaseRegex.test("wmp-f42-wde")).toBe(true);
-    expect(lowerCaseRegex.test("WMP-F42-WDE")).toBe(true);
-    expect(lowerCaseRegex.test("WmP-f42-wDE")).toBe(true);
-  });
-
-  it("matches numbers (sbi)", () => {
-    const sbi = "123456789";
-    const regex = buildCaseInsensitiveExactRegex(sbi);
-    expect(regex.test(sbi)).toBe(true);
-  });
-
-  it("does not match partial strings", () => {
-    const regex = buildCaseInsensitiveExactRegex("WMP");
-    expect(regex.test("WMP-F42-WDE")).toBe(false);
-    expect(regex.test("PREFIX-WMP")).toBe(false);
-  });
-});
 
 describe("save", () => {
   it("creates a case and returns it", async () => {
@@ -346,7 +319,30 @@ describe("findAll", () => {
     const { filter } = paginate.mock.calls[0][1];
     expect(filter).toEqual({
       workflowCode: { $in: ["WF"] },
-      $or: [{ caseRef: /^12345$/i }, { "payload.identifiers.sbi": /^12345$/i }],
+      $or: [{ caseRef: "12345" }, { "payload.identifiers.sbi": "12345" }],
+    });
+  });
+
+  it("lowercases search input to match stored caseRefs", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: "WMP-F42-WDE",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+      $or: [
+        { caseRef: "wmp-f42-wde" },
+        { "payload.identifiers.sbi": "wmp-f42-wde" },
+      ],
     });
   });
 
