@@ -148,7 +148,7 @@ const ascDescToFlags = (sort) =>
 
 export const buildCaseInsensitiveExactRegex = (search) => {
   // escape special characters with prefix '\'
-  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
   const caseInsensitiveFlag = "i";
 
   // wrap in ^...$ anchors so we only match on the entire value
