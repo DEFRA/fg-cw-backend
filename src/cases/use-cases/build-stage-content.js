@@ -26,7 +26,7 @@ const processStageContentItem = async (item, caseWorkflowContext) => {
   if (!shouldRender) {
     return [];
   }
-  return await resolveContentItem(item, caseWorkflowContext);
+  return resolveContentItem(item, caseWorkflowContext);
 };
 
 const buildContent = async (items, caseWorkflowContext) => {
