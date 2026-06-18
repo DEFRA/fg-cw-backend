@@ -7,7 +7,7 @@ const shouldRenderItem = async (item, caseWorkflowContext) => {
     return true;
   }
 
-  return await resolveJSONPath({
+  return resolveJSONPath({
     root: caseWorkflowContext,
     path: item.renderIf,
   });
@@ -30,7 +30,9 @@ const processStageContentItem = async (item, caseWorkflowContext) => {
 };
 
 const buildContent = async (items, caseWorkflowContext) => {
-  if (!items) return [];
+  if (!items) {
+    return [];
+  }
 
   const resolvedItems = await Promise.all(
     items.map((item) => processStageContentItem(item, caseWorkflowContext)),

@@ -140,7 +140,7 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
 };
 
 const buildContent = async (root) => {
-  return await resolveJSONPath({
+  return resolveJSONPath({
     root,
     path: root.tabDefinition.content,
   });
