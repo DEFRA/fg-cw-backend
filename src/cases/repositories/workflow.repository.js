@@ -103,6 +103,7 @@ const toWorkflowStage = (s) =>
     statuses: s.statuses.map(toWorkflowStageStatus),
     taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
     beforeContent: s.beforeContent,
+    afterContent: s.afterContent,
   });
 
 const toWorkflowPhase = (p) =>

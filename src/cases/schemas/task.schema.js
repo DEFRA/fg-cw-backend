@@ -94,6 +94,7 @@ export const Stage = Joi.object({
   statuses: Joi.array().items(Status).required(),
   agreements: Joi.array().optional().allow(null),
   beforeContent: Joi.array().items(componentSchema).optional(),
+  afterContent: Joi.array().items(componentSchema).optional(),
 }).label("Stage");
 
 export const Phase = Joi.object({

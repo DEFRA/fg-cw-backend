@@ -200,6 +200,7 @@ const createWorkflowStage = (stage, context, phases) =>
     ),
     taskGroups: stage.taskGroups.map(createWorkflowTaskGroup),
     beforeContent: stage.beforeContent,
+    afterContent: stage.afterContent,
   });
 
 const createWorkflowPhase = (phase, phases) =>
