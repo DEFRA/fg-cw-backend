@@ -11,7 +11,6 @@ import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
-import { buildBeforeContent } from "./build-before-content.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
@@ -44,13 +43,10 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     user,
   });
 
-  const workflowStage = workflow.getStage(kase.position);
-
-  const [banner, links, content, beforeContent] = await Promise.all([
+  const [banner, links, content] = await Promise.all([
     buildBanner(root),
     buildLinks(root),
     buildContent(root),
-    buildBeforeContent(workflowStage, root),
   ]);
 
   logger.info(
@@ -64,7 +60,6 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     banner,
     links,
     content,
-    beforeContent,
   };
 };
 
@@ -145,7 +140,7 @@ const getActionContext = async ({ tabDefinition, caseWorkflowContext }) => {
 };
 
 const buildContent = async (root) => {
-  return await resolveJSONPath({
+  return resolveJSONPath({
     root,
     path: root.tabDefinition.content,
   });

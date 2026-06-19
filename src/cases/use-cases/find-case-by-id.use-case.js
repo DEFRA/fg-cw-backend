@@ -12,7 +12,10 @@ import { findAll } from "../../users/repositories/user.repository.js";
 import { EventEnums } from "../models/event-enums.js";
 import { Position } from "../models/position.js";
 import { findById } from "../repositories/case.repository.js";
-import { buildBeforeContent } from "./build-before-content.js";
+import {
+  buildAfterContent,
+  buildBeforeContent,
+} from "./build-stage-content.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 
 // eslint-disable-next-line complexity
@@ -253,6 +256,11 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
   const caseStage = kase.getStage();
   const assignedUser = userMap.get(kase.assignedUser?.id);
 
+  const [beforeContent, afterContent] = await Promise.all([
+    buildBeforeContent(workflowStage, caseWorkflowContext),
+    buildAfterContent(workflowStage, caseWorkflowContext),
+  ]);
+
   logger.info(`Finished: Finding case by id "${caseId}"`);
 
   return {
@@ -281,7 +289,8 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     links: await buildLinks(caseWorkflowContext),
     comments: mapCommentsWithUsers(kase.comments, userMap),
     timeline: mapTimelineWithUsers(kase.timeline, workflow, userMap),
-    beforeContent: await buildBeforeContent(workflowStage, caseWorkflowContext),
+    beforeContent,
+    afterContent,
   };
 };
 
