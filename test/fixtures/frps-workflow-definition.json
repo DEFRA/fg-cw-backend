@@ -1861,7 +1861,7 @@
           ],
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'APPLICATION_AMEND'",
+              "renderIf": "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
               "content": [
                 {
                   "component": "container",
@@ -2158,7 +2158,7 @@
           ],
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'APPLICATION_AMEND'",
+              "renderIf": "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
               "content": [
                 {
                   "component": "container",
@@ -2180,7 +2180,7 @@
           "description": "Customer reviews the agreement offer",
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_OFFERED'",
+              "renderIf": "jsonata:$.position.statusCode = 'AGREEMENT_OFFERED'",
               "content": [
                 {
                   "component": "alert",
@@ -2228,7 +2228,7 @@
               ]
             },
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'APPLICATION_AMEND'",
+              "renderIf": "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
               "content": [
                 {
                   "component": "container",
@@ -2436,7 +2436,7 @@
           "taskGroups": [],
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_ACCEPTED'",
+              "renderIf": "jsonata:$.position.statusCode = 'AGREEMENT_ACCEPTED'",
               "content": [
                 {
                   "component": "heading",
@@ -2488,7 +2488,7 @@
           "description": "Stage to control the workflow for the termination process",
           "beforeContent": [
             {
-              "renderIf": "jsonata:$.request.params.tabId = 'tasks' and $.position.statusCode = 'AGREEMENT_TERMINATED'",
+              "renderIf": "jsonata:$.position.statusCode = 'AGREEMENT_TERMINATED'",
               "content": [
                 {
                   "component": "container",
