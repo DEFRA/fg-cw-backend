@@ -1,6 +1,26 @@
+const WORKFLOW_CODE = "frps-private-beta";
+const PHASE_CODE = "POST_AGREEMENT_MONITORING";
+const STAGE_CODE = "MONITORING";
+const STATUS_CODE = "AGREEMENT_ACCEPTED";
+const TASK_GROUP_CODE = "PAYMENT_CONTROL_CHECK";
+
+const paymentControlCaseTaskGroup = {
+  code: TASK_GROUP_CODE,
+  tasks: [
+    {
+      code: TASK_GROUP_CODE,
+      status: null,
+      completed: false,
+      commentRefs: [],
+      updatedAt: null,
+      updatedBy: null,
+    },
+  ],
+};
+
 export const up = async (db) => {
   await db.collection("workflows").updateOne(
-    { code: "frps-private-beta" },
+    { code: WORKFLOW_CODE },
     {
       $set: {
         "phases.0.stages.0.beforeContent.0.renderIf":
@@ -26,12 +46,12 @@ export const up = async (db) => {
         ],
         "phases.1.stages.0.taskGroups": [
           {
-            code: "PAYMENT_CONTROL_CHECK",
+            code: TASK_GROUP_CODE,
             name: "Payment control tasks (6 months)",
             description: "Payment control check tasks",
             tasks: [
               {
-                code: "PAYMENT_CONTROL_CHECK",
+                code: TASK_GROUP_CODE,
                 name: "Payment control tasks 6-month check",
                 mandatory: true,
                 description: [
@@ -189,6 +209,45 @@ export const up = async (db) => {
           },
         ],
       },
+    },
+  );
+
+  await db.collection("cases").updateMany(
+    {
+      workflowCode: WORKFLOW_CODE,
+      currentPhase: PHASE_CODE,
+      currentStage: STAGE_CODE,
+      currentStatus: STATUS_CODE,
+      closed: { $ne: true },
+      phases: {
+        $elemMatch: {
+          code: PHASE_CODE,
+          stages: {
+            $elemMatch: {
+              code: STAGE_CODE,
+              taskGroups: {
+                $not: {
+                  $elemMatch: {
+                    code: TASK_GROUP_CODE,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      $push: {
+        "phases.$[phase].stages.$[stage].taskGroups":
+          paymentControlCaseTaskGroup,
+      },
+    },
+    {
+      arrayFilters: [
+        { "phase.code": PHASE_CODE },
+        { "stage.code": STAGE_CODE },
+      ],
     },
   );
 };
