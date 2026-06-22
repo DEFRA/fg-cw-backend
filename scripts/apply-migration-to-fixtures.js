@@ -79,10 +79,23 @@ for (const { collection, filter, update } of captured) {
     continue;
   }
 
+  const VALID_WORKFLOW_CODES = [
+    "woodland",
+    "frps-private-beta",
+    "pigs-might-fly",
+  ];
+
   const code = filter.code;
   if (!code) {
     console.warn("Skipping updateOne with no code filter:", filter);
     continue;
+  }
+
+  if (!VALID_WORKFLOW_CODES.includes(code)) {
+    console.error(
+      `Invalid workflow code "${code}" in migration. Valid codes: ${VALID_WORKFLOW_CODES.join(", ")}`,
+    );
+    process.exit(1);
   }
 
   const fixturePath = resolve(fixturesDir, `${code}-workflow-definition.json`);

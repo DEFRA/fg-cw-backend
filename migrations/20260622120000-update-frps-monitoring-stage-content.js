@@ -1,8 +1,18 @@
 export const up = async (db) => {
   await db.collection("workflows").updateOne(
-    { code: "frps" },
+    { code: "frps-private-beta" },
     {
       $set: {
+        "phases.0.stages.0.beforeContent.0.renderIf":
+          "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
+        "phases.0.stages.1.beforeContent.0.renderIf":
+          "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
+        "phases.0.stages.2.beforeContent.0.renderIf":
+          "jsonata:$.position.statusCode = 'AGREEMENT_OFFERED'",
+        "phases.0.stages.2.beforeContent.1.renderIf":
+          "jsonata:$.position.statusCode = 'APPLICATION_AMEND'",
+        "phases.1.stages.1.beforeContent.0.renderIf":
+          "jsonata:$.position.statusCode = 'AGREEMENT_TERMINATED'",
         "phases.1.stages.0.beforeContent": [
           {
             renderIf: "jsonata:$.position.statusCode = 'AGREEMENT_ACCEPTED'",
