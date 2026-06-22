@@ -79,11 +79,11 @@ for (const { collection, filter, update } of captured) {
     continue;
   }
 
-  const VALID_WORKFLOW_CODES = [
-    "woodland",
-    "frps-private-beta",
-    "pigs-might-fly",
-  ];
+  const WORKFLOW_CODE_TO_FIXTURE = {
+    woodland: "woodland",
+    "frps-private-beta": "frps",
+    "pigs-might-fly": "pmf",
+  };
 
   const code = filter.code;
   if (!code) {
@@ -91,14 +91,17 @@ for (const { collection, filter, update } of captured) {
     continue;
   }
 
-  if (!VALID_WORKFLOW_CODES.includes(code)) {
+  if (!(code in WORKFLOW_CODE_TO_FIXTURE)) {
     console.error(
-      `Invalid workflow code "${code}" in migration. Valid codes: ${VALID_WORKFLOW_CODES.join(", ")}`,
+      `Invalid workflow code "${code}" in migration. Valid codes: ${Object.keys(WORKFLOW_CODE_TO_FIXTURE).join(", ")}`,
     );
     process.exit(1);
   }
 
-  const fixturePath = resolve(fixturesDir, `${code}-workflow-definition.json`);
+  const fixturePath = resolve(
+    fixturesDir,
+    `${WORKFLOW_CODE_TO_FIXTURE[code]}-workflow-definition.json`,
+  );
   let fixture;
   try {
     fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
