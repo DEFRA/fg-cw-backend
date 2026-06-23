@@ -31,7 +31,10 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.supplementaryData = props.supplementaryData || {};
-    this.configVersion = props.configVersion ?? null;
+    this.originalConfigVersion =
+      props.originalConfigVersion ?? props.configVersion ?? null;
+    this.currentConfigVersion =
+      props.currentConfigVersion ?? props.configVersion ?? null;
     this.closed = props.closed;
     this.closedAt = props.closedAt;
   }
@@ -442,7 +445,8 @@ export class Case {
       createdAt: new Date().toISOString(),
       payload,
       supplementaryData: {},
-      configVersion,
+      originalConfigVersion: configVersion,
+      currentConfigVersion: configVersion,
       closed: false,
       timeline: [
         new TimelineEvent({

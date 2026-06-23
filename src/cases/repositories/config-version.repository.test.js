@@ -3,7 +3,7 @@ import { FetchStatus } from "../../common/fetch-status.js";
 import { ConfigVersion } from "../models/config-version.js";
 import {
   findByGrantCodeAndVersion,
-  findLatestPatch,
+  findLatestForMajor,
   updateFetchStatus,
   upsert,
 } from "./config-version.repository.js";
@@ -34,8 +34,10 @@ describe("config-version.repository", () => {
       expect(mockCollection.updateOne).toHaveBeenCalledWith(
         { grantCode: "pigs-might-fly", version: "1.0.0" },
         expect.objectContaining({
-          $set: expect.objectContaining({ major: 1, minor: 0, patch: 0 }),
-          $setOnInsert: expect.objectContaining({
+          $set: expect.objectContaining({
+            major: 1,
+            minor: 0,
+            patch: 0,
             fetchStatus: FetchStatus.Pending,
           }),
         }),
@@ -44,29 +46,28 @@ describe("config-version.repository", () => {
     });
   });
 
-  describe("findLatestPatch", () => {
-    it("should return config version for matching active patch", async () => {
-      const doc = ConfigVersion.createMock({ patch: 3 }).toDocument();
+  describe("findLatestForMajor", () => {
+    it("should return the latest active version within the major", async () => {
+      const doc = ConfigVersion.createMock({ minor: 2, patch: 1 }).toDocument();
       mockCollection.findOne.mockResolvedValue(doc);
 
-      const result = await findLatestPatch("pigs-might-fly", 1, 0);
+      const result = await findLatestForMajor("pigs-might-fly", 1);
       expect(result).toBeInstanceOf(ConfigVersion);
       expect(mockCollection.findOne).toHaveBeenCalledWith(
         {
           grantCode: "pigs-might-fly",
           major: 1,
-          minor: 0,
           status: "active",
           fetchStatus: { $ne: FetchStatus.PermanentError },
         },
-        { sort: { patch: -1 } },
+        { sort: { minor: -1, patch: -1 } },
       );
     });
 
     it("should return null when no match found", async () => {
       mockCollection.findOne.mockResolvedValue(null);
 
-      const result = await findLatestPatch("nonexistent", 1, 0);
+      const result = await findLatestForMajor("nonexistent", 1);
       expect(result).toBeNull();
     });
   });

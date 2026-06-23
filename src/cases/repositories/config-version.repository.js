@@ -17,30 +17,32 @@ export const upsert = async (configVersion) => {
         status: doc.status,
         s3Key: doc.s3Key,
         s3Bucket: doc.s3Bucket,
-      },
-      $setOnInsert: {
-        receivedAt: doc.receivedAt,
-        fetchedAt: doc.fetchedAt,
         fetchStatus: doc.fetchStatus,
         fetchError: doc.fetchError,
         fetchAttempts: doc.fetchAttempts,
         lastFetchAttemptAt: doc.lastFetchAttemptAt,
+      },
+      $setOnInsert: {
+        receivedAt: doc.receivedAt,
+        fetchedAt: doc.fetchedAt,
       },
     },
     { upsert: true },
   );
 };
 
-export const findLatestPatch = async (grantCode, major, minor) => {
+// Resolves the highest active version within the same major (any minor/patch).
+// Lazy filter: only excludes PermanentError so an uncached newer version is
+// still selectable and triggers an on-demand S3 fetch.
+export const findLatestForMajor = async (grantCode, major) => {
   const doc = await db.collection(collection).findOne(
     {
       grantCode,
       major,
-      minor,
       status: "active",
       fetchStatus: { $ne: FetchStatus.PermanentError },
     },
-    { sort: { patch: -1 } },
+    { sort: { minor: -1, patch: -1 } },
   );
 
   return ConfigVersion.fromDocument(doc);

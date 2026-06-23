@@ -34,25 +34,24 @@ const mapCaveatSources = (payload) => {
   };
 };
 
-const resolveWorkflow = async (workflowCode, payload) => {
-  const configVersion = payload?.configVersion;
+// eslint-disable-next-line complexity
+const extractConfigVersion = (payload) =>
+  payload?.originalConfigVersion ?? payload?.configVersion ?? null;
 
-  if (configVersion) {
-    logger.info(
-      `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,
-    );
-    const result = await resolveAndFetchWorkflowUseCase(
-      workflowCode,
-      configVersion,
-    );
-    return {
-      workflow: result.workflow,
-      resolvedVersion: result.resolvedVersion,
-    };
+const resolveLegacyWorkflow = async (workflowCode) => ({
+  workflow: await findWorkflowByCodeUseCase(workflowCode),
+  resolvedVersion: null,
+});
+
+const resolveWorkflow = (workflowCode, payload) => {
+  const configVersion = extractConfigVersion(payload);
+  if (!configVersion) {
+    return resolveLegacyWorkflow(workflowCode);
   }
-
-  const workflow = await findWorkflowByCodeUseCase(workflowCode);
-  return { workflow, resolvedVersion: null };
+  logger.info(
+    `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,
+  );
+  return resolveAndFetchWorkflowUseCase(workflowCode, configVersion);
 };
 
 export const newCaseUseCase = async (message, session) => {

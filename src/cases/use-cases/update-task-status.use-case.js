@@ -3,7 +3,10 @@ import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const validatePayloadComment = (comment, required) => {
   if (required && !comment) {
@@ -23,7 +26,8 @@ export const updateTaskStatusUseCase = async (command) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   const currentStatus = workflow.getStatus(kase.position);
 

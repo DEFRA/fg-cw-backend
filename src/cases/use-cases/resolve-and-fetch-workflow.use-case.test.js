@@ -13,13 +13,13 @@ vi.mock("../../common/logger.js", () => ({
   },
 }));
 
-const { mockFindLatestPatch, mockUpdateFetchStatus } = vi.hoisted(() => ({
-  mockFindLatestPatch: vi.fn(),
+const { mockFindLatestForMajor, mockUpdateFetchStatus } = vi.hoisted(() => ({
+  mockFindLatestForMajor: vi.fn(),
   mockUpdateFetchStatus: vi.fn(),
 }));
 
 vi.mock("../repositories/config-version.repository.js", () => ({
-  findLatestPatch: mockFindLatestPatch,
+  findLatestForMajor: mockFindLatestForMajor,
   updateFetchStatus: mockUpdateFetchStatus,
 }));
 
@@ -71,7 +71,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Fetched,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
 
     const result = await resolveAndFetchWorkflowUseCase(
@@ -88,8 +88,8 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Pending,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
-    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFindLatestForMajor.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
     mockFetchConfigFile.mockResolvedValue({ code: "pigs-might-fly" });
     mockSaveFromDefinition.mockResolvedValue(mockWorkflow);
 
@@ -109,7 +109,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
   });
 
   it("should throw notFound when no config version exists", async () => {
-    mockFindLatestPatch.mockResolvedValue(null);
+    mockFindLatestForMajor.mockResolvedValue(null);
 
     await expect(
       resolveAndFetchWorkflowUseCase("nonexistent", "1.0.0"),
@@ -127,7 +127,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
       fetchStatus: FetchStatus.PermanentError,
       fetchError: "S3 object not found",
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
 
     await expect(
       resolveAndFetchWorkflowUseCase("pigs-might-fly", "1.0.0"),
@@ -139,7 +139,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
       fetchStatus: FetchStatus.TransientError,
       fetchAttempts: 5,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
 
     await expect(
       resolveAndFetchWorkflowUseCase("pigs-might-fly", "1.0.0"),
@@ -159,7 +159,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
       patch: 3,
       fetchStatus: FetchStatus.Fetched,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
 
     const result = await resolveAndFetchWorkflowUseCase(
@@ -174,8 +174,10 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Fetched,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
-    mockFindByCodeAndVersion.mockResolvedValue(null);
+    mockFindLatestForMajor.mockResolvedValue(cv);
+    mockFindByCodeAndVersion
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockWorkflow);
     mockFetchConfigFile.mockResolvedValue({ code: "pigs-might-fly" });
     mockSaveFromDefinition.mockResolvedValue(mockWorkflow);
 
@@ -193,7 +195,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
       fetchStatus: FetchStatus.Pending,
     });
     const conflict = Boom.conflict("already exists");
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
     mockFetchConfigFile.mockResolvedValue({ code: "pigs-might-fly" });
     mockSaveFromDefinition.mockRejectedValue(conflict);
@@ -215,7 +217,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Pending,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(null);
     mockFetchConfigFile.mockRejectedValue(
       new S3FetchError("Not found", { statusCode: 404, key: "k", bucket: "b" }),
@@ -238,7 +240,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Pending,
     });
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(null);
     mockFetchConfigFile.mockRejectedValue(
       new S3FetchError("Timeout", { statusCode: 503, key: "k", bucket: "b" }),
@@ -261,7 +263,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
       fetchStatus: FetchStatus.Pending,
     });
     const error = new Error("Unexpected failure");
-    mockFindLatestPatch.mockResolvedValue(cv);
+    mockFindLatestForMajor.mockResolvedValue(cv);
     mockFindByCodeAndVersion.mockResolvedValue(null);
     mockFetchConfigFile.mockRejectedValue(error);
 

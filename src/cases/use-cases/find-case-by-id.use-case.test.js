@@ -19,11 +19,11 @@ import {
   mapStatusOptions,
   mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("formatTimelineItemDescription", () => {
   it("formats task completed", () => {
@@ -282,13 +282,18 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: kase.workflowCode }),
+    );
 
     // TODO: strip to what's necessary when individual endpoints are exposed
     expect(result).toEqual({
@@ -298,6 +303,8 @@ describe("findCaseByIdUseCase", () => {
       comments: [],
       currentStatus: "STATUS_1",
       workflowCode: "workflow-code",
+      originalConfigVersion: kase.originalConfigVersion,
+      currentConfigVersion: kase.currentConfigVersion,
       createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
@@ -435,7 +442,10 @@ describe("findCaseByIdUseCase", () => {
     mockWorkflow.phases[0].stages[0].statuses[0].hideTaskGroups = true;
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -457,7 +467,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -482,7 +495,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -520,7 +536,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase(
@@ -541,7 +560,10 @@ describe("findCaseByIdUseCase", () => {
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -578,7 +600,10 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", readOnlyUser);
@@ -603,7 +628,10 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", readWriteUser);
@@ -659,7 +687,10 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser, mockUserAssigned]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
@@ -671,8 +702,8 @@ describe("findCaseByIdUseCase", () => {
         "64c88faac1f56f71e1b89a33",
       ],
     });
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
-      mockCase.workflowCode,
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
     );
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
@@ -686,7 +717,10 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
 
     findById.mockResolvedValue(mockCase);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findAll.mockRejectedValue(userError);
 
     await expect(
@@ -694,8 +728,8 @@ describe("findCaseByIdUseCase", () => {
     ).rejects.toThrow("User not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
-      mockCase.workflowCode,
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
     );
     expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
   });
@@ -709,12 +743,17 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("TEST_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "TEST_WORKFLOW" }),
+    );
     expect(result.requiredRoles).toEqual({
       allOf: ["ROLE_1", "ROLE_2"],
       anyOf: ["ROLE_3"],
@@ -731,13 +770,18 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findAll).toHaveBeenCalledWith({ ids: [mockUser.id] });
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("USER_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "USER_WORKFLOW" }),
+    );
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual({
       allOf: ["ROLE_1", "ROLE_2"],
@@ -754,14 +798,16 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
+    resolveWorkflowForCase.mockRejectedValue(workflowError);
 
     await expect(
       findCaseByIdUseCase(mockCase._id, mockAuthUser),
     ).rejects.toThrow("Workflow not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("INVALID_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "INVALID_WORKFLOW" }),
+    );
   });
 
   it("finds case with assigned user and populates user name", async () => {
@@ -773,7 +819,10 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
@@ -811,7 +860,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -839,7 +891,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -867,7 +922,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -890,7 +948,10 @@ describe("findCaseByIdUseCase", () => {
       mockCase.getStage().outcome = undefined;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -927,7 +988,10 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -964,7 +1028,10 @@ describe("findCaseByIdUseCase", () => {
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1002,7 +1069,10 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1037,7 +1107,10 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1063,7 +1136,10 @@ describe("findCaseByIdUseCase", () => {
       mockCase.comments = [];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1093,7 +1169,10 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1112,7 +1191,10 @@ describe("findCaseByIdUseCase", () => {
         undefined;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1465,7 +1547,10 @@ describe("beforeContent", () => {
     const mockCase = Case.createMock();
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1493,7 +1578,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1529,7 +1617,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1568,7 +1659,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1607,7 +1701,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1644,7 +1741,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {

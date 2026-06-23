@@ -11,7 +11,7 @@ import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.
 import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 import {
   updateTaskStatusUseCase,
   validatePayloadComment,
@@ -19,7 +19,7 @@ import {
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-case-by-id.use-case.js");
-vi.mock("../repositories/workflow.repository.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("updateTaskStatusUseCase", () => {
   const mockAuthUser = User.createMock({
@@ -41,7 +41,10 @@ describe("updateTaskStatusUseCase", () => {
 
   it("throws if case not found", async () => {
     const workflow = Workflow.createMock();
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(null);
 
     await expect(() =>
@@ -62,7 +65,10 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock();
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await updateTaskStatusUseCase({
@@ -90,7 +96,10 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock();
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const user = User.createMock({
@@ -120,7 +129,10 @@ describe("updateTaskStatusUseCase", () => {
     const workflow = Workflow.createMock();
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const user = User.createMock({
@@ -159,7 +171,10 @@ describe("updateTaskStatusUseCase", () => {
 
     workflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles = null;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const user = User.createMock({
@@ -184,9 +199,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("sets completed flag based on statusOption when statusOptions exist", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -244,7 +258,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await updateTaskStatusUseCase({
@@ -266,9 +283,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("sets completed to false when statusOption has completes false", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -326,7 +342,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await updateTaskStatusUseCase({
@@ -348,9 +367,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("throws error when invalid status option is provided", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -408,7 +426,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await expect(() =>
@@ -429,9 +450,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("uses completed parameter when task has no statusOptions", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -476,7 +496,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await updateTaskStatusUseCase({
@@ -498,9 +521,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("throws error when trying to update task status when current stage status is not interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -545,7 +567,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await expect(() =>
@@ -566,9 +591,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("allows task update when current stage status is interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -613,7 +637,10 @@ describe("updateTaskStatusUseCase", () => {
     });
     kase.workflowCode = workflow.code;
 
-    findByCode.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     await updateTaskStatusUseCase({

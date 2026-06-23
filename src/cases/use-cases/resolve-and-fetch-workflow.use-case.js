@@ -4,7 +4,7 @@ import { logger } from "../../common/logger.js";
 import { fetchConfigFile, S3FetchError } from "../../common/s3-client.js";
 import { parseSemver } from "../../common/semver.js";
 import {
-  findLatestPatch,
+  findLatestForMajor,
   updateFetchStatus,
 } from "../repositories/config-version.repository.js";
 import {
@@ -15,71 +15,77 @@ import {
 const MAX_FETCH_ATTEMPTS = 5;
 const HTTP_CONFLICT = 409;
 
-const handleS3Error = async (err, grantCode, version) => {
+const handleS3Error = async (err, workflowCode, version) => {
   if (err.isPermanent || err.isParseError) {
     logger.error(
-      `Permanent S3 fetch failure for ${grantCode}@${version} key=${err.key}: ${err.message}`,
+      err,
+      `Permanent S3 fetch failure for ${workflowCode}@${version}`,
     );
     await updateFetchStatus(
-      grantCode,
+      workflowCode,
       version,
       FetchStatus.PermanentError,
       err.message,
     );
     throw Boom.badGateway(
-      `Permanent S3 error for ${grantCode}@${version}: ${err.message}`,
+      `Permanent S3 error for ${workflowCode}@${version}: ${err.message}`,
     );
   }
 
   logger.error(
-    `Transient S3 fetch failure for ${grantCode}@${version} key=${err.key}: ${err.message}`,
+    err,
+    `Transient S3 fetch failure for ${workflowCode}@${version}`,
   );
   await updateFetchStatus(
-    grantCode,
+    workflowCode,
     version,
     FetchStatus.TransientError,
     err.message,
   );
   throw Boom.serverUnavailable(
-    `Transient S3 error for ${grantCode}@${version}: ${err.message}`,
+    `Transient S3 error for ${workflowCode}@${version}: ${err.message}`,
   );
 };
 
-const guardFetchStatus = async (configVersion, grantCode, resolvedVersion) => {
+const guardFetchStatus = async (
+  configVersion,
+  workflowCode,
+  resolvedVersion,
+) => {
   if (
     configVersion.fetchAttempts >= MAX_FETCH_ATTEMPTS &&
     configVersion.fetchStatus !== FetchStatus.PermanentError
   ) {
     logger.warn(
-      `Max fetch attempts (${MAX_FETCH_ATTEMPTS}) exceeded for ${grantCode}@${resolvedVersion}`,
+      `Max fetch attempts (${MAX_FETCH_ATTEMPTS}) exceeded for ${workflowCode}@${resolvedVersion}`,
     );
     await updateFetchStatus(
-      grantCode,
+      workflowCode,
       resolvedVersion,
       FetchStatus.PermanentError,
       `Exceeded ${MAX_FETCH_ATTEMPTS} fetch attempts`,
     );
     throw Boom.badGateway(
-      `Max fetch attempts exceeded for ${grantCode}@${resolvedVersion}`,
+      `Max fetch attempts exceeded for ${workflowCode}@${resolvedVersion}`,
     );
   }
 
   if (configVersion.fetchStatus === FetchStatus.PermanentError) {
     logger.warn(
-      `Permanent error recorded for ${grantCode}@${resolvedVersion}: ${configVersion.fetchError}`,
+      `Permanent error recorded for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
     );
     throw Boom.badGateway(
-      `Permanent error for ${grantCode}@${resolvedVersion}: ${configVersion.fetchError}`,
+      `Permanent error for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
     );
   }
 };
 
-const fetchFromS3 = async (configVersion, grantCode, resolvedVersion) => {
+const fetchFromS3 = async (configVersion, workflowCode, resolvedVersion) => {
   try {
     return await fetchConfigFile(configVersion.s3Bucket, configVersion.s3Key);
   } catch (err) {
     if (err instanceof S3FetchError) {
-      await handleS3Error(err, grantCode, resolvedVersion);
+      await handleS3Error(err, workflowCode, resolvedVersion);
     }
     throw err;
   }
@@ -87,57 +93,56 @@ const fetchFromS3 = async (configVersion, grantCode, resolvedVersion) => {
 
 const saveOrFallback = async (
   workflowDefinition,
-  grantCode,
+  workflowCode,
   resolvedVersion,
 ) => {
   try {
-    const workflow = await saveFromDefinition(
-      workflowDefinition,
-      resolvedVersion,
-    );
-    await updateFetchStatus(grantCode, resolvedVersion, FetchStatus.Fetched);
-    return workflow;
+    await saveFromDefinition(workflowDefinition, resolvedVersion);
+    await updateFetchStatus(workflowCode, resolvedVersion, FetchStatus.Fetched);
   } catch (err) {
     if (err.isBoom && err.output.statusCode === HTTP_CONFLICT) {
       logger.info(
-        `Concurrent insert for ${grantCode}@${resolvedVersion}, loading existing`,
+        `Concurrent insert for ${workflowCode}@${resolvedVersion}, loading existing`,
       );
-      return await findByCodeAndVersion(grantCode, resolvedVersion);
+    } else {
+      throw err;
     }
-    throw err;
   }
+  // Always reload from DB so the document is properly mapped to domain models
+  // (the raw Workflow constructor does not hydrate sub-models like WorkflowPhase).
+  return await findByCodeAndVersion(workflowCode, resolvedVersion);
 };
 
 const fetchAndStoreWorkflow = async (
   configVersion,
-  grantCode,
+  workflowCode,
   resolvedVersion,
 ) => {
   logger.info(
-    `Fetching workflow definition from S3 for ${grantCode}@${resolvedVersion}`,
+    `Fetching workflow definition from S3 for ${workflowCode}@${resolvedVersion}`,
   );
 
   const workflowDefinition = await fetchFromS3(
     configVersion,
-    grantCode,
+    workflowCode,
     resolvedVersion,
   );
   const workflow = await saveOrFallback(
     workflowDefinition,
-    grantCode,
+    workflowCode,
     resolvedVersion,
   );
 
   logger.info(
-    `Finished: Resolved and stored ${grantCode}@${resolvedVersion} from S3`,
+    `Finished: Resolved and stored ${workflowCode}@${resolvedVersion} from S3`,
   );
 
   return workflow;
 };
 
-const findCachedWorkflow = async (
+const findStoredWorkflow = async (
   configVersion,
-  grantCode,
+  workflowCode,
   resolvedVersion,
 ) => {
   if (configVersion.fetchStatus !== FetchStatus.Fetched) {
@@ -145,30 +150,27 @@ const findCachedWorkflow = async (
   }
 
   const existingWorkflow = await findByCodeAndVersion(
-    grantCode,
+    workflowCode,
     resolvedVersion,
   );
   if (existingWorkflow) {
-    logger.info(`Resolved ${grantCode}@${resolvedVersion} from cache`);
+    logger.info(`Resolved ${workflowCode}@${resolvedVersion} from cache`);
   }
   return existingWorkflow;
 };
 
-const resolveConfigVersion = async (grantCode, requestedVersion) => {
+const resolveConfigVersion = async (workflowCode, requestedVersion) => {
   const parsed = parseSemver(requestedVersion);
   if (!parsed) {
     throw Boom.badRequest(`Invalid semver version: ${requestedVersion}`);
   }
 
-  const configVersion = await findLatestPatch(
-    grantCode,
-    parsed.major,
-    parsed.minor,
-  );
+  // Roll forward to the latest active version within the same major.
+  const configVersion = await findLatestForMajor(workflowCode, parsed.major);
 
   if (!configVersion) {
     throw Boom.notFound(
-      `No active config version found for ${grantCode}@${parsed.major}.${parsed.minor}`,
+      `No active config version found for ${workflowCode}@${parsed.major}.x`,
     );
   }
 
@@ -176,19 +178,24 @@ const resolveConfigVersion = async (grantCode, requestedVersion) => {
 };
 
 export const resolveAndFetchWorkflowUseCase = async (
-  grantCode,
+  workflowCode,
   requestedVersion,
 ) => {
-  logger.info(`Resolving config version for ${grantCode}@${requestedVersion}`);
+  logger.info(
+    `Resolving config version for ${workflowCode}@${requestedVersion}`,
+  );
 
-  const configVersion = await resolveConfigVersion(grantCode, requestedVersion);
+  const configVersion = await resolveConfigVersion(
+    workflowCode,
+    requestedVersion,
+  );
   const resolvedVersion = configVersion.version;
 
-  await guardFetchStatus(configVersion, grantCode, resolvedVersion);
+  await guardFetchStatus(configVersion, workflowCode, resolvedVersion);
 
-  const cached = await findCachedWorkflow(
+  const cached = await findStoredWorkflow(
     configVersion,
-    grantCode,
+    workflowCode,
     resolvedVersion,
   );
   if (cached) {
@@ -197,7 +204,7 @@ export const resolveAndFetchWorkflowUseCase = async (
 
   const workflow = await fetchAndStoreWorkflow(
     configVersion,
-    grantCode,
+    workflowCode,
     resolvedVersion,
   );
 

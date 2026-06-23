@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-const { mockSaveInboxMessageUseCase } = vi.hoisted(() => ({
-  mockSaveInboxMessageUseCase: vi.fn(),
+const { mockProcessConfigVersion } = vi.hoisted(() => ({
+  mockProcessConfigVersion: vi.fn(),
 }));
 
 vi.mock("../../common/config.js", () => ({
@@ -18,9 +18,12 @@ vi.mock("../../common/config.js", () => ({
   },
 }));
 
-vi.mock("../use-cases/save-inbox-message.use-case.js", () => ({
-  messageSource: { ConfigBroker: "CONFIG_BROKER" },
-  saveInboxMessageUseCase: mockSaveInboxMessageUseCase,
+vi.mock("../../common/logger.js", () => ({
+  logger: { warn: vi.fn(), info: vi.fn() },
+}));
+
+vi.mock("../use-cases/process-config-version.use-case.js", () => ({
+  processConfigVersionUseCase: mockProcessConfigVersion,
 }));
 
 vi.mock("../../common/sqs-subscriber.js", () => ({
@@ -42,16 +45,23 @@ describe("configVersionUpdatedSubscriber", () => {
     expect(configVersionUpdatedSubscriber).not.toBeNull();
   });
 
-  it("should call saveInboxMessageUseCase with CONFIG_BROKER source on message", async () => {
+  it("should extract message attributes and call processConfigVersionUseCase", async () => {
     const { configVersionUpdatedSubscriber } =
       await import("./config-version-updated.subscriber.js");
 
-    const message = { id: "msg-1", data: { grantCode: "woodland" } };
-    await configVersionUpdatedSubscriber.onMessage(message);
+    const body = ["example-grant/1.0.0/metadata.json"];
+    const messageAttributes = {
+      grant: { DataType: "String", StringValue: "woodland" },
+      version: { DataType: "String", StringValue: "1.2.3" },
+      status: { DataType: "String", StringValue: "active" },
+    };
 
-    expect(mockSaveInboxMessageUseCase).toHaveBeenCalledWith(
-      message,
-      "CONFIG_BROKER",
-    );
+    await configVersionUpdatedSubscriber.onMessage(body, messageAttributes);
+
+    expect(mockProcessConfigVersion).toHaveBeenCalledWith({
+      grantCode: "woodland",
+      version: "1.2.3",
+      status: "active",
+    });
   });
 });

@@ -28,7 +28,10 @@ export class CaseDocument {
       (timelineProps) => new TimelineEventDocument(timelineProps),
     );
     this.supplementaryData = props.supplementaryData;
-    this.configVersion = props.configVersion ?? null;
+    this.originalConfigVersion =
+      props.originalConfigVersion ?? props.configVersion ?? null;
+    this.currentConfigVersion =
+      props.currentConfigVersion ?? props.configVersion ?? null;
   }
 
   static createMock(props) {

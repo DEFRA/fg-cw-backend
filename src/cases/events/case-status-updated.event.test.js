@@ -18,7 +18,7 @@ vi.mock("../../common/config.js", () => ({
 import { CaseStatusUpdatedEvent } from "./case-status-updated.event.js";
 
 describe("CaseStatusUpdatedEvent", () => {
-  it("omits configVersion from data when not provided", () => {
+  it("omits currentConfigVersion from data when not provided", () => {
     const event = new CaseStatusUpdatedEvent({
       caseRef: "CASE-REF-001",
       workflowCode: "frps-private-beta",
@@ -35,15 +35,15 @@ describe("CaseStatusUpdatedEvent", () => {
     expect(event.messageGroupId).toBe("CASE-REF-001-frps-private-beta");
   });
 
-  it("includes configVersion in data when provided", () => {
+  it("includes currentConfigVersion in data when provided", () => {
     const event = new CaseStatusUpdatedEvent({
       caseRef: "CASE-REF-001",
       workflowCode: "frps-private-beta",
       previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
       currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
-      configVersion: "1.0.3",
+      currentConfigVersion: "1.0.3",
     });
 
-    expect(event.data.configVersion).toBe("1.0.3");
+    expect(event.data.currentConfigVersion).toBe("1.0.3");
   });
 });

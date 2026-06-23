@@ -191,9 +191,9 @@ export const findAll = async (query) => {
 };
 
 export const findByCode = async (code) => {
-  const workflowDocument = await db.collection(collection).findOne({
-    code,
-  });
+  const workflowDocument = await db
+    .collection(collection)
+    .findOne({ code }, { sort: { version: -1 } });
 
   return workflowDocument && toWorkflow(workflowDocument);
 };
