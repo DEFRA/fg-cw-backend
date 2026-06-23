@@ -32,3 +32,8 @@ services:
       - ./migrate-mongo-config.js:/home/node/migrate-mongo-config.js
       - ./migrations:/home/node/migrations
       - ./package.json:/home/node/package.json
+      # Local-dev workflow overrides (WORKFLOW_OVERRIDES manifest + the workflow
+      # definition files it points at). Not COPYed into the image, so bind-mount
+      # them for the override loader to resolve at runtime.
+      - ./dev-workflows:/home/node/dev-workflows
+      - ./test/fixtures:/home/node/test/fixtures

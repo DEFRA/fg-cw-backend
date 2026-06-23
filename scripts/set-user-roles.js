@@ -9,6 +9,10 @@ const roles = {
     startDate: "2005-01-01",
     endDate: "3000-01-01",
   },
+  ROLE_WMP: {
+    startDate: "2005-01-01",
+    endDate: "3000-01-01",
+  },
 };
 
 const users = {
