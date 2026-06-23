@@ -6,7 +6,7 @@ export class CaseStatusUpdatedEvent extends CloudEvent {
     workflowCode,
     previousStatus,
     currentStatus,
-    configVersion = null,
+    currentConfigVersion = null,
   }) {
     super(
       "case.status.updated",
@@ -15,7 +15,7 @@ export class CaseStatusUpdatedEvent extends CloudEvent {
         workflowCode,
         previousStatus,
         currentStatus,
-        ...(configVersion && { configVersion }),
+        ...(currentConfigVersion && { currentConfigVersion }),
       },
       `${caseRef}-${workflowCode}`,
     );

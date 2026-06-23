@@ -431,7 +431,8 @@ describe("newCaseUseCase", () => {
     expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
 
     const savedCase = save.mock.calls[0][0];
-    expect(savedCase.configVersion).toBe("1.0.3");
+    expect(savedCase.originalConfigVersion).toBe("1.0.3");
+    expect(savedCase.currentConfigVersion).toBe("1.0.3");
   });
 
   it("falls back to findWorkflowByCodeUseCase when configVersion is absent", async () => {
@@ -457,6 +458,7 @@ describe("newCaseUseCase", () => {
     expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
 
     const savedCase = save.mock.calls[0][0];
-    expect(savedCase.configVersion).toBeNull();
+    expect(savedCase.originalConfigVersion).toBeNull();
+    expect(savedCase.currentConfigVersion).toBeNull();
   });
 });

@@ -228,7 +228,7 @@ describe("findByCode", () => {
     const result = await findByCode(code);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
-    expect(findOne).toHaveBeenCalledWith({ code });
+    expect(findOne).toHaveBeenCalledWith({ code }, { sort: { version: -1 } });
     expect(result._id.toString()).toEqual(workflowDocument._id.toString());
     expect(result.templates).toEqual(workflowDocument.templates);
   });
