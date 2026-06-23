@@ -54,6 +54,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(result.content).toBeDefined();
     expect(Array.isArray(result.content)).toBe(true);
     expect(result.content[0].title).toBe("Details");
+    expect(result.beforeContent).toBeUndefined();
   });
 
   it("throws error when case not found", async () => {

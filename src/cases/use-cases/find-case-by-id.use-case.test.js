@@ -431,6 +431,7 @@ describe("findCaseByIdUseCase", () => {
         },
       ],
       beforeContent: [],
+      afterContent: [],
     });
   });
 
@@ -1756,6 +1757,230 @@ describe("beforeContent", () => {
         component: "heading",
         text: "TEST-REF-123",
         level: 2,
+      },
+    ]);
+  });
+});
+
+describe("afterContent", () => {
+  const authenticatedUserId = new ObjectId().toHexString();
+  const mockAuthUser = User.createMock({
+    id: authenticatedUserId,
+    idpId: new ObjectId().toHexString(),
+    name: "Test User",
+    email: "test.user@example.com",
+    idpRoles: ["user"],
+    appRoles: {},
+  });
+
+  it("returns empty array when stage has no afterContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+    expect(result.afterContent).toEqual([]);
+  });
+
+  it("processes afterContent with truthy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithAfterContent = mockWorkflow.phases[0].stages[0];
+    stageWithAfterContent.afterContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "warning-text",
+            text: "This is after content",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.afterContent).toEqual([
+      {
+        component: "warning-text",
+        text: "This is after content",
+      },
+    ]);
+  });
+
+  it("filters out afterContent with falsy renderIf condition", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithAfterContent = mockWorkflow.phases[0].stages[0];
+    stageWithAfterContent.afterContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "warning-text",
+            text: "This should not appear",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "case-details" },
+    });
+
+    expect(result.afterContent).toEqual([]);
+  });
+
+  it("processes multiple afterContent items", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithAfterContent = mockWorkflow.phases[0].stages[0];
+    stageWithAfterContent.afterContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "heading",
+            text: "First heading",
+            level: 2,
+          },
+        ],
+      },
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "text",
+            text: "Second text",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.afterContent).toEqual([
+      {
+        component: "heading",
+        text: "First heading",
+        level: 2,
+      },
+      {
+        component: "text",
+        text: "Second text",
+      },
+    ]);
+  });
+
+  it("processes afterContent without renderIf (always included)", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+
+    const stageWithAfterContent = mockWorkflow.phases[0].stages[0];
+    stageWithAfterContent.afterContent = [
+      {
+        content: [
+          {
+            component: "paragraph",
+            text: "Always visible content",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "any-tab" },
+    });
+
+    expect(result.afterContent).toEqual([
+      {
+        component: "paragraph",
+        text: "Always visible content",
+      },
+    ]);
+  });
+
+  it("resolves JSONPath references in afterContent", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const mockCase = Case.createMock();
+    mockCase.caseRef = "TEST-REF-123";
+
+    const stageWithAfterContent = mockWorkflow.phases[0].stages[0];
+    stageWithAfterContent.afterContent = [
+      {
+        renderIf: "jsonata:$.request.params.tabId = 'task-list'",
+        content: [
+          {
+            component: "paragraph",
+            text: "$.caseRef",
+          },
+        ],
+      },
+    ];
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(mockCase);
+
+    const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
+      params: { tabId: "task-list" },
+    });
+
+    expect(result.afterContent).toEqual([
+      {
+        component: "paragraph",
+        text: "TEST-REF-123",
       },
     ]);
   });

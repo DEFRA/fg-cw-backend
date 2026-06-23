@@ -152,8 +152,12 @@ const buildSearchFilter = (workflowCodes, search) => {
     workflowCode: { $in: workflowCodes },
   };
 
-  if (search) {
-    filter.$or = [{ caseRef: search }, { "payload.identifiers.sbi": search }];
+  if (search && typeof search === "string") {
+    const searchValue = search.trim().toLowerCase();
+    filter.$or = [
+      { caseRef: searchValue },
+      { "payload.identifiers.sbi": searchValue },
+    ];
   }
 
   return filter;
