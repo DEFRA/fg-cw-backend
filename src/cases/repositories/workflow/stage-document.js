@@ -6,6 +6,8 @@ export class StageDocument {
     this.code = props.code;
     this.name = props.name;
     this.description = props.description;
+    this.beforeContent = props.beforeContent;
+    this.afterContent = props.afterContent;
     this.statuses = props.statuses.map((status) => new StatusDocument(status));
     this.taskGroups = props.taskGroups.map(
       (taskGroup) => new TaskGroupDocument(taskGroup),

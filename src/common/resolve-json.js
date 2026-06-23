@@ -297,7 +297,7 @@ const resolveTemplateComponent = async ({ path, root, row }) => {
     return [];
   }
 
-  return await resolveJSONPath({
+  return resolveJSONPath({
     root,
     path: templateContent,
     row: dataRow,

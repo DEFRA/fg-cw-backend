@@ -207,6 +207,7 @@ describe("GET /cases/{caseId}", () => {
         },
       ],
       beforeContent: [],
+      afterContent: [],
       caseSeries: {
         length: 1,
       },
