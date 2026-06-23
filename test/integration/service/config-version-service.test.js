@@ -9,16 +9,13 @@ import {
   expect,
   it,
 } from "vitest";
-import {
-  ConfigVersion,
-  FetchStatus,
-} from "../../../src/cases/models/config-version.js";
+import { ConfigVersion } from "../../../src/cases/models/config-version.js";
 import {
   findByGrantCodeAndVersion,
-  findLatestPatch,
   updateFetchStatus,
   upsert,
 } from "../../../src/cases/repositories/config-version.repository.js";
+import { FetchStatus } from "../../../src/common/fetch-status.js";
 
 let client;
 let configVersions;
@@ -92,83 +89,6 @@ describe("config-version repository integration", () => {
       });
       expect(doc.status).toBe("active");
       expect(doc.fetchStatus).toBe(FetchStatus.Pending);
-    });
-  });
-
-  describe("findLatestPatch", () => {
-    it("should return the record with the highest patch for active status", async () => {
-      await configVersions.insertMany([
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.2.0",
-          major: 1,
-          minor: 2,
-          patch: 0,
-          status: "active",
-        }).toDocument(),
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.2.3",
-          major: 1,
-          minor: 2,
-          patch: 3,
-          status: "active",
-        }).toDocument(),
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.2.1",
-          major: 1,
-          minor: 2,
-          patch: 1,
-          status: "active",
-        }).toDocument(),
-      ]);
-
-      const result = await findLatestPatch("pigs-might-fly", 1, 2);
-      expect(result).toBeInstanceOf(ConfigVersion);
-      expect(result.version).toBe("1.2.3");
-      expect(result.patch).toBe(3);
-    });
-
-    it("should skip records with fetchStatus permanent_error", async () => {
-      await configVersions.insertMany([
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.2.3",
-          major: 1,
-          minor: 2,
-          patch: 3,
-          status: "active",
-          fetchStatus: FetchStatus.PermanentError,
-        }).toDocument(),
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.2.2",
-          major: 1,
-          minor: 2,
-          patch: 2,
-          status: "active",
-        }).toDocument(),
-      ]);
-
-      const result = await findLatestPatch("pigs-might-fly", 1, 2);
-      expect(result.version).toBe("1.2.2");
-    });
-
-    it("should return null when no matching major.minor exists", async () => {
-      await configVersions.insertOne(
-        ConfigVersion.createMock({
-          grantCode: "pigs-might-fly",
-          version: "1.0.0",
-          major: 1,
-          minor: 0,
-          patch: 0,
-          status: "active",
-        }).toDocument(),
-      );
-
-      const result = await findLatestPatch("pigs-might-fly", 9, 9);
-      expect(result).toBeNull();
     });
   });
 
