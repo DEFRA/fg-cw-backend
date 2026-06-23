@@ -67,6 +67,8 @@ describe("GET /cases/{caseId}", () => {
       _id: caseId,
       caseRef: caseData2.caseRef,
       workflowCode: caseData2.workflowCode,
+      originalConfigVersion: null,
+      currentConfigVersion: null,
       currentStatus: "AWAITING_REVIEW",
       stage: {
         code: "APPLICATION_RECEIPT",
