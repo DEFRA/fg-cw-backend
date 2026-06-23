@@ -11,10 +11,10 @@ import {
   it,
   vi,
 } from "vitest";
-import { FetchStatus } from "../../../src/cases/models/config-version.js";
 import { Inbox, InboxStatus } from "../../../src/cases/models/inbox.js";
 import { claimEvents } from "../../../src/cases/repositories/inbox.repository.js";
 import { InboxSubscriber } from "../../../src/cases/subscribers/inbox.subscriber.js";
+import { FetchStatus } from "../../../src/common/fetch-status.js";
 
 let client;
 let inboxCol, fifoCol, configVersionsCol;

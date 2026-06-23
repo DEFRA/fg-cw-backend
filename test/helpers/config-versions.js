@@ -1,7 +1,5 @@
-import {
-  ConfigVersion,
-  FetchStatus,
-} from "../../src/cases/models/config-version.js";
+import { ConfigVersion } from "../../src/cases/models/config-version.js";
+import { FetchStatus } from "../../src/common/fetch-status.js";
 
 export const seedConfigVersion = async (
   db,
