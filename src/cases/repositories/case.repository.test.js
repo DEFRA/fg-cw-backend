@@ -324,6 +324,29 @@ describe("findAll", () => {
     });
   });
 
+  it("lowercases search input to match stored caseRefs", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: "WMP-F42-WDE",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+      $or: [
+        { caseRef: "wmp-f42-wde" },
+        { "payload.identifiers.sbi": "wmp-f42-wde" },
+      ],
+    });
+  });
+
   it("does not add $or filter when search is not provided", async () => {
     db.collection.mockReturnValue({});
     paginate.mockResolvedValue({ data: [], pagination: {} });
