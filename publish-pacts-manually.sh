@@ -36,7 +36,7 @@ fi
 
 echo ""
 echo "=== Step 4: Publish pacts to broker ==="
-CONSUMER_VERSION=$(git describe --tags --abbrev=0 --always)
+CONSUMER_VERSION=$(git describe --tags --always --long)
 echo "Consumer version: $CONSUMER_VERSION"
 
 pact-broker publish --merge \
