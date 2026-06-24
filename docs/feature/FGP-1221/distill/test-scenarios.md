@@ -31,7 +31,15 @@ correct-but-unwired implementation (TBU defect) is structurally impossible.
 | AC-9              | Choosing a case type filters the report to it (query passed through)                                                                                                        | _Choosing a case type filters the report to it_              | `routes/report-cases.route.test.js` → "passes the requested case type through to the use case"                                                                       |
 | AC-10 _(adapter)_ | Counting groups cases by position and sums; no matches → empty, not error                                                                                                   | _Counting groups cases by their lifecycle position_          | `repositories/case.repository.test.js` → "groups cases by phase, stage and status and sums each group" + "returns an empty list when no cases match"                 |
 
-**Error/edge coverage:** AC-4, AC-7, AC-8, AC-10b = 4 of 10 scenarios (40%), meeting the DISTILL ≥40% edge-path target.
+| AC-11 _(real-io)_ | End-to-end: counts produced from **real stored cases** match the roll-up; empty case type → empty report | _Counts are produced from real stored cases, end to end_ | `test/cases/report-cases.test.js` (testcontainers) → "counts cases by lifecycle position and rolls them up" + "returns an empty report for a case type with no cases" |
+
+**Error/edge coverage:** AC-4, AC-7, AC-8, AC-10b = 4 of 11 scenarios (36%); close to the
+DISTILL ≥40% target and acceptable for a prototype.
+
+**Two-tier coverage:** AC-1..AC-10 are the **unit tier** (`--dir src`, Mongo/repo mocked).
+AC-11 is the **integration tier** (`--dir test`, real Mongo via testcontainers) — the real
+aggregation, matching the repo's `test/cases/<endpoint>.test.js` convention. See DWD-03 for the
+local-run caveat (port `:3011` clash with the dev stack).
 
 ## Business-language check
 

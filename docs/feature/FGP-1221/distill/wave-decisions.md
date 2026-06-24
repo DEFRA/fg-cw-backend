@@ -17,22 +17,29 @@ this repository predates the nWave SSOT model. Graceful degradation applied: acc
 criteria derived from the implemented code; driving ports identified directly from the Hapi
 routes; no traceability to user stories (none exist). Zero contradictions to reconcile.
 
-## DWD-03 — Walking Skeleton strategy: **mocked port boundary (repo convention)**
+## DWD-03 — Walking Skeleton strategy: **Strategy C (real I/O), matching the repo's two-tier convention**
 
-The feature's only driven adapter is MongoDB. The DISTILL decision tree would suggest
-Strategy C / real-I/O with a database (testcontainers). However, the established convention
-in this repository is **port-boundary unit tests with the Mongo client mocked**
-(`vi.mock("../../common/mongo-client.js")`) and routes exercised via `hapi.server().inject(...)`.
+> Correction: an earlier draft of this decision claimed the repo convention was "mocked Mongo
+> only" and chose to skip testcontainers. That was wrong. The repo runs **two tiers** —
+> `test:unit` (`--dir src`, Mongo mocked, asserts pipeline shape) **and** `test:integration`
+> (`--dir test`, `test/setup.js` brings up a real Dockerised Mongo via testcontainers, with a
+> `test/cases/<endpoint>.test.js` per endpoint). The correct decision is to honour **both**.
 
-Decision: **follow the repo convention**, not introduce testcontainers for a deliberately
-simple prototype. The walking-skeleton scenario (_Caseworker reports a case type …_) is
-exercised through the real Hapi route via `inject`, with the use-case mocked — verifying
-wiring, status, query handling and the page envelope (the driving-adapter mandate).
+Decision: follow the established two-tier convention.
 
-**Known limitation (see acceptance-review.md):** the aggregation pipeline is asserted by
-_shape_, not executed against a real MongoDB. If this prototype is hardened for production,
-add one `@real-io @adapter-integration` scenario running `countByPosition` against a
-testcontainer / in-memory Mongo to close the adapter-coverage gap.
+- **Unit tier** — `repositories/case.repository.test.js` asserts the aggregation pipeline shape
+  with Mongo mocked (fast change-detector); `report-cases.use-case.test.js` covers orchestration
+  with the repository mocked; `report-cases.route.test.js` exercises the real Hapi route via
+  `inject` (driving-adapter mandate: status, query handling, page envelope).
+- **Integration tier (`@real-io @adapter-integration`)** — `test/cases/report-cases.test.js`
+  seeds cases across positions in a **real Mongo** (testcontainers), calls `GET /cases/report`,
+  and asserts the real rolled-up counts. This is the end-to-end walking skeleton and the
+  adapter-integration test in one, matching every sibling endpoint.
+
+**Local-run caveat:** the integration test needs Docker and free testcontainers ports; it
+collides with a running `fg-grants-core` dev stack on `:3011`. It executes in CI / with the dev
+stack down. Authored against the verified `frps-private-beta` workflow fixture and `INFO` status
+themes; not executed on the authoring machine due to that port clash.
 
 ## DWD-04 — Executable binding is vitest, not Cucumber
 

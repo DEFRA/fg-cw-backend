@@ -97,3 +97,13 @@ Feature: Case lifecycle report by position
     When the cases are counted by position
     Then each distinct position has a total
     And asking for a case type with no cases returns nothing rather than an error
+
+  @walking_skeleton @real-io @adapter-integration
+  Scenario: Counts are produced from real stored cases, end to end
+    # Tested by: test/cases/report-cases.test.js (testcontainers — real Mongo + stack)
+    #            "counts cases by lifecycle position and rolls them up"
+    #            "returns an empty report for a case type with no cases"
+    Given cases really stored across several lifecycle positions for a case type
+    When a caseworker asks for that case type's report over HTTP
+    Then the counts and roll-up returned match the stored cases
+    And a case type with no stored cases yields an empty report

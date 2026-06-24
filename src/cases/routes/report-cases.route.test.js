@@ -57,7 +57,6 @@ describe("reportCasesRoute", () => {
       navItems: [
         { title: "Admin", href: "/admin" },
         { title: "Casework", href: "/cases" },
-        { title: "Reports", href: "/reports" },
       ],
     });
   });

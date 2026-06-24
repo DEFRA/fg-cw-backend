@@ -2,22 +2,25 @@
 
 ## Adapter coverage (Mandate 6)
 
-| Driven adapter                                  | Real-I/O scenario? | Covered by                                                                                                                                                                                 |
-| ----------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| MongoDB `cases` aggregation (`countByPosition`) | NO — mocked        | `repositories/case.repository.test.js` asserts the pipeline **shape** and the mapping of grouped `_id` docs, with `db.collection` mocked. Pipeline is **not executed against real Mongo**. |
+| Driven adapter                                  | Real-I/O scenario? | Covered by                                                                                                                                                                                                                                 |
+| ----------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| MongoDB `cases` aggregation (`countByPosition`) | YES                | `test/cases/report-cases.test.js` — testcontainers (real Mongo + full stack), seeds cases across positions, `GET /cases/report`, asserts the real rolled-up counts. **Plus** `repositories/case.repository.test.js` for fast shape checks. |
 
-**Gap & rationale:** No `@real-io` adapter test. This is an accepted, documented deviation
-(DWD-03) — the repo convention is mocked-Mongo unit tests, and this is a simple prototype.
-**To close for production:** add one scenario running `countByPosition` against a real/in-memory
-Mongo (testcontainers), asserting actual grouping over seeded documents.
+**Coverage note:** The aggregation is validated two ways — its real grouping/`$sum` over seeded
+documents (integration tier, testcontainers) and its pipeline shape (unit tier, mocked Mongo).
+This matches the repo convention of a `test/cases/<endpoint>.test.js` per endpoint.
+
+**Local-run caveat:** `test/cases/report-cases.test.js` requires Docker and the testcontainers
+ports to be free (it collides with a running `fg-grants-core` dev stack on `:3011`). It runs in
+CI / when the dev stack is down; it was authored against the verified workflow fixture
+(`frps-private-beta`) and status themes but not executed on this machine due to that port clash.
 
 ## Self-review checklist
 
 - [x] WS strategy declared in `wave-decisions.md` (DWD-03)
 - [x] WS scenario exercises the **driving adapter** via its protocol — Hapi route `GET /cases/report` through `server.inject` (status, query handling, page envelope)
-- [~] Every driven adapter has a real-I/O scenario — **NO**, documented gap above (mocked by repo convention)
-- [x] For the mocked adapter: documented what it cannot model (real grouping/`$sum` over real documents)
-- [x] Container preference documented — none, by convention
+- [x] Every driven adapter has a real-I/O scenario — `test/cases/report-cases.test.js` (testcontainers)
+- [x] Container preference documented — testcontainers via `test/setup.js` (Docker Compose stack)
 - [x] ≥40% error/edge scenarios — 40% (AC-4, AC-7, AC-8, AC-10b)
 - [x] Business-language purity in scenario names and steps
 - [x] Every scenario traced to an executing test (`Tested by:`)
@@ -25,8 +28,9 @@ Mongo (testcontainers), asserting actual grouping over seeded documents.
 
 ## Verification
 
-All referenced tests pass on branch `FGP-1221-simple-report-by-position`:
+Unit tier passes on branch `FGP-1221-simple-report-by-position`:
 `case.repository.test.js` (25), `report-cases.use-case.test.js` (8), `report-cases.route.test.js` (2).
+Integration tier (`test/cases/report-cases.test.js`) runs under testcontainers in CI — see local-run caveat above.
 
 ## Cross-repo note
 
