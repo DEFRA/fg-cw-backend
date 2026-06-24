@@ -15,6 +15,10 @@ import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
+import {
+  applyOverride,
+  findOverrideDocument,
+} from "./workflow/workflow-override.js";
 
 const collection = "workflows";
 
@@ -187,10 +191,16 @@ export const findAll = async (query) => {
     .find(filter)
     .toArray();
 
-  return workflowDocuments.map(toWorkflow);
+  return workflowDocuments.map(applyOverride).map(toWorkflow);
 };
 
 export const findByCode = async (code) => {
+  const override = findOverrideDocument(code);
+
+  if (override) {
+    return toWorkflow(override);
+  }
+
   const workflowDocument = await db.collection(collection).findOne({
     code,
   });

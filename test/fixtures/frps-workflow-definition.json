@@ -4,160 +4,6 @@
     "allOf": ["ROLE_SFI_REFORM"],
     "anyOf": []
   },
-  "templates": {
-    "caveats": {
-      "natural-england": {
-        "content": [
-          {
-            "component": "heading",
-            "text": "Land parcel: @.metadata.sheetId @.metadata.parcelId",
-            "level": 3,
-            "classes": "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1"
-          },
-          {
-            "component": "summary-list",
-            "rows": [
-              {
-                "label": "Action code",
-                "text": "@.metadata.actionCode"
-              },
-              {
-                "label": "Overlap area",
-                "text": "@.metadata.overlapAreaHectares Ha"
-              },
-              {
-                "label": "Overlap",
-                "text": "@.metadata.percentageOverlap %"
-              }
-            ]
-          }
-        ]
-      },
-      "historic-england": {
-        "content": [
-          {
-            "component": "heading",
-            "text": "Land parcel: @.metadata.sheetId @.metadata.parcelId",
-            "level": 3,
-            "classes": "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1"
-          },
-          {
-            "component": "summary-list",
-            "rows": [
-              {
-                "label": "Action code",
-                "text": "@.metadata.actionCode"
-              },
-              {
-                "label": "Overlap area",
-                "text": "@.metadata.overlapAreaHectares Ha"
-              },
-              {
-                "label": "Overlap",
-                "text": "@.metadata.percentageOverlap %"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "pageFragments": {
-      "APPLICATION_AMEND": {
-        "content": [
-          {
-            "component": "heading",
-            "text": "Application returned to customer for amending",
-            "level": 2,
-            "classes": "govuk-heading-m"
-          },
-          {
-            "component": "paragraph",
-            "text": "Application $.caseRef has been cancelled. However, you can still review the notes and timeline for this application."
-          },
-          {
-            "component": "paragraph",
-            "text": "A new, linked application will be submitted after amendments have been made by the customer."
-          },
-          {
-            "component": "paragraph",
-            "text": "All review tasks will need to be started again once the amended application is submitted."
-          }
-        ]
-      },
-      "AGREEMENT_TERMINATED": {
-        "content": [
-          {
-            "component": "heading",
-            "text": "The agreement has been terminated",
-            "level": 2,
-            "classes": "govuk-heading-m govuk-!-margin-top-6 govuk-!-margin-bottom-4"
-          },
-          {
-            "component": "paragraph",
-            "text": "The agreement has now been closed."
-          },
-          {
-            "component": "paragraph",
-            "text": "What this means:"
-          },
-          {
-            "component": "unordered-list",
-            "classes": "govuk-list govuk-list--bullet",
-            "items": [
-              {
-                "component": "text",
-                "text": "All future payments have stopped for the agreement holder."
-              },
-              {
-                "component": "text",
-                "text": "All actions and standards in the agreement have ended."
-              },
-              {
-                "component": "text",
-                "text": "Any payment recovery actions will have been initiated"
-              },
-              {
-                "component": "text",
-                "text": "The agreement is locked and can't be updated or reopened."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "caveatGroups": {
-      "natural-england": {
-        "order": 1,
-        "content": [
-          {
-            "component": "heading",
-            "text": "SSSI consent",
-            "level": 2,
-            "classes": "govuk-heading-m"
-          },
-          {
-            "component": "paragraph",
-            "text": "jsonata:@.caveats[0].description"
-          }
-        ]
-      },
-      "historic-england": {
-        "order": 2,
-        "content": [
-          {
-            "component": "heading",
-            "text": "Historic England consent",
-            "level": 2,
-            "classes": "govuk-heading-m"
-          },
-          {
-            "component": "paragraph",
-            "text": "jsonata:@.caveats[0].description"
-          }
-        ]
-      }
-    }
-  },
   "definitions": {
     "agreementsService": {
       "internalUrl": "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}"
@@ -913,15 +759,24 @@
                         "component": "status",
                         "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
                         "labelsMap": {
+                          "AGREEMENT_GENERATING": "Agreement generating",
                           "AGREEMENT_DRAFTED": "Agreement drafted",
                           "OFFERED": "Offered",
                           "ACCEPTED": "Accepted",
                           "WITHDRAWN": "Withdrawn",
                           "REJECTED": "Rejected",
-                          "TERMINATED": "Terminated"
+                          "TERMINATED": "Terminated",
+                          "CANCELLED": "Cancelled"
                         },
                         "themeMap": {
-                          "TERMINATED": "ERROR"
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "INFO",
+                          "AGREEMENT_GENERATING": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "WITHDRAWN": "WARN",
+                          "REJECTED": "ERROR",
+                          "TERMINATED": "ERROR",
+                          "CANCELLED": "WARN"
                         }
                       }
                     ]
@@ -993,21 +848,24 @@
                           "component": "status",
                           "text": "@.agreementStatus",
                           "labelsMap": {
+                            "AGREEMENT_GENERATING": "Agreement generating",
                             "AGREEMENT_DRAFTED": "Agreement drafted",
                             "OFFERED": "Offered",
                             "ACCEPTED": "Accepted",
                             "WITHDRAWN": "Withdrawn",
                             "REJECTED": "Rejected",
-                            "TERMINATED": "Terminated"
+                            "TERMINATED": "Terminated",
+                            "CANCELLED": "Cancelled"
                           },
                           "themeMap": {
                             "OFFERED": "NOTICE",
                             "ACCEPTED": "INFO",
-                            "AGREEMENT_DRAFTED": "INFO",
                             "AGREEMENT_GENERATING": "INFO",
+                            "AGREEMENT_DRAFTED": "INFO",
                             "WITHDRAWN": "WARN",
                             "REJECTED": "ERROR",
-                            "TERMINATED": "ERROR"
+                            "TERMINATED": "ERROR",
+                            "CANCELLED": "WARN"
                           }
                         },
                         {
@@ -1454,30 +1312,30 @@
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
-                      "theme": "SUCCESS",
+                      "completes": true,
                       "altName": "Accept",
-                      "completes": true
+                      "theme": "NONE"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
-                      "theme": "INFO",
+                      "completes": false,
                       "altName": "Request information from customer",
-                      "completes": false
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
-                      "theme": "WARN",
+                      "completes": false,
                       "altName": "Pause for internal investigation",
-                      "completes": false
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
                       "name": "Cannot complete",
-                      "theme": "ERROR",
+                      "completes": false,
                       "altName": "Cannot complete",
-                      "completes": false
+                      "theme": "ERROR"
                     }
                   ]
                 },
@@ -1552,21 +1410,21 @@
                       "name": "Accepted",
                       "completes": true,
                       "altName": "Accept",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
                       "completes": false,
                       "altName": "Request information from customer",
-                      "theme": "INFO"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
                       "completes": false,
                       "altName": "Pause for internal investigation",
-                      "theme": "WARN"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
@@ -1578,7 +1436,6 @@
                   ]
                 },
                 {
-                  "conditional": "$.payload.answers.rulesCalculations.caveats[?(@.code=='ne-consent-required')]",
                   "code": "SSSI_CONSENT_REQUESTED",
                   "name": "Check if any land parcels are within an SSSI",
                   "mandatory": true,
@@ -1639,21 +1496,21 @@
                       "name": "Accepted",
                       "completes": true,
                       "altName": "Accept",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
                       "completes": false,
                       "altName": "Request information from customer",
-                      "theme": "INFO"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
                       "completes": false,
                       "altName": "Pause for internal investigation",
-                      "theme": "WARN"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
@@ -1662,7 +1519,8 @@
                       "altName": "Cannot complete",
                       "theme": "ERROR"
                     }
-                  ]
+                  ],
+                  "conditional": "$.payload.answers.rulesCalculations.caveats[?(@.code=='ne-consent-required')]"
                 },
                 {
                   "code": "PAYMENT_AMOUNT_CHECK",
@@ -1762,21 +1620,21 @@
                       "name": "Accepted",
                       "completes": true,
                       "altName": "Accept",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
                       "completes": false,
                       "altName": "Request information from customer",
-                      "theme": "INFO"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
                       "completes": false,
                       "altName": "Pause for internal investigation",
-                      "theme": "WARN"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
@@ -1831,21 +1689,21 @@
                       "name": "Accepted",
                       "completes": true,
                       "altName": "Accept",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "RFI",
                       "name": "Information requested",
                       "completes": false,
                       "altName": "Request information from customer",
-                      "theme": "INFO"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "INTERNAL_INVESTIGATION",
                       "name": "Internal investigation",
                       "completes": false,
                       "altName": "Pause for internal investigation",
-                      "theme": "WARN"
+                      "theme": "NOTICE"
                     },
                     {
                       "code": "CANNOT_COMPLETE",
@@ -2108,7 +1966,7 @@
                       "name": "Confirmed",
                       "completes": true,
                       "altName": "Confirm",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "PROBLEM_FOUND",
@@ -2142,7 +2000,7 @@
                       "name": "Confirmed",
                       "completes": true,
                       "altName": "Confirm",
-                      "theme": "SUCCESS"
+                      "theme": "NONE"
                     },
                     {
                       "code": "PROBLEM_FOUND",
@@ -2424,7 +2282,10 @@
                     "checkTasks": false,
                     "confirm": null,
                     "comment": {
-                      "label": "Reason for termination",
+                      "label": {
+                        "text": "Reason for termination",
+                        "classes": "govuk-label--s"
+                      },
                       "helpText": "You must include an explanation for auditing purposes.",
                       "mandatory": true
                     }
@@ -2856,5 +2717,159 @@
         }
       ]
     }
-  ]
+  ],
+  "templates": {
+    "caveats": {
+      "natural-england": {
+        "content": [
+          {
+            "component": "heading",
+            "text": "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+            "level": 3,
+            "classes": "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1"
+          },
+          {
+            "component": "summary-list",
+            "rows": [
+              {
+                "label": "Action code",
+                "text": "@.metadata.actionCode"
+              },
+              {
+                "label": "Overlap area",
+                "text": "@.metadata.overlapAreaHectares Ha"
+              },
+              {
+                "label": "Overlap",
+                "text": "@.metadata.percentageOverlap %"
+              }
+            ]
+          }
+        ]
+      },
+      "historic-england": {
+        "content": [
+          {
+            "component": "heading",
+            "text": "Land parcel: @.metadata.sheetId @.metadata.parcelId",
+            "level": 3,
+            "classes": "govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-1"
+          },
+          {
+            "component": "summary-list",
+            "rows": [
+              {
+                "label": "Action code",
+                "text": "@.metadata.actionCode"
+              },
+              {
+                "label": "Overlap area",
+                "text": "@.metadata.overlapAreaHectares Ha"
+              },
+              {
+                "label": "Overlap",
+                "text": "@.metadata.percentageOverlap %"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "pageFragments": {
+      "APPLICATION_AMEND": {
+        "content": [
+          {
+            "component": "heading",
+            "text": "Application returned to customer for amending",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "Application $.caseRef has been cancelled. However, you can still review the notes and timeline for this application."
+          },
+          {
+            "component": "paragraph",
+            "text": "A new, linked application will be submitted after amendments have been made by the customer."
+          },
+          {
+            "component": "paragraph",
+            "text": "All review tasks will need to be started again once the amended application is submitted."
+          }
+        ]
+      },
+      "AGREEMENT_TERMINATED": {
+        "content": [
+          {
+            "component": "heading",
+            "text": "The agreement has been terminated",
+            "level": 2,
+            "classes": "govuk-heading-m govuk-!-margin-top-6 govuk-!-margin-bottom-4"
+          },
+          {
+            "component": "paragraph",
+            "text": "The agreement has now been closed."
+          },
+          {
+            "component": "paragraph",
+            "text": "What this means:"
+          },
+          {
+            "component": "unordered-list",
+            "classes": "govuk-list govuk-list--bullet",
+            "items": [
+              {
+                "component": "text",
+                "text": "All future payments have stopped for the agreement holder."
+              },
+              {
+                "component": "text",
+                "text": "All actions and standards in the agreement have ended."
+              },
+              {
+                "component": "text",
+                "text": "Any payment recovery actions will have been initiated"
+              },
+              {
+                "component": "text",
+                "text": "The agreement is locked and can't be updated or reopened."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "caveatGroups": {
+      "natural-england": {
+        "order": 1,
+        "content": [
+          {
+            "component": "heading",
+            "text": "SSSI consent",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "jsonata:@.caveats[0].description"
+          }
+        ]
+      },
+      "historic-england": {
+        "order": 2,
+        "content": [
+          {
+            "component": "heading",
+            "text": "Historic England consent",
+            "level": 2,
+            "classes": "govuk-heading-m"
+          },
+          {
+            "component": "paragraph",
+            "text": "jsonata:@.caveats[0].description"
+          }
+        ]
+      }
+    }
+  }
 }

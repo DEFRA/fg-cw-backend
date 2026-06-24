@@ -106,6 +106,13 @@ export const config = convict({
       env: "MONGO_DATABASE",
     },
   },
+  workflowOverrides: {
+    doc: 'Path to a JSON manifest mapping workflow code -> definition file (e.g. { "woodland": "/path/woodland.json" }). Only honoured when cdpEnvironment is "local". Used to bypass loading workflow definitions from MongoDB while developing/prototyping.',
+    format: String,
+    nullable: true,
+    default: null,
+    env: "WORKFLOW_OVERRIDES",
+  },
   fifoLock: {
     ttlMs: {
       doc: "Fifo lock time to live",

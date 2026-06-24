@@ -1,13 +1,29 @@
 import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import { findAll, findByCode, save } from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
+import {
+  applyOverride,
+  findOverrideDocument,
+} from "./workflow/workflow-override.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("./workflow/workflow-override.js", () => ({
+  findOverrideDocument: vi.fn(),
+  applyOverride: vi.fn(),
+}));
+
+// The override logic is exercised in workflow-override.test.js. Here it is mocked
+// to safe no-op defaults so the repository tests stay focused on persistence;
+// individual tests override these to exercise the wiring.
+beforeEach(() => {
+  findOverrideDocument.mockReturnValue(null);
+  applyOverride.mockImplementation((doc) => doc);
+});
 
 describe("save", () => {
   it("creates a workflow and returns it", async () => {
@@ -257,5 +273,44 @@ describe("findByCode", () => {
     const result = await findByCode("DOESNT_EXIST");
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("workflow definition override wiring", () => {
+  it("returns the override from findByCode without querying the database", async () => {
+    const overrideDoc = WorkflowDocument.createMock({ code: "woodland" });
+    findOverrideDocument.mockReturnValue(overrideDoc);
+    const findOne = vi.fn();
+    db.collection.mockReturnValue({ findOne });
+
+    const result = await findByCode("woodland");
+
+    expect(findOverrideDocument).toHaveBeenCalledWith("woodland");
+    expect(result).toBeInstanceOf(Workflow);
+    expect(result.code).toBe("woodland");
+    expect(findOne).not.toHaveBeenCalled();
+  });
+
+  it("runs each database document through applyOverride in findAll", async () => {
+    const dbDocs = [
+      WorkflowDocument.createMock({ code: "woodland" }),
+      WorkflowDocument.createMock({ code: "other" }),
+    ];
+    const override = WorkflowDocument.createMock({ code: "woodland" });
+    override.templates = { caseDetails: "from-override" };
+    applyOverride.mockImplementation((doc) =>
+      doc.code === "woodland" ? override : doc,
+    );
+    db.collection.mockReturnValue({
+      find: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue(dbDocs),
+      }),
+    });
+
+    const result = await findAll();
+
+    expect(applyOverride).toHaveBeenCalledTimes(2);
+    expect(result[0].templates).toEqual({ caseDetails: "from-override" });
+    expect(result[1].code).toBe("other");
   });
 });
