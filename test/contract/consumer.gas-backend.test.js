@@ -6,6 +6,7 @@
 // CreateNewCaseCommand: Our code expects (src/cases/use-cases/create-case.use-case.js):
 //   - data.caseRef: Primary key for case creation (required)
 //   - data.workflowCode: Workflow validation (required)
+//   - data.payload.configVersion: Optional semver string; triggers Config Broker resolution
 //   - data.payload.identifiers: { sbi, frn, crn, defraId } - stored on case
 //   - data.payload.answers: Application form data - validated against workflow schema
 //   - data.payload.createdAt, submittedAt: Timestamps
@@ -170,6 +171,61 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           expect(cloudEvent.data.payload.identifiers.crn).toBeDefined();
           expect(cloudEvent.data.payload.identifiers.defraId).toBeUndefined();
           expect(cloudEvent.data.payload.metadata).toBeUndefined();
+        });
+    });
+  });
+
+  describe("CreateNewCaseCommand with configVersion (pigs-might-fly)", () => {
+    it("should accept a create new case command with payload.configVersion for Config Broker resolution", async () => {
+      await messagePact
+        .expectsToReceive(
+          "a create new case command from GAS with configVersion",
+        )
+        .withContent({
+          id: uuid("12345678-1234-1234-1234-123456789010"),
+          type: term({
+            generate: "cloud.defra.test.fg-gas-backend.case.create",
+            matcher:
+              "^cloud\\.defra\\.(test|local|prod)\\.fg-gas-backend\\.case\\.create$",
+          }),
+          source: "fg-gas-backend",
+          specVersion: "1.0",
+          datacontenttype: "application/json",
+          time: iso8601DateTimeWithMillis("2025-02-09T12:00:00.000Z"),
+          traceparent: like("00-trace-id"),
+
+          data: {
+            caseRef: like("PMF-CASE-001"),
+            workflowCode: like("pigs-might-fly"),
+            payload: {
+              configVersion: like("1.0.0"),
+              createdAt: iso8601DateTimeWithMillis("2025-02-09T11:00:00.000Z"),
+              submittedAt: iso8601DateTimeWithMillis(
+                "2025-02-09T12:00:00.000Z",
+              ),
+              identifiers: {
+                sbi: like("SBI001"),
+                frn: like("FIRM0001"),
+                crn: like("CUST0001"),
+                defraId: like("DEFRA0001"),
+              },
+              answers: like({
+                isPigFarmer: true,
+                totalPigs: 4,
+              }),
+            },
+          },
+        })
+        .withMetadata({
+          contentType: "application/json",
+        })
+        .verify(async (message) => {
+          const cloudEvent = message.contents;
+
+          expect(cloudEvent.data.caseRef).toBeDefined();
+          expect(cloudEvent.data.workflowCode).toBeDefined();
+          expect(cloudEvent.data.payload.configVersion).toBeDefined();
+          expect(cloudEvent.data.payload.identifiers).toBeDefined();
         });
     });
   });

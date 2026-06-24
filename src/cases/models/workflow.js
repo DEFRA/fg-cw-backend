@@ -10,6 +10,7 @@ export class Workflow {
   constructor(props) {
     this._id = props._id || new ObjectId().toHexString();
     this.code = props.code;
+    this.version = props.version ?? "1.0.0";
     this.pages = props.pages;
     this.phases = props.phases;
     this.requiredRoles = props.requiredRoles;
@@ -138,6 +139,7 @@ export class Workflow {
   static createMock(props) {
     return new Workflow({
       code: "workflow-code",
+      version: "1.0.0",
       pages: createPagesMock(),
       phases: [WorkflowPhase.createMock(1), WorkflowPhase.createMock(2)],
       requiredRoles: new RequiredAppRoles({

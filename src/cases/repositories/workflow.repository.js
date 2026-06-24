@@ -126,6 +126,7 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
+    version: doc.version,
     pages: doc.pages,
     phases: doc.phases.map(toWorkflowPhase),
     requiredRoles: new RequiredAppRoles({
@@ -148,7 +149,7 @@ export const save = async (workflow) => {
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(
-        `Workflow with code "${workflow.code}" already exists`,
+        `Workflow with code "${workflow.code}" version "${workflow.version}" already exists`,
       );
     }
     throw error;
@@ -191,9 +192,20 @@ export const findAll = async (query) => {
 };
 
 export const findByCode = async (code) => {
-  const workflowDocument = await db.collection(collection).findOne({
-    code,
-  });
+  const workflowDocument = await db
+    .collection(collection)
+    .findOne({ code }, { sort: { version: -1 } });
 
   return workflowDocument && toWorkflow(workflowDocument);
+};
+
+export const findByCodeAndVersion = async (code, version) => {
+  const doc = await db.collection(collection).findOne({ code, version });
+  return doc && toWorkflow(doc);
+};
+
+export const saveFromDefinition = async (workflowDefinition, version) => {
+  const workflow = new Workflow({ ...workflowDefinition, version });
+  await save(workflow);
+  return workflow;
 };

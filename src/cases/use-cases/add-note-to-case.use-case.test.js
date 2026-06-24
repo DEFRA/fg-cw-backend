@@ -5,12 +5,12 @@ import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { Comment } from "../models/comment.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { addNoteToCaseUseCase } from "./add-note-to-case.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../../common/auth.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../repositories/workflow.repository.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("addNoteToCaseUseCase", () => {
   const validUserId = new ObjectId().toHexString();
@@ -35,7 +35,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
@@ -63,7 +66,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
@@ -88,7 +94,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       `User ${user.id} does not have required roles to perform action`,
@@ -113,7 +122,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       `User ${user.id} does not have required roles to perform action`,
@@ -132,13 +144,18 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(null);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: null,
+      resolvedVersion: null,
+    });
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       `Workflow not found: ${mockCase.workflowCode}`,
     );
 
-    expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
+    );
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -152,12 +169,17 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({});
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: {},
+      resolvedVersion: null,
+    });
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
 
-    expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
+    );
     expect(result).toBeInstanceOf(Comment);
     expect(result.text).toBe("This is a test note");
     expect(update).toHaveBeenCalledWith(mockCase);
@@ -195,7 +217,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       "Failed to add note",
@@ -215,7 +240,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
       "Note text is required and cannot be empty",
@@ -236,7 +264,10 @@ describe("addNoteToCaseUseCase", () => {
 
     const updateError = new Error("Database update failed");
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
     update.mockRejectedValue(updateError);
 
     await expect(addNoteToCaseUseCase(command)).rejects.toThrow(
@@ -266,7 +297,10 @@ describe("addNoteToCaseUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({ requiredRoles });
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: { requiredRoles },
+      resolvedVersion: null,
+    });
     update.mockResolvedValue(mockCase);
 
     const result = await addNoteToCaseUseCase(command);
