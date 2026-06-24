@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { buildReport } from "./report-cases.use-case.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { User } from "../../users/models/user.js";
+import { Workflow } from "../models/workflow.js";
+import { countByPosition } from "../repositories/case.repository.js";
+import { createRoleFilter } from "./find-cases.use-case.js";
+import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
+import { buildReport, reportCasesUseCase } from "./report-cases.use-case.js";
+
+vi.mock("../repositories/case.repository.js");
+vi.mock("./find-workflows.use-case.js");
 
 const workflow = {
   phases: [
@@ -179,5 +187,97 @@ describe("buildReport", () => {
         },
       ],
     });
+  });
+});
+
+describe("reportCasesUseCase", () => {
+  const user = User.createMock();
+
+  // A caseworker who can see two case types (frps, woodland).
+  const accessibleWorkflows = [
+    Workflow.createMock({ code: "woodland" }),
+    Workflow.createMock({ code: "frps" }),
+  ];
+
+  // One case sitting at a position that exists in the mock workflow definition.
+  const counts = [
+    {
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      statusCode: "STATUS_1",
+      count: 7,
+    },
+  ];
+
+  beforeEach(() => {
+    findWorkflowsUseCase.mockResolvedValue(accessibleWorkflows);
+    countByPosition.mockResolvedValue(counts);
+  });
+
+  // Given a caseworker requests a case type they have access to
+  // When the report is built
+  // Then only that case type is counted and reported
+  it("reports the requested case type", async () => {
+    const result = await reportCasesUseCase({
+      user,
+      query: { workflowCode: "woodland" },
+    });
+
+    expect(countByPosition).toHaveBeenCalledWith(["woodland"]);
+    expect(result.selectedCaseType).toBe("woodland");
+    expect(result.total).toBe(7);
+  });
+
+  // Given a caseworker only sees workflows their roles permit
+  // When the report is built
+  // Then workflows are fetched using the role filter
+  it("restricts available case types to the user's roles", async () => {
+    const result = await reportCasesUseCase({ user, query: {} });
+
+    expect(findWorkflowsUseCase).toHaveBeenCalledWith(
+      createRoleFilter(user.getRoles()),
+    );
+    // And case types are offered in a stable, alphabetical order
+    expect(result.availableCaseTypes).toEqual(["frps", "woodland"]);
+  });
+
+  // Given no case type is requested
+  // When the report is built
+  // Then it defaults to the first available case type
+  it("defaults to the first available case type when none is requested", async () => {
+    const result = await reportCasesUseCase({ user, query: {} });
+
+    expect(result.selectedCaseType).toBe("frps");
+    expect(countByPosition).toHaveBeenCalledWith(["frps"]);
+  });
+
+  // Given a case type is requested that the user cannot access
+  // When the report is built
+  // Then it falls back to the first available case type
+  it("falls back to the first case type when the requested one is unavailable", async () => {
+    const result = await reportCasesUseCase({
+      user,
+      query: { workflowCode: "not-permitted" },
+    });
+
+    expect(result.selectedCaseType).toBe("frps");
+    expect(countByPosition).toHaveBeenCalledWith(["frps"]);
+  });
+
+  // Given the user has access to no case types at all
+  // When the report is built
+  // Then an empty report is returned and no counting is attempted
+  it("returns an empty report when the user has no accessible case types", async () => {
+    findWorkflowsUseCase.mockResolvedValue([]);
+
+    const result = await reportCasesUseCase({ user, query: {} });
+
+    expect(result).toEqual({
+      selectedCaseType: null,
+      availableCaseTypes: [],
+      total: 0,
+      phases: [],
+    });
+    expect(countByPosition).not.toHaveBeenCalled();
   });
 });
