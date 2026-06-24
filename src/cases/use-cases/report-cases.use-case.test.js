@@ -269,6 +269,21 @@ describe("reportCasesUseCase", () => {
     expect(countByPosition).not.toHaveBeenCalled();
   });
 
+  // Regression (FGP-1221): the frontend's blank option submits workflowCode="".
+  // Given an empty case type is requested
+  // When the report is built
+  // Then it is treated as no selection (not counted)
+  it("makes no selection when the requested case type is empty", async () => {
+    const result = await reportCasesUseCase({
+      user,
+      query: { workflowCode: "" },
+    });
+
+    expect(result.selectedCaseType).toBeNull();
+    expect(result.phases).toEqual([]);
+    expect(countByPosition).not.toHaveBeenCalled();
+  });
+
   // Given the user has access to no case types at all
   // When the report is built
   // Then an empty report is returned and no counting is attempted

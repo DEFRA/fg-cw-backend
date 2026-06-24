@@ -123,4 +123,20 @@ describe("GET /cases/report", () => {
       phases: [],
     });
   });
+
+  // Regression (FGP-1221): the frontend's blank option submits workflowCode="";
+  // it must be accepted (200) as no selection, not rejected with 400.
+  it("accepts an empty workflowCode as no selection", async () => {
+    await createWorkflow();
+
+    const response = await wreck.get("/cases/report?workflowCode=");
+
+    expect(response.res.statusCode).toBe(200);
+    expect(response.payload.data).toEqual({
+      selectedCaseType: null,
+      availableCaseTypes: ["frps-private-beta"],
+      total: 0,
+      phases: [],
+    });
+  });
 });

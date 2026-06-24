@@ -10,7 +10,9 @@ export const reportCasesRoute = {
     tags: ["api"],
     validate: {
       query: Joi.object({
-        workflowCode: Joi.string(),
+        // Allow empty — the frontend's blank "Select a case type" option submits
+        // workflowCode=""; it is treated as no selection (see reportCasesUseCase).
+        workflowCode: Joi.string().allow(""),
       }),
     },
   },

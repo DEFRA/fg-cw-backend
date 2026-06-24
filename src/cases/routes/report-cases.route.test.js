@@ -85,4 +85,28 @@ describe("reportCasesRoute", () => {
       query: { workflowCode: "woodland" },
     });
   });
+
+  // Regression (FGP-1221): the frontend's blank "Select a case type" option
+  // submits workflowCode="" — this must be accepted as "no selection", not 400.
+  it("accepts an empty workflowCode as no selection (does not reject with 400)", async () => {
+    const user = adminUser();
+    reportCasesUseCase.mockResolvedValue({
+      selectedCaseType: null,
+      availableCaseTypes: ["woodland"],
+      total: 0,
+      phases: [],
+    });
+
+    const { statusCode } = await inject(
+      server,
+      "/cases/report?workflowCode=",
+      user,
+    );
+
+    expect(statusCode).toEqual(200);
+    expect(reportCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: { workflowCode: "" },
+    });
+  });
 });
