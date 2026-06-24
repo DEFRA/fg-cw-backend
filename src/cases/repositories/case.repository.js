@@ -202,6 +202,34 @@ export const findAll = ({
   });
 };
 
+export const countByPosition = async (workflowCodes) => {
+  const results = await db
+    .collection(collection)
+    .aggregate([
+      { $match: { workflowCode: { $in: workflowCodes } } },
+      {
+        $group: {
+          _id: {
+            workflowCode: "$workflowCode",
+            phaseCode: "$currentPhase",
+            stageCode: "$currentStage",
+            statusCode: "$currentStatus",
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ])
+    .toArray();
+
+  return results.map((r) => ({
+    workflowCode: r._id.workflowCode,
+    phaseCode: r._id.phaseCode,
+    stageCode: r._id.stageCode,
+    statusCode: r._id.statusCode,
+    count: r.count,
+  }));
+};
+
 export const findCasesByCaseRefsAndWorkflowCode = async (
   caseRefs,
   workflowCode,

@@ -16,6 +16,10 @@ const buildNavItems = (user) => {
         title: "Casework",
         href: "/cases",
       },
+      {
+        title: "Reports",
+        href: "/reports",
+      },
     ];
   }
 
