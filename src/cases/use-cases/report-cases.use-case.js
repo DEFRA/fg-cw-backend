@@ -138,13 +138,14 @@ export const buildReport = (workflow, counts) => {
   };
 };
 
-const selectCaseType = (query, availableCaseTypes) => {
-  if (query.workflowCode && availableCaseTypes.includes(query.workflowCode)) {
-    return query.workflowCode;
-  }
-
-  return availableCaseTypes[0] ?? null;
-};
+// Only an explicitly requested, permitted case type is selected. When none is
+// requested (first visit) or the requested one is not permitted, no case type
+// is selected — the caseworker chooses from availableCaseTypes. We deliberately
+// do not default to the first type, so the dropdown starts blank.
+const selectCaseType = (query, availableCaseTypes) =>
+  query.workflowCode && availableCaseTypes.includes(query.workflowCode)
+    ? query.workflowCode
+    : null;
 
 export const reportCasesUseCase = async ({ user, query }) => {
   const roleFilter = createRoleFilter(user.getRoles());

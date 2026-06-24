@@ -241,27 +241,32 @@ describe("reportCasesUseCase", () => {
     expect(result.availableCaseTypes).toEqual(["frps", "woodland"]);
   });
 
-  // Given no case type is requested
+  // Given no case type is requested (first visit)
   // When the report is built
-  // Then it defaults to the first available case type
-  it("defaults to the first available case type when none is requested", async () => {
+  // Then no case type is selected and no counting is attempted
+  it("makes no selection when no case type is requested", async () => {
     const result = await reportCasesUseCase({ user, query: {} });
 
-    expect(result.selectedCaseType).toBe("frps");
-    expect(countByPosition).toHaveBeenCalledWith(["frps"]);
+    expect(result.selectedCaseType).toBeNull();
+    expect(result.total).toBe(0);
+    expect(result.phases).toEqual([]);
+    // The available case types are still offered for the caseworker to choose.
+    expect(result.availableCaseTypes).toEqual(["frps", "woodland"]);
+    expect(countByPosition).not.toHaveBeenCalled();
   });
 
   // Given a case type is requested that the user cannot access
   // When the report is built
-  // Then it falls back to the first available case type
-  it("falls back to the first case type when the requested one is unavailable", async () => {
+  // Then no case type is selected (it does not silently pick another)
+  it("makes no selection when the requested case type is unavailable", async () => {
     const result = await reportCasesUseCase({
       user,
       query: { workflowCode: "not-permitted" },
     });
 
-    expect(result.selectedCaseType).toBe("frps");
-    expect(countByPosition).toHaveBeenCalledWith(["frps"]);
+    expect(result.selectedCaseType).toBeNull();
+    expect(result.phases).toEqual([]);
+    expect(countByPosition).not.toHaveBeenCalled();
   });
 
   // Given the user has access to no case types at all

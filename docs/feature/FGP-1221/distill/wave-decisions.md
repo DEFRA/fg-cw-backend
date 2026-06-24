@@ -46,3 +46,19 @@ themes; not executed on the authoring machine due to that port clash.
 No Cucumber/Gherkin runner exists here. `acceptance.feature` is the canonical human-readable
 spec; the executable acceptance tests are the named vitest tests it references. The two are
 kept in step by the `Tested by:` annotations.
+
+## DWD-05 — No default case type (supersedes the original AC-6/AC-7)
+
+Change request (FGP-1221): the `/reports` case-type dropdown must start blank on first visit.
+The "default to the first available case type" behaviour lived here, in `reportCasesUseCase`.
+
+Decision (user-confirmed): the backend **stops defaulting**. `selectCaseType` now returns the
+requested case type only when it is explicitly provided **and** permitted; otherwise it returns
+`null` and the use-case returns `{ selectedCaseType: null, availableCaseTypes, total: 0,
+phases: [] }` without counting.
+
+Consequence — applied uniformly to both "no case type requested" (first visit) **and** "an
+unpermitted case type requested". The original AC-7 ("fall back to the first available") is
+**removed**, because silently picking a type the caseworker did not choose is the same
+anti-pattern the change is correcting. `availableCaseTypes` is still returned so the frontend
+can offer the choices. Tests updated accordingly (unit + a new no-query integration case).

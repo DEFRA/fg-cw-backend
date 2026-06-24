@@ -57,20 +57,24 @@ Feature: Case lifecycle report by position
     Then I can only choose from the case types my role permits
     And they are listed in a predictable order
 
-  Scenario: The report defaults to the first available case type
+  Scenario: No case type is chosen on first visit
     # Tested by: use-cases/report-cases.use-case.test.js
-    #            "defaults to the first available case type when none is requested"
+    #            "makes no selection when no case type is requested"
+    #            test/cases/report-cases.test.js
+    #            "makes no selection on first visit when no case type is requested"
     Given I have not yet chosen a case type
     When I open the report
-    Then it shows the first case type available to me
+    Then no case type is selected
+    And no counts are produced until I choose one
 
   @edge
-  Scenario: Choosing a case type I cannot see falls back safely
+  Scenario: Choosing a case type I cannot see selects nothing
     # Tested by: use-cases/report-cases.use-case.test.js
-    #            "falls back to the first case type when the requested one is unavailable"
+    #            "makes no selection when the requested case type is unavailable"
     Given I ask for a case type I am not permitted to see
     When the report is produced
-    Then it falls back to the first case type available to me
+    Then no case type is selected
+    And it does not silently pick another case type for me
 
   @edge
   Scenario: A user with no permitted case types sees an empty report

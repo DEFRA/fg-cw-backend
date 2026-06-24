@@ -104,4 +104,23 @@ describe("GET /cases/report", () => {
       phases: [],
     });
   });
+
+  it("makes no selection on first visit when no case type is requested", async () => {
+    await createWorkflow();
+
+    // Cases exist, but with no case type requested nothing is counted.
+    await cases.insertMany([
+      seedCaseAt("R-1", "APPLICATION_RECEIPT", "AWAITING_REVIEW"),
+    ]);
+
+    const response = await wreck.get("/cases/report");
+
+    expect(response.res.statusCode).toBe(200);
+    expect(response.payload.data).toEqual({
+      selectedCaseType: null,
+      availableCaseTypes: ["frps-private-beta"],
+      total: 0,
+      phases: [],
+    });
+  });
 });
