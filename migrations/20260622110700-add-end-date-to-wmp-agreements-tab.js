@@ -16,16 +16,3 @@ export const up = async (db) => {
     },
   );
 };
-
-export const down = async (db) => {
-  await db.collection("workflows").updateOne(
-    { code: "woodland" },
-    {
-      $pull: {
-        "pages.cases.details.tabs.agreements.content.1.rows": {
-          label: "End date",
-        },
-      },
-    },
-  );
-};
