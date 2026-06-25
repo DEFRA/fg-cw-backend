@@ -2199,10 +2199,6 @@
                   "level": 3
                 },
                 {
-                  "component": "paragraph",
-                  "text": "There are no tasks to complete."
-                },
-                {
                   "component": "heading",
                   "text": "You can still withdraw this agreement",
                   "level": 3
