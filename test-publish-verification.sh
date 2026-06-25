@@ -25,7 +25,7 @@ PACT_USE_LOCAL="true" PACT_LOCAL_DIR="tmp/pacts" \
 
 echo ""
 echo "=== Step 3: Publish verification results to broker ==="
-PROVIDER_VERSION=$(git describe --tags --abbrev=0 --always)
+PROVIDER_VERSION=$(git describe --tags --always --long)
 echo "Provider version: $PROVIDER_VERSION"
 
 for pact_file in tmp/pacts/fg-gas-backend-fg-cw-backend*.json; do
