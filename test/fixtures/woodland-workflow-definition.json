@@ -766,7 +766,7 @@
                       "completes": false,
                       "comment": {
                         "label": "Explanation",
-                        "helpText": "Explain why the draft agreement link could not been sent.",
+                        "helpText": "Explain why the draft agreement link could not be sent.",
                         "mandatory": true
                       }
                     }
