@@ -498,19 +498,7 @@ const messageWMPCase = {
       },
     },
 
-    supplementaryData: {
-      agreements: [
-        {
-          agreementRef: "WMP710951843",
-          agreementStatus: "ACCEPTED",
-          createdAt: "2026-06-08T08:31:44.136Z",
-          updatedAt: "2026-06-09T13:44:43.739Z",
-          acceptedDate: "2026-07-08T08:31:44.136Z",
-          startDate: "2026-07-08T08:31:44.136Z",
-          endDate: "2027-07-08T08:31:44.136Z",
-        },
-      ],
-    },
+    supplementaryData: {},
 
     closed: false,
     closedAt: null,
