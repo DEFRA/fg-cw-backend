@@ -328,14 +328,200 @@ const messageFrps = {
   },
 };
 
+const messageWMPCase = {
+  id: randomUUID(),
+  time: "2026-06-23T11:30:52.000Z",
+  source: "fg-gas-backend",
+  specversion: "1.0",
+  type: "cloud.defra.local.fg-gas-backend.case.create",
+  datacontenttype: "application/json",
+  traceparent: randomUUID(),
+
+  data: {
+    id: randomUUID(),
+    caseRef: `wmp-${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 5)}`,
+    workflowCode: "woodland",
+    currentPhase: "PHASE_PRE_AWARD",
+    currentStage: "STAGE_PREPARING_AGREEMENT",
+    currentStatus: "STATUS_AGREEMENT_READY_FOR_APPLICANT",
+    createdAt: "2026-06-08T17:02:59.660Z",
+
+    payload: {
+      createdAt: "2026-06-08T17:02:59.402Z",
+      submittedAt: "2026-06-08T17:02:59.330Z",
+
+      identifiers: {
+        sbi: "900000007",
+        frn: "9000000007",
+        crn: "9000000007",
+      },
+
+      metadata: {},
+
+      answers: {
+        businessDetailsUpToDate: true,
+        landRegisteredWithRpa: true,
+        landManagementControl: false,
+        counterSignature: true,
+        publicBodyTenant: true,
+        tenantObligations: false,
+        landHasGrazingRights: true,
+        appLandHasExistingWmp: true,
+        existingWmps: "WMP-12345, WMP-23456",
+        intendToApplyHigherTier: true,
+
+        hectaresTenOrOverYearsOld: 0.4,
+        hectaresUnderTenYearsOld: 0.1,
+
+        centreGridReference: "AA 0000 0002",
+        woodlandName: "Test Woodland",
+        fcTeamCode: "EAST_AND_EAST_MIDLANDS",
+
+        applicant: {
+          business: {
+            name: "Example Grove Farm",
+            reference: "9000000007",
+
+            email: {
+              address: "grove@example.test",
+            },
+
+            phone: {
+              mobile: "+44 7700 900003",
+              landline: "020 7946 0904",
+            },
+
+            address: {
+              line1: "6 Example Lane",
+              line2: "Example Lane",
+              line3: null,
+              line4: null,
+              line5: null,
+              street: "Example Lane",
+              city: "Exampleton",
+              postalCode: "ZZ99 6ZZ",
+              uprn: "990000000002",
+              buildingName: "6 Example Lane",
+              buildingNumberRange: null,
+              county: "Example County",
+              dependentLocality: null,
+              doubleDependentLocality: null,
+              flatName: null,
+              pafOrganisationName: "Example Grove Farm",
+            },
+
+            vat: "GB123456789",
+
+            type: {
+              code: 101443,
+              type: "Farmer",
+            },
+          },
+
+          customer: {
+            name: {
+              title: "Mrs",
+              first: "Morgan",
+              middle: null,
+              last: "Example",
+            },
+
+            email: {
+              address: "grove@example.test",
+            },
+
+            phone: {
+              mobile: "+44 7700 900003",
+              landline: "020 7946 0904",
+            },
+
+            address: {
+              line1: "7 Example Lane",
+              line2: "Example Village",
+              line3: null,
+              line4: null,
+              line5: null,
+              street: "Arncliffe",
+              city: "Exampleton",
+              postalCode: "ZZ99 7ZZ",
+              uprn: "990000000003",
+              buildingName: "Example Cottage",
+              buildingNumberRange: "2",
+              county: "Example County",
+              dependentLocality: null,
+              doubleDependentLocality: null,
+              flatName: null,
+              pafOrganisationName: null,
+            },
+          },
+        },
+
+        detailsConfirmedAt: "2026-06-08T17:02:25.683Z",
+        totalHectaresForSelectedParcels: 79.4865,
+
+        guidanceRead: true,
+        includedAllEligibleWoodland: true,
+        applicationConfirmation: true,
+
+        landParcels: [
+          {
+            parcelId: "AA0011-0101",
+            areaHa: 68.0498,
+          },
+          {
+            parcelId: "AA0005-0102",
+            areaHa: 11.1006,
+          },
+          {
+            parcelId: "AA0013-0103",
+            areaHa: 0.3361,
+          },
+        ],
+
+        totalAgreementPaymentPence: 150000,
+
+        payments: {
+          agreement: [
+            {
+              code: "PA3",
+              description: "Woodland management plan",
+              activePaymentTier: 1,
+              quantityInActiveTier: 0.5,
+              activeTierRatePence: 0,
+              activeTierFlatRatePence: 150000,
+              quantity: 0.5,
+              agreementTotalPence: 150000,
+              unit: "ha",
+            },
+          ],
+        },
+      },
+    },
+
+    supplementaryData: {},
+
+    closed: false,
+    closedAt: null,
+    assignedUserId: null,
+  },
+};
+
+const getMessage = (code) => {
+  if (code === "pigs-might-fly") {
+    return messagePmf;
+  }
+  if (code === "woodland") {
+    return messageWMPCase;
+  }
+  return messageFrps;
+};
+
 console.log("Sending message to SQS queue:", queueUrl);
 
 await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
-    MessageBody: JSON.stringify(
-      process.argv[2] === "pigs-might-fly" ? messagePmf : messageFrps,
-    ),
+    MessageBody: JSON.stringify(getMessage(process.argv[2])),
     MessageGroupId: "cw-create-new-case",
     MessageDeduplicationId: randomUUID(),
     DelaySeconds: 0,
