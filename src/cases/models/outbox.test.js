@@ -102,7 +102,7 @@ describe("Outbox model", () => {
     expect(obj.status).toBe(OutboxStatus.FAILED);
   });
 
-  it("should mark outbox as failed", () => {
+  it("should mark outbox as completed", () => {
     const obj = new Outbox({
       event: {
         clientRef: "1234",
