@@ -2186,7 +2186,6 @@
                   "component": "alert",
                   "variant": "success",
                   "title": "Agreement sent",
-                  "text": "There is nothing more you need to do.",
                   "showTitleAsHeading": true
                 },
                 {

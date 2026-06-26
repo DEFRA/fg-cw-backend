@@ -1,42 +1,52 @@
-const EMPTY_STATE_TEXT = "There are no tasks to complete.";
-
-const isEmptyStateParagraph = (node) =>
-  node !== null &&
-  typeof node === "object" &&
-  node.component === "paragraph" &&
-  node.text === EMPTY_STATE_TEXT;
-
-const removeEmptyStateParagraphs = (node) => {
+const EMPTY_STATE_TEXTS = new Set([
+  "There are no tasks to complete.",
+  "There is nothing more you need to do.",
+  "The agreement has been offered and you don't need to do anything else.",
+]);
+const stageHasTasks = (stage) =>
+  (stage.taskGroups ?? []).some((group) => (group.tasks ?? []).length > 0);
+const removeEmptyStateMessaging = (node) => {
   let changed = false;
-
   if (Array.isArray(node)) {
     for (let i = node.length - 1; i >= 0; i--) {
-      if (isEmptyStateParagraph(node[i])) {
-        node.splice(i, 1);
+      const item = node[i];
+      if (item?.text && EMPTY_STATE_TEXTS.has(item.text)) {
+        if (item.component === "paragraph") {
+          node.splice(i, 1);
+          changed = true;
+          continue;
+        }
+        delete item.text;
         changed = true;
-      } else if (removeEmptyStateParagraphs(node[i])) {
+      }
+      if (removeEmptyStateMessaging(item)) {
         changed = true;
       }
     }
-    return changed;
-  }
-
-  if (node && typeof node === "object") {
-    for (const key of Object.keys(node)) {
-      if (removeEmptyStateParagraphs(node[key])) {
+  } else if (node && typeof node === "object") {
+    for (const value of Object.values(node)) {
+      if (removeEmptyStateMessaging(value)) {
         changed = true;
       }
     }
   }
-
   return changed;
 };
-
 export const up = async (db) => {
   const workflows = await db.collection("workflows").find({}).toArray();
-
   for (const workflow of workflows) {
-    if (removeEmptyStateParagraphs(workflow)) {
+    let changed = false;
+    for (const phase of workflow.phases ?? []) {
+      for (const stage of phase.stages ?? []) {
+        if (
+          !stageHasTasks(stage) &&
+          removeEmptyStateMessaging(stage.beforeContent)
+        ) {
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
       await db
         .collection("workflows")
         .replaceOne({ _id: workflow._id }, workflow);
