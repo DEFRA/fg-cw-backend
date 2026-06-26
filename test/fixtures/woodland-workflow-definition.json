@@ -805,10 +805,6 @@
               "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_OFFERED'",
               "content": [
                 {
-                  "component": "paragraph",
-                  "text": "The agreement has been offered and you don't need to do anything else."
-                },
-                {
                   "component": "heading",
                   "level": 3,
                   "text": "Withdrawing the agreement"

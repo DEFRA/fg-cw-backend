@@ -2186,7 +2186,6 @@
                   "component": "alert",
                   "variant": "success",
                   "title": "Agreement sent",
-                  "text": "There is nothing more you need to do.",
                   "showTitleAsHeading": true
                 },
                 {
@@ -2197,10 +2196,6 @@
                   "component": "heading",
                   "text": "Agreement with customer for review",
                   "level": 3
-                },
-                {
-                  "component": "paragraph",
-                  "text": "There are no tasks to complete."
                 },
                 {
                   "component": "heading",
