@@ -32,8 +32,10 @@ export const createAuthPlugin = (overrides = {}) => {
           const { payload } = artifacts.decoded;
 
           const entra = config.get("entra");
-          const roles = new Set(entra.roles).intersection(
-            new Set(payload.roles),
+          const configuredRoles = new Set(entra.roles);
+          const tokenRoles = new Set(payload.roles);
+          const roles = new Set(
+            [...configuredRoles].filter((role) => tokenRoles.has(role)),
           );
 
           const raw = {

@@ -219,15 +219,17 @@ describe("inbox.subscriber", () => {
         }),
       ];
 
-      const spy1 = vi.spyOn(InboxSubscriber.prototype, "processEvents");
-      spy1.mockResolvedValue();
+      const subscriber = new InboxSubscriber();
+      const spy1 = vi.spyOn(subscriber, "processEvents");
+      spy1.mockImplementation(async () => {
+        subscriber.stop();
+      });
       setFifoLock.mockResolvedValue({ upsertedCount: 1, modifiedCount: 1 });
       freeFifoLock.mockResolvedValue();
       getFifoLocks.mockResolvedValue([]);
       findNextMessage.mockResolvedValue({ segregationRef: "ref-2" });
 
       claimEvents.mockResolvedValue([events[2]]);
-      const subscriber = new InboxSubscriber();
 
       subscriber.start();
       await vi.waitFor(() => {
