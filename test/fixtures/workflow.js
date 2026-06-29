@@ -1,5 +1,6 @@
 export const workflowData1 = {
   code: "frps-private-beta",
+  version: "0.0.0",
   pages: {
     cases: {
       details: {
@@ -313,6 +314,7 @@ export const workflowData1 = {
 
 export const workflowData2 = {
   code: "grant-ref-2",
+  version: "0.0.0",
   pages: {
     cases: {
       details: {
