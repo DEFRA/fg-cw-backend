@@ -126,6 +126,7 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
+    version: doc.version,
     pages: doc.pages,
     phases: doc.phases.map(toWorkflowPhase),
     requiredRoles: new RequiredAppRoles({
@@ -190,9 +191,10 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
-export const findByCode = async (code) => {
+export const findByCode = async (code, version = "0.0.0") => {
   const workflowDocument = await db.collection(collection).findOne({
     code,
+    version,
   });
 
   return workflowDocument && toWorkflow(workflowDocument);
