@@ -13,6 +13,7 @@ USER node
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node scripts/run.sh scripts/run.sh
+COPY --chown=node:node scripts/preload.js scripts/preload.js
 COPY --chown=node:node migrate-mongo-config.js ./
 COPY --chown=node:node migrations ./migrations
 
