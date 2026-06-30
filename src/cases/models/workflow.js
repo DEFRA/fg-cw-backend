@@ -10,7 +10,7 @@ export class Workflow {
   constructor(props) {
     this._id = props._id || new ObjectId().toHexString();
     this.code = props.code;
-    this.version = props.version ?? "0.0.0";
+    this.version = props.version;
     this.pages = props.pages;
     this.phases = props.phases;
     this.requiredRoles = props.requiredRoles;
