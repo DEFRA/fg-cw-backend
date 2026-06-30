@@ -20,7 +20,7 @@ export const setup = async ({ globalConfig }) => {
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
     })
-    .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", 3101))
+    .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
     .withNoRecreate()
     .up();
 
@@ -36,16 +36,9 @@ export const setup = async ({ globalConfig }) => {
       const logStream = await backendContainer.logs();
 
       logStream
-        // eslint-disable-next-line no-console
-        .on("data", (line) => console.log(line.toString()))
-        // eslint-disable-next-line no-console
-        .on("err", (line) => console.error(line.toString()));
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn("Backend container is not running, unable to stream logs");
-      // eslint-disable-next-line no-console
-      console.warn(err.message);
-    }
+        .on("data", (line) => process.stdout.write(line))
+        .on("err", (line) => process.stderr.write(line));
+    } catch (err) {}
   }
 };
 
