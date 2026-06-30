@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { styleText } from "node:util";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
 import { ensureQueues } from "./helpers/sqs.js";
 
@@ -32,12 +31,21 @@ export const setup = async ({ globalConfig }) => {
   ]);
 
   if (env.PRINT_LOGS) {
-    const backendContainer = environment.getContainer("fg-cw-backend-1");
-    const logStream = await backendContainer.logs();
+    try {
+      const backendContainer = environment.getContainer("fg-cw-backend-1");
+      const logStream = await backendContainer.logs();
 
-    logStream.on("data", (line) =>
-      process.stdout.write(styleText("gray", line)),
-    );
+      logStream
+        // eslint-disable-next-line no-console
+        .on("data", (line) => console.log(line.toString()))
+        // eslint-disable-next-line no-console
+        .on("err", (line) => console.error(line.toString()));
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("Backend container is not running, unable to stream logs");
+      // eslint-disable-next-line no-console
+      console.warn(err.message);
+    }
   }
 };
 

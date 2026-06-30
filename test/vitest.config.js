@@ -12,11 +12,12 @@ export default defineConfig({
   test: {
     globalSetup: "./test/setup.js",
     setupFiles: ["./test/cleanup.js"],
+    include: ["test/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
     sequence: {
       concurrent: false,
     },
     fileParallelism: false,
-    exclude: ["**/contract/**"],
+    exclude: ["test/contract/**"],
     env: {
       CW_PORT,
       MONGO_PORT,
