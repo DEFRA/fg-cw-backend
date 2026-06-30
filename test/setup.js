@@ -20,7 +20,7 @@ export const setup = async ({ globalConfig }) => {
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
     })
-    .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health", 3101))
+    .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", 3101))
     .withNoRecreate()
     .up();
 
