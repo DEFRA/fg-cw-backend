@@ -83,7 +83,6 @@ const WorkflowData = Joi.object({
     .required(),
   version: Joi.string()
     .pattern(/^\d+\.\d+\.\d+$/)
-    .default("0.0.0")
     .optional()
     .label("version"),
   pages: Joi.object({
