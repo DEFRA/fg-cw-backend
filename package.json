@@ -67,7 +67,7 @@
   },
   "devDependencies": {
     "@pact-foundation/pact": "16.2.0",
-    "@vitest/coverage-v8": "4.0.18",
+    "@vitest/coverage-v8": "4.1.9",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "husky": "9.1.7",
@@ -79,6 +79,6 @@
     "prettier-plugin-organize-imports": "4.3.0",
     "testcontainers": "^12.0.3",
     "typescript": "5.0.4",
-    "vitest": "4.0.18"
+    "vitest": "4.1.9"
   }
 }
