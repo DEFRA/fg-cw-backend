@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-const CW_PORT = 3002;
+const CW_PORT = 3101;
 const MONGO_PORT = 27018;
 const LOCALSTACK_PORT = 4567;
 const ENTRA_PORT = 3011;

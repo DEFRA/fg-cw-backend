@@ -32,7 +32,7 @@ export const setup = async ({ globalConfig }) => {
 
   if (env.PRINT_LOGS) {
     try {
-      const backendContainer = environment.getContainer("fg-cw-backend-1");
+      const backendContainer = environment.getContainer("fg-cw-backend");
       const logStream = await backendContainer.logs();
 
       logStream
