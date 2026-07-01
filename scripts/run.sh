@@ -9,5 +9,5 @@ export NODE_EXTRA_CA_CERTS="/tmp/certs.pem"
 # Use HTTP_PROXY and HTTPS_PROXY environment variables
 export GLOBAL_AGENT_ENVIRONMENT_VARIABLE_NAMESPACE=
 
-node --import "global-agent/bootstrap.js" .
+node --import "./scripts/preload.js" .
 
