@@ -103,6 +103,15 @@ describe("config-version.repository", () => {
       const updateArg = mockCollection.updateOne.mock.calls[0][1];
       expect(updateArg.$set.fetchedAt).toBeDefined();
     });
+
+    it("should not increment fetchAttempts when status is fetched", async () => {
+      mockCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
+
+      await updateFetchStatus("pigs-might-fly", "1.0.0", FetchStatus.Fetched);
+
+      const updateArg = mockCollection.updateOne.mock.calls[0][1];
+      expect(updateArg.$inc).toBeUndefined();
+    });
   });
 
   describe("findByGrantCodeAndVersion", () => {

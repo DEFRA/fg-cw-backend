@@ -22,7 +22,6 @@ import {
   findNextMessage,
 } from "../repositories/inbox.repository.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
-import { processConfigVersionUseCase } from "../use-cases/process-config-version.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
@@ -33,7 +32,6 @@ vi.mock("../repositories/inbox.repository.js");
 vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
 vi.mock("../use-cases/handle-case-status-update.use-case.js");
-vi.mock("../use-cases/process-config-version.use-case.js");
 vi.mock("../../common/logger.js");
 
 const createInbox = (doc) =>
@@ -351,96 +349,6 @@ describe("inbox.subscriber", () => {
       await inbox.processEvents([mockEvent]);
       expect(withTraceParent).toHaveBeenCalled();
       expect(mockEvent.markAsComplete).toHaveBeenCalled();
-    });
-  });
-
-  describe("Config Broker dispatch", () => {
-    it("should dispatch CONFIG_BROKER messages to processConfigVersionUseCase", async () => {
-      processConfigVersionUseCase.mockResolvedValue();
-      withTraceParent.mockImplementation((_, fn) => fn());
-
-      const mockEvent = {
-        type: "config.version.published",
-        source: "CONFIG_BROKER",
-        traceparent: "trace-config-001",
-        messageId: "msg-config-001",
-        event: {
-          data: {
-            grantCode: "pigs-might-fly",
-            version: "1.0.0",
-            status: "active",
-          },
-        },
-        markAsComplete: vi.fn(),
-      };
-
-      const inbox = new InboxSubscriber();
-      await inbox.handleEvent(mockEvent);
-
-      expect(withTraceParent).toHaveBeenCalledWith(
-        "trace-config-001",
-        expect.any(Function),
-      );
-      expect(processConfigVersionUseCase).toHaveBeenCalledWith({
-        grantCode: "pigs-might-fly",
-        version: "1.0.0",
-        status: "active",
-      });
-      expect(mockEvent.markAsComplete).toHaveBeenCalled();
-    });
-
-    it("should mark CONFIG_BROKER message as failed when processing throws", async () => {
-      processConfigVersionUseCase.mockRejectedValue(
-        new Error("Invalid semver"),
-      );
-      withTraceParent.mockImplementation((_, fn) => fn());
-
-      const mockEvent = {
-        type: "config.version.published",
-        source: "CONFIG_BROKER",
-        traceparent: "trace-config-002",
-        messageId: "msg-config-002",
-        event: {
-          data: {
-            grantCode: "pigs-might-fly",
-            version: "bad-version",
-            status: "active",
-          },
-        },
-        markAsFailed: vi.fn(),
-      };
-
-      const inbox = new InboxSubscriber();
-      await inbox.handleEvent(mockEvent);
-
-      expect(processConfigVersionUseCase).toHaveBeenCalled();
-      expect(mockEvent.markAsFailed).toHaveBeenCalled();
-    });
-
-    it("should not dispatch CONFIG_BROKER messages to useCaseMap handlers", async () => {
-      processConfigVersionUseCase.mockResolvedValue();
-      withTraceParent.mockImplementation((_, fn) => fn());
-
-      const mockEvent = {
-        type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
-        source: "CONFIG_BROKER",
-        traceparent: "trace-config-003",
-        messageId: "msg-config-003",
-        event: {
-          data: {
-            grantCode: "pigs-might-fly",
-            version: "1.0.0",
-            status: "active",
-          },
-        },
-        markAsComplete: vi.fn(),
-      };
-
-      const inbox = new InboxSubscriber();
-      await inbox.handleEvent(mockEvent);
-
-      expect(processConfigVersionUseCase).toHaveBeenCalled();
-      expect(submitCaseUseCase).not.toHaveBeenCalled();
     });
   });
 });

@@ -64,13 +64,16 @@ export const updateFetchStatus = async (
     update.fetchedAt = new Date().toISOString();
   }
 
-  return db.collection(collection).updateOne(
-    { grantCode, version },
-    {
-      $set: update,
-      $inc: { fetchAttempts: 1 },
-    },
-  );
+  // Only failed attempts count towards the retry limit; a successful fetch
+  // must not push fetchAttempts over MAX_FETCH_ATTEMPTS.
+  const mongoUpdate = { $set: update };
+  if (fetchStatus !== FetchStatus.Fetched) {
+    mongoUpdate.$inc = { fetchAttempts: 1 };
+  }
+
+  return db
+    .collection(collection)
+    .updateOne({ grantCode, version }, mongoUpdate);
 };
 
 export const findByGrantCodeAndVersion = async (grantCode, version) => {
