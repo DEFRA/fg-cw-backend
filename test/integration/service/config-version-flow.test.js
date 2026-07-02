@@ -1,5 +1,4 @@
 import { MongoClient } from "mongodb";
-import { randomUUID } from "node:crypto";
 import { env } from "node:process";
 import {
   afterAll,
@@ -9,34 +8,24 @@ import {
   describe,
   expect,
   it,
-  vi,
 } from "vitest";
-import { Inbox, InboxStatus } from "../../../src/cases/models/inbox.js";
-import { claimEvents } from "../../../src/cases/repositories/inbox.repository.js";
-import { InboxSubscriber } from "../../../src/cases/subscribers/inbox.subscriber.js";
+import { processConfigVersionUseCase } from "../../../src/cases/use-cases/process-config-version.use-case.js";
 import { FetchStatus } from "../../../src/common/fetch-status.js";
 
 let client;
-let inboxCol, fifoCol, configVersionsCol;
+let configVersionsCol;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   const db = client.db();
-  inboxCol = db.collection("inbox");
-  fifoCol = db.collection("fifo_locks");
   configVersionsCol = db.collection("config_versions");
 });
 
 beforeEach(async () => {
-  await inboxCol.deleteMany({});
-  await fifoCol.deleteMany({});
   await configVersionsCol.deleteMany({});
 });
 
 afterEach(async () => {
-  vi.restoreAllMocks();
-  await inboxCol.deleteMany({});
-  await fifoCol.deleteMany({});
   await configVersionsCol.deleteMany({});
 });
 
@@ -44,53 +33,16 @@ afterAll(async () => {
   await client?.close();
 });
 
-const createConfigBrokerInbox = (id, grantCode, version, status) => {
-  return Inbox.createMock({
-    _id: id,
-    source: "CONFIG_BROKER",
-    type: "config.version.published",
-    messageId: `msg-${id}`,
-    segregationRef: grantCode,
-    event: {
-      id: randomUUID(),
-      type: "config.version.published",
-      source: "config-broker",
-      time: new Date().toISOString(),
-      data: {
-        grantCode,
-        version,
-        status,
-      },
-    },
-  });
-};
-
-describe("config broker inbox flow", () => {
-  it("should process a config broker message through the inbox and create a config_versions record", async () => {
-    const inboxMsg = createConfigBrokerInbox(
-      "cv-1",
-      "pigs-might-fly",
-      "1.2.3",
-      "active",
-    );
-
-    await inboxCol.insertOne(inboxMsg.toDocument());
-
-    await fifoCol.insertOne({
-      segregationRef: "pigs-might-fly",
-      locked: true,
-      lockedAt: new Date(),
-      actor: "INBOX",
+// Config broker messages are delivered by the SQS subscriber, which calls
+// processConfigVersionUseCase directly (the broker topic is a standard,
+// non-FIFO SNS topic, so the inbox pattern adds nothing here).
+describe("config broker message flow", () => {
+  it("should process a config broker message and create a config_versions record", async () => {
+    await processConfigVersionUseCase({
+      grantCode: "pigs-might-fly",
+      version: "1.2.3",
+      status: "active",
     });
-
-    const events = await claimEvents(randomUUID(), "pigs-might-fly", 1);
-    expect(events).toHaveLength(1);
-
-    const subscriber = new InboxSubscriber();
-    await subscriber.handleEvent(events[0]);
-
-    const inboxDoc = await inboxCol.findOne({ _id: "cv-1" });
-    expect(inboxDoc.status).toBe(InboxStatus.COMPLETED);
 
     const cvDoc = await configVersionsCol.findOne({
       grantCode: "pigs-might-fly",
@@ -104,29 +56,14 @@ describe("config broker inbox flow", () => {
     expect(cvDoc.s3Key).toBe("pigs-might-fly/1.2.3/workflow-definition.json");
   });
 
-  it("should mark inbox event as failed when config version has invalid semver", async () => {
-    const inboxMsg = createConfigBrokerInbox(
-      "cv-2",
-      "pigs-might-fly",
-      "not-a-version",
-      "active",
-    );
-
-    await inboxCol.insertOne(inboxMsg.toDocument());
-
-    await fifoCol.insertOne({
-      segregationRef: "pigs-might-fly",
-      locked: true,
-      lockedAt: new Date(),
-      actor: "INBOX",
-    });
-
-    const events = await claimEvents(randomUUID(), "pigs-might-fly", 1);
-    const subscriber = new InboxSubscriber();
-    await subscriber.handleEvent(events[0]);
-
-    const inboxDoc = await inboxCol.findOne({ _id: "cv-2" });
-    expect(inboxDoc.status).toBe(InboxStatus.FAILED);
+  it("should reject a config version with invalid semver and create no record", async () => {
+    await expect(
+      processConfigVersionUseCase({
+        grantCode: "pigs-might-fly",
+        version: "not-a-version",
+        status: "active",
+      }),
+    ).rejects.toThrow("Invalid semver version");
 
     const cvCount = await configVersionsCol.countDocuments({
       grantCode: "pigs-might-fly",
@@ -135,46 +72,19 @@ describe("config broker inbox flow", () => {
   });
 
   it("should handle duplicate messages via upsert without error", async () => {
-    const first = createConfigBrokerInbox(
-      "cv-3",
-      "pigs-might-fly",
-      "2.0.0",
-      "active",
-    );
-    await inboxCol.insertOne(first.toDocument());
-    await fifoCol.insertOne({
-      segregationRef: "pigs-might-fly",
-      locked: true,
-      lockedAt: new Date(),
-      actor: "INBOX",
-    });
+    const eventData = {
+      grantCode: "pigs-might-fly",
+      version: "2.0.0",
+      status: "active",
+    };
 
-    const events1 = await claimEvents(randomUUID(), "pigs-might-fly", 1);
-    const subscriber = new InboxSubscriber();
-    await subscriber.handleEvent(events1[0]);
-
-    const second = createConfigBrokerInbox(
-      "cv-4",
-      "pigs-might-fly",
-      "2.0.0",
-      "active",
-    );
-    await inboxCol.insertOne(second.toDocument());
-    await fifoCol.updateOne(
-      { segregationRef: "pigs-might-fly" },
-      { $set: { locked: true, lockedAt: new Date() } },
-    );
-
-    const events2 = await claimEvents(randomUUID(), "pigs-might-fly", 1);
-    await subscriber.handleEvent(events2[0]);
+    await processConfigVersionUseCase(eventData);
+    await processConfigVersionUseCase(eventData);
 
     const cvCount = await configVersionsCol.countDocuments({
       grantCode: "pigs-might-fly",
       version: "2.0.0",
     });
     expect(cvCount).toBe(1);
-
-    const inboxDoc = await inboxCol.findOne({ _id: "cv-4" });
-    expect(inboxDoc.status).toBe(InboxStatus.COMPLETED);
   });
 });

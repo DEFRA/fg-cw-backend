@@ -52,10 +52,22 @@ const guardFetchStatus = async (
   workflowCode,
   resolvedVersion,
 ) => {
-  if (
-    configVersion.fetchAttempts >= MAX_FETCH_ATTEMPTS &&
-    configVersion.fetchStatus !== FetchStatus.PermanentError
-  ) {
+  // A successfully fetched version must never be poisoned by the retry limit,
+  // even if fetchAttempts accumulated before the fetch succeeded.
+  if (configVersion.fetchStatus === FetchStatus.Fetched) {
+    return;
+  }
+
+  if (configVersion.fetchStatus === FetchStatus.PermanentError) {
+    logger.warn(
+      `Permanent error recorded for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
+    );
+    throw Boom.badGateway(
+      `Permanent error for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
+    );
+  }
+
+  if (configVersion.fetchAttempts >= MAX_FETCH_ATTEMPTS) {
     logger.warn(
       `Max fetch attempts (${MAX_FETCH_ATTEMPTS}) exceeded for ${workflowCode}@${resolvedVersion}`,
     );
@@ -67,15 +79,6 @@ const guardFetchStatus = async (
     );
     throw Boom.badGateway(
       `Max fetch attempts exceeded for ${workflowCode}@${resolvedVersion}`,
-    );
-  }
-
-  if (configVersion.fetchStatus === FetchStatus.PermanentError) {
-    logger.warn(
-      `Permanent error recorded for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
-    );
-    throw Boom.badGateway(
-      `Permanent error for ${workflowCode}@${resolvedVersion}: ${configVersion.fetchError}`,
     );
   }
 };
@@ -103,6 +106,14 @@ const saveOrFallback = async (
     if (err.isBoom && err.output.statusCode === HTTP_CONFLICT) {
       logger.info(
         `Concurrent insert for ${workflowCode}@${resolvedVersion}, loading existing`,
+      );
+      // The workflow exists, so record Fetched here too in case the winning
+      // process crashed before updating the status; otherwise the row stays
+      // pending and every request re-fetches from S3.
+      await updateFetchStatus(
+        workflowCode,
+        resolvedVersion,
+        FetchStatus.Fetched,
       );
     } else {
       throw err;

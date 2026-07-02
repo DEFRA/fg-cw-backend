@@ -84,6 +84,29 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     expect(mockFetchConfigFile).not.toHaveBeenCalled();
   });
 
+  it("should return cached workflow when fetched even if fetchAttempts reached max", async () => {
+    const cv = ConfigVersion.createMock({
+      fetchStatus: FetchStatus.Fetched,
+      fetchAttempts: 5,
+    });
+    mockFindLatestForMajor.mockResolvedValue(cv);
+    mockFindByCodeAndVersion.mockResolvedValue(mockWorkflow);
+
+    const result = await resolveAndFetchWorkflowUseCase(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+
+    expect(result.workflow).toEqual(mockWorkflow);
+    expect(mockFetchConfigFile).not.toHaveBeenCalled();
+    expect(mockUpdateFetchStatus).not.toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+      FetchStatus.PermanentError,
+      expect.anything(),
+    );
+  });
+
   it("should fetch from S3 when fetchStatus is pending", async () => {
     const cv = ConfigVersion.createMock({
       fetchStatus: FetchStatus.Pending,
@@ -209,6 +232,11 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     expect(mockFindByCodeAndVersion).toHaveBeenCalledWith(
       "pigs-might-fly",
       "1.0.0",
+    );
+    expect(mockUpdateFetchStatus).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.0.0",
+      FetchStatus.Fetched,
     );
   });
 

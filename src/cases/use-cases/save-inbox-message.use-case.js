@@ -8,7 +8,6 @@ import {
 
 export const messageSource = {
   Gas: "GAS",
-  ConfigBroker: "CONFIG_BROKER",
 };
 
 export const getSegregationRef = (event) => {
