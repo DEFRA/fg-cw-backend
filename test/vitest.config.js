@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-const CW_PORT = 3002;
+const CW_PORT = 3101;
 const MONGO_PORT = 27018;
 const LOCALSTACK_PORT = 4567;
 const ENTRA_PORT = 3011;
@@ -12,11 +12,12 @@ export default defineConfig({
   test: {
     globalSetup: "./test/setup.js",
     setupFiles: ["./test/cleanup.js"],
+    include: ["test/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
     sequence: {
       concurrent: false,
     },
     fileParallelism: false,
-    exclude: ["**/contract/**"],
+    exclude: ["test/contract/**"],
     env: {
       CW_PORT,
       MONGO_PORT,

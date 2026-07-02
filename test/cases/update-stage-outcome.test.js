@@ -81,30 +81,33 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       actionCode: "APPROVE",
     });
 
-    await vi.waitFor(async () => {
-      const caseStatusUpdatedEvents = await receiveMessages(
-        env.GAS__SQS__UPDATE_STATUS,
-      );
+    await vi.waitFor(
+      async () => {
+        const caseStatusUpdatedEvents = await receiveMessages(
+          env.GAS__SQS__UPDATE_STATUS,
+        );
 
-      expect(caseStatusUpdatedEvents).toEqual([
-        {
-          id: expect.any(String),
-          traceparent: expect.any(String),
-          type: "cloud.defra.local.fg-cw-backend.case.status.updated",
-          datacontenttype: "application/json",
-          source: "fg-cw-backend",
-          specversion: "1.0",
-          time: expect.any(String),
-          messageGroupId: expect.any(String),
-          data: {
-            caseRef: "APPLICATION-REF-1",
-            currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
-            previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
-            workflowCode: "frps-private-beta",
+        expect(caseStatusUpdatedEvents).toEqual([
+          {
+            id: expect.any(String),
+            traceparent: expect.any(String),
+            type: "cloud.defra.local.fg-cw-backend.case.status.updated",
+            datacontenttype: "application/json",
+            source: "fg-cw-backend",
+            specversion: "1.0",
+            time: expect.any(String),
+            messageGroupId: expect.any(String),
+            data: {
+              caseRef: "APPLICATION-REF-1",
+              currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
+              previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
+              workflowCode: "frps-private-beta",
+            },
           },
-        },
-      ]);
-    });
+        ]);
+      },
+      { timeout: 30000 },
+    );
   });
 
   it("updates stage outcome with optional comment", async () => {

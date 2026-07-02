@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Use Node version
         uses: actions/setup-node@v6
@@ -89,7 +89,7 @@ jobs:
             --broker-base-url "${PACT_BROKER_BASE_URL}" \
             --broker-username "${PACT_USER}" \
             --broker-password "${PACT_PASS}" \
-            --consumer-app-version "$(git describe --tags --abbrev=0 --always)" \
+            --consumer-app-version "$(git describe --tags --always --long)" \
             tmp/pacts/*.json
 
   pact:

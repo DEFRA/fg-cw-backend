@@ -4,6 +4,7 @@ export const createWorkflow = async (payload = {}) => {
   const response = await wreck.post("/workflows", {
     payload: {
       code: "frps-private-beta",
+      version: "0.0.0",
       pages: {
         cases: {
           details: {
