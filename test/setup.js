@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { styleText } from "node:util";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
 import { ensureQueues } from "./helpers/sqs.js";
 
@@ -21,7 +20,7 @@ export const setup = async ({ globalConfig }) => {
       LOCALSTACK_PORT: env.LOCALSTACK_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
     })
-    .withWaitStrategy("fg-cw-backend", Wait.forHttp("/health"))
+    .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
     .withNoRecreate()
     .up();
 
@@ -33,12 +32,14 @@ export const setup = async ({ globalConfig }) => {
   ]);
 
   if (env.PRINT_LOGS) {
-    const backendContainer = environment.getContainer("fg-cw-backend-1");
-    const logStream = await backendContainer.logs();
+    try {
+      const backendContainer = environment.getContainer("fg-cw-backend-1");
+      const logStream = await backendContainer.logs();
 
-    logStream.on("data", (line) =>
-      process.stdout.write(styleText("gray", line)),
-    );
+      logStream
+        .on("data", (line) => process.stdout.write(line))
+        .on("err", (line) => process.stderr.write(line));
+    } catch (err) {}
   }
 };
 

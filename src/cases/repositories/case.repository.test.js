@@ -6,6 +6,7 @@ import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
+  countByPosition,
   findAll,
   findByCaseRefAndWorkflowCode,
   findById,
@@ -531,5 +532,85 @@ describe("updateStage", () => {
     await expect(updateStage(caseId, "APPLICATION_RECEIPT")).rejects.toThrow(
       Boom.notFound(`Case with id "${caseId}" not found`),
     );
+  });
+});
+
+describe("countByPosition", () => {
+  // Given cases exist for the requested workflow codes
+  // When counting by lifecycle position
+  // Then they are grouped by phase/stage/status and summed
+  it("groups cases by phase, stage and status and sums each group", async () => {
+    const aggregate = vi.fn().mockReturnValue({
+      toArray: () => [
+        {
+          _id: {
+            workflowCode: "woodland",
+            phaseCode: "PRE_AWARD",
+            stageCode: "REVIEW",
+            statusCode: "IN_PROGRESS",
+          },
+          count: 40,
+        },
+        {
+          _id: {
+            workflowCode: "woodland",
+            phaseCode: "CLOSED",
+            stageCode: "CLOSED",
+            statusCode: "WITHDRAWN",
+          },
+          count: 10,
+        },
+      ],
+    });
+
+    db.collection.mockReturnValue({ aggregate });
+
+    const result = await countByPosition(["woodland"]);
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(aggregate).toHaveBeenCalledWith([
+      { $match: { workflowCode: { $in: ["woodland"] } } },
+      {
+        $group: {
+          _id: {
+            workflowCode: "$workflowCode",
+            phaseCode: "$currentPhase",
+            stageCode: "$currentStage",
+            statusCode: "$currentStatus",
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // And the grouped _id is flattened into a plain count row
+    expect(result).toEqual([
+      {
+        workflowCode: "woodland",
+        phaseCode: "PRE_AWARD",
+        stageCode: "REVIEW",
+        statusCode: "IN_PROGRESS",
+        count: 40,
+      },
+      {
+        workflowCode: "woodland",
+        phaseCode: "CLOSED",
+        stageCode: "CLOSED",
+        statusCode: "WITHDRAWN",
+        count: 10,
+      },
+    ]);
+  });
+
+  // Given no cases match the requested workflow codes
+  // When counting by lifecycle position
+  // Then an empty list is returned (not an error)
+  it("returns an empty list when no cases match", async () => {
+    const aggregate = vi.fn().mockReturnValue({ toArray: () => [] });
+    db.collection.mockReturnValue({ aggregate });
+
+    const result = await countByPosition(["unknown"]);
+
+    expect(result).toEqual([]);
   });
 });

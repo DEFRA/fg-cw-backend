@@ -28,7 +28,7 @@ export class WorkflowDocument {
   static createMock(props) {
     return new WorkflowDocument({
       code: "workflow-code",
-      version: "1.0.0",
+      version: "0.0.0",
       pages: createPagesMock(),
       phases: [PhaseDocument.createMock()],
       requiredRoles: {
