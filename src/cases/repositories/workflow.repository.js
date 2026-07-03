@@ -191,10 +191,13 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
-export const findByCode = async (code) => {
+// Legacy callers get the 0.0.0 workflow (FGP-1224 rollback contract). Latest
+// version resolution goes through config_versions (numeric major/minor/patch
+// sort), never a string sort on the version field.
+export const findByCode = async (code, version = "0.0.0") => {
   const workflowDocument = await db
     .collection(collection)
-    .findOne({ code }, { sort: { version: -1 } });
+    .findOne({ code, version });
 
   return workflowDocument && toWorkflow(workflowDocument);
 };

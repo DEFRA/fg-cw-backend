@@ -63,6 +63,29 @@ describe("ConfigVersion", () => {
       const cv = ConfigVersion.fromDocument(doc);
       expect(cv.grantCode).toBe("test-grant");
     });
+
+    it("should hydrate a seeded legacy 0.0.0 row (null s3 fields, fetched)", () => {
+      const doc = {
+        grantCode: "woodland",
+        version: "0.0.0",
+        major: 0,
+        minor: 0,
+        patch: 0,
+        status: "active",
+        s3Key: null,
+        s3Bucket: null,
+        fetchStatus: "fetched",
+        fetchedAt: "2026-07-02T10:00:00Z",
+        fetchAttempts: 0,
+        fetchError: null,
+        lastFetchAttemptAt: null,
+      };
+
+      const cv = ConfigVersion.fromDocument(doc);
+      expect(cv.s3Key).toBeNull();
+      expect(cv.s3Bucket).toBeNull();
+      expect(cv.fetchStatus).toBe(FetchStatus.Fetched);
+    });
   });
 
   describe("toDocument", () => {
