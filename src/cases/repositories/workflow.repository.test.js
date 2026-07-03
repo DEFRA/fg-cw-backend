@@ -215,7 +215,7 @@ describe("findAll", () => {
 });
 
 describe("findByCode", () => {
-  it("returns the latest version workflow by sorting descending", async () => {
+  it("returns the legacy 0.0.0 workflow by default", async () => {
     const workflowDocument = WorkflowDocument.createMock();
 
     const findOne = vi.fn().mockResolvedValue(workflowDocument);
@@ -228,10 +228,24 @@ describe("findByCode", () => {
     const result = await findByCode(code);
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
-    expect(findOne).toHaveBeenCalledWith({ code }, { sort: { version: -1 } });
+    expect(findOne).toHaveBeenCalledWith({ code, version: "0.0.0" });
     expect(result._id.toString()).toEqual(workflowDocument._id.toString());
     expect(result.templates).toEqual(workflowDocument.templates);
     expect(result.version).toEqual("0.0.0");
+  });
+
+  it("returns the requested version when passed explicitly", async () => {
+    const workflowDocument = WorkflowDocument.createMock();
+
+    const findOne = vi.fn().mockResolvedValue(workflowDocument);
+
+    db.collection = vi.fn().mockReturnValue({
+      findOne,
+    });
+
+    await findByCode("123", "1.0.2");
+
+    expect(findOne).toHaveBeenCalledWith({ code: "123", version: "1.0.2" });
   });
 
   it("maps status option comment when present", async () => {
