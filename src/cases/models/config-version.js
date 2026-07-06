@@ -95,7 +95,7 @@ export class ConfigVersion {
       minor: 0,
       patch: 0,
       status: "active",
-      s3Key: "pigs-might-fly/1.0.0/workflow-definition.json",
+      s3Key: "pigs-might-fly/1.0.0/cw/cw.json",
       s3Bucket: "config-broker-local",
       receivedAt: new Date().toISOString(),
       fetchStatus: FetchStatus.Pending,

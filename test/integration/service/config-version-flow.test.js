@@ -53,7 +53,7 @@ describe("config broker message flow", () => {
     expect(cvDoc.minor).toBe(2);
     expect(cvDoc.patch).toBe(3);
     expect(cvDoc.fetchStatus).toBe(FetchStatus.Pending);
-    expect(cvDoc.s3Key).toBe("pigs-might-fly/1.2.3/workflow-definition.json");
+    expect(cvDoc.s3Key).toBe("pigs-might-fly/1.2.3/cw/cw.json");
   });
 
   it("should reject a config version with invalid semver and create no record", async () => {

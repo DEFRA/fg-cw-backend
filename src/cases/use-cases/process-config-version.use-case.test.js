@@ -22,7 +22,7 @@ vi.mock("../../common/logger.js", () => ({
 
 vi.mock("../../common/s3-client.js", () => ({
   buildS3Key: vi.fn(
-    (grantCode, version) => `${grantCode}/${version}/workflow-definition.json`,
+    (grantCode, version) => `${grantCode}/${version}/cw/cw.json`,
   ),
 }));
 
@@ -56,7 +56,7 @@ describe("processConfigVersionUseCase", () => {
     expect(cv.patch).toBe(3);
     expect(cv.status).toBe("active");
     expect(cv.s3Bucket).toBe("config-broker-local");
-    expect(cv.s3Key).toBe("pigs-might-fly/1.2.3/workflow-definition.json");
+    expect(cv.s3Key).toBe("pigs-might-fly/1.2.3/cw/cw.json");
   });
 
   it("should accept draft status", async () => {

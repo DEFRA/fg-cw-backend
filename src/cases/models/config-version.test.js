@@ -30,7 +30,7 @@ describe("ConfigVersion", () => {
         grantCode: "woodland",
         version: "2.3.4",
         status: "active",
-        s3Key: "woodland/2.3.4/workflow-definition.json",
+        s3Key: "woodland/2.3.4/cw/cw.json",
         s3Bucket: "config-broker-local",
       });
 
@@ -99,7 +99,7 @@ describe("ConfigVersion", () => {
       expect(doc.minor).toBe(0);
       expect(doc.patch).toBe(0);
       expect(doc.status).toBe("active");
-      expect(doc.s3Key).toBe("pigs-might-fly/1.0.0/workflow-definition.json");
+      expect(doc.s3Key).toBe("pigs-might-fly/1.0.0/cw/cw.json");
       expect(doc.s3Bucket).toBe("config-broker-local");
       expect(doc.fetchStatus).toBe(FetchStatus.Pending);
       expect(doc.fetchAttempts).toBe(0);

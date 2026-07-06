@@ -11,7 +11,7 @@ export const seedConfigVersion = async (
     grantCode,
     version,
     status: "active",
-    s3Key: `${grantCode}/${version}/workflow-definition.json`,
+    s3Key: `${grantCode}/${version}/cw/cw.json`,
     s3Bucket: "config-broker-local",
   });
 

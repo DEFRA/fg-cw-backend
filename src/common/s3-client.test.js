@@ -44,21 +44,19 @@ describe("s3-client", () => {
 
   describe("buildS3Key", () => {
     it("should construct the S3 key from grant code and version", () => {
-      expect(buildS3Key("woodland", "1.2.3")).toBe(
-        "woodland/1.2.3/workflow-definition.json",
-      );
+      expect(buildS3Key("woodland", "1.2.3")).toBe("woodland/1.2.3/cw/cw.json");
     });
 
     it("should handle codes with hyphens", () => {
       expect(buildS3Key("pigs-might-fly", "2.0.0")).toBe(
-        "pigs-might-fly/2.0.0/workflow-definition.json",
+        "pigs-might-fly/2.0.0/cw/cw.json",
       );
     });
   });
 
   describe("fetchConfigFile", () => {
     const bucket = "config-broker-test";
-    const key = "woodland/1.0.0/workflow-definition.json";
+    const key = "woodland/1.0.0/cw/cw.json";
 
     it("should return parsed JSON when the S3 object exists and is valid", async () => {
       const workflowDef = { code: "woodland", phases: [] };

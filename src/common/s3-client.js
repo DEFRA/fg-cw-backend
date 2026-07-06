@@ -37,7 +37,7 @@ export class S3FetchError extends Error {
 }
 
 export const buildS3Key = (grantCode, version) => {
-  return `${grantCode}/${version}/workflow-definition.json`;
+  return `${grantCode}/${version}/cw/cw.json`;
 };
 
 // eslint-disable-next-line complexity

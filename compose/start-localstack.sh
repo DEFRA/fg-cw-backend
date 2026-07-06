@@ -139,11 +139,11 @@ wait
 
 echo "SNS/SQS ready"
 
-# Create S3 bucket for config broker and seed with sample workflow definition
+# Create S3 bucket for config broker and seed with sample workflow config
 if ! awslocal s3api head-bucket --bucket config-broker-local >/dev/null 2>&1; then
   awslocal s3 mb s3://config-broker-local
 fi
-awslocal s3 cp /etc/localstack/init/ready.d/seed/pigs-might-fly/1.0.0/workflow-definition.json \
-  s3://config-broker-local/pigs-might-fly/1.0.0/workflow-definition.json
+awslocal s3 cp /etc/localstack/init/ready.d/seed/pigs-might-fly/1.0.0/cw/cw.json \
+  s3://config-broker-local/pigs-might-fly/1.0.0/cw/cw.json
 
 echo "S3 config broker bucket ready"
