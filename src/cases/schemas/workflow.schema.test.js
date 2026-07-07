@@ -14,6 +14,15 @@ describe("workflowSchema", () => {
       expect(error).toBeUndefined();
     });
 
+    it("allows statuses to declare whether they close a case", () => {
+      const data = structuredClone(workflowData1);
+      data.phases[0].stages[0].statuses[0].closes = true;
+
+      const { error } = WorkflowData.validate(data);
+
+      expect(error).toBeUndefined();
+    });
+
     it("requires tabs to exist in pages.cases.details", () => {
       const data = structuredClone(workflowData1);
       delete data.pages.cases.details.tabs;

@@ -51,6 +51,7 @@ export const Status = Joi.object({
     .required(),
   description: Joi.string().allow(null).required(),
   interactive: Joi.boolean().required(),
+  closes: Joi.boolean().optional(),
   transitions: Joi.array().items(Transition).required(),
 }).label("Status");
 
