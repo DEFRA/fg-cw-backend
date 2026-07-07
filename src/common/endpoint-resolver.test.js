@@ -8,30 +8,66 @@ import {
 
 describe("endpoint-resolver", () => {
   describe("parseHeaders", () => {
-    it("should parse comma-separated headers", () => {
-      const headersString = "x-api-key: test-key,Authorization: Bearer token";
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle empty headers string", () => {
-      const result = parseHeaders(null);
-      expect(result).toEqual({});
-    });
-
-    it("should handle whitespace in headers", () => {
-      const headersString =
-        "  x-api-key:  test-key  ,  Authorization:  Bearer token  ";
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
+    it.each([
+      {
+        description: "should parse comma-separated headers",
+        input: "x-api-key: test-key,Authorization: Bearer token",
+        expected: {
+          "x-api-key": "test-key",
+          Authorization: "Bearer token",
+        },
+      },
+      {
+        description: "should handle empty headers string",
+        input: null,
+        expected: {},
+      },
+      {
+        description: "should handle whitespace in headers",
+        input: "  x-api-key:  test-key  ,  Authorization:  Bearer token  ",
+        expected: {
+          "x-api-key": "test-key",
+          Authorization: "Bearer token",
+        },
+      },
+      {
+        description:
+          "should handle header strings with surrounding quotes (CDP format)",
+        input: '"Authorization: Bearer token"',
+        expected: {
+          Authorization: "Bearer token",
+        },
+      },
+      {
+        description: "should handle multiple headers with surrounding quotes",
+        input: '"x-api-key: test-key, Authorization: Bearer token"',
+        expected: {
+          "x-api-key": "test-key",
+          Authorization: "Bearer token",
+        },
+      },
+      {
+        description: "should handle whitespace around quoted headers",
+        input: '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ',
+        expected: {
+          Authorization: "Bearer token",
+          "x-api-key": "test-key",
+        },
+      },
+      {
+        description:
+          "should handle null and non-string values (undefined, empty string)",
+        input: undefined,
+        expected: {},
+      },
+      {
+        description: "should handle empty string",
+        input: "",
+        expected: {},
+      },
+    ])("$description", ({ input, expected }) => {
+      const result = parseHeaders(input);
+      expect(result).toEqual(expected);
     });
 
     it("should throw error for invalid header format", () => {
@@ -40,57 +76,18 @@ describe("endpoint-resolver", () => {
         "Invalid header format",
       );
     });
+  });
 
-    it("should handle header strings with surrounding quotes (CDP format)", () => {
-      const headersString = '"Authorization: Bearer token"';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle multiple headers with surrounding quotes", () => {
-      const headersString =
-        '"x-api-key: test-key, Authorization: Bearer token"';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle whitespace around quoted headers", () => {
-      const headersString =
-        '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        Authorization: "Bearer token",
-        "x-api-key": "test-key",
-      });
-    });
-
-    it("should handle null and non-string values in stripOuterQuotes", () => {
-      expect(parseHeaders(null)).toEqual({});
-      expect(parseHeaders(undefined)).toEqual({});
-      expect(parseHeaders("")).toEqual({});
-    });
-
-    it("should handle edge cases in stripOuterQuotes", () => {
-      expect(parseHeaders('"Authorization: Bearer token"')).toEqual({
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle null and non-string values in stripQuotes", () => {
-      expect(stripOuterQuotes(null)).toBe(null);
-      expect(stripOuterQuotes(undefined)).toBe(undefined);
-      expect(stripOuterQuotes(123)).toBe(123);
-      expect(stripOuterQuotes("")).toBe("");
-      expect(stripOuterQuotes('"quoted"')).toBe("quoted");
-      expect(stripOuterQuotes("unquoted")).toBe("unquoted");
+  describe("stripOuterQuotes", () => {
+    it.each([
+      { input: null, expected: null },
+      { input: undefined, expected: undefined },
+      { input: 123, expected: 123 },
+      { input: "", expected: "" },
+      { input: '"quoted"', expected: "quoted" },
+      { input: "unquoted", expected: "unquoted" },
+    ])("should handle $input", ({ input, expected }) => {
+      expect(stripOuterQuotes(input)).toBe(expected);
     });
   });
 

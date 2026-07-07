@@ -375,118 +375,77 @@ describe("createWorkflowUseCase", () => {
         externalActions: [],
       });
 
-    it("resolves ::STATUS_CODE to CURRENT_PHASE:CURRENT_STAGE:STATUS_CODE", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: "::STATUS_B",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
-        },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+    it.each([
+      {
+        description:
+          "resolves ::STATUS_CODE to CURRENT_PHASE:CURRENT_STAGE:STATUS_CODE",
+        targetPosition: "::STATUS_B",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_1",
           statusCode: "STATUS_B",
-        }),
-      );
-    });
-
-    it("resolves :STAGE_CODE: to CURRENT_PHASE:STAGE_CODE:FIRST_STATUS", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: ":STAGE_2:",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        description:
+          "resolves :STAGE_CODE: to CURRENT_PHASE:STAGE_CODE:FIRST_STATUS",
+        targetPosition: ":STAGE_2:",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_2",
           statusCode: "STATUS_C",
-        }),
-      );
-    });
-
-    it("resolves PHASE_CODE:: to PHASE_CODE:FIRST_STAGE:FIRST_STATUS", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: "PHASE_B::",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        description:
+          "resolves PHASE_CODE:: to PHASE_CODE:FIRST_STAGE:FIRST_STATUS",
+        targetPosition: "PHASE_B::",
+        expected: {
           phaseCode: "PHASE_B",
           stageCode: "STAGE_3",
           statusCode: "STATUS_D",
-        }),
-      );
-    });
-
-    it("resolves :STAGE_CODE:STATUS_CODE to CURRENT_PHASE:STAGE_CODE:STATUS_CODE", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: ":STAGE_2:STATUS_C",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        description:
+          "resolves :STAGE_CODE:STATUS_CODE to CURRENT_PHASE:STAGE_CODE:STATUS_CODE",
+        targetPosition: ":STAGE_2:STATUS_C",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_2",
           statusCode: "STATUS_C",
-        }),
-      );
-    });
-
-    it("resolves PHASE_CODE::STATUS_CODE to PHASE_CODE:FIRST_STAGE:STATUS_CODE", async () => {
+        },
+      },
+      {
+        description:
+          "resolves PHASE_CODE::STATUS_CODE to PHASE_CODE:FIRST_STAGE:STATUS_CODE",
+        targetPosition: "PHASE_B::STATUS_D",
+        expected: {
+          phaseCode: "PHASE_B",
+          stageCode: "STAGE_3",
+          statusCode: "STATUS_D",
+        },
+      },
+      {
+        description: "keeps fully qualified position unchanged",
+        targetPosition: "PHASE_B:STAGE_3:STATUS_D",
+        expected: {
+          phaseCode: "PHASE_B",
+          stageCode: "STAGE_3",
+          statusCode: "STATUS_D",
+        },
+      },
+    ])("$description", async ({ targetPosition, expected }) => {
       const workflow = await createTestWorkflow([
         {
-          targetPosition: "PHASE_B::STATUS_D",
+          targetPosition,
           action: { code: "NEXT", name: "Next", checkTasks: false },
         },
       ]);
 
       expect(
         workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
-          phaseCode: "PHASE_B",
-          stageCode: "STAGE_3",
-          statusCode: "STATUS_D",
-        }),
-      );
-    });
-
-    it("keeps fully qualified position unchanged", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: "PHASE_B:STAGE_3:STATUS_D",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
-        },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
-          phaseCode: "PHASE_B",
-          stageCode: "STAGE_3",
-          statusCode: "STATUS_D",
-        }),
-      );
+      ).toEqual(new Position(expected));
     });
 
     it("throws error for invalid position ::", async () => {

@@ -3016,82 +3016,80 @@ describe("conditional component resolution", () => {
 });
 
 describe("evaluateTaskCondition", () => {
-  it("should return true when condition is null", async () => {
-    const root = { payload: { answers: { whitePigsCount: 5 } } };
-    const result = await evaluateTaskCondition({ condition: null, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return true when condition is undefined", async () => {
-    const root = { payload: { answers: { whitePigsCount: 5 } } };
-    const result = await evaluateTaskCondition({ condition: undefined, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return true when JSONPath condition matches", async () => {
-    const root = { payload: { answers: { whitePigsCount: 5 } } };
-    const condition =
-      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
+  it.each([
+    {
+      description: "should return true when condition is null",
+      root: { payload: { answers: { whitePigsCount: 5 } } },
+      condition: null,
+      expected: true,
+    },
+    {
+      description: "should return true when condition is undefined",
+      root: { payload: { answers: { whitePigsCount: 5 } } },
+      condition: undefined,
+      expected: true,
+    },
+    {
+      description: "should return true when JSONPath condition matches",
+      root: { payload: { answers: { whitePigsCount: 5 } } },
+      condition: "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      expected: true,
+    },
+    {
+      description: "should return false when JSONPath condition does not match",
+      root: { payload: { answers: { whitePigsCount: 2 } } },
+      condition: "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      expected: false,
+    },
+    {
+      description:
+        "should return false when whitePigsCount equals 3 (boundary test)",
+      root: { payload: { answers: { whitePigsCount: 3 } } },
+      condition: "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      expected: false,
+    },
+    {
+      description:
+        "should return true when whitePigsCount equals 4 (boundary test)",
+      root: { payload: { answers: { whitePigsCount: 4 } } },
+      condition: "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
+      expected: true,
+    },
+    {
+      description:
+        "should return true for simple JSONPath that returns truthy value",
+      root: { payload: { answers: { whitePigsCount: 5 } } },
+      condition: "$.payload.answers.whitePigsCount",
+      expected: true,
+    },
+    {
+      description: "should return false for simple JSONPath that returns 0",
+      root: { payload: { answers: { whitePigsCount: 0 } } },
+      condition: "$.payload.answers.whitePigsCount",
+      expected: false,
+    },
+    {
+      description: "should return false when property does not exist",
+      root: { payload: { answers: {} } },
+      condition: "$.payload.answers.whitePigsCount",
+      expected: false,
+    },
+    {
+      description:
+        "should return true for jsonata expression that evaluates to true",
+      root: { payload: { answers: { whitePigsCount: 5 } } },
+      condition: "jsonata:$.payload.answers.whitePigsCount > 3",
+      expected: true,
+    },
+    {
+      description:
+        "should return false for jsonata expression that evaluates to false",
+      root: { payload: { answers: { whitePigsCount: 2 } } },
+      condition: "jsonata:$.payload.answers.whitePigsCount > 3",
+      expected: false,
+    },
+  ])("$description", async ({ root, condition, expected }) => {
     const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return false when JSONPath condition does not match", async () => {
-    const root = { payload: { answers: { whitePigsCount: 2 } } };
-    const condition =
-      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(false);
-  });
-
-  it("should return false when whitePigsCount equals 3 (boundary test)", async () => {
-    const root = { payload: { answers: { whitePigsCount: 3 } } };
-    const condition =
-      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(false);
-  });
-
-  it("should return true when whitePigsCount equals 4 (boundary test)", async () => {
-    const root = { payload: { answers: { whitePigsCount: 4 } } };
-    const condition =
-      "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return true for simple JSONPath that returns truthy value", async () => {
-    const root = { payload: { answers: { whitePigsCount: 5 } } };
-    const condition = "$.payload.answers.whitePigsCount";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return false for simple JSONPath that returns 0", async () => {
-    const root = { payload: { answers: { whitePigsCount: 0 } } };
-    const condition = "$.payload.answers.whitePigsCount";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(false);
-  });
-
-  it("should return false when property does not exist", async () => {
-    const root = { payload: { answers: {} } };
-    const condition = "$.payload.answers.whitePigsCount";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(false);
-  });
-
-  it("should return true for jsonata expression that evaluates to true", async () => {
-    const root = { payload: { answers: { whitePigsCount: 5 } } };
-    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(true);
-  });
-
-  it("should return false for jsonata expression that evaluates to false", async () => {
-    const root = { payload: { answers: { whitePigsCount: 2 } } };
-    const condition = "jsonata:$.payload.answers.whitePigsCount > 3";
-    const result = await evaluateTaskCondition({ condition, root });
-    expect(result).toBe(false);
+    expect(result).toBe(expected);
   });
 });

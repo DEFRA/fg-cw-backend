@@ -194,79 +194,63 @@ describe("Workflow", () => {
   });
 
   describe("isMissingRequiredComment", () => {
-    it("returns true when required comment is missing", () => {
+    it.each([
+      {
+        description: "returns true when required comment is missing",
+        action: { comment: { mandatory: true } },
+        comment: null,
+        expected: true,
+      },
+      {
+        description: "returns true when required comment is empty string",
+        action: { comment: { mandatory: true } },
+        comment: "",
+        expected: true,
+      },
+      {
+        description: "returns true when required comment is whitespace only",
+        action: { comment: { mandatory: true } },
+        comment: "   \t\n   ",
+        expected: true,
+      },
+      {
+        description: "returns false when required comment is provided",
+        action: { comment: { mandatory: true } },
+        comment: "Valid comment",
+        expected: false,
+      },
+      {
+        description: "returns false when comment is optional and not provided",
+        action: { comment: { mandatory: false } },
+        comment: null,
+        expected: false,
+      },
+      {
+        description: "returns false when comment is optional and provided",
+        action: { comment: { mandatory: false } },
+        comment: "Optional comment",
+        expected: false,
+      },
+      {
+        description: "returns false when action has no comment configuration",
+        action: { id: "no-comment" },
+        comment: null,
+        expected: false,
+      },
+      {
+        description: "returns false when action comment is null",
+        action: { comment: null },
+        comment: null,
+        expected: false,
+      },
+    ])("$description", ({ action, comment, expected }) => {
       const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, null);
-
-      expect(result).toBe(true);
-    });
-
-    it("returns true when required comment is empty string", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, "");
-
-      expect(result).toBe(true);
-    });
-
-    it("returns true when required comment is whitespace only", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, "   \t\n   ");
-
-      expect(result).toBe(true);
-    });
-
-    it("returns false when required comment is provided", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, "Valid comment");
-
-      expect(result).toBe(false);
-    });
-
-    it("returns false when comment is optional and not provided", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: false } };
-
-      const result = workflow.isMissingRequiredComment(action, null);
-
-      expect(result).toBe(false);
-    });
-
-    it("returns false when comment is optional and provided", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: false } };
-
-      const result = workflow.isMissingRequiredComment(
-        action,
-        "Optional comment",
-      );
-
-      expect(result).toBe(false);
-    });
-
-    it("returns false when action has no comment configuration", () => {
-      const workflow = createMockWorkflow();
-      const action = { id: "no-comment" };
-
-      const result = workflow.isMissingRequiredComment(action, null);
-
-      expect(result).toBeFalsy();
-    });
-
-    it("returns false when action comment is null", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: null };
-
-      const result = workflow.isMissingRequiredComment(action, null);
-
-      expect(result).toBeFalsy();
+      const result = workflow.isMissingRequiredComment(action, comment);
+      if (expected) {
+        expect(result).toBe(expected);
+      } else {
+        expect(result).toBeFalsy();
+      }
     });
   });
 
