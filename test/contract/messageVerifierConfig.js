@@ -1,8 +1,7 @@
-// eslint-disable-next-line import-x/no-extraneous-dependencies
-import { globSync } from "glob";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { env } from "node:process";
+import { globSync } from "glob";
 
 const getLatestGitTagOrFallback = () => {
   return execSync("git describe --tags --always --long", {

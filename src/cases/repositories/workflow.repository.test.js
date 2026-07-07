@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
-import { findAll, findByCode, save } from "./workflow.repository.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
+import { findAll, findByCode, save } from "./workflow.repository.js";
 
 vi.mock("../../common/mongo-client.js");
 

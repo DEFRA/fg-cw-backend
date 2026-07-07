@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { setTimeout } from "node:timers/promises";
+import { env } from "process";
 import {
   ListQueuesCommand,
   PurgeQueueCommand,
@@ -5,9 +8,6 @@ import {
   SendMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { randomUUID } from "node:crypto";
-import { setTimeout } from "node:timers/promises";
-import { env } from "process";
 
 const sqs = new SQSClient({
   region: env.AWS_REGION || "eu-west-2",

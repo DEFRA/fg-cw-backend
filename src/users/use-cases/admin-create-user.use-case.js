@@ -1,5 +1,5 @@
-import Boom from "@hapi/boom";
 import { randomUUID } from "crypto";
+import Boom from "@hapi/boom";
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
 import { logger } from "../../common/logger.js";

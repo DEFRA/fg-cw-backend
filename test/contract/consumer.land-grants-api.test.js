@@ -10,8 +10,8 @@
 //    - Reruns validation for an application
 //    - Returns validation result with pass/fail status
 //
-import { MatchersV3, PactV3 } from "@pact-foundation/pact";
 import path from "path";
+import { MatchersV3, PactV3 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
 
 const { like, eachLike, integer, boolean } = MatchersV3;

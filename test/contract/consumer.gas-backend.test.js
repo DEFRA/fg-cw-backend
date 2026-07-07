@@ -19,8 +19,8 @@
 //     - dataType: "ARRAY" or "OBJECT"
 //     - data: The actual data to store
 //
-import { MatchersV2, MessageConsumerPact } from "@pact-foundation/pact";
 import path from "path";
+import { MatchersV2, MessageConsumerPact } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
 import {
   minimalFrpsPayload,

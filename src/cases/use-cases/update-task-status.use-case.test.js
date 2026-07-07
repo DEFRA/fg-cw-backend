@@ -184,9 +184,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("sets completed flag based on statusOption when statusOptions exist", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -266,9 +265,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("sets completed to false when statusOption has completes false", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -348,9 +346,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("throws error when invalid status option is provided", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -429,9 +426,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("uses completed parameter when task has no statusOptions", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -498,9 +494,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("throws error when trying to update task status when current stage status is not interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -566,9 +561,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("allows task update when current stage status is interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [

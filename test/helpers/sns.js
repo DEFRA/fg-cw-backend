@@ -1,5 +1,5 @@
-import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { env } from "node:process";
+import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 
 export const publish = async (topicArn, message) => {
   const snsClient = new SNSClient({

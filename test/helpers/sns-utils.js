@@ -1,6 +1,6 @@
+import { env } from "node:process";
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { PurgeQueueCommand, SQSClient } from "@aws-sdk/client-sqs";
-import { env } from "node:process";
 
 // Force AWS SDK to use static credentials for LocalStack
 const awsConfig = {

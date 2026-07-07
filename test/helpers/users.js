@@ -1,6 +1,6 @@
+import { env } from "node:process";
 import Wreck from "@hapi/wreck";
 import { MongoClient } from "mongodb";
-import { env } from "node:process";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
 

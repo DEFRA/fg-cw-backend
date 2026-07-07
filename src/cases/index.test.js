@@ -3,11 +3,11 @@ import { up } from "migrate-mongo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
-import { cases } from "./index.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { InboxSubscriber } from "./subscribers/inbox.subscriber.js";
 import { OutboxSubscriber } from "./subscribers/outbox.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
+import { cases } from "./index.js";
 
 vi.mock("migrate-mongo");
 vi.mock("../common/logger.js", () => ({

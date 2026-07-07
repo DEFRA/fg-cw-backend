@@ -5,6 +5,7 @@ import { db } from "../../common/mongo-client.js";
 import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
+import { CaseDocument } from "./case/case-document.js";
 import {
   countByPosition,
   findAll,
@@ -15,7 +16,6 @@ import {
   update,
   updateStage,
 } from "./case.repository.js";
-import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
 vi.mock("../../common/paginate.js");

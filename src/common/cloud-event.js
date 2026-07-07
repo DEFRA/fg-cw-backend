@@ -1,5 +1,5 @@
-import { getTraceId } from "@defra/hapi-tracing";
 import { randomUUID } from "node:crypto";
+import { getTraceId } from "@defra/hapi-tracing";
 import { config } from "./config.js";
 import { getTraceParent } from "./trace-parent.js";
 

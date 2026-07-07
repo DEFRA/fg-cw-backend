@@ -1,5 +1,5 @@
-import { MongoClient } from "mongodb";
 import { env } from "node:process";
+import { MongoClient } from "mongodb";
 import { afterEach, beforeEach } from "vitest";
 import { purgeQueues } from "./helpers/sqs.js";
 

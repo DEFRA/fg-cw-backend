@@ -1,5 +1,5 @@
-import { MongoClient } from "mongodb";
 import tls from "node:tls";
+import { MongoClient } from "mongodb";
 import { config } from "./config.js";
 
 export const getReadPreference = (env) => {

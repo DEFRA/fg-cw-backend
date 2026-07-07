@@ -1,9 +1,9 @@
+import { setTimeout } from "node:timers/promises";
 import {
   DeleteMessageCommand,
   ReceiveMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
-import { setTimeout } from "node:timers/promises";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { withTraceParent } from "./trace-parent.js";
