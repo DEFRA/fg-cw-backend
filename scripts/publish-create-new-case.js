@@ -328,14 +328,200 @@ const messageFrps = {
   },
 };
 
+const messageWMPCase = {
+  id: randomUUID(),
+  time: "2026-06-23T11:30:52.000Z",
+  source: "fg-gas-backend",
+  specversion: "1.0",
+  type: "cloud.defra.local.fg-gas-backend.case.create",
+  datacontenttype: "application/json",
+  traceparent: randomUUID(),
+
+  data: {
+    id: randomUUID(),
+    caseRef: `wmp-${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 5)}`,
+    workflowCode: "woodland",
+    currentPhase: "PHASE_PRE_AWARD",
+    currentStage: "STAGE_PREPARING_AGREEMENT",
+    currentStatus: "STATUS_AGREEMENT_READY_FOR_APPLICANT",
+    createdAt: "2026-06-08T17:02:59.660Z",
+
+    payload: {
+      createdAt: "2026-06-08T17:02:59.402Z",
+      submittedAt: "2026-06-08T17:02:59.330Z",
+
+      identifiers: {
+        sbi: "113593357",
+        frn: "1100943757",
+        crn: "1100943757",
+      },
+
+      metadata: {},
+
+      answers: {
+        businessDetailsUpToDate: true,
+        landRegisteredWithRpa: true,
+        landManagementControl: false,
+        counterSignature: true,
+        publicBodyTenant: true,
+        tenantObligations: false,
+        landHasGrazingRights: true,
+        appLandHasExistingWmp: true,
+        existingWmps: "WMP-12345, WMP-23456",
+        intendToApplyHigherTier: true,
+
+        hectaresTenOrOverYearsOld: 0.4,
+        hectaresUnderTenYearsOld: 0.1,
+
+        centreGridReference: "SP 1234 5678",
+        woodlandName: "Test Woodland",
+        fcTeamCode: "EAST_AND_EAST_MIDLANDS",
+
+        applicant: {
+          business: {
+            name: "Mellor & Sons",
+            reference: "1100943757",
+
+            email: {
+              address: "patricia.mellor@mellorandsons.com.test",
+            },
+
+            phone: {
+              mobile: "+44 7712 334891",
+              landline: "01729 851204",
+            },
+
+            address: {
+              line1: "Brackenfold Farm",
+              line2: "Littondale Road",
+              line3: null,
+              line4: null,
+              line5: null,
+              street: "Littondale Road",
+              city: "Skipton",
+              postalCode: "BD23 5QH",
+              uprn: "981124620011",
+              buildingName: "Brackenfold Farm",
+              buildingNumberRange: null,
+              county: "North Yorkshire",
+              dependentLocality: null,
+              doubleDependentLocality: null,
+              flatName: null,
+              pafOrganisationName: "Mellor & Sons",
+            },
+
+            vat: "GB123456789",
+
+            type: {
+              code: 101443,
+              type: "Farmer",
+            },
+          },
+
+          customer: {
+            name: {
+              title: "Mrs",
+              first: "Patricia",
+              middle: null,
+              last: "Mellor",
+            },
+
+            email: {
+              address: "patricia.mellor@mellorandsons.com.test",
+            },
+
+            phone: {
+              mobile: "+44 7712 334891",
+              landline: "01729 851204",
+            },
+
+            address: {
+              line1: "2 Dales View Cottage",
+              line2: "Arncliffe",
+              line3: null,
+              line4: null,
+              line5: null,
+              street: "Arncliffe",
+              city: "Skipton",
+              postalCode: "BD23 5QE",
+              uprn: "981124620022",
+              buildingName: "Dales View Cottage",
+              buildingNumberRange: "2",
+              county: "North Yorkshire",
+              dependentLocality: null,
+              doubleDependentLocality: null,
+              flatName: null,
+              pafOrganisationName: null,
+            },
+          },
+        },
+
+        detailsConfirmedAt: "2026-06-08T17:02:25.683Z",
+        totalHectaresForSelectedParcels: 79.4865,
+
+        guidanceRead: true,
+        includedAllEligibleWoodland: true,
+        applicationConfirmation: true,
+
+        landParcels: [
+          {
+            parcelId: "SD6351-8781",
+            areaHa: 68.0498,
+          },
+          {
+            parcelId: "SD6352-8774",
+            areaHa: 11.1006,
+          },
+          {
+            parcelId: "SD6252-7537",
+            areaHa: 0.3361,
+          },
+        ],
+
+        totalAgreementPaymentPence: 150000,
+
+        payments: {
+          agreement: [
+            {
+              code: "PA3",
+              description: "Woodland management plan",
+              activePaymentTier: 1,
+              quantityInActiveTier: 0.5,
+              activeTierRatePence: 0,
+              activeTierFlatRatePence: 150000,
+              quantity: 0.5,
+              agreementTotalPence: 150000,
+              unit: "ha",
+            },
+          ],
+        },
+      },
+    },
+
+    supplementaryData: {},
+
+    closed: false,
+    closedAt: null,
+    assignedUserId: null,
+  },
+};
+
+const getMessage = (code) => {
+  if (code === "pigs-might-fly") {
+    return messagePmf;
+  }
+  if (code === "woodland") {
+    return messageWMPCase;
+  }
+  return messageFrps;
+};
+
 console.log("Sending message to SQS queue:", queueUrl);
 
 await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
-    MessageBody: JSON.stringify(
-      process.argv[2] === "pigs-might-fly" ? messagePmf : messageFrps,
-    ),
+    MessageBody: JSON.stringify(getMessage(process.argv[2])),
     MessageGroupId: "cw-create-new-case",
     MessageDeduplicationId: randomUUID(),
     DelaySeconds: 0,

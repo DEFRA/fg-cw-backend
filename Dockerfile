@@ -1,4 +1,4 @@
-ARG PARENT_VERSION=3.0.5-node24.14.1
+ARG PARENT_VERSION=3.1.1-node24.18.0
 ARG PORT=3001
 ARG PORT_DEBUG=9229
 
@@ -12,7 +12,9 @@ RUN apk add --no-cache curl
 USER node
 
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node .npmrc ./
 COPY --chown=node:node scripts/run.sh scripts/run.sh
+COPY --chown=node:node scripts/preload.js scripts/preload.js
 COPY --chown=node:node migrate-mongo-config.js ./
 COPY --chown=node:node migrations ./migrations
 

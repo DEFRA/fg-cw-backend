@@ -543,6 +543,10 @@
                     "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
                   },
                   {
+                    "label": "End date",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(endDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(endDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
+                  },
+                  {
                     "label": "View",
                     "text": [
                       {
@@ -800,10 +804,6 @@
             {
               "renderIf": "jsonata:$.position.statusCode = 'STATUS_AGREEMENT_OFFERED'",
               "content": [
-                {
-                  "component": "paragraph",
-                  "text": "The agreement has been offered and you don't need to do anything else."
-                },
                 {
                   "component": "heading",
                   "level": 3,
