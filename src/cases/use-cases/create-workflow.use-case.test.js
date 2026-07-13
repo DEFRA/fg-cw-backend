@@ -375,99 +375,65 @@ describe("createWorkflowUseCase", () => {
         externalActions: [],
       });
 
-    it("resolves ::STATUS_CODE to CURRENT_PHASE:CURRENT_STAGE:STATUS_CODE", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: "::STATUS_B",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
-        },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+    it.each([
+      {
+        targetPosition: "::STATUS_B",
+        description: "::STATUS_CODE to CURRENT_PHASE:CURRENT_STAGE:STATUS_CODE",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_1",
           statusCode: "STATUS_B",
-        }),
-      );
-    });
-
-    it("resolves :STAGE_CODE: to CURRENT_PHASE:STAGE_CODE:FIRST_STATUS", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: ":STAGE_2:",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        targetPosition: ":STAGE_2:",
+        description: ":STAGE_CODE: to CURRENT_PHASE:STAGE_CODE:FIRST_STATUS",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_2",
           statusCode: "STATUS_C",
-        }),
-      );
-    });
-
-    it("resolves PHASE_CODE:: to PHASE_CODE:FIRST_STAGE:FIRST_STATUS", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: "PHASE_B::",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        targetPosition: "PHASE_B::",
+        description: "PHASE_CODE:: to PHASE_CODE:FIRST_STAGE:FIRST_STATUS",
+        expected: {
           phaseCode: "PHASE_B",
           stageCode: "STAGE_3",
           statusCode: "STATUS_D",
-        }),
-      );
-    });
-
-    it("resolves :STAGE_CODE:STATUS_CODE to CURRENT_PHASE:STAGE_CODE:STATUS_CODE", async () => {
-      const workflow = await createTestWorkflow([
-        {
-          targetPosition: ":STAGE_2:STATUS_C",
-          action: { code: "NEXT", name: "Next", checkTasks: false },
         },
-      ]);
-
-      expect(
-        workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
+      },
+      {
+        targetPosition: ":STAGE_2:STATUS_C",
+        description:
+          ":STAGE_CODE:STATUS_CODE to CURRENT_PHASE:STAGE_CODE:STATUS_CODE",
+        expected: {
           phaseCode: "PHASE_A",
           stageCode: "STAGE_2",
           statusCode: "STATUS_C",
-        }),
-      );
-    });
-
-    it("resolves PHASE_CODE::STATUS_CODE to PHASE_CODE:FIRST_STAGE:STATUS_CODE", async () => {
+        },
+      },
+      {
+        targetPosition: "PHASE_B::STATUS_D",
+        description:
+          "PHASE_CODE::STATUS_CODE to PHASE_CODE:FIRST_STAGE:STATUS_CODE",
+        expected: {
+          phaseCode: "PHASE_B",
+          stageCode: "STAGE_3",
+          statusCode: "STATUS_D",
+        },
+      },
+    ])("resolves $description", async ({ targetPosition, expected }) => {
       const workflow = await createTestWorkflow([
         {
-          targetPosition: "PHASE_B::STATUS_D",
+          targetPosition,
           action: { code: "NEXT", name: "Next", checkTasks: false },
         },
       ]);
 
       expect(
         workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-      ).toEqual(
-        new Position({
-          phaseCode: "PHASE_B",
-          stageCode: "STAGE_3",
-          statusCode: "STATUS_D",
-        }),
-      );
+      ).toEqual(new Position(expected));
     });
 
     it("keeps fully qualified position unchanged", async () => {
@@ -501,40 +467,32 @@ describe("createWorkflowUseCase", () => {
       ).rejects.toThrow("Target position '::' is not valid");
     });
 
-    it("throws error for non-existent phase", async () => {
+    it.each([
+      {
+        targetPosition: "PHASE_X::",
+        error: "Phase 'PHASE_X' not found in workflow",
+        description: "non-existent phase",
+      },
+      {
+        targetPosition: ":STAGE_X:",
+        error: "Stage 'STAGE_X' not found in phase 'PHASE_A'",
+        description: "non-existent stage",
+      },
+      {
+        targetPosition: "::STATUS_X",
+        error: "Status 'STATUS_X' not found in stage 'STAGE_1'",
+        description: "non-existent status",
+      },
+    ])("throws error for $description", async ({ targetPosition, error }) => {
       await expect(
         createTestWorkflow([
           {
-            targetPosition: "PHASE_X::",
+            targetPosition,
             checkTasks: true,
             action: { code: "NEXT", name: "Next", checkTasks: false },
           },
         ]),
-      ).rejects.toThrow("Phase 'PHASE_X' not found in workflow");
-    });
-
-    it("throws error for non-existent stage", async () => {
-      await expect(
-        createTestWorkflow([
-          {
-            targetPosition: ":STAGE_X:",
-            checkTasks: true,
-            action: { code: "NEXT", name: "Next", checkTasks: false },
-          },
-        ]),
-      ).rejects.toThrow("Stage 'STAGE_X' not found in phase 'PHASE_A'");
-    });
-
-    it("throws error for non-existent status", async () => {
-      await expect(
-        createTestWorkflow([
-          {
-            targetPosition: "::STATUS_X",
-            checkTasks: true,
-            action: { code: "NEXT", name: "Next", checkTasks: false },
-          },
-        ]),
-      ).rejects.toThrow("Status 'STATUS_X' not found in stage 'STAGE_1'");
+      ).rejects.toThrow(error);
     });
 
     it("throws error when stage has no statuses", async () => {
