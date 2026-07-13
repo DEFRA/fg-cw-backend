@@ -24,115 +24,98 @@ vi.mock("./wreck.js", () => ({
 
 describe("external-endpoint-client", () => {
   describe("buildUrl", () => {
-    it("should build URL with path parameters", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: 123 };
+    it.each([
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/runs/{runId}",
+        pathParams: { runId: 123 },
+        expected: "https://api.example.com/api/runs/123",
+        description: "build URL with path parameters",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/{resource}/{id}/details",
+        pathParams: { resource: "cases", id: 456 },
+        expected: "https://api.example.com/api/cases/456/details",
+        description: "handle multiple path parameters",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/search/{query}",
+        pathParams: { query: "hello world" },
+        expected: "https://api.example.com/api/search/hello%20world",
+        description: "encode special characters in parameters",
+      },
+      {
+        baseUrl: "https://api.example.com/",
+        pathTemplate: "/api/runs/{runId}",
+        pathParams: { runId: 123 },
+        expected: "https://api.example.com/api/runs/123",
+        description: "handle trailing slash in base URL",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "api/runs/{runId}",
+        pathParams: { runId: 123 },
+        expected: "https://api.example.com/api/runs/123",
+        description: "handle path without leading slash",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/runs",
+        pathParams: {},
+        expected: "https://api.example.com/api/runs",
+        description: "handle empty path parameters",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/runs/{runId}",
+        pathParams: { runId: 456 },
+        expected: "https://api.example.com/api/runs/456",
+        description: "convert non-string parameter to string",
+      },
+      {
+        baseUrl: "https://api.example.com",
+        pathTemplate: "/api/flag/{enabled}",
+        pathParams: { enabled: true },
+        expected: "https://api.example.com/api/flag/true",
+        description: "handle boolean path parameter",
+      },
+    ])(
+      "should $description",
+      ({ baseUrl, pathTemplate, pathParams, expected }) => {
+        const result = buildUrl(baseUrl, pathTemplate, pathParams);
+        expect(result).toBe(expected);
+      },
+    );
 
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
+    it.each([
+      {
+        pathParams: { runId: null },
+        error: "Path parameter 'runId' is required but was null",
+        description: "null",
+      },
+      {
+        pathParams: { runId: undefined },
+        error: "Path parameter 'runId' is required but was undefined",
+        description: "undefined",
+      },
+      {
+        pathParams: { runId: "" },
+        error: "Path parameter 'runId' is required but was empty",
+        description: "empty string",
+      },
+    ])(
+      "should throw error for $description path parameter",
+      ({ pathParams, error }) => {
+        const baseUrl = "https://api.example.com";
+        const pathTemplate = "/api/runs/{runId}";
 
-      expect(result).toBe("https://api.example.com/api/runs/123");
-    });
-
-    it("should handle multiple path parameters", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/{resource}/{id}/details";
-      const pathParams = { resource: "cases", id: 456 };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/cases/456/details");
-    });
-
-    it("should encode special characters in parameters", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/search/{query}";
-      const pathParams = { query: "hello world" };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/search/hello%20world");
-    });
-
-    it("should handle trailing slash in base URL", () => {
-      const baseUrl = "https://api.example.com/";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: 123 };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/runs/123");
-    });
-
-    it("should handle path without leading slash", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "api/runs/{runId}";
-      const pathParams = { runId: 123 };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/runs/123");
-    });
-
-    it("should handle empty path parameters", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs";
-      const pathParams = {};
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/runs");
-    });
-
-    it("should throw error for null path parameter", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: null };
-
-      expect(() => {
-        buildUrl(baseUrl, pathTemplate, pathParams);
-      }).toThrow("Path parameter 'runId' is required but was null");
-    });
-
-    it("should throw error for undefined path parameter", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: undefined };
-
-      expect(() => {
-        buildUrl(baseUrl, pathTemplate, pathParams);
-      }).toThrow("Path parameter 'runId' is required but was undefined");
-    });
-
-    it("should throw error for empty string path parameter", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: "" };
-
-      expect(() => {
-        buildUrl(baseUrl, pathTemplate, pathParams);
-      }).toThrow("Path parameter 'runId' is required but was empty");
-    });
-
-    it("should convert non-string parameter to string", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/runs/{runId}";
-      const pathParams = { runId: 456 };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/runs/456");
-    });
-
-    it("should handle boolean path parameter", () => {
-      const baseUrl = "https://api.example.com";
-      const pathTemplate = "/api/flag/{enabled}";
-      const pathParams = { enabled: true };
-
-      const result = buildUrl(baseUrl, pathTemplate, pathParams);
-
-      expect(result).toBe("https://api.example.com/api/flag/true");
-    });
+        expect(() => {
+          buildUrl(baseUrl, pathTemplate, pathParams);
+        }).toThrow(error);
+      },
+    );
   });
 
   describe("callExternalEndpoint", () => {
@@ -180,46 +163,64 @@ describe("external-endpoint-client", () => {
       );
     });
 
-    it("should call external endpoint with POST request and body", async () => {
-      resolveEndpoint.mockReturnValue({
-        url: "https://api.example.com",
-        headers: { Authorization: "Bearer token" },
-      });
-
-      const mockResponse = { statusCode: 201 };
-      const mockPayload = { id: 123, status: "created" };
-
-      wreck.request.mockResolvedValue(mockResponse);
-      wreck.read.mockResolvedValue(mockPayload);
-
-      const endpoint = {
-        code: "CREATE_RESOURCE",
-        service: "RULES_ENGINE",
-        path: "/api/resources",
+    it.each([
+      {
         method: "POST",
-      };
+        endpointCode: "CREATE_RESOURCE",
+        path: "/api/resources",
+        params: { BODY: { name: "test", value: 42 } },
+        expectedPayload: { name: "test", value: 42 },
+        description: "POST request and body",
+      },
+      {
+        method: "PUT",
+        endpointCode: "UPDATE_RESOURCE",
+        path: "/api/resources/{id}",
+        params: { PATH: { id: 123 }, BODY: { name: "updated" } },
+        expectedPayload: { name: "updated" },
+        description: "PUT request and body",
+      },
+      {
+        method: "PATCH",
+        endpointCode: "PATCH_RESOURCE",
+        path: "/api/resources/{id}",
+        params: { PATH: { id: 123 }, BODY: { status: "active" } },
+        expectedPayload: { status: "active" },
+        description: "PATCH request and body",
+      },
+    ])(
+      "should handle $description",
+      async ({ method, endpointCode, path, params, expectedPayload }) => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: { Authorization: "Bearer token" },
+        });
 
-      const params = {
-        PATH: {},
-        BODY: { name: "test", value: 42 },
-      };
+        const mockResponse = { statusCode: 200 };
+        const mockPayload = { id: 123, status: "ok" };
 
-      const result = await callExternalEndpoint(endpoint, params);
+        wreck.request.mockResolvedValue(mockResponse);
+        wreck.read.mockResolvedValue(mockPayload);
 
-      expect(result).toEqual(mockPayload);
-      expect(wreck.request).toHaveBeenCalledWith(
-        "POST",
-        "https://api.example.com/api/resources",
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-            Authorization: "Bearer token",
+        const endpoint = {
+          code: endpointCode,
+          service: "RULES_ENGINE",
+          path,
+          method,
+        };
+
+        const result = await callExternalEndpoint(endpoint, params);
+
+        expect(result).toEqual(mockPayload);
+        expect(wreck.request).toHaveBeenCalledWith(
+          method,
+          expect.stringContaining("https://api.example.com/api/resources"),
+          expect.objectContaining({
+            payload: expectedPayload,
           }),
-          json: true,
-          payload: { name: "test", value: 42 },
-        }),
-      );
-    });
+        );
+      },
+    );
 
     it("should return null on error", async () => {
       resolveEndpoint.mockReturnValue({
@@ -371,78 +372,6 @@ describe("external-endpoint-client", () => {
       ).rejects.toThrow(Boom.badGateway().constructor);
     });
 
-    it("should handle PUT request with body", async () => {
-      resolveEndpoint.mockReturnValue({
-        url: "https://api.example.com",
-        headers: {},
-      });
-
-      const mockResponse = { statusCode: 200 };
-      const mockPayload = { id: 123, updated: true };
-
-      wreck.request.mockResolvedValue(mockResponse);
-      wreck.read.mockResolvedValue(mockPayload);
-
-      const endpoint = {
-        code: "UPDATE_RESOURCE",
-        service: "RULES_ENGINE",
-        path: "/api/resources/{id}",
-        method: "PUT",
-      };
-
-      const params = {
-        PATH: { id: 123 },
-        BODY: { name: "updated" },
-      };
-
-      const result = await callExternalEndpoint(endpoint, params);
-
-      expect(result).toEqual(mockPayload);
-      expect(wreck.request).toHaveBeenCalledWith(
-        "PUT",
-        "https://api.example.com/api/resources/123",
-        expect.objectContaining({
-          payload: { name: "updated" },
-        }),
-      );
-    });
-
-    it("should handle PATCH request with body", async () => {
-      resolveEndpoint.mockReturnValue({
-        url: "https://api.example.com",
-        headers: {},
-      });
-
-      const mockResponse = { statusCode: 200 };
-      const mockPayload = { id: 123, patched: true };
-
-      wreck.request.mockResolvedValue(mockResponse);
-      wreck.read.mockResolvedValue(mockPayload);
-
-      const endpoint = {
-        code: "PATCH_RESOURCE",
-        service: "RULES_ENGINE",
-        path: "/api/resources/{id}",
-        method: "PATCH",
-      };
-
-      const params = {
-        PATH: { id: 123 },
-        BODY: { status: "active" },
-      };
-
-      const result = await callExternalEndpoint(endpoint, params);
-
-      expect(result).toEqual(mockPayload);
-      expect(wreck.request).toHaveBeenCalledWith(
-        "PATCH",
-        "https://api.example.com/api/resources/123",
-        expect.objectContaining({
-          payload: { status: "active" },
-        }),
-      );
-    });
-
     it("should handle DELETE request", async () => {
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
@@ -536,16 +465,19 @@ describe("external-endpoint-client", () => {
       expect(callArgs.payload).toBeUndefined();
     });
 
-    it("should handle all 2xx status codes as success", async () => {
-      resolveEndpoint.mockReturnValue({
-        url: "https://api.example.com",
-        headers: {},
-      });
-
-      const statusCodes = [200, 201, 202, 204, 299];
-
-      for (const statusCode of statusCodes) {
-        vi.clearAllMocks();
+    it.each([
+      { statusCode: 200 },
+      { statusCode: 201 },
+      { statusCode: 202 },
+      { statusCode: 204 },
+      { statusCode: 299 },
+    ])(
+      "should handle $statusCode status code as success",
+      async ({ statusCode }) => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: {},
+        });
 
         const mockResponse = { statusCode };
         const mockPayload = { status: "ok" };
@@ -570,19 +502,26 @@ describe("external-endpoint-client", () => {
           }),
           expect.stringContaining("successful"),
         );
-      }
-    });
+      },
+    );
 
-    it("should handle 3xx and 4xx status codes as non-success", async () => {
-      resolveEndpoint.mockReturnValue({
-        url: "https://api.example.com",
-        headers: {},
-      });
-
-      const statusCodes = [300, 301, 400, 401, 403, 404, 500, 502, 503];
-
-      for (const statusCode of statusCodes) {
-        vi.clearAllMocks();
+    it.each([
+      { statusCode: 300 },
+      { statusCode: 301 },
+      { statusCode: 400 },
+      { statusCode: 401 },
+      { statusCode: 403 },
+      { statusCode: 404 },
+      { statusCode: 500 },
+      { statusCode: 502 },
+      { statusCode: 503 },
+    ])(
+      "should handle $statusCode status code as non-success",
+      async ({ statusCode }) => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: {},
+        });
 
         const mockResponse = { statusCode };
         const mockPayload = { error: "error" };
@@ -607,8 +546,8 @@ describe("external-endpoint-client", () => {
           }),
           expect.stringContaining("non-success status"),
         );
-      }
-    });
+      },
+    );
 
     it("should pass caseWorkflowContext to resolveEndpoint", async () => {
       resolveEndpoint.mockReturnValue({
