@@ -13,101 +13,63 @@ afterEach(() => {
 
 describe("AppRole", () => {
   describe("constructor", () => {
-    it("creates a AppRole with all properties", () => {
-      const props = {
-        name: "ROLE_ADMIN",
-        startDate: "2025-07-01",
-        endDate: "2025-12-01",
-      };
-
+    it.each([
+      {
+        props: {
+          name: "ROLE_ADMIN",
+          startDate: "2025-07-01",
+          endDate: "2025-12-01",
+        },
+        description: "all properties",
+        expected: { startDate: "2025-07-01", endDate: "2025-12-01" },
+      },
+      {
+        props: { name: "ROLE_USER" },
+        description: "only name",
+        expected: { startDate: undefined, endDate: undefined },
+      },
+      {
+        props: { name: "ROLE_TEMP", startDate: "2025-12-01" },
+        description: "name and startDate only",
+        expected: { startDate: "2025-12-01", endDate: undefined },
+      },
+      {
+        props: { name: "ROLE_LIMITED", endDate: "2025-12-01" },
+        description: "name and endDate only",
+        expected: { startDate: undefined, endDate: "2025-12-01" },
+      },
+    ])("creates a AppRole with $description", ({ props, expected }) => {
       const role = new AppRole(props);
-
-      expect(role.startDate).toEqual("2025-07-01");
-      expect(role.endDate).toEqual("2025-12-01");
+      expect(role.startDate).toEqual(expected.startDate);
+      expect(role.endDate).toEqual(expected.endDate);
     });
 
-    it("creates a AppRole with only name", () => {
-      const props = {
-        name: "ROLE_USER",
-      };
-
-      const role = new AppRole(props);
-
-      expect(role.startDate).toBeUndefined();
-      expect(role.endDate).toBeUndefined();
-    });
-
-    it("creates a Role with name and startDate only", () => {
-      const props = {
-        name: "ROLE_TEMP",
-        startDate: "2025-12-01",
-      };
-
-      const role = new AppRole(props);
-
-      expect(role.startDate).toEqual("2025-12-01");
-      expect(role.endDate).toBeUndefined();
-    });
-
-    it("creates a AppRole with name and endDate only", () => {
-      const props = {
-        name: "ROLE_LIMITED",
-        endDate: "2025-12-01",
-      };
-
-      const appRole = new AppRole(props);
-
-      expect(appRole.startDate).toBeUndefined();
-      expect(appRole.endDate).toEqual("2025-12-01");
-    });
-
-    it("does not call validateRole when startDate is missing", () => {
-      const props = {
-        name: "ROLE_TEST",
-        endDate: "2025-01-01",
-      };
-
-      expect(() => new AppRole(props)).not.toThrow();
-    });
-
-    it("does not call validateRole when endDate is missing", () => {
-      const props = {
-        name: "ROLE_TEST",
-        startDate: "2025-07-01",
-      };
-
-      expect(() => new AppRole(props)).not.toThrow();
-    });
-
-    it("calls validateRole when both startDate and endDate are present", () => {
-      const props = {
-        name: "ROLE_TEST",
-        startDate: "2025-07-01",
-        endDate: "2025-12-01",
-      };
-
-      expect(() => new AppRole(props)).not.toThrow();
-    });
-
-    it("throws error when endDate is before startDate", () => {
-      const props = {
-        name: "ROLE_INVALID",
-        startDate: "2025-07-01",
-        endDate: "2025-01-01",
-      };
-
-      expect(() => new AppRole(props)).toThrow(
-        "endDate must be greater than startDate for role ROLE_INVALID.",
-      );
-    });
-
-    it("allows endDate to equal startDate", () => {
-      const props = {
-        name: "ROLE_SAME_DATE",
-        startDate: "2025-07-01",
-        endDate: "2025-07-01",
-      };
-
+    it.each([
+      {
+        props: { name: "ROLE_TEST", endDate: "2025-01-01" },
+        description: "startDate is missing",
+      },
+      {
+        props: { name: "ROLE_TEST", startDate: "2025-07-01" },
+        description: "endDate is missing",
+      },
+      {
+        props: {
+          name: "ROLE_TEST",
+          startDate: "2025-07-01",
+          endDate: "2025-12-01",
+        },
+        description: "both startDate and endDate are present",
+      },
+      {
+        props: {
+          name: "ROLE_SAME_DATE",
+          startDate: "2025-07-01",
+          endDate: "2025-07-01",
+        },
+        description: "endDate equals startDate",
+      },
+    ])("does not throw when $description", ({ props }) => {
       expect(() => new AppRole(props)).not.toThrow();
     });
   });

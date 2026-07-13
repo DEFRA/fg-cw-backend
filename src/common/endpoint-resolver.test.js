@@ -8,30 +8,48 @@ import {
 
 describe("endpoint-resolver", () => {
   describe("parseHeaders", () => {
-    it("should parse comma-separated headers", () => {
-      const headersString = "x-api-key: test-key,Authorization: Bearer token";
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
+    it.each([
+      {
+        headers: "x-api-key: test-key,Authorization: Bearer token",
+        expected: { "x-api-key": "test-key", Authorization: "Bearer token" },
+        description: "parse comma-separated headers",
+      },
+      {
+        headers: "  x-api-key:  test-key  ,  Authorization:  Bearer token  ",
+        expected: { "x-api-key": "test-key", Authorization: "Bearer token" },
+        description: "handle whitespace in headers",
+      },
+      {
+        headers: '"Authorization: Bearer token"',
+        expected: { Authorization: "Bearer token" },
+        description:
+          "handle header strings with surrounding quotes (CDP format)",
+      },
+      {
+        headers: '"x-api-key: test-key, Authorization: Bearer token"',
+        expected: { "x-api-key": "test-key", Authorization: "Bearer token" },
+        description: "handle multiple headers with surrounding quotes",
+      },
+      {
+        headers: '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ',
+        expected: { Authorization: "Bearer token", "x-api-key": "test-key" },
+        description: "handle whitespace around quoted headers",
+      },
+      {
+        headers: '"Authorization: Bearer token"',
+        expected: { Authorization: "Bearer token" },
+        description: "handle edge cases in stripOuterQuotes",
+      },
+    ])("should $description", ({ headers, expected }) => {
+      expect(parseHeaders(headers)).toEqual(expected);
     });
 
-    it("should handle empty headers string", () => {
-      const result = parseHeaders(null);
-      expect(result).toEqual({});
-    });
-
-    it("should handle whitespace in headers", () => {
-      const headersString =
-        "  x-api-key:  test-key  ,  Authorization:  Bearer token  ";
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
+    it.each([
+      { val: null, expected: {}, description: "null" },
+      { val: undefined, expected: {}, description: "undefined" },
+      { val: "", expected: {}, description: "empty string" },
+    ])("should handle $description headers string", ({ val, expected }) => {
+      expect(parseHeaders(val)).toEqual(expected);
     });
 
     it("should throw error for invalid header format", () => {
@@ -41,56 +59,15 @@ describe("endpoint-resolver", () => {
       );
     });
 
-    it("should handle header strings with surrounding quotes (CDP format)", () => {
-      const headersString = '"Authorization: Bearer token"';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle multiple headers with surrounding quotes", () => {
-      const headersString =
-        '"x-api-key: test-key, Authorization: Bearer token"';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        "x-api-key": "test-key",
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle whitespace around quoted headers", () => {
-      const headersString =
-        '  "Authorization: Bearer token"  ,  "x-api-key: test-key"  ';
-      const result = parseHeaders(headersString);
-
-      expect(result).toEqual({
-        Authorization: "Bearer token",
-        "x-api-key": "test-key",
-      });
-    });
-
-    it("should handle null and non-string values in stripOuterQuotes", () => {
-      expect(parseHeaders(null)).toEqual({});
-      expect(parseHeaders(undefined)).toEqual({});
-      expect(parseHeaders("")).toEqual({});
-    });
-
-    it("should handle edge cases in stripOuterQuotes", () => {
-      expect(parseHeaders('"Authorization: Bearer token"')).toEqual({
-        Authorization: "Bearer token",
-      });
-    });
-
-    it("should handle null and non-string values in stripQuotes", () => {
-      expect(stripOuterQuotes(null)).toBe(null);
-      expect(stripOuterQuotes(undefined)).toBe(undefined);
-      expect(stripOuterQuotes(123)).toBe(123);
-      expect(stripOuterQuotes("")).toBe("");
-      expect(stripOuterQuotes('"quoted"')).toBe("quoted");
-      expect(stripOuterQuotes("unquoted")).toBe("unquoted");
+    it.each([
+      { val: null, expected: null, description: "null" },
+      { val: undefined, expected: undefined, description: "undefined" },
+      { val: 123, expected: 123, description: "non-string (number)" },
+      { val: "", expected: "", description: "empty string" },
+      { val: '"quoted"', expected: "quoted", description: "quoted string" },
+      { val: "unquoted", expected: "unquoted", description: "unquoted string" },
+    ])("stripOuterQuotes should handle $description", ({ val, expected }) => {
+      expect(stripOuterQuotes(val)).toBe(expected);
     });
   });
 
@@ -105,35 +82,32 @@ describe("endpoint-resolver", () => {
       delete process.env.API_KEY;
     });
 
-    it("should resolve single environment variable reference", () => {
-      // eslint-disable-next-line no-template-curly-in-string
-      const value = "${TEST_TOKEN}";
-      const result = resolveEnvVarReferences(value);
-
-      expect(result).toBe("secret-token-123");
-    });
-
-    it("should resolve environment variable in Bearer token", () => {
-      // eslint-disable-next-line no-template-curly-in-string
-      const value = "Bearer ${TEST_TOKEN}";
-      const result = resolveEnvVarReferences(value);
-
-      expect(result).toBe("Bearer secret-token-123");
-    });
-
-    it("should resolve multiple environment variables", () => {
-      // eslint-disable-next-line no-template-curly-in-string
-      const value = "${TEST_TOKEN}:${API_KEY}";
-      const result = resolveEnvVarReferences(value);
-
-      expect(result).toBe("secret-token-123:my-api-key");
-    });
-
-    it("should return value unchanged if no env var references", () => {
-      const value = "static-value";
-      const result = resolveEnvVarReferences(value);
-
-      expect(result).toBe("static-value");
+    it.each([
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        value: "${TEST_TOKEN}",
+        expected: "secret-token-123",
+        description: "single environment variable reference",
+      },
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        value: "Bearer ${TEST_TOKEN}",
+        expected: "Bearer secret-token-123",
+        description: "environment variable in Bearer token",
+      },
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        value: "${TEST_TOKEN}:${API_KEY}",
+        expected: "secret-token-123:my-api-key",
+        description: "multiple environment variables",
+      },
+      {
+        value: "static-value",
+        expected: "static-value",
+        description: "value unchanged if no env var references",
+      },
+    ])("should resolve $description", ({ value, expected }) => {
+      expect(resolveEnvVarReferences(value)).toBe(expected);
     });
 
     it("should throw error if environment variable is not defined", () => {
@@ -144,12 +118,13 @@ describe("endpoint-resolver", () => {
       );
     });
 
-    it("should handle null and non-string values", () => {
-      expect(resolveEnvVarReferences(null)).toBe(null);
-      expect(resolveEnvVarReferences(undefined)).toBe(undefined);
-      expect(resolveEnvVarReferences(123)).toBe(123);
-      const testObj = {};
-      expect(resolveEnvVarReferences(testObj)).toBe(testObj);
+    it.each([
+      { val: null, description: "null" },
+      { val: undefined, description: "undefined" },
+      { val: 123, description: "number" },
+      { val: {}, description: "object" },
+    ])("should handle $description values", ({ val }) => {
+      expect(resolveEnvVarReferences(val)).toBe(val);
     });
   });
 
