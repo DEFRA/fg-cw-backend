@@ -70,6 +70,7 @@ describe("buildViewModel", () => {
         },
         templates: {},
         currentStatusName: "Status One",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
@@ -94,9 +95,41 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
+    });
+
+    it("should use schemeName when it is defined on the workflow", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "grasslands",
+        schemeName: "Grassland Private Beta",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow });
+
+      expect(result.schemeName).toBe("Grassland Private Beta");
+    });
+
+    it("should fall back to the workflow code when schemeName is not defined", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "grasslands",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow });
+
+      expect(result.schemeName).toBe("grasslands");
     });
 
     it("should handle empty workflow definitions", async () => {
@@ -119,6 +152,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
@@ -152,6 +186,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -199,6 +234,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -245,6 +281,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -293,6 +330,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user,
       });
