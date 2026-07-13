@@ -72,6 +72,7 @@ describe("createWorkflowUseCase", () => {
                   code: "STATUS_1",
                   name: "Status 1",
                   description: "Status 1",
+                  closes: true,
                   transitions: [
                     {
                       targetPosition: "PHASE_1:STAGE_1:STATUS_1",
@@ -192,6 +193,7 @@ describe("createWorkflowUseCase", () => {
                   code: "STATUS_1",
                   name: "Status 1",
                   description: "Status 1",
+                  closes: true,
                   transitions: [
                     new WorkflowTransition({
                       targetPosition: new Position({
