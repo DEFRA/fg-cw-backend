@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { auditActions, auditEntities } from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { AppRole } from "../models/app-role.js";
@@ -43,17 +44,18 @@ const loginUser = async (props) => {
   return upsertedUser;
 };
 
-export const loginUserAuditDataBuilder = (args) => {
+export const loginUserAuditDataBuilder = ([props], result) => {
+  const actor = result ?? props;
   return {
     entities: [
       {
         entity: auditEntities.USER,
         action: auditActions.LOGIN,
-        entityid: args[0].idpId,
+        entityid: props.idpId,
       },
     ],
-    details: { email: args[0].email },
-    messageGroupId: args[0].idpId,
+    details: { security: buildSecurityContext(actor) },
+    messageGroupId: `login-${props.idpId}`,
   };
 };
 
