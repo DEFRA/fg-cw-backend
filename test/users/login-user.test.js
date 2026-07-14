@@ -133,6 +133,45 @@ describe("POST /users/login", () => {
     );
   });
 
+  it("writes a LOGIN audit event to the outbox with the actor's security context", async () => {
+    const idpId = randomUUID();
+    const payload = {
+      idpId,
+      name: "Audit Test User",
+      email: "audit-test@example.com",
+      idpRoles: ["some-role"],
+    };
+
+    const response = await wreck.post("/users/login", { payload });
+    const userId = response.payload.id;
+
+    const outboxEntry = await client
+      .db()
+      .collection("outbox")
+      .findOne({ "event.audit.entities.entityid": idpId });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [{ entity: "USER", action: "LOGIN", entityid: idpId }],
+          status: "SUCCESS",
+        },
+        details: {
+          security: {
+            actor: {
+              id: userId,
+              idpId,
+              name: "Audit Test User",
+              email: "audit-test@example.com",
+              idpRoles: ["some-role"],
+            },
+          },
+        },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
+  });
+
   it("returns 400 when payload is invalid", async () => {
     const payload = {
       idpId: randomUUID(),
