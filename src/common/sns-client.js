@@ -7,11 +7,14 @@ const snsClient = new SNSClient({
 });
 
 export const publish = async (topic, data, messageGroupId) => {
+  const messageGroup = topic.endsWith(".fifo") && {
+    MessageGroupId: messageGroupId,
+  };
   await snsClient.send(
     new PublishCommand({
       TopicArn: topic,
       Message: JSON.stringify(data),
-      MessageGroupId: messageGroupId,
+      ...messageGroup,
     }),
   );
 };
