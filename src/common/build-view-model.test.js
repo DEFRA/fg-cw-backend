@@ -965,6 +965,67 @@ describe("buildViewModel", () => {
       });
     });
 
+    it("should resolve the scheme from schemeName when it is defined", async () => {
+      const workflowWithScheme = {
+        code: "grasslands",
+        schemeName: "Grassland Private Beta",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                summary: {
+                  scheme: {
+                    label: "Scheme",
+                    text: "$.schemeName",
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithScheme,
+      });
+      const result = await buildBanner(mockContext);
+
+      expect(result.summary.scheme.text).toBe("Grassland Private Beta");
+    });
+
+    it("should resolve the scheme from the code when schemeName is not defined", async () => {
+      const workflowWithoutScheme = {
+        code: "grasslands",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                summary: {
+                  scheme: {
+                    label: "Scheme",
+                    text: "$.schemeName",
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithoutScheme,
+      });
+      const result = await buildBanner(mockContext);
+
+      expect(result.summary.scheme.text).toBe("grasslands");
+    });
+
     it("should handle missing banner configuration", async () => {
       const workflowWithoutBanner = {
         code: "minimal-workflow",
