@@ -211,29 +211,15 @@ describe("Workflow", () => {
   });
 
   describe("isMissingRequiredComment", () => {
-    it("returns true when required comment is missing", () => {
+    it.each([
+      { comment: null, description: "missing" },
+      { comment: "", description: "empty string" },
+      { comment: "   \t\n   ", description: "whitespace only" },
+    ])("returns true when required comment is $description", ({ comment }) => {
       const workflow = createMockWorkflow();
       const action = { comment: { mandatory: true } };
 
-      const result = workflow.isMissingRequiredComment(action, null);
-
-      expect(result).toBe(true);
-    });
-
-    it("returns true when required comment is empty string", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, "");
-
-      expect(result).toBe(true);
-    });
-
-    it("returns true when required comment is whitespace only", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      const result = workflow.isMissingRequiredComment(action, "   \t\n   ");
+      const result = workflow.isMissingRequiredComment(action, comment);
 
       expect(result).toBe(true);
     });
@@ -333,7 +319,11 @@ describe("Workflow", () => {
       }).not.toThrow();
     });
 
-    it("throws error when required comment is missing", () => {
+    it.each([
+      { comment: null, description: "missing" },
+      { comment: "", description: "empty" },
+      { comment: "   \t   ", description: "whitespace only" },
+    ])("throws error when required comment is $description", ({ comment }) => {
       const workflow = createMockWorkflow();
       const action = { comment: { mandatory: true } };
 
@@ -343,41 +333,7 @@ describe("Workflow", () => {
           stageCode: "STAGE_1",
           actionCode: "APPROVE",
           action,
-          comment: null,
-        });
-      }).toThrowError(
-        'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
-      );
-    });
-
-    it("throws error when required comment is empty", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      expect(() => {
-        workflow.validateComment({
-          phaseCode: "PHASE_1",
-          stageCode: "STAGE_1",
-          actionCode: "APPROVE",
-          action,
-          comment: "",
-        });
-      }).toThrowError(
-        'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
-      );
-    });
-
-    it("throws error when required comment is whitespace only", () => {
-      const workflow = createMockWorkflow();
-      const action = { comment: { mandatory: true } };
-
-      expect(() => {
-        workflow.validateComment({
-          phaseCode: "PHASE_1",
-          stageCode: "STAGE_1",
-          actionCode: "APPROVE",
-          action,
-          comment: "   \t   ",
+          comment,
         });
       }).toThrowError(
         'Phase "PHASE_1", Stage "STAGE_1", Action "APPROVE" requires a comment',
