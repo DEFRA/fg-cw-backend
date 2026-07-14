@@ -81,6 +81,7 @@ const WorkflowData = Joi.object({
   code: Joi.string()
     .pattern(/^[a-zA-Z0-9-]+$/)
     .required(),
+  schemeName: Joi.string().optional().label("schemeName"),
   version: Joi.string()
     .pattern(/^\d+\.\d+\.\d+$/)
     .optional()

@@ -5,10 +5,18 @@ import { User } from "../users/models/user.js";
 import {
   assertPathExists,
   buildBanner,
+  createCaseWorkflowContext as buildCaseWorkflowContext,
   buildLinks,
-  createCaseWorkflowContext,
   pathExists,
 } from "./build-view-model.js";
+
+const createCaseWorkflowContext = (params) => {
+  const { workflow } = params;
+
+  workflow.getSchemeName ??= () => workflow.schemeName ?? workflow.code;
+
+  return buildCaseWorkflowContext(params);
+};
 
 describe("buildViewModel", () => {
   // Links are sorted by index, so this array reflects the sorted order
@@ -70,6 +78,7 @@ describe("buildViewModel", () => {
         },
         templates: {},
         currentStatusName: "Status One",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
@@ -94,9 +103,41 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
+    });
+
+    it("should use schemeName when it is defined on the workflow", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "grasslands",
+        schemeName: "Grassland Private Beta",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow });
+
+      expect(result.schemeName).toBe("Grassland Private Beta");
+    });
+
+    it("should fall back to the workflow code when schemeName is not defined", async () => {
+      const kase = {
+        _id: "case-123",
+        position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
+      };
+      const workflow = {
+        code: "grasslands",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+      };
+
+      const result = createCaseWorkflowContext({ kase, workflow });
+
+      expect(result.schemeName).toBe("grasslands");
     });
 
     it("should handle empty workflow definitions", async () => {
@@ -119,6 +160,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user: null,
       });
@@ -152,6 +194,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -199,6 +242,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -245,6 +289,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         externalActions: [
           {
@@ -293,6 +338,7 @@ describe("buildViewModel", () => {
         definitions: {},
         templates: {},
         currentStatusName: "Status Name",
+        schemeName: "test-workflow",
         request: {},
         user,
       });
@@ -925,6 +971,67 @@ describe("buildViewModel", () => {
           },
         },
       });
+    });
+
+    it("should resolve the scheme from schemeName when it is defined", async () => {
+      const workflowWithScheme = {
+        code: "grasslands",
+        schemeName: "Grassland Private Beta",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                summary: {
+                  scheme: {
+                    label: "Scheme",
+                    text: "$.schemeName",
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithScheme,
+      });
+      const result = await buildBanner(mockContext);
+
+      expect(result.summary.scheme.text).toBe("Grassland Private Beta");
+    });
+
+    it("should resolve the scheme from the code when schemeName is not defined", async () => {
+      const workflowWithoutScheme = {
+        code: "grasslands",
+        getStatus: () => ({ code: "ST1", name: "Status Name" }),
+        pages: {
+          cases: {
+            details: {
+              banner: {
+                summary: {
+                  scheme: {
+                    label: "Scheme",
+                    text: "$.schemeName",
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const mockContext = createCaseWorkflowContext({
+        kase: mockCase,
+        workflow: workflowWithoutScheme,
+      });
+      const result = await buildBanner(mockContext);
+
+      expect(result.summary.scheme.text).toBe("grasslands");
     });
 
     it("should handle missing banner configuration", async () => {

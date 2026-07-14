@@ -82,6 +82,7 @@ describe("findCasesUseCase", () => {
     const workflows = [
       Workflow.createMock({
         code: "WORKFLOW_1",
+        schemeName: "Workflow One",
         requiredRoles: ["ROLE_1", "ROLE_2"],
       }),
       Workflow.createMock({
@@ -153,6 +154,7 @@ describe("findCasesUseCase", () => {
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_1",
+          schemeName: "Workflow One",
         },
         {
           _id: "id-2",
@@ -164,6 +166,7 @@ describe("findCasesUseCase", () => {
           createdAt: "2025-01-01T00:00:00.000Z",
           payload: {},
           workflowCode: "WORKFLOW_2",
+          schemeName: "WORKFLOW_2",
         },
       ],
     });
