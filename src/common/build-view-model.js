@@ -11,10 +11,12 @@ export const createCaseWorkflowContext = ({
   user = null,
 }) => {
   const status = workflow.getStatus(kase.position);
+  const schemeName = workflow.getSchemeName();
 
   return {
     ...kase,
     workflow,
+    schemeName,
     definitions: { ...workflow.definitions },
     templates: getWorkflowTemplates(workflow),
     currentStatusName: status.name,
