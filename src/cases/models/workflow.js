@@ -71,6 +71,10 @@ export class Workflow {
     return this.getStage(position).getStatus(position.statusCode);
   }
 
+  getSchemeName() {
+    return this.schemeName ?? this.code;
+  }
+
   getTransitionForTargetPosition(casePosition, targetPosition) {
     const transitions = this.getStatus(casePosition).transitions;
     const targetTransition = transitions.find((transition) =>

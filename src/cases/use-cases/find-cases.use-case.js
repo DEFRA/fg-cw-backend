@@ -86,7 +86,7 @@ export const findCasesUseCase = async ({ user, query }) => {
       _id: kase._id,
       caseRef: kase.caseRef,
       workflowCode: kase.workflowCode,
-      schemeName: workflow.schemeName ?? workflow.code,
+      schemeName: workflow.getSchemeName(),
       createdAt: kase.createdAt,
       currentStatus: currentStatus.name,
       currentStatusTheme: currentStatus.theme,

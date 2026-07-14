@@ -5,10 +5,18 @@ import { User } from "../users/models/user.js";
 import {
   assertPathExists,
   buildBanner,
+  createCaseWorkflowContext as buildCaseWorkflowContext,
   buildLinks,
-  createCaseWorkflowContext,
   pathExists,
 } from "./build-view-model.js";
+
+const createCaseWorkflowContext = (params) => {
+  const { workflow } = params;
+
+  workflow.getSchemeName ??= () => workflow.schemeName ?? workflow.code;
+
+  return buildCaseWorkflowContext(params);
+};
 
 describe("buildViewModel", () => {
   // Links are sorted by index, so this array reflects the sorted order

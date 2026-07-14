@@ -11,7 +11,7 @@ export const createCaseWorkflowContext = ({
   user = null,
 }) => {
   const status = workflow.getStatus(kase.position);
-  const schemeName = getSchemeName(workflow);
+  const schemeName = workflow.getSchemeName();
 
   return {
     ...kase,
@@ -32,10 +32,6 @@ export const createCaseWorkflowContext = ({
 
 const getWorkflowTemplates = (workflow) => {
   return workflow.templates || {};
-};
-
-const getSchemeName = (workflow) => {
-  return workflow.schemeName ?? workflow.code;
 };
 
 export const assertPathExists = async (root, path) => {
