@@ -133,7 +133,7 @@ describe("POST /users/login", () => {
     );
   });
 
-  it("writes a LOGIN audit event to the outbox with the actor's security context", async () => {
+  it("writes a LOGIN audit event to the outbox with the users's security context", async () => {
     const idpId = randomUUID();
     const payload = {
       idpId,
