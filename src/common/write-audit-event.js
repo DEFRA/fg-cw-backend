@@ -26,7 +26,7 @@ export const stripNulls = (obj) => {
   return result;
 };
 
-export const buildPayload = ({ entities, accounts, status }) => {
+export const buildPayload = ({ entities, accounts, status, security }) => {
   const context = getRequestContext();
 
   return {
@@ -37,6 +37,7 @@ export const buildPayload = ({ entities, accounts, status }) => {
     environment: config.get("cdpEnvironment"),
     correlationid: getCorrelationId(),
     ip: getIP(context),
+    security,
     audit: {
       entities,
       accounts,
@@ -46,12 +47,14 @@ export const buildPayload = ({ entities, accounts, status }) => {
 };
 
 export const writeAuditEvent = async (
-  { entities, accounts, details, messageGroupId, status },
+  { entities, accounts, details, security, messageGroupId, status },
   session,
 ) => {
   logger.info("Begin write audit event.");
 
-  const payload = stripNulls(buildPayload({ entities, accounts, status }));
+  const payload = stripNulls(
+    buildPayload({ entities, accounts, status, security }),
+  );
 
   const { valid, errors } = validateAuditEvent(payload);
 

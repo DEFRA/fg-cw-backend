@@ -188,6 +188,7 @@ describe("loginUserUseCase", () => {
             },
           },
         },
+        security: { pmccode: "0701" },
         messageGroupId: "login-6a232710-1c66-4f8b-967d-41d41ae38478",
         status: auditStatus.SUCCESS,
       }),
@@ -222,6 +223,7 @@ describe("loginUserUseCase", () => {
             },
           },
         },
+        security: { pmccode: "0701" },
         status: auditStatus.FAILURE,
       }),
       null,
@@ -261,5 +263,13 @@ describe("loginUserAuditDataBuilder", () => {
 
     expect(auditData.entities[0].entityid).toBe("idp-1");
     expect(auditData.messageGroupId).toBe("login-idp-1");
+  });
+
+  it("includes a top-level security object for SOC forwarding", () => {
+    const props = { idpId: "idp-1" };
+
+    const auditData = loginUserAuditDataBuilder([props], undefined);
+
+    expect(auditData.security).toEqual({ pmccode: "0701" });
   });
 });

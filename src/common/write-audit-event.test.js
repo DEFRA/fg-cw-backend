@@ -135,6 +135,16 @@ describe("buildPayload", () => {
     });
   });
 
+  it("includes security as a top-level field, sibling to audit", () => {
+    const result = buildPayload({
+      entities: [],
+      status: auditStatus.SUCCESS,
+      security: { pmccode: "TBC" },
+    });
+
+    expect(result.security).toEqual({ pmccode: "TBC" });
+  });
+
   it("includes a datetime ISO string", () => {
     const result = buildPayload({
       entities: [],
@@ -218,6 +228,28 @@ describe("writeAuditEvent", () => {
         event: expect.objectContaining({
           details: { name: "Bob Bill" },
         }),
+      }),
+    );
+  });
+
+  it("includes security as a top-level field in the outbox event", async () => {
+    await writeAuditEvent({ ...eventData, security: { pmccode: "TBC" } }, {});
+
+    expect(Outbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({
+          security: { pmccode: "TBC" },
+        }),
+      }),
+    );
+  });
+
+  it("omits security from the outbox event when not provided", async () => {
+    await writeAuditEvent(eventData, {});
+
+    expect(Outbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.not.objectContaining({ security: expect.anything() }),
       }),
     );
   });

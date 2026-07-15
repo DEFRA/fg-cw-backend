@@ -81,6 +81,22 @@ describe("withAudit", () => {
       );
     });
 
+    it("passes the top-level security field from dataBuilder through to writeAuditEvent", async () => {
+      const fn = vi.fn().mockResolvedValue({ id: "123" });
+      const dataBuilder = vi.fn().mockReturnValue({
+        entities: [],
+        details: {},
+        security: { pmccode: "TBC" },
+      });
+
+      await withAudit(fn, dataBuilder)("arg0", "my-session");
+
+      expect(writeAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ security: { pmccode: "TBC" } }),
+        "my-session",
+      );
+    });
+
     it("passes args[1] as the session to writeAuditEvent", async () => {
       const fn = vi.fn().mockResolvedValue(undefined);
       const dataBuilder = vi

@@ -1,5 +1,9 @@
 import Boom from "@hapi/boom";
-import { auditActions, auditEntities } from "../../common/audit-constants.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
 import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
@@ -55,6 +59,7 @@ export const loginUserAuditDataBuilder = ([props], result) => {
       },
     ],
     details: { security: buildSecurityContext(actor) },
+    security: buildAuditSecurity(auditActions.LOGIN),
     messageGroupId: `login-${props.idpId}`,
   };
 };

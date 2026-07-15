@@ -27,13 +27,15 @@ export const withAudit = (f, dataBuilder) =>
               "withAudit: dataBuilder returned no audit data - skipping audit event.",
             );
           } else {
-            const { entities, accounts, details, messageGroupId } = auditData;
+            const { entities, accounts, details, security, messageGroupId } =
+              auditData;
 
             await writeAuditEvent(
               {
                 entities,
                 accounts,
                 details,
+                security,
                 messageGroupId,
                 status,
               },
