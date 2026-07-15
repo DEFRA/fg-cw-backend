@@ -155,18 +155,19 @@ describe("POST /users/login", () => {
         audit: {
           entities: [{ entity: "USER", action: "LOGIN", entityid: idpId }],
           status: "SUCCESS",
-        },
-        details: {
-          security: {
-            actor: {
-              id: userId,
-              idpId,
-              name: "Audit Test User",
-              email: "audit-test@example.com",
-              idpRoles: ["some-role"],
+          details: {
+            security: {
+              actor: {
+                id: userId,
+                idpId,
+                name: "Audit Test User",
+                email: "audit-test@example.com",
+                idpRoles: ["some-role"],
+              },
             },
           },
         },
+        security: { pmccode: "0701" },
       },
       target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });
