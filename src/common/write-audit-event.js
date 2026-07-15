@@ -26,7 +26,13 @@ export const stripNulls = (obj) => {
   return result;
 };
 
-export const buildPayload = ({ entities, accounts, status, security }) => {
+export const buildPayload = ({
+  entities,
+  accounts,
+  status,
+  details,
+  security,
+}) => {
   const context = getRequestContext();
 
   return {
@@ -42,6 +48,7 @@ export const buildPayload = ({ entities, accounts, status, security }) => {
       entities,
       accounts,
       status,
+      details,
     },
   };
 };
@@ -53,7 +60,7 @@ export const writeAuditEvent = async (
   logger.info("Begin write audit event.");
 
   const payload = stripNulls(
-    buildPayload({ entities, accounts, status, security }),
+    buildPayload({ entities, accounts, status, details, security }),
   );
 
   const { valid, errors } = validateAuditEvent(payload);
@@ -65,7 +72,7 @@ export const writeAuditEvent = async (
 
     const outboxEntry = new Outbox({
       target: config.get("aws.sns.auditTopicArn"),
-      event: { ...payload, details, messageGroupId: msgGroupId },
+      event: { ...payload, messageGroupId: msgGroupId },
       segregationRef: msgGroupId,
     });
 

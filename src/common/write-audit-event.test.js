@@ -121,17 +121,19 @@ describe("buildPayload", () => {
     expect(result.ip).toBeNull();
   });
 
-  it("includes entities, accounts and status under audit", () => {
+  it("includes entities, accounts, status and details under audit", () => {
     const result = buildPayload({
       entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
       accounts: { sbi: "sbi-1" },
       status: auditStatus.SUCCESS,
+      details: { name: "Bob Bill" },
     });
 
     expect(result.audit).toEqual({
       entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
       accounts: { sbi: "sbi-1" },
       status: auditStatus.SUCCESS,
+      details: { name: "Bob Bill" },
     });
   });
 
@@ -220,13 +222,35 @@ describe("writeAuditEvent", () => {
     );
   });
 
-  it("includes details in the outbox event", async () => {
+  it("nests details under audit in the outbox event", async () => {
     await writeAuditEvent(eventData, {});
 
     expect(Outbox).toHaveBeenCalledWith(
       expect.objectContaining({
         event: expect.objectContaining({
-          details: { name: "Bob Bill" },
+          audit: expect.objectContaining({
+            details: { name: "Bob Bill" },
+          }),
+        }),
+      }),
+    );
+
+    const [{ event }] = Outbox.mock.calls[0];
+    expect(event.details).toBeUndefined();
+  });
+
+  it("strips nulls from within details before writing", async () => {
+    await writeAuditEvent(
+      { ...eventData, details: { name: "Bob Bill", note: null } },
+      {},
+    );
+
+    expect(Outbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({
+          audit: expect.objectContaining({
+            details: { name: "Bob Bill" },
+          }),
         }),
       }),
     );

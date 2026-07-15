@@ -16,7 +16,7 @@ export const auditStatus = {
   FAILURE: "FAILURE",
 };
 
-// Defra Protective Monitoring event reference codes (BUJ QRG v2.2), dashes
+// Defra Protective Monitoring event reference codes (BUJ QRG v2.2), dashes stripped.
 const pmcCodesByAction = {
   [auditActions.LOGIN]: "0701", // session created
   [auditActions.CREATE_USER]: "1204", // user registration / service enrollment
