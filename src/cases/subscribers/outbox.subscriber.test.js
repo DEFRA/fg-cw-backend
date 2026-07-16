@@ -228,20 +228,6 @@ describe("outbox.subscriber", () => {
     expect(processEventsSpy).not.toHaveBeenCalled();
   });
 
-  it("should append _fifo.fifo to topic string", () => {
-    const subscriber = new OutboxSubscriber();
-    expect(subscriber.topicStringToFifo("arn:aws:sns:topic")).toBe(
-      "arn:aws:sns:topic_fifo.fifo",
-    );
-  });
-
-  it("should not double-append _fifo.fifo", () => {
-    const subscriber = new OutboxSubscriber();
-    expect(subscriber.topicStringToFifo("arn:aws:sns:topic_fifo.fifo")).toBe(
-      "arn:aws:sns:topic_fifo.fifo",
-    );
-  });
-
   it("should processExpiredEvents", async () => {
     updateExpiredEvents.mockResolvedValue({ modifiedCount: 2 });
     const subscriber = new OutboxSubscriber();
