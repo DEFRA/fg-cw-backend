@@ -7,6 +7,7 @@ import {
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 import {
   __clearDefinitionCache,
+  pinnedVersionOf,
   resolveCurrentWorkflowUseCase,
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
@@ -182,5 +183,85 @@ describe("resolveWorkflowForCase", () => {
 
     expect(result).toEqual({ workflow, resolvedVersion: "1.0.0" });
     expect(workflow.getStage).not.toHaveBeenCalled();
+  });
+
+  it("pins to currentConfigVersion over originalConfigVersion", async () => {
+    const workflow = aWorkflow({ getStage: vi.fn() });
+    findLatestForMajor.mockResolvedValue({ version: "1.4.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: "1.4.0",
+    });
+
+    const kase = {
+      workflowCode: "pigs-might-fly",
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.3.1",
+      position: { phaseCode: "PHASE_1" },
+    };
+
+    const result = await resolveWorkflowForCase(kase);
+
+    expect(result).toEqual({ workflow, resolvedVersion: "1.4.0" });
+    expect(findLatestForMajor).toHaveBeenCalledWith("pigs-might-fly", 1);
+  });
+
+  it("falls back to currentConfigVersion (not originalConfigVersion) when position is missing", async () => {
+    const newWorkflow = aWorkflow({
+      getStage: vi.fn(() => {
+        throw new Error("stage not found");
+      }),
+    });
+    const pinnedWorkflow = aWorkflow({ code: "pinned" });
+    findLatestForMajor.mockResolvedValue({ version: "1.4.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: newWorkflow,
+      resolvedVersion: "1.4.0",
+    });
+    findByCodeAndVersion.mockResolvedValue(pinnedWorkflow);
+
+    const kase = {
+      workflowCode: "pigs-might-fly",
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.3.1",
+      position: { phaseCode: "GONE" },
+    };
+
+    const result = await resolveWorkflowForCase(kase);
+
+    expect(result).toEqual({
+      workflow: pinnedWorkflow,
+      resolvedVersion: "1.3.1",
+    });
+    expect(findByCodeAndVersion).toHaveBeenCalledWith(
+      "pigs-might-fly",
+      "1.3.1",
+    );
+  });
+});
+
+describe("pinnedVersionOf", () => {
+  it("returns currentConfigVersion when present", () => {
+    const kase = {
+      currentConfigVersion: "1.3.1",
+      originalConfigVersion: "0.0.0",
+    };
+    expect(pinnedVersionOf(kase)).toBe("1.3.1");
+  });
+
+  it("falls back to originalConfigVersion when currentConfigVersion is null", () => {
+    const kase = {
+      currentConfigVersion: null,
+      originalConfigVersion: "1.0.0",
+    };
+    expect(pinnedVersionOf(kase)).toBe("1.0.0");
+  });
+
+  it("returns null when both are null", () => {
+    const kase = {
+      currentConfigVersion: null,
+      originalConfigVersion: null,
+    };
+    expect(pinnedVersionOf(kase)).toBeNull();
   });
 });
