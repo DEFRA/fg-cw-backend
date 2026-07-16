@@ -5,7 +5,10 @@ import {
   findByCaseRefAndWorkflowCode,
   findCasesByCaseRefsAndWorkflowCode,
 } from "../repositories/case.repository.js";
-import { resolveCurrentWorkflowUseCase } from "./resolve-current-workflow.use-case.js";
+import {
+  pinnedVersionOf,
+  resolveCurrentWorkflowUseCase,
+} from "./resolve-current-workflow.use-case.js";
 
 const TIMELINE = "timeline";
 
@@ -23,7 +26,7 @@ const resolveTimelineSeries = async (caseRef, workflowCode, doc) => {
   const currentCase = await findByCaseRefAndWorkflowCode(caseRef, workflowCode);
   const { workflow } = await resolveCurrentWorkflowUseCase(
     workflowCode,
-    currentCase?.originalConfigVersion ?? null,
+    currentCase ? pinnedVersionOf(currentCase) : null,
   );
 
   if (!workflow) {

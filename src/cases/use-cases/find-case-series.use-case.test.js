@@ -12,7 +12,14 @@ import { resolveCurrentWorkflowUseCase } from "./resolve-current-workflow.use-ca
 
 vi.mock("../repositories/case-series.repository.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("./resolve-current-workflow.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    resolveCurrentWorkflowUseCase: vi.fn(),
+    persistResolvedVersion: vi.fn(),
+  };
+});
 
 describe("findCaseSeries", () => {
   it("should return basic series information when tabid is not 'timeline'", async () => {

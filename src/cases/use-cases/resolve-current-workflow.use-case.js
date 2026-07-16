@@ -102,13 +102,16 @@ export const resolveCurrentWorkflowUseCase = async (
   );
 };
 
+export const pinnedVersionOf = (kase) =>
+  kase.currentConfigVersion ?? kase.originalConfigVersion;
+
 const isRollForward = (pinnedVersion, resolvedVersion) =>
   Boolean(pinnedVersion) &&
   Boolean(resolvedVersion) &&
   resolvedVersion !== pinnedVersion;
 
 const fallbackToPinned = async (kase, resolution, err) => {
-  const pinnedVersion = kase.originalConfigVersion;
+  const pinnedVersion = pinnedVersionOf(kase);
   // Safety-net: the rolled-forward definition cannot locate the case's current
   // position. Fall back to the pinned version.
   logger.warn(
@@ -139,13 +142,14 @@ const verifyOrFallback = async (kase, resolution) => {
 // Resolves the workflow for a case, falling back to the pinned version if the
 // rolled-forward definition is incompatible with the case's current position.
 export const resolveWorkflowForCase = async (kase, memo) => {
+  const pinned = pinnedVersionOf(kase);
   const resolution = await resolveCurrentWorkflowUseCase(
     kase.workflowCode,
-    kase.originalConfigVersion,
+    pinned,
     memo,
   );
 
-  if (!isRollForward(kase.originalConfigVersion, resolution.resolvedVersion)) {
+  if (!isRollForward(pinned, resolution.resolvedVersion)) {
     return resolution;
   }
   if (!kase.position) {
