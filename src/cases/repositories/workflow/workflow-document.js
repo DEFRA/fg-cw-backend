@@ -11,6 +11,7 @@ export class WorkflowDocument {
       : new ObjectId();
 
     this.code = props.code;
+    this.schemeName = props.schemeName;
     this.version = props.version;
     this.pages = props.pages;
     this.phases = props.phases.map((phase) => new PhaseDocument(phase));

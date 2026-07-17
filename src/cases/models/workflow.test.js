@@ -163,6 +163,23 @@ describe("Workflow", () => {
     });
   };
 
+  describe("getSchemeName", () => {
+    it("returns schemeName when it is defined", () => {
+      const workflow = Workflow.createMock({
+        code: "grasslands",
+        schemeName: "Grassland Private Beta",
+      });
+
+      expect(workflow.getSchemeName()).toBe("Grassland Private Beta");
+    });
+
+    it("falls back to the workflow code when schemeName is not defined", () => {
+      const workflow = Workflow.createMock({ code: "grasslands" });
+
+      expect(workflow.getSchemeName()).toBe("grasslands");
+    });
+  });
+
   describe("canClose", () => {
     it("returns false when closes equals false", () => {
       const workflow = Workflow.createMock({

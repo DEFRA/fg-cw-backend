@@ -126,6 +126,7 @@ const toWorkflow = (doc) =>
   new Workflow({
     _id: doc._id.toHexString(),
     code: doc.code,
+    schemeName: doc.schemeName,
     version: doc.version,
     pages: doc.pages,
     phases: doc.phases.map(toWorkflowPhase),

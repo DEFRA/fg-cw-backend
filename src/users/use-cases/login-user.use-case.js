@@ -1,10 +1,17 @@
 import Boom from "@hapi/boom";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { AppRole } from "../models/app-role.js";
 import { User } from "../models/user.js";
 import { upsertLogin } from "../repositories/user.repository.js";
 
-export const loginUserUseCase = async (props) => {
+const loginUser = async (props) => {
   logger.info(`Processing login for user with idpId "${props.idpId}"`);
 
   if (!props.idpRoles) {
@@ -40,3 +47,21 @@ export const loginUserUseCase = async (props) => {
 
   return upsertedUser;
 };
+
+export const loginUserAuditDataBuilder = ([props], result) => {
+  const actor = result ?? props;
+  return {
+    entities: [
+      {
+        entity: auditEntities.USER,
+        action: auditActions.LOGIN,
+        entityid: props.idpId,
+      },
+    ],
+    details: { security: buildSecurityContext(actor) },
+    security: buildAuditSecurity(auditActions.LOGIN),
+    messageGroupId: `login-${props.idpId}`,
+  };
+};
+
+export const loginUserUseCase = withAudit(loginUser, loginUserAuditDataBuilder);
