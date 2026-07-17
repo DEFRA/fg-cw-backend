@@ -1,6 +1,7 @@
 import hapi from "@hapi/hapi";
 import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
+import { requestContext } from "../common/request-context.js";
 import { auth } from "./plugins/auth.js";
 import { health } from "./plugins/health.js";
 import { logging } from "./plugins/logging.js";
@@ -41,6 +42,7 @@ export const createServer = async () => {
 
   await server.register([
     tracing,
+    requestContext,
     auth,
     health,
     logging,

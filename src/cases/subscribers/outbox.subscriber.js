@@ -130,11 +130,7 @@ export class OutboxSubscriber {
     } = event;
     logger.info(`Send outbox event to "${topic}"`);
     try {
-      await publish(
-        this.topicStringToFifo(topic),
-        data,
-        this.getMessageGroupId(messageGroupId, data),
-      );
+      await publish(topic, data, this.getMessageGroupId(messageGroupId, data));
       await this.markEventComplete(event);
     } catch (ex) {
       logger.error(ex, `Error sending outbox event to topic "${topic}"`);
@@ -150,14 +146,6 @@ export class OutboxSubscriber {
 
   getMessageGroupId(id, data) {
     return getMessageGroupId(id, data);
-  }
-
-  topicStringToFifo(topic) {
-    if (topic.search(/_fifo\.fifo$/) === -1) {
-      return `${topic}_fifo.fifo`;
-    }
-
-    return topic;
   }
 
   async start() {

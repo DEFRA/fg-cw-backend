@@ -1,5 +1,6 @@
 {
   "code": "grasslands",
+  "schemeName": "Grassland Private Beta",
   "requiredRoles": {
     "allOf": ["ROLE_SFI_REFORM"],
     "anyOf": []
@@ -19,7 +20,7 @@
           "summary": {
             "scheme": {
               "label": "Scheme",
-              "text": "$.payload.answers.scheme",
+              "text": "$.schemeName",
               "type": "string"
             },
             "applicationId": {

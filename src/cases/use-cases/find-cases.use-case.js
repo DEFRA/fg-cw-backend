@@ -68,6 +68,7 @@ const enrichCase = async (kase, workflowMemo, assignedUsers) => {
     _id: kase._id,
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
+    schemeName: workflow.getSchemeName(),
     createdAt: kase.createdAt,
     currentStatus: currentStatus.name,
     currentStatusTheme: currentStatus.theme,

@@ -223,6 +223,7 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   const workflow = new Workflow({
     code: createWorkflowCommand.code,
+    schemeName: createWorkflowCommand.schemeName,
     version: createWorkflowCommand.version,
     pages: createWorkflowCommand.pages,
     phases: createWorkflowCommand.phases.map((phase) =>
