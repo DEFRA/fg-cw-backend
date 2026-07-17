@@ -129,6 +129,10 @@ describe("findCasesUseCase", () => {
     findAll.mockResolvedValue(mockFindAllResult(casesWithoutUsers));
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue(workflows);
+    resolveWorkflowForCase.mockImplementation(async (kase) => ({
+      workflow: workflows.find((w) => w.code === kase.workflowCode),
+      resolvedVersion: kase.originalConfigVersion ?? null,
+    }));
 
     const result = await findCasesUseCase({ user, query: defaultQuery });
 
