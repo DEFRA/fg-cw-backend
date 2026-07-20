@@ -42,6 +42,10 @@ describe("config broker message flow", () => {
       grantCode: "pigs-might-fly",
       version: "1.2.3",
       status: "active",
+      manifest: [
+        "pigs-might-fly/1.2.3/cw/cw.json",
+        "pigs-might-fly/1.2.3/metadata.json",
+      ],
     });
 
     const cvDoc = await configVersionsCol.findOne({
@@ -62,6 +66,7 @@ describe("config broker message flow", () => {
         grantCode: "pigs-might-fly",
         version: "not-a-version",
         status: "active",
+        manifest: ["pigs-might-fly/1.0.0/cw/cw.json"],
       }),
     ).rejects.toThrow("Invalid semver version");
 
@@ -76,6 +81,10 @@ describe("config broker message flow", () => {
       grantCode: "pigs-might-fly",
       version: "2.0.0",
       status: "active",
+      manifest: [
+        "pigs-might-fly/2.0.0/cw/cw.json",
+        "pigs-might-fly/2.0.0/metadata.json",
+      ],
     };
 
     await processConfigVersionUseCase(eventData);
