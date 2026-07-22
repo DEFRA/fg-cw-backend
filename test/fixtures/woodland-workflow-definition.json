@@ -689,11 +689,6 @@
               "renderIf": "jsonata:$.position.statusCode = 'STATUS_APPLICATION_IN_REVIEW'",
               "content": [
                 {
-                  "component": "heading",
-                  "level": 3,
-                  "text": "Application received"
-                },
-                {
                   "component": "paragraph",
                   "text": "Select 'Generate agreement' if you are ready to continue. If the customer needs to make amendments select 'Return to customer'."
                 }
