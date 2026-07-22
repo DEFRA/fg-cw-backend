@@ -15,6 +15,10 @@ const users = {
   readerwriter: {
     idpId: "df20f4bd-d009-4bf4-b499-46e93e0f005a",
   },
+  admin_rw: {
+    // admin_rw@t.gov.uk
+    idpId: "4c2915b8-527a-4ec5-bcd2-eb769a198ead",
+  },
 };
 
 const DEFAULT_USER = "readerwriter";
