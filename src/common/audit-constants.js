@@ -11,6 +11,7 @@ export const auditActions = {
   CREATE_ROLE: "CREATE_ROLE",
   UPDATE_ROLE: "UPDATE_ROLE",
   VIEW_CASE_LIST: "VIEW_CASE_LIST",
+  VIEW_ROLE_LIST: "VIEW_ROLE_LIST",
 };
 
 export const auditStatus = {
@@ -26,6 +27,7 @@ const pmcCodesByAction = {
   [auditActions.CREATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.UPDATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.VIEW_CASE_LIST]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_ROLE_LIST]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({

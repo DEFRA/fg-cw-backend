@@ -1,5 +1,4 @@
-import { createPageResponse } from "../../common/create-page-response.js";
-import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
+import { viewRoleListUseCase } from "../use-cases/view-role-list.use-case.js";
 
 export const findRolesRoute = {
   method: "GET",
@@ -10,7 +9,7 @@ export const findRolesRoute = {
   },
   async handler(request) {
     const { user } = request.auth.credentials;
-    const data = await findRolesUseCase({ user });
-    return createPageResponse({ user, data });
+
+    return viewRoleListUseCase({ user });
   },
 };

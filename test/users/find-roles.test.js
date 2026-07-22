@@ -2,14 +2,16 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createRole } from "../helpers/roles.js";
-import { createAdminUser } from "../helpers/users.js";
+import { createAdminUser, TestUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
+let outbox;
 
 beforeAll(async () => {
   client = new MongoClient(env.MONGO_URI);
   await client.connect();
+  outbox = client.db().collection("outbox");
 });
 
 afterAll(async () => {
@@ -85,6 +87,38 @@ describe("GET /roles", () => {
           ],
         },
       },
+    });
+  });
+
+  it("writes a VIEW_ROLE_LIST audit event to the outbox with the actor's security context", async () => {
+    const response = await wreck.get("/roles");
+
+    expect(response.res.statusCode).toBe(200);
+
+    const outboxEntry = await outbox.findOne({
+      "event.audit.entities.action": "VIEW_ROLE_LIST",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [{ entity: "ROLE", action: "VIEW_ROLE_LIST" }],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: expect.any(String),
+                idpId: TestUser.Admin.idpId,
+                name: TestUser.Admin.name,
+                email: TestUser.Admin.email,
+                idpRoles: TestUser.Admin.idpRoles,
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });
   });
 });
