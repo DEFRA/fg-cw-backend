@@ -14,6 +14,7 @@ import { wreck } from "../helpers/wreck.js";
 
 describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status", () => {
   let cases;
+  let outbox;
   let client;
   let user;
 
@@ -21,6 +22,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection("cases");
+    outbox = client.db().collection("outbox");
   });
 
   afterAll(async () => {
@@ -244,5 +246,49 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
         },
       ),
     ).rejects.toThrow();
+  });
+
+  it("writes an UPDATE_TASK_STATUS audit event to the outbox with the actor's security context", async () => {
+    const kase = await createCase(cases);
+
+    const response = await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    expect(response.res.statusCode).toBe(204);
+
+    const outboxEntry = await outbox.findOne({
+      "event.audit.entities.action": "UPDATE_TASK_STATUS",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "UPDATE_TASK_STATUS",
+              entityid: kase._id.toString(),
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: expect.any(String),
+                idpId: user.idpId,
+                name: user.name,
+                email: user.email,
+                idpRoles: expect.arrayContaining([IdpRoles.ReadWrite]),
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
   });
 });
