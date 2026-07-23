@@ -78,7 +78,7 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("STATUS_OPTION_1");
+    expect(task.value).toBe("STATUS_OPTION_1");
     expect(task.commentRefs).toHaveLength(1);
     expect(task.commentRefs[0].status).toBe("STATUS_OPTION_1");
     expect(task.commentRefs[0].ref).toBeDefined();
@@ -184,9 +184,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("sets completed flag based on statusOption when statusOptions exist", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -260,15 +259,14 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
   it("sets completed to false when statusOption has completes false", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -342,15 +340,14 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("IN_PROGRESS");
+    expect(task.value).toBe("IN_PROGRESS");
     expect(task.completed).toBe(false);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
   it("throws error when invalid status option is provided", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -429,9 +426,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("uses completed parameter when task has no statusOptions", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -492,15 +488,14 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe(null);
+    expect(task.value).toBe(null);
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
   it("throws error when trying to update task status when current stage status is not interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -566,9 +561,8 @@ describe("updateTaskStatusUseCase", () => {
   });
 
   it("allows task update when current stage status is interactive", async () => {
-    const { WorkflowStageStatus } = await import(
-      "../models/workflow-stage-status.js"
-    );
+    const { WorkflowStageStatus } =
+      await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
     const workflow = Workflow.createMock({
       phases: [
@@ -629,7 +623,7 @@ describe("updateTaskStatusUseCase", () => {
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe(null);
+    expect(task.value).toBe(null);
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });

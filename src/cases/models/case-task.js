@@ -3,17 +3,17 @@ import Joi from "joi";
 import { Code } from "../schemas/task.schema.js";
 import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 
-export const TaskStatus = Joi.string().allow(null);
+export const TaskValue = Joi.string().allow(null);
 
 const CommentRefSchema = Joi.object({
-  status: TaskStatus.required(),
+  status: TaskValue.required(),
   ref: UrlSafeId.required(),
 }).label("CommentRef");
 
 export class CaseTask {
   static validationSchema = Joi.object({
     code: Code.required(),
-    status: TaskStatus.required(),
+    value: TaskValue.required(),
     completed: Joi.boolean(),
     updatedAt: Joi.string().isoDate().optional().allow(null),
     updatedBy: Joi.string().allow(null),
@@ -33,15 +33,15 @@ export class CaseTask {
     }
 
     this.code = value.code;
-    this.status = value.status;
+    this.value = value.value;
     this.completed = value.completed;
     this.commentRefs = value.commentRefs;
     this.updatedAt = value.updatedAt;
     this.updatedBy = value.updatedBy;
   }
 
-  updateStatus({ status, completed, updatedBy, comment }) {
-    const { error, value } = TaskStatus.validate(status, {
+  updateValue({ value, completed, updatedBy, comment }) {
+    const { error, value: v } = TaskValue.validate(value, {
       stripUnknown: true,
       abortEarly: false,
     });
@@ -52,7 +52,7 @@ export class CaseTask {
       );
     }
 
-    this.status = value;
+    this.value = v;
     this.completed = completed;
     this.updatedBy = updatedBy;
     this.updatedAt = new Date().toISOString();

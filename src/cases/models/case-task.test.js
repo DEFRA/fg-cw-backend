@@ -5,34 +5,34 @@ describe("CaseTask", () => {
   it("should create a basic task", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
 
     expect(task.code).toBe("TASK_1");
-    expect(task.status).toBe("PENDING");
+    expect(task.value).toBe("PENDING");
   });
 
   it("should create a task with optional fields", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
       updatedAt: "2025-01-01T00:00:00.000Z",
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
     expect(task.code).toBe("TASK_1");
-    expect(task.status).toBe("PENDING");
+    expect(task.value).toBe("PENDING");
     expect(task.updatedAt).toBe("2025-01-01T00:00:00.000Z");
     expect(task.updatedBy).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
   });
 
-  it("should not create a task with an invalid status", () => {
+  it("should not create a task with an invalid value", () => {
     expect(
       () =>
         new CaseTask({
           code: "TASK_1",
-          status: 999,
+          value: 999,
         }),
-    ).toThrow('Invalid Task: "status" must be a string');
+    ).toThrow('Invalid Task: "value" must be a string');
   });
 
   it("should not create a task with an invalid code", () => {
@@ -40,7 +40,7 @@ describe("CaseTask", () => {
       () =>
         new CaseTask({
           code: "invalid_code",
-          status: "PENDING",
+          value: "PENDING",
         }),
     ).toThrow(
       'Invalid Task: "code" with value "invalid_code" fails to match the required pattern: /^[A-Z0-9_]+$/',
@@ -50,7 +50,7 @@ describe("CaseTask", () => {
   it("should create a task with empty commentRefs by default", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
 
     expect(task.commentRefs).toEqual([]);
@@ -59,7 +59,7 @@ describe("CaseTask", () => {
   it("should create a task with commentRefs array", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
       commentRefs: [{ status: "ACCEPTED", ref: "abc123def456" }],
     });
 
@@ -73,7 +73,7 @@ describe("CaseTask", () => {
       () =>
         new CaseTask({
           code: "TASK_1",
-          status: "PENDING",
+          value: "PENDING",
           commentRefs: [{ status: "ACCEPTED", ref: "INVALID_REF" }],
         }),
     ).toThrow(
@@ -81,40 +81,40 @@ describe("CaseTask", () => {
     );
   });
 
-  it("should update the status of a task", () => {
+  it("should update the value of a task", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
-    task.updateStatus({
-      status: "COMPLETE",
+    task.updateValue({
+      value: "COMPLETE",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
   });
 
   it("should update the updated at of a task", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
-    task.updateStatus({
-      status: "COMPLETE",
+    task.updateValue({
+      value: "COMPLETE",
       completed: true,
       updatedBy: "1k0a7-9xv4f2h1n3q8c5w2999",
     });
     expect(task.updatedAt).toBeDefined();
   });
 
-  it("should throw an error if the status is invalid", () => {
+  it("should throw an error if the value is invalid", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
     expect(() =>
-      task.updateStatus({
-        status: 999,
+      task.updateValue({
+        value: 999,
         completed: false,
         updatedBy: "k0a7-9xv4f2h1n3q8c5w2999",
       }),
@@ -124,29 +124,29 @@ describe("CaseTask", () => {
   it("should create a task with completed field", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
     });
 
     expect(task.code).toBe("TASK_1");
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
   });
 
-  it("should update the completed flag when updating status", () => {
+  it("should update the completed flag when updating value", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
       completed: false,
     });
 
-    task.updateStatus({
-      status: "COMPLETE",
+    task.updateValue({
+      value: "COMPLETE",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
 
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(task.updatedBy).toBe("k0a7-9xv4f2h1n3q8c5w2z1y");
   });
@@ -154,30 +154,30 @@ describe("CaseTask", () => {
   it("should return array with updatedBy from getUserIds", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2999",
     });
 
     expect(task.getUserIds()).toEqual(["k0a7-9xv4f2h1n3q8c5w2999"]);
   });
 
-  it("should accept null as status", () => {
+  it("should accept null as value", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: null,
+      value: null,
     });
 
-    expect(task.status).toBe(null);
+    expect(task.value).toBe(null);
   });
 
-  it("should append comment ref when updating status with comment", () => {
+  it("should append comment ref when updating value with comment", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
 
-    task.updateStatus({
-      status: "ACCEPTED",
+    task.updateValue({
+      value: "ACCEPTED",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
       comment: { ref: "abc123def456" },
@@ -188,21 +188,21 @@ describe("CaseTask", () => {
     ]);
   });
 
-  it("should append multiple comment refs when updating status multiple times", () => {
+  it("should append multiple comment refs when updating value multiple times", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
 
-    task.updateStatus({
-      status: "RFI",
+    task.updateValue({
+      value: "RFI",
       completed: false,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
       comment: { ref: "abc123def456" },
     });
 
-    task.updateStatus({
-      status: "ACCEPTED",
+    task.updateValue({
+      value: "ACCEPTED",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
       comment: { ref: "xyz789ghi012" },
@@ -217,11 +217,11 @@ describe("CaseTask", () => {
   it("should not append comment ref when no comment is provided", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
     });
 
-    task.updateStatus({
-      status: "ACCEPTED",
+    task.updateValue({
+      value: "ACCEPTED",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
@@ -232,12 +232,12 @@ describe("CaseTask", () => {
   it("should preserve existing commentRefs when updating without comment", () => {
     const task = new CaseTask({
       code: "TASK_1",
-      status: "PENDING",
+      value: "PENDING",
       commentRefs: [{ status: "RFI", ref: "abc123def456" }],
     });
 
-    task.updateStatus({
-      status: "ACCEPTED",
+    task.updateValue({
+      value: "ACCEPTED",
       completed: true,
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
@@ -249,7 +249,7 @@ describe("CaseTask", () => {
     it("should return true for non-mandatory tasks regardless of completion status", () => {
       const task = new CaseTask({
         code: "TASK_1",
-        status: "PENDING",
+        value: "PENDING",
         completed: false,
       });
       const workflowTask = { mandatory: false };
@@ -260,7 +260,7 @@ describe("CaseTask", () => {
     it("should return true for mandatory task when completed", () => {
       const task = new CaseTask({
         code: "TASK_1",
-        status: "ACCEPTED",
+        value: "ACCEPTED",
         completed: true,
       });
       const workflowTask = { mandatory: true };
@@ -271,7 +271,7 @@ describe("CaseTask", () => {
     it("should return false for mandatory task when not completed", () => {
       const task = new CaseTask({
         code: "TASK_1",
-        status: "PENDING",
+        value: "PENDING",
         completed: false,
       });
       const workflowTask = { mandatory: true };

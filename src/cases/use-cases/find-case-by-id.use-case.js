@@ -135,7 +135,7 @@ const mapTasks = async (
       );
 
       const selectedStatus = mapSelectedStatusOption(
-        caseTaskGroupTask.status,
+        caseTaskGroupTask.value,
         workflowTaskGroupTask.statusOptions,
       );
 
@@ -152,7 +152,7 @@ const mapTasks = async (
         description: await mapDescription(workflowTaskGroupTask, root),
         mandatory: workflowTaskGroupTask.mandatory,
         statusOptions: mapStatusOptions(workflowTaskGroupTask.statusOptions),
-        status: caseTaskGroupTask.status,
+        status: caseTaskGroupTask.value,
         statusText: selectedStatus.statusText,
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,

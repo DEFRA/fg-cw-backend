@@ -50,7 +50,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     const updatedCase = await findCaseById(kase._id);
     const task = updatedCase.phases[0].stages[0].taskGroups[0].tasks[0];
 
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(task.updatedAt).toBeDefined();
   });
@@ -178,7 +178,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
                   tasks: [
                     {
                       code: "SIMPLE_REVIEW",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                     },
                   ],

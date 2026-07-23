@@ -49,10 +49,10 @@ export const updateTaskStatusUseCase = async (command) => {
 
   const taskCompleted = mapCompleted({ task, status, completed });
 
-  kase.setTaskStatus({
+  kase.setTaskValue({
     taskGroupCode,
     taskCode,
-    status,
+    value: status,
     completed: taskCompleted,
     comment,
     updatedBy: user.id,

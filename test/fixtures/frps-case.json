@@ -179,7 +179,7 @@
               "tasks": [
                 {
                   "code": "SIMPLE_REVIEW",
-                  "status": "pending"
+                  "value": "pending"
                 }
               ]
             }

@@ -18,7 +18,7 @@ describe("createCaseTask", () => {
 
     expect(task).toBeInstanceOf(CaseTask);
     expect(task.code).toBe("MY_TASK");
-    expect(task.status).toBeNull();
+    expect(task.value).toBeNull();
     expect(task.completed).toBe(false);
     expect(task.commentRefs).toEqual([]);
     expect(task.updatedAt).toBeNull();
@@ -121,7 +121,7 @@ describe("ensureCasePosition", () => {
           tasks: [
             new CaseTask({
               code: "TASK_1",
-              status: "COMPLETE",
+              value: "COMPLETE",
               completed: true,
             }),
           ],
@@ -145,7 +145,7 @@ describe("ensureCasePosition", () => {
 
     expect(kase.phases).toHaveLength(1);
     expect(kase.phases[0].stages).toHaveLength(1);
-    expect(kase.phases[0].stages[0].taskGroups[0].tasks[0].status).toBe(
+    expect(kase.phases[0].stages[0].taskGroups[0].tasks[0].value).toBe(
       "COMPLETE",
     );
   });
@@ -222,7 +222,7 @@ describe("ensureCasePosition", () => {
   it("preserves existing task data when phase/stage already exists", async () => {
     const existingTask = new CaseTask({
       code: "TASK_1",
-      status: "IN_PROGRESS",
+      value: "IN_PROGRESS",
       completed: false,
       commentRefs: [{ status: "IN_PROGRESS", ref: "comment-123" }],
       updatedAt: "2025-01-01T00:00:00.000Z",
@@ -248,7 +248,7 @@ describe("ensureCasePosition", () => {
     await ensureCasePosition(kase, workflow, target);
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("IN_PROGRESS");
+    expect(task.value).toBe("IN_PROGRESS");
     expect(task.commentRefs).toEqual([
       { status: "IN_PROGRESS", ref: "comment-123" },
     ]);

@@ -14,7 +14,7 @@ describe("CaseTaskGroup", () => {
         tasks: [
           new CaseTask({
             code: "TASK_1",
-            status: "PENDING",
+            value: "PENDING",
           }),
         ],
       });
@@ -30,8 +30,8 @@ describe("CaseTaskGroup", () => {
       const taskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "PENDING" }),
-          new CaseTask({ code: "TASK_2", status: "PENDING" }),
+          new CaseTask({ code: "TASK_1", value: "PENDING" }),
+          new CaseTask({ code: "TASK_2", value: "PENDING" }),
         ],
       });
 
@@ -42,7 +42,7 @@ describe("CaseTaskGroup", () => {
     it("should return false when task code is absent", () => {
       const taskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
-        tasks: [new CaseTask({ code: "TASK_1", status: "PENDING" })],
+        tasks: [new CaseTask({ code: "TASK_1", value: "PENDING" })],
       });
 
       expect(taskGroup.hasTask("NON_EXISTENT_TASK")).toBe(false);
@@ -60,7 +60,7 @@ describe("CaseTaskGroup", () => {
 
   describe("findTask", () => {
     it("should return the task when found", () => {
-      const task = new CaseTask({ code: "TASK_1", status: "PENDING" });
+      const task = new CaseTask({ code: "TASK_1", value: "PENDING" });
       const taskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [task],
@@ -75,7 +75,7 @@ describe("CaseTaskGroup", () => {
     it("should throw Boom.notFound when task is not found", () => {
       const taskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
-        tasks: [new CaseTask({ code: "TASK_1", status: "PENDING" })],
+        tasks: [new CaseTask({ code: "TASK_1", value: "PENDING" })],
       });
 
       expect(() => taskGroup.findTask("NON_EXISTENT_TASK")).toThrow(
@@ -91,12 +91,12 @@ describe("CaseTaskGroup", () => {
         tasks: [
           new CaseTask({
             code: "TASK_1",
-            status: "PENDING",
+            value: "PENDING",
             updatedBy: "user-id-1",
           }),
           new CaseTask({
             code: "TASK_2",
-            status: "PENDING",
+            value: "PENDING",
             updatedBy: "user-id-2",
           }),
         ],
@@ -120,12 +120,12 @@ describe("CaseTaskGroup", () => {
         tasks: [
           new CaseTask({
             code: "TASK_1",
-            status: "PENDING",
+            value: "PENDING",
             updatedBy: "user-id-1",
           }),
           new CaseTask({
             code: "TASK_2",
-            status: "PENDING",
+            value: "PENDING",
           }),
         ],
       });
@@ -157,8 +157,8 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "ACCEPTED", completed: true }),
-          new CaseTask({ code: "TASK_2", status: "ACCEPTED", completed: true }),
+          new CaseTask({ code: "TASK_1", value: "ACCEPTED", completed: true }),
+          new CaseTask({ code: "TASK_2", value: "ACCEPTED", completed: true }),
         ],
       });
 
@@ -176,8 +176,8 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "ACCEPTED", completed: true }),
-          new CaseTask({ code: "TASK_2", status: "PENDING", completed: false }),
+          new CaseTask({ code: "TASK_1", value: "ACCEPTED", completed: true }),
+          new CaseTask({ code: "TASK_2", value: "PENDING", completed: false }),
         ],
       });
 
@@ -195,7 +195,7 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "ACCEPTED", completed: true }),
+          new CaseTask({ code: "TASK_1", value: "ACCEPTED", completed: true }),
         ],
       });
 
@@ -216,7 +216,7 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "PENDING", completed: false }),
+          new CaseTask({ code: "TASK_1", value: "PENDING", completed: false }),
         ],
       });
 
@@ -253,7 +253,7 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "PENDING", completed: false }),
+          new CaseTask({ code: "TASK_1", value: "PENDING", completed: false }),
         ],
       });
 
@@ -271,8 +271,8 @@ describe("CaseTaskGroup", () => {
       const caseTaskGroup = new CaseTaskGroup({
         code: "TASK_GROUP_1",
         tasks: [
-          new CaseTask({ code: "TASK_1", status: "ACCEPTED", completed: true }),
-          new CaseTask({ code: "TASK_2", status: "PENDING", completed: false }),
+          new CaseTask({ code: "TASK_1", value: "ACCEPTED", completed: true }),
+          new CaseTask({ code: "TASK_2", value: "PENDING", completed: false }),
         ],
       });
 

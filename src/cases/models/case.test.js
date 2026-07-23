@@ -466,27 +466,27 @@ describe("Case", () => {
     });
   });
 
-  describe("setTaskStatus", () => {
-    it("should update status", () => {
+  describe("setTaskValue", () => {
+    it("should update value", () => {
       const kase = Case.createMock();
 
       const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
 
-      expect(task.status).toBe("PENDING");
+      expect(task.value).toBe("PENDING");
       expect(task.commentRefs).toEqual([]);
 
-      kase.setTaskStatus({
+      kase.setTaskValue({
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
         comment: "This is a note",
         updatedBy: "099999999999999999999999",
       });
 
-      expect(task.status).toBe("COMPLETE");
+      expect(task.value).toBe("COMPLETE");
       expect(task.commentRefs).toHaveLength(1);
       expect(task.commentRefs[0].status).toBe("COMPLETE");
       expect(task.commentRefs[0].ref).toBeDefined();
@@ -496,12 +496,12 @@ describe("Case", () => {
       const kase = Case.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.setTaskStatus({
+      kase.setTaskValue({
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "IN_PROGRESS",
+        value: "IN_PROGRESS",
         completed: false,
         comment: "Starting work on this task",
         updatedBy: "099999999999999999999999",
@@ -524,12 +524,12 @@ describe("Case", () => {
       const kase = Case.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.setTaskStatus({
+      kase.setTaskValue({
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
         comment: "Task finished",
         updatedBy: "099999999999999999999999",
@@ -552,12 +552,12 @@ describe("Case", () => {
       const kase = Case.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.setTaskStatus({
+      kase.setTaskValue({
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "IN_PROGRESS",
+        value: "IN_PROGRESS",
         completed: false,
         updatedBy: "099999999999999999999999",
       });
@@ -710,7 +710,7 @@ describe("Case", () => {
                   tasks: [
                     new CaseTask({
                       code: "TASK_1",
-                      status: "COMPLETE",
+                      value: "COMPLETE",
                       completed: true,
                       updatedAt: null,
                       updatedBy: null,
@@ -822,7 +822,7 @@ describe("Case", () => {
                   tasks: [
                     new CaseTask({
                       code: "TASK_1",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                     }),
                   ],
@@ -906,7 +906,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
       const actions = kase.getPermittedActions(workflow);
@@ -921,7 +921,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "PENDING";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       const actions = kase.getPermittedActions(workflow);
@@ -945,7 +945,7 @@ describe("Case", () => {
         }),
       );
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "PENDING";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       const actions = kase.getPermittedActions(workflow);
@@ -977,7 +977,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "PENDING";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = false;
@@ -1010,7 +1010,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "PENDING";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "PENDING";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       const newPosition = new Position({
@@ -1037,7 +1037,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1071,7 +1071,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1108,7 +1108,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1167,7 +1167,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialTimelineLength = kase.timeline.length;
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1216,7 +1216,7 @@ describe("Case", () => {
     it("updates position, updates closed and closedAt after successful transition", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
       workflow.phases[0].stages[0].statuses[1].closes = true;
@@ -1254,7 +1254,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1291,7 +1291,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1317,7 +1317,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1349,7 +1349,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
       workflow.phases[0].stages[0].statuses[0].transitions[0].checkTasks = true;
 
@@ -1493,7 +1493,7 @@ describe("Case", () => {
       const kase = Case.createMock();
       const workflow = Workflow.createMock();
 
-      kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+      kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
       kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
       const newPosition = Position.from("PHASE_1:STAGE_1:STATUS_2");

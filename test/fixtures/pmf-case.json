@@ -32,7 +32,7 @@
               "tasks": [
                 {
                   "code": "review-application-data",
-                  "status": "pending"
+                  "value": "pending"
                 }
               ]
             }
@@ -46,15 +46,15 @@
               "tasks": [
                 {
                   "code": "check-application-and-documents",
-                  "status": "pending"
+                  "value": "pending"
                 },
                 {
                   "code": "check-find-farm-and-land-payment-data",
-                  "status": "pending"
+                  "value": "pending"
                 },
                 {
                   "code": "check-rps-dual-funding",
-                  "status": "pending"
+                  "value": "pending"
                 }
               ]
             },
@@ -63,11 +63,11 @@
               "tasks": [
                 {
                   "code": "confirm-farm-has-cph",
-                  "status": "pending"
+                  "value": "pending"
                 },
                 {
                   "code": "confirm-apha-registration",
-                  "status": "pending"
+                  "value": "pending"
                 }
               ]
             }

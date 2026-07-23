@@ -538,7 +538,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     findAll.mockResolvedValue([mockUser]);
@@ -569,7 +569,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions would normally be available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with only Read role (not ReadWrite)
@@ -594,7 +594,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions are available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with ReadWrite role
@@ -905,7 +905,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set a task status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status =
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value =
         "STATUS_OPTION_1";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
@@ -961,7 +961,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Ensure task has no status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = null;
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = null;
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       findAll.mockResolvedValue([mockUser]);
@@ -982,7 +982,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set task with status but not completed
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = "RFI";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = "RFI";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [

@@ -50,7 +50,7 @@ export const createCase = async (cases, payload = {}) => {
                 tasks: [
                   {
                     code: "SIMPLE_REVIEW",
-                    status: "PENDING",
+                    value: "PENDING",
                     completed: false,
                   },
                 ],

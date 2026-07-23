@@ -134,7 +134,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     updatedBy: "user-123",
                   }),
                 ],
@@ -149,7 +149,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_2",
-                    status: "PENDING",
+                    value: "PENDING",
                     updatedBy: "user-456",
                   }),
                 ],
@@ -196,7 +196,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     completed: true,
                   }),
                 ],
@@ -259,7 +259,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "PENDING",
+                    value: "PENDING",
                     completed: false,
                   }),
                 ],
@@ -322,7 +322,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     completed: true,
                   }),
                 ],
@@ -337,7 +337,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_2",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     completed: true,
                   }),
                 ],
@@ -429,7 +429,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     completed: true,
                   }),
                 ],
@@ -444,7 +444,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_2",
-                    status: "PENDING",
+                    value: "PENDING",
                     completed: false,
                   }),
                 ],
@@ -553,7 +553,7 @@ describe("CasePhase", () => {
                 tasks: [
                   new CaseTask({
                     code: "TASK_1",
-                    status: "COMPLETE",
+                    value: "COMPLETE",
                     completed: true,
                   }),
                 ],
