@@ -10,8 +10,11 @@ import {
 import { logger } from "../../common/logger.js";
 import { resolveJSONPath } from "../../common/resolve-json.js";
 import { findById } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const buildCaseDetailsTabUseCase = async (request) => {
   // TODO: check permissions!!!
@@ -29,7 +32,8 @@ export const buildCaseDetailsTabUseCase = async (request) => {
     throw Boom.notFound(`Case not found: ${caseId}`);
   }
 
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   if (!workflow) {
     throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);

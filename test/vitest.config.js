@@ -32,6 +32,8 @@ export default defineConfig({
       CW__SQS__CREATE_NEW_CASE_URL: `${SQS_URL}/cw__sqs__create_new_case_fifo.fifo`,
       CW__SQS__UPDATE_STATUS_URL: `${SQS_URL}/cw__sqs__update_status_fifo.fifo`,
       GAS__SQS__UPDATE_STATUS: `${SQS_URL}/gas__sqs__update_status_fifo.fifo`, // required for varification purposes only
+      CW__SQS__CONFIG_VERSION_QUEUE_URL: `${SQS_URL}/cw__sqs__config_version_updated`,
+      CONFIG_BROKER_S3_BUCKET: "config-broker-local",
       OIDC_JWKS_URI: `http://localhost:${ENTRA_PORT}/jwks`,
       OIDC_VERIFY_ISS: `http://localhost:3010`, // Match the actual token issuer from Entra stub
       OIDC_VERIFY_AUD: "api://client1",

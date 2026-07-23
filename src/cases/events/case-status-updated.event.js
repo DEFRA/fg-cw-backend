@@ -1,7 +1,13 @@
 import { CloudEvent } from "../../common/cloud-event.js";
 
 export class CaseStatusUpdatedEvent extends CloudEvent {
-  constructor({ caseRef, workflowCode, previousStatus, currentStatus }) {
+  constructor({
+    caseRef,
+    workflowCode,
+    previousStatus,
+    currentStatus,
+    currentConfigVersion = null,
+  }) {
     super(
       "case.status.updated",
       {
@@ -9,6 +15,7 @@ export class CaseStatusUpdatedEvent extends CloudEvent {
         workflowCode,
         previousStatus,
         currentStatus,
+        ...(currentConfigVersion && { currentConfigVersion }),
       },
       `${caseRef}-${workflowCode}`,
     );

@@ -8,8 +8,11 @@ import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const updateStageOutcomeUseCase = async (command) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
@@ -22,7 +25,12 @@ export const updateStageOutcomeUseCase = async (command) => {
       throw Boom.notFound(`Case with id "${caseId}" not found`);
     }
 
-    const workflow = await findByCode(kase.workflowCode);
+    const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+    await persistResolvedVersion(kase, resolvedVersion);
+
+    if (!workflow) {
+      throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
+    }
 
     AccessControl.authorise(user, {
       idpRoles: [IdpRoles.ReadWrite],
@@ -54,6 +62,7 @@ export const updateStageOutcomeUseCase = async (command) => {
       workflowCode: kase.workflowCode,
       previousStatus: previousPosition.toString(),
       currentStatus: kase.position.toString(),
+      currentConfigVersion: kase.currentConfigVersion,
     });
 
     await insertMany(

@@ -41,7 +41,10 @@ const toCasePhase = (p) =>
     stages: p.stages.map(toCaseStage),
   });
 
+const toAssignedUser = (id) => (id ? { id } : null);
+
 const toCase = (doc) => {
+  const legacy = doc.configVersion ?? null;
   return new Case({
     _id: doc._id.toHexString(),
     caseRef: doc.caseRef,
@@ -58,12 +61,10 @@ const toCase = (doc) => {
     phases: doc.phases.map(toCasePhase),
     comments: doc.comments,
     timeline: doc.timeline,
-    assignedUser: doc.assignedUserId
-      ? {
-          id: doc.assignedUserId,
-        }
-      : null,
+    assignedUser: toAssignedUser(doc.assignedUserId),
     supplementaryData: doc.supplementaryData,
+    originalConfigVersion: doc.originalConfigVersion ?? legacy,
+    currentConfigVersion: doc.currentConfigVersion ?? legacy,
   });
 };
 
@@ -189,20 +190,28 @@ export const findAll = ({
       assignedUserId: 1,
       createdAt: 1,
       payload: 1,
+      originalConfigVersion: 1,
+      currentConfigVersion: 1,
+      configVersion: 1,
     },
-    mapDocument: (doc) => ({
-      _id: doc._id,
-      caseRef: doc.caseRef,
-      workflowCode: doc.workflowCode,
-      position: new Position({
-        phaseCode: doc.currentPhase,
-        stageCode: doc.currentStage,
-        statusCode: doc.currentStatus,
-      }),
-      assignedUserId: doc.assignedUserId,
-      payload: doc.payload,
-      createdAt: doc.createdAt,
-    }),
+    mapDocument: (doc) => {
+      const legacy = doc.configVersion ?? null;
+      return {
+        _id: doc._id,
+        caseRef: doc.caseRef,
+        workflowCode: doc.workflowCode,
+        position: new Position({
+          phaseCode: doc.currentPhase,
+          stageCode: doc.currentStage,
+          statusCode: doc.currentStatus,
+        }),
+        assignedUserId: doc.assignedUserId,
+        payload: doc.payload,
+        createdAt: doc.createdAt,
+        originalConfigVersion: doc.originalConfigVersion ?? legacy,
+        currentConfigVersion: doc.currentConfigVersion ?? legacy,
+      };
+    },
   });
 };
 
@@ -289,4 +298,12 @@ export const updateStage = async (caseId, nextStage, timelineEvent) => {
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
+};
+
+export const updateCurrentConfigVersion = async (caseId, version) => {
+  const _id =
+    typeof caseId === "string" ? ObjectId.createFromHexString(caseId) : caseId;
+  await db
+    .collection(collection)
+    .updateOne({ _id }, { $set: { currentConfigVersion: version } });
 };
