@@ -81,6 +81,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
 
     expect(result.workflow).toEqual(mockWorkflow);
     expect(result.resolvedVersion).toBe("1.0.0");
+    expect(result.definitionSource).toBe("mongodb");
     expect(mockFetchConfigFile).not.toHaveBeenCalled();
   });
 
@@ -122,6 +123,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     );
 
     expect(result.workflow).toEqual(mockWorkflow);
+    expect(result.definitionSource).toBe("s3");
     expect(mockFetchConfigFile).toHaveBeenCalled();
     expect(mockSaveFromDefinition).toHaveBeenCalled();
     expect(mockUpdateFetchStatus).toHaveBeenCalledWith(
@@ -210,6 +212,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     );
 
     expect(result.workflow).toEqual(mockWorkflow);
+    expect(result.definitionSource).toBe("s3");
     expect(mockFetchConfigFile).toHaveBeenCalled();
   });
 
@@ -229,6 +232,7 @@ describe("resolveAndFetchWorkflowUseCase", () => {
     );
 
     expect(result.workflow).toEqual(mockWorkflow);
+    expect(result.definitionSource).toBe("s3");
     expect(mockFindByCodeAndVersion).toHaveBeenCalledWith(
       "pigs-might-fly",
       "1.0.0",

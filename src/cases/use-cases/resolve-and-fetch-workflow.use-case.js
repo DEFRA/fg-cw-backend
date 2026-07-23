@@ -210,7 +210,7 @@ export const resolveAndFetchWorkflowUseCase = async (
     resolvedVersion,
   );
   if (cached) {
-    return { workflow: cached, resolvedVersion };
+    return { workflow: cached, resolvedVersion, definitionSource: "mongodb" };
   }
 
   const workflow = await fetchAndStoreWorkflow(
@@ -219,5 +219,5 @@ export const resolveAndFetchWorkflowUseCase = async (
     resolvedVersion,
   );
 
-  return { workflow, resolvedVersion };
+  return { workflow, resolvedVersion, definitionSource: "s3" };
 };
