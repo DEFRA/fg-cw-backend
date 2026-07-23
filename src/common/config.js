@@ -116,7 +116,7 @@ export const config = convict({
   },
   aws: {
     endpointUrl: {
-      doc: "AWS Endpoint URL used for LocalStack",
+      doc: "AWS Endpoint URL used for floci",
       format: String,
       nullable: true,
       default: null,

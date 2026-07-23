@@ -81,3 +81,6 @@ create_topic_and_queue "gas__sns__create_agreement_fifo.fifo" "create_agreement_
 wait
 
 echo "SNS/SQS ready"
+
+# Marker the compose healthcheck waits on - see the floci service in compose.yml
+echo READY > /tmp/READY
