@@ -110,7 +110,7 @@ describe("buildPayload", () => {
     expect(result.ip).toBe("10.0.0.1");
   });
 
-  it("sets ip to null when request context has no ip", () => {
+  it("defaults ip to 0.0.0.0 when request context has no ip", () => {
     getRequestContext.mockReturnValue(null);
 
     const result = buildPayload({
@@ -118,7 +118,7 @@ describe("buildPayload", () => {
       status: auditStatus.SUCCESS,
     });
 
-    expect(result.ip).toBeNull();
+    expect(result.ip).toBe("0.0.0.0");
   });
 
   it("includes entities, accounts, status and details under audit", () => {

@@ -23,6 +23,7 @@ import { wreck } from "../helpers/wreck.js";
 
 describe("POST /cases/{caseId}/page-action", () => {
   let cases;
+  let outbox;
   let client;
   let externalAction;
   let user;
@@ -31,6 +32,7 @@ describe("POST /cases/{caseId}/page-action", () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection("cases");
+    outbox = client.db().collection("outbox");
   });
 
   afterAll(async () => {
@@ -230,5 +232,49 @@ describe("POST /cases/{caseId}/page-action", () => {
         },
       }),
     ).rejects.toThrow("Bad Request");
+  });
+
+  it("writes a PERFORM_PAGE_ACTION audit event to the outbox with the actor's security context", async () => {
+    const kase = await createCase(cases);
+
+    const response = await wreck.post(`/cases/${kase._id}/page-action`, {
+      payload: {
+        actionCode: "TEST_ACTION",
+      },
+    });
+
+    expect(response.res.statusCode).toBe(204);
+
+    const outboxEntry = await outbox.findOne({
+      "event.audit.entities.action": "PERFORM_PAGE_ACTION",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "PERFORM_PAGE_ACTION",
+              entityid: kase._id.toString(),
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: expect.any(String),
+                idpId: user.idpId,
+                name: user.name,
+                email: user.email,
+                idpRoles: expect.arrayContaining([IdpRoles.ReadWrite]),
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
   });
 });

@@ -21,11 +21,13 @@ import { createWorkflow } from "../helpers/workflows.js";
 let client;
 let cases;
 let caseSeries;
+let outbox;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
   caseSeries = client.db().collection("case_series");
+  outbox = client.db().collection("outbox");
 });
 
 afterAll(async () => {
@@ -85,5 +87,41 @@ describe("On CreateNewCase event", () => {
         workflowCode: "frps-private-beta",
       },
     ]);
+  });
+
+  it("writes a CREATE_CASE audit event to the outbox with a system actor", async () => {
+    await sendMessage(env.CW__SQS__CREATE_NEW_CASE_URL, {
+      ...createCaseEvent3,
+      id: randomUUID(),
+    });
+
+    const [outboxEntry] = await waitForDocuments(outbox, 10, {
+      "event.audit.entities.action": "CREATE_CASE",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "CREATE_CASE",
+              entityid: "CASE-REF-3",
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: "fg-gas-backend",
+                name: "GAS (system)",
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
   });
 });

@@ -1,17 +1,20 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 
-export const performPageActionUseCase = async ({
-  caseId,
-  actionCode,
-  user,
-}) => {
+const performPageAction = async ({ caseId, actionCode, user }) => {
   const kase = await loadCase(caseId);
   const workflow = await loadWorkflow(kase.workflowCode);
 
@@ -63,6 +66,27 @@ export const performPageActionUseCase = async ({
 
   return response;
 };
+
+export const performPageActionAuditDataBuilder = ([command]) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.PERFORM_PAGE_ACTION,
+      entityid: command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user),
+    action: { actionCode: command.actionCode },
+  },
+  security: buildAuditSecurity(auditActions.PERFORM_PAGE_ACTION),
+  messageGroupId: `perform-page-action-${command.caseId}`,
+});
+
+export const performPageActionUseCase = withAudit(
+  performPageAction,
+  performPageActionAuditDataBuilder,
+);
 
 const loadCase = async (caseId) => {
   const kase = await findById(caseId);

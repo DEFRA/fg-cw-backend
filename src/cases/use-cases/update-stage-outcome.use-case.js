@@ -1,7 +1,14 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
@@ -11,7 +18,7 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 
-export const updateStageOutcomeUseCase = async (command) => {
+const updateStageOutcome = async (command) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
 
   return await withTransaction(async (session) => {
@@ -70,3 +77,27 @@ export const updateStageOutcomeUseCase = async (command) => {
     logger.info(`Finished: Updating stage outcome of case "${command.caseId}"`);
   });
 };
+
+export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.UPDATE_STAGE_OUTCOME,
+      entityid: command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user),
+    stage: {
+      actionCode: command.actionCode,
+      hasComment: Boolean(command.comment),
+    },
+  },
+  security: buildAuditSecurity(auditActions.UPDATE_STAGE_OUTCOME),
+  messageGroupId: `update-stage-outcome-${command.caseId}`,
+});
+
+export const updateStageOutcomeUseCase = withAudit(
+  updateStageOutcome,
+  updateStageOutcomeAuditDataBuilder,
+);

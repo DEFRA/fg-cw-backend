@@ -23,6 +23,7 @@ import { wreck } from "../helpers/wreck.js";
 
 describe("PATCH /cases/{caseId}/stage/outcome", () => {
   let cases;
+  let outbox;
   let client;
   let user;
 
@@ -30,6 +31,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection("cases");
+    outbox = client.db().collection("outbox");
   });
 
   afterAll(async () => {
@@ -224,5 +226,56 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
         },
       }),
     ).rejects.toThrow("Response Error: 412 Precondition Failed");
+  });
+
+  it("writes an UPDATE_STAGE_OUTCOME audit event to the outbox with the actor's security context", async () => {
+    const kase = await createCase(cases);
+
+    await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    const response = await wreck.patch(`/cases/${kase._id}/stage/outcome`, {
+      payload: {
+        actionCode: "APPROVE",
+        comment: null,
+      },
+    });
+
+    expect(response.res.statusCode).toBe(204);
+
+    const outboxEntry = await outbox.findOne({
+      "event.audit.entities.action": "UPDATE_STAGE_OUTCOME",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "UPDATE_STAGE_OUTCOME",
+              entityid: kase._id.toString(),
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: expect.any(String),
+                idpId: user.idpId,
+                name: user.name,
+                email: user.email,
+                idpRoles: expect.arrayContaining([IdpRoles.ReadWrite]),
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
   });
 });

@@ -1,12 +1,19 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { findById, update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 
-export const addNoteToCaseUseCase = async (command) => {
+const addNoteToCase = async (command) => {
   const { caseId, text, user } = command;
 
   logger.info(`Adding a note to case "${caseId}"`);
@@ -41,3 +48,24 @@ export const addNoteToCaseUseCase = async (command) => {
 
   return note;
 };
+
+export const addNoteToCaseAuditDataBuilder = ([command], result) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.ADD_NOTE_TO_CASE,
+      entityid: command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user),
+    note: { ref: result?.ref },
+  },
+  security: buildAuditSecurity(auditActions.ADD_NOTE_TO_CASE),
+  messageGroupId: `add-note-to-case-${command.caseId}`,
+});
+
+export const addNoteToCaseUseCase = withAudit(
+  addNoteToCase,
+  addNoteToCaseAuditDataBuilder,
+);
