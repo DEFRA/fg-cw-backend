@@ -44,23 +44,14 @@ const parseMajor = (version) => {
 const loadDefinition = async (workflowCode, resolvedVersion) => {
   const cached = getCachedDefinition(workflowCode, resolvedVersion);
   if (cached) {
-    return cached;
+    return { workflow: cached, definitionSource: "cache" };
   }
-  const { workflow } = await resolveAndFetchWorkflowUseCase(
+  const { workflow, definitionSource } = await resolveAndFetchWorkflowUseCase(
     workflowCode,
     resolvedVersion,
   );
   setCachedDefinition(workflowCode, resolvedVersion, workflow);
-  return workflow;
-};
-
-const logRollForward = (workflowCode, pinnedVersion, resolvedVersion) => {
-  if (resolvedVersion !== pinnedVersion) {
-    // Observability: a case has rolled forward to a newer config version.
-    logger.info(
-      `Config version roll-forward for workflow ${workflowCode}: ${pinnedVersion} -> ${resolvedVersion}`,
-    );
-  }
+  return { workflow, definitionSource };
 };
 
 const resolveRolledForward = async (workflowCode, pinnedVersion, major) => {
@@ -71,9 +62,11 @@ const resolveRolledForward = async (workflowCode, pinnedVersion, major) => {
     );
   }
   const resolvedVersion = configVersion.version;
-  const workflow = await loadDefinition(workflowCode, resolvedVersion);
-  logRollForward(workflowCode, pinnedVersion, resolvedVersion);
-  return { workflow, resolvedVersion };
+  const { workflow, definitionSource } = await loadDefinition(
+    workflowCode,
+    resolvedVersion,
+  );
+  return { workflow, resolvedVersion, definitionSource };
 };
 
 const memoResolve = async (memo, key, produce) => {
@@ -92,7 +85,11 @@ export const resolveCurrentWorkflowUseCase = async (
   memo,
 ) => {
   if (!pinnedVersion) {
-    return { workflow: await findByCode(workflowCode), resolvedVersion: null };
+    return {
+      workflow: await findByCode(workflowCode),
+      resolvedVersion: null,
+      definitionSource: "mongodb",
+    };
   }
 
   const major = parseMajor(pinnedVersion);
@@ -110,16 +107,28 @@ const isRollForward = (pinnedVersion, resolvedVersion) =>
   Boolean(resolvedVersion) &&
   resolvedVersion !== pinnedVersion;
 
+// Safety-net: the rolled-forward definition cannot locate the case's current
+// position. Fall back to the pinned version.
 const fallbackToPinned = async (kase, resolution, err) => {
   const pinnedVersion = pinnedVersionOf(kase);
-  // Safety-net: the rolled-forward definition cannot locate the case's current
-  // position. Fall back to the pinned version.
   logger.warn(
     `Config version fallback for workflow ${kase.workflowCode}: position ${kase.position} not found in ${resolution.resolvedVersion}, using pinned ${pinnedVersion}: ${err.message}`,
   );
-  const pinnedWorkflow =
-    getCachedDefinition(kase.workflowCode, pinnedVersion) ??
-    (await findByCodeAndVersion(kase.workflowCode, pinnedVersion));
+
+  const cached = getCachedDefinition(kase.workflowCode, pinnedVersion);
+  if (cached) {
+    setCachedDefinition(kase.workflowCode, pinnedVersion, cached);
+    return {
+      workflow: cached,
+      resolvedVersion: pinnedVersion,
+      definitionSource: "cache",
+    };
+  }
+
+  const pinnedWorkflow = await findByCodeAndVersion(
+    kase.workflowCode,
+    pinnedVersion,
+  );
 
   if (!pinnedWorkflow) {
     // Pinned definition unavailable; best-effort with the rolled-forward one.
@@ -127,36 +136,135 @@ const fallbackToPinned = async (kase, resolution, err) => {
   }
 
   setCachedDefinition(kase.workflowCode, pinnedVersion, pinnedWorkflow);
-  return { workflow: pinnedWorkflow, resolvedVersion: pinnedVersion };
+  return {
+    workflow: pinnedWorkflow,
+    resolvedVersion: pinnedVersion,
+    definitionSource: "mongodb",
+  };
 };
 
 const verifyOrFallback = async (kase, resolution) => {
   try {
     resolution.workflow.getStage(kase.position);
-    return resolution;
+    return { ...resolution, didFallback: false };
   } catch (err) {
-    return fallbackToPinned(kase, resolution, err);
+    const fallback = await fallbackToPinned(kase, resolution, err);
+    // Only true when the pinned definition was actually used; when the pinned
+    // workflow is unavailable, fallbackToPinned returns the rolled-forward
+    // resolution and this should not be reported as a fallback.
+    const didFallback = fallback.resolvedVersion === pinnedVersionOf(kase);
+    return { ...fallback, didFallback };
   }
 };
 
-// Resolves the workflow for a case, falling back to the pinned version if the
-// rolled-forward definition is incompatible with the case's current position.
-export const resolveWorkflowForCase = async (kase, memo) => {
-  const pinned = pinnedVersionOf(kase);
+const determineResolutionType = (pinned, resolvedVersion, didFallback) => {
+  if (!pinned) {
+    return "legacy";
+  }
+  if (didFallback) {
+    return "fallback";
+  }
+  if (resolvedVersion !== pinned) {
+    return "roll-forward";
+  }
+  return "version-match";
+};
+
+const logWorkflowResolved = (kase, resolvedVersion, resolution) => {
+  logger.info(
+    {
+      event: {
+        action: "case-workflow-resolved",
+        outcome: "success",
+      },
+      case: {
+        id: kase._id,
+        reference: kase.caseRef,
+      },
+      workflow: {
+        code: kase.workflowCode,
+        originalConfigVersion: kase.originalConfigVersion,
+        resolvedConfigVersion: resolvedVersion,
+        resolutionType: resolution.resolutionType,
+        definitionSource: resolution.definitionSource,
+      },
+    },
+    "Resolved workflow configuration for case",
+  );
+};
+
+const logWorkflowResolutionFailure = (kase, requestedVersion, err) => {
+  logger.error(
+    {
+      event: {
+        action: "case-workflow-resolved",
+        outcome: "failure",
+      },
+      case: {
+        id: kase._id,
+        reference: kase.caseRef,
+      },
+      workflow: {
+        code: kase.workflowCode,
+        originalConfigVersion: kase.originalConfigVersion,
+        requestedVersion,
+        resolvedConfigVersion: null,
+      },
+      error: { message: err.message },
+    },
+    "Failed to resolve workflow configuration for case",
+  );
+};
+
+// Resolves the workflow version for a case then verifies it is compatible with
+// the case's current position, falling back to the pinned version if not.
+const resolveWithFallback = async (kase, pinned, memo) => {
   const resolution = await resolveCurrentWorkflowUseCase(
     kase.workflowCode,
     pinned,
     memo,
   );
 
-  if (!isRollForward(pinned, resolution.resolvedVersion)) {
-    return resolution;
+  if (!resolution.workflow) {
+    throw Boom.notFound(`Workflow with code "${kase.workflowCode}" not found`);
   }
-  if (!kase.position) {
-    return resolution;
+
+  if (!isRollForward(pinned, resolution.resolvedVersion) || !kase.position) {
+    return { ...resolution, didFallback: false };
   }
 
   return verifyOrFallback(kase, resolution);
+};
+
+// Resolves the workflow for a case, falling back to the pinned version if the
+// rolled-forward definition is incompatible with the case's current position.
+export const resolveWorkflowForCase = async (kase, memo) => {
+  const pinned = pinnedVersionOf(kase);
+
+  try {
+    const { workflow, resolvedVersion, definitionSource, didFallback } =
+      await resolveWithFallback(kase, pinned, memo);
+
+    const resolutionType = determineResolutionType(
+      pinned,
+      resolvedVersion,
+      didFallback,
+    );
+
+    const result = {
+      workflow,
+      resolvedVersion,
+      definitionSource,
+      resolutionType,
+    };
+
+    logWorkflowResolved(kase, resolvedVersion, result);
+
+    return result;
+  } catch (err) {
+    logWorkflowResolutionFailure(kase, pinned, err);
+    throw err;
+  }
 };
 
 export const persistResolvedVersion = async (kase, resolvedVersion) => {
