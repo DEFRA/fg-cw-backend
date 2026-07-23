@@ -64,22 +64,22 @@ export const updateTaskStatusUseCase = async (command) => {
 };
 
 const mapCompleted = ({ task, status, completed }) => {
-  if (!hasStatusOptions(task)) {
+  if (!hasValueOptions(task)) {
     return completed;
   }
 
-  const selectedOption = task.statusOptions.find(
+  const selectedOption = task.valueOptions.find(
     (option) => option.code === status,
   );
 
   if (!selectedOption) {
     throw Boom.badRequest(
-      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
+      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
     );
   }
 
   return selectedOption.completes;
 };
 
-const hasStatusOptions = (task) =>
-  task?.statusOptions && task?.statusOptions.length > 0;
+const hasValueOptions = (task) =>
+  task?.valueOptions && task?.valueOptions.length > 0;

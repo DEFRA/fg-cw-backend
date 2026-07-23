@@ -245,7 +245,7 @@ describe("findByCode", () => {
 
   it("maps status option comment when present", async () => {
     const workflowDocument = WorkflowDocument.createMock();
-    workflowDocument.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions[0].comment =
+    workflowDocument.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions[0].comment =
       {
         label: "Explain this outcome",
         helpText: "You must include an explanation for auditing purposes.",
@@ -257,10 +257,10 @@ describe("findByCode", () => {
     });
 
     const result = await findByCode("123");
-    const statusOption =
-      result.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions[0];
+    const valueOption =
+      result.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions[0];
 
-    expect(statusOption.comment).toEqual({
+    expect(valueOption.comment).toEqual({
       label: "Explain this outcome",
       helpText: "You must include an explanation for auditing purposes.",
       mandatory: true,

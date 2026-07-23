@@ -10,7 +10,7 @@ import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskComment } from "../models/workflow-task-comment.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
@@ -53,8 +53,8 @@ const toWorkflowStageStatus = (s) =>
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
-const toWorkflowTaskStatusOption = (so) =>
-  new WorkflowTaskStatusOption({
+const toWorkflowTaskValueOption = (so) =>
+  new WorkflowTaskValueOption({
     code: so.code,
     name: so.name,
     theme: so.theme,
@@ -83,7 +83,7 @@ const toWorkflowTask = (t) =>
       allOf: t.requiredRoles?.allOf,
       anyOf: t.requiredRoles?.anyOf,
     }),
-    statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
+    valueOptions: t.valueOptions.map(toWorkflowTaskValueOption),
     comment: toWorkflowTaskComment(t.comment),
   });
 

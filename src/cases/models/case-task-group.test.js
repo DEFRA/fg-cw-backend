@@ -3,7 +3,7 @@ import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
 import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 
 describe("CaseTaskGroup", () => {
@@ -142,8 +142,8 @@ describe("CaseTaskGroup", () => {
         name: `Task ${code}`,
         description: `${code} description`,
         mandatory,
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "ACCEPTED",
             name: "Accept",
             theme: "SUCCESS",

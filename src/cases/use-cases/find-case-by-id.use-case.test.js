@@ -15,8 +15,8 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
-  mapSelectedStatusOption,
-  mapStatusOptions,
+  mapSelectedValueOption,
+  mapValueOptions,
   mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
@@ -910,7 +910,7 @@ describe("findCaseByIdUseCase", () => {
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
       // Add theme and altName to workflow status option
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "STATUS_OPTION_1",
           name: "Accepted",
@@ -985,7 +985,7 @@ describe("findCaseByIdUseCase", () => {
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = "RFI";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "RFI",
           name: "Information requested",
@@ -1124,9 +1124,9 @@ describe("findCaseByIdUseCase", () => {
   });
 });
 
-describe("mapSelectedStatusOption", () => {
+describe("mapSelectedValueOption", () => {
   it("returns name as statusText (altName is used only in statusOptions array)", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1143,7 +1143,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1152,7 +1152,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code is null", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1162,7 +1162,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption(null, statusOptions);
+    const result = mapSelectedValueOption(null, valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1171,7 +1171,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code does not match any option", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1181,7 +1181,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("NONEXISTENT", statusOptions);
+    const result = mapSelectedValueOption("NONEXISTENT", valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1190,7 +1190,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("falls back to name as statusText when altName is not present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1199,7 +1199,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1208,7 +1208,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("handles missing theme gracefully", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1217,7 +1217,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1226,9 +1226,9 @@ describe("mapSelectedStatusOption", () => {
   });
 });
 
-describe("mapStatusOptions", () => {
+describe("mapValueOptions", () => {
   it("transforms status options using altName when present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1251,7 +1251,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1276,7 +1276,7 @@ describe("mapStatusOptions", () => {
   });
 
   it("falls back to name when altName is missing", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "COMPLETE",
         name: "Complete",
@@ -1285,7 +1285,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1298,12 +1298,12 @@ describe("mapStatusOptions", () => {
   });
 
   it("handles empty array", () => {
-    const result = mapStatusOptions([]);
+    const result = mapValueOptions([]);
     expect(result).toEqual([]);
   });
 
   it("handles mixed altName presence", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1319,7 +1319,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {

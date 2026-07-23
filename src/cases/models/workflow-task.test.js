@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 
 describe("WorkflowTask", () => {
@@ -10,8 +10,8 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: "A test task",
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",
@@ -25,7 +25,7 @@ describe("WorkflowTask", () => {
         ],
       });
 
-      expect(task.statusOptions[0].comment).toEqual({
+      expect(task.valueOptions[0].comment).toEqual({
         label: "Explain outcome",
         helpText: "Provide additional details",
         mandatory: true,
@@ -38,8 +38,8 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: "A test task",
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",
@@ -50,10 +50,10 @@ describe("WorkflowTask", () => {
 
       expect(task.code).toBe("TASK_1");
       expect(task.name).toBe("Test Task");
-      expect(task.statusOptions).toHaveLength(1);
+      expect(task.valueOptions).toHaveLength(1);
     });
 
-    it("should throw error when statusOptions has no completing option", () => {
+    it("should throw error when valueOptions has no completing option", () => {
       expect(
         () =>
           new WorkflowTask({
@@ -61,8 +61,8 @@ describe("WorkflowTask", () => {
             name: "Test Task",
             mandatory: true,
             description: "A test task",
-            statusOptions: [
-              new WorkflowTaskStatusOption({
+            valueOptions: [
+              new WorkflowTaskValueOption({
                 code: "IN_PROGRESS",
                 name: "In Progress",
                 theme: "INFO",
@@ -79,14 +79,14 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: "A test task",
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "IN_PROGRESS",
             name: "In Progress",
             theme: "INFO",
             completes: false,
           }),
-          new WorkflowTaskStatusOption({
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",
@@ -95,7 +95,7 @@ describe("WorkflowTask", () => {
         ],
       });
 
-      expect(task.statusOptions).toHaveLength(2);
+      expect(task.valueOptions).toHaveLength(2);
     });
 
     it("should throw error when required field is missing", () => {
@@ -106,7 +106,7 @@ describe("WorkflowTask", () => {
             name: "Test Task",
           }),
       ).toThrow(
-        'Invalid WorkflowTask: "mandatory" is required, "description" is required, "statusOptions" is required',
+        'Invalid WorkflowTask: "mandatory" is required, "description" is required, "valueOptions" is required',
       );
     });
 
@@ -116,8 +116,8 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: null,
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",
@@ -135,8 +135,8 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: ["Step 1", "Step 2"],
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",
@@ -157,8 +157,8 @@ describe("WorkflowTask", () => {
         name: "Test Task",
         mandatory: true,
         description: "A test task",
-        statusOptions: [
-          new WorkflowTaskStatusOption({
+        valueOptions: [
+          new WorkflowTaskValueOption({
             code: "COMPLETE",
             name: "Complete",
             theme: "SUCCESS",

@@ -6,7 +6,7 @@ import { CaseTask } from "./case-task.js";
 import { WorkflowPhase } from "./workflow-phase.js";
 import { WorkflowStage } from "./workflow-stage.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 
 describe("CasePhase", () => {
@@ -226,8 +226,8 @@ describe("CasePhase", () => {
                     name: "Task 1",
                     description: "Task 1 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -289,8 +289,8 @@ describe("CasePhase", () => {
                     name: "Task 1",
                     description: "Task 1 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -367,8 +367,8 @@ describe("CasePhase", () => {
                     name: "Task 1",
                     description: "Task 1 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -396,8 +396,8 @@ describe("CasePhase", () => {
                     name: "Task 2",
                     description: "Task 2 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -474,8 +474,8 @@ describe("CasePhase", () => {
                     name: "Task 1",
                     description: "Task 1 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -503,8 +503,8 @@ describe("CasePhase", () => {
                     name: "Task 2",
                     description: "Task 2 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",
@@ -583,8 +583,8 @@ describe("CasePhase", () => {
                     name: "Task 1",
                     description: "Task 1 description",
                     mandatory: true,
-                    statusOptions: [
-                      new WorkflowTaskStatusOption({
+                    valueOptions: [
+                      new WorkflowTaskValueOption({
                         code: "COMPLETE",
                         name: "Complete",
                         theme: "SUCCESS",

@@ -1,4 +1,4 @@
-export class StatusOptionDocument {
+export class ValueOptionDocument {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;

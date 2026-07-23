@@ -7,7 +7,7 @@ import { Case } from "../models/case.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
@@ -218,14 +218,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -299,14 +299,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -380,14 +380,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -460,7 +460,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
@@ -528,7 +528,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
@@ -595,7 +595,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
