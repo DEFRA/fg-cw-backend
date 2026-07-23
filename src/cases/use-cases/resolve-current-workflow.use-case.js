@@ -54,7 +54,7 @@ const loadDefinition = async (workflowCode, resolvedVersion) => {
   return { workflow, definitionSource };
 };
 
-const resolveRolledForward = async (workflowCode, pinnedVersion, major) => {
+const resolveRolledForward = async (workflowCode, major) => {
   const configVersion = await findLatestForMajor(workflowCode, major);
   if (!configVersion) {
     throw Boom.notFound(
@@ -95,7 +95,7 @@ export const resolveCurrentWorkflowUseCase = async (
   const major = parseMajor(pinnedVersion);
   const key = cacheKey(workflowCode, major);
   return memoResolve(memo, key, () =>
-    resolveRolledForward(workflowCode, pinnedVersion, major),
+    resolveRolledForward(workflowCode, major),
   );
 };
 
