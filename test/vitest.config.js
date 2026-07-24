@@ -19,6 +19,7 @@ export default defineConfig({
     fileParallelism: false,
     exclude: ["test/contract/**"],
     env: {
+      SERVICE_VERSION: "0.0.1",
       CW_PORT,
       MONGO_PORT,
       FLOCI_PORT,

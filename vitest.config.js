@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     env: {
+      SERVICE_VERSION: "0.0.1",
       OIDC_JWKS_URI:
         "https://login.microsoftonline.com/common/discovery/v2.0/keys",
       OIDC_VERIFY_ISS: "https://sts.windows.net/common/",
