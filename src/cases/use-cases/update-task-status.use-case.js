@@ -12,9 +12,9 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 export const updateTaskStatusUseCase = async (command) => {
-  logger.info(`Updating task status of case "${command.caseId}"`);
+  logger.info(`Updating task value of case "${command.caseId}"`);
 
-  const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
+  const { caseId, taskGroupCode, taskCode, value, completed, comment, user } =
     command;
 
   const kase = await findById(caseId);
@@ -47,34 +47,34 @@ export const updateTaskStatusUseCase = async (command) => {
 
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  const taskCompleted = mapCompleted({ task, status, completed });
+  const taskCompleted = mapCompleted({ task, value, completed });
 
   kase.setTaskValue({
     taskGroupCode,
     taskCode,
-    value: status,
+    value,
     completed: taskCompleted,
     comment,
     updatedBy: user.id,
   });
 
-  logger.info(`Finished: Updating task status of case "${command.caseId}"`);
+  logger.info(`Finished: Updating task value of case "${command.caseId}"`);
 
   return update(kase);
 };
 
-const mapCompleted = ({ task, status, completed }) => {
+const mapCompleted = ({ task, value, completed }) => {
   if (!hasValueOptions(task)) {
     return completed;
   }
 
   const selectedOption = task.valueOptions.find(
-    (option) => option.code === status,
+    (option) => option.code === value,
   );
 
   if (!selectedOption) {
     throw Boom.badRequest(
-      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
+      `Invalid value option "${value}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
     );
   }
 

@@ -90,10 +90,10 @@ export const completeTask = async ({
   comment = null,
 }) => {
   const response = await wreck.patch(
-    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
     {
       payload: {
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
         comment,
       },

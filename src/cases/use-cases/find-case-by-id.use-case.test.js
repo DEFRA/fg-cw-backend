@@ -368,7 +368,7 @@ describe("findCaseByIdUseCase", () => {
                 code: "TASK_1",
                 name: "Task 1",
                 mandatory: true,
-                status: "PENDING",
+                value: "PENDING",
                 updatedAt: undefined,
                 updatedBy: null,
                 commentRefs: [],
@@ -392,7 +392,7 @@ describe("findCaseByIdUseCase", () => {
                   anyOf: ["ROLE_2"],
                 }),
                 canComplete: true,
-                statusOptions: [
+                valueOptions: [
                   {
                     code: "STATUS_OPTION_1",
                     completes: true,
@@ -934,12 +934,12 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("STATUS_OPTION_1");
+      expect(task.value).toBe("STATUS_OPTION_1");
       expect(task.statusText).toBe("Accepted");
       expect(task.statusTheme).toBe("NONE");
 
       // Verify statusOptions are transformed
-      expect(task.statusOptions).toEqual([
+      expect(task.valueOptions).toEqual([
         {
           code: "STATUS_OPTION_1",
           name: "Accept",
@@ -971,7 +971,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBeNull();
+      expect(task.value).toBeNull();
       expect(task.statusText).toBe("Incomplete");
       expect(task.statusTheme).toBe("INFO");
     });
@@ -1009,7 +1009,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("RFI");
+      expect(task.value).toBe("RFI");
       expect(task.statusText).toBe("Information requested");
       expect(task.statusTheme).toBe("NOTICE");
       expect(task.completed).toBe(false);

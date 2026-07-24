@@ -12,7 +12,7 @@ import {
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
-describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status", () => {
+describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/value", () => {
   let cases;
   let client;
   let user;
@@ -111,10 +111,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${nonExistentCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${nonExistentCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -129,10 +129,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${invalidCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${invalidCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -147,10 +147,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "INVALID_STATUS",
+            value: "INVALID_STATUS",
             completed: true,
           },
         },
@@ -199,10 +199,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -217,10 +217,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${nonExistentTaskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${nonExistentTaskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -235,10 +235,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${nonExistentTaskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${nonExistentTaskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
