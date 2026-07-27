@@ -1,16 +1,18 @@
 import Boom from "@hapi/boom";
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../models/idp-roles.js";
 import { findByCode, update } from "../repositories/role.repository.js";
 
-export const updateRoleUseCase = async ({
-  user,
-  code,
-  description,
-  assignable,
-}) => {
+const updateRole = async ({ user, code, description, assignable }) => {
   logger.info(`Updating role: "${code}"`);
 
   AccessControl.authorise(user, {
@@ -34,3 +36,23 @@ export const updateRoleUseCase = async ({
 
   return role;
 };
+
+export const updateRoleAuditDataBuilder = ([{ user, code }]) => ({
+  entities: [
+    {
+      entity: auditEntities.ROLE,
+      action: auditActions.UPDATE_ROLE,
+      entityid: code,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(user),
+  },
+  security: buildAuditSecurity(auditActions.UPDATE_ROLE),
+  messageGroupId: `update-role-${code}`,
+});
+
+export const updateRoleUseCase = withAudit(
+  updateRole,
+  updateRoleAuditDataBuilder,
+);
