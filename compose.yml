@@ -3,20 +3,27 @@ include:
     project_directory: .
 
 services:
-  localstack:
-    image: localstack/localstack:4.3.0
+  floci:
+    image: floci/floci:latest-compat
     ports:
-      - "${LOCALSTACK_PORT:-4566}:4566"
+      - "${FLOCI_PORT:-4566}:4566"
     env_file:
       - "compose/aws.env"
     environment:
-      DEBUG: ${DEBUG:-1}
-      LS_LOG: WARN
-      SERVICES: sqs,sns
-      LOCALSTACK_HOST: 127.0.0.1
+      FLOCI_DEFAULT_REGION: eu-west-2
+      FLOCI_HOSTNAME: 127.0.0.1
     volumes:
-      - ./tmp/localstack:/var/lib/localstack
-      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
+      - ./compose/floci/start.d:/etc/floci/init/start.d:ro
+    # The image ships a healthcheck, but it only reports that the gateway is
+    # listening - which happens before the init scripts have run. Waiting on the
+    # marker the setup script writes means nothing that depends on floci starts
+    # before its queues and topics exist.
+    healthcheck:
+      test: ["CMD", "stat", "/tmp/READY"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     networks:
       - cdp-tenant
 

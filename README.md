@@ -132,8 +132,9 @@ docker exec -it <container id> sh
 
 ### Useful commands
 
-Docker compose uses localstack to replicate the aws environment.
-Here are some useful commands for interacting with the localstack aws.
+Docker compose uses [floci](https://floci.io) to replicate the aws environment.
+Here are some useful commands for interacting with it. The image ships `awslocal`,
+so these run inside the container: `docker compose exec floci <command>`.
 
 #### List the topics
 
@@ -520,7 +521,7 @@ docker run -e PORT=3001 -p 3001:3001 fg-cw-backend
 
 A local environment with:
 
-- Localstack for AWS services (S3, SQS)
+- floci for AWS services (S3, SQS)
 - MongoDB
 - This service.
 - A commented out frontend example.

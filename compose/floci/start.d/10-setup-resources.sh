@@ -12,6 +12,15 @@ function create_topic() {
   echo $topic_arn
 }
 
+function create_standard_topic() {
+  local topic_name=$1
+  local topic_arn=$(awslocal sns create-topic \
+	  --name $topic_name \
+	  --query "TopicArn" \
+	  --output text)
+  echo $topic_arn
+}
+
 function create_queue() {
   local queue_name=$1
 
@@ -78,6 +87,13 @@ create_topic_and_queue "gas__sns__create_new_case_fifo.fifo" "cw__sqs__create_ne
 create_topic_and_queue "gas__sns__update_case_status_fifo.fifo" "cw__sqs__update_status_fifo.fifo" &
 create_topic_and_queue "gas__sns__create_agreement_fifo.fifo" "create_agreement_fifo.fifo" &
 
+# Standard (non-FIFO) topic the service publishes audit events to. Without it
+# every audit publish fails and the outbox retries it indefinitely.
+create_standard_topic "cw__sns__audit_topic_arn" &
+
 wait
 
 echo "SNS/SQS ready"
+
+# Marker the compose healthcheck waits on - see the floci service in compose.yml
+echo READY > /tmp/READY
