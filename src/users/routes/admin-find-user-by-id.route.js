@@ -1,8 +1,7 @@
 import Joi from "joi";
 
-import { createPageResponse } from "../../common/create-page-response.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
-import { adminFindUserByIdUseCase } from "../use-cases/admin-find-user-by-id.use-case.js";
+import { viewUserDetailsUseCase } from "../use-cases/view-user-details.use-case.js";
 
 export const adminFindUserByIdRoute = {
   method: "GET",
@@ -20,8 +19,6 @@ export const adminFindUserByIdRoute = {
     const { user } = request.auth.credentials;
     const { userId } = request.params;
 
-    const data = await adminFindUserByIdUseCase({ user, userId });
-
-    return createPageResponse({ user, data });
+    return viewUserDetailsUseCase({ user, userId });
   },
 };
