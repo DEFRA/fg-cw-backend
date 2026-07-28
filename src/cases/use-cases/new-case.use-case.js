@@ -3,6 +3,7 @@ import {
   auditEntities,
   buildAuditSecurity,
 } from "../../common/audit-constants.js";
+import { buildSystemSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { CasePhase } from "../models/case-phase.js";
@@ -10,11 +11,6 @@ import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseStage } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
-
-const systemActor = {
-  id: "fg-gas-backend",
-  name: "GAS (system)",
-};
 
 const temporaryCaveatSourceMap = {
   "hefer-consent-required": "historic-england",
@@ -100,7 +96,7 @@ export const newCaseAuditDataBuilder = ([message], result) => {
       },
     ],
     details: {
-      security: { actor: systemActor },
+      security: buildSystemSecurityContext(),
       case: {
         caseRef,
         workflowCode,
