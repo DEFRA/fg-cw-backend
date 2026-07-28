@@ -42,11 +42,12 @@ const toAuditEvent = (auditData, status) => ({
 
 describe("updateStageOutcomeUseCase audit", () => {
   const mockUser = User.createMock();
+  const session = { id: "txn-session" };
 
   beforeEach(() => {
     writeAuditEvent.mockResolvedValue(undefined);
     insertMany.mockResolvedValue(undefined);
-    withTransaction.mockImplementation(async (cb) => cb({}));
+    withTransaction.mockImplementation(async (cb) => cb(session));
   });
 
   afterEach(() => {
@@ -89,7 +90,7 @@ describe("updateStageOutcomeUseCase audit", () => {
         messageGroupId: `update-stage-outcome-${mockCase._id}`,
         status: auditStatus.SUCCESS,
       }),
-      undefined,
+      session,
     );
   });
 

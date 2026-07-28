@@ -18,64 +18,62 @@ import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 
-const updateStageOutcome = async (command) => {
+const updateStageOutcome = async (command, session) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
 
-  return await withTransaction(async (session) => {
-    const { caseId, actionCode, comment, user } = command;
-    const kase = await findById(caseId);
+  const { caseId, actionCode, comment, user } = command;
+  const kase = await findById(caseId);
 
-    if (!kase) {
-      throw Boom.notFound(`Case with id "${caseId}" not found`);
-    }
+  if (!kase) {
+    throw Boom.notFound(`Case with id "${caseId}" not found`);
+  }
 
-    const workflow = await findByCode(kase.workflowCode);
+  const workflow = await findByCode(kase.workflowCode);
 
-    AccessControl.authorise(user, {
-      idpRoles: [IdpRoles.ReadWrite],
-      appRoles: workflow.requiredRoles,
-    });
-
-    workflow.validateStageActionComment({
-      actionCode,
-      position: kase.position,
-      comment,
-    });
-
-    const previousPosition = kase.position;
-
-    const targetPosition = workflow.getNextPosition(kase.position, actionCode);
-    await ensureCasePosition(kase, workflow, targetPosition);
-
-    kase.updateStageOutcome({
-      workflow,
-      actionCode,
-      comment,
-      createdBy: user.id,
-    });
-
-    await update(kase, session);
-
-    const caseStatusEvent = new CaseStatusUpdatedEvent({
-      caseRef: kase.caseRef,
-      workflowCode: kase.workflowCode,
-      previousStatus: previousPosition.toString(),
-      currentStatus: kase.position.toString(),
-    });
-
-    await insertMany(
-      [
-        new Outbox({
-          event: caseStatusEvent,
-          target: config.get("aws.sns.caseStatusUpdatedTopicArn"),
-          segregationRef: Outbox.getSegregationRef(caseStatusEvent),
-        }),
-      ],
-      session,
-    );
-
-    logger.info(`Finished: Updating stage outcome of case "${command.caseId}"`);
+  AccessControl.authorise(user, {
+    idpRoles: [IdpRoles.ReadWrite],
+    appRoles: workflow.requiredRoles,
   });
+
+  workflow.validateStageActionComment({
+    actionCode,
+    position: kase.position,
+    comment,
+  });
+
+  const previousPosition = kase.position;
+
+  const targetPosition = workflow.getNextPosition(kase.position, actionCode);
+  await ensureCasePosition(kase, workflow, targetPosition);
+
+  kase.updateStageOutcome({
+    workflow,
+    actionCode,
+    comment,
+    createdBy: user.id,
+  });
+
+  await update(kase, session);
+
+  const caseStatusEvent = new CaseStatusUpdatedEvent({
+    caseRef: kase.caseRef,
+    workflowCode: kase.workflowCode,
+    previousStatus: previousPosition.toString(),
+    currentStatus: kase.position.toString(),
+  });
+
+  await insertMany(
+    [
+      new Outbox({
+        event: caseStatusEvent,
+        target: config.get("aws.sns.caseStatusUpdatedTopicArn"),
+        segregationRef: Outbox.getSegregationRef(caseStatusEvent),
+      }),
+    ],
+    session,
+  );
+
+  logger.info(`Finished: Updating stage outcome of case "${command.caseId}"`);
 };
 
 export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
@@ -97,7 +95,10 @@ export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
   messageGroupId: `update-stage-outcome-${command.caseId}`,
 });
 
-export const updateStageOutcomeUseCase = withAudit(
-  updateStageOutcome,
-  updateStageOutcomeAuditDataBuilder,
-);
+export const updateStageOutcomeUseCase = (command) =>
+  withTransaction((session) =>
+    withAudit(updateStageOutcome, updateStageOutcomeAuditDataBuilder)(
+      command,
+      session,
+    ),
+  );
