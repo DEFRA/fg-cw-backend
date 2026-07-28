@@ -6,8 +6,7 @@ import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 export const TaskValue = Joi.string().allow(null);
 
 const CommentRefSchema = Joi.object({
-  // Historical snapshot field, deliberately not renamed to "value" alongside CaseTask.value
-  status: TaskValue.required(),
+  value: TaskValue.required(),
   ref: UrlSafeId.required(),
 }).label("CommentRef");
 
@@ -60,10 +59,7 @@ export class CaseTask {
 
     // Append new comment ref to the array if a comment was provided
     if (comment?.ref) {
-      this.commentRefs = [
-        ...this.commentRefs,
-        { status: value, ref: comment.ref },
-      ];
+      this.commentRefs = [...this.commentRefs, { value, ref: comment.ref }];
     }
   }
 

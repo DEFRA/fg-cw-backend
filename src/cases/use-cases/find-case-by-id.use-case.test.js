@@ -1024,7 +1024,7 @@ describe("findCaseByIdUseCase", () => {
 
       const commentRef = "64c88faac1f56f71e1b89a33";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "STATUS_OPTION_1", ref: commentRef },
+        { value: "STATUS_OPTION_1", ref: commentRef },
       ];
 
       mockCase.comments = [
@@ -1059,7 +1059,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "STATUS_OPTION_1", ref: "nonexistent-ref" },
+        { value: "STATUS_OPTION_1", ref: "nonexistent-ref" },
       ];
       mockCase.comments = [];
 
@@ -1073,14 +1073,14 @@ describe("findCaseByIdUseCase", () => {
       expect(task.notesHistory).toEqual([]);
     });
 
-    it("falls back to status code when statusOption is not found", async () => {
+    it("falls back to value code when valueOption is not found", async () => {
       const mockUser = User.createMock();
       const mockWorkflow = Workflow.createMock();
       const mockCase = Case.createMock();
 
       const commentRef = "64c88faac1f56f71e1b89a33";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "UNKNOWN_STATUS", ref: commentRef },
+        { value: "UNKNOWN_STATUS_VALUE", ref: commentRef },
       ];
 
       mockCase.comments = [
@@ -1101,7 +1101,7 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.notesHistory).toHaveLength(1);
-      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS");
+      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS_VALUE");
     });
 
     it("returns empty notesHistory when commentRefs is undefined", async () => {

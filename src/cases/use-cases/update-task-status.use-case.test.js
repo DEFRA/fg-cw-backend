@@ -57,7 +57,7 @@ describe("updateTaskStatusUseCase", () => {
     ).rejects.toThrow('Case with id "0909990909099990aaee9878" not found');
   });
 
-  it("updates the status of a task", async () => {
+  it("updates the value of a task", async () => {
     const kase = Case.createMock();
     const workflow = Workflow.createMock();
     kase.workflowCode = workflow.code;
@@ -80,7 +80,7 @@ describe("updateTaskStatusUseCase", () => {
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.value).toBe("STATUS_OPTION_1");
     expect(task.commentRefs).toHaveLength(1);
-    expect(task.commentRefs[0].status).toBe("STATUS_OPTION_1");
+    expect(task.commentRefs[0].value).toBe("STATUS_OPTION_1");
     expect(task.commentRefs[0].ref).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);
   });
@@ -183,7 +183,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("sets completed flag based on statusOption when statusOptions exist", async () => {
+  it("sets completed flag based on valueOption when valueOptions exist", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -264,7 +264,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("sets completed to false when statusOption has completes false", async () => {
+  it("sets completed to false when valueOption has completes false", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -345,7 +345,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("throws error when invalid status option is provided", async () => {
+  it("throws error when invalid valueOption is provided", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -425,7 +425,7 @@ describe("updateTaskStatusUseCase", () => {
     );
   });
 
-  it("uses completed parameter when task has no statusOptions", async () => {
+  it("uses completed parameter when task has no valueOptions", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -493,7 +493,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("throws error when trying to update task status when current stage status is not interactive", async () => {
+  it("throws error when trying to update task value when current stage status is not interactive", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
