@@ -14,6 +14,11 @@ export const auditActions = {
   VIEW_LANDING_PAGE: "VIEW_LANDING_PAGE",
   VIEW_USER_LIST: "VIEW_USER_LIST",
   VIEW_USER_DETAILS: "VIEW_USER_DETAILS",
+  CREATE_CASE: "CREATE_CASE",
+  UPDATE_STAGE_OUTCOME: "UPDATE_STAGE_OUTCOME",
+  UPDATE_TASK_STATUS: "UPDATE_TASK_STATUS",
+  PERFORM_PAGE_ACTION: "PERFORM_PAGE_ACTION",
+  ADD_NOTE_TO_CASE: "ADD_NOTE_TO_CASE",
 };
 
 export const auditStatus = {
@@ -32,6 +37,11 @@ const pmcCodesByAction = {
   [auditActions.VIEW_LANDING_PAGE]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_USER_LIST]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_USER_DETAILS]: "0706", // any action an internal/external user or service can execute
+  [auditActions.CREATE_CASE]: "0706", // any action an internal/external user or service can execute
+  [auditActions.UPDATE_STAGE_OUTCOME]: "0706", // any action an internal/external user or service can execute
+  [auditActions.UPDATE_TASK_STATUS]: "0706", // any action an internal/external user or service can execute
+  [auditActions.PERFORM_PAGE_ACTION]: "0706", // any action an internal/external user or service can execute
+  [auditActions.ADD_NOTE_TO_CASE]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({

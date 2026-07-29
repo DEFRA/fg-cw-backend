@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildActorSummary,
   buildSecurityContext,
+  buildSystemSecurityContext,
   buildUserSummary,
+  SYSTEM_ACTOR,
 } from "./audit-security-context.js";
 
 const actor = {
@@ -79,5 +81,18 @@ describe("buildSecurityContext", () => {
 
   it("omits targetUser when the target user is falsy", () => {
     expect(buildSecurityContext(actor, null)).not.toHaveProperty("targetUser");
+  });
+});
+
+describe("buildSystemSecurityContext", () => {
+  it("returns the shared system actor as the security actor", () => {
+    expect(buildSystemSecurityContext()).toEqual({ actor: SYSTEM_ACTOR });
+  });
+
+  it("exposes the GAS system actor identity", () => {
+    expect(SYSTEM_ACTOR).toEqual({
+      id: "fg-gas-backend",
+      name: "GAS (system)",
+    });
   });
 });
