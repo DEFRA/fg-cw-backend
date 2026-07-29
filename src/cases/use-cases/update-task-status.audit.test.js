@@ -54,7 +54,7 @@ describe("updateTaskStatusUseCase audit", () => {
   it("writes an UPDATE_TASK_STATUS audit event on success", async () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
-    mockCase.setTaskStatus = vi.fn();
+    mockCase.setTaskValue = vi.fn();
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
     update.mockResolvedValue(mockCase);
