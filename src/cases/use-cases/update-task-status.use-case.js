@@ -20,9 +20,9 @@ export const validatePayloadComment = (comment, required) => {
 };
 
 const updateTaskStatus = async (command) => {
-  logger.info(`Updating task status of case "${command.caseId}"`);
+  logger.info(`Updating task value for case "${command.caseId}"`);
 
-  const { taskGroupCode, taskCode, status, completed, comment, user } = command;
+  const { taskGroupCode, taskCode, value, completed, comment, user } = command;
 
   const kase = await loadCase(command);
 
@@ -50,18 +50,18 @@ const updateTaskStatus = async (command) => {
 
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  const taskCompleted = mapCompleted({ task, status, completed });
+  const taskCompleted = mapCompleted({ task, value, completed });
 
-  kase.setTaskStatus({
+  kase.setTaskValue({
     taskGroupCode,
     taskCode,
-    status,
+    value,
     completed: taskCompleted,
     comment,
     updatedBy: user.id,
   });
 
-  logger.info(`Finished: Updating task status of case "${command.caseId}"`);
+  logger.info(`Finished: Updating task value for case "${command.caseId}"`);
 
   return update(kase);
 };
