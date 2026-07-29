@@ -4,9 +4,9 @@ import { auditStatus } from "../../common/audit-constants.js";
 import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { adminAccessCheckUseCase } from "./admin-access-check.use-case.js";
 import {
-  viewLandingPageAuditDataBuilder,
-  viewLandingPageUseCase,
-} from "./view-landing-page.use-case.js";
+  adminViewLandingPageAuditDataBuilder,
+  adminViewLandingPageUseCase,
+} from "./admin-view-landing-page.use-case.js";
 
 vi.mock("./admin-access-check.use-case.js");
 
@@ -38,7 +38,7 @@ const toAuditEvent = (auditData, status) => ({
   },
 });
 
-describe("viewLandingPageUseCase", () => {
+describe("adminViewLandingPageUseCase", () => {
   beforeEach(() => {
     writeAuditEvent.mockResolvedValue(undefined);
   });
@@ -50,7 +50,7 @@ describe("viewLandingPageUseCase", () => {
   it("returns the paged landing page response", async () => {
     adminAccessCheckUseCase.mockReturnValue({ ok: true });
 
-    const result = await viewLandingPageUseCase({ user });
+    const result = await adminViewLandingPageUseCase({ user });
 
     expect(adminAccessCheckUseCase).toHaveBeenCalledWith({ user });
     expect(result.data).toEqual({ ok: true });
@@ -60,7 +60,7 @@ describe("viewLandingPageUseCase", () => {
   it("writes a VIEW_LANDING_PAGE SUCCESS audit event with the actor's context", async () => {
     adminAccessCheckUseCase.mockReturnValue({ ok: true });
 
-    await viewLandingPageUseCase({ user });
+    await adminViewLandingPageUseCase({ user });
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -89,7 +89,9 @@ describe("viewLandingPageUseCase", () => {
       throw new Error("forbidden");
     });
 
-    await expect(viewLandingPageUseCase({ user })).rejects.toThrow("forbidden");
+    await expect(adminViewLandingPageUseCase({ user })).rejects.toThrow(
+      "forbidden",
+    );
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,9 +104,9 @@ describe("viewLandingPageUseCase", () => {
   });
 });
 
-describe("viewLandingPageAuditDataBuilder", () => {
+describe("adminViewLandingPageAuditDataBuilder", () => {
   it("builds an audit payload that passes audit validation", () => {
-    const auditData = viewLandingPageAuditDataBuilder([{ user }]);
+    const auditData = adminViewLandingPageAuditDataBuilder([{ user }]);
 
     const { valid } = validateAuditEvent(
       toAuditEvent(auditData, auditStatus.SUCCESS),
@@ -114,7 +116,7 @@ describe("viewLandingPageAuditDataBuilder", () => {
   });
 
   it("uses the user id for the messageGroupId", () => {
-    const auditData = viewLandingPageAuditDataBuilder([{ user }]);
+    const auditData = adminViewLandingPageAuditDataBuilder([{ user }]);
 
     expect(auditData.messageGroupId).toBe(`view-landing-page-${user.id}`);
   });

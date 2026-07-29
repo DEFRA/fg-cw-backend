@@ -4,9 +4,9 @@ import { auditStatus } from "../../common/audit-constants.js";
 import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { adminFindUserByIdUseCase } from "./admin-find-user-by-id.use-case.js";
 import {
-  viewUserDetailsAuditDataBuilder,
-  viewUserDetailsUseCase,
-} from "./view-user-details.use-case.js";
+  adminViewUserDetailsAuditDataBuilder,
+  adminViewUserDetailsUseCase,
+} from "./admin-view-user-details.use-case.js";
 
 vi.mock("./admin-find-user-by-id.use-case.js");
 
@@ -40,7 +40,7 @@ const toAuditEvent = (auditData, status) => ({
   },
 });
 
-describe("viewUserDetailsUseCase", () => {
+describe("adminViewUserDetailsUseCase", () => {
   beforeEach(() => {
     writeAuditEvent.mockResolvedValue(undefined);
   });
@@ -54,7 +54,7 @@ describe("viewUserDetailsUseCase", () => {
 
     adminFindUserByIdUseCase.mockResolvedValue(foundUser);
 
-    const result = await viewUserDetailsUseCase({ user, userId });
+    const result = await adminViewUserDetailsUseCase({ user, userId });
 
     expect(adminFindUserByIdUseCase).toHaveBeenCalledWith({ user, userId });
     expect(result.data).toEqual(foundUser);
@@ -64,7 +64,7 @@ describe("viewUserDetailsUseCase", () => {
   it("writes a VIEW_USER_DETAILS SUCCESS audit event with the target id", async () => {
     adminFindUserByIdUseCase.mockResolvedValue({ id: userId });
 
-    await viewUserDetailsUseCase({ user, userId });
+    await adminViewUserDetailsUseCase({ user, userId });
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -93,7 +93,7 @@ describe("viewUserDetailsUseCase", () => {
   it("writes a FAILURE audit event when the use-case throws", async () => {
     adminFindUserByIdUseCase.mockRejectedValue(new Error("boom"));
 
-    await expect(viewUserDetailsUseCase({ user, userId })).rejects.toThrow(
+    await expect(adminViewUserDetailsUseCase({ user, userId })).rejects.toThrow(
       "boom",
     );
 
@@ -110,9 +110,9 @@ describe("viewUserDetailsUseCase", () => {
   });
 });
 
-describe("viewUserDetailsAuditDataBuilder", () => {
+describe("adminViewUserDetailsAuditDataBuilder", () => {
   it("builds an audit payload that passes audit validation", () => {
-    const auditData = viewUserDetailsAuditDataBuilder([{ user, userId }]);
+    const auditData = adminViewUserDetailsAuditDataBuilder([{ user, userId }]);
 
     const { valid } = validateAuditEvent(
       toAuditEvent(auditData, auditStatus.SUCCESS),
@@ -122,7 +122,7 @@ describe("viewUserDetailsAuditDataBuilder", () => {
   });
 
   it("uses the user id for the messageGroupId", () => {
-    const auditData = viewUserDetailsAuditDataBuilder([{ user, userId }]);
+    const auditData = adminViewUserDetailsAuditDataBuilder([{ user, userId }]);
 
     expect(auditData.messageGroupId).toBe(`view-user-details-${userId}`);
   });

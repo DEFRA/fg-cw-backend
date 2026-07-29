@@ -8,13 +8,13 @@ import { createPageResponse } from "../../common/create-page-response.js";
 import { withAudit } from "../../common/with-audit.js";
 import { adminFindUsersUseCase } from "./admin-find-users.use-case.js";
 
-const viewUserList = async ({ user, query }) => {
+const adminViewUserList = async ({ user, query }) => {
   const data = await adminFindUsersUseCase({ user, query });
 
   return createPageResponse({ user, data });
 };
 
-export const viewUserListAuditDataBuilder = ([{ user }]) => ({
+export const adminViewUserListAuditDataBuilder = ([{ user }]) => ({
   entities: [
     {
       entity: auditEntities.USER,
@@ -28,7 +28,7 @@ export const viewUserListAuditDataBuilder = ([{ user }]) => ({
   messageGroupId: `view-user-list-${user.id}`,
 });
 
-export const viewUserListUseCase = withAudit(
-  viewUserList,
-  viewUserListAuditDataBuilder,
+export const adminViewUserListUseCase = withAudit(
+  adminViewUserList,
+  adminViewUserListAuditDataBuilder,
 );

@@ -8,13 +8,13 @@ import { createPageResponse } from "../../common/create-page-response.js";
 import { withAudit } from "../../common/with-audit.js";
 import { adminAccessCheckUseCase } from "./admin-access-check.use-case.js";
 
-const viewLandingPage = ({ user }) => {
+const adminViewLandingPage = ({ user }) => {
   const data = adminAccessCheckUseCase({ user });
 
   return createPageResponse({ user, data });
 };
 
-export const viewLandingPageAuditDataBuilder = ([{ user }]) => ({
+export const adminViewLandingPageAuditDataBuilder = ([{ user }]) => ({
   entities: [
     {
       entity: auditEntities.USER,
@@ -28,7 +28,7 @@ export const viewLandingPageAuditDataBuilder = ([{ user }]) => ({
   messageGroupId: `view-landing-page-${user.id}`,
 });
 
-export const viewLandingPageUseCase = withAudit(
-  viewLandingPage,
-  viewLandingPageAuditDataBuilder,
+export const adminViewLandingPageUseCase = withAudit(
+  adminViewLandingPage,
+  adminViewLandingPageAuditDataBuilder,
 );

@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 import { idSchema } from "../../common/schemas/user/id.schema.js";
-import { viewUserDetailsUseCase } from "../use-cases/view-user-details.use-case.js";
+import { adminViewUserDetailsUseCase } from "../use-cases/admin-view-user-details.use-case.js";
 
 export const adminFindUserByIdRoute = {
   method: "GET",
@@ -19,6 +19,6 @@ export const adminFindUserByIdRoute = {
     const { user } = request.auth.credentials;
     const { userId } = request.params;
 
-    return viewUserDetailsUseCase({ user, userId });
+    return adminViewUserDetailsUseCase({ user, userId });
   },
 };

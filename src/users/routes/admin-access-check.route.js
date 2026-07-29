@@ -1,4 +1,4 @@
-import { viewLandingPageUseCase } from "../use-cases/view-landing-page.use-case.js";
+import { adminViewLandingPageUseCase } from "../use-cases/admin-view-landing-page.use-case.js";
 
 export const adminAccessCheckRoute = {
   method: "GET",
@@ -10,6 +10,6 @@ export const adminAccessCheckRoute = {
   async handler(request) {
     const { user } = request.auth.credentials;
 
-    return viewLandingPageUseCase({ user });
+    return adminViewLandingPageUseCase({ user });
   },
 };

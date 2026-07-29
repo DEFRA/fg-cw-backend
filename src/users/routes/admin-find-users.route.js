@@ -3,7 +3,7 @@ import Joi from "joi";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { idpIdSchema } from "../schemas/user/idp-id.schema.js";
-import { viewUserListUseCase } from "../use-cases/view-user-list.use-case.js";
+import { adminViewUserListUseCase } from "../use-cases/admin-view-user-list.use-case.js";
 
 export const adminFindUsersRoute = {
   method: "GET",
@@ -23,7 +23,7 @@ export const adminFindUsersRoute = {
   async handler(request) {
     const { user } = request.auth.credentials;
 
-    return viewUserListUseCase({
+    return adminViewUserListUseCase({
       user,
       query: {
         idpId: request.query.idpId,
