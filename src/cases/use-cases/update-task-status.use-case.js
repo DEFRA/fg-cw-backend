@@ -79,12 +79,12 @@ export const updateTaskStatusAuditDataBuilder = ([command]) => ({
     task: {
       taskGroupCode: command.taskGroupCode,
       taskCode: command.taskCode,
-      status: command.status,
+      value: command.value,
       completed: command.completed,
     },
   },
   security: buildAuditSecurity(auditActions.UPDATE_TASK_STATUS),
-  messageGroupId: `update-task-status-${command.caseId}`,
+  messageGroupId: `update-task-value-${command.caseId}`,
 });
 
 export const updateTaskStatusUseCase = withAudit(
@@ -92,18 +92,18 @@ export const updateTaskStatusUseCase = withAudit(
   updateTaskStatusAuditDataBuilder,
 );
 
-const mapCompleted = ({ task, status, completed }) => {
+const mapCompleted = ({ task, value, completed }) => {
   if (!hasValueOptions(task)) {
     return completed;
   }
 
   const selectedOption = task.valueOptions.find(
-    (option) => option.code === status,
+    (option) => option.code === value,
   );
 
   if (!selectedOption) {
     throw Boom.badRequest(
-      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
+      `Invalid value option "${value}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
     );
   }
 
