@@ -3,13 +3,8 @@ services:
     build: .
     ports:
       - "${CW_PORT:-3101}:3101"
-    links:
-      - "localstack:localstack"
-      - "mongo-ready:mongo-ready"
-      - "mongodb:mongodb"
-      - "entra:entra"
     depends_on:
-      localstack:
+      floci:
         condition: service_healthy
       mongo-ready:
         condition: service_healthy
