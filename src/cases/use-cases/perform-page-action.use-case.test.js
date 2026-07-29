@@ -186,7 +186,10 @@ describe("performPageActionUseCase", () => {
     });
 
     expect(result).toEqual(mockResponse);
-    expect(findById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
+    expect(findById).toHaveBeenCalledWith(
+      "64c88faac1f56f71e1b89a33",
+      undefined,
+    );
     expect(resolveWorkflowForCase).toHaveBeenCalledWith(
       expect.objectContaining({ workflowCode: "FRPS" }),
     );
@@ -313,7 +316,7 @@ describe("performPageActionUseCase", () => {
         actionCode: "RECALCULATE_RULES",
         user: mockUser,
       }),
-    ).rejects.toThrow("Case not found: 64c88faac1f56f71e1b89a33");
+    ).rejects.toThrow('Case with id "64c88faac1f56f71e1b89a33" not found');
   });
 
   it("should throw error when workflow is not found", async () => {

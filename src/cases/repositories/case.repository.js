@@ -273,10 +273,13 @@ export const findByCaseRefAndWorkflowCode = async (
   return caseDocument && toCase(caseDocument);
 };
 
-export const findById = async (caseId) => {
-  const caseDocument = await db.collection(collection).findOne({
-    _id: ObjectId.createFromHexString(caseId),
-  });
+export const findById = async (caseId, session) => {
+  const caseDocument = await db.collection(collection).findOne(
+    {
+      _id: ObjectId.createFromHexString(caseId),
+    },
+    { session },
+  );
 
   return caseDocument && toCase(caseDocument);
 };

@@ -43,7 +43,7 @@ describe("addNoteToCaseUseCase", () => {
 
     const result = await addNoteToCaseUseCase(command);
 
-    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id, undefined);
 
     expect(result).toBeInstanceOf(Comment);
     expect(result.type).toBe("NOTE_ADDED");
@@ -198,7 +198,7 @@ describe("addNoteToCaseUseCase", () => {
       'Case with id "non-existent-case-id" not found',
     );
 
-    expect(findById).toHaveBeenCalledWith("non-existent-case-id");
+    expect(findById).toHaveBeenCalledWith("non-existent-case-id", undefined);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -226,7 +226,7 @@ describe("addNoteToCaseUseCase", () => {
       "Failed to add note",
     );
 
-    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id, undefined);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -249,7 +249,7 @@ describe("addNoteToCaseUseCase", () => {
       "Note text is required and cannot be empty",
     );
 
-    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id, undefined);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -274,7 +274,7 @@ describe("addNoteToCaseUseCase", () => {
       "Database update failed",
     );
 
-    expect(findById).toHaveBeenCalledWith(mockCase._id);
+    expect(findById).toHaveBeenCalledWith(mockCase._id, undefined);
     expect(update).toHaveBeenCalledWith(mockCase);
   });
 
