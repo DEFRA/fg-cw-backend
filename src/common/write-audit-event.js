@@ -8,7 +8,10 @@ import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
 
 const getCorrelationId = () => getTraceId() ?? randomUUID();
-const getIP = (context) => context?.ip ?? null;
+// System-originated events (e.g. inbox consumers) have no HTTP request context,
+// so default to the unspecified-address sentinel to satisfy the required `ip` field.
+const SYSTEM_IP = "0.0.0.0";
+const getIP = (context) => context?.ip ?? SYSTEM_IP;
 
 const isPlainObject = (value) => value?.constructor === Object;
 

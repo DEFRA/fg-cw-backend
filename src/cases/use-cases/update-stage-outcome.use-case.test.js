@@ -52,7 +52,7 @@ describe("updateStageOutcomeUseCase", () => {
 
       await updateStageOutcomeUseCase(command);
 
-      expect(findById).toHaveBeenCalledWith(mockCase._id);
+      expect(findById).toHaveBeenCalledWith(mockCase._id, session);
       expect(findByCode).toHaveBeenCalledWith(mockCase.workflowCode);
       expect(mockWorkflow.validateStageActionComment).toHaveBeenCalledWith({
         actionCode: "APPROVE",
@@ -194,7 +194,7 @@ describe("updateStageOutcomeUseCase", () => {
         Boom.notFound('Case with id "non-existent-case-id" not found'),
       );
 
-      expect(findById).toHaveBeenCalledWith("non-existent-case-id");
+      expect(findById).toHaveBeenCalledWith("non-existent-case-id", session);
       expect(findByCode).not.toHaveBeenCalled();
       expect(update).not.toHaveBeenCalled();
     });
