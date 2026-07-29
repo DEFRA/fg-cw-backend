@@ -171,48 +171,50 @@ const determineResolutionType = (pinned, resolvedVersion, didFallback) => {
 };
 
 const logWorkflowResolved = (kase, resolvedVersion, resolution) => {
+  const message = [
+    "Resolved workflow configuration for case",
+    `caseReference=${kase.caseRef}`,
+    `workflowCode=${kase.workflowCode}`,
+    `originalConfigVersion=${kase.originalConfigVersion ?? "none"}`,
+    `resolvedConfigVersion=${resolvedVersion ?? "none"}`,
+    `resolutionType=${resolution.resolutionType}`,
+    `definitionSource=${resolution.definitionSource}`,
+  ].join(" ");
+
   logger.info(
     {
       event: {
         action: "case-workflow-resolved",
         outcome: "success",
-      },
-      case: {
-        id: kase._id,
         reference: kase.caseRef,
-      },
-      workflow: {
-        code: kase.workflowCode,
-        originalConfigVersion: kase.originalConfigVersion,
-        resolvedConfigVersion: resolvedVersion,
-        resolutionType: resolution.resolutionType,
-        definitionSource: resolution.definitionSource,
+        reason: resolution.resolutionType,
       },
     },
-    "Resolved workflow configuration for case",
+    message,
   );
 };
 
 const logWorkflowResolutionFailure = (kase, requestedVersion, err) => {
+  const message = [
+    "Failed to resolve workflow configuration for case",
+    `caseReference=${kase.caseRef}`,
+    `workflowCode=${kase.workflowCode}`,
+    `originalConfigVersion=${kase.originalConfigVersion ?? "none"}`,
+    `requestedVersion=${requestedVersion ?? "none"}`,
+    `error=${err.message}`,
+  ].join(" ");
+
   logger.error(
     {
       event: {
         action: "case-workflow-resolved",
         outcome: "failure",
-      },
-      case: {
-        id: kase._id,
         reference: kase.caseRef,
-      },
-      workflow: {
-        code: kase.workflowCode,
-        originalConfigVersion: kase.originalConfigVersion,
-        requestedVersion,
-        resolvedConfigVersion: null,
+        reason: err.message,
       },
       error: { message: err.message },
     },
-    "Failed to resolve workflow configuration for case",
+    message,
   );
 };
 
