@@ -12,6 +12,15 @@ function create_topic() {
   echo $topic_arn
 }
 
+function create_standard_topic() {
+  local topic_name=$1
+  local topic_arn=$(awslocal sns create-topic \
+	  --name $topic_name \
+	  --query "TopicArn" \
+	  --output text)
+  echo $topic_arn
+}
+
 function create_queue() {
   local queue_name=$1
 
@@ -124,18 +133,37 @@ function create_standard_topic_and_queue() {
 }
 
 
-create_topic_and_queue "cw__sns__case_created_fifo.fifo" "cw__sqs__case_created_fifo.fifo" &
-create_topic_and_queue "cw__sns__case_status_updated_fifo.fifo" "gas__sqs__update_status_fifo.fifo" &
+# Every job is backgrounded to create resources in parallel, and each PID is
+# collected so failures can be waited on individually. A bare `wait` always
+# returns 0 regardless of what the jobs did, so `set -e` would not catch a
+# failed create and this script would exit 0 with resources missing. Floci
+# aborts startup and shuts down when an init script exits non-zero, so
+# propagating the failure turns a silently half-built emulator into a container
+# that refuses to start and says why.
+pids=()
 
-create_topic_and_queue "agreement_status_updated_fifo.fifo" "gas__sqs__update_agreement_status_fifo.fifo" &
-create_topic_and_queue "gas__sns__application_status_updated_fifo.fifo" "gas__sqs__application_status_updated_fifo.fifo" & 
-create_topic_and_queue "gas__sns__create_new_case_fifo.fifo" "cw__sqs__create_new_case_fifo.fifo" &
-create_topic_and_queue "gas__sns__update_case_status_fifo.fifo" "cw__sqs__update_status_fifo.fifo" &
-create_topic_and_queue "gas__sns__create_agreement_fifo.fifo" "create_agreement_fifo.fifo" &
+create_topic_and_queue "cw__sns__case_created_fifo.fifo" "cw__sqs__case_created_fifo.fifo" & pids+=($!)
+create_topic_and_queue "cw__sns__case_status_updated_fifo.fifo" "gas__sqs__update_status_fifo.fifo" & pids+=($!)
+
+
+create_topic_and_queue "agreement_status_updated_fifo.fifo" "gas__sqs__update_agreement_status_fifo.fifo" & pids+=($!)
+create_topic_and_queue "gas__sns__application_status_updated_fifo.fifo" "gas__sqs__application_status_updated_fifo.fifo" & pids+=($!)
+create_topic_and_queue "gas__sns__create_new_case_fifo.fifo" "cw__sqs__create_new_case_fifo.fifo" & pids+=($!)
+create_topic_and_queue "gas__sns__update_case_status_fifo.fifo" "cw__sqs__update_status_fifo.fifo" & pids+=($!)
+create_topic_and_queue "gas__sns__create_agreement_fifo.fifo" "create_agreement_fifo.fifo" & pids+=($!)
 
 create_standard_topic_and_queue "gfr__sns___config_update" "cw__sqs__config_version_updated" &
 
-wait
+# Standard (non-FIFO) topic the service publishes audit events to. Without it
+# every audit publish fails and the outbox retries it indefinitely.
+create_standard_topic "cw__sns__audit_topic_arn" & pids+=($!)
+
+for pid in "${pids[@]}"; do
+  if ! wait "$pid"; then
+    echo "SNS/SQS setup failed (pid $pid)" >&2
+    exit 1
+  fi
+done
 
 echo "SNS/SQS ready"
 
@@ -147,3 +175,8 @@ awslocal s3 cp /etc/localstack/init/ready.d/seed/pigs-might-fly/1.0.0/cw/cw.json
   s3://config-broker-local/pigs-might-fly/1.0.0/cw/cw.json
 
 echo "S3 config broker bucket ready"
+
+# Marker the compose healthcheck waits on - see the floci service in compose.yml
+echo READY > /tmp/READY
+
+

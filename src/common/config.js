@@ -29,7 +29,6 @@ export const config = convict({
   serviceVersion: {
     doc: "The service version, this variable is injected into your docker container in CDP environments",
     format: String,
-    nullable: true,
     default: null,
     env: "SERVICE_VERSION",
   },
@@ -116,7 +115,7 @@ export const config = convict({
   },
   aws: {
     endpointUrl: {
-      doc: "AWS Endpoint URL used for LocalStack",
+      doc: "AWS Endpoint URL used for floci",
       format: String,
       nullable: true,
       default: null,
