@@ -257,7 +257,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
             {
               entity: "CASE",
               action: "UPDATE_STAGE_OUTCOME",
-              entityid: kase._id.toString(),
+              entityid: kase.caseRef,
             },
           ],
           status: "SUCCESS",

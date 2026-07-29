@@ -49,7 +49,7 @@ const message = {
   },
 };
 
-describe("newCaseUseCase audit", () => {
+describe("new-case audit", () => {
   beforeEach(() => {
     writeAuditEvent.mockResolvedValue(undefined);
   });
@@ -58,7 +58,7 @@ describe("newCaseUseCase audit", () => {
     vi.clearAllMocks();
   });
 
-  it("writes a CREATE_CASE audit event within the transaction session on success", async () => {
+  it("does not write an audit event itself - auditing is delegated to the callers (submit-case / replace-case)", async () => {
     const session = { id: "session-1" };
     save.mockResolvedValue({
       insertedId: new ObjectId("888888888888888999999998"),
@@ -67,35 +67,7 @@ describe("newCaseUseCase audit", () => {
 
     await newCaseUseCase(message, session);
 
-    expect(writeAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        entities: [
-          {
-            entity: "CASE",
-            action: "CREATE_CASE",
-            entityid: "TEST-001",
-          },
-        ],
-        security: { pmccode: "0706" },
-        messageGroupId: "create-case-TEST-001",
-        status: auditStatus.SUCCESS,
-      }),
-      session,
-    );
-    expect(writeAuditEvent.mock.calls[0][0].details.security.actor.id).toBe(
-      "fg-gas-backend",
-    );
-  });
-
-  it("writes a FAILURE audit event when workflow lookup fails", async () => {
-    findWorkflowByCodeUseCase.mockRejectedValue(new Error("boom"));
-
-    await newCaseUseCase(message, { id: "session-1" }).catch(() => {});
-
-    expect(writeAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ status: auditStatus.FAILURE }),
-      null,
-    );
+    expect(writeAuditEvent).not.toHaveBeenCalled();
   });
 
   it("produces a payload that passes audit validation", () => {

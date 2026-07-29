@@ -10,12 +10,14 @@ import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { findById, update } from "../repositories/case.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
+import { loadCase } from "./load-case.js";
 
-const performPageAction = async ({ caseId, actionCode, user }) => {
-  const kase = await loadCase(caseId);
+const performPageAction = async (command) => {
+  const { caseId, actionCode, user } = command;
+  const kase = await loadCase(command);
   const workflow = await loadWorkflow(kase.workflowCode);
 
   AccessControl.authorise(user, {
@@ -72,7 +74,7 @@ export const performPageActionAuditDataBuilder = ([command]) => ({
     {
       entity: auditEntities.CASE,
       action: auditActions.PERFORM_PAGE_ACTION,
-      entityid: command.caseId,
+      entityid: command.caseRef ?? command.caseId,
     },
   ],
   details: {
@@ -87,16 +89,6 @@ export const performPageActionUseCase = withAudit(
   performPageAction,
   performPageActionAuditDataBuilder,
 );
-
-const loadCase = async (caseId) => {
-  const kase = await findById(caseId);
-
-  if (!kase) {
-    throw Boom.notFound(`Case not found: ${caseId}`);
-  }
-
-  return kase;
-};
 
 const loadWorkflow = async (workflowCode) => {
   const workflow = await findByCode(workflowCode);

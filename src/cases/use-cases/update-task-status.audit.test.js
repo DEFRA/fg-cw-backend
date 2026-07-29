@@ -74,7 +74,7 @@ describe("updateTaskStatusUseCase audit", () => {
           {
             entity: "CASE",
             action: "UPDATE_TASK_STATUS",
-            entityid: mockCase._id,
+            entityid: mockCase.caseRef,
           },
         ],
         security: { pmccode: "0706" },

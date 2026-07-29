@@ -2,6 +2,7 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { withTransaction } from "../../common/with-transaction.js";
+import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { CaseSeries } from "../models/case-series.js";
 import { Case } from "../models/case.js";
 import {
@@ -13,14 +14,20 @@ import { newCaseUseCase } from "./new-case.use-case.js";
 import { replaceCaseUseCase } from "./replace-case.use-case.js";
 
 vi.mock("../../common/with-transaction.js");
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/case-series.repository.js");
-vi.mock("./new-case.use-case.js");
+// Keep the real audit data builder but stub the shared new-case building block.
+vi.mock("./new-case.use-case.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  newCaseUseCase: vi.fn(),
+}));
 
 describe("replaceCaseUseCase", () => {
   const session = {};
 
   beforeEach(() => {
+    vi.clearAllMocks();
     withTransaction.mockImplementation((cb) => cb(session));
   });
 
@@ -65,6 +72,43 @@ describe("replaceCaseUseCase", () => {
     );
   });
 
+  it("audits a CREATE_CASE success at this level", async () => {
+    newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
+
+    const mockSeries = CaseSeries.new({
+      workflowCode: "wf-001",
+      caseRef: "TEST-001",
+      caseId: "old-id",
+    });
+    findByCaseRefAndWorkflowCode.mockResolvedValue(mockSeries);
+
+    const mockPreviousCase = Case.createMock();
+    mockPreviousCase.closed = true;
+    findCase.mockResolvedValue(mockPreviousCase);
+
+    const message = {
+      event: {
+        data: {
+          caseRef: "TEST-001",
+          previousCaseRef: "TEST-000",
+          workflowCode: "wf-001",
+        },
+      },
+    };
+
+    await replaceCaseUseCase(message);
+
+    expect(writeAuditEvent).toHaveBeenCalledTimes(1);
+    const [auditData] = writeAuditEvent.mock.calls[0];
+    expect(auditData).toMatchObject({
+      entities: [
+        { entity: "CASE", action: "CREATE_CASE", entityid: "TEST-001" },
+      ],
+      status: "SUCCESS",
+    });
+    expect(auditData.details.case.caseId).toBe("123333333344455555666666");
+  });
+
   it("throws 409 if the previous case is not closed", async () => {
     newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
 
@@ -93,5 +137,34 @@ describe("replaceCaseUseCase", () => {
         "Can not replace existing Case with caseRef: TEST-000 with new caseRef: TEST-001 - replacement is not allowed",
       ),
     );
+  });
+
+  it("audits a CREATE_CASE failure when replacement is not allowed", async () => {
+    const mockCase = Case.createMock();
+    findCase.mockResolvedValue(mockCase);
+
+    const message = {
+      event: {
+        data: {
+          caseRef: "TEST-001",
+          previousCaseRef: "TEST-000",
+          workflowCode: "wf-001",
+        },
+      },
+    };
+
+    await expect(replaceCaseUseCase(message)).rejects.toThrow(
+      "replacement is not allowed",
+    );
+
+    expect(newCaseUseCase).not.toHaveBeenCalled();
+    expect(writeAuditEvent).toHaveBeenCalledTimes(1);
+    const [auditData] = writeAuditEvent.mock.calls[0];
+    expect(auditData).toMatchObject({
+      entities: [
+        { entity: "CASE", action: "CREATE_CASE", entityid: "TEST-001" },
+      ],
+      status: "FAILURE",
+    });
   });
 });

@@ -54,7 +54,11 @@ describe("performPageActionUseCase audit", () => {
   });
 
   it("writes a PERFORM_PAGE_ACTION audit event on success", async () => {
-    findById.mockResolvedValue({ _id: "case-1", workflowCode: "FRPS" });
+    findById.mockResolvedValue({
+      _id: "case-1",
+      caseRef: "CASE-REF-1",
+      workflowCode: "FRPS",
+    });
     findByCode.mockResolvedValue({
       requiredRoles: { allOf: [], anyOf: [] },
       findExternalAction: vi.fn().mockReturnValue({
@@ -77,7 +81,7 @@ describe("performPageActionUseCase audit", () => {
           {
             entity: "CASE",
             action: "PERFORM_PAGE_ACTION",
-            entityid: "case-1",
+            entityid: "CASE-REF-1",
           },
         ],
         security: { pmccode: "0706" },

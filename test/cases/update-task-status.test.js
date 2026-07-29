@@ -270,7 +270,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
             {
               entity: "CASE",
               action: "UPDATE_TASK_STATUS",
-              entityid: kase._id.toString(),
+              entityid: kase.caseRef,
             },
           ],
           status: "SUCCESS",

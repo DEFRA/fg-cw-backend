@@ -179,7 +179,7 @@ describe("POST /cases/{caseId}/notes", () => {
             {
               entity: "CASE",
               action: "ADD_NOTE_TO_CASE",
-              entityid: kase._id.toString(),
+              entityid: kase.caseRef,
             },
           ],
           status: "SUCCESS",

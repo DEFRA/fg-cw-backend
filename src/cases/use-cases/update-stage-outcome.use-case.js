@@ -1,4 +1,3 @@
-import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
 import {
   auditActions,
@@ -13,20 +12,17 @@ import { withTransaction } from "../../common/with-transaction.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
-import { findById, update } from "../repositories/case.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
+import { loadCase } from "./load-case.js";
 
 const updateStageOutcome = async (command, session) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
 
-  const { caseId, actionCode, comment, user } = command;
-  const kase = await findById(caseId);
-
-  if (!kase) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
+  const { actionCode, comment, user } = command;
+  const kase = await loadCase(command);
 
   const workflow = await findByCode(kase.workflowCode);
 
@@ -81,7 +77,7 @@ export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
     {
       entity: auditEntities.CASE,
       action: auditActions.UPDATE_STAGE_OUTCOME,
-      entityid: command.caseId,
+      entityid: command.caseRef ?? command.caseId,
     },
   ],
   details: {

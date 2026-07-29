@@ -10,19 +10,16 @@ import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
-import { findById, update } from "../repositories/case.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
+import { loadCase } from "./load-case.js";
 
 const addNoteToCase = async (command) => {
   const { caseId, text, user } = command;
 
   logger.info(`Adding a note to case "${caseId}"`);
 
-  const kase = await findById(caseId);
-
-  if (!kase) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
+  const kase = await loadCase(command);
 
   const workflow = await findByCode(kase.workflowCode);
 
@@ -54,7 +51,7 @@ export const addNoteToCaseAuditDataBuilder = ([command], result) => ({
     {
       entity: auditEntities.CASE,
       action: auditActions.ADD_NOTE_TO_CASE,
-      entityid: command.caseId,
+      entityid: command.caseRef ?? command.caseId,
     },
   ],
   details: {

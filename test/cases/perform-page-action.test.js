@@ -256,7 +256,7 @@ describe("POST /cases/{caseId}/page-action", () => {
             {
               entity: "CASE",
               action: "PERFORM_PAGE_ACTION",
-              entityid: kase._id.toString(),
+              entityid: kase.caseRef,
             },
           ],
           status: "SUCCESS",

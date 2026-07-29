@@ -5,7 +5,6 @@ import {
 } from "../../common/audit-constants.js";
 import { buildSystemSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
-import { withAudit } from "../../common/with-audit.js";
 import { CasePhase } from "../models/case-phase.js";
 import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
@@ -108,4 +107,7 @@ export const newCaseAuditDataBuilder = ([message], result) => {
   };
 };
 
-export const newCaseUseCase = withAudit(newCase, newCaseAuditDataBuilder);
+// newCaseUseCase is a building block shared by submit-case and replace-case.
+// Auditing is deliberately performed by those callers (a level up), where each
+// owns its transaction, so the CREATE_CASE audit reflects the full operation.
+export const newCaseUseCase = newCase;

@@ -68,7 +68,7 @@ describe("addNoteToCaseUseCase audit", () => {
           {
             entity: "CASE",
             action: "ADD_NOTE_TO_CASE",
-            entityid: mockCase._id,
+            entityid: mockCase.caseRef,
           },
         ],
         security: { pmccode: "0706" },

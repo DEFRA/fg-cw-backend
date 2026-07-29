@@ -83,7 +83,7 @@ describe("updateStageOutcomeUseCase audit", () => {
           {
             entity: "CASE",
             action: "UPDATE_STAGE_OUTCOME",
-            entityid: mockCase._id,
+            entityid: mockCase.caseRef,
           },
         ],
         security: { pmccode: "0706" },
