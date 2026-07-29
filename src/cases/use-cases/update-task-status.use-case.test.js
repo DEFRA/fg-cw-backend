@@ -80,7 +80,7 @@ describe("updateTaskStatusUseCase", () => {
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.value).toBe("STATUS_OPTION_1");
     expect(task.commentRefs).toHaveLength(1);
-    expect(task.commentRefs[0].value).toBe("STATUS_OPTION_1");
+    expect(task.commentRefs[0].status).toBe("STATUS_OPTION_1");
     expect(task.commentRefs[0].ref).toBeDefined();
     expect(update).toHaveBeenCalledWith(kase);
   });
