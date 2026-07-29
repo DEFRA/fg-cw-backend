@@ -346,18 +346,23 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.info).toHaveBeenCalledWith(
       {
-        event: { action: "case-workflow-resolved", outcome: "success" },
-        case: { id: "case-123", reference: "CASE-REF-001" },
-        workflow: {
-          code: "pigs-might-fly",
-          originalConfigVersion: "1.0.0",
-          resolvedConfigVersion: "1.0.0",
-          resolutionType: "version-match",
-          definitionSource: "cache",
+        event: {
+          action: "case-workflow-resolved",
+          outcome: "success",
+          reference: "CASE-REF-001",
+          reason: "version-match",
         },
       },
-      "Resolved workflow configuration for case",
+      expect.stringContaining("Resolved workflow configuration for case"),
     );
+
+    const message = logger.info.mock.calls[0][1];
+    expect(message).toContain("caseReference=CASE-REF-001");
+    expect(message).toContain("workflowCode=pigs-might-fly");
+    expect(message).toContain("originalConfigVersion=1.0.0");
+    expect(message).toContain("resolvedConfigVersion=1.0.0");
+    expect(message).toContain("resolutionType=version-match");
+    expect(message).toContain("definitionSource=cache");
   });
 
   it("logs roll-forward with info on success", async () => {
@@ -374,14 +379,18 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        workflow: expect.objectContaining({
-          resolvedConfigVersion: "1.2.3",
-          resolutionType: "roll-forward",
-          definitionSource: "s3",
+        event: expect.objectContaining({
+          action: "case-workflow-resolved",
+          outcome: "success",
+          reason: "roll-forward",
         }),
       }),
-      "Resolved workflow configuration for case",
+      expect.stringContaining("resolvedConfigVersion=1.2.3"),
     );
+
+    const message = logger.info.mock.calls[0][1];
+    expect(message).toContain("resolutionType=roll-forward");
+    expect(message).toContain("definitionSource=s3");
   });
 
   it("logs fallback with info on success", async () => {
@@ -404,14 +413,18 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        workflow: expect.objectContaining({
-          resolvedConfigVersion: "1.0.0",
-          resolutionType: "fallback",
-          definitionSource: "mongodb",
+        event: expect.objectContaining({
+          action: "case-workflow-resolved",
+          outcome: "success",
+          reason: "fallback",
         }),
       }),
-      "Resolved workflow configuration for case",
+      expect.stringContaining("resolvedConfigVersion=1.0.0"),
     );
+
+    const message = logger.info.mock.calls[0][1];
+    expect(message).toContain("resolutionType=fallback");
+    expect(message).toContain("definitionSource=mongodb");
   });
 
   it("logs legacy with info when there is no stored config version", async () => {
@@ -426,14 +439,18 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        workflow: expect.objectContaining({
-          resolvedConfigVersion: null,
-          resolutionType: "legacy",
-          definitionSource: "mongodb",
+        event: expect.objectContaining({
+          action: "case-workflow-resolved",
+          outcome: "success",
+          reason: "legacy",
         }),
       }),
-      "Resolved workflow configuration for case",
+      expect.stringContaining("resolvedConfigVersion=none"),
     );
+
+    const message = logger.info.mock.calls[0][1];
+    expect(message).toContain("resolutionType=legacy");
+    expect(message).toContain("definitionSource=mongodb");
   });
 
   it("logs failure with error when resolution throws", async () => {
@@ -445,18 +462,24 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       {
-        event: { action: "case-workflow-resolved", outcome: "failure" },
-        case: { id: "case-123", reference: "CASE-REF-001" },
-        workflow: {
-          code: "pigs-might-fly",
-          originalConfigVersion: "1.0.0",
-          requestedVersion: "1.0.0",
-          resolvedConfigVersion: null,
+        event: {
+          action: "case-workflow-resolved",
+          outcome: "failure",
+          reference: "CASE-REF-001",
+          reason: expect.any(String),
         },
         error: { message: expect.any(String) },
       },
-      "Failed to resolve workflow configuration for case",
+      expect.stringContaining(
+        "Failed to resolve workflow configuration for case",
+      ),
     );
+
+    const message = logger.error.mock.calls[0][1];
+    expect(message).toContain("caseReference=CASE-REF-001");
+    expect(message).toContain("workflowCode=pigs-might-fly");
+    expect(message).toContain("originalConfigVersion=1.0.0");
+    expect(message).toContain("requestedVersion=1.0.0");
   });
 
   it("failure log includes currentConfigVersion as requestedVersion when it differs from originalConfigVersion", async () => {
@@ -469,15 +492,9 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     await expect(resolveWorkflowForCase(kase)).rejects.toThrow();
 
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workflow: expect.objectContaining({
-          originalConfigVersion: "0.0.0",
-          requestedVersion: "1.3.1",
-        }),
-      }),
-      "Failed to resolve workflow configuration for case",
-    );
+    const message = logger.error.mock.calls[0][1];
+    expect(message).toContain("originalConfigVersion=0.0.0");
+    expect(message).toContain("requestedVersion=1.3.1");
   });
 
   it("emits error log (not success) when legacy workflow is not found", async () => {
@@ -496,18 +513,22 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: { action: "case-workflow-resolved", outcome: "failure" },
-        workflow: expect.objectContaining({
-          code: "pigs-might-fly",
-          requestedVersion: null,
-          resolvedConfigVersion: null,
+        event: expect.objectContaining({
+          action: "case-workflow-resolved",
+          outcome: "failure",
         }),
       }),
-      "Failed to resolve workflow configuration for case",
+      expect.stringContaining(
+        "Failed to resolve workflow configuration for case",
+      ),
     );
 
-    const successCalls = logger.info.mock.calls.filter(
-      (call) => call[1] === "Resolved workflow configuration for case",
+    const message = logger.error.mock.calls[0][1];
+    expect(message).toContain("workflowCode=pigs-might-fly");
+    expect(message).toContain("requestedVersion=none");
+
+    const successCalls = logger.info.mock.calls.filter((call) =>
+      call[1]?.startsWith("Resolved workflow configuration for case"),
     );
     expect(successCalls).toHaveLength(0);
   });
@@ -522,11 +543,12 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     await expect(resolveWorkflowForCase(kase)).rejects.toThrow();
 
-    const errorCall = logger.error.mock.calls.find(
-      (call) => call[1] === "Failed to resolve workflow configuration for case",
+    const errorCall = logger.error.mock.calls.find((call) =>
+      call[1]?.startsWith("Failed to resolve workflow configuration for case"),
     );
     const logObj = errorCall[0];
-    const logPayload = JSON.stringify(logObj);
+    const logMessage = errorCall[1];
+    const logPayload = JSON.stringify(logObj) + logMessage;
     expect(logPayload).not.toContain("user-1");
     expect(logPayload).not.toContain("123456789");
     expect(logObj).not.toHaveProperty("payload");
