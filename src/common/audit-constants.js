@@ -6,6 +6,7 @@ export const auditEntities = {
 
 export const auditActions = {
   LOGIN: "LOGIN",
+  LOGOUT: "LOGOUT",
   CREATE_USER: "CREATE_USER",
   UPDATE_USER: "UPDATE_USER",
   CREATE_ROLE: "CREATE_ROLE",
@@ -21,6 +22,7 @@ export const auditStatus = {
 // Defra Protective Monitoring event reference codes (BUJ QRG v2.2), dashes stripped.
 const pmcCodesByAction = {
   [auditActions.LOGIN]: "0701", // session created
+  [auditActions.LOGOUT]: "0702", // session ended
   [auditActions.CREATE_USER]: "1204", // user registration / service enrollment
   [auditActions.UPDATE_USER]: "0704", // user role change / privilege uplift
   [auditActions.CREATE_ROLE]: "0705", // account permission & privilege management
