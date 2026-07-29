@@ -88,7 +88,7 @@ export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
     },
   },
   security: buildAuditSecurity(auditActions.UPDATE_STAGE_OUTCOME),
-  messageGroupId: `update-stage-outcome-${command.caseId}`,
+  segregationRef: `update-stage-outcome-${command.caseId}`,
 });
 
 export const updateStageOutcomeUseCase = (command) =>

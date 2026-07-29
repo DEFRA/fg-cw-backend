@@ -84,7 +84,7 @@ export const updateTaskStatusAuditDataBuilder = ([command]) => ({
     },
   },
   security: buildAuditSecurity(auditActions.UPDATE_TASK_STATUS),
-  messageGroupId: `update-task-status-${command.caseId}`,
+  segregationRef: `update-task-status-${command.caseId}`,
 });
 
 export const updateTaskStatusUseCase = withAudit(

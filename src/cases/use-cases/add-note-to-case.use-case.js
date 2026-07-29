@@ -59,7 +59,7 @@ export const addNoteToCaseAuditDataBuilder = ([command], result) => ({
     note: { ref: result?.ref },
   },
   security: buildAuditSecurity(auditActions.ADD_NOTE_TO_CASE),
-  messageGroupId: `add-note-to-case-${command.caseId}`,
+  segregationRef: `add-note-to-case-${command.caseId}`,
 });
 
 export const addNoteToCaseUseCase = withAudit(

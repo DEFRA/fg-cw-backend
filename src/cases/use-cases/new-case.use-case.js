@@ -103,7 +103,7 @@ export const newCaseAuditDataBuilder = ([message], result) => {
       },
     },
     security: buildAuditSecurity(auditActions.CREATE_CASE),
-    messageGroupId: `create-case-${caseRef}`,
+    segregationRef: `create-case-${caseRef}`,
   };
 };
 
