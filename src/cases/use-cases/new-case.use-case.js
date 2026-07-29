@@ -1,3 +1,9 @@
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSystemSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
 import { CasePhase } from "../models/case-phase.js";
 import { Case } from "../models/case.js";
@@ -33,7 +39,7 @@ const mapCaveatSources = (payload) => {
   };
 };
 
-export const newCaseUseCase = async (message, session) => {
+const newCase = async (message, session) => {
   const {
     event: { data },
   } = message;
@@ -76,3 +82,32 @@ export const newCaseUseCase = async (message, session) => {
 
   return insertedId;
 };
+
+export const newCaseAuditDataBuilder = ([message], result) => {
+  const { caseRef, workflowCode } = message.event.data;
+
+  return {
+    entities: [
+      {
+        entity: auditEntities.CASE,
+        action: auditActions.CREATE_CASE,
+        entityid: caseRef,
+      },
+    ],
+    details: {
+      security: buildSystemSecurityContext(),
+      case: {
+        caseRef,
+        workflowCode,
+        caseId: result?.toString(),
+      },
+    },
+    security: buildAuditSecurity(auditActions.CREATE_CASE),
+    messageGroupId: `create-case-${caseRef}`,
+  };
+};
+
+// newCaseUseCase is a building block shared by submit-case and replace-case.
+// Auditing is deliberately performed by those callers (a level up), where each
+// owns its transaction, so the CREATE_CASE audit reflects the full operation.
+export const newCaseUseCase = newCase;
