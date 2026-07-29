@@ -177,7 +177,10 @@ describe("performPageActionUseCase", () => {
     });
 
     expect(result).toEqual(mockResponse);
-    expect(findById).toHaveBeenCalledWith("64c88faac1f56f71e1b89a33");
+    expect(findById).toHaveBeenCalledWith(
+      "64c88faac1f56f71e1b89a33",
+      undefined,
+    );
     expect(findByCode).toHaveBeenCalledWith("FRPS");
     expect(externalActionUseCase).toHaveBeenCalledWith({
       actionCode: "RECALCULATE_RULES",

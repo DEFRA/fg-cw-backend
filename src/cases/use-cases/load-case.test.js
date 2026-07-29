@@ -15,9 +15,20 @@ describe("loadCase", () => {
     const command = { caseId: "case-1" };
     const kase = await loadCase(command);
 
-    expect(findById).toHaveBeenCalledWith("case-1");
+    expect(findById).toHaveBeenCalledWith("case-1", undefined);
     expect(kase).toEqual({ _id: "case-1", caseRef: "CASE-REF-1" });
     expect(command.caseRef).toBe("CASE-REF-1");
+  });
+
+  it("passes the session through to findById", async () => {
+    findById.mockResolvedValue({ _id: "case-1", caseRef: "CASE-REF-1" });
+
+    const command = { caseId: "case-1" };
+    const session = { id: "txn" };
+
+    await loadCase(command, session);
+
+    expect(findById).toHaveBeenCalledWith("case-1", session);
   });
 
   it("throws a 404 when the case is not found", async () => {

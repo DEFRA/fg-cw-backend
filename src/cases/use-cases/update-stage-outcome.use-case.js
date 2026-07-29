@@ -22,7 +22,7 @@ const updateStageOutcome = async (command, session) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
 
   const { actionCode, comment, user } = command;
-  const kase = await loadCase(command);
+  const kase = await loadCase(command, session);
 
   const workflow = await findByCode(kase.workflowCode);
 
