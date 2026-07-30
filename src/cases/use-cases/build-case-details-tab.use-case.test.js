@@ -46,6 +46,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     );
     expect(result.caseId).toBe("test-case-id");
     expect(result.caseRef).toBe("TEST-REF-001");
+    expect(result.workflowCode).toBe("frps-private-beta");
     expect(result.tabId).toBe("case-details");
     expect(result.banner).toBeDefined();
     expect(result.banner.title.text).toBe("Test Business");
@@ -55,7 +56,6 @@ describe("buildCaseDetailsTabUseCase", () => {
     expect(Array.isArray(result.content)).toBe(true);
     expect(result.content[0].title).toBe("Details");
     expect(result.beforeContent).toBeUndefined();
-    expect(result.agreements).toBeUndefined();
   });
 
   it("throws error when case not found", async () => {
@@ -165,85 +165,40 @@ describe("buildCaseDetailsTabUseCase", () => {
     );
   });
 
-  it.each(["upland-water", "tree-health"])(
-    "supplies agreement references with the trusted %s grant code",
-    async (grantCode) => {
-      const mockCase = Case.createMock({
-        _id: "test-case-id",
-        caseRef: "TEST-REF-001",
-        workflowCode: grantCode,
-        supplementaryData: {
-          agreements: [
-            { agreementRef: "AGR-001" },
-            { agreementRef: "AGR-002" },
-          ],
-        },
-      });
-
-      const mockWorkflow = Workflow.createMock({
-        code: grantCode,
-        pages: {
-          cases: {
-            details: {
-              banner: {
-                title: { text: "Test Title" },
-              },
-              tabs: {
-                agreements: {
-                  renderIf: "$.supplementaryData.agreements[0]",
-                  content: [
-                    {
-                      id: "agreements",
-                      component: "table",
-                      title: "Agreements",
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      });
-
-      findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
-
-      const result = await buildCaseDetailsTabUseCase({
-        params: { caseId: "test-case-id", tabId: "agreements" },
-        query: {},
-      });
-
-      expect(result.caseId).toBe("test-case-id");
-      expect(result.caseRef).toBe("TEST-REF-001");
-      expect(result.tabId).toBe("agreements");
-      expect(result.agreements).toEqual([
-        { agreementRef: "AGR-001", grantCode },
-        { agreementRef: "AGR-002", grantCode },
-      ]);
-      expect(result.content).toBeDefined();
-      expect(Array.isArray(result.content)).toBe(true);
-    },
-  );
-
-  it("preserves an absent grant code for legacy agreement page data", async () => {
+  it("preserves agreement content and links", async () => {
     const mockCase = Case.createMock({
-      _id: "legacy-case-id",
-      caseRef: "LEGACY-REF-001",
-      workflowCode: undefined,
+      _id: "test-case-id",
+      caseRef: "TEST-REF-001",
+      workflowCode: "test-workflow",
       supplementaryData: {
-        agreements: [{ agreementRef: "LEGACY-AGR-001" }],
+        agreements: [{ agreementRef: "AGR-001" }],
       },
     });
 
     const mockWorkflow = Workflow.createMock({
-      code: "legacy-workflow",
+      code: "test-workflow",
       pages: {
         cases: {
           details: {
             tabs: {
               agreements: {
                 renderIf: "$.supplementaryData.agreements[0]",
-                content: [],
+                link: {
+                  href: {
+                    urlTemplate: "/cases/{caseId}/agreements",
+                    params: {
+                      caseId: "$._id",
+                    },
+                  },
+                  text: "Agreements",
+                },
+                content: [
+                  {
+                    id: "agreements",
+                    component: "table",
+                    title: "Agreements",
+                  },
+                ],
               },
             },
           },
@@ -258,11 +213,24 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     const result = await buildCaseDetailsTabUseCase({
-      params: { caseId: "legacy-case-id", tabId: "agreements" },
+      params: { caseId: "test-case-id", tabId: "agreements" },
       query: {},
     });
 
-    expect(result.agreements).toEqual([{ agreementRef: "LEGACY-AGR-001" }]);
+    expect(result.workflowCode).toBe("test-workflow");
+    expect(result).not.toHaveProperty("agreements");
+    expect(result.content).toEqual([
+      {
+        id: "agreements",
+        component: "table",
+        title: "Agreements",
+      },
+    ]);
+    expect(result.links).toContainEqual({
+      id: "agreements",
+      href: "/cases/test-case-id/agreements",
+      text: "Agreements",
+    });
   });
 
   it("handles missing pages structure in workflow", async () => {

@@ -52,7 +52,7 @@ export const up = async (db) => {
       anyOf: [],
     },
     templates: {},
-    definitions,
+    definitions: definitions,
     endpoints: [],
     externalActions: [],
     pages: {

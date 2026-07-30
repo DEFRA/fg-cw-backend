@@ -108,12 +108,6 @@ describe("GET /cases/{caseId}/tabs/{tabId}", () => {
     });
     expect(response.payload.data.content).toBeDefined();
     expect(Array.isArray(response.payload.data.content)).toBe(true);
-    expect(response.payload.data.agreements).toEqual([
-      {
-        agreementRef: "AGR-001",
-        grantCode: "frps-private-beta",
-      },
-    ]);
   });
 
   it("returns 404 when case does not exist", async () => {

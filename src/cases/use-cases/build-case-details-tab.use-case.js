@@ -60,24 +60,12 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   return {
     caseId,
     caseRef: kase.caseRef,
+    workflowCode: kase.workflowCode,
     tabId,
     banner,
     links,
     content,
-    ...buildAgreementPageData(kase, tabId),
   };
-};
-
-const buildAgreementPageData = (kase, tabId) =>
-  tabId === "agreements" ? { agreements: buildAgreementRoutingData(kase) } : {};
-
-const buildAgreementRoutingData = (kase) => {
-  const grantCode = kase.workflowCode;
-
-  return (kase.supplementaryData?.agreements ?? []).map(({ agreementRef }) => ({
-    agreementRef,
-    ...(grantCode && { grantCode }),
-  }));
 };
 
 export const createRootContext = async ({

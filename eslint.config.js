@@ -1,8 +1,6 @@
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 import neostandard from "neostandard";
 
-const sourcePath = (suffix) => `${import.meta.dirname}/src/**/${suffix}`;
-
 export default [
   ...neostandard({
     env: ["node"],
@@ -51,44 +49,40 @@ export default [
             },
             {
               target: "**/routes/**/!(*.test).js",
-              from: [sourcePath("**")],
-              except: [
-                sourcePath("use-cases/**"),
-                sourcePath("schemas/**"),
-                sourcePath("common/**"),
-              ],
+              from: ["src/**/**"],
+              except: ["**/use-cases/**", "**/schemas/**", "**/common/**"],
               message: "Routes should only import use cases and schemas",
             },
             {
               target: "**/subscribers/**/!(*.test).js",
-              from: [sourcePath("**")],
+              from: ["src/**/**"],
               except: [
-                sourcePath("common/**"),
-                sourcePath("use-cases/**"),
-                sourcePath("schemas/**"),
-                sourcePath("repositories/**"),
+                "**/common/**",
+                "**/use-cases/**",
+                "**/schemas/**",
+                "**/repositories/**",
               ],
               message:
                 "Subscribers should only import common, repositories, use cases and schemas",
             },
             {
               target: "**/use-cases/**/!(*.test).js",
-              from: [sourcePath("**")],
+              from: ["src/**/**"],
               except: [
-                sourcePath("common/**"),
-                sourcePath("repositories/**"),
-                sourcePath("models/**"),
-                sourcePath("publishers/**"),
-                sourcePath("use-cases/**"),
-                sourcePath("events/**"),
+                "**/common/**",
+                "**/repositories/**",
+                "**/models/**",
+                "**/publishers/**",
+                "**/use-cases/**",
+                "**/events/**",
               ],
               message:
                 "Use cases should only import common, events, repositories, models, publishers and other use cases",
             },
             {
               target: "**/publishers/**/!(*.test).js",
-              from: [sourcePath("**")],
-              except: [sourcePath("common/**"), sourcePath("events/**")],
+              from: ["src/**/**"],
+              except: ["**/common/**", "**/events/**"],
               message: "Publishers should only import common and events",
             },
           ],
