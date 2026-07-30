@@ -1,10 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   evaluateTaskCondition,
   jp,
   populateUrlTemplate,
   resolveJSONPath,
 } from "./resolve-json.js";
+
+vi.mock("./config.js", () => ({
+  config: {
+    get: vi.fn((key) => {
+      const values = {
+        cdpEnvironment: "test",
+        "log.level": "silent",
+        "log.format": "pino-pretty",
+        "log.isEnabled": false,
+        "log.redact": ["req.headers.authorization"],
+        serviceName: "fg-cw-backend",
+        serviceVersion: "0.0.0",
+      };
+      return values[key];
+    }),
+  },
+}));
 
 describe("resolveJSONPath", () => {
   const mockRoot = {
@@ -1102,6 +1119,39 @@ describe("populateUrlTemplate", () => {
     const template = `/{${longKey}}`;
     const result = populateUrlTemplate(template, { [longKey]: "value" });
     expect(result).toBe(`/{${longKey}}`);
+  });
+
+  it("should replace %ENVIRONMENT% and {param} placeholders in an absolute URL", () => {
+    const result = populateUrlTemplate(
+      "https://service.%ENVIRONMENT%.example.com/resources/{id}",
+      { id: "123" },
+    );
+    expect(result).toBe("https://service.test.example.com/resources/123");
+  });
+
+  it("should replace %ENVIRONMENT% when no {param} placeholders are present", () => {
+    const result = populateUrlTemplate(
+      "https://service.%ENVIRONMENT%.example.com/health",
+      {},
+    );
+    expect(result).toBe("https://service.test.example.com/health");
+  });
+
+  it("should leave URLs without %ENVIRONMENT% unchanged", () => {
+    const result = populateUrlTemplate("/cases/{caseId}/details", {
+      caseId: "456",
+    });
+    expect(result).toBe("/cases/456/details");
+  });
+
+  it("should only replace the first occurrence of %ENVIRONMENT%", () => {
+    const result = populateUrlTemplate(
+      "https://a.%ENVIRONMENT%.example.com/b.%ENVIRONMENT%.example.com",
+      {},
+    );
+    expect(result).toBe(
+      "https://a.test.example.com/b.%ENVIRONMENT%.example.com",
+    );
   });
 });
 

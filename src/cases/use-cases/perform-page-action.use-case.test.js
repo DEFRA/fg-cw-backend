@@ -5,14 +5,14 @@ import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 import { performPageActionUseCase } from "./perform-page-action.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../../common/build-view-model.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../repositories/workflow.repository.js");
 vi.mock("./external-action.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("../../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
@@ -104,7 +104,10 @@ describe("performPageActionUseCase", () => {
     const mockWorkflow = createMockWorkflow();
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       performPageActionUseCase({
@@ -136,7 +139,10 @@ describe("performPageActionUseCase", () => {
     const mockWorkflow = createMockWorkflow();
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       performPageActionUseCase({
@@ -162,7 +168,10 @@ describe("performPageActionUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     externalActionUseCase.mockResolvedValue(mockResponse);
     createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
@@ -181,7 +190,9 @@ describe("performPageActionUseCase", () => {
       "64c88faac1f56f71e1b89a33",
       undefined,
     );
-    expect(findByCode).toHaveBeenCalledWith("FRPS");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "FRPS" }),
+    );
     expect(externalActionUseCase).toHaveBeenCalledWith({
       actionCode: "RECALCULATE_RULES",
       caseWorkflowContext: { ...mockCase, workflow: mockWorkflow },
@@ -210,7 +221,10 @@ describe("performPageActionUseCase", () => {
     };
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     externalActionUseCase.mockResolvedValue(mockResponse);
     createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
@@ -235,7 +249,10 @@ describe("performPageActionUseCase", () => {
     const mockResponse = {};
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     externalActionUseCase.mockResolvedValue(mockResponse);
     createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
@@ -264,7 +281,10 @@ describe("performPageActionUseCase", () => {
     const mockResponse = null;
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     externalActionUseCase.mockResolvedValue(mockResponse);
     createCaseWorkflowContext.mockReturnValue({
       ...mockCase,
@@ -302,7 +322,10 @@ describe("performPageActionUseCase", () => {
   it("should throw error when workflow is not found", async () => {
     const mockCase = createMockCase();
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(null);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: null,
+      resolvedVersion: null,
+    });
 
     await expect(
       performPageActionUseCase({
@@ -317,7 +340,10 @@ describe("performPageActionUseCase", () => {
     const mockCase = createMockCase();
     const mockWorkflow = createMockWorkflow();
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       performPageActionUseCase({

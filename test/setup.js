@@ -28,6 +28,7 @@ export const setup = async ({ globalConfig }) => {
     env.CW__SQS__CREATE_NEW_CASE_URL,
     env.CW__SQS__UPDATE_STATUS_URL,
     env.GAS__SQS__UPDATE_STATUS,
+    env.CW__SQS__CONFIG_VERSION_QUEUE_URL,
   ]);
 
   if (env.PRINT_LOGS) {

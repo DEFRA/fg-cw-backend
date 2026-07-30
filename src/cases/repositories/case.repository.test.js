@@ -252,6 +252,8 @@ describe("findAll", () => {
       assignedUserId: "user-123",
       payload: { foo: "bar" },
       createdAt,
+      originalConfigVersion: null,
+      currentConfigVersion: null,
     });
   });
 

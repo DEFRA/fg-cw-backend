@@ -6,11 +6,13 @@ import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repos
 import { findAll } from "../repositories/case.repository.js";
 import { createRoleFilter, findCasesUseCase } from "./find-cases.use-case.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/case-series.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflows.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("../../common/auth.js");
 
 const defaultQuery = { direction: "forward", createdAt: "desc" };
@@ -76,6 +78,10 @@ describe("findCasesUseCase", () => {
     findInCaseRefsAndWorkflowCode.mockResolvedValue({
       caseRefs: new Set(["case-ref"]),
     });
+    resolveWorkflowForCase.mockImplementation(async (kase) => ({
+      workflow: Workflow.createMock({ code: kase.workflowCode }),
+      resolvedVersion: kase.originalConfigVersion ?? null,
+    }));
   });
 
   it("finds cases without assigned users", async () => {
@@ -123,6 +129,10 @@ describe("findCasesUseCase", () => {
     findAll.mockResolvedValue(mockFindAllResult(casesWithoutUsers));
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowsUseCase.mockResolvedValue(workflows);
+    resolveWorkflowForCase.mockImplementation(async (kase) => ({
+      workflow: workflows.find((w) => w.code === kase.workflowCode),
+      resolvedVersion: kase.originalConfigVersion ?? null,
+    }));
 
     const result = await findCasesUseCase({ user, query: defaultQuery });
 
