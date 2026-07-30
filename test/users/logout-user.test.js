@@ -63,10 +63,10 @@ describe("POST /users/logout", () => {
   });
 
   it("returns 404 for an unknown user id", async () => {
-    const response = await wreck.post("/users/logout", {
-      payload: { userId: "507f1f77bcf86cd799439011" },
-    });
-
-    expect(response.res.statusCode).toEqual(404);
+    await expect(
+      wreck.post("/users/logout", {
+        payload: { userId: "507f1f77bcf86cd799439011" },
+      }),
+    ).rejects.toThrow("Response Error: 404 Not Found");
   });
 });
