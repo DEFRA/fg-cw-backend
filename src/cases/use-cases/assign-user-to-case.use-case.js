@@ -5,8 +5,11 @@ import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { update } from "../repositories/case.repository.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const assignUserToCaseUseCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
@@ -14,7 +17,8 @@ export const assignUserToCaseUseCase = async (command) => {
   logger.info(`Assigning User "${assignedUserId}" to case "${caseId}"`);
 
   const kase = await loadCase(command);
-  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],

@@ -16,7 +16,10 @@ import {
   buildAfterContent,
   buildBeforeContent,
 } from "./build-stage-content.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 // eslint-disable-next-line complexity
 const mapUserIdToName = (userId, userMap) => {
@@ -233,6 +236,7 @@ export const mapWorkflowCommentDef = (workflowTask) => {
     : DEFAULT_COMMENT;
 };
 
+// eslint-disable-next-line complexity
 export const findCaseByIdUseCase = async (caseId, user, request) => {
   logger.info(`Finding case by id "${caseId}"`);
 
@@ -242,7 +246,13 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
+
+  if (!workflow) {
+    throw Boom.notFound(`Workflow with code "${kase.workflowCode}" not found`);
+  }
+
   const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
@@ -267,6 +277,8 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     _id: kase._id,
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
+    originalConfigVersion: kase.originalConfigVersion,
+    currentConfigVersion: kase.currentConfigVersion,
     currentStatus: kase.position.statusCode,
     stage: await mapStageData(
       kase,
