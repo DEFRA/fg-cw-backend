@@ -56,7 +56,7 @@ describe("POST /users/logout", () => {
             },
           },
         },
-        security: { pmccode: "0702" },
+        security: { pmccode: "0703" },
       },
       target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });

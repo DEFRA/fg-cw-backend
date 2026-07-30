@@ -22,7 +22,7 @@ export const auditStatus = {
 // Defra Protective Monitoring event reference codes (BUJ QRG v2.2), dashes stripped.
 const pmcCodesByAction = {
   [auditActions.LOGIN]: "0701", // session created
-  [auditActions.LOGOUT]: "0702", // session ended
+  [auditActions.LOGOUT]: "0703", // session ended
   [auditActions.CREATE_USER]: "1204", // user registration / service enrollment
   [auditActions.UPDATE_USER]: "0704", // user role change / privilege uplift
   [auditActions.CREATE_ROLE]: "0705", // account permission & privilege management

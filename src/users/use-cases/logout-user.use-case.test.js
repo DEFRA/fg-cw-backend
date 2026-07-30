@@ -65,7 +65,7 @@ describe("logoutUserUseCase", () => {
             },
           },
         },
-        security: { pmccode: "0702" },
+        security: { pmccode: "0703" },
         messageGroupId: `logout-${mockUser.idpId}`,
         status: auditStatus.SUCCESS,
       }),
@@ -90,7 +90,7 @@ describe("logoutUserUseCase", () => {
           },
         ],
         details: { security: { actor: { id: mockUser.id } } },
-        security: { pmccode: "0702" },
+        security: { pmccode: "0703" },
         status: auditStatus.FAILURE,
       }),
       null,
@@ -139,6 +139,6 @@ describe("logoutUserAuditDataBuilder", () => {
       mockUser,
     );
 
-    expect(auditData.security).toEqual({ pmccode: "0702" });
+    expect(auditData.security).toEqual({ pmccode: "0703" });
   });
 });
