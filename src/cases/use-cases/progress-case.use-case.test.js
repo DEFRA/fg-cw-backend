@@ -6,11 +6,11 @@ import {
   update,
 } from "../repositories/case.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { progressCaseUseCase } from "./progress-case.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("./ensure-case-position.use-case.js");
 
 const testAgreement1 = {
@@ -71,7 +71,10 @@ describe("update supplementary data use case", () => {
     vi.spyOn(kase, "progressTo").mockResolvedValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
 
     const returnValue = await progressCaseUseCase(data);
 
@@ -125,7 +128,10 @@ describe("update supplementary data use case", () => {
     vi.spyOn(kase, "progressTo").mockReturnValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
 
     const returnValue = await progressCaseUseCase(data);
 
@@ -159,7 +165,10 @@ describe("update supplementary data use case", () => {
     vi.spyOn(kase, "progressTo").mockReturnValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
 
     const returnValue = await progressCaseUseCase(data);
 
@@ -180,7 +189,10 @@ describe("update supplementary data use case", () => {
     vi.spyOn(kase, "progressTo").mockReturnValue();
 
     findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
-    findWorkflowByCodeUseCase.mockResolvedValue(workflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
 
     const returnValue = await progressCaseUseCase(data);
 
