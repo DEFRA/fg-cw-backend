@@ -1,7 +1,6 @@
 import Joi from "joi";
-import { createPageResponse } from "../../common/create-page-response.js";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
-import { findRoleByCodeUseCase } from "../use-cases/find-role-by-code.use-case.js";
+import { viewRoleUseCase } from "../use-cases/view-role.use-case.js";
 
 export const findRoleByCodeRoute = {
   method: "GET",
@@ -18,10 +17,7 @@ export const findRoleByCodeRoute = {
   async handler(request) {
     const { user } = request.auth.credentials;
     const { code } = request.params;
-    const data = await findRoleByCodeUseCase({
-      user,
-      code,
-    });
-    return createPageResponse({ user, data });
+
+    return viewRoleUseCase({ user, code });
   },
 };
