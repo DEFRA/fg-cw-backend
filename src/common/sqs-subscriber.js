@@ -64,7 +64,7 @@ export class SqsSubscriber {
     await withTraceParent(traceparent, async () => {
       logger.info(`Processing SQS message "${message.MessageId}"`);
       try {
-        await this.onMessage(body);
+        await this.onMessage(body, message.MessageAttributes);
         await this.deleteMessage(message);
       } catch (err) {
         logger.error(

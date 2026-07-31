@@ -87,7 +87,7 @@ describe("updateStageOutcomeUseCase audit", () => {
           },
         ],
         security: { pmccode: "0706" },
-        messageGroupId: `update-stage-outcome-${mockCase._id}`,
+        segregationRef: `update-stage-outcome-${mockCase._id}`,
         status: auditStatus.SUCCESS,
       }),
       session,

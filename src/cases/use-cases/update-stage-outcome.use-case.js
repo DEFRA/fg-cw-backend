@@ -14,9 +14,12 @@ import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
 import { update } from "../repositories/case.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 const updateStageOutcome = async (command, session) => {
   logger.info(`Updating stage outcome of case "${command.caseId}"`);
@@ -24,7 +27,8 @@ const updateStageOutcome = async (command, session) => {
   const { actionCode, comment, user } = command;
   const kase = await loadCase(command, session);
 
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],
@@ -56,6 +60,7 @@ const updateStageOutcome = async (command, session) => {
     workflowCode: kase.workflowCode,
     previousStatus: previousPosition.toString(),
     currentStatus: kase.position.toString(),
+    currentConfigVersion: kase.currentConfigVersion,
   });
 
   await insertMany(
@@ -88,7 +93,7 @@ export const updateStageOutcomeAuditDataBuilder = ([command]) => ({
     },
   },
   security: buildAuditSecurity(auditActions.UPDATE_STAGE_OUTCOME),
-  messageGroupId: `update-stage-outcome-${command.caseId}`,
+  segregationRef: `update-stage-outcome-${command.caseId}`,
 });
 
 export const updateStageOutcomeUseCase = (command) =>
