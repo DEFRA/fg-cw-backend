@@ -63,7 +63,7 @@ describe("viewRoleListUseCase", () => {
           },
         },
         security: { pmccode: "0706" },
-        messageGroupId: `view-role-list-${user.id}`,
+        segregationRef: `view-role-list-${user.id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -113,10 +113,18 @@ describe("viewRoleListAuditDataBuilder", () => {
     expect(valid).toBe(true);
   });
 
-  it("uses the user id for the messageGroupId", () => {
+  it("groups outbox rows by user via segregationRef", () => {
     const auditData = viewRoleListAuditDataBuilder([{ user }]);
 
-    expect(auditData.messageGroupId).toBe(`view-role-list-${user.id}`);
+    expect(auditData.segregationRef).toBe(`view-role-list-${user.id}`);
+  });
+
+  // segregationRef partitions outbox work only. messageGroupId is an SNS FIFO
+  // transport parameter and must never reach the published message body.
+  it("sets no messageGroupId", () => {
+    const auditData = viewRoleListAuditDataBuilder([{ user }]);
+
+    expect(auditData).not.toHaveProperty("messageGroupId");
   });
 
   it("includes a top-level security object for SOC forwarding", () => {

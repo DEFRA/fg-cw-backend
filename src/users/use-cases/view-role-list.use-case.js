@@ -25,7 +25,7 @@ export const viewRoleListAuditDataBuilder = ([{ user }]) => ({
     security: buildSecurityContext(user),
   },
   security: buildAuditSecurity(auditActions.VIEW_ROLE_LIST),
-  messageGroupId: `view-role-list-${user.id}`,
+  segregationRef: `view-role-list-${user.id}`,
 });
 
 export const viewRoleListUseCase = withAudit(

@@ -29,7 +29,6 @@ export const config = convict({
   serviceVersion: {
     doc: "The service version, this variable is injected into your docker container in CDP environments",
     format: String,
-    nullable: true,
     default: null,
     env: "SERVICE_VERSION",
   },
@@ -116,7 +115,7 @@ export const config = convict({
   },
   aws: {
     endpointUrl: {
-      doc: "AWS Endpoint URL used for LocalStack",
+      doc: "AWS Endpoint URL used for floci",
       format: String,
       nullable: true,
       default: null,
@@ -165,6 +164,22 @@ export const config = convict({
           "http://sqs.eu-west-2.127.0.0.0.1:4566/000000000000/cw__sqs__update_status_fifo.fifo",
         env: "CW__SQS__UPDATE_STATUS_URL",
       },
+      configVersionQueueUrl: {
+        doc: "URL of the SQS queue for config version update notifications",
+        format: String,
+        nullable: true,
+        default: null,
+        env: "CW__SQS__CONFIG_VERSION_QUEUE_URL",
+      },
+    },
+  },
+  configBroker: {
+    s3Bucket: {
+      doc: "S3 bucket name for Config Broker files",
+      format: String,
+      nullable: true,
+      default: null,
+      env: "CONFIG_BROKER_S3_BUCKET",
     },
   },
   tracing: {

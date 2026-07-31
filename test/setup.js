@@ -17,7 +17,7 @@ export const setup = async ({ globalConfig }) => {
     .withEnvironment({
       CW_PORT: env.CW_PORT,
       MONGO_PORT: env.MONGO_PORT,
-      LOCALSTACK_PORT: env.LOCALSTACK_PORT,
+      FLOCI_PORT: env.FLOCI_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
     })
     .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
@@ -28,6 +28,7 @@ export const setup = async ({ globalConfig }) => {
     env.CW__SQS__CREATE_NEW_CASE_URL,
     env.CW__SQS__UPDATE_STATUS_URL,
     env.GAS__SQS__UPDATE_STATUS,
+    env.CW__SQS__CONFIG_VERSION_QUEUE_URL,
   ]);
 
   if (env.PRINT_LOGS) {
