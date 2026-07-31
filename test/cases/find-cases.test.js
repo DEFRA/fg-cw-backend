@@ -3,6 +3,7 @@ import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caseData1, caseData2 } from "../fixtures/case.js";
 import { createAdminUser, TestUser } from "../helpers/users.js";
+import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
@@ -222,5 +223,24 @@ describe("GET /cases", () => {
       },
       target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });
+  });
+
+  // The audit topic is standard, not FIFO. Asserting the row is merely written
+  // would still pass if the subscriber could not publish it - it would retry
+  // and land in DEAD_LETTER. Wait for it to actually drain.
+  it("publishes the VIEW_CASE_LIST audit event and marks the outbox row complete", async () => {
+    const response = await wreck.get("/cases");
+
+    expect(response.res.statusCode).toBe(200);
+
+    const [completed] = await waitForDocuments(outbox, 15, {
+      "event.audit.entities.action": "VIEW_CASE_LIST",
+      status: "COMPLETED",
+    });
+
+    expect(completed.completionDate).toBeDefined();
+    // messageGroupId is an SNS FIFO transport parameter - it must never be
+    // published inside the message body, where it fails the audit schema.
+    expect(completed.event).not.toHaveProperty("messageGroupId");
   });
 });

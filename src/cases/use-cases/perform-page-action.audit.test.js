@@ -85,7 +85,7 @@ describe("performPageActionUseCase audit", () => {
           },
         ],
         security: { pmccode: "0706" },
-        messageGroupId: "perform-page-action-case-1",
+        segregationRef: "perform-page-action-case-1",
         status: auditStatus.SUCCESS,
       }),
       undefined,

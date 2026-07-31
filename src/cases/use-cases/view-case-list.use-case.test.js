@@ -67,7 +67,7 @@ describe("viewCaseListUseCase", () => {
           query,
         },
         security: { pmccode: "0706" },
-        messageGroupId: `view-case-list-${user.id}`,
+        segregationRef: `view-case-list-${user.id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -120,10 +120,18 @@ describe("viewCaseListAuditDataBuilder", () => {
     expect(valid).toBe(true);
   });
 
-  it("uses the user id for the messageGroupId", () => {
+  it("groups outbox rows by user via segregationRef", () => {
     const auditData = viewCaseListAuditDataBuilder([{ user, query: {} }]);
 
-    expect(auditData.messageGroupId).toBe(`view-case-list-${user.id}`);
+    expect(auditData.segregationRef).toBe(`view-case-list-${user.id}`);
+  });
+
+  // segregationRef partitions outbox work only. messageGroupId is an SNS FIFO
+  // transport parameter and must never reach the published message body.
+  it("sets no messageGroupId", () => {
+    const auditData = viewCaseListAuditDataBuilder([{ user, query: {} }]);
+
+    expect(auditData).not.toHaveProperty("messageGroupId");
   });
 
   it("includes a top-level security object for SOC forwarding", () => {

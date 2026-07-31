@@ -72,7 +72,7 @@ describe("addNoteToCaseUseCase audit", () => {
           },
         ],
         security: { pmccode: "0706" },
-        messageGroupId: `add-note-to-case-${mockCase._id}`,
+        segregationRef: `add-note-to-case-${mockCase._id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,

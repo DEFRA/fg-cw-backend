@@ -61,12 +61,11 @@ describe("withAudit", () => {
       });
     });
 
-    it("writes the audit event with entities, details and messageGroupId from dataBuilder", async () => {
+    it("writes the audit event with entities and details from dataBuilder", async () => {
       const fn = vi.fn().mockResolvedValue({ id: "123" });
       const dataBuilder = vi.fn().mockReturnValue({
         entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
         details: { security: { actor: { id: "user-1" } } },
-        messageGroupId: "msg-1",
       });
 
       await withAudit(fn, dataBuilder)("arg0", "my-session");
@@ -75,8 +74,23 @@ describe("withAudit", () => {
         expect.objectContaining({
           entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
           details: { security: { actor: { id: "user-1" } } },
-          messageGroupId: "msg-1",
         }),
+        "my-session",
+      );
+    });
+
+    it("forwards the dataBuilder segregationRef to writeAuditEvent", async () => {
+      const fn = vi.fn().mockResolvedValue({ id: "123" });
+      const dataBuilder = vi.fn().mockReturnValue({
+        entities: [],
+        details: {},
+        segregationRef: "login-idp-1",
+      });
+
+      await withAudit(fn, dataBuilder)("arg0", "my-session");
+
+      expect(writeAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ segregationRef: "login-idp-1" }),
         "my-session",
       );
     });

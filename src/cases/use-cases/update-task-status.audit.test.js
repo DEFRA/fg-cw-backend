@@ -78,7 +78,7 @@ describe("updateTaskStatusUseCase audit", () => {
           },
         ],
         security: { pmccode: "0706" },
-        messageGroupId: `update-task-status-${mockCase._id}`,
+        segregationRef: `update-task-status-${mockCase._id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
