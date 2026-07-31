@@ -10,8 +10,11 @@ import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const validatePayloadComment = (comment, required) => {
   if (required && !comment) {
@@ -26,7 +29,8 @@ const updateTaskStatus = async (command) => {
 
   const kase = await loadCase(command);
 
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   const currentStatus = workflow.getStatus(kase.position);
 
@@ -84,7 +88,7 @@ export const updateTaskStatusAuditDataBuilder = ([command]) => ({
     },
   },
   security: buildAuditSecurity(auditActions.UPDATE_TASK_STATUS),
-  messageGroupId: `update-task-value-${command.caseId}`,
+  segregationRef: `update-task-value-${command.caseId}`,
 });
 
 export const updateTaskStatusUseCase = withAudit(

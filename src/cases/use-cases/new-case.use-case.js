@@ -10,6 +10,7 @@ import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseStage } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 const temporaryCaveatSourceMap = {
   "hefer-consent-required": "historic-england",
@@ -39,6 +40,26 @@ const mapCaveatSources = (payload) => {
   };
 };
 
+// eslint-disable-next-line complexity
+const extractConfigVersion = (payload) =>
+  payload?.originalConfigVersion ?? payload?.configVersion ?? null;
+
+const resolveLegacyWorkflow = async (workflowCode) => ({
+  workflow: await findWorkflowByCodeUseCase(workflowCode),
+  resolvedVersion: null,
+});
+
+const resolveWorkflow = (workflowCode, payload) => {
+  const configVersion = extractConfigVersion(payload);
+  if (!configVersion) {
+    return resolveLegacyWorkflow(workflowCode);
+  }
+  logger.info(
+    `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,
+  );
+  return resolveAndFetchWorkflowUseCase(workflowCode, configVersion);
+};
+
 const newCase = async (message, session) => {
   const {
     event: { data },
@@ -50,7 +71,10 @@ const newCase = async (message, session) => {
     `Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
   );
 
-  const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflow(
+    workflowCode,
+    payload,
+  );
 
   const position = workflow.getInitialPosition();
 
@@ -72,6 +96,7 @@ const newCase = async (message, session) => {
     position,
     payload,
     phases,
+    configVersion: resolvedVersion,
   });
 
   const { insertedId } = await save(kase, session);
@@ -103,7 +128,7 @@ export const newCaseAuditDataBuilder = ([message], result) => {
       },
     },
     security: buildAuditSecurity(auditActions.CREATE_CASE),
-    messageGroupId: `create-case-${caseRef}`,
+    segregationRef: `create-case-${caseRef}`,
   };
 };
 

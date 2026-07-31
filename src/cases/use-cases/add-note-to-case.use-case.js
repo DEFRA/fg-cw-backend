@@ -11,8 +11,11 @@ import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 const addNoteToCase = async (command) => {
   const { caseId, text, user } = command;
@@ -21,7 +24,8 @@ const addNoteToCase = async (command) => {
 
   const kase = await loadCase(command);
 
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   if (!workflow) {
     throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
@@ -59,7 +63,7 @@ export const addNoteToCaseAuditDataBuilder = ([command], result) => ({
     note: { ref: result?.ref },
   },
   security: buildAuditSecurity(auditActions.ADD_NOTE_TO_CASE),
-  messageGroupId: `add-note-to-case-${command.caseId}`,
+  segregationRef: `add-note-to-case-${command.caseId}`,
 });
 
 export const addNoteToCaseUseCase = withAudit(
