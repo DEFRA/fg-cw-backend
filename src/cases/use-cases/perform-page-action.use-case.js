@@ -110,7 +110,7 @@ export const performPageActionAuditDataBuilder = ([command]) => ({
     action: { actionCode: command.actionCode },
   },
   security: buildAuditSecurity(auditActions.PERFORM_PAGE_ACTION),
-  messageGroupId: `perform-page-action-${command.caseId}`,
+  segregationRef: `perform-page-action-${command.caseId}`,
 });
 
 export const performPageActionUseCase = withAudit(
