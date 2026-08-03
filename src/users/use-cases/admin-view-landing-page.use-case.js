@@ -25,7 +25,7 @@ export const adminViewLandingPageAuditDataBuilder = ([{ user }]) => ({
     security: buildSecurityContext(user),
   },
   security: buildAuditSecurity(auditActions.VIEW_LANDING_PAGE),
-  messageGroupId: `view-landing-page-${user.id}`,
+  segregationRef: `view-landing-page-${user.id}`,
 });
 
 export const adminViewLandingPageUseCase = withAudit(

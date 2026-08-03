@@ -77,7 +77,7 @@ describe("adminViewLandingPageUseCase", () => {
           },
         },
         security: { pmccode: "0706" },
-        messageGroupId: `view-landing-page-${user.id}`,
+        segregationRef: `view-landing-page-${user.id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -115,9 +115,9 @@ describe("adminViewLandingPageAuditDataBuilder", () => {
     expect(valid).toBe(true);
   });
 
-  it("uses the user id for the messageGroupId", () => {
+  it("uses the user id for the segregationRef", () => {
     const auditData = adminViewLandingPageAuditDataBuilder([{ user }]);
 
-    expect(auditData.messageGroupId).toBe(`view-landing-page-${user.id}`);
+    expect(auditData.segregationRef).toBe(`view-landing-page-${user.id}`);
   });
 });

@@ -80,7 +80,7 @@ describe("adminViewUserListUseCase", () => {
           },
         },
         security: { pmccode: "0706" },
-        messageGroupId: `view-user-list-${user.id}`,
+        segregationRef: `view-user-list-${user.id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -116,9 +116,9 @@ describe("adminViewUserListAuditDataBuilder", () => {
     expect(valid).toBe(true);
   });
 
-  it("uses the user id for the messageGroupId", () => {
+  it("uses the user id for the segregationRef", () => {
     const auditData = adminViewUserListAuditDataBuilder([{ user }]);
 
-    expect(auditData.messageGroupId).toBe(`view-user-list-${user.id}`);
+    expect(auditData.segregationRef).toBe(`view-user-list-${user.id}`);
   });
 });

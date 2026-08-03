@@ -26,7 +26,7 @@ export const adminViewUserDetailsAuditDataBuilder = ([{ user, userId }]) => ({
     security: buildSecurityContext(user),
   },
   security: buildAuditSecurity(auditActions.VIEW_USER_DETAILS),
-  messageGroupId: `view-user-details-${userId}`,
+  segregationRef: `view-user-details-${userId}`,
 });
 
 export const adminViewUserDetailsUseCase = withAudit(
