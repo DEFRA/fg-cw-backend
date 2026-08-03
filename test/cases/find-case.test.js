@@ -93,12 +93,12 @@ describe("GET /cases/{caseId}", () => {
                     text: "Simple review task",
                   },
                 ],
-                status: "COMPLETE",
+                value: "COMPLETE",
                 statusText: "Complete",
                 statusTheme: "SUCCESS",
                 completed: true,
                 mandatory: true,
-                statusOptions: [
+                valueOptions: [
                   {
                     code: "COMPLETE",
                     name: "Complete",

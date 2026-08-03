@@ -15,7 +15,7 @@ const collection = "cases";
 const toCaseTask = (t) =>
   new CaseTask({
     code: t.code,
-    status: t.status,
+    value: t.value,
     completed: t.completed,
     commentRefs: t.commentRefs || [],
     updatedAt: t.updatedAt,

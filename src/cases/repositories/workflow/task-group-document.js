@@ -1,6 +1,6 @@
 import { RequiredRolesDocument } from "./required-roles-document.js";
-import { StatusOptionDocument } from "./status-option-document.js";
 import { TaskDocument } from "./task-document.js";
+import { ValueOptionDocument } from "./value-option-document.js";
 
 export class TaskGroupDocument {
   constructor(props) {
@@ -21,8 +21,8 @@ export class TaskGroupDocument {
           name: "Task 1",
           description: "Task 1 description",
           mandatory: true,
-          statusOptions: [
-            new StatusOptionDocument({
+          valueOptions: [
+            new ValueOptionDocument({
               code: "STATUS_OPTION_1",
               name: "Status option 1",
               theme: "SUCCESS",

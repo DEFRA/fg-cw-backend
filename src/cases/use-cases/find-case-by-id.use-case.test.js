@@ -15,8 +15,8 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
-  mapSelectedStatusOption,
-  mapStatusOptions,
+  mapSelectedValueOption,
+  mapValueOptions,
   mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
@@ -375,7 +375,7 @@ describe("findCaseByIdUseCase", () => {
                 code: "TASK_1",
                 name: "Task 1",
                 mandatory: true,
-                status: "PENDING",
+                value: "PENDING",
                 updatedAt: undefined,
                 updatedBy: null,
                 commentRefs: [],
@@ -399,7 +399,7 @@ describe("findCaseByIdUseCase", () => {
                   anyOf: ["ROLE_2"],
                 }),
                 canComplete: true,
-                statusOptions: [
+                valueOptions: [
                   {
                     code: "STATUS_OPTION_1",
                     completes: true,
@@ -557,7 +557,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     findAll.mockResolvedValue([mockUser]);
@@ -591,7 +591,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions would normally be available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with only Read role (not ReadWrite)
@@ -619,7 +619,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions are available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with ReadWrite role
@@ -966,12 +966,12 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set a task status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status =
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value =
         "STATUS_OPTION_1";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
       // Add theme and altName to workflow status option
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "STATUS_OPTION_1",
           name: "Accepted",
@@ -998,12 +998,12 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("STATUS_OPTION_1");
+      expect(task.value).toBe("STATUS_OPTION_1");
       expect(task.statusText).toBe("Accepted");
       expect(task.statusTheme).toBe("NONE");
 
       // Verify statusOptions are transformed
-      expect(task.statusOptions).toEqual([
+      expect(task.valueOptions).toEqual([
         {
           code: "STATUS_OPTION_1",
           name: "Accept",
@@ -1025,7 +1025,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Ensure task has no status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = null;
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = null;
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       findAll.mockResolvedValue([mockUser]);
@@ -1038,7 +1038,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBeNull();
+      expect(task.value).toBeNull();
       expect(task.statusText).toBe("Incomplete");
       expect(task.statusTheme).toBe("INFO");
     });
@@ -1049,10 +1049,10 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set task with status but not completed
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = "RFI";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = "RFI";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "RFI",
           name: "Information requested",
@@ -1079,7 +1079,7 @@ describe("findCaseByIdUseCase", () => {
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("RFI");
+      expect(task.value).toBe("RFI");
       expect(task.statusText).toBe("Information requested");
       expect(task.statusTheme).toBe("NOTICE");
       expect(task.completed).toBe(false);
@@ -1206,9 +1206,9 @@ describe("findCaseByIdUseCase", () => {
   });
 });
 
-describe("mapSelectedStatusOption", () => {
+describe("mapSelectedValueOption", () => {
   it("returns name as statusText (altName is used only in statusOptions array)", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1225,7 +1225,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1234,7 +1234,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code is null", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1244,7 +1244,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption(null, statusOptions);
+    const result = mapSelectedValueOption(null, valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1253,7 +1253,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code does not match any option", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1263,7 +1263,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("NONEXISTENT", statusOptions);
+    const result = mapSelectedValueOption("NONEXISTENT", valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1272,7 +1272,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("falls back to name as statusText when altName is not present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1281,7 +1281,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1290,7 +1290,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("handles missing theme gracefully", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1299,7 +1299,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1308,9 +1308,9 @@ describe("mapSelectedStatusOption", () => {
   });
 });
 
-describe("mapStatusOptions", () => {
+describe("mapValueOptions", () => {
   it("transforms status options using altName when present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1333,7 +1333,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1358,7 +1358,7 @@ describe("mapStatusOptions", () => {
   });
 
   it("falls back to name when altName is missing", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "COMPLETE",
         name: "Complete",
@@ -1367,7 +1367,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1380,12 +1380,12 @@ describe("mapStatusOptions", () => {
   });
 
   it("handles empty array", () => {
-    const result = mapStatusOptions([]);
+    const result = mapValueOptions([]);
     expect(result).toEqual([]);
   });
 
   it("handles mixed altName presence", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1401,7 +1401,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
