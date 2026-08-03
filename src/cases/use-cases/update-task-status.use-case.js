@@ -25,14 +25,9 @@ export const validatePayloadComment = (comment, required) => {
 const updateTaskStatus = async (command) => {
   logger.info(`Updating task value for case "${command.caseId}"`);
 
-  const { caseId, taskGroupCode, taskCode, value, completed, comment, user } =
-    command;
+  const { taskGroupCode, taskCode, value, completed, comment, user } = command;
 
   const kase = await loadCase(command);
-
-  if (!kase) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
 
   const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
   await persistResolvedVersion(kase, resolvedVersion);
