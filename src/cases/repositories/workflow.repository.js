@@ -10,7 +10,7 @@ import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskComment } from "../models/workflow-task-comment.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
@@ -53,8 +53,8 @@ const toWorkflowStageStatus = (s) =>
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
-const toWorkflowTaskStatusOption = (so) =>
-  new WorkflowTaskStatusOption({
+const toWorkflowTaskValueOption = (so) =>
+  new WorkflowTaskValueOption({
     code: so.code,
     name: so.name,
     theme: so.theme,
@@ -83,7 +83,7 @@ const toWorkflowTask = (t) =>
       allOf: t.requiredRoles?.allOf,
       anyOf: t.requiredRoles?.anyOf,
     }),
-    statusOptions: t.statusOptions.map(toWorkflowTaskStatusOption),
+    valueOptions: t.valueOptions.map(toWorkflowTaskValueOption),
     comment: toWorkflowTaskComment(t.comment),
   });
 
@@ -150,7 +150,7 @@ export const save = async (workflow) => {
   } catch (error) {
     if (error.code === 11000) {
       throw Boom.conflict(
-        `Workflow with code "${workflow.code}" already exists`,
+        `Workflow with code "${workflow.code}" version "${workflow.version}" already exists`,
       );
     }
     throw error;
@@ -192,11 +192,24 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
+// Legacy callers get the 0.0.0 workflow (FGP-1224 rollback contract). Latest
+// version resolution goes through config_versions (numeric major/minor/patch
+// sort), never a string sort on the version field.
 export const findByCode = async (code, version = "0.0.0") => {
-  const workflowDocument = await db.collection(collection).findOne({
-    code,
-    version,
-  });
+  const workflowDocument = await db
+    .collection(collection)
+    .findOne({ code, version });
 
   return workflowDocument && toWorkflow(workflowDocument);
+};
+
+export const findByCodeAndVersion = async (code, version) => {
+  const doc = await db.collection(collection).findOne({ code, version });
+  return doc && toWorkflow(doc);
+};
+
+export const saveFromDefinition = async (workflowDefinition, version) => {
+  const workflow = new Workflow({ ...workflowDefinition, version });
+  await save(workflow);
+  return workflow;
 };

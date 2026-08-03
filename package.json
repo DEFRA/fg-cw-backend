@@ -23,7 +23,7 @@
     "postinstall": "npm run setup:husky && npm run setup:env",
     "setup:env": "cp --update=none .env.example .env || true",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
-    "migration:create": "migrate-mongo create"
+    "migration:create": "node --env-file .env node_modules/.bin/migrate-mongo create"
   },
   "lint-staged": {
     "**/*.js": "npm run lint",
@@ -37,6 +37,7 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1068.0",
     "@aws-sdk/client-sns": "3.1085.0",
     "@aws-sdk/client-sqs": "3.1085.0",
     "@aws-sdk/credential-providers": "3.1081.0",

@@ -45,7 +45,7 @@ export const caseData1 = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: "PENDING",
+                  value: "PENDING",
                   completed: false,
                   commentRefs: [],
                   updatedAt: null,
@@ -126,7 +126,7 @@ export const caseData2 = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: "COMPLETE",
+                  value: "COMPLETE",
                   completed: true,
                   commentRefs: [],
                   updatedAt: null,
@@ -163,6 +163,8 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
+  originalConfigVersion: null,
+  currentConfigVersion: null,
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
@@ -207,7 +209,7 @@ export const caseData3Document = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: null,
+                  value: null,
                   completed: false,
                   commentRefs: [],
                   updatedAt: null,

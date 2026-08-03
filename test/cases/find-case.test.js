@@ -67,6 +67,8 @@ describe("GET /cases/{caseId}", () => {
       _id: caseId,
       caseRef: caseData2.caseRef,
       workflowCode: caseData2.workflowCode,
+      originalConfigVersion: null,
+      currentConfigVersion: null,
       currentStatus: "AWAITING_REVIEW",
       stage: {
         code: "APPLICATION_RECEIPT",
@@ -91,12 +93,12 @@ describe("GET /cases/{caseId}", () => {
                     text: "Simple review task",
                   },
                 ],
-                status: "COMPLETE",
+                value: "COMPLETE",
                 statusText: "Complete",
                 statusTheme: "SUCCESS",
                 completed: true,
                 mandatory: true,
-                statusOptions: [
+                valueOptions: [
                   {
                     code: "COMPLETE",
                     name: "Complete",

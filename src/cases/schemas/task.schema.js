@@ -55,7 +55,7 @@ export const Status = Joi.object({
   transitions: Joi.array().items(Transition).required(),
 }).label("Status");
 
-export const StatusOption = Joi.object({
+export const ValueOption = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
   theme: Joi.string()
@@ -64,7 +64,7 @@ export const StatusOption = Joi.object({
   altName: Joi.string().allow(null),
   completes: Joi.boolean().required(),
   comment: comment.optional().allow(null),
-}).label("StatusOption");
+}).label("ValueOption");
 
 export const Task = Joi.object({
   conditional: Joi.string().optional().allow(null),
@@ -74,7 +74,7 @@ export const Task = Joi.object({
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
-  statusOptions: Joi.array().items(StatusOption).required(),
+  valueOptions: Joi.array().items(ValueOption).required(),
   comment: comment.optional().allow(null),
   requiredRoles: requiredRolesSchema.allow(null),
 });

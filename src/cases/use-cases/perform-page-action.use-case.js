@@ -11,14 +11,51 @@ import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
+
+const applyResponseEffects = (
+  kase,
+  externalAction,
+  response,
+  actionCode,
+  caseId,
+  user,
+) => {
+  let caseUpdated = false;
+
+  if (shouldStoreResponse(externalAction, response)) {
+    storeResponseInSupplementaryData(kase, externalAction, response);
+    caseUpdated = true;
+    logger.debug(
+      `Successfully stored response in supplementaryData for action: "${actionCode}" for case: "${caseId}"`,
+    );
+  }
+
+  if (externalAction.display === true) {
+    kase.addExternalActionTimelineEvent({
+      actionName: externalAction.name,
+      createdBy: user.id,
+    });
+    caseUpdated = true;
+  }
+
+  return caseUpdated;
+};
 
 const performPageAction = async (command) => {
   const { caseId, actionCode, user } = command;
   const kase = await loadCase(command);
-  const workflow = await loadWorkflow(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
+
+  if (!workflow) {
+    throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
+  }
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],
@@ -40,25 +77,16 @@ const performPageAction = async (command) => {
     throwOnError: true,
   });
 
-  let caseUpdated = false;
-
-  if (shouldStoreResponse(externalAction, response)) {
-    storeResponseInSupplementaryData(kase, externalAction, response);
-    caseUpdated = true;
-    logger.debug(
-      `Successfully stored response in supplementaryData for action: "${actionCode}" for case: "${caseId}"`,
-    );
-  }
-
-  if (externalAction.display === true) {
-    kase.addExternalActionTimelineEvent({
-      actionName: externalAction.name,
-      createdBy: user.id,
-    });
-    caseUpdated = true;
-  }
-
-  if (caseUpdated) {
+  if (
+    applyResponseEffects(
+      kase,
+      externalAction,
+      response,
+      actionCode,
+      caseId,
+      user,
+    )
+  ) {
     await update(kase);
   }
 
@@ -82,23 +110,13 @@ export const performPageActionAuditDataBuilder = ([command]) => ({
     action: { actionCode: command.actionCode },
   },
   security: buildAuditSecurity(auditActions.PERFORM_PAGE_ACTION),
-  messageGroupId: `perform-page-action-${command.caseId}`,
+  segregationRef: `perform-page-action-${command.caseId}`,
 });
 
 export const performPageActionUseCase = withAudit(
   performPageAction,
   performPageActionAuditDataBuilder,
 );
-
-const loadWorkflow = async (workflowCode) => {
-  const workflow = await findByCode(workflowCode);
-
-  if (!workflow) {
-    throw Boom.notFound(`Workflow not found: ${workflowCode}`);
-  }
-
-  return workflow;
-};
 
 const validateExternalAction = (actionCode, workflow) => {
   const externalAction = workflow.findExternalAction(actionCode);

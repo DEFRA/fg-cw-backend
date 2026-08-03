@@ -150,6 +150,16 @@
                 "dataRef": "$.payload.answers",
                 "templateRef": "$.templates.pmf-template",
                 "templateKey": "pmf-example"
+              },
+              {
+                "component": "paragraph",
+                "text": "Original configuration version $.originalConfigVersion",
+                "classes": "govuk-body"
+              },
+              {
+                "component": "paragraph",
+                "text": "Current configuration version $.currentConfigVersion",
+                "classes": "govuk-body"
               }
             ]
           }
@@ -360,7 +370,7 @@
                       "classes": "govuk-body"
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
@@ -424,7 +434,7 @@
                       ]
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
@@ -471,7 +481,7 @@
                       "classes": "govuk-body"
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",

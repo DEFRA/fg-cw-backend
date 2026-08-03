@@ -46,6 +46,14 @@ describe("getMessageGroupId", () => {
     expect(result).toBe("fallback-id");
   });
 
+  it("returns grantCode when id is not provided and only grantCode is available", () => {
+    const result = getMessageGroupId(null, {
+      grantCode: "GRANT456",
+    });
+
+    expect(result).toBe("GRANT456");
+  });
+
   it("throws when no id and data has no matching fields", () => {
     expect(() => getMessageGroupId(null, { foo: "bar" })).toThrow(
       "Unable to derive MessageGroupId",
