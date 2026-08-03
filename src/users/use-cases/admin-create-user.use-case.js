@@ -2,12 +2,19 @@ import Boom from "@hapi/boom";
 import { randomUUID } from "crypto";
 import { RequiredAppRoles } from "../../cases/models/required-app-roles.js";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../models/idp-roles.js";
 import { User } from "../models/user.js";
 import { findByEmail, save } from "../repositories/user.repository.js";
 
-export const adminCreateUserUseCase = async ({ user, props }) => {
+const adminCreateUser = async ({ user, props }) => {
   logger.info("Creating user manually");
 
   AccessControl.authorise(user, {
@@ -40,3 +47,23 @@ export const adminCreateUserUseCase = async ({ user, props }) => {
 
   return newUser;
 };
+
+export const adminCreateUserAuditDataBuilder = ([{ user, props }], result) => ({
+  entities: [
+    {
+      entity: auditEntities.USER,
+      action: auditActions.CREATE_USER,
+      entityid: result?.id,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(user, result),
+  },
+  security: buildAuditSecurity(auditActions.CREATE_USER),
+  segregationRef: `create-user-${result?.id ?? props.email}`,
+});
+
+export const adminCreateUserUseCase = withAudit(
+  adminCreateUser,
+  adminCreateUserAuditDataBuilder,
+);

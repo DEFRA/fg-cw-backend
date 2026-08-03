@@ -65,6 +65,45 @@ describe("POST /roles", () => {
     });
   });
 
+  it("writes a CREATE_ROLE audit event to the outbox", async () => {
+    await createAdminUser();
+
+    await createRole({
+      code: "ROLE_AUDIT_CREATE",
+      description: "Auditable role",
+      assignable: true,
+    });
+
+    const outboxEntry = await client
+      .db()
+      .collection("outbox")
+      .findOne({ "event.audit.entities.action": "CREATE_ROLE" });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "ROLE",
+              action: "CREATE_ROLE",
+              entityid: "ROLE_AUDIT_CREATE",
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: expect.objectContaining({
+                idpId: TestUser.Admin.idpId,
+              }),
+            },
+          },
+        },
+        security: { pmccode: "0705" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
+  });
+
   it("returns 403 when user is not admin", async () => {
     await createUser(TestUser.ReadOnly);
 

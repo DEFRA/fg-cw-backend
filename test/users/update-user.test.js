@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createAdminUser, createUser } from "../helpers/users.js";
+import { createAdminUser, createUser, TestUser } from "../helpers/users.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -118,6 +118,64 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
           ],
         },
       },
+    });
+  });
+
+  it("writes an UPDATE_USER audit event capturing before/after roles and the target user", async () => {
+    await createAdminUser();
+
+    const testUser = await createUser({
+      idpId: "00000000-0000-0000-0000-000000000042",
+      name: "Audit Target",
+      email: "audit.target@defra.gov.uk",
+      idpRoles: ["FCP.Casework.Read"],
+    });
+
+    const updateResponse = await wreck.patch(`/admin/users/${testUser.id}`, {
+      payload: {
+        idpRoles: ["FCP.Casework.Admin"],
+      },
+    });
+
+    expect(updateResponse.res.statusCode).toEqual(200);
+
+    const outboxEntry = await client
+      .db()
+      .collection("outbox")
+      .findOne({ "event.audit.entities.action": "UPDATE_USER" });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "USER",
+              action: "UPDATE_USER",
+              entityid: testUser.id,
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: expect.objectContaining({
+                idpId: TestUser.Admin.idpId,
+              }),
+              targetUser: expect.objectContaining({
+                id: testUser.id,
+                idpId: "00000000-0000-0000-0000-000000000042",
+              }),
+            },
+            changes: {
+              idpRoles: {
+                before: ["FCP.Casework.Read"],
+                after: ["FCP.Casework.Admin"],
+              },
+            },
+          },
+        },
+        security: { pmccode: "0704" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });
   });
 

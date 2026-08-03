@@ -1,4 +1,4 @@
-const summariseAppRoles = (appRoles = {}) =>
+export const summariseAppRoles = (appRoles = {}) =>
   Object.fromEntries(
     Object.entries(appRoles).map(([code, role]) => [
       code,
