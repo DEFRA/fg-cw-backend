@@ -4,7 +4,11 @@
     "allOf": ["ROLE_PMF"],
     "anyOf": ["ROLE_PMF2"]
   },
-  "definitions": {},
+  "definitions": {
+    "agreementsService": {
+      "internalUrl": "https://fg-cw-frontend.%ENVIRONMENT%.cdp-int.defra.cloud/cases/{caseId}/agreement/{agreementRef}"
+    }
+  },
   "templates": {
     "pmf-template": {
       "pmf-example": {
@@ -162,6 +166,98 @@
                 "classes": "govuk-body"
               }
             ]
+          },
+          "agreements": {
+            "link": {
+              "id": "agreements",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/agreements",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Agreements",
+              "index": 2
+            },
+            "renderIf": "$.supplementaryData.agreements[0]",
+            "content": [
+              {
+                "id": "title",
+                "component": "heading",
+                "text": "Funding agreement",
+                "level": 2,
+                "classes": "govuk-!-margin-top-6"
+              },
+              {
+                "component": "summary-list",
+                "rows": [
+                  {
+                    "label": "Agreement status",
+                    "text": [
+                      {
+                        "component": "status",
+                        "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
+                        "themeMap": {
+                          "AGREEMENT_GENERATING": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "SUCCESS",
+                          "WITHDRAWN": "WARN",
+                          "REJECTED": "ERROR",
+                          "TERMINATED": "ERROR",
+                          "CANCELLED": "WARN"
+                        },
+                        "labelsMap": {
+                          "AGREEMENT_GENERATING": "Agreement generating",
+                          "AGREEMENT_DRAFTED": "Agreement drafted",
+                          "OFFERED": "Offered",
+                          "ACCEPTED": "Accepted",
+                          "WITHDRAWN": "Withdrawn",
+                          "REJECTED": "Rejected",
+                          "TERMINATED": "Terminated",
+                          "CANCELLED": "Cancelled"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Reference",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                  },
+                  {
+                    "label": "Date created",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
+                    "format": "formatDate"
+                  },
+                  {
+                    "label": "Date accepted",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate)), '[D] [MNn,*-3] [Y]') : 'Not accepted'"
+                  },
+                  {
+                    "label": "Start date",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
+                  },
+                  {
+                    "label": "View",
+                    "text": [
+                      {
+                        "component": "url",
+                        "text": "View agreement",
+                        "href": {
+                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                          "params": {
+                            "caseId": "$._id",
+                            "agreementRef": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                          }
+                        },
+                        "target": "_blank",
+                        "rel": "noopener"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         }
       }
@@ -205,7 +301,7 @@
               "interactive": true,
               "transitions": [
                 {
-                  "targetPosition": "PRE_AWARD:FINAL_APPROVAL:APPLICATION_APPROVED",
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
                   "checkTasks": false,
                   "action": {
                     "code": "APPROVE_APPLICATION",
@@ -321,6 +417,21 @@
                 }
               ],
               "closes": true
+            },
+            {
+              "code": "AGREEMENT_GENERATING",
+              "name": "Agreement generating",
+              "theme": "INFO",
+              "description": "Agreement is being generated",
+              "interactive": false,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ],
+              "closes": false
             },
             {
               "code": "ON_HOLD",
@@ -503,6 +614,119 @@
           ]
         },
         {
+          "code": "REVIEW_OFFER",
+          "name": "Agreement ready for applicant",
+          "description": "Send the agreement to the applicant",
+          "statuses": [
+            {
+              "code": "AGREEMENT_DRAFTED",
+              "name": "Agreement ready for applicant",
+              "theme": "INFO",
+              "description": "The agreement is ready to be sent to the applicant",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "checkTasks": true,
+                  "action": {
+                    "code": "AGREEMENT_SENT",
+                    "name": "Confirm agreement sent",
+                    "checkTasks": true,
+                    "comment": {
+                      "label": {
+                        "text": "Comment",
+                        "classes": "govuk-visually-hidden"
+                      },
+                      "helpText": "Add comment for auditing purposes.",
+                      "mandatory": false
+                    }
+                  }
+                }
+              ],
+              "closes": false
+            }
+          ],
+          "taskGroups": [
+            {
+              "name": "Tasks",
+              "code": "AGREEMENT_PREPARATION_TASKS",
+              "description": "Tasks to prepare and send the agreement to the applicant",
+              "tasks": [
+                {
+                  "name": "Notify customer that draft agreement is ready",
+                  "code": "SEND_AGREEMENT_TO_APPLICANT",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Notify customer that draft agreement is ready",
+                      "level": 2
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Send the draft agreement link to the customer or explain why this is not possible."
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Confirm the draft agreement link has been sent",
+                      "level": 3
+                    }
+                  ],
+                  "mandatory": true,
+                  "statusOptions": [
+                    {
+                      "name": "Sent",
+                      "code": "AGREEMENT_SENT_TO_APPLICANT",
+                      "theme": "SUCCESS",
+                      "altName": "Sent to customer",
+                      "completes": true,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Enter the CRM reference number to confirm the draft agreement has been sent.",
+                        "mandatory": true
+                      }
+                    },
+                    {
+                      "name": "Not sent",
+                      "code": "AGREEMENT_NOT_SENT_TO_APPLICANT",
+                      "theme": "ERROR",
+                      "altName": "Could not send to customer",
+                      "completes": false,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Explain why the draft agreement link could not be sent.",
+                        "mandatory": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "CUSTOMER_AGREEMENT_REVIEW",
+          "name": "Agreement with applicant",
+          "description": "Agreement is with the applicant, awaiting their response",
+          "statuses": [
+            {
+              "code": "AGREEMENT_OFFERED",
+              "name": "Agreement offered",
+              "theme": "NOTICE",
+              "description": "Agreement has been offered to the customer",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ],
+              "closes": false
+            }
+          ],
+          "taskGroups": []
+        },
+        {
           "code": "FINAL_APPROVAL",
           "name": "Final Approval",
           "description": "Final approval stage for approved applications",
@@ -529,6 +753,30 @@
           "taskGroups": []
         }
       ]
+    },
+    {
+      "code": "POST_AGREEMENT_MONITORING",
+      "name": "Post agreement monitoring",
+      "stages": [
+        {
+          "code": "MONITORING",
+          "name": "Monitoring",
+          "description": "Monitor accepted agreement",
+          "statuses": [
+            {
+              "code": "AGREEMENT_ACCEPTED",
+              "name": "Agreement accepted",
+              "theme": "SUCCESS",
+              "description": "Agreement has been accepted",
+              "interactive": false,
+              "transitions": [],
+              "closes": false
+            }
+          ],
+          "taskGroups": []
+        }
+      ]
     }
-  ]
+  ],
+  "version": "0.0.0"
 }

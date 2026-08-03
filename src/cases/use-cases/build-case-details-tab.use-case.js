@@ -60,6 +60,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   return {
     caseId,
     caseRef: kase.caseRef,
+    workflowCode: kase.workflowCode,
     tabId,
     banner,
     links,
