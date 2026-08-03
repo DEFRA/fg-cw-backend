@@ -54,7 +54,7 @@ describe("updateTaskStatusUseCase audit", () => {
   it("writes an UPDATE_TASK_STATUS audit event on success", async () => {
     const mockCase = Case.createMock();
     const mockWorkflow = Workflow.createMock();
-    mockCase.setTaskStatus = vi.fn();
+    mockCase.setTaskValue = vi.fn();
     findById.mockResolvedValue(mockCase);
     findByCode.mockResolvedValue(mockWorkflow);
     update.mockResolvedValue(mockCase);
@@ -63,7 +63,7 @@ describe("updateTaskStatusUseCase audit", () => {
       caseId: mockCase._id,
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "STATUS_OPTION_1",
+      value: "STATUS_OPTION_1",
       comment: "done",
       user: mockUser,
     });
@@ -78,7 +78,7 @@ describe("updateTaskStatusUseCase audit", () => {
           },
         ],
         security: { pmccode: "0706" },
-        segregationRef: `update-task-status-${mockCase._id}`,
+        segregationRef: `update-task-value-${mockCase._id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -96,7 +96,7 @@ describe("updateTaskStatusUseCase audit", () => {
       caseId: "missing",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "COMPLETE",
+      value: "COMPLETE",
       user: mockUser,
     }).catch(() => {});
 
@@ -112,7 +112,7 @@ describe("updateTaskStatusUseCase audit", () => {
         caseId: "abc",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
         user: mockUser,
       },
