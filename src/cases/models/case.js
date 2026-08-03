@@ -15,6 +15,7 @@ import {
 } from "./timeline-event.js";
 
 export class Case {
+  // eslint-disable-next-line complexity
   constructor(props) {
     const comments = toComments(props.comments);
     const timeline = toTimelineEvents(props.timeline, comments);
@@ -30,6 +31,10 @@ export class Case {
     this.comments = comments;
     this.timeline = timeline;
     this.supplementaryData = props.supplementaryData || {};
+    this.originalConfigVersion =
+      props.originalConfigVersion ?? props.configVersion ?? null;
+    this.currentConfigVersion =
+      props.currentConfigVersion ?? props.configVersion ?? null;
     this.closed = props.closed;
     this.closedAt = props.closedAt;
   }
@@ -72,10 +77,10 @@ export class Case {
     return this.comments.find((c) => c.ref === commentRef);
   }
 
-  setTaskStatus({
+  setTaskValue({
     taskGroupCode,
     taskCode,
-    status,
+    value,
     completed,
     comment,
     updatedBy,
@@ -107,8 +112,8 @@ export class Case {
       createdBy: updatedBy,
     });
 
-    task.updateStatus({
-      status,
+    task.updateValue({
+      value,
       completed,
       updatedBy,
       comment: optionalComment,
@@ -425,7 +430,14 @@ export class Case {
     return comment;
   }
 
-  static new({ caseRef, workflowCode, position, payload, phases }) {
+  static new({
+    caseRef,
+    workflowCode,
+    position,
+    payload,
+    phases,
+    configVersion = null,
+  }) {
     return new Case({
       caseRef,
       workflowCode,
@@ -433,6 +445,8 @@ export class Case {
       createdAt: new Date().toISOString(),
       payload,
       supplementaryData: {},
+      originalConfigVersion: configVersion,
+      currentConfigVersion: configVersion,
       closed: false,
       timeline: [
         new TimelineEvent({
@@ -472,7 +486,7 @@ export class Case {
                   tasks: [
                     new CaseTask({
                       code: "TASK_1",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                       commentRefs: [],
                       updatedAt: undefined,

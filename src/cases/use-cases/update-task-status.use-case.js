@@ -1,9 +1,20 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { update } from "../repositories/case.repository.js";
+import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const validatePayloadComment = (comment, required) => {
   if (required && !comment) {
@@ -11,19 +22,15 @@ export const validatePayloadComment = (comment, required) => {
   }
 };
 
-export const updateTaskStatusUseCase = async (command) => {
-  logger.info(`Updating task status of case "${command.caseId}"`);
+const updateTaskStatus = async (command) => {
+  logger.info(`Updating task value for case "${command.caseId}"`);
 
-  const { caseId, taskGroupCode, taskCode, status, completed, comment, user } =
-    command;
+  const { taskGroupCode, taskCode, value, completed, comment, user } = command;
 
-  const kase = await findById(caseId);
+  const kase = await loadCase(command);
 
-  if (!kase) {
-    throw Boom.notFound(`Case with id "${caseId}" not found`);
-  }
-
-  const workflow = await findByCode(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   const currentStatus = workflow.getStatus(kase.position);
 
@@ -47,39 +54,65 @@ export const updateTaskStatusUseCase = async (command) => {
 
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  const taskCompleted = mapCompleted({ task, status, completed });
+  const taskCompleted = mapCompleted({ task, value, completed });
 
-  kase.setTaskStatus({
+  kase.setTaskValue({
     taskGroupCode,
     taskCode,
-    status,
+    value,
     completed: taskCompleted,
     comment,
     updatedBy: user.id,
   });
 
-  logger.info(`Finished: Updating task status of case "${command.caseId}"`);
+  logger.info(`Finished: Updating task value for case "${command.caseId}"`);
 
   return update(kase);
 };
 
-const mapCompleted = ({ task, status, completed }) => {
-  if (!hasStatusOptions(task)) {
+export const updateTaskStatusAuditDataBuilder = ([command]) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.UPDATE_TASK_STATUS,
+      entityid: command.caseRef ?? command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user),
+    task: {
+      taskGroupCode: command.taskGroupCode,
+      taskCode: command.taskCode,
+      value: command.value,
+      completed: command.completed,
+    },
+  },
+  security: buildAuditSecurity(auditActions.UPDATE_TASK_STATUS),
+  segregationRef: `update-task-value-${command.caseId}`,
+});
+
+export const updateTaskStatusUseCase = withAudit(
+  updateTaskStatus,
+  updateTaskStatusAuditDataBuilder,
+);
+
+const mapCompleted = ({ task, value, completed }) => {
+  if (!hasValueOptions(task)) {
     return completed;
   }
 
-  const selectedOption = task.statusOptions.find(
-    (option) => option.code === status,
+  const selectedOption = task.valueOptions.find(
+    (option) => option.code === value,
   );
 
   if (!selectedOption) {
     throw Boom.badRequest(
-      `Invalid status option "${status}" for task "${task.code}". Valid options are: ${task.statusOptions.map((o) => o.code).join(", ")}`,
+      `Invalid value option "${value}" for task "${task.code}". Valid options are: ${task.valueOptions.map((o) => o.code).join(", ")}`,
     );
   }
 
   return selectedOption.completes;
 };
 
-const hasStatusOptions = (task) =>
-  task?.statusOptions && task?.statusOptions.length > 0;
+const hasValueOptions = (task) =>
+  task?.valueOptions && task?.valueOptions.length > 0;

@@ -12,8 +12,9 @@ import {
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
 
-describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status", () => {
+describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/value", () => {
   let cases;
+  let outbox;
   let client;
   let user;
 
@@ -21,6 +22,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     client = new MongoClient(env.MONGO_URI);
     await client.connect();
     cases = client.db().collection("cases");
+    outbox = client.db().collection("outbox");
   });
 
   afterAll(async () => {
@@ -50,7 +52,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
     const updatedCase = await findCaseById(kase._id);
     const task = updatedCase.phases[0].stages[0].taskGroups[0].tasks[0];
 
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(task.updatedAt).toBeDefined();
   });
@@ -111,10 +113,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${nonExistentCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${nonExistentCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -129,10 +131,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${invalidCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${invalidCaseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -147,10 +149,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "INVALID_STATUS",
+            value: "INVALID_STATUS",
             completed: true,
           },
         },
@@ -178,7 +180,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
                   tasks: [
                     {
                       code: "SIMPLE_REVIEW",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                     },
                   ],
@@ -199,10 +201,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -217,10 +219,10 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${nonExistentTaskCode}/status`,
+        `/cases/${kase._id}/task-groups/${taskGroupCode}/tasks/${nonExistentTaskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
@@ -235,14 +237,58 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/sta
 
     await expect(
       wreck.patch(
-        `/cases/${kase._id}/task-groups/${nonExistentTaskGroupCode}/tasks/${taskCode}/status`,
+        `/cases/${kase._id}/task-groups/${nonExistentTaskGroupCode}/tasks/${taskCode}/value`,
         {
           payload: {
-            status: "COMPLETE",
+            value: "COMPLETE",
             completed: true,
           },
         },
       ),
     ).rejects.toThrow();
+  });
+
+  it("writes an UPDATE_TASK_STATUS audit event to the outbox with the actor's security context", async () => {
+    const kase = await createCase(cases);
+
+    const response = await completeTask({
+      caseId: kase._id,
+      taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+      taskCode: "SIMPLE_REVIEW",
+    });
+
+    expect(response.res.statusCode).toBe(204);
+
+    const outboxEntry = await outbox.findOne({
+      "event.audit.entities.action": "UPDATE_TASK_STATUS",
+    });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "UPDATE_TASK_STATUS",
+              entityid: kase.caseRef,
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: {
+                id: expect.any(String),
+                idpId: user.idpId,
+                name: user.name,
+                email: user.email,
+                idpRoles: expect.arrayContaining([IdpRoles.ReadWrite]),
+              },
+            },
+          },
+        },
+        security: { pmccode: "0706" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
   });
 });

@@ -4,11 +4,11 @@ import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findById } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import { buildCaseDetailsTabUseCase } from "./build-case-details-tab.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
-vi.mock("../repositories/workflow.repository.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("../../common/external-endpoint-client.js", () => ({
   callExternalEndpoint: vi.fn(),
 }));
@@ -30,7 +30,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     const mockWorkflow = Workflow.createMock();
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await buildCaseDetailsTabUseCase({
       params: { caseId: "test-case-id", tabId: "case-details" },
@@ -38,9 +41,12 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
-    expect(findByCode).toHaveBeenCalledWith("frps-private-beta");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "frps-private-beta" }),
+    );
     expect(result.caseId).toBe("test-case-id");
     expect(result.caseRef).toBe("TEST-REF-001");
+    expect(result.workflowCode).toBe("frps-private-beta");
     expect(result.tabId).toBe("case-details");
     expect(result.banner).toBeDefined();
     expect(result.banner.title.text).toBe("Test Business");
@@ -71,7 +77,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(null);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: null,
+      resolvedVersion: null,
+    });
 
     await expect(
       buildCaseDetailsTabUseCase({
@@ -102,7 +111,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       buildCaseDetailsTabUseCase({
@@ -138,7 +150,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       buildCaseDetailsTabUseCase({
@@ -150,12 +165,14 @@ describe("buildCaseDetailsTabUseCase", () => {
     );
   });
 
-  it("handles tab with renderIf condition that evaluates to true", async () => {
+  it("preserves agreement content and links", async () => {
     const mockCase = Case.createMock({
       _id: "test-case-id",
       caseRef: "TEST-REF-001",
       workflowCode: "test-workflow",
-      supplementaryData: { agreements: [{ agreementRef: "AGR-001" }] },
+      supplementaryData: {
+        agreements: [{ agreementRef: "AGR-001" }],
+      },
     });
 
     const mockWorkflow = Workflow.createMock({
@@ -163,12 +180,18 @@ describe("buildCaseDetailsTabUseCase", () => {
       pages: {
         cases: {
           details: {
-            banner: {
-              title: { text: "Test Title" },
-            },
             tabs: {
               agreements: {
                 renderIf: "$.supplementaryData.agreements[0]",
+                link: {
+                  href: {
+                    urlTemplate: "/cases/{caseId}/agreements",
+                    params: {
+                      caseId: "$._id",
+                    },
+                  },
+                  text: "Agreements",
+                },
                 content: [
                   {
                     id: "agreements",
@@ -184,18 +207,30 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await buildCaseDetailsTabUseCase({
       params: { caseId: "test-case-id", tabId: "agreements" },
       query: {},
     });
 
-    expect(result.caseId).toBe("test-case-id");
-    expect(result.caseRef).toBe("TEST-REF-001");
-    expect(result.tabId).toBe("agreements");
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
+    expect(result.workflowCode).toBe("test-workflow");
+    expect(result).not.toHaveProperty("agreements");
+    expect(result.content).toEqual([
+      {
+        id: "agreements",
+        component: "table",
+        title: "Agreements",
+      },
+    ]);
+    expect(result.links).toContainEqual({
+      id: "agreements",
+      href: "/cases/test-case-id/agreements",
+      text: "Agreements",
+    });
   });
 
   it("handles missing pages structure in workflow", async () => {
@@ -209,7 +244,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       buildCaseDetailsTabUseCase({
@@ -234,7 +272,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     await expect(
       buildCaseDetailsTabUseCase({
@@ -336,7 +377,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await buildCaseDetailsTabUseCase({
       params: { caseId: "64c88faac1f56f71e1b89a77", tabId: "case-details" },
@@ -435,7 +479,10 @@ describe("buildCaseDetailsTabUseCase", () => {
     });
 
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await buildCaseDetailsTabUseCase({
       params: { caseId: "test-case-id", tabId: "case-details" },
@@ -573,7 +620,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       });
 
       findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
 
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "land-grants" },
@@ -632,7 +682,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       });
 
       findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
 
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "simple-tab" },
@@ -689,7 +742,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       });
 
       findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
 
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "test-tab" },
@@ -742,7 +798,10 @@ describe("buildCaseDetailsTabUseCase", () => {
       });
 
       findById.mockResolvedValue(mockCase);
-      findByCode.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
 
       const result = await buildCaseDetailsTabUseCase({
         params: { caseId: "test-case-id", tabId: "test-tab" },

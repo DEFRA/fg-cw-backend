@@ -130,7 +130,12 @@ export class OutboxSubscriber {
     } = event;
     logger.info(`Send outbox event to "${topic}"`);
     try {
-      await publish(topic, data, this.getMessageGroupId(messageGroupId, data));
+      // Only FIFO topics need a MessageGroupId. Deriving one for standard
+      // topics throws for payloads without a caseRef/clientRef (e.g. audit).
+      const messageGroup = topic.endsWith(".fifo")
+        ? this.getMessageGroupId(messageGroupId, data)
+        : undefined;
+      await publish(topic, data, messageGroup);
       await this.markEventComplete(event);
     } catch (ex) {
       logger.error(ex, `Error sending outbox event to topic "${topic}"`);
