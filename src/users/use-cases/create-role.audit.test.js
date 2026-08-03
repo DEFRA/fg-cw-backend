@@ -62,7 +62,7 @@ describe("createRoleUseCase auditing", () => {
           },
         },
         security: { pmccode: "0705" },
-        messageGroupId: "create-role-TEST.ROLE",
+        segregationRef: "create-role-TEST.ROLE",
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -82,7 +82,7 @@ describe("createRoleUseCase auditing", () => {
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         status: auditStatus.FAILURE,
-        messageGroupId: "create-role-TEST.ROLE",
+        segregationRef: "create-role-TEST.ROLE",
       }),
       null,
     );

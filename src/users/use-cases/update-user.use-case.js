@@ -74,7 +74,7 @@ export const updateUserAuditDataBuilder = ([command], result) => {
     ],
     details,
     security: buildAuditSecurity(auditActions.UPDATE_USER),
-    messageGroupId: `update-user-${userId}`,
+    segregationRef: `update-user-${userId}`,
   };
 };
 

@@ -82,7 +82,7 @@ describe("updateUserUseCase auditing", () => {
           },
         }),
         security: { pmccode: "0704" },
-        messageGroupId: `update-user-${userId}`,
+        segregationRef: `update-user-${userId}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,

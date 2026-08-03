@@ -48,7 +48,7 @@ export const createRoleAuditDataBuilder = ([{ user, code }]) => ({
     security: buildSecurityContext(user),
   },
   security: buildAuditSecurity(auditActions.CREATE_ROLE),
-  messageGroupId: `create-role-${code}`,
+  segregationRef: `create-role-${code}`,
 });
 
 export const createRoleUseCase = withAudit(

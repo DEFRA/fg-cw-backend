@@ -66,7 +66,7 @@ describe("updateRoleUseCase auditing", () => {
           },
         },
         security: { pmccode: "0705" },
-        messageGroupId: "update-role-TEST.ROLE",
+        segregationRef: "update-role-TEST.ROLE",
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -87,7 +87,7 @@ describe("updateRoleUseCase auditing", () => {
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         status: auditStatus.FAILURE,
-        messageGroupId: "update-role-MISSING.ROLE",
+        segregationRef: "update-role-MISSING.ROLE",
       }),
       null,
     );

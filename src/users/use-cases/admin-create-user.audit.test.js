@@ -69,7 +69,7 @@ describe("adminCreateUserUseCase auditing", () => {
           },
         },
         security: { pmccode: "1204" },
-        messageGroupId: `create-user-${result.id}`,
+        segregationRef: `create-user-${result.id}`,
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -88,7 +88,7 @@ describe("adminCreateUserUseCase auditing", () => {
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         status: auditStatus.FAILURE,
-        messageGroupId: "create-user-dup@example.com",
+        segregationRef: "create-user-dup@example.com",
       }),
       null,
     );

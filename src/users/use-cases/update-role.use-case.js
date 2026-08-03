@@ -49,7 +49,7 @@ export const updateRoleAuditDataBuilder = ([{ user, code }]) => ({
     security: buildSecurityContext(user),
   },
   security: buildAuditSecurity(auditActions.UPDATE_ROLE),
-  messageGroupId: `update-role-${code}`,
+  segregationRef: `update-role-${code}`,
 });
 
 export const updateRoleUseCase = withAudit(

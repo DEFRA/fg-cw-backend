@@ -60,7 +60,7 @@ export const adminCreateUserAuditDataBuilder = ([{ user, props }], result) => ({
     security: buildSecurityContext(user, result),
   },
   security: buildAuditSecurity(auditActions.CREATE_USER),
-  messageGroupId: `create-user-${result?.id ?? props.email}`,
+  segregationRef: `create-user-${result?.id ?? props.email}`,
 });
 
 export const adminCreateUserUseCase = withAudit(
