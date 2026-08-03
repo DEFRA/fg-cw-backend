@@ -39,6 +39,11 @@ describe("GET /admin/users (admin only)", () => {
                 idpId: TestUser.Admin.idpId,
               }),
             },
+            query: expect.objectContaining({
+              ids: [],
+              allAppRoles: [],
+              anyAppRoles: [],
+            }),
           },
         },
         security: { pmccode: "0706" },

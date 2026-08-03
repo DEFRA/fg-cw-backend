@@ -61,9 +61,11 @@ describe("adminViewUserListUseCase", () => {
   });
 
   it("writes a VIEW_USER_LIST SUCCESS audit event with the actor's context", async () => {
+    const query = { ids: ["abc"], allAppRoles: [], anyAppRoles: [] };
+
     adminFindUsersUseCase.mockResolvedValue([]);
 
-    await adminViewUserListUseCase({ user, query: {} });
+    await adminViewUserListUseCase({ user, query });
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -78,6 +80,7 @@ describe("adminViewUserListUseCase", () => {
               idpRoles: user.idpRoles,
             },
           },
+          query,
         },
         security: { pmccode: "0706" },
         segregationRef: `view-user-list-${user.id}`,
@@ -120,5 +123,13 @@ describe("adminViewUserListAuditDataBuilder", () => {
     const auditData = adminViewUserListAuditDataBuilder([{ user }]);
 
     expect(auditData.segregationRef).toBe(`view-user-list-${user.id}`);
+  });
+
+  it("includes the query in the audit details", () => {
+    const query = { ids: ["abc"], allAppRoles: ["ROLE_1"], anyAppRoles: [] };
+
+    const auditData = adminViewUserListAuditDataBuilder([{ user, query }]);
+
+    expect(auditData.details.query).toEqual(query);
   });
 });

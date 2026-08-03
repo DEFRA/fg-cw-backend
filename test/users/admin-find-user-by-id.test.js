@@ -46,6 +46,17 @@ describe("GET /admin/users/{userId} (admin only)", () => {
             },
           ],
           status: "SUCCESS",
+          details: {
+            security: {
+              targetUser: expect.objectContaining({
+                id: testUser.id,
+                idpId: "00000000-0000-0000-0000-000000000077",
+                name: "View Target",
+                email: "view.target@defra.gov.uk",
+                idpRoles: ["FCP.Casework.Read"],
+              }),
+            },
+          },
         },
         security: { pmccode: "0706" },
       },

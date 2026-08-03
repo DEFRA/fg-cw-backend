@@ -14,7 +14,7 @@ const adminViewUserList = async ({ user, query }) => {
   return createPageResponse({ user, data });
 };
 
-export const adminViewUserListAuditDataBuilder = ([{ user }]) => ({
+export const adminViewUserListAuditDataBuilder = ([{ user, query }]) => ({
   entities: [
     {
       entity: auditEntities.USER,
@@ -23,6 +23,7 @@ export const adminViewUserListAuditDataBuilder = ([{ user }]) => ({
   ],
   details: {
     security: buildSecurityContext(user),
+    query,
   },
   security: buildAuditSecurity(auditActions.VIEW_USER_LIST),
   segregationRef: `view-user-list-${user.id}`,

@@ -24,6 +24,31 @@ const user = {
 
 const userId = "607f1f77bcf86cd799439022";
 
+const targetUser = {
+  id: userId,
+  idpId: "70b3e2d9-1234-4f8b-967d-99d41ae38999",
+  name: "Target User",
+  email: "target.user@defra.gov.uk",
+  idpRoles: ["FCP.Casework.ReadWrite"],
+  appRoles: {
+    ROLE_RPA_CASES_APPROVE: {
+      startDate: "2024-01-01",
+      endDate: null,
+    },
+  },
+};
+
+const targetUserSummary = {
+  id: userId,
+  idpId: targetUser.idpId,
+  name: targetUser.name,
+  email: targetUser.email,
+  idpRoles: targetUser.idpRoles,
+  appRoles: {
+    ROLE_RPA_CASES_APPROVE: { startDate: "2024-01-01", endDate: null },
+  },
+};
+
 const toAuditEvent = (auditData, status) => ({
   datetime: new Date().toISOString(),
   version: "1.0.0",
@@ -61,8 +86,8 @@ describe("adminViewUserDetailsUseCase", () => {
     expect(result.header).toBeDefined();
   });
 
-  it("writes a VIEW_USER_DETAILS SUCCESS audit event with the target id", async () => {
-    adminFindUserByIdUseCase.mockResolvedValue({ id: userId });
+  it("writes a VIEW_USER_DETAILS SUCCESS audit event with the target id and returned user", async () => {
+    adminFindUserByIdUseCase.mockResolvedValue(targetUser);
 
     await adminViewUserDetailsUseCase({ user, userId });
 
@@ -80,6 +105,7 @@ describe("adminViewUserDetailsUseCase", () => {
               email: user.email,
               idpRoles: user.idpRoles,
             },
+            targetUser: targetUserSummary,
           },
         },
         security: { pmccode: "0706" },
@@ -125,5 +151,19 @@ describe("adminViewUserDetailsAuditDataBuilder", () => {
     const auditData = adminViewUserDetailsAuditDataBuilder([{ user, userId }]);
 
     expect(auditData.segregationRef).toBe(`view-user-details-${userId}`);
+  });
+
+  it("includes the returned user as the target user", () => {
+    const auditData = adminViewUserDetailsAuditDataBuilder([{ user, userId }], {
+      data: targetUser,
+    });
+
+    expect(auditData.details.security.targetUser).toEqual(targetUserSummary);
+  });
+
+  it("omits the target user when no result is available", () => {
+    const auditData = adminViewUserDetailsAuditDataBuilder([{ user, userId }]);
+
+    expect(auditData.details.security).not.toHaveProperty("targetUser");
   });
 });
