@@ -60,7 +60,7 @@
     "hapi-swagger": "^17.3.2",
     "joi": "18.2.3",
     "jose": "6.2.3",
-    "jsonata": "2.2.1",
+    "jsonata": "2.2.2",
     "jsonpath-plus": "10.4.0",
     "migrate-mongo": "14.0.7",
     "mongodb": "7.4.0",
