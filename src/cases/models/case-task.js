@@ -6,6 +6,7 @@ import { UrlSafeId } from "../schemas/url-safe-id.schema.js";
 export const TaskValue = Joi.string().allow(null);
 
 const CommentRefSchema = Joi.object({
+  // Historical snapshot field, deliberately not renamed to "value" alongside CaseTask.value
   value: TaskValue.required(),
   ref: UrlSafeId.required(),
 }).label("CommentRef");

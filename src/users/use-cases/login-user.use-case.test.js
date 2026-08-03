@@ -189,7 +189,7 @@ describe("loginUserUseCase", () => {
           },
         },
         security: { pmccode: "0701" },
-        messageGroupId: "login-6a232710-1c66-4f8b-967d-41d41ae38478",
+        segregationRef: "login-6a232710-1c66-4f8b-967d-41d41ae38478",
         status: auditStatus.SUCCESS,
       }),
       undefined,
@@ -256,13 +256,23 @@ describe("loginUserAuditDataBuilder", () => {
     });
   });
 
-  it("uses idpId for both entityid and messageGroupId", () => {
+  it("uses idpId for both the entityid and the segregationRef", () => {
     const props = { idpId: "idp-1" };
 
     const auditData = loginUserAuditDataBuilder([props], undefined);
 
     expect(auditData.entities[0].entityid).toBe("idp-1");
-    expect(auditData.messageGroupId).toBe("login-idp-1");
+    expect(auditData.segregationRef).toBe("login-idp-1");
+  });
+
+  // segregationRef partitions outbox work only. messageGroupId is an SNS FIFO
+  // transport parameter and must never reach the published message body.
+  it("sets no messageGroupId", () => {
+    const props = { idpId: "idp-1" };
+
+    const auditData = loginUserAuditDataBuilder([props], undefined);
+
+    expect(auditData).not.toHaveProperty("messageGroupId");
   });
 
   it("includes a top-level security object for SOC forwarding", () => {

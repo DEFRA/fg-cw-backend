@@ -252,6 +252,8 @@ describe("findAll", () => {
       assignedUserId: "user-123",
       payload: { foo: "bar" },
       createdAt,
+      originalConfigVersion: null,
+      currentConfigVersion: null,
     });
   });
 
@@ -435,9 +437,12 @@ describe("findById", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(findOne).toHaveBeenCalledWith({
-      _id: doc._id,
-    });
+    expect(findOne).toHaveBeenCalledWith(
+      {
+        _id: doc._id,
+      },
+      { session: undefined },
+    );
 
     expect(result).toEqual(
       Case.createMock({

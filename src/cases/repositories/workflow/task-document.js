@@ -10,6 +10,7 @@ export class TaskDocument {
     this.valueOptions = props.valueOptions.map(
       (option) => new ValueOptionDocument(option),
     );
+    this.conditional = props?.conditional;
     this.comment = props?.comment;
     this.requiredRoles = props.requiredRoles
       ? new RequiredRolesDocument(props.requiredRoles)
