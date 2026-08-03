@@ -70,6 +70,54 @@ describe("PUT /roles/{code}", () => {
     });
   });
 
+  it("writes an UPDATE_ROLE audit event to the outbox", async () => {
+    await createAdminUser();
+
+    await createRole({
+      code: "ROLE_AUDIT_UPDATE",
+      description: "Auditable role",
+      assignable: true,
+    });
+
+    const updateRoleResponse = await wreck.put("/roles/ROLE_AUDIT_UPDATE", {
+      payload: {
+        description: "Updated auditable role",
+        assignable: false,
+      },
+    });
+
+    expect(updateRoleResponse.res.statusCode).toEqual(204);
+
+    const outboxEntry = await client
+      .db()
+      .collection("outbox")
+      .findOne({ "event.audit.entities.action": "UPDATE_ROLE" });
+
+    expect(outboxEntry).toMatchObject({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "ROLE",
+              action: "UPDATE_ROLE",
+              entityid: "ROLE_AUDIT_UPDATE",
+            },
+          ],
+          status: "SUCCESS",
+          details: {
+            security: {
+              actor: expect.objectContaining({
+                idpId: TestUser.Admin.idpId,
+              }),
+            },
+          },
+        },
+        security: { pmccode: "0705" },
+      },
+      target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
+  });
+
   it("returns 403 when user is not admin", async () => {
     await createUser(TestUser.ReadOnly);
 

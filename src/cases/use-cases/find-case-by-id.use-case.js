@@ -81,28 +81,27 @@ export const formatTimelineItemDescription = (tl, workflow) => {
 
 const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
 
-const findStatusOptionByCode = (statusOptions, code) =>
-  statusOptions.find((opt) => opt.code === code);
+const findValueOptionByCode = (valueOptions, code) =>
+  valueOptions.find((opt) => opt.code === code);
 
 const getCommentDate = (comment) => comment?.createdAt ?? null;
 const getCommentText = (comment) => comment?.text ?? null;
 const getCommentCreatedBy = (comment) => comment?.createdBy;
-const getOutcomeName = (statusOption, fallback) =>
-  statusOption?.name ?? fallback;
+const getOutcomeName = (valueOption, fallback) => valueOption?.name ?? fallback;
 
 const mapCommentRefToNoteHistory = (
   commentRef,
   comment,
-  statusOption,
+  valueOption,
   userMap,
 ) => ({
   date: getCommentDate(comment),
-  outcome: getOutcomeName(statusOption, commentRef.status),
+  outcome: getOutcomeName(valueOption, commentRef.status),
   note: getCommentText(comment),
   addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
 });
 
-const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
+const mapNotesHistory = (commentRefs, comments, valueOptions, userMap) => {
   if (!commentRefs?.length) {
     return [];
   }
@@ -110,14 +109,14 @@ const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
   return commentRefs
     .map((commentRef) => {
       const comment = findCommentByRef(comments, commentRef.ref);
-      const statusOption = findStatusOptionByCode(
-        statusOptions,
+      const valueOption = findValueOptionByCode(
+        valueOptions,
         commentRef.status,
       );
       return mapCommentRefToNoteHistory(
         commentRef,
         comment,
-        statusOption,
+        valueOption,
         userMap,
       );
     })
@@ -137,15 +136,15 @@ const mapTasks = async (
         caseTaskGroupTask.code,
       );
 
-      const selectedStatus = mapSelectedStatusOption(
-        caseTaskGroupTask.status,
-        workflowTaskGroupTask.statusOptions,
+      const selectedStatus = mapSelectedValueOption(
+        caseTaskGroupTask.value,
+        workflowTaskGroupTask.valueOptions,
       );
 
       const notesHistory = mapNotesHistory(
         caseTaskGroupTask.commentRefs,
         comments,
-        workflowTaskGroupTask.statusOptions,
+        workflowTaskGroupTask.valueOptions,
         userMap,
       );
 
@@ -154,8 +153,8 @@ const mapTasks = async (
         name: workflowTaskGroupTask.name,
         description: await mapDescription(workflowTaskGroupTask, root),
         mandatory: workflowTaskGroupTask.mandatory,
-        statusOptions: mapStatusOptions(workflowTaskGroupTask.statusOptions),
-        status: caseTaskGroupTask.status,
+        valueOptions: mapValueOptions(workflowTaskGroupTask.valueOptions),
+        value: caseTaskGroupTask.value,
         statusText: selectedStatus.statusText,
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
@@ -173,8 +172,8 @@ const mapTasks = async (
     }),
   );
 
-export const mapStatusOptions = (statusOptions) =>
-  statusOptions.map((option) => ({
+export const mapValueOptions = (valueOptions) =>
+  valueOptions.map((option) => ({
     code: option.code,
     name: option.altName || option.name,
     theme: option.theme,
@@ -182,7 +181,7 @@ export const mapStatusOptions = (statusOptions) =>
     commentInputDef: option.comment,
   }));
 
-export const mapSelectedStatusOption = (statusCode, statusOptions) => {
+export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
     return {
       statusText: "Incomplete",
@@ -190,7 +189,7 @@ export const mapSelectedStatusOption = (statusCode, statusOptions) => {
     };
   }
 
-  const selectedOption = statusOptions.find((opt) => opt.code === statusCode);
+  const selectedOption = valueOptions.find((opt) => opt.code === statusCode);
 
   if (!selectedOption) {
     return {

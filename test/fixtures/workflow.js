@@ -264,7 +264,7 @@ export const workflowData1 = {
                   description: null,
                   comment: null,
                   mandatory: true,
-                  statusOptions: [
+                  valueOptions: [
                     {
                       code: "COMPLETE",
                       name: "Complete",

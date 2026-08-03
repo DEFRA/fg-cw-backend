@@ -116,7 +116,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",
@@ -166,7 +166,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",
@@ -216,7 +216,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",
@@ -266,7 +266,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",
@@ -316,7 +316,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",
@@ -366,7 +366,7 @@ describe("newCaseUseCase", () => {
         name: "Conditional Task",
         mandatory: true,
         description: "Only when whitePigsCount > 3",
-        statusOptions: [
+        valueOptions: [
           {
             code: "ACCEPTED",
             name: "Accept",

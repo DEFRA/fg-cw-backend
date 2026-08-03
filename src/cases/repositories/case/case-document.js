@@ -59,7 +59,7 @@ export class CaseDocument {
                   tasks: [
                     new TaskDocument({
                       code: "TASK_1",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                     }),
                   ],
