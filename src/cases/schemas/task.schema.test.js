@@ -8,7 +8,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [],
+      valueOptions: [],
       requiredRoles: {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],
@@ -26,7 +26,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [],
+      valueOptions: [],
       comment: {
         helpText: "Please provide a note",
         mandatory: false,
@@ -44,7 +44,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [],
+      valueOptions: [],
       comment: {
         label: "Note",
         mandatory: false,
@@ -62,7 +62,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [],
+      valueOptions: [],
       comment: {
         label: "Note",
         helpText: "Please provide a note",
@@ -79,7 +79,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [],
+      valueOptions: [],
       comment: {
         label: { text: "Reason for termination", classes: "govuk-label--s" },
         helpText: "You must include an explanation for auditing purposes.",
@@ -97,7 +97,7 @@ describe("Task Schema", () => {
       name: "Test task",
       description: null,
       mandatory: true,
-      statusOptions: [
+      valueOptions: [
         {
           code: "COMPLETE",
           name: "Complete",
@@ -112,26 +112,26 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
-  it("should pass when statusOptions is empty", () => {
+  it("should pass when valueOptions is empty", () => {
     const task = {
       code: "TASK_1",
       name: "Test task",
       mandatory: true,
       description: null,
-      statusOptions: [],
+      valueOptions: [],
     };
 
     const { error } = Task.validate(task);
     expect(error).toBeUndefined();
   });
 
-  it("should pass when multiple statusOptions have completes true", () => {
+  it("should pass when multiple valueOptions have completes true", () => {
     const task = {
       code: "TASK_1",
       name: "Test task",
       mandatory: true,
       description: null,
-      statusOptions: [
+      valueOptions: [
         {
           code: "COMPLETE",
           name: "Complete",
@@ -151,13 +151,13 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
-  it("should allow status option comment object", () => {
+  it("should allow value option comment object", () => {
     const task = {
       code: "TASK_1",
       name: "Test task",
       mandatory: true,
       description: null,
-      statusOptions: [
+      valueOptions: [
         {
           code: "COMPLETE",
           name: "Complete",
@@ -176,13 +176,13 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
-  it("should allow null status option comment", () => {
+  it("should allow null value option comment", () => {
     const task = {
       code: "TASK_1",
       name: "Test task",
       mandatory: true,
       description: null,
-      statusOptions: [
+      valueOptions: [
         {
           code: "COMPLETE",
           name: "Complete",

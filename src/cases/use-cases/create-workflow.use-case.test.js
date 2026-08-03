@@ -11,7 +11,7 @@ import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
@@ -105,7 +105,7 @@ describe("createWorkflowUseCase", () => {
                       mandatory: true,
                       description: "Task 1",
                       requiredRoles: null,
-                      statusOptions: [
+                      valueOptions: [
                         {
                           code: "COMPLETE",
                           name: "Complete",
@@ -123,7 +123,7 @@ describe("createWorkflowUseCase", () => {
                         allOf: ["ROLE_ADMIN"],
                         anyOf: ["ROLE_USER"],
                       },
-                      statusOptions: [
+                      valueOptions: [
                         {
                           code: "COMPLETE",
                           name: "Complete",
@@ -238,8 +238,8 @@ describe("createWorkflowUseCase", () => {
                         allOf: [],
                         anyOf: [],
                       }),
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -256,8 +256,8 @@ describe("createWorkflowUseCase", () => {
                         allOf: ["ROLE_ADMIN"],
                         anyOf: ["ROLE_USER"],
                       }),
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",

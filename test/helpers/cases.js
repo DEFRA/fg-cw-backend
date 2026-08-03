@@ -50,7 +50,7 @@ export const createCase = async (cases, payload = {}) => {
                 tasks: [
                   {
                     code: "SIMPLE_REVIEW",
-                    status: "PENDING",
+                    value: "PENDING",
                     completed: false,
                   },
                 ],
@@ -90,10 +90,10 @@ export const completeTask = async ({
   comment = null,
 }) => {
   const response = await wreck.patch(
-    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
     {
       payload: {
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
         comment,
       },

@@ -7,7 +7,7 @@ import { Case } from "../models/case.js";
 import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
@@ -53,14 +53,14 @@ describe("updateTaskStatusUseCase", () => {
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "COMPLETE",
+        value: "COMPLETE",
         comment: "This is a note/comment",
         user: mockAuthUser,
       }),
     ).rejects.toThrow('Case with id "0909990909099990aaee9878" not found');
   });
 
-  it("updates the status of a task", async () => {
+  it("updates the value of a task", async () => {
     const kase = Case.createMock();
     const workflow = Workflow.createMock();
     kase.workflowCode = workflow.code;
@@ -77,14 +77,14 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "STATUS_OPTION_1",
+      value: "STATUS_OPTION_1",
       completed: true,
       comment: "This is a note/comment",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("STATUS_OPTION_1");
+    expect(task.value).toBe("STATUS_OPTION_1");
     expect(task.commentRefs).toHaveLength(1);
     expect(task.commentRefs[0].status).toBe("STATUS_OPTION_1");
     expect(task.commentRefs[0].ref).toBeDefined();
@@ -114,7 +114,7 @@ describe("updateTaskStatusUseCase", () => {
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "STATUS_OPTION_1",
+        value: "STATUS_OPTION_1",
         completed: true,
         comment: "This is a note/comment",
         user,
@@ -154,7 +154,7 @@ describe("updateTaskStatusUseCase", () => {
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "STATUS_OPTION_1",
+        value: "STATUS_OPTION_1",
         completed: true,
         comment: "This is a note/comment",
         user,
@@ -189,7 +189,7 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "STATUS_OPTION_1",
+      value: "STATUS_OPTION_1",
       completed: true,
       comment: "This is a note/comment",
       user,
@@ -198,7 +198,7 @@ describe("updateTaskStatusUseCase", () => {
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("sets completed flag based on statusOption when statusOptions exist", async () => {
+  it("sets completed flag based on valueOption when valueOptions exist", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -233,14 +233,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -270,19 +270,19 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: false,
       comment: "Task completed",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("COMPLETE");
+    expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("sets completed to false when statusOption has completes false", async () => {
+  it("sets completed to false when valueOption has completes false", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -317,14 +317,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -354,19 +354,19 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: "IN_PROGRESS",
+      value: "IN_PROGRESS",
       completed: true,
       comment: "Task in progress",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe("IN_PROGRESS");
+    expect(task.value).toBe("IN_PROGRESS");
     expect(task.completed).toBe(false);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("throws error when invalid status option is provided", async () => {
+  it("throws error when invalid value option is provided", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -401,14 +401,14 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "IN_PROGRESS",
                           name: "In Progress",
                           theme: "INFO",
                           completes: false,
                         }),
-                        new WorkflowTaskStatusOption({
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
@@ -439,17 +439,17 @@ describe("updateTaskStatusUseCase", () => {
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: "invalid-status",
+        value: "invalid-status",
         completed: true,
         comment: "Task completed",
         user: mockAuthUser,
       }),
     ).rejects.toThrow(
-      'Invalid status option "invalid-status" for task "TASK_1". Valid options are: IN_PROGRESS, COMPLETE',
+      'Invalid value option "invalid-status" for task "TASK_1". Valid options are: IN_PROGRESS, COMPLETE',
     );
   });
 
-  it("uses completed parameter when task has no statusOptions", async () => {
+  it("uses completed parameter when task has no valueOptions", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -484,7 +484,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
@@ -508,19 +508,19 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: null,
+      value: null,
       completed: true,
       comment: "Task completed",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe(null);
+    expect(task.value).toBe(null);
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
 
-  it("throws error when trying to update task status when current stage status is not interactive", async () => {
+  it("throws error when trying to update task value when current stage value is not interactive", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -555,7 +555,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
@@ -580,7 +580,7 @@ describe("updateTaskStatusUseCase", () => {
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
-        status: null,
+        value: null,
         completed: true,
         comment: "Task completed",
         user: mockAuthUser,
@@ -590,7 +590,7 @@ describe("updateTaskStatusUseCase", () => {
     );
   });
 
-  it("allows task update when current stage status is interactive", async () => {
+  it("allows task update when current stage value is interactive", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");
     const kase = Case.createMock();
@@ -625,7 +625,7 @@ describe("updateTaskStatusUseCase", () => {
                       name: "Task 1",
                       mandatory: true,
                       description: "Task description",
-                      statusOptions: [],
+                      valueOptions: [],
                     }),
                   ],
                 }),
@@ -649,14 +649,14 @@ describe("updateTaskStatusUseCase", () => {
       stageCode: "STAGE_1",
       taskGroupCode: "TASK_GROUP_1",
       taskCode: "TASK_1",
-      status: null,
+      value: null,
       completed: true,
       comment: "Task completed",
       user: mockAuthUser,
     });
 
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
-    expect(task.status).toBe(null);
+    expect(task.value).toBe(null);
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });

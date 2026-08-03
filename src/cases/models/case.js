@@ -77,10 +77,10 @@ export class Case {
     return this.comments.find((c) => c.ref === commentRef);
   }
 
-  setTaskStatus({
+  setTaskValue({
     taskGroupCode,
     taskCode,
-    status,
+    value,
     completed,
     comment,
     updatedBy,
@@ -112,8 +112,8 @@ export class Case {
       createdBy: updatedBy,
     });
 
-    task.updateStatus({
-      status,
+    task.updateValue({
+      value,
       completed,
       updatedBy,
       comment: optionalComment,
@@ -486,7 +486,7 @@ export class Case {
                   tasks: [
                     new CaseTask({
                       code: "TASK_1",
-                      status: "PENDING",
+                      value: "PENDING",
                       completed: false,
                       commentRefs: [],
                       updatedAt: undefined,

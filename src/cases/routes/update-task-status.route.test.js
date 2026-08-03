@@ -39,9 +39,9 @@ describe("updateTaskStatusRoute", () => {
 
     const { statusCode, result } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
       payload: {
-        status: "COMPLETE",
+        value: "COMPLETE",
         completed: true,
       },
       auth: {
@@ -60,7 +60,7 @@ describe("updateTaskStatusRoute", () => {
       caseId,
       taskGroupCode,
       taskCode,
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
       user: mockAuthUser,
     });
@@ -79,9 +79,9 @@ describe("updateTaskStatusRoute", () => {
 
     const { statusCode } = await server.inject({
       method: "PATCH",
-      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/status`,
+      url: `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
       payload: {
-        status: 999,
+        value: 999,
       },
     });
 

@@ -2,31 +2,31 @@ import { describe, expect, it } from "vitest";
 import { updateTaskStatusRequestSchema } from "./update-task-status-request.schema.js";
 
 describe("updateTaskStatusRequestSchema", () => {
-  it("allows task statuses", () => {
+  it("allows task values", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
     });
     expect(error).toBeUndefined();
   });
 
-  it("does not allow invalid status", () => {
+  it("does not allow invalid value", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: 999,
+      value: 999,
     });
     expect(error.name).toEqual("ValidationError");
-    expect(error.details[0].message).toContain('"status" must be a string');
+    expect(error.details[0].message).toContain('"value" must be a string');
   });
 
-  it("requires status", () => {
+  it("requires value", () => {
     const { error } = updateTaskStatusRequestSchema.validate({});
     expect(error.name).toEqual("ValidationError");
-    expect(error.details[0].message).toContain('"status" is required');
+    expect(error.details[0].message).toContain('"value" is required');
   });
 
   it("allows comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
       comment: "This is a comment",
     });
@@ -35,7 +35,7 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("allows null comment", () => {
     const { error } = updateTaskStatusRequestSchema.validate({
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
       comment: null,
     });
@@ -44,11 +44,11 @@ describe("updateTaskStatusRequestSchema", () => {
 
   it("removes other fields", () => {
     const { value, error } = updateTaskStatusRequestSchema.validate({
-      status: "COMPLETE",
+      value: "COMPLETE",
       completed: true,
       extraField: "should be removed",
     });
     expect(error).toBeUndefined();
-    expect(value).toEqual({ status: "COMPLETE", completed: true });
+    expect(value).toEqual({ value: "COMPLETE", completed: true });
   });
 });

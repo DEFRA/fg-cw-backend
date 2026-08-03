@@ -1,7 +1,7 @@
 export class TaskDocument {
   constructor(props) {
     this.code = props.code;
-    this.status = props.status;
+    this.value = props.value;
     this.completed = props.completed;
     this.commentRefs = props.commentRefs || [];
     this.updatedAt = props.updatedAt;

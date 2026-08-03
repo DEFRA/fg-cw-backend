@@ -6,7 +6,7 @@ import { WorkflowPhase } from "./workflow-phase.js";
 import { WorkflowStageStatus } from "./workflow-stage-status.js";
 import { WorkflowStage } from "./workflow-stage.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 import { WorkflowTransition } from "./workflow-transition.js";
 import { Workflow } from "./workflow.js";
@@ -34,8 +34,8 @@ describe("Workflow", () => {
                       name: "Review application",
                       mandatory: true,
                       description: "Review the application",
-                      statusOptions: [
-                        new WorkflowTaskStatusOption({
+                      valueOptions: [
+                        new WorkflowTaskValueOption({
                           code: "COMPLETE",
                           name: "Complete",
                           theme: "SUCCESS",
