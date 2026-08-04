@@ -2,12 +2,17 @@ import Boom from "@hapi/boom";
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { Role } from "../models/role.js";
 import { User } from "../models/user.js";
 import { findRolesUseCase } from "../use-cases/find-roles.use-case.js";
 import { findRolesRoute } from "./find-roles.route.js";
 
 vi.mock("../use-cases/find-roles.use-case.js");
+
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("findRolesRoute", () => {
   let server;
@@ -69,5 +74,31 @@ describe("findRolesRoute", () => {
     expect(findRolesUseCase).toHaveBeenCalledWith({
       user: admin,
     });
+  });
+
+  it("writes a VIEW_ROLE_LIST audit event", async () => {
+    const admin = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findRolesUseCase.mockResolvedValue([]);
+
+    await server.inject({
+      method: "GET",
+      url: "/roles",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: admin,
+        },
+      },
+    });
+
+    expect(writeAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entities: [{ entity: "ROLE", action: "VIEW_ROLE_LIST" }],
+      }),
+      undefined,
+    );
   });
 });
