@@ -3,7 +3,12 @@ import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
-import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
+import {
+  completeTask,
+  createCase,
+  findCaseById,
+  updateTaskValue,
+} from "../helpers/cases.js";
 import {
   changeUserIdpRoles,
   createAdminUser,
@@ -289,6 +294,169 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
         security: { pmccode: "0706" },
       },
       target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
+    });
+  });
+
+  describe("input tasks", () => {
+    const taskGroupCode = "REFERENCE_CAPTURE_TASKS";
+
+    const findInputTask = async (caseId, taskCode) => {
+      const updatedCase = await findCaseById(caseId);
+      const taskGroup = updatedCase.phases[0].stages[0].taskGroups.find(
+        (group) => group.code === taskGroupCode,
+      );
+
+      return taskGroup.tasks.find((task) => task.code === taskCode);
+    };
+
+    it.each([
+      ["CAPTURE_TEXT", "SF123456"],
+      ["CAPTURE_NUMBER", "1200"],
+      ["CAPTURE_DATE", "2026-03-27"],
+    ])(
+      "stores %s and infers completion from the value",
+      async (taskCode, value) => {
+        const kase = await createCase(cases);
+
+        const response = await updateTaskValue({
+          caseId: kase._id,
+          taskGroupCode,
+          taskCode,
+          value,
+        });
+
+        expect(response.res.statusCode).toBe(204);
+
+        const task = await findInputTask(kase._id, taskCode);
+        expect(task.value).toBe(value);
+        expect(task.completed).toBe(true);
+        expect(task.updatedAt).toBeDefined();
+      },
+    );
+
+    it.each([
+      ["CAPTURE_TEXT", "TOOMANYCHARS"],
+      ["CAPTURE_NUMBER", "0"],
+      ["CAPTURE_NUMBER", "5001"],
+      ["CAPTURE_NUMBER", "not-a-number"],
+      ["CAPTURE_DATE", "27-03-2026"],
+      ["CAPTURE_DATE", "2026-02-30"],
+    ])(
+      "rejects %s value %s and leaves the task untouched",
+      async (taskCode, value) => {
+        const kase = await createCase(cases);
+
+        await expect(
+          updateTaskValue({
+            caseId: kase._id,
+            taskGroupCode,
+            taskCode,
+            value,
+          }),
+        ).rejects.toThrow("Response Error: 400 Bad Request");
+
+        const task = await findInputTask(kase._id, taskCode);
+        expect(task.value).toBeNull();
+        expect(task.completed).toBe(false);
+      },
+    );
+
+    // The route's valueSchema is Joi.string().allow(null), so "" is rejected
+    // before the use case sees it - null is the only way to clear a value.
+    it("un-completes the task when the value is cleared with null", async () => {
+      const kase = await createCase(cases);
+      const taskCode = "CAPTURE_TEXT";
+
+      await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode,
+        value: "SF123456",
+      });
+
+      expect((await findInputTask(kase._id, taskCode)).completed).toBe(true);
+
+      const response = await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode,
+        value: null,
+      });
+
+      expect(response.res.statusCode).toBe(204);
+
+      const task = await findInputTask(kase._id, taskCode);
+      expect(task.value).toBeNull();
+      expect(task.completed).toBe(false);
+    });
+
+    it("rejects an empty string value", async () => {
+      const kase = await createCase(cases);
+
+      await expect(
+        updateTaskValue({
+          caseId: kase._id,
+          taskGroupCode,
+          taskCode: "CAPTURE_TEXT",
+          value: "",
+        }),
+      ).rejects.toThrow("Response Error: 400 Bad Request");
+    });
+
+    it("ignores a client-supplied completed flag", async () => {
+      const kase = await createCase(cases);
+      const taskCode = "CAPTURE_TEXT";
+
+      await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode,
+        value: null,
+        completed: true,
+      });
+
+      const task = await findInputTask(kase._id, taskCode);
+      expect(task.completed).toBe(false);
+    });
+
+    it("returns the input definition and no valueOptions when reading the case", async () => {
+      const kase = await createCase(cases);
+
+      await client
+        .db()
+        .collection("case_series")
+        .insertOne({
+          caseRefs: [kase.caseRef],
+          workflowCode: kase.workflowCode,
+          latestCaseRef: kase.caseRef,
+          latestCaseId: kase._id.toHexString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+      await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode: "CAPTURE_NUMBER",
+        value: "1200",
+      });
+
+      const { payload } = await wreck.get(`/cases/${kase._id}`);
+      const taskGroup = payload.data.stage.taskGroups.find(
+        (group) => group.code === taskGroupCode,
+      );
+      const task = taskGroup.tasks.find((t) => t.code === "CAPTURE_NUMBER");
+
+      expect(task.input).toEqual({
+        type: "number",
+        label: "Herd size",
+        min: 1,
+        max: 5000,
+      });
+      expect(task.valueOptions).toEqual([]);
+      expect(task.value).toBe("1200");
+      expect(task.statusText).toBe("Completed");
+      expect(task.statusTheme).toBe("SUCCESS");
     });
   });
 });

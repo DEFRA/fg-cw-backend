@@ -279,6 +279,47 @@ export const createWorkflow = async (payload = {}) => {
                     },
                   ],
                 },
+                {
+                  code: "REFERENCE_CAPTURE_TASKS",
+                  name: "Reference capture tasks",
+                  description:
+                    "Input tasks - completion is inferred from value",
+                  tasks: [
+                    {
+                      code: "CAPTURE_TEXT",
+                      name: "Capture reference",
+                      description: "Text input task",
+                      mandatory: true,
+                      input: {
+                        type: "text",
+                        label: "Reference",
+                        maxlength: 8,
+                      },
+                    },
+                    {
+                      code: "CAPTURE_NUMBER",
+                      name: "Capture herd size",
+                      description: "Number input task",
+                      mandatory: false,
+                      input: {
+                        type: "number",
+                        label: "Herd size",
+                        min: 1,
+                        max: 5000,
+                      },
+                    },
+                    {
+                      code: "CAPTURE_DATE",
+                      name: "Capture inspection date",
+                      description: "Date input task",
+                      mandatory: false,
+                      input: {
+                        type: "date",
+                        label: "Date of last inspection",
+                      },
+                    },
+                  ],
+                },
               ],
             },
             {

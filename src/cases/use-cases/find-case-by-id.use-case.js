@@ -42,6 +42,8 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+// Input tasks get no suffix - the value, not the transition, is the event, and
+// the frontend appends "by <user>" to whatever this returns.
 const formatTaskEvent = (tl, workflow, suffix) => {
   const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
   const task = workflow.findTask({
