@@ -2,6 +2,48 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 
+export const InputSchema = Joi.object({
+  type: Joi.string().valid("text", "number", "date").required(),
+  label: Joi.string().required(),
+  hint: Joi.array().items(Joi.string()).optional(),
+
+  // text only
+  placeholder: Joi.string().optional(),
+  pattern: Joi.string().optional(),
+  maxlength: Joi.number().integer().positive().optional(),
+
+  // number only
+  min: Joi.number().optional(),
+  max: Joi.number().optional(),
+})
+  .when(".type", {
+    switch: [
+      {
+        is: "text",
+        then: Joi.object({ min: Joi.forbidden(), max: Joi.forbidden() }),
+      },
+      {
+        is: "number",
+        then: Joi.object({
+          placeholder: Joi.forbidden(),
+          pattern: Joi.forbidden(),
+          maxlength: Joi.forbidden(),
+        }),
+      },
+      {
+        is: "date",
+        then: Joi.object({
+          min: Joi.forbidden(),
+          max: Joi.forbidden(),
+          placeholder: Joi.forbidden(),
+          pattern: Joi.forbidden(),
+          maxlength: Joi.forbidden(),
+        }),
+      },
+    ],
+  })
+  .label("input");
+
 const componentSchema = Joi.object({
   id: Joi.string().optional(),
   component: Joi.string().optional(),
@@ -74,10 +116,11 @@ export const Task = Joi.object({
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
-  valueOptions: Joi.array().items(ValueOption).required(),
+  valueOptions: Joi.array().items(ValueOption).optional(),
+  input: InputSchema.optional(),
   comment: comment.optional().allow(null),
   requiredRoles: requiredRolesSchema.allow(null),
-});
+}).xor("input", "valueOptions");
 
 const TaskGroup = Joi.object({
   code: Code.required(),

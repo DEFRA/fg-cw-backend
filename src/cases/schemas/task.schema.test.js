@@ -125,6 +125,39 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
+  it("should error when valueOptions is empty and input is also provided", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      valueOptions: [],
+      input: {
+        type: "text",
+        label: "Capture Siti/FC reference",
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error.details[0].message).toBe(
+      '"value" contains a conflict between exclusive peers [input, valueOptions]',
+    );
+  });
+
+  it("should error when neither valueOptions nor input is provided", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+    };
+
+    const { error } = Task.validate(task);
+    expect(error.details[0].message).toBe(
+      '"value" must contain at least one of [input, valueOptions]',
+    );
+  });
+
   it("should pass when multiple valueOptions have completes true", () => {
     const task = {
       code: "TASK_1",
