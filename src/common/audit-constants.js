@@ -2,6 +2,7 @@ export const auditEntities = {
   USER: "USER",
   ROLE: "ROLE",
   CASE: "CASE",
+  WORKFLOW: "WORKFLOW",
 };
 
 export const auditActions = {
@@ -16,6 +17,7 @@ export const auditActions = {
   UPDATE_TASK_STATUS: "UPDATE_TASK_STATUS",
   PERFORM_PAGE_ACTION: "PERFORM_PAGE_ACTION",
   ADD_NOTE_TO_CASE: "ADD_NOTE_TO_CASE",
+  CREATE_WORKFLOW: "CREATE_WORKFLOW",
 };
 
 export const auditStatus = {
@@ -36,6 +38,7 @@ const pmcCodesByAction = {
   [auditActions.UPDATE_TASK_STATUS]: "0706", // any action an internal/external user or service can execute
   [auditActions.PERFORM_PAGE_ACTION]: "0706", // any action an internal/external user or service can execute
   [auditActions.ADD_NOTE_TO_CASE]: "0706", // any action an internal/external user or service can execute
+  [auditActions.CREATE_WORKFLOW]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({
