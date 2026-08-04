@@ -96,7 +96,7 @@ const mapCommentRefToNoteHistory = (
   userMap,
 ) => ({
   date: getCommentDate(comment),
-  outcome: getOutcomeName(valueOption, commentRef.status),
+  outcome: getOutcomeName(valueOption, commentRef.value),
   note: getCommentText(comment),
   addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
 });
@@ -109,10 +109,7 @@ const mapNotesHistory = (commentRefs, comments, valueOptions, userMap) => {
   return commentRefs
     .map((commentRef) => {
       const comment = findCommentByRef(comments, commentRef.ref);
-      const valueOption = findValueOptionByCode(
-        valueOptions,
-        commentRef.status,
-      );
+      const valueOption = findValueOptionByCode(valueOptions, commentRef.value);
       return mapCommentRefToNoteHistory(
         commentRef,
         comment,
