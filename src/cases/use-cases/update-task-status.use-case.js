@@ -97,6 +97,10 @@ export const updateTaskStatusUseCase = withAudit(
 );
 
 const mapCompleted = ({ task, value, completed }) => {
+  if (hasInput(task)) {
+    return mapInputCompleted(task, value);
+  }
+
   if (!hasValueOptions(task)) {
     return completed;
   }
@@ -116,3 +120,106 @@ const mapCompleted = ({ task, value, completed }) => {
 
 const hasValueOptions = (task) =>
   task?.valueOptions && task?.valueOptions.length > 0;
+
+const hasInput = (task) => Boolean(task?.input);
+
+const isEmptyValue = (value) =>
+  value === null || value === undefined || String(value).trim() === "";
+
+const mapInputCompleted = (task, value) => {
+  if (isEmptyValue(value)) {
+    return false;
+  }
+
+  validateInputValue(task, String(value));
+
+  return true;
+};
+
+const validateInputValue = (task, value) => {
+  const validators = {
+    text: validateTextInput,
+    number: validateNumberInput,
+    date: validateDateInput,
+  };
+
+  validators[task.input.type](task, value);
+};
+
+const invalidValue = (task, value, reason) =>
+  Boom.badRequest(
+    `Invalid value "${value}" for task "${task.code}": ${reason}`,
+  );
+
+const validateTextInput = (task, value) => {
+  validateMaxLength(task, value);
+  validatePattern(task, value);
+};
+
+const validateMaxLength = (task, value) => {
+  const { maxlength } = task.input;
+
+  if (maxlength !== undefined && value.length > maxlength) {
+    throw invalidValue(task, value, `must be ${maxlength} characters or fewer`);
+  }
+};
+
+const validatePattern = (task, value) => {
+  const { pattern } = task.input;
+
+  if (pattern === undefined) {
+    return;
+  }
+
+  const valid = new RegExp(`^(?:${pattern})$`).test(value);
+  if (!valid) {
+    throw invalidValue(task, value, `must match the pattern ${pattern}`);
+  }
+};
+
+const validateNumberInput = (task, value) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    throw invalidValue(task, value, "must be a number");
+  }
+
+  validateMin(task, value, numericValue);
+  validateMax(task, value, numericValue);
+};
+
+const validateMin = (task, value, numericValue) => {
+  const { min } = task.input;
+
+  if (min !== undefined && numericValue < min) {
+    throw invalidValue(task, value, `must be ${min} or more`);
+  }
+};
+
+const validateMax = (task, value, numericValue) => {
+  const { max } = task.input;
+
+  if (max !== undefined && numericValue > max) {
+    throw invalidValue(task, value, `must be ${max} or less`);
+  }
+};
+
+const validateDateInput = (task, value) => {
+  const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (!isoDate.test(value) || !isRealDate(value)) {
+    throw invalidValue(
+      task,
+      value,
+      "must be a valid date in YYYY-MM-DD format",
+    );
+  }
+};
+
+const isRealDate = (value) => {
+  const parsed = new Date(`${value}T00:00:00Z`);
+
+  return (
+    !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(value)
+  );
+};

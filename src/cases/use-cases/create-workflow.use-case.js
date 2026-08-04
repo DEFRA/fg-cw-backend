@@ -130,7 +130,8 @@ const createWorkflowTask = (task) =>
       allOf: task.requiredRoles?.allOf,
       anyOf: task.requiredRoles?.anyOf,
     }),
-    valueOptions: task.valueOptions.map(createWorkflowTaskValueOption),
+    valueOptions: task.valueOptions?.map(createWorkflowTaskValueOption),
+    input: task.input,
     comment: task.comment,
   });
 
