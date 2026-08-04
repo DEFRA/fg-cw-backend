@@ -1,40 +1,5 @@
 {
   "code": "pigs-might-fly",
-  "requiredRoles": {
-    "allOf": ["ROLE_PMF"],
-    "anyOf": ["ROLE_PMF2"]
-  },
-  "definitions": {},
-  "templates": {
-    "pmf-template": {
-      "pmf-example": {
-        "content": [
-          {
-            "id": "title",
-            "component": "heading",
-            "text": "PMF Template",
-            "level": 2
-          },
-          {
-            "id": "totalPigs",
-            "component": "summary-list",
-            "rows": [
-              {
-                "label": "Total Pigs",
-                "text": "@.totalPigs"
-              },
-              {
-                "label": "White Pigs",
-                "text": "@.whitePigsCount"
-              }
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "endpoints": [],
-  "externalActions": [],
   "pages": {
     "cases": {
       "details": {
@@ -150,6 +115,107 @@
                 "dataRef": "$.payload.answers",
                 "templateRef": "$.templates.pmf-template",
                 "templateKey": "pmf-example"
+              },
+              {
+                "component": "paragraph",
+                "text": "Original configuration version $.originalConfigVersion",
+                "classes": "govuk-body"
+              },
+              {
+                "component": "paragraph",
+                "text": "Current configuration version $.currentConfigVersion",
+                "classes": "govuk-body"
+              }
+            ]
+          },
+          "agreements": {
+            "link": {
+              "id": "agreements",
+              "href": {
+                "urlTemplate": "/cases/{caseId}/agreements",
+                "params": {
+                  "caseId": "$._id"
+                }
+              },
+              "text": "Agreements",
+              "index": 2
+            },
+            "renderIf": "$.supplementaryData.agreements[0]",
+            "content": [
+              {
+                "id": "title",
+                "component": "heading",
+                "text": "Funding agreement",
+                "level": 2,
+                "classes": "govuk-!-margin-top-6"
+              },
+              {
+                "component": "summary-list",
+                "rows": [
+                  {
+                    "label": "Agreement status",
+                    "text": [
+                      {
+                        "component": "status",
+                        "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementStatus",
+                        "themeMap": {
+                          "AGREEMENT_GENERATING": "INFO",
+                          "AGREEMENT_DRAFTED": "INFO",
+                          "OFFERED": "NOTICE",
+                          "ACCEPTED": "SUCCESS",
+                          "WITHDRAWN": "WARN",
+                          "REJECTED": "ERROR",
+                          "TERMINATED": "ERROR",
+                          "CANCELLED": "WARN"
+                        },
+                        "labelsMap": {
+                          "AGREEMENT_GENERATING": "Agreement generating",
+                          "AGREEMENT_DRAFTED": "Agreement drafted",
+                          "OFFERED": "Offered",
+                          "ACCEPTED": "Accepted",
+                          "WITHDRAWN": "Withdrawn",
+                          "REJECTED": "Rejected",
+                          "TERMINATED": "Terminated",
+                          "CANCELLED": "Cancelled"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Reference",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                  },
+                  {
+                    "label": "Date created",
+                    "text": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].createdAt",
+                    "format": "formatDate"
+                  },
+                  {
+                    "label": "Date accepted",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(acceptedDate)), '[D] [MNn,*-3] [Y]') : 'Not accepted'"
+                  },
+                  {
+                    "label": "Start date",
+                    "text": "jsonata:$exists($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate))) ? $fromMillis($max($.supplementaryData.agreements[agreementStatus='ACCEPTED'].$toMillis(startDate)), '[D] [MNn,*-3] [Y]') : 'Not started'"
+                  },
+                  {
+                    "label": "View",
+                    "text": [
+                      {
+                        "component": "url",
+                        "text": "View agreement",
+                        "href": {
+                          "urlTemplate": "$.definitions.agreementsService.internalUrl",
+                          "params": {
+                            "agreementRef": "jsonata:$sort($.supplementaryData.agreements, function($l, $r) { $l.createdAt < $r.createdAt })[0].agreementRef"
+                          }
+                        },
+                        "target": "_blank",
+                        "rel": "noopener"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -168,11 +234,13 @@
           "description": "Review the application for eligibility",
           "statuses": [
             {
+              "closes": null,
               "code": "APPLICATION_RECEIVED",
               "name": "Application Received",
               "theme": "NEUTRAL",
               "description": "Application received and pending review",
               "interactive": false,
+              "hideTaskGroups": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -181,26 +249,31 @@
                     "code": "START_REVIEW",
                     "name": "Start",
                     "checkTasks": false,
+                    "classes": null,
+                    "confirm": null,
                     "comment": null
                   }
                 }
-              ],
-              "closes": false
+              ]
             },
             {
+              "closes": null,
               "code": "IN_REVIEW",
               "name": "In Review",
               "theme": "INFO",
               "description": "Application is being reviewed",
               "interactive": true,
+              "hideTaskGroups": false,
               "transitions": [
                 {
-                  "targetPosition": "PRE_AWARD:FINAL_APPROVAL:APPLICATION_APPROVED",
+                  "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:AGREEMENT_GENERATING",
                   "checkTasks": false,
                   "action": {
                     "code": "APPROVE_APPLICATION",
                     "name": "Approve",
                     "checkTasks": true,
+                    "classes": null,
+                    "confirm": null,
                     "comment": {
                       "label": "Explain this decision",
                       "helpText": "You must include an explanation for auditing purposes.",
@@ -215,11 +288,7 @@
                     "code": "REJECT_APPLICATION",
                     "name": "Reject",
                     "checkTasks": false,
-                    "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "You must include an explanation for auditing purposes.",
-                      "mandatory": true
-                    },
+                    "classes": null,
                     "confirm": {
                       "details": [
                         {
@@ -263,6 +332,11 @@
                         ]
                       },
                       "no": "No, I do not want to reject this application"
+                    },
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
                     }
                   }
                 },
@@ -273,27 +347,29 @@
                     "code": "PUT_ON_HOLD",
                     "name": "Put on Hold",
                     "checkTasks": false,
-                    "comment": {
-                      "label": "Explain this decision",
-                      "helpText": "You must include an explanation for auditing purposes.",
-                      "mandatory": true
-                    },
+                    "classes": null,
                     "confirm": {
                       "details": null,
                       "yes": null,
                       "no": null
+                    },
+                    "comment": {
+                      "label": "Explain this decision",
+                      "helpText": "You must include an explanation for auditing purposes.",
+                      "mandatory": true
                     }
                   }
                 }
-              ],
-              "closes": false
+              ]
             },
             {
+              "closes": null,
               "code": "APPLICATION_REJECTED",
               "name": "Rejected",
               "theme": "ERROR",
               "description": "Application has been rejected",
               "interactive": false,
+              "hideTaskGroups": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -302,6 +378,8 @@
                     "code": "REINSTATE_APPLICATION",
                     "name": "Reinstate Application",
                     "checkTasks": false,
+                    "classes": null,
+                    "confirm": null,
                     "comment": {
                       "label": "Explain this decision",
                       "helpText": "You must include an explanation for auditing purposes.",
@@ -309,15 +387,31 @@
                     }
                   }
                 }
-              ],
-              "closes": true
+              ]
             },
             {
+              "code": "AGREEMENT_GENERATING",
+              "name": "Agreement generating",
+              "theme": "INFO",
+              "description": "Agreement is being generated",
+              "interactive": false,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:REVIEW_OFFER:AGREEMENT_DRAFTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ],
+              "closes": false
+            },
+            {
+              "closes": null,
               "code": "ON_HOLD",
               "name": "On Hold",
               "theme": "NOTICE",
               "description": "Application is on hold pending more information",
               "interactive": true,
+              "hideTaskGroups": false,
               "transitions": [
                 {
                   "targetPosition": "PRE_AWARD:REVIEW_APPLICATION:IN_REVIEW",
@@ -326,6 +420,8 @@
                     "code": "RESUME",
                     "name": "Resume",
                     "checkTasks": false,
+                    "classes": null,
+                    "confirm": null,
                     "comment": {
                       "label": "Explain this decision",
                       "helpText": "You must include an explanation for auditing purposes.",
@@ -333,8 +429,7 @@
                     }
                   }
                 }
-              ],
-              "closes": false
+              ]
             }
           ],
           "taskGroups": [
@@ -360,7 +455,7 @@
                       "classes": "govuk-body"
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
@@ -424,7 +519,7 @@
                       ]
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
@@ -454,7 +549,6 @@
                   }
                 },
                 {
-                  "conditional": "$.payload.answers[?(@property == 'whitePigsCount' && @ > 3)]",
                   "code": "CHECK_WHITE_PIGS",
                   "name": "Check number of White Pigs",
                   "mandatory": true,
@@ -471,7 +565,7 @@
                       "classes": "govuk-body"
                     }
                   ],
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "code": "ACCEPTED",
                       "name": "Accepted",
@@ -486,6 +580,195 @@
                       "altName": "Request information from customer",
                       "completes": false
                     }
+                  ],
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                }
+              ]
+            },
+            {
+              "code": "REFERENCE_CAPTURE_TASKS",
+              "name": "Reference capture tasks",
+              "description": "Reference details recorded against this application",
+              "tasks": [
+                {
+                  "code": "CAPTURE_SITI_FC_REFERENCE",
+                  "name": "Capture Siti/FC reference",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture Siti/FC reference",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the Siti or FC reference held against this holding.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "text",
+                    "label": "Siti/FC reference",
+                    "hint": ["For example, SF123456"],
+                    "maxlength": 20
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                },
+                {
+                  "code": "CAPTURE_HERD_SIZE",
+                  "name": "Capture herd size",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture herd size",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the number of pigs held at the time of the review.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "number",
+                    "label": "Herd size",
+                    "hint": ["Enter a whole number between 1 and 5000"],
+                    "min": 1,
+                    "max": 5000
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                },
+                {
+                  "code": "CAPTURE_INSPECTION_DATE",
+                  "name": "Capture inspection date",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture inspection date",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the date the holding was last inspected.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "date",
+                    "label": "Date of last inspection",
+                    "hint": ["For example, 27 3 2026"]
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "REVIEW_OFFER",
+          "name": "Agreement ready for applicant",
+          "description": "Send the agreement to the applicant",
+          "statuses": [
+            {
+              "code": "AGREEMENT_DRAFTED",
+              "name": "Agreement ready for applicant",
+              "theme": "INFO",
+              "description": "The agreement is ready to be sent to the applicant",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "PRE_AWARD:CUSTOMER_AGREEMENT_REVIEW:AGREEMENT_OFFERED",
+                  "checkTasks": true,
+                  "action": {
+                    "code": "AGREEMENT_SENT",
+                    "name": "Confirm agreement sent",
+                    "checkTasks": true,
+                    "comment": {
+                      "label": {
+                        "text": "Comment",
+                        "classes": "govuk-visually-hidden"
+                      },
+                      "helpText": "Add comment for auditing purposes.",
+                      "mandatory": false
+                    }
+                  }
+                }
+              ],
+              "closes": false
+            }
+          ],
+          "taskGroups": [
+            {
+              "name": "Tasks",
+              "code": "AGREEMENT_PREPARATION_TASKS",
+              "description": "Tasks to prepare and send the agreement to the applicant",
+              "tasks": [
+                {
+                  "name": "Notify customer that draft agreement is ready",
+                  "code": "SEND_AGREEMENT_TO_APPLICANT",
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Notify customer that draft agreement is ready",
+                      "level": 2
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Send the draft agreement link to the customer or explain why this is not possible."
+                    },
+                    {
+                      "component": "heading",
+                      "text": "Confirm the draft agreement link has been sent",
+                      "level": 3
+                    }
+                  ],
+                  "mandatory": true,
+                  "valueOptions": [
+                    {
+                      "name": "Sent",
+                      "code": "AGREEMENT_SENT_TO_APPLICANT",
+                      "theme": "SUCCESS",
+                      "altName": "Sent to customer",
+                      "completes": true,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Enter the CRM reference number to confirm the draft agreement has been sent.",
+                        "mandatory": true
+                      }
+                    },
+                    {
+                      "name": "Not sent",
+                      "code": "AGREEMENT_NOT_SENT_TO_APPLICANT",
+                      "theme": "ERROR",
+                      "altName": "Could not send to customer",
+                      "completes": false,
+                      "comment": {
+                        "label": "Explanation",
+                        "helpText": "Explain why the draft agreement link could not be sent.",
+                        "mandatory": true
+                      }
+                    }
                   ]
                 }
               ]
@@ -493,32 +776,120 @@
           ]
         },
         {
+          "code": "CUSTOMER_AGREEMENT_REVIEW",
+          "name": "Agreement with applicant",
+          "description": "Agreement is with the applicant, awaiting their response",
+          "statuses": [
+            {
+              "code": "AGREEMENT_OFFERED",
+              "name": "Agreement offered",
+              "theme": "NOTICE",
+              "description": "Agreement has been offered to the customer",
+              "interactive": true,
+              "transitions": [
+                {
+                  "targetPosition": "POST_AGREEMENT_MONITORING:MONITORING:AGREEMENT_ACCEPTED",
+                  "checkTasks": false,
+                  "action": null
+                }
+              ],
+              "closes": false
+            }
+          ],
+          "taskGroups": []
+        },
+        {
           "code": "FINAL_APPROVAL",
           "name": "Final Approval",
           "description": "Final approval stage for approved applications",
           "statuses": [
             {
+              "closes": null,
               "code": "APPLICATION_APPROVED",
               "name": "Approved",
               "theme": "SUCCESS",
               "description": "Application has been approved",
               "interactive": false,
-              "transitions": [],
-              "closes": false
+              "hideTaskGroups": false,
+              "transitions": []
             },
             {
+              "closes": null,
               "code": "APPLICATION_WITHDRAWN",
               "name": "Withdrawn",
               "theme": "WARN",
               "description": "Application has been withdrawn",
               "interactive": false,
+              "hideTaskGroups": false,
+              "transitions": []
+            }
+          ],
+          "taskGroups": []
+        }
+      ]
+    },
+    {
+      "code": "POST_AGREEMENT_MONITORING",
+      "name": "Post agreement monitoring",
+      "stages": [
+        {
+          "code": "MONITORING",
+          "name": "Monitoring",
+          "description": "Monitor accepted agreement",
+          "statuses": [
+            {
+              "code": "AGREEMENT_ACCEPTED",
+              "name": "Agreement accepted",
+              "theme": "SUCCESS",
+              "description": "Agreement has been accepted",
+              "interactive": false,
               "transitions": [],
-              "closes": true
+              "closes": false
             }
           ],
           "taskGroups": []
         }
       ]
     }
-  ]
+  ],
+  "requiredRoles": {
+    "allOf": ["ROLE_PMF"],
+    "anyOf": ["ROLE_PMF2"]
+  },
+  "definitions": {
+    "agreementsService": {
+      "internalUrl": "https://fg-cw-frontend.dev.cdp-int.defra.cloud/agreement/{agreementRef}"
+    }
+  },
+  "templates": {
+    "pmf-template": {
+      "pmf-example": {
+        "content": [
+          {
+            "id": "title",
+            "component": "heading",
+            "text": "PMF Template",
+            "level": 2
+          },
+          {
+            "id": "totalPigs",
+            "component": "summary-list",
+            "rows": [
+              {
+                "label": "Total Pigs",
+                "text": "@.totalPigs"
+              },
+              {
+                "label": "White Pigs",
+                "text": "@.whitePigsCount"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "endpoints": [],
+  "externalActions": [],
+  "version": "0.0.0"
 }
