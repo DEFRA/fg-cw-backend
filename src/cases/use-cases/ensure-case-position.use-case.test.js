@@ -224,7 +224,7 @@ describe("ensureCasePosition", () => {
       code: "TASK_1",
       value: "IN_PROGRESS",
       completed: false,
-      commentRefs: [{ status: "IN_PROGRESS", ref: "comment-123" }],
+      commentRefs: [{ value: "IN_PROGRESS", ref: "comment-123" }],
       updatedAt: "2025-01-01T00:00:00.000Z",
       updatedBy: "user-1",
     });
@@ -250,7 +250,7 @@ describe("ensureCasePosition", () => {
     const task = kase.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.value).toBe("IN_PROGRESS");
     expect(task.commentRefs).toEqual([
-      { status: "IN_PROGRESS", ref: "comment-123" },
+      { value: "IN_PROGRESS", ref: "comment-123" },
     ]);
     expect(task.updatedBy).toBe("user-1");
   });

@@ -60,11 +60,11 @@ describe("CaseTask", () => {
     const task = new CaseTask({
       code: "TASK_1",
       value: "PENDING",
-      commentRefs: [{ status: "ACCEPTED", ref: "abc123def456" }],
+      commentRefs: [{ value: "ACCEPTED", ref: "abc123def456" }],
     });
 
     expect(task.commentRefs).toEqual([
-      { status: "ACCEPTED", ref: "abc123def456" },
+      { value: "ACCEPTED", ref: "abc123def456" },
     ]);
   });
 
@@ -74,7 +74,7 @@ describe("CaseTask", () => {
         new CaseTask({
           code: "TASK_1",
           value: "PENDING",
-          commentRefs: [{ status: "ACCEPTED", ref: "INVALID_REF" }],
+          commentRefs: [{ value: "ACCEPTED", ref: "INVALID_REF" }],
         }),
     ).toThrow(
       'Invalid Task: "UrlSafeId" with value "INVALID_REF" fails to match the required pattern: /^[a-z0-9-]+$/',
@@ -184,7 +184,7 @@ describe("CaseTask", () => {
     });
 
     expect(task.commentRefs).toEqual([
-      { status: "ACCEPTED", ref: "abc123def456" },
+      { value: "ACCEPTED", ref: "abc123def456" },
     ]);
   });
 
@@ -209,8 +209,8 @@ describe("CaseTask", () => {
     });
 
     expect(task.commentRefs).toEqual([
-      { status: "RFI", ref: "abc123def456" },
-      { status: "ACCEPTED", ref: "xyz789ghi012" },
+      { value: "RFI", ref: "abc123def456" },
+      { value: "ACCEPTED", ref: "xyz789ghi012" },
     ]);
   });
 
@@ -233,7 +233,7 @@ describe("CaseTask", () => {
     const task = new CaseTask({
       code: "TASK_1",
       value: "PENDING",
-      commentRefs: [{ status: "RFI", ref: "abc123def456" }],
+      commentRefs: [{ value: "RFI", ref: "abc123def456" }],
     });
 
     task.updateValue({
@@ -242,11 +242,11 @@ describe("CaseTask", () => {
       updatedBy: "k0a7-9xv4f2h1n3q8c5w2z1y",
     });
 
-    expect(task.commentRefs).toEqual([{ status: "RFI", ref: "abc123def456" }]);
+    expect(task.commentRefs).toEqual([{ value: "RFI", ref: "abc123def456" }]);
   });
 
   describe("isComplete", () => {
-    it("should return true for non-mandatory tasks regardless of completion status", () => {
+    it("should return true for non-mandatory tasks regardless of completion value", () => {
       const task = new CaseTask({
         code: "TASK_1",
         value: "PENDING",
