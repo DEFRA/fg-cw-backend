@@ -148,4 +148,24 @@ describe("viewCaseAuditDataBuilder", () => {
 
     expect(auditData.entities[0].entityid).toBe(caseId);
   });
+
+  it.each(["tasks", "task", "notes", "timeline"])(
+    "records the %s tab in the audit details so views are distinguishable",
+    (tabId) => {
+      const auditData = viewCaseAuditDataBuilder([{ caseId, tabId, user }], {
+        data: { caseRef: "CASE-REF-1" },
+      });
+
+      expect(auditData.details.tabId).toBe(tabId);
+    },
+  );
+
+  it("omits tabId from the details for the base case view", () => {
+    const auditData = viewCaseAuditDataBuilder(
+      [{ caseId, tabId: undefined, user }],
+      { data: { caseRef: "CASE-REF-1" } },
+    );
+
+    expect(auditData.details.tabId).toBeUndefined();
+  });
 });

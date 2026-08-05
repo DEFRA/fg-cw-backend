@@ -37,7 +37,10 @@ const viewCase = async ({ caseId, tabId, user }) => {
   return createPageResponse({ user, data: { ...data, links, caseSeries } });
 };
 
-export const viewCaseAuditDataBuilder = ([{ caseId, user }], result) => ({
+export const viewCaseAuditDataBuilder = (
+  [{ caseId, tabId, user }],
+  result,
+) => ({
   entities: [
     {
       entity: auditEntities.CASE,
@@ -47,6 +50,7 @@ export const viewCaseAuditDataBuilder = ([{ caseId, user }], result) => ({
   ],
   details: {
     security: buildSecurityContext(user),
+    tabId,
   },
   security: buildAuditSecurity(auditActions.VIEW_CASE),
   segregationRef: `view-case-${caseId}`,
