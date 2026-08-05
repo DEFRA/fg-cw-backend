@@ -68,10 +68,29 @@ const updateTaskStatus = async (command) => {
 
   logger.info(`Finished: Updating task value for case "${command.caseId}"`);
 
-  return update(kase);
+  await update(kase);
+
+  // return the derived state values (completed, value) for use in audit.
+  return {
+    completed: taskCompleted,
+    value: taskValue,
+  };
 };
 
-export const updateTaskStatusAuditDataBuilder = ([command]) => ({
+// On success audit what was actually stored; on failure there is no result,
+// so fall back to what the caller asked for.
+const auditedTask = (command, results) => {
+  const source = results ?? command;
+
+  return {
+    taskGroupCode: command.taskGroupCode,
+    taskCode: command.taskCode,
+    value: source.value,
+    completed: source.completed,
+  };
+};
+
+export const updateTaskStatusAuditDataBuilder = ([command], results) => ({
   entities: [
     {
       entity: auditEntities.CASE,
@@ -81,12 +100,7 @@ export const updateTaskStatusAuditDataBuilder = ([command]) => ({
   ],
   details: {
     security: buildSecurityContext(command.user),
-    task: {
-      taskGroupCode: command.taskGroupCode,
-      taskCode: command.taskCode,
-      value: command.value,
-      completed: command.completed,
-    },
+    task: auditedTask(command, results),
   },
   security: buildAuditSecurity(auditActions.UPDATE_TASK_STATUS),
   segregationRef: `update-task-value-${command.caseId}`,
