@@ -1,10 +1,9 @@
 import Joi from "joi";
 
-import { createPageResponse } from "../../common/create-page-response.js";
 import { codeSchema } from "../../common/schemas/roles/code.schema.js";
 import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { idpIdSchema } from "../schemas/user/idp-id.schema.js";
-import { adminFindUsersUseCase } from "../use-cases/admin-find-users.use-case.js";
+import { adminViewUserListUseCase } from "../use-cases/admin-view-user-list.use-case.js";
 
 export const adminFindUsersRoute = {
   method: "GET",
@@ -24,7 +23,7 @@ export const adminFindUsersRoute = {
   async handler(request) {
     const { user } = request.auth.credentials;
 
-    const data = await adminFindUsersUseCase({
+    return adminViewUserListUseCase({
       user,
       query: {
         idpId: request.query.idpId,
@@ -33,7 +32,5 @@ export const adminFindUsersRoute = {
         anyAppRoles: request.query.anyAppRoles,
       },
     });
-
-    return createPageResponse({ user, data });
   },
 };
