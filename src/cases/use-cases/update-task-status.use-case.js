@@ -54,12 +54,13 @@ const updateTaskStatus = async (command) => {
 
   validatePayloadComment(comment, task.comment?.mandatory === true);
 
-  const taskCompleted = mapCompleted({ task, value, completed });
+  const taskValue = hasInput(task) ? normaliseInputValue(value) : value;
+  const taskCompleted = mapCompleted({ task, value: taskValue, completed });
 
   kase.setTaskValue({
     taskGroupCode,
     taskCode,
-    value,
+    value: taskValue,
     completed: taskCompleted,
     comment,
     updatedBy: user.id,
@@ -126,6 +127,11 @@ const hasInput = (task) => Boolean(task?.input);
 const isEmptyValue = (value) =>
   value === null || value === undefined || String(value).trim() === "";
 
+// A whitespace-only value must store as null rather than as blank that can
+// be misread as a value.
+const normaliseInputValue = (value) =>
+  isEmptyValue(value) ? null : String(value).trim();
+
 const mapInputCompleted = (task, value) => {
   if (isEmptyValue(value)) {
     return false;
@@ -177,12 +183,35 @@ const validatePattern = (task, value) => {
   }
 };
 
-const validateNumberInput = (task, value) => {
-  const numericValue = Number(value);
+// Number() is far looser than a caseworker would expect: it accepts hex
+// ("0x10" -> 16), exponent form ("1e3" -> 1000) and whitespace, and the value
+// is stored as the string typed, so the field would redisplay as "0x10".
+const DECIMAL_NUMBER = /^-?\d+(\.\d+)?$/;
+const WHOLE_NUMBER = /^-?\d+$/;
 
-  if (!Number.isFinite(numericValue)) {
-    throw invalidValue(task, value, "must be a number");
+// Split from validateNumberInput so a well-formed decimal offered to an
+// integer-only input gets "must be a whole number" rather than the blunter
+// "must be a number".
+const numberFormatError = (task, value) => {
+  if (!DECIMAL_NUMBER.test(value)) {
+    return "must be a number";
   }
+
+  if (task.input.integer && !WHOLE_NUMBER.test(value)) {
+    return "must be a whole number";
+  }
+
+  return null;
+};
+
+const validateNumberInput = (task, value) => {
+  const formatError = numberFormatError(task, value);
+
+  if (formatError) {
+    throw invalidValue(task, value, formatError);
+  }
+
+  const numericValue = Number(value);
 
   validateMin(task, value, numericValue);
   validateMax(task, value, numericValue);

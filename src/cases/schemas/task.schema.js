@@ -2,6 +2,22 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 
+// The pattern is compiled per request as `^(?:<pattern>)$`. Reject one that
+// cannot compile at definition time, so a bad config fails when the workflow is
+// saved rather than as a 500 on every attempt to set a value.
+// NB this proves the pattern is valid, not that it is efficient
+const compilablePattern = Joi.string().custom((value, helpers) => {
+  try {
+    RegExp(`^(?:${value})$`);
+  } catch {
+    return helpers.message(
+      `"input.pattern" must be a valid regular expression`,
+    );
+  }
+
+  return value;
+});
+
 export const InputSchema = Joi.object({
   type: Joi.string().valid("text", "number", "date").required(),
   label: Joi.string().required(),
@@ -9,18 +25,23 @@ export const InputSchema = Joi.object({
 
   // text only
   placeholder: Joi.string().optional(),
-  pattern: Joi.string().optional(),
+  pattern: compilablePattern.optional(),
   maxlength: Joi.number().integer().positive().optional(),
 
   // number only
   min: Joi.number().optional(),
   max: Joi.number().optional(),
+  integer: Joi.boolean().optional(),
 })
   .when(".type", {
     switch: [
       {
         is: "text",
-        then: Joi.object({ min: Joi.forbidden(), max: Joi.forbidden() }),
+        then: Joi.object({
+          min: Joi.forbidden(),
+          max: Joi.forbidden(),
+          integer: Joi.forbidden(),
+        }),
       },
       {
         is: "number",
@@ -35,6 +56,7 @@ export const InputSchema = Joi.object({
         then: Joi.object({
           min: Joi.forbidden(),
           max: Joi.forbidden(),
+          integer: Joi.forbidden(),
           placeholder: Joi.forbidden(),
           pattern: Joi.forbidden(),
           maxlength: Joi.forbidden(),

@@ -339,6 +339,12 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
       ["CAPTURE_NUMBER", "0"],
       ["CAPTURE_NUMBER", "5001"],
       ["CAPTURE_NUMBER", "not-a-number"],
+      // Number() reads these as 16 and 1000, but the value is stored as the
+      // string typed, so the field would come back reading "0x10".
+      ["CAPTURE_NUMBER", "0x10"],
+      ["CAPTURE_NUMBER", "1e3"],
+      // CAPTURE_NUMBER is integer-only, matching the pmf herd size field.
+      ["CAPTURE_NUMBER", "12.5"],
       ["CAPTURE_DATE", "27-03-2026"],
       ["CAPTURE_DATE", "2026-02-30"],
     ])(
@@ -386,6 +392,42 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
       expect(response.res.statusCode).toBe(204);
 
       const task = await findInputTask(kase._id, taskCode);
+      expect(task.value).toBeNull();
+      expect(task.completed).toBe(false);
+    });
+
+    it("trims surrounding whitespace before storing the value", async () => {
+      const kase = await createCase(cases);
+
+      const response = await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode: "CAPTURE_TEXT",
+        value: "  SF123456  ",
+      });
+
+      expect(response.res.statusCode).toBe(204);
+
+      const task = await findInputTask(kase._id, "CAPTURE_TEXT");
+      expect(task.value).toBe("SF123456");
+      expect(task.completed).toBe(true);
+    });
+
+    // Blanks would persist as a value that redisplays as a filled-in field
+    // against a task reading Incomplete.
+    it("stores a whitespace-only value as null rather than as blanks", async () => {
+      const kase = await createCase(cases);
+
+      const response = await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode,
+        taskCode: "CAPTURE_TEXT",
+        value: "   ",
+      });
+
+      expect(response.res.statusCode).toBe(204);
+
+      const task = await findInputTask(kase._id, "CAPTURE_TEXT");
       expect(task.value).toBeNull();
       expect(task.completed).toBe(false);
     });
@@ -452,6 +494,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
         label: "Herd size",
         min: 1,
         max: 5000,
+        integer: true,
       });
       expect(task.valueOptions).toEqual([]);
       expect(task.value).toBe("1200");

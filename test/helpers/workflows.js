@@ -306,6 +306,7 @@ export const createWorkflow = async (payload = {}) => {
                         label: "Herd size",
                         min: 1,
                         max: 5000,
+                        integer: true,
                       },
                     },
                     {

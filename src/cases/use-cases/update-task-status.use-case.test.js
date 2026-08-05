@@ -831,6 +831,73 @@ describe("updateTaskStatusUseCase", () => {
       );
     });
 
+    // Number() reads these as 16 and 1000, but the value is stored as the
+    // string typed, so the field would come back reading "0x10".
+    it.each(["0x10", "1e3", "1_000", "+12"])(
+      "rejects %s for a number input",
+      async (value) => {
+        const kase = await setUpInputTask({
+          type: "number",
+          label: "Capture reference number",
+        });
+
+        await expect(() => updateValue(kase, value)).rejects.toThrow(
+          "must be a number",
+        );
+      },
+    );
+
+    it("accepts a decimal when the input is not integer-only", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture area",
+      });
+
+      await updateValue(kase, "12.5");
+
+      expect(taskOf(kase).value).toBe("12.5");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("rejects a decimal for an integer-only number input", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await expect(() => updateValue(kase, "12.5")).rejects.toThrow(
+        "must be a whole number",
+      );
+    });
+
+    it("accepts a whole number for an integer-only number input", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await updateValue(kase, "1200");
+
+      expect(taskOf(kase).value).toBe("1200");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    // Not "must be a whole number" - the value is not a number at all, so the
+    // blunter message is the accurate one.
+    it("reports a non-numeric value as not a number even when integer-only", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await expect(() => updateValue(kase, "abc")).rejects.toThrow(
+        "must be a number",
+      );
+    });
+
     it("infers completed for a valid date value", async () => {
       const kase = await setUpInputTask({
         type: "date",
@@ -890,6 +957,22 @@ describe("updateTaskStatusUseCase", () => {
       await updateValue(kase, "   ");
 
       expect(taskOf(kase).completed).toBe(false);
+      // Stored as null, not as blanks - blanks would redisplay as a
+      // filled-in field against a task reading Incomplete.
+      expect(taskOf(kase).value).toBe(null);
+    });
+
+    it("trims surrounding whitespace from a stored value", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{4}",
+      });
+
+      await updateValue(kase, "  SF1234  ");
+
+      expect(taskOf(kase).value).toBe("SF1234");
+      expect(taskOf(kase).completed).toBe(true);
     });
 
     it("ignores the client-supplied completed flag for input tasks", async () => {

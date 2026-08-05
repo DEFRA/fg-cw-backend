@@ -166,6 +166,7 @@ describe("GET /cases/{caseId}", () => {
                   label: "Herd size",
                   min: 1,
                   max: 5000,
+                  integer: true,
                 },
                 value: null,
                 statusText: "Incomplete",

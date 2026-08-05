@@ -16,6 +16,7 @@ export class InputDocument {
       // number only
       min: props.min,
       max: props.max,
+      integer: props.integer,
     });
   }
 }
