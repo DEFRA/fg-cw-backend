@@ -796,6 +796,5 @@
     }
   },
   "endpoints": [],
-  "externalActions": [],
-  "version": "0.0.0"
+  "externalActions": []
 }
