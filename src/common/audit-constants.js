@@ -14,6 +14,9 @@ export const auditActions = {
   VIEW_CASE_LIST: "VIEW_CASE_LIST",
   VIEW_CASE: "VIEW_CASE",
   VIEW_CASE_TAB: "VIEW_CASE_TAB",
+  VIEW_LANDING_PAGE: "VIEW_LANDING_PAGE",
+  VIEW_USER_LIST: "VIEW_USER_LIST",
+  VIEW_USER_DETAILS: "VIEW_USER_DETAILS",
   CREATE_CASE: "CREATE_CASE",
   UPDATE_STAGE_OUTCOME: "UPDATE_STAGE_OUTCOME",
   UPDATE_TASK_STATUS: "UPDATE_TASK_STATUS",
@@ -38,6 +41,9 @@ const pmcCodesByAction = {
   [auditActions.VIEW_CASE_LIST]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_TAB]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_LANDING_PAGE]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_USER_LIST]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_USER_DETAILS]: "0706", // any action an internal/external user or service can execute
   [auditActions.CREATE_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.UPDATE_STAGE_OUTCOME]: "0706", // any action an internal/external user or service can execute
   [auditActions.UPDATE_TASK_STATUS]: "0706", // any action an internal/external user or service can execute
