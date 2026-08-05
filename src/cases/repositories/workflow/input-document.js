@@ -10,7 +10,6 @@ export class InputDocument {
     assignDefined(this, {
       hint: props.hint,
       // text only
-      placeholder: props.placeholder,
       pattern: props.pattern,
       maxlength: props.maxlength,
       // number only

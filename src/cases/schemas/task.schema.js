@@ -23,8 +23,10 @@ export const InputSchema = Joi.object({
   label: Joi.string().required(),
   hint: Joi.array().items(Joi.string()).optional(),
 
-  // text only
-  placeholder: Joi.string().optional(),
+  // text only. No placeholder: the GOV.UK Design System says not to use it for
+  // hints or examples - its default styling often fails WCAG 2.2 1.4.3.
+  // Use hint instead.
+  // https://design-system.service.gov.uk/components/text-input/
   pattern: compilablePattern.optional(),
   maxlength: Joi.number().integer().positive().optional(),
 
@@ -46,7 +48,6 @@ export const InputSchema = Joi.object({
       {
         is: "number",
         then: Joi.object({
-          placeholder: Joi.forbidden(),
           pattern: Joi.forbidden(),
           maxlength: Joi.forbidden(),
         }),
@@ -57,7 +58,6 @@ export const InputSchema = Joi.object({
           min: Joi.forbidden(),
           max: Joi.forbidden(),
           integer: Joi.forbidden(),
-          placeholder: Joi.forbidden(),
           pattern: Joi.forbidden(),
           maxlength: Joi.forbidden(),
         }),
