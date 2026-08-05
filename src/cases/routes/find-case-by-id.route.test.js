@@ -7,6 +7,9 @@ import { findCaseByIdRoute } from "./find-case-by-id.route.js";
 
 vi.mock("../use-cases/find-case-by-id.use-case.js");
 vi.mock("../use-cases/find-case-series.use-case.js");
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("findCaseByIdRoute", () => {
   const authenticatedUserId = new ObjectId().toHexString();

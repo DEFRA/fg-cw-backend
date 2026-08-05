@@ -1,6 +1,5 @@
 import Joi from "joi";
-import { createPageResponse } from "../../common/create-page-response.js";
-import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.use-case.js";
+import { viewCaseTabUseCase } from "../use-cases/view-case-tab.use-case.js";
 
 export const findCaseByIdTabIdRoute = {
   method: "GET",
@@ -21,12 +20,6 @@ export const findCaseByIdTabIdRoute = {
     const query = request.query ?? {};
     const { user } = request.auth.credentials;
 
-    const data = await buildCaseDetailsTabUseCase({
-      params: { caseId, tabId },
-      query,
-      user,
-    });
-
-    return createPageResponse({ user, data });
+    return viewCaseTabUseCase({ caseId, tabId, query, user });
   },
 };
