@@ -1,6 +1,13 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
@@ -213,7 +220,7 @@ const createWorkflowPhase = (phase, phases) =>
     ),
   });
 
-export const createWorkflowUseCase = async (createWorkflowCommand) => {
+const createWorkflow = async (createWorkflowCommand) => {
   logger.info(`Creating workflow with code "${createWorkflowCommand.code}"`);
 
   AccessControl.authorise(createWorkflowCommand.user, {
@@ -245,6 +252,33 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   return workflow;
 };
+
+export const createWorkflowAuditDataBuilder = (
+  [createWorkflowCommand],
+  result,
+) => ({
+  entities: [
+    {
+      entity: auditEntities.WORKFLOW,
+      action: auditActions.CREATE_WORKFLOW,
+      entityid: result?.code ?? createWorkflowCommand.code,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(createWorkflowCommand.user),
+    workflow: {
+      code: createWorkflowCommand.code,
+      version: createWorkflowCommand.version,
+    },
+  },
+  security: buildAuditSecurity(auditActions.CREATE_WORKFLOW),
+  segregationRef: `create-workflow-${createWorkflowCommand.code}`,
+});
+
+export const createWorkflowUseCase = withAudit(
+  createWorkflow,
+  createWorkflowAuditDataBuilder,
+);
 
 const createWorkflowEndpoint = (endpoint) =>
   new WorkflowEndpoint({

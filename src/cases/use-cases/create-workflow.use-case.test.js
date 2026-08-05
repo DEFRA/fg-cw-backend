@@ -19,6 +19,9 @@ import { save } from "../repositories/workflow.repository.js";
 import { createWorkflowUseCase } from "./create-workflow.use-case.js";
 
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("createWorkflowUseCase", () => {
   const adminUser = User.createMock({
