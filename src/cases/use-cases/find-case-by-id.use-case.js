@@ -91,7 +91,7 @@ export const formatTimelineItemDescription = (tl, workflow) => {
 
 const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
 
-const findValueOptionByCode = (valueOptions = [], code) =>
+const findValueOptionByCode = (code, valueOptions = []) =>
   valueOptions.find((opt) => opt.code === code);
 
 const getCommentDate = (comment) => comment?.createdAt ?? null;
@@ -119,7 +119,7 @@ const mapNotesHistory = (commentRefs, comments, valueOptions, userMap) => {
   return commentRefs
     .map((commentRef) => {
       const comment = findCommentByRef(comments, commentRef.ref);
-      const valueOption = findValueOptionByCode(valueOptions, commentRef.value);
+      const valueOption = findValueOptionByCode(commentRef.value, valueOptions);
       return mapCommentRefToNoteHistory(
         commentRef,
         comment,
