@@ -83,7 +83,8 @@ const toWorkflowTask = (t) =>
       allOf: t.requiredRoles?.allOf,
       anyOf: t.requiredRoles?.anyOf,
     }),
-    valueOptions: t.valueOptions.map(toWorkflowTaskValueOption),
+    valueOptions: t.valueOptions?.map(toWorkflowTaskValueOption),
+    input: t.input,
     comment: toWorkflowTaskComment(t.comment),
   });
 

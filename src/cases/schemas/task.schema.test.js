@@ -125,6 +125,117 @@ describe("Task Schema", () => {
     expect(error).toBeUndefined();
   });
 
+  it("should error when valueOptions is empty and input is also provided", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      valueOptions: [],
+      input: {
+        type: "text",
+        label: "Capture Siti/FC reference",
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error.details[0].message).toBe(
+      '"value" contains a conflict between exclusive peers [input, valueOptions]',
+    );
+  });
+
+  // The pattern is compiled per request as `^(?:<pattern>)$`. Catching a
+  // malformed one here means a bad config fails when the workflow is saved,
+  // rather than as a 500 every time a caseworker sets a value.
+  it("should error when the input pattern is not a valid regular expression", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      input: {
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z",
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error.details[0].message).toBe(
+      '"input.pattern" must be a valid regular expression',
+    );
+  });
+
+  it("should accept a valid input pattern", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      input: {
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{6}",
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should accept integer on a number input", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      input: {
+        type: "number",
+        label: "Capture herd size",
+        min: 1,
+        max: 5000,
+        integer: true,
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it.each(["text", "date"])(
+    "should error when integer is set on a %s input",
+    (type) => {
+      const task = {
+        code: "TASK_1",
+        name: "Test task",
+        mandatory: true,
+        description: null,
+        input: {
+          type,
+          label: "Capture something",
+          integer: true,
+        },
+      };
+
+      const { error } = Task.validate(task);
+      expect(error.details[0].message).toBe('"input.integer" is not allowed');
+    },
+  );
+
+  it("should error when neither valueOptions nor input is provided", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+    };
+
+    const { error } = Task.validate(task);
+    expect(error.details[0].message).toBe(
+      '"value" must contain at least one of [input, valueOptions]',
+    );
+  });
+
   it("should pass when multiple valueOptions have completes true", () => {
     const task = {
       code: "TASK_1",

@@ -55,6 +55,14 @@ export const createCase = async (cases, payload = {}) => {
                   },
                 ],
               },
+              {
+                code: "REFERENCE_CAPTURE_TASKS",
+                tasks: [
+                  { code: "CAPTURE_TEXT", value: null, completed: false },
+                  { code: "CAPTURE_NUMBER", value: null, completed: false },
+                  { code: "CAPTURE_DATE", value: null, completed: false },
+                ],
+              },
             ],
           },
         ],
@@ -82,6 +90,21 @@ export const assignUserToCase = async (caseId, assignedUserId) => {
 
   return response;
 };
+
+export const updateTaskValue = async ({
+  caseId,
+  taskGroupCode,
+  taskCode,
+  value,
+  completed = false,
+  comment = null,
+}) =>
+  wreck.patch(
+    `/cases/${caseId}/task-groups/${taskGroupCode}/tasks/${taskCode}/value`,
+    {
+      payload: { value, completed, comment },
+    },
+  );
 
 export const completeTask = async ({
   caseId,

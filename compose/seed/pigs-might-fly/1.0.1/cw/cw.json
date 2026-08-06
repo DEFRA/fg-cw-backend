@@ -588,6 +588,101 @@
                   }
                 }
               ]
+            },
+            {
+              "code": "REFERENCE_CAPTURE_TASKS",
+              "name": "Reference capture tasks",
+              "description": "Reference details recorded against this application",
+              "tasks": [
+                {
+                  "code": "CAPTURE_SITI_FC_REFERENCE",
+                  "name": "Capture Siti/FC reference",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture Siti/FC reference",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the Siti or FC reference held against this holding.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "text",
+                    "label": "Siti/FC reference",
+                    "hint": ["For example, SF123456"],
+                    "maxlength": 20
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                },
+                {
+                  "code": "CAPTURE_HERD_SIZE",
+                  "name": "Capture herd size",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture herd size",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the number of pigs held at the time of the review.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "number",
+                    "label": "Herd size",
+                    "hint": ["Enter a whole number between 1 and 5000"],
+                    "min": 1,
+                    "max": 5000,
+                    "integer": true
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                },
+                {
+                  "code": "CAPTURE_INSPECTION_DATE",
+                  "name": "Capture inspection date",
+                  "mandatory": true,
+                  "description": [
+                    {
+                      "component": "heading",
+                      "text": "Capture inspection date",
+                      "level": 2,
+                      "classes": "govuk-!-margin-bottom-3"
+                    },
+                    {
+                      "component": "paragraph",
+                      "text": "Record the date the holding was last inspected.",
+                      "classes": "govuk-body"
+                    }
+                  ],
+                  "input": {
+                    "type": "date",
+                    "label": "Date of last inspection",
+                    "hint": ["For example, 27 3 2026"]
+                  },
+                  "comment": null,
+                  "requiredRoles": {
+                    "allOf": [],
+                    "anyOf": []
+                  }
+                }
+              ]
             }
           ]
         },

@@ -2,6 +2,70 @@ import Joi from "joi";
 import { comment } from "./comment.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 
+// The pattern is compiled per request as `^(?:<pattern>)$`. Reject one that
+// cannot compile at definition time, so a bad config fails when the workflow is
+// saved rather than as a 500 on every attempt to set a value.
+// NB this proves the pattern is valid, not that it is efficient
+const compilablePattern = Joi.string().custom((value, helpers) => {
+  try {
+    RegExp(`^(?:${value})$`);
+  } catch {
+    return helpers.message(
+      `"input.pattern" must be a valid regular expression`,
+    );
+  }
+
+  return value;
+});
+
+export const InputSchema = Joi.object({
+  type: Joi.string().valid("text", "number", "date").required(),
+  label: Joi.string().required(),
+  hint: Joi.array().items(Joi.string()).optional(),
+
+  // text only. No placeholder: the GOV.UK Design System says not to use it for
+  // hints or examples - its default styling often fails WCAG 2.2 1.4.3.
+  // Use hint instead.
+  // https://design-system.service.gov.uk/components/text-input/
+  pattern: compilablePattern.optional(),
+  maxlength: Joi.number().integer().positive().optional(),
+
+  // number only
+  min: Joi.number().optional(),
+  max: Joi.number().optional(),
+  integer: Joi.boolean().optional(),
+})
+  .when(".type", {
+    switch: [
+      {
+        is: "text",
+        then: Joi.object({
+          min: Joi.forbidden(),
+          max: Joi.forbidden(),
+          integer: Joi.forbidden(),
+        }),
+      },
+      {
+        is: "number",
+        then: Joi.object({
+          pattern: Joi.forbidden(),
+          maxlength: Joi.forbidden(),
+        }),
+      },
+      {
+        is: "date",
+        then: Joi.object({
+          min: Joi.forbidden(),
+          max: Joi.forbidden(),
+          integer: Joi.forbidden(),
+          pattern: Joi.forbidden(),
+          maxlength: Joi.forbidden(),
+        }),
+      },
+    ],
+  })
+  .label("input");
+
 const componentSchema = Joi.object({
   id: Joi.string().optional(),
   component: Joi.string().optional(),
@@ -74,10 +138,11 @@ export const Task = Joi.object({
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
-  valueOptions: Joi.array().items(ValueOption).required(),
+  valueOptions: Joi.array().items(ValueOption).optional(),
+  input: InputSchema.optional(),
   comment: comment.optional().allow(null),
   requiredRoles: requiredRolesSchema.allow(null),
-});
+}).xor("input", "valueOptions");
 
 const TaskGroup = Joi.object({
   code: Code.required(),
