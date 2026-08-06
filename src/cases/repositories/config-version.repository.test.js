@@ -3,7 +3,6 @@ import { FetchStatus } from "../../common/fetch-status.js";
 import { ConfigVersion } from "../models/config-version.js";
 import {
   findByGrantCodeAndVersion,
-  findLatestActive,
   findLatestForMajor,
   updateFetchStatus,
   upsert,
@@ -69,32 +68,6 @@ describe("config-version.repository", () => {
       mockCollection.findOne.mockResolvedValue(null);
 
       const result = await findLatestForMajor("nonexistent", 1);
-      expect(result).toBeNull();
-    });
-  });
-
-  describe("findLatestActive", () => {
-    it("should return the latest active version across majors excluding 0.0.0", async () => {
-      const doc = ConfigVersion.createMock({ minor: 6, patch: 0 }).toDocument();
-      mockCollection.findOne.mockResolvedValue(doc);
-
-      const result = await findLatestActive("pigs-might-fly");
-      expect(result).toBeInstanceOf(ConfigVersion);
-      expect(mockCollection.findOne).toHaveBeenCalledWith(
-        {
-          grantCode: "pigs-might-fly",
-          status: "active",
-          version: { $ne: "0.0.0" },
-          fetchStatus: { $ne: FetchStatus.PermanentError },
-        },
-        { sort: { major: -1, minor: -1, patch: -1 } },
-      );
-    });
-
-    it("should return null when only the 0.0.0 sentinel exists", async () => {
-      mockCollection.findOne.mockResolvedValue(null);
-
-      const result = await findLatestActive("pigs-might-fly");
       expect(result).toBeNull();
     });
   });
