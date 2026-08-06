@@ -610,6 +610,47 @@
                   ]
                 }
               ]
+            },
+            {
+              "code": "REFERENCE_CAPTURE_TASKS",
+              "name": "Reference capture tasks",
+              "description": "Reference details recorded against this application",
+              "tasks": [
+                {
+                  "code": "CAPTURE_SITI_FC_REFERENCE",
+                  "name": "Capture Siti/FC reference",
+                  "mandatory": false,
+                  "description": null,
+                  "input": {
+                    "type": "text",
+                    "label": "Siti/FC reference",
+                    "hint": ["For example, SF123456"],
+                    "maxlength": 20
+                  }
+                },
+                {
+                  "code": "CAPTURE_HERD_SIZE",
+                  "name": "Capture herd size",
+                  "mandatory": false,
+                  "description": null,
+                  "input": {
+                    "type": "number",
+                    "label": "Herd size",
+                    "min": 1,
+                    "max": 5000
+                  }
+                },
+                {
+                  "code": "CAPTURE_INSPECTION_DATE",
+                  "name": "Capture inspection date",
+                  "mandatory": false,
+                  "description": null,
+                  "input": {
+                    "type": "date",
+                    "label": "Date of last inspection"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -672,7 +713,7 @@
                     }
                   ],
                   "mandatory": true,
-                  "statusOptions": [
+                  "valueOptions": [
                     {
                       "name": "Sent",
                       "code": "AGREEMENT_SENT_TO_APPLICANT",

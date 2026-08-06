@@ -66,6 +66,38 @@ describe("formatTimelineItemDescription", () => {
     );
   });
 
+  it.each([
+    [EventEnums.eventTypes.TASK_COMPLETED, "Task Completed"],
+    [EventEnums.eventTypes.TASK_UPDATED, "Task Updated"],
+  ])("omits the suffix for input tasks on %s", (eventType, description) => {
+    const wf = Workflow.createMock();
+    const task = wf.findTask({
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+    });
+    task.input = { type: "text", label: "Siti/FC reference" };
+    task.valueOptions = undefined;
+
+    const timelineItem = {
+      eventType,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description,
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Task 'Task 1'",
+    );
+  });
+
   it("formats stage completed", () => {
     const wf = Workflow.createMock();
     const timelineItem = {
@@ -1202,6 +1234,114 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.notesHistory).toEqual([]);
+    });
+  });
+
+  describe("input tasks", () => {
+    const setUpInputTask = ({ input, value, completed }) => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const workflowTask = mockWorkflow.findTask({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      });
+      workflowTask.input = input;
+      workflowTask.valueOptions = undefined;
+
+      const caseTask = mockCase.phases[0].stages[0].taskGroups[0].tasks[0];
+      caseTask.value = value;
+      caseTask.completed = completed;
+
+      findAll.mockResolvedValue([mockUser]);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
+      findById.mockResolvedValue(mockCase);
+
+      return { mockUser, mockCase, caseTask };
+    };
+
+    const textInput = { type: "text", label: "Siti/FC reference" };
+
+    it("reports a captured value as Completed", async () => {
+      const { mockCase } = setUpInputTask({
+        input: textInput,
+        value: "SF123456",
+        completed: true,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.statusText).toBe("Completed");
+      expect(task.statusTheme).toBe("SUCCESS");
+      expect(task.value).toBe("SF123456");
+    });
+
+    it("reports a cleared value as Incomplete", async () => {
+      const { mockCase } = setUpInputTask({
+        input: textInput,
+        value: null,
+        completed: false,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.statusText).toBe("Incomplete");
+      expect(task.statusTheme).toBe("INFO");
+    });
+
+    it("passes the input definition through and sends no valueOptions", async () => {
+      const input = {
+        type: "number",
+        label: "Herd size",
+        hint: ["Enter a whole number between 1 and 5000"],
+        min: 1,
+        max: 5000,
+      };
+      const { mockCase } = setUpInputTask({
+        input,
+        value: "1200",
+        completed: true,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.input).toEqual(input);
+      expect(task.valueOptions).toEqual([]);
+    });
+
+    it("falls back to the captured value as the notesHistory outcome", async () => {
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      const { mockUser, mockCase, caseTask } = setUpInputTask({
+        input: textInput,
+        value: "SF123456",
+        completed: true,
+      });
+
+      caseTask.commentRefs = [{ value: "SF123456", ref: commentRef }];
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "Reference confirmed with the applicant",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0].outcome).toBe("SF123456");
     });
   });
 });

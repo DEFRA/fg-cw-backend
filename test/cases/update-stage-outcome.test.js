@@ -11,7 +11,12 @@ import {
 } from "vitest";
 
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
-import { completeTask, createCase, findCaseById } from "../helpers/cases.js";
+import {
+  completeTask,
+  createCase,
+  findCaseById,
+  updateTaskValue,
+} from "../helpers/cases.js";
 import { receiveMessages } from "../helpers/sqs.js";
 import {
   changeUserIdpRoles,
@@ -20,6 +25,14 @@ import {
 } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
+
+const completeMandatoryInputTask = (caseId) =>
+  updateTaskValue({
+    caseId,
+    taskGroupCode: "REFERENCE_CAPTURE_TASKS",
+    taskCode: "CAPTURE_TEXT",
+    value: "SF123456",
+  });
 
 describe("PATCH /cases/{caseId}/stage/outcome", () => {
   let cases;
@@ -53,6 +66,8 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       taskGroupCode: "APPLICATION_RECEIPT_TASKS",
       taskCode: "SIMPLE_REVIEW",
     });
+
+    await completeMandatoryInputTask(kase._id);
 
     const actionCode = "APPROVE";
 
@@ -121,6 +136,8 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       taskCode: "SIMPLE_REVIEW",
     });
 
+    await completeMandatoryInputTask(kase._id);
+
     const commentText = "Application reviewed and approved";
 
     const response = await wreck.patch(`/cases/${kase._id}/stage/outcome`, {
@@ -135,6 +152,77 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
     const updatedCase = await findCaseById(kase._id);
 
     expect(updatedCase.timeline[0].comment.text).toBe(commentText);
+  });
+
+  describe("input task completion gating", () => {
+    const approve = (caseId) =>
+      wreck.patch(`/cases/${caseId}/stage/outcome`, {
+        payload: { actionCode: "APPROVE", comment: null },
+      });
+
+    it("blocks the transition until the mandatory input task has a value", async () => {
+      const kase = await createCase(cases);
+
+      await completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      });
+
+      await expect(approve(kase._id)).rejects.toThrow(
+        "Response Error: 412 Precondition Failed",
+      );
+
+      expect((await findCaseById(kase._id)).position.stageCode).toBe(
+        "APPLICATION_RECEIPT",
+      );
+
+      await completeMandatoryInputTask(kase._id);
+
+      const response = await approve(kase._id);
+
+      expect(response.res.statusCode).toBe(204);
+      expect((await findCaseById(kase._id)).position.stageCode).toBe(
+        "CONTRACT",
+      );
+    });
+
+    it("still blocks when the mandatory input value is cleared again", async () => {
+      const kase = await createCase(cases);
+
+      await completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      });
+      await completeMandatoryInputTask(kase._id);
+
+      await updateTaskValue({
+        caseId: kase._id,
+        taskGroupCode: "REFERENCE_CAPTURE_TASKS",
+        taskCode: "CAPTURE_TEXT",
+        value: null,
+      });
+
+      await expect(approve(kase._id)).rejects.toThrow(
+        "Response Error: 412 Precondition Failed",
+      );
+    });
+
+    it("does not block on empty non-mandatory input tasks", async () => {
+      const kase = await createCase(cases);
+
+      await completeTask({
+        caseId: kase._id,
+        taskGroupCode: "APPLICATION_RECEIPT_TASKS",
+        taskCode: "SIMPLE_REVIEW",
+      });
+      await completeMandatoryInputTask(kase._id);
+
+      const response = await approve(kase._id);
+
+      expect(response.res.statusCode).toBe(204);
+    });
   });
 
   it("returns 404 when case does not exist", async () => {
@@ -236,6 +324,8 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
       taskGroupCode: "APPLICATION_RECEIPT_TASKS",
       taskCode: "SIMPLE_REVIEW",
     });
+
+    await completeMandatoryInputTask(kase._id);
 
     const response = await wreck.patch(`/cases/${kase._id}/stage/outcome`, {
       payload: {
