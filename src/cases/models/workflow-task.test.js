@@ -106,7 +106,7 @@ describe("WorkflowTask", () => {
             name: "Test Task",
           }),
       ).toThrow(
-        'Invalid WorkflowTask: "mandatory" is required, "description" is required, "valueOptions" is required',
+        'Invalid WorkflowTask: "mandatory" is required, "description" is required, "Task" must contain at least one of [valueOptions, input]',
       );
     });
 

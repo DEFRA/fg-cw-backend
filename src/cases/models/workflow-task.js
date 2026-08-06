@@ -2,7 +2,7 @@ import Joi from "joi";
 import { validateProps } from "../../common/validation.js";
 import { comment } from "../schemas/comment.schema.js";
 import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
-import { Code, ValueOption } from "../schemas/task.schema.js";
+import { Code, InputSchema, ValueOption } from "../schemas/task.schema.js";
 
 export class WorkflowTask {
   constructor(props) {
@@ -18,8 +18,13 @@ export class WorkflowTask {
     this.description = value.description;
     this.mandatory = value.mandatory;
     this.valueOptions = value.valueOptions;
+    this.input = value.input;
     this.requiredRoles = value.requiredRoles;
     this.comment = value.comment;
+  }
+
+  hasInput() {
+    return !!this.input;
   }
 
   getRequiredRoles() {
@@ -40,7 +45,8 @@ WorkflowTask.validationSchema = Joi.object({
   description: Joi.alternatives()
     .try(Joi.string(), Joi.array(), Joi.valid(null))
     .required(),
-  valueOptions: Joi.array().items(ValueOption).required(),
+  valueOptions: Joi.array().items(ValueOption).optional(),
+  input: InputSchema.optional(),
   comment: comment.optional().allow(null),
   requiredRoles: Joi.alternatives()
     .try(requiredRolesSchema, Joi.valid(null))
@@ -57,6 +63,7 @@ WorkflowTask.validationSchema = Joi.object({
     }
     return value;
   })
+  .xor("valueOptions", "input")
   .messages({
     "task.valueOptions.noCompletingOption":
       "At least one status option must have completes set to true",

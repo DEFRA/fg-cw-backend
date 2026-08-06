@@ -660,4 +660,339 @@ describe("updateTaskStatusUseCase", () => {
     expect(task.completed).toBe(true);
     expect(update).toHaveBeenCalledWith(kase);
   });
+
+  describe("input tasks", () => {
+    const setUpInputTask = async (input) => {
+      const { WorkflowStageStatus } =
+        await import("../models/workflow-stage-status.js");
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock({
+        phases: [
+          new WorkflowPhase({
+            code: "PHASE_1",
+            name: "Phase 1",
+            stages: [
+              new WorkflowStage({
+                code: "STAGE_1",
+                name: "Stage 1",
+                description: "Stage description",
+                statuses: [
+                  new WorkflowStageStatus({
+                    code: "STATUS_1",
+                    name: "Interactive Status",
+                    theme: "INFO",
+                    description: "Status description",
+                    interactive: true,
+                    transitions: [],
+                  }),
+                ],
+                taskGroups: [
+                  new WorkflowTaskGroup({
+                    code: "TASK_GROUP_1",
+                    name: "Task Group 1",
+                    description: "Task group description",
+                    tasks: [
+                      new WorkflowTask({
+                        code: "TASK_1",
+                        name: "Task 1",
+                        mandatory: true,
+                        description: "Task description",
+                        input,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      });
+      kase.workflowCode = workflow.code;
+
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow,
+        resolvedVersion: null,
+      });
+      findById.mockResolvedValue(kase);
+
+      return kase;
+    };
+
+    const updateValue = (kase, value) =>
+      updateTaskStatusUseCase({
+        caseId: kase._id,
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        value,
+        completed: false,
+        user: mockAuthUser,
+      });
+
+    const taskOf = (kase) => kase.phases[0].stages[0].taskGroups[0].tasks[0];
+
+    it("infers completed when a text value satisfies pattern and maxlength", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{4}",
+        maxlength: 6,
+      });
+
+      await updateValue(kase, "AB1234");
+
+      expect(taskOf(kase).value).toBe("AB1234");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("rejects a text value that exceeds maxlength", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        maxlength: 6,
+      });
+
+      await expect(() => updateValue(kase, "ABCDEFG")).rejects.toThrow(
+        'Invalid value "ABCDEFG" for task "TASK_1": must be 6 characters or fewer',
+      );
+    });
+
+    it("rejects a text value that does not match the pattern", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{4}",
+      });
+
+      await expect(() => updateValue(kase, "ab1234")).rejects.toThrow(
+        "must match the pattern [A-Z]{2}[0-9]{4}",
+      );
+    });
+
+    it("matches the pattern against the whole value", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[0-9]{6}",
+      });
+
+      await expect(() => updateValue(kase, "xxx123456xxx")).rejects.toThrow(
+        "must match the pattern [0-9]{6}",
+      );
+    });
+
+    it("infers completed when a number value is within min and max", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture reference number",
+        min: 1000000,
+        max: 9999999,
+      });
+
+      await updateValue(kase, "1234567");
+
+      expect(taskOf(kase).value).toBe("1234567");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("rejects a number value below min", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture reference number",
+        min: 1000000,
+      });
+
+      await expect(() => updateValue(kase, "999")).rejects.toThrow(
+        "must be 1000000 or more",
+      );
+    });
+
+    it("rejects a number value above max", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture reference number",
+        max: 100,
+      });
+
+      await expect(() => updateValue(kase, "101")).rejects.toThrow(
+        "must be 100 or less",
+      );
+    });
+
+    it("rejects a non-numeric value for a number input", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture reference number",
+      });
+
+      await expect(() => updateValue(kase, "12abc")).rejects.toThrow(
+        "must be a number",
+      );
+    });
+
+    // Number() reads these as 16 and 1000, but the value is stored as the
+    // string typed, so the field would come back reading "0x10".
+    it.each(["0x10", "1e3", "1_000", "+12"])(
+      "rejects %s for a number input",
+      async (value) => {
+        const kase = await setUpInputTask({
+          type: "number",
+          label: "Capture reference number",
+        });
+
+        await expect(() => updateValue(kase, value)).rejects.toThrow(
+          "must be a number",
+        );
+      },
+    );
+
+    it("accepts a decimal when the input is not integer-only", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture area",
+      });
+
+      await updateValue(kase, "12.5");
+
+      expect(taskOf(kase).value).toBe("12.5");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("rejects a decimal for an integer-only number input", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await expect(() => updateValue(kase, "12.5")).rejects.toThrow(
+        "must be a whole number",
+      );
+    });
+
+    it("accepts a whole number for an integer-only number input", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await updateValue(kase, "1200");
+
+      expect(taskOf(kase).value).toBe("1200");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    // Not "must be a whole number" - the value is not a number at all, so the
+    // blunter message is the accurate one.
+    it("reports a non-numeric value as not a number even when integer-only", async () => {
+      const kase = await setUpInputTask({
+        type: "number",
+        label: "Capture herd size",
+        integer: true,
+      });
+
+      await expect(() => updateValue(kase, "abc")).rejects.toThrow(
+        "must be a number",
+      );
+    });
+
+    it("infers completed for a valid date value", async () => {
+      const kase = await setUpInputTask({
+        type: "date",
+        label: "Capture inspection date",
+      });
+
+      await updateValue(kase, "2026-07-14");
+
+      expect(taskOf(kase).value).toBe("2026-07-14");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("rejects a date that is not in YYYY-MM-DD format", async () => {
+      const kase = await setUpInputTask({
+        type: "date",
+        label: "Capture inspection date",
+      });
+
+      await expect(() => updateValue(kase, "14/07/2026")).rejects.toThrow(
+        "must be a valid date in YYYY-MM-DD format",
+      );
+    });
+
+    it("rejects a date that does not exist in the calendar", async () => {
+      const kase = await setUpInputTask({
+        type: "date",
+        label: "Capture inspection date",
+      });
+
+      await expect(() => updateValue(kase, "2026-02-30")).rejects.toThrow(
+        "must be a valid date in YYYY-MM-DD format",
+      );
+    });
+
+    it("un-completes the task when the value is cleared", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+      });
+
+      await updateValue(kase, "AB1234");
+      expect(taskOf(kase).completed).toBe(true);
+
+      await updateValue(kase, null);
+
+      expect(taskOf(kase).value).toBe(null);
+      expect(taskOf(kase).completed).toBe(false);
+    });
+
+    it("treats a whitespace-only value as empty", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{4}",
+      });
+
+      await updateValue(kase, "   ");
+
+      expect(taskOf(kase).completed).toBe(false);
+      // Stored as null, not as blanks - blanks would redisplay as a
+      // filled-in field against a task reading Incomplete.
+      expect(taskOf(kase).value).toBe(null);
+    });
+
+    it("trims surrounding whitespace from a stored value", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+        pattern: "[A-Z]{2}[0-9]{4}",
+      });
+
+      await updateValue(kase, "  SF1234  ");
+
+      expect(taskOf(kase).value).toBe("SF1234");
+      expect(taskOf(kase).completed).toBe(true);
+    });
+
+    it("ignores the client-supplied completed flag for input tasks", async () => {
+      const kase = await setUpInputTask({
+        type: "text",
+        label: "Capture Siti/FC reference",
+      });
+
+      await updateTaskStatusUseCase({
+        caseId: kase._id,
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        value: null,
+        completed: true,
+        user: mockAuthUser,
+      });
+
+      expect(taskOf(kase).completed).toBe(false);
+    });
+  });
 });
