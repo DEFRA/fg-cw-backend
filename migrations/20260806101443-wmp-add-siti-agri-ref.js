@@ -6,9 +6,10 @@ export const up = async (db) => {
 
     // develop
     "wmp-967-b2u": 2222222, // is accepted
-
+    "wmp-xph-rym": 2222222, // not at accepted stage
     // test
     "wmp-zum-ypr": 3333333, // is accepted
+    "wmp-4db-8ra": 3333333, // not at accepted stage
 
     // prod
     "wmp-l8r-329": 2326337,
