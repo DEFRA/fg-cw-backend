@@ -20,7 +20,15 @@ const compilablePattern = Joi.string().custom((value, helpers) => {
 
 export const InputSchema = Joi.object({
   type: Joi.string().valid("text", "number", "date").required(),
-  label: Joi.string().required(),
+  label: Joi.alternatives()
+    .try(
+      Joi.string(),
+      Joi.object({
+        text: Joi.string().required(),
+        classes: Joi.string().optional(),
+      }),
+    )
+    .required(),
   hint: Joi.array().items(Joi.string()).optional(),
 
   // text only. No placeholder: the GOV.UK Design System says not to use it for

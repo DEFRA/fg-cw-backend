@@ -166,6 +166,41 @@ describe("Task Schema", () => {
     );
   });
 
+  it("should allow object label on an input", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      input: {
+        type: "text",
+        label: {
+          text: "Enter SitiAgri reference",
+          classes: "govuk-label--m",
+        },
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeUndefined();
+  });
+
+  it("should error when an object input label has no text", () => {
+    const task = {
+      code: "TASK_1",
+      name: "Test task",
+      mandatory: true,
+      description: null,
+      input: {
+        type: "text",
+        label: { classes: "govuk-label--m" },
+      },
+    };
+
+    const { error } = Task.validate(task);
+    expect(error).toBeDefined();
+  });
+
   it("should accept a valid input pattern", () => {
     const task = {
       code: "TASK_1",
