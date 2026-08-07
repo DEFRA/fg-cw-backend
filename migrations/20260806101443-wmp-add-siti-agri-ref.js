@@ -5,12 +5,12 @@ export const up = async (db) => {
     "wood-1001": 1010101,
 
     // develop
-    "wmp-967-b2u": 2222222,
+    "wmp-967-b2u": 2222222, // is accepted
 
     // test
-    "wmp-zum-ypr": 3333333,
+    "wmp-zum-ypr": 3333333, // is accepted
 
-    //
+    // prod
     "wmp-l8r-329": 2326337,
     "wmp-rku-ha4": 2348574,
     "wmp-ylw-4jl": 2305310,
@@ -48,6 +48,30 @@ export const up = async (db) => {
     "wmp-awp-bkp": 2291951,
     "wmp-3zp-hwl": 2318913,
     "wmp-8cv-768": 2341576,
+    "wmp-hlr-abn": 2296339,
+    "wmp-zjh-3jl": 2340794,
+    "wmp-nf4-bn5": 2264699,
+    "wmp-228-kra": 2336940,
+    "wmp-b4j-7s2": 2453823,
+    "wmp-lp8-tvx": 2348726,
+    "wmp-4xs-twt": 2345445,
+    "wmp-rnr-res": 2346201,
+    "wmp-p8n-c2c": 2335973,
+    "wmp-vss-tae": 2344996,
+    "wmp-pl4-pdc": 2343986,
+    "wmp-uc4-u9s": 2343947,
+    "wmp-dr5-tzd": 2449146,
+    "wmp-867-s22": 2331858,
+    "wmp-py3-wx8": 2344231,
+    "wmp-tfz-lnc": 2453465,
+    "wmp-792-68t": 2346889,
+    "wmp-c4j-y3y": 2453062,
+    "wmp-fz7-5a4": 2348615,
+    "wmp-m85-kbw": 2453453,
+    "wmp-m8p-v78": 2340798,
+    "wmp-fu9-nbv": 2348106,
+    "wmp-2tu-tua": 2345972,
+    "wmp-uxa-6kn": 2458804,
   };
 
   const task = {
