@@ -2,8 +2,6 @@ import { withTransaction } from "../src/common/with-transaction.js";
 
 export const up = async (db) => {
   const refs = {
-    "wood-1001": 1010101,
-
     // develop
     "wmp-967-b2u": 2222222, // is accepted
     "wmp-xph-rym": 2222222, // not at accepted stage
