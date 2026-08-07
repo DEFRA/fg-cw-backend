@@ -1,44 +1,53 @@
 import { withTransaction } from "../src/common/with-transaction.js";
 
-export const up = async (db, client) => {
+export const up = async (db) => {
   const refs = {
-    106241643: "2326337",
-    106323196: "2348574",
-    106490576: "2305310",
-    106553297: "2342972",
-    106634181: "2337697",
-    106668514: "2338801",
-    106692400: "2338146",
-    106776150: "2298162",
-    106933321: "2295123",
-    106969836: "2341558",
-    107006764: "2320439",
-    107059405: "2339149",
-    107082687: "2314222",
-    107124756: "2286716",
-    107138876: "2315984",
-    110192152: "2338513",
-    110327815: "2332924",
-    110545261: "2337012",
-    114352085: "2342146",
-    116623145: "2323988",
-    117570918: "2265948",
-    117571851: "2265872",
-    122259669: "2337691",
-    200008255: "2337285",
-    200105772: "2328369",
-    200628182: "2334316",
-    200922657: "2342831",
-    200927219: "2286938",
-    201109197: "2244737",
-    201115195: "2338603",
-    201117357: "2263459",
-    201127086: "2283622",
-    201127543: "2286784",
-    201128065: "2297777",
-    201130003: "2291951",
-    201141756: "2318913",
-    201145088: "2341576",
+    "wood-1001": 1010101,
+
+    // develop
+    "wmp-967-b2u": 2222222,
+
+    // test
+    "wmp-zum-ypr": 3333333,
+
+    //
+    "wmp-l8r-329": 2326337,
+    "wmp-rku-ha4": 2348574,
+    "wmp-ylw-4jl": 2305310,
+    "wmp-vt8-j4a": 2342972,
+    "wmp-x7m-l38": 2337697,
+    "wmp-2ax-726": 2338801,
+    "wmp-5f4-jza": 2338146,
+    "wmp-ns8-j3x": 2298162,
+    "wmp-js2-u7c": 2295123,
+    "wmp-4u7-dm3": 2341558,
+    "wmp-yjd-ww3": 2320439,
+    "wmp-sh3-d4k": 2339149,
+    "wmp-9kn-87r": 2314222,
+    "wmp-lam-zvk": 2286716,
+    "wmp-5kb-wav": 2315984,
+    "wmp-fuh-rwr": 2338513,
+    "wmp-sat-n6h": 2332924,
+    "wmp-ve5-bxu": 2337012,
+    "wmp-tc3-ac8": 2342146,
+    "wmp-24b-wyn": 2323988,
+    "wmp-mrl-b74": 2265948,
+    "wmp-vwd-bhm": 2265872,
+    "wmp-nvk-v6v": 2337691,
+    "wmp-4tm-txn": 2337285,
+    "wmp-ref-uk5": 2328369,
+    "wmp-6zl-s7t": 2334316,
+    "wmp-7nw-dl3": 2342831,
+    "wmp-c2n-4z8": 2286938,
+    "wmp-398-75z": 2244737,
+    "wmp-s8l-2hr": 2338603,
+    "wmp-u5x-mu9": 2263459,
+    "wmp-ldb-szm": 2283622,
+    "wmp-mxs-sw9": 2286784,
+    "wmp-ch2-zcl": 2297777,
+    "wmp-awp-bkp": 2291951,
+    "wmp-3zp-hwl": 2318913,
+    "wmp-8cv-768": 2341576,
   };
 
   const task = {
@@ -63,50 +72,61 @@ export const up = async (db, client) => {
 
   const collection = "cases";
 
-  withTransaction(async (session) => {
-    Object.keys(refs).forEach(async (key) => {
+  await withTransaction(async (session) => {
+    for (const [caseRef, ref] of Object.entries(refs)) {
       const kase = await db
         .collection(collection)
-        .findOne({ "payload.identifiers.sbi": key });
+        .findOne({ caseRef, workflowCode: "woodland" }, { session });
 
-      if (kase) {
-        const stage = kase.phases
-          .find((phase) => phase.code === "PHASE_PRE_AWARD")
-          ?.stages.find((stage) => stage.code === "STAGE_AGREEMENT_ACCEPTED");
-
-        if (stage) {
-          const taskGroup = stage.taskGroups && stage.taskGroups[0];
-          const date = new Date().toISOString();
-          if (taskGroup) {
-            taskGroup?.tasks?.unshift({
-              ...task,
-              value: refs[key],
-              updatedAt: date,
-            });
-
-            kase.timeline?.unshift({
-              ...timelineEntry,
-              createdAt: date,
-              data: {
-                caseRef: kase.caseRef,
-              },
-            });
-            await db
-              .collection(collection)
-              .updateOne(
-                { "payload.identifiers.sbi": key },
-                { $set: { phases: kase.phases, timeline: kase.timeline } },
-                { session },
-              );
-          }
-        } else {
-          console.warn(
-            `Stage STAGE_AGREEMENT_UPDATED not found on Case with sbi ${key}.`,
-          );
-        }
-      } else {
-        console.warn(`Case with sbi ${key} was not found.`);
+      if (!kase) {
+        console.warn(`Case with caseRef ${caseRef} was not found.`);
+        continue;
       }
-    });
+
+      const stage = kase.phases
+        .find((phase) => phase.code === "PHASE_PRE_AWARD")
+        ?.stages.find((stage) => stage.code === "STAGE_AGREEMENT_ACCEPTED");
+
+      if (!stage) {
+        console.warn(
+          `Stage STAGE_AGREEMENT_ACCEPTED not found on Case with caseRef ${caseRef}.`,
+        );
+        continue;
+      }
+
+      const taskGroup = stage.taskGroups?.[0];
+
+      if (!taskGroup) {
+        continue;
+      }
+
+      if (taskGroup.tasks?.some((t) => t.code === task.code)) {
+        continue;
+      }
+
+      const date = new Date().toISOString();
+
+      taskGroup.tasks?.unshift({
+        ...task,
+        value: String(ref),
+        updatedAt: date,
+      });
+
+      kase.timeline?.unshift({
+        ...timelineEntry,
+        createdAt: date,
+        data: {
+          caseRef: kase.caseRef,
+        },
+      });
+
+      await db
+        .collection(collection)
+        .updateOne(
+          { caseRef, workflowCode: "woodland" },
+          { $set: { phases: kase.phases, timeline: kase.timeline } },
+          { session },
+        );
+    }
   });
 };
