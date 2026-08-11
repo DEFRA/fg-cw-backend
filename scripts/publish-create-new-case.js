@@ -348,6 +348,7 @@ const messageWMPCase = {
     createdAt: "2026-06-08T17:02:59.660Z",
 
     payload: {
+      configVersion: "1.0.1",
       createdAt: "2026-06-08T17:02:59.402Z",
       submittedAt: "2026-06-08T17:02:59.330Z",
 
