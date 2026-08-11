@@ -21,9 +21,19 @@ export const up = async (db) => {
       continue;
     }
 
-    await cases.updateMany(
+    const { modifiedCount } = await cases.updateMany(
       { workflowCode, currentConfigVersion: "0.0.0" },
       { $set: { currentConfigVersion: highest.version } },
     );
+
+    console.log(
+      `Updated ${modifiedCount} cases for ${workflowCode} to ${highest.version}`,
+    );
   }
+
+  const remainingCount = await cases.countDocuments({
+    currentConfigVersion: "0.0.0",
+  });
+
+  console.log(`${remainingCount} cases remain on the legacy version`);
 };
