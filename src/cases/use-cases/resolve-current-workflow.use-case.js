@@ -2,10 +2,7 @@ import Boom from "@hapi/boom";
 import { logger } from "../../common/logger.js";
 import { parseSemver } from "../../common/semver.js";
 import { updateCurrentConfigVersion } from "../repositories/case.repository.js";
-import {
-  findLatestActive,
-  findLatestForMajor,
-} from "../repositories/config-version.repository.js";
+import { findLatestForMajor } from "../repositories/config-version.repository.js";
 import {
   findByCode,
   findByCodeAndVersion,
@@ -81,31 +78,11 @@ const memoResolve = async (memo, key, produce) => {
   return result;
 };
 
-const LEGACY_SENTINEL_VERSION = "0.0.0";
-
 const legacyResolution = async (workflowCode) => ({
   workflow: await findByCode(workflowCode),
   resolvedVersion: null,
   definitionSource: "mongodb",
 });
-
-// Legacy sentinel: upgrade once to the highest active version across any
-// major. persistResolvedVersion moves currentConfigVersion off 0.0.0, so this
-// branch never runs again for that case.
-//
-// Why this exists: on a fresh environment the backfill migration
-// (20260716-fix-rolled-back-case-config-versions) runs before the SQS
-// subscriber has ingested config broker versions, so it finds only the seeded
-// 0.0.0 row and skips the update. By the time real versions arrive via SQS the
-// migration has already completed, leaving cases pinned to 0.0.0 with no
-// runtime path to roll forward (normal resolution scopes to the same major).
-const resolveFromSentinel = async (workflowCode) => {
-  const latest = await findLatestActive(workflowCode);
-  if (!latest) {
-    return legacyResolution(workflowCode);
-  }
-  return resolveRolledForward(workflowCode, latest.major);
-};
 
 // Resolves the latest active workflow within the same major as the pinned version.
 export const resolveCurrentWorkflowUseCase = async (
@@ -115,12 +92,6 @@ export const resolveCurrentWorkflowUseCase = async (
 ) => {
   if (!pinnedVersion) {
     return legacyResolution(workflowCode);
-  }
-
-  if (pinnedVersion === LEGACY_SENTINEL_VERSION) {
-    return memoResolve(memo, cacheKey(workflowCode, "sentinel"), () =>
-      resolveFromSentinel(workflowCode),
-    );
   }
 
   const major = parseMajor(pinnedVersion);
