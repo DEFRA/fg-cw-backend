@@ -11,12 +11,14 @@ let client;
 let cases;
 let caseSeries;
 let outbox;
+let workflows;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   cases = client.db().collection("cases");
   caseSeries = client.db().collection("case_series");
   outbox = client.db().collection("outbox");
+  workflows = client.db().collection("workflows");
 });
 
 afterAll(async () => {
@@ -242,5 +244,84 @@ describe("GET /cases", () => {
     // messageGroupId is an SNS FIFO transport parameter - it must never be
     // published inside the message body, where it fails the audit schema.
     expect(completed.event).not.toHaveProperty("messageGroupId");
+  });
+
+  it("succeeds when an accessible workflow has an incompatible task structure", async () => {
+    await createWorkflow();
+
+    await workflows.insertOne({
+      code: "incompatible-wf",
+      version: "0.0.0",
+      pages: {},
+      phases: [
+        {
+          code: "DEFAULT",
+          name: "Default",
+          stages: [
+            {
+              code: "STAGE_1",
+              name: "Stage One",
+              description: "First stage",
+              statuses: [
+                {
+                  code: "OPEN",
+                  name: "Open",
+                  theme: "INFO",
+                  description: null,
+                  interactive: true,
+                  transitions: [],
+                },
+              ],
+              taskGroups: [
+                {
+                  code: "GROUP_1",
+                  name: "Group One",
+                  description: "Tasks",
+                  tasks: [
+                    {
+                      code: "TASK_WITHOUT_VALUE_OR_INPUT",
+                      name: "Incompatible task",
+                      description: "Has neither valueOptions nor input",
+                      mandatory: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      requiredRoles: { allOf: [], anyOf: [] },
+      definitions: {},
+      endpoints: [],
+    });
+
+    await cases.insertOne({
+      ...caseData1,
+      caseRef: "VALID-WF-CASE",
+      workflowCode: "frps-private-beta",
+      createdAt: new Date(caseData1.createdAt),
+    });
+
+    const now = new Date().toISOString();
+    await caseSeries.insertOne({
+      caseRefs: ["VALID-WF-CASE"],
+      workflowCode: "frps-private-beta",
+      latestCaseRef: "VALID-WF-CASE",
+      latestCaseId: "case-valid",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const response = await wreck.get("/cases");
+
+    expect(response.res.statusCode).toBe(200);
+    expect(response.payload.data.cases.length).toBeGreaterThanOrEqual(1);
+
+    const validCase = response.payload.data.cases.find(
+      (c) => c.caseRef === "VALID-WF-CASE",
+    );
+    expect(validCase).toBeDefined();
+    expect(validCase.workflowCode).toBe("frps-private-beta");
   });
 });

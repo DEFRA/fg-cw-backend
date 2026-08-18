@@ -193,6 +193,17 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
+export const findAllCodes = async (query) => {
+  const filter = createWorkflowFilter(query);
+
+  const documents = await db
+    .collection(collection)
+    .find(filter, { projection: { _id: 0, code: 1 } })
+    .toArray();
+
+  return [...new Set(documents.map((doc) => doc.code))];
+};
+
 // Legacy callers get the 0.0.0 workflow (FGP-1224 rollback contract). Latest
 // version resolution goes through config_versions (numeric major/minor/patch
 // sort), never a string sort on the version field.
