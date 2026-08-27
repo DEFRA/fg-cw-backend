@@ -30,8 +30,13 @@ const createOptions = async (options = {}) => {
 
   const { headers } = _options;
 
-  headers.authorization ??=
-    headers.Authorization || `Bearer ${await getToken()}`;
+  // an explicit authorization: null means "send no authorization header"
+  if (headers.authorization === null) {
+    delete headers.authorization;
+  } else {
+    headers.authorization ??=
+      headers.Authorization || `Bearer ${await getToken()}`;
+  }
 
   headers["x-cdp-request-id"] ??= randomUUID().replaceAll("-", "");
 
