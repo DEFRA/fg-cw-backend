@@ -2,6 +2,7 @@ import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
 import HapiSwagger from "hapi-swagger";
 import { config } from "../../common/config.js";
+import { serviceTokenSecurity } from "./auth/public-api.js";
 
 export const swagger = {
   name: "swagger",
@@ -23,6 +24,7 @@ export const swagger = {
               in: "header",
               description: "Enter token e.g. 'Bearer token..'",
             },
+            ...serviceTokenSecurity,
           },
           security: [
             {

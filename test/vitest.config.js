@@ -1,4 +1,6 @@
 import { defineConfig } from "vitest/config";
+import { hashToken } from "../src/server/plugins/auth/hash-token.js";
+import { SERVICE_CLIENT, SERVICE_TOKEN } from "./helpers/service-token.js";
 
 const CW_PORT = 3101;
 const MONGO_PORT = 27018;
@@ -6,6 +8,8 @@ const FLOCI_PORT = 4567;
 const ENTRA_PORT = 3011;
 
 const SQS_URL = `http://sqs.eu-west-2.127.0.0.1:${FLOCI_PORT}/000000000000`;
+
+const SERVICE_ACCESS_TOKEN_HASH = `${SERVICE_CLIENT}:${hashToken(SERVICE_TOKEN)}`;
 
 // eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
@@ -53,6 +57,7 @@ export default defineConfig({
         "https://ephemeral-protected.api.dev.cdp-int.defra.cloud/land-grants-api",
       RULES_ENGINE_HEADERS: "x-api-key: fake-key",
       FIFO_LOCK_TTL_MS: 5000,
+      SERVICE_ACCESS_TOKEN_HASH,
     },
     hookTimeout: 30000,
   },

@@ -376,11 +376,146 @@ git config --global core.autocrlf false
 
 ## API endpoints
 
-| Endpoint             | Description                    |
-| :------------------- | :----------------------------- |
-| `GET: /health`       | Health                         |
-| `GET: /example    `  | Example API (remove as needed) |
-| `GET: /example/<id>` | Example API (remove as needed) |
+The endpoint reference is the Swagger UI at `/documentation`, generated from
+the route definitions.
+
+## Two API surfaces
+
+This service answers to two different callers, and which one an endpoint is for
+decides how it is authenticated:
+
+| Surface        | Called by                          | Strategy     | Credential                                    |
+| :------------- | :--------------------------------- | :----------- | :-------------------------------------------- |
+| **BFF**        | fg-cw-frontend                     | `entra`      | An Entra ID user token, verified against JWKS |
+| **Public API** | Other backends, e.g fg-gas-backend | `public-api` | A service access token (see below)            |
+
+The BFF surface is everything that existed before, and follows
+[ADR-001](./docs/ADR/0001_use_backend_for_frontend_style.md): endpoints shaped
+for a particular CW-FE view, free to change as that view changes. The public API
+is the opposite - a contract other backends depend on. `/actuators/*` is the
+service management subset of it.
+
+`entra` stays the server default, so a route is on the BFF surface unless it
+says otherwise, and no existing endpoint can start accepting a service token by
+accident.
+
+### Adding a public API endpoint
+
+Declare the surface on the route itself:
+
+```javascript
+export const findQueueStatsRoute = {
+  method: "GET",
+  path: "/actuators/queue-stats",
+  options: {
+    auth: "public-api",
+    tags: ["api", "public-api"],
+    plugins: { "hapi-swagger": { security: [{ serviceToken: [] }] } },
+  },
+  // ...
+};
+```
+
+`auth` puts the route on the service-token strategy, the `public-api` tag
+separates it from the BFF surface in the docs, and the security block names the
+credential in Swagger. The names are string literals because the ESLint layering
+zones stop a file under `routes/` importing from `src/server/`.
+
+Forgetting `auth` leaves the route on `entra`: a service caller gets a 401, but
+the route is quietly exposed to the BFF surface - every logged-in CW user -
+instead. The actuators module test guards against exactly that by asserting
+every `/actuators/*` route sits on the `public-api` strategy.
+
+### Service access tokens
+
+The public API is for callers with no Entra user behind them, so it uses the
+same credential scheme as fg-gas-backend's own service auth. Tokens are stored
+in `access_tokens` as a SHA-256 hash of the raw value, so a leak of the
+collection yields nothing that authenticates and this service can never mint or
+impersonate a credential it accepts.
+
+Deployed environments give nobody direct database access, so tokens are not
+inserted by hand. The service seeds one itself on boot from
+`SERVICE_ACCESS_TOKEN_HASH`, supplied by the platform's secret store, which makes
+issuing and rotating a credential a secret change plus a redeploy.
+
+The value is a single `client:sha256hex` pair:
+
+```
+fg-gas-backend:4bb35ade...
+```
+
+Only the hash reaches this service. The raw token lives solely in the calling
+service's own secrets. Neither value belongs in a repository: this repo is
+public, and callers' repos may be too.
+
+This is an instruction to issue, not a record of who holds a token:
+
+- It affects only the client it names. The secret names one client, and only
+  that client's record is rewritten.
+- Unset it and nothing happens. Clearing the secret revokes nobody, so it can be
+  emptied once a credential has been issued.
+- Onboard services one at a time: point it at the next client and redeploy. The
+  previously issued token stays valid.
+
+Seeding never stops the service starting. A malformed value or a database
+failure is logged and skipped, leaving that client without a working token until
+the next deploy, rather than taking the service down for everyone. Check the logs
+after a deploy - a credential that silently never appeared looks exactly like one
+that was never set.
+
+#### Issue or rotate
+
+Run once **per environment** - never reuse a token across environments, or a dev
+credential authenticates against prod:
+
+```bash
+npm run token:new -- <client-name>
+```
+
+Then in the CDP portal for that environment:
+
+1. `fg-cw-backend` -> Secrets -> `SERVICE_ACCESS_TOKEN_HASH` = the printed
+   `client:hash` pair
+2. Give the raw token to the calling service as its own secret
+3. Redeploy `fg-cw-backend`, then the caller
+
+Setting a new hash for a client that already has one rotates it: a single seeded
+record per client is enforced by a unique index, so the new token replaces the
+previous one on the next boot. Expect 401s between the two redeploys, so deploy
+`fg-cw-backend` first.
+
+Locally, set `SERVICE_ACCESS_TOKEN_HASH` in `.env` instead of the portal.
+
+#### Revoke
+
+There is no revoke-by-omission - clearing the secret deliberately does nothing.
+To cut a client off, rotate it to a freshly generated hash and discard the raw
+token: the old token stops working on the next boot and nobody holds the new one.
+Removing the record outright needs database access. Issuing the new hash and
+revoking the old one is a single atomic step, so confirm the deploy logged
+`Seeded access token for <client>` - a failed seed leaves the old token live.
+
+The client name is the identity, so renaming one issues a _second_ credential
+rather than rotating the first, and the original stays valid indefinitely. Cut the old name off the same
+way - point the secret at `<old-name>:<fresh hash>`, redeploy, and discard that
+token - before switching to the new name.
+
+#### Verify
+
+Check the startup logs, which will show one of:
+
+| Log line                                                                    | Meaning                                                                                                                  |
+| :-------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
+| `Seeded access token for <client>`                                          | Issued. A `, replacing the previous one` suffix means the hash changed; without it, the credential was already in place. |
+| `SERVICE_ACCESS_TOKEN_HASH is not a client:sha256hex pair - nothing seeded` | The value is malformed. Nothing was issued or removed.                                                                   |
+| `Failed to seed access token for <client>`                                  | The database write failed. The service started anyway; retry by redeploying.                                             |
+
+Then call the endpoint with the raw token:
+
+```bash
+curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/boxes
+```
 
 ## Development helpers
 

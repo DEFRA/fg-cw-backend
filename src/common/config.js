@@ -226,6 +226,12 @@ export const config = convict({
       env: "AZURE_ENTRA_APP_ROLES",
     },
   },
+  serviceAccessTokenHash: {
+    doc: "The client:sha256hex pair for the service access token seeded on boot",
+    format: String,
+    default: "",
+    env: "SERVICE_ACCESS_TOKEN_HASH",
+  },
   outbox: {
     outboxMaxRetries: {
       doc: "Maximum number of retries before setting to DEAD_LETTER",
