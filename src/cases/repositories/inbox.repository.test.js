@@ -1,12 +1,15 @@
+import { ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 import {
   claimEvents,
   findByMessageId,
   findNextMessage,
+  findPage,
   insertMany,
   insertOne,
   processExpiredEvents,
@@ -17,6 +20,7 @@ import {
 } from "./inbox.repository.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("../../common/paginate.js");
 
 const createMockInbox = (id, time) => {
   return Inbox.createMock({
@@ -252,5 +256,232 @@ describe("inbox.repository", () => {
         $set: expect.objectContaining({ someOtherValue: "foo" }),
       },
     );
+  });
+});
+
+describe("inbox.repository findPage", () => {
+  const callFindPage = async (args = {}) => {
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findPage({ direction: "forward", pageSize: 20, ...args });
+
+    return paginate.mock.calls.at(-1)[1];
+  };
+
+  const mapOne = async (doc, args = {}) => {
+    const opts = await callFindPage(args);
+    return opts.mapDocument(doc);
+  };
+
+  const objectId = new ObjectId("665f1c2e9a1b2c3d4e5f6a7b");
+
+  const aDoc = (overrides = {}) => ({
+    _id: objectId,
+    messageId: "msg-1",
+    type: "cloud.defra.prd.fg-gas-backend.case.create.new",
+    source: "GAS",
+    segregationRef: "GLD-9B2",
+    status: InboxStatus.PUBLISHED,
+    completionAttempts: 1,
+    traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    eventTime: "2026-06-16T10:00:00.000Z",
+    lastResubmissionDate: null,
+    completionDate: null,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(paginate).mockReset();
+  });
+
+  it("sorts newest first with an _id tie-break", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.sort).toEqual({ eventTime: -1, _id: -1 });
+  });
+
+  it("skips the total count", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.withTotal).toBe(false);
+  });
+
+  it("filters by status when given", async () => {
+    const opts = await callFindPage({ status: InboxStatus.DEAD_LETTER });
+
+    expect(opts.filter).toEqual({ status: InboxStatus.DEAD_LETTER });
+  });
+
+  it("uses an empty filter when status is absent", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.filter).toEqual({});
+  });
+
+  it("passes cursor, direction and pageSize through", async () => {
+    const opts = await callFindPage({
+      cursor: "abc",
+      direction: "backward",
+      pageSize: 7,
+    });
+
+    expect(opts.cursor).toBe("abc");
+    expect(opts.direction).toBe("backward");
+    expect(opts.pageSize).toBe(7);
+  });
+
+  it("projects only the generic fields", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.project).toEqual({
+      _id: 1,
+      messageId: 1,
+      type: 1,
+      source: 1,
+      segregationRef: 1,
+      status: 1,
+      completionAttempts: 1,
+      traceparent: 1,
+      eventTime: 1,
+      lastResubmissionDate: 1,
+      completionDate: 1,
+    });
+    expect(opts.project).not.toHaveProperty("event");
+    expect(opts.project).not.toHaveProperty("claimedBy");
+  });
+
+  it("maps messageId to eventId", async () => {
+    const row = await mapOne(aDoc({ messageId: "msg-42" }));
+
+    expect(row.eventId).toBe("msg-42");
+  });
+
+  it("maps eventTime to createdAt", async () => {
+    const row = await mapOne(aDoc({ eventTime: "2026-06-16T10:00:00.000Z" }));
+
+    expect(row.createdAt).toBe("2026-06-16T10:00:00.000Z");
+  });
+
+  it("maps lastResubmissionDate to lastFailureAt", async () => {
+    const row = await mapOne(
+      aDoc({ lastResubmissionDate: "2026-06-16T10:16:05.000Z" }),
+    );
+
+    expect(row.lastFailureAt).toBe("2026-06-16T10:16:05.000Z");
+  });
+
+  it("maps completionDate to completedAt", async () => {
+    const row = await mapOne(
+      aDoc({ completionDate: "2026-06-16T10:20:00.000Z" }),
+    );
+
+    expect(row.completedAt).toBe("2026-06-16T10:20:00.000Z");
+  });
+
+  it("renders _id as a hex string", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row._id).toBe("665f1c2e9a1b2c3d4e5f6a7b");
+  });
+
+  it("normalises a Date eventTime to ISO", async () => {
+    const row = await mapOne(
+      aDoc({ eventTime: new Date("2026-06-16T10:00:00.000Z") }),
+    );
+
+    expect(row.createdAt).toBe("2026-06-16T10:00:00.000Z");
+  });
+
+  it("passes an ISO string eventTime through", async () => {
+    const row = await mapOne(aDoc({ eventTime: "2026-06-16T10:00:00.000Z" }));
+
+    expect(row.createdAt).toBe("2026-06-16T10:00:00.000Z");
+  });
+
+  it("returns null rather than undefined for absent optional fields", async () => {
+    const row = await mapOne({
+      _id: objectId,
+      status: InboxStatus.PUBLISHED,
+    });
+
+    expect(row).toEqual({
+      _id: "665f1c2e9a1b2c3d4e5f6a7b",
+      eventId: null,
+      type: null,
+      source: null,
+      segregationRef: null,
+      status: InboxStatus.PUBLISHED,
+      completionAttempts: null,
+      traceparent: null,
+      createdAt: null,
+      lastFailureAt: null,
+      completedAt: null,
+    });
+  });
+
+  it("returns the document's traceparent", async () => {
+    const row = await mapOne(
+      aDoc({
+        traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      }),
+    );
+
+    expect(row.traceparent).toBe(
+      "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    );
+  });
+
+  it("returns a bare CDP request id traceparent unchanged", async () => {
+    const row = await mapOne(aDoc({ traceparent: "cdp-request-id-1" }));
+
+    expect(row.traceparent).toBe("cdp-request-id-1");
+  });
+
+  it("returns null when the document has no traceparent", async () => {
+    const row = await mapOne(aDoc({ traceparent: undefined }));
+
+    expect(row.traceparent).toBeNull();
+  });
+
+  it("returns null when the document's traceparent is null", async () => {
+    const row = await mapOne(aDoc({ traceparent: null }));
+
+    expect(row.traceparent).toBeNull();
+  });
+
+  it("never returns event or claimedBy", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row).not.toHaveProperty("event");
+    expect(row).not.toHaveProperty("claimedBy");
+  });
+
+  it("encodes and decodes _id cursor values as ObjectIds", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.codecs._id.encode(objectId)).toBe("665f1c2e9a1b2c3d4e5f6a7b");
+    expect(opts.codecs._id.decode("665f1c2e9a1b2c3d4e5f6a7b")).toEqual(
+      objectId,
+    );
+  });
+
+  it("keeps eventTime cursor values as strings", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.codecs.eventTime.encode("2026-06-16T10:00:00.000Z")).toBe(
+      "2026-06-16T10:00:00.000Z",
+    );
+    expect(opts.codecs.eventTime.decode("2026-06-16T10:00:00.000Z")).toBe(
+      "2026-06-16T10:00:00.000Z",
+    );
+  });
+
+  it("returns the paginate result unchanged", async () => {
+    const page = { data: [], pagination: { hasNextPage: false } };
+    paginate.mockResolvedValue(page);
+
+    await expect(
+      findPage({ direction: "forward", pageSize: 20 }),
+    ).resolves.toBe(page);
   });
 });

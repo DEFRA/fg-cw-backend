@@ -1,6 +1,8 @@
+import { ObjectId } from "mongodb";
 import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 
 const collection = "outbox";
@@ -144,3 +146,76 @@ export const updateDeadEvents = async () => {
   );
   return results;
 };
+
+const orNull = (value) => value ?? null;
+
+const toIsoOrNull = (value) =>
+  value instanceof Date ? value.toISOString() : orNull(value);
+
+// audit entity objects also carry `entityid` - an application/agreement/user
+// reference. Rebuild each entity from the two keys the contract allows rather
+// than passing the projected object through.
+const toAuditEntities = (entities) =>
+  entities ? entities.map(({ entity, action }) => ({ entity, action })) : null;
+
+const auditEntitiesOf = (doc) => toAuditEntities(doc.event?.audit?.entities);
+
+const eventIdOf = (doc) => orNull(doc.event?.id);
+
+const eventTypeOf = (doc) => orNull(doc.event?.type);
+
+// audit payloads carry no traceparent (their `correlationid` is a different
+// identifier and is deliberately not used here), so those rows stay null.
+const traceparentOf = (doc) => orNull(doc.event?.traceparent);
+
+const outboxCursorCodecs = {
+  publicationDate: {
+    encode: (v) => v.toISOString(),
+    decode: (v) => new Date(v),
+  },
+  _id: {
+    encode: (v) => v.toHexString(),
+    decode: (v) => new ObjectId(v),
+  },
+};
+
+export const findPage = ({ cursor, direction, pageSize, status }) =>
+  paginate(db.collection(collection), {
+    filter: status ? { status } : {},
+    cursor,
+    direction,
+    sort: { publicationDate: -1, _id: -1 },
+    pageSize,
+    withTotal: false,
+    codecs: outboxCursorCodecs,
+    project: {
+      _id: 1,
+      "event.id": 1,
+      "event.type": 1,
+      "event.audit.entities": 1,
+      // the ONLY other `event` key ever projected - the W3C traceparent that
+      // links this row to its logs. Never `event.data` or the payload itself.
+      "event.traceparent": 1,
+      target: 1,
+      segregationRef: 1,
+      status: 1,
+      completionAttempts: 1,
+      publicationDate: 1,
+      lastResubmissionDate: 1,
+      completionDate: 1,
+    },
+    mapDocument: (doc) => ({
+      _id: doc._id.toHexString(),
+      eventId: eventIdOf(doc),
+      type: eventTypeOf(doc),
+      auditEntities: auditEntitiesOf(doc),
+      target: orNull(doc.target),
+      segregationRef: orNull(doc.segregationRef),
+      status: doc.status,
+      completionAttempts: orNull(doc.completionAttempts),
+      traceparent: traceparentOf(doc),
+      createdAt: toIsoOrNull(doc.publicationDate),
+      lastFailureAt: toIsoOrNull(doc.lastResubmissionDate),
+      completedAt: toIsoOrNull(doc.completionDate),
+    }),
+  });

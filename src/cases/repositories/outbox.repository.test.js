@@ -1,11 +1,14 @@
+import { ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
   claimEvents,
   findNextMessage,
+  findPage,
   insertMany,
   update,
   updateDeadEvents,
@@ -15,6 +18,7 @@ import {
 } from "./outbox.repository.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("../../common/paginate.js");
 
 describe("outbox.repository", () => {
   describe("findNextMessage", () => {
@@ -253,5 +257,330 @@ describe("outbox.repository", () => {
         },
       );
     });
+  });
+});
+
+describe("outbox.repository findPage", () => {
+  const callFindPage = async (args = {}) => {
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findPage({ direction: "forward", pageSize: 20, ...args });
+
+    return paginate.mock.calls.at(-1)[1];
+  };
+
+  const mapOne = async (doc, args = {}) => {
+    const opts = await callFindPage(args);
+    return opts.mapDocument(doc);
+  };
+
+  const objectId = new ObjectId("665f1c2e9a1b2c3d4e5f6a7c");
+
+  const aDoc = (overrides = {}) => ({
+    _id: objectId,
+    event: {
+      id: "9b4d2f10",
+      type: "cloud.defra.prd.fg-cw-backend.case.status.updated",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
+    target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+    segregationRef: "GLD-9B2",
+    status: OutboxStatus.COMPLETED,
+    completionAttempts: 1,
+    publicationDate: new Date("2026-06-16T10:00:01.000Z"),
+    lastResubmissionDate: null,
+    completionDate: null,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(paginate).mockReset();
+  });
+
+  it("sorts newest first with an _id tie-break", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.sort).toEqual({ publicationDate: -1, _id: -1 });
+  });
+
+  it("skips the total count", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.withTotal).toBe(false);
+  });
+
+  it("filters by status when given", async () => {
+    const opts = await callFindPage({ status: OutboxStatus.DEAD_LETTER });
+
+    expect(opts.filter).toEqual({ status: OutboxStatus.DEAD_LETTER });
+  });
+
+  it("uses an empty filter when status is absent", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.filter).toEqual({});
+  });
+
+  it("passes cursor, direction and pageSize through", async () => {
+    const opts = await callFindPage({
+      cursor: "abc",
+      direction: "backward",
+      pageSize: 7,
+    });
+
+    expect(opts.cursor).toBe("abc");
+    expect(opts.direction).toBe("backward");
+    expect(opts.pageSize).toBe(7);
+  });
+
+  it("projects only event.id, event.type, event.audit.entities and event.traceparent", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.project).toEqual({
+      _id: 1,
+      "event.id": 1,
+      "event.type": 1,
+      "event.audit.entities": 1,
+      "event.traceparent": 1,
+      target: 1,
+      segregationRef: 1,
+      status: 1,
+      completionAttempts: 1,
+      publicationDate: 1,
+      lastResubmissionDate: 1,
+      completionDate: 1,
+    });
+    expect(opts.project).not.toHaveProperty("event");
+    expect(opts.project).not.toHaveProperty("event.data");
+    expect(opts.project).not.toHaveProperty("event.audit.details");
+    expect(opts.project).not.toHaveProperty("claimedBy");
+  });
+
+  it("projects no event key beyond id, type, audit.entities and traceparent", async () => {
+    const opts = await callFindPage();
+
+    const eventKeys = Object.keys(opts.project).filter((k) =>
+      k.startsWith("event"),
+    );
+
+    expect(eventKeys).toEqual([
+      "event.id",
+      "event.type",
+      "event.audit.entities",
+      "event.traceparent",
+    ]);
+  });
+
+  it("maps a CloudEvent row to eventId and type", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.eventId).toBe("9b4d2f10");
+    expect(row.type).toBe("cloud.defra.prd.fg-cw-backend.case.status.updated");
+  });
+
+  it("maps an audit row to null eventId, null type and its audit entities", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: {
+            entities: [
+              {
+                entity: "CASE",
+                action: "CREATE_CASE",
+                entityid: "665f1c2e9a1b2c3d4e5f6a7b",
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(row.eventId).toBeNull();
+    expect(row.type).toBeNull();
+    expect(row.auditEntities).toEqual([
+      { entity: "CASE", action: "CREATE_CASE" },
+    ]);
+  });
+
+  it("strips entityid from every audit entity", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: {
+            entities: [
+              {
+                entity: "CASE",
+                action: "CREATE_CASE",
+                entityid: "665f1c2e9a1b2c3d4e5f6a7b",
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(row.auditEntities).toEqual([
+      { entity: "CASE", action: "CREATE_CASE" },
+    ]);
+    expect(Object.keys(row.auditEntities[0])).toEqual(["entity", "action"]);
+  });
+
+  it("keeps an empty audit entities array as an array, not null", async () => {
+    const row = await mapOne(aDoc({ event: { audit: { entities: [] } } }));
+
+    expect(row.auditEntities).toEqual([]);
+  });
+
+  it("returns null auditEntities for a CloudEvent row", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.auditEntities).toBeNull();
+  });
+
+  it("never returns audit details", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: {
+            entities: [{ entity: "CASE", action: "VIEW_CASE_LIST" }],
+            details: { query: { page: 1 }, security: { user: "someone" } },
+          },
+        },
+      }),
+    );
+
+    expect(JSON.stringify(row)).not.toMatch(/details/);
+  });
+
+  it("returns the raw target ARN unmodified", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.target).toBe(
+      "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+    );
+  });
+
+  it("renders _id as a hex string", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row._id).toBe("665f1c2e9a1b2c3d4e5f6a7c");
+  });
+
+  it("converts a Date publicationDate to an ISO string", async () => {
+    const row = await mapOne(
+      aDoc({ publicationDate: new Date("2026-06-16T10:00:01.000Z") }),
+    );
+
+    expect(row.createdAt).toBe("2026-06-16T10:00:01.000Z");
+  });
+
+  it("returns null rather than undefined for absent optional fields", async () => {
+    const row = await mapOne({
+      _id: objectId,
+      status: OutboxStatus.PUBLISHED,
+    });
+
+    expect(row).toEqual({
+      _id: "665f1c2e9a1b2c3d4e5f6a7c",
+      eventId: null,
+      type: null,
+      auditEntities: null,
+      target: null,
+      segregationRef: null,
+      status: OutboxStatus.PUBLISHED,
+      completionAttempts: null,
+      traceparent: null,
+      createdAt: null,
+      lastFailureAt: null,
+      completedAt: null,
+    });
+  });
+
+  it("lifts event.traceparent to a top-level traceparent", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.traceparent).toBe(
+      "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    );
+  });
+
+  it("returns a bare CDP request id traceparent unchanged", async () => {
+    const row = await mapOne(
+      aDoc({ event: { id: "9b4d2f10", traceparent: "cdp-request-id-1" } }),
+    );
+
+    expect(row.traceparent).toBe("cdp-request-id-1");
+  });
+
+  it("returns a null traceparent for an audit row", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: {
+            entities: [{ entity: "CASE", action: "VIEW_CASE_LIST" }],
+            details: { security: { user: "someone" } },
+          },
+          correlationid: "d0f7b2a4-1111-2222-3333-444455556666",
+        },
+      }),
+    );
+
+    expect(row.traceparent).toBeNull();
+  });
+
+  it("never uses an audit correlationid as the traceparent", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: { entities: [] },
+          correlationid: "d0f7b2a4-1111-2222-3333-444455556666",
+        },
+      }),
+    );
+
+    expect(JSON.stringify(row)).not.toMatch(/d0f7b2a4/);
+  });
+
+  it("returns null when the event carries no traceparent", async () => {
+    const row = await mapOne(aDoc({ event: { id: "9b4d2f10" } }));
+
+    expect(row.traceparent).toBeNull();
+  });
+
+  it("never returns event or claimedBy", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row).not.toHaveProperty("event");
+    expect(row).not.toHaveProperty("claimedBy");
+  });
+
+  it("encodes and decodes _id cursor values as ObjectIds", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.codecs._id.encode(objectId)).toBe("665f1c2e9a1b2c3d4e5f6a7c");
+    expect(opts.codecs._id.decode("665f1c2e9a1b2c3d4e5f6a7c")).toEqual(
+      objectId,
+    );
+  });
+
+  it("encodes and decodes publicationDate cursor values as Dates", async () => {
+    const opts = await callFindPage();
+    const date = new Date("2026-06-16T10:00:01.000Z");
+
+    expect(opts.codecs.publicationDate.encode(date)).toBe(
+      "2026-06-16T10:00:01.000Z",
+    );
+    expect(
+      opts.codecs.publicationDate.decode("2026-06-16T10:00:01.000Z"),
+    ).toEqual(date);
+  });
+
+  it("returns the paginate result unchanged", async () => {
+    const page = { data: [], pagination: { hasNextPage: false } };
+    paginate.mockResolvedValue(page);
+
+    await expect(
+      findPage({ direction: "forward", pageSize: 20 }),
+    ).resolves.toBe(page);
   });
 });

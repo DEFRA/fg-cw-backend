@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
 import { createServer } from "../server/index.js";
+import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
 import { actuators } from "./index.js";
 
 vi.mock("../common/mongo-client.js");
@@ -15,10 +15,12 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the find-boxes route", async () => {
+  it("registers the inbox and outbox routes", async () => {
     const server = await registeredServer();
 
-    expect(server.table().map((r) => r.path)).toContain("/actuators/boxes");
+    expect(server.table().map((r) => r.path)).toEqual(
+      expect.arrayContaining(["/actuators/inbox", "/actuators/outbox"]),
+    );
   });
 
   it("keeps every /actuators/* route on the public API strategy", async () => {

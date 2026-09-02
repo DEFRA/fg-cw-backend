@@ -51,6 +51,12 @@ const ensureTieBreaker = (sort) => {
   };
 };
 
+const countTotal = (collection, opts) =>
+  opts.withTotal === false ? undefined : collection.countDocuments(opts.filter);
+
+const withTotalCount = (pagination, totalCount) =>
+  totalCount === undefined ? pagination : { ...pagination, totalCount };
+
 // eslint-disable-next-line complexity
 export const paginate = async (collection, opts) => {
   const sort = ensureTieBreaker(opts.sort);
@@ -75,7 +81,7 @@ export const paginate = async (collection, opts) => {
       .sort(effectiveSort)
       .limit(opts.pageSize + 1)
       .toArray(),
-    collection.countDocuments(opts.filter),
+    countTotal(collection, opts),
   ]);
 
   const hasMore = docs.length > opts.pageSize;
@@ -93,18 +99,20 @@ export const paginate = async (collection, opts) => {
 
   return {
     data: opts.mapDocument ? docs.map(opts.mapDocument) : docs,
-    pagination: {
-      startCursor: hasDocs
-        ? encodeCursor(docs.at(0), sortKeys, opts.codecs)
-        : null,
+    pagination: withTotalCount(
+      {
+        startCursor: hasDocs
+          ? encodeCursor(docs.at(0), sortKeys, opts.codecs)
+          : null,
 
-      endCursor: hasDocs
-        ? encodeCursor(docs.at(-1), sortKeys, opts.codecs)
-        : null,
+        endCursor: hasDocs
+          ? encodeCursor(docs.at(-1), sortKeys, opts.codecs)
+          : null,
 
-      hasNextPage: isForward ? hasMore : true,
-      hasPreviousPage: isForward ? !!cursor : hasMore,
+        hasNextPage: isForward ? hasMore : true,
+        hasPreviousPage: isForward ? !!cursor : hasMore,
+      },
       totalCount,
-    },
+    ),
   };
 };

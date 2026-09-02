@@ -355,4 +355,58 @@ describe("paginate", () => {
       );
     });
   });
+
+  describe("withTotal", () => {
+    it("omits totalCount and does not count when withTotal is false", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: false });
+
+      expect(col.countDocuments).not.toHaveBeenCalled();
+      expect(result.pagination).not.toHaveProperty("totalCount");
+    });
+
+    it("still counts when withTotal is omitted", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, baseOpts);
+
+      expect(col.countDocuments).toHaveBeenCalledWith(baseOpts.filter);
+      expect(result.pagination.totalCount).toBe(5);
+    });
+
+    it("still counts when withTotal is true", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: true });
+
+      expect(col.countDocuments).toHaveBeenCalledWith(baseOpts.filter);
+      expect(result.pagination.totalCount).toBe(5);
+    });
+
+    it("returns totalCount 0 without treating it as absent", async () => {
+      const col = makeCollection([], 0);
+
+      const result = await paginate(col, baseOpts);
+
+      expect(result.pagination).toHaveProperty("totalCount", 0);
+    });
+
+    it("keeps the rest of the pagination envelope when withTotal is false", async () => {
+      const docs = [
+        { name: "Alice", _id: "1" },
+        { name: "Bob", _id: "2" },
+      ];
+      const col = makeCollection(docs, 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: false });
+
+      expect(result.pagination).toEqual({
+        startCursor: makeCursor({ name: "Alice", _id: "1" }),
+        endCursor: makeCursor({ name: "Bob", _id: "2" }),
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    });
+  });
 });

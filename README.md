@@ -514,7 +514,7 @@ Check the startup logs, which will show one of:
 Then call the endpoint with the raw token:
 
 ```bash
-curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/boxes
+curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/inbox
 ```
 
 ## Development helpers

@@ -1,5 +1,7 @@
+import { ObjectId } from "mongodb";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 
 const collection = "inbox";
@@ -146,3 +148,56 @@ export const update = async (inbox) => {
 
   return db.collection(collection).updateOne({ _id }, { $set: updateDoc });
 };
+
+const orNull = (value) => value ?? null;
+
+const toIsoOrNull = (value) =>
+  value instanceof Date ? value.toISOString() : orNull(value);
+
+const inboxCursorCodecs = {
+  eventTime: {
+    encode: (v) => v,
+    decode: (v) => v,
+  },
+  _id: {
+    encode: (v) => v.toHexString(),
+    decode: (v) => new ObjectId(v),
+  },
+};
+
+export const findPage = ({ cursor, direction, pageSize, status }) =>
+  paginate(db.collection(collection), {
+    filter: status ? { status } : {},
+    cursor,
+    direction,
+    sort: { eventTime: -1, _id: -1 },
+    pageSize,
+    withTotal: false,
+    codecs: inboxCursorCodecs,
+    project: {
+      _id: 1,
+      messageId: 1,
+      type: 1,
+      source: 1,
+      segregationRef: 1,
+      status: 1,
+      completionAttempts: 1,
+      traceparent: 1,
+      eventTime: 1,
+      lastResubmissionDate: 1,
+      completionDate: 1,
+    },
+    mapDocument: (doc) => ({
+      _id: doc._id.toHexString(),
+      eventId: orNull(doc.messageId),
+      type: orNull(doc.type),
+      source: orNull(doc.source),
+      segregationRef: orNull(doc.segregationRef),
+      status: doc.status,
+      completionAttempts: orNull(doc.completionAttempts),
+      traceparent: orNull(doc.traceparent),
+      createdAt: toIsoOrNull(doc.eventTime),
+      lastFailureAt: toIsoOrNull(doc.lastResubmissionDate),
+      completedAt: toIsoOrNull(doc.completionDate),
+    }),
+  });
