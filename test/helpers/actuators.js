@@ -18,8 +18,7 @@ const post = (path, token, payload) =>
     ...(payload ? { payload } : {}),
   });
 
-// `by` travels as a query parameter on every mutation, so all three take the
-// actor the same way - only park has a body at all.
+// `by` travels as a query parameter on every mutation, never as a body key.
 const withActor = (path, by) =>
   by ? `${path}?by=${encodeURIComponent(by)}` : path;
 
@@ -52,27 +51,3 @@ export const breakdownInbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
 
 export const breakdownOutbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
   get("/actuators/outbox/breakdown", query, token);
-
-export const parkInboxEvent = (
-  id,
-  { reason, by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/inbox/${id}/park`, by), token, { reason });
-
-export const parkOutboxEvent = (
-  id,
-  { reason, by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/outbox/${id}/park`, by), token, { reason });
-
-export const unparkInboxEvent = (
-  id,
-  { by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/inbox/${id}/unpark`, by), token);
-
-export const unparkOutboxEvent = (
-  id,
-  { by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/outbox/${id}/unpark`, by), token);

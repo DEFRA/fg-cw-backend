@@ -5,7 +5,6 @@ import {
   breakdownInbox,
   breakdownOutbox,
   findInbox,
-  parkInboxEvent,
 } from "../helpers/actuators.js";
 
 // NOTE - written against the same running stack the rest of test/actuators/
@@ -31,7 +30,6 @@ const aDeadInboxDoc = (overrides = {}) => ({
   eventTime: "2026-06-16T10:00:00.000Z",
   lastError: { name: "Error", message: "No handler found", at: null },
   attemptHistory: [],
-  parked: null,
   lastRedrive: null,
   claimedBy: null,
   claimedAt: null,
@@ -49,7 +47,6 @@ const aDeadOutboxDoc = (overrides = {}) => ({
   publicationDate: new Date("2026-06-16T10:00:00.000Z"),
   lastError: { name: "Error", message: "publish failed", at: null },
   attemptHistory: [],
-  parked: null,
   lastRedrive: null,
   claimedBy: null,
   claimedAt: null,
@@ -143,18 +140,6 @@ describe("GET /actuators/inbox/breakdown", () => {
     const { payload } = await breakdownInbox();
 
     expect(groupFor(payload.groups, "COMPLETED-ONLY")).toBeUndefined();
-  });
-
-  it("excludes a PARKED row - parked poison is not stuck work", async () => {
-    const doc = aDeadInboxDoc({
-      lastError: { name: "Error", message: "PARK-ME", at: null },
-    });
-    await inbox.insertOne(doc);
-    await parkInboxEvent(doc._id.toHexString(), { reason: "poison" });
-
-    const { payload } = await breakdownInbox();
-
-    expect(groupFor(payload.groups, "PARK-ME")).toBeUndefined();
   });
 
   it("honours the same q/from/to filter the list and the counts use", async () => {

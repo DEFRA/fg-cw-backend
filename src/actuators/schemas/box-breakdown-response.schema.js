@@ -14,8 +14,8 @@ const breakdownGroup = Joi.object({
   lastAt: Joi.string().isoDate().allow(null).required(),
 }).label("BreakdownGroup");
 
-// Sorted by count descending. Always DEAD_LETTER rows only - a PARKED row has
-// been taken out of the loop on purpose and is not "stuck".
+// Sorted by count descending. Always DEAD_LETTER rows only - a row that is
+// still retrying is not "stuck".
 export const boxBreakdownResponseSchema = Joi.object({
   groups: Joi.array().items(breakdownGroup).required(),
 }).label("BoxBreakdownResponse");

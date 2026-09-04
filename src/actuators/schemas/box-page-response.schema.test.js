@@ -29,7 +29,6 @@ const inboxRow = (overrides = {}) => ({
     at: "2026-06-16T10:16:05.000Z",
   },
   completedAt: null,
-  parked: null,
   lastRedrive: null,
   ...overrides,
 });
@@ -48,7 +47,6 @@ const outboxRow = (overrides = {}) => ({
   lastFailureAt: null,
   lastError: null,
   completedAt: "2026-06-16T10:00:02.000Z",
-  parked: null,
   lastRedrive: null,
   ...overrides,
 });
@@ -282,26 +280,10 @@ describe("box row lastError", () => {
   });
 });
 
-describe("box row parked and lastRedrive", () => {
-  it("accepts a parked row with its reason and actor", () => {
-    const { error } = validateInbox(
-      inboxRow({
-        status: "PARKED",
-        parked: {
-          at: "2026-06-16T11:00:00.000Z",
-          reason: "poison payload",
-          by: "donatas",
-        },
-      }),
-    );
-
-    expect(error).toBeUndefined();
-  });
-
-  it("accepts an unattributed park and redrive", () => {
+describe("box row lastRedrive", () => {
+  it("accepts an unattributed redrive", () => {
     const { error } = validateOutbox(
       outboxRow({
-        parked: { at: "2026-06-16T11:00:00.000Z", reason: "poison", by: null },
         lastRedrive: { at: "2026-06-16T11:05:00.000Z", by: null },
       }),
     );
@@ -309,15 +291,15 @@ describe("box row parked and lastRedrive", () => {
     expect(error).toBeUndefined();
   });
 
-  it("requires both keys, so a projection gap fails a test", () => {
-    const { parked, ...row } = inboxRow();
+  it("requires the key, so a projection gap fails a test", () => {
+    const { lastRedrive, ...row } = inboxRow();
 
     expect(validateInbox(row).error).toBeDefined();
   });
 
-  it("rejects a parked object missing its reason", () => {
+  it("rejects a lastRedrive object missing its actor", () => {
     const { error } = validateInbox(
-      inboxRow({ parked: { at: "2026-06-16T11:00:00.000Z", by: "donatas" } }),
+      inboxRow({ lastRedrive: { at: "2026-06-16T11:05:00.000Z" } }),
     );
 
     expect(error).toBeDefined();

@@ -16,10 +16,8 @@ import {
   findStatusById,
   insertMany,
   insertOne,
-  parkById,
   processExpiredEvents,
   redriveById,
-  unparkById,
   update,
   updateDeadEvents,
   updateFailedEvents,
@@ -110,13 +108,7 @@ describe("inbox.repository", () => {
         claimExpiresAt: {
           $lt: expect.any(Date),
         },
-        status: {
-          $nin: [
-            InboxStatus.DEAD_LETTER,
-            InboxStatus.COMPLETED,
-            InboxStatus.PARKED,
-          ],
-        },
+        status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
       },
       {
         $set: {
@@ -158,7 +150,7 @@ describe("inbox.repository", () => {
         completionAttempts: {
           $gte: parseInt(config.get("inbox.inboxMaxRetries")),
         },
-        status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.PARKED] },
+        status: { $ne: InboxStatus.DEAD_LETTER },
       },
       {
         $set: {
@@ -376,7 +368,6 @@ describe("inbox.repository findPage", () => {
       lastResubmissionDate: 1,
       completionDate: 1,
       lastError: 1,
-      parked: 1,
       lastRedrive: 1,
     });
     expect(opts.project).not.toHaveProperty("event");
@@ -450,7 +441,6 @@ describe("inbox.repository findPage", () => {
       lastFailureAt: null,
       lastError: null,
       completedAt: null,
-      parked: null,
       lastRedrive: null,
     });
   });
@@ -753,7 +743,6 @@ describe("inbox.repository detail and redrive", () => {
       lastFailureAt: null,
       lastError: { name: "TypeError", message: "boom", at: null },
       completedAt: null,
-      parked: null,
       lastRedrive: null,
     });
   });
@@ -858,7 +847,6 @@ describe("inbox.repository countFacets", () => {
         RESUBMITTED: 0,
         COMPLETED: 0,
         DEAD_LETTER: 0,
-        PARKED: 0,
       },
     });
   });
@@ -875,57 +863,6 @@ describe("inbox.repository countFacets", () => {
     expect(counts.DEAD_LETTER).toBe(1);
   });
 });
-describe("inbox.repository park and unpark", () => {
-  const ID = "665f1c2e9a1b2c3d4e5f6a7b";
-
-  it("parks with a single conditional update filtered on DEAD_LETTER", async () => {
-    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
-    db.collection.mockReturnValue({ findOneAndUpdate });
-
-    await parkById(ID, { reason: "poison", by: "donatas" });
-
-    const [filter, update] = findOneAndUpdate.mock.calls[0];
-
-    expect(filter).toEqual({
-      _id: new ObjectId(ID),
-      status: InboxStatus.DEAD_LETTER,
-    });
-    expect(update.$set.status).toBe(InboxStatus.PARKED);
-    expect(update.$set.parked).toEqual({
-      at: expect.any(String),
-      reason: "poison",
-      by: "donatas",
-    });
-  });
-
-  it("unparks with a single conditional update filtered on PARKED", async () => {
-    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
-    db.collection.mockReturnValue({ findOneAndUpdate });
-
-    await unparkById(ID);
-
-    const [filter, update] = findOneAndUpdate.mock.calls[0];
-
-    expect(filter).toEqual({
-      _id: new ObjectId(ID),
-      status: InboxStatus.PARKED,
-    });
-    expect(update.$set).toEqual({
-      status: InboxStatus.DEAD_LETTER,
-      parked: null,
-    });
-  });
-
-  it("answers null when nothing matched, so the use case can tell 404 from 409", async () => {
-    db.collection.mockReturnValue({
-      findOneAndUpdate: vi.fn().mockResolvedValue(null),
-    });
-
-    expect(await parkById(ID, { reason: "poison" })).toBeNull();
-    expect(await unparkById(ID)).toBeNull();
-  });
-});
-
 describe("inbox.repository breakdown", () => {
   const mockAggregate = (rows) => {
     const aggregate = vi.fn().mockReturnValue({

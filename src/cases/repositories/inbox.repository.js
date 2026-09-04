@@ -9,12 +9,6 @@ import { toDetailDocument } from "../../common/event-detail.js";
 import { toSourceFacets } from "../../common/event-facets.js";
 import { buildEventListFilter } from "../../common/event-list-filter.js";
 import {
-  PARK_FROM_STATUS,
-  UNPARK_FROM_STATUS,
-  parkUpdate,
-  unparkUpdate,
-} from "../../common/event-park.js";
-import {
   REDRIVE_FROM_STATUS,
   redriveUpdate,
 } from "../../common/event-redrive.js";
@@ -82,15 +76,7 @@ export const processExpiredEvents = async () => {
   await db.collection(collection).updateMany(
     {
       claimExpiresAt: { $lt: new Date() },
-      // PARKED is excluded as well as the two terminal statuses: an
-      // operator parked this row on purpose and no sweep may move it.
-      status: {
-        $nin: [
-          InboxStatus.DEAD_LETTER,
-          InboxStatus.COMPLETED,
-          InboxStatus.PARKED,
-        ],
-      },
+      status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
     },
     {
       $set: {
@@ -117,10 +103,7 @@ export const updateDeadEvents = async () => {
   const results = await db.collection(collection).updateMany(
     {
       completionAttempts: { $gte: MAX_RETRIES },
-      // `$nin`, not `$ne`: `$ne: DEAD_LETTER` matched PARKED rows too and
-      // would have dragged poison an operator parked straight back into
-      // DEAD_LETTER on the next tick.
-      status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.PARKED] },
+      status: { $ne: InboxStatus.DEAD_LETTER },
     },
     {
       $set: {
@@ -138,7 +121,6 @@ export const updateDeadEvents = async () => {
 export const updateFailedEvents = async () => {
   const results = await db.collection(collection).updateMany(
     {
-      // Selects FAILED alone, so PARKED is out of scope by construction.
       status: InboxStatus.FAILED,
     },
     {
@@ -216,19 +198,7 @@ const toLastError = (value) =>
       }
     : null;
 
-// Rebuilt from its three contract keys, exactly as `lastError` is: a `parked`
-// object written by another version must not leak an extra key past the
-// response schema.
-const toParked = (value) =>
-  value
-    ? {
-        at: toIsoOrNull(value.at),
-        reason: String(value.reason ?? ""),
-        by: orNull(value.by),
-      }
-    : null;
-
-// Same rebuild for the redrive record.
+// Rebuilt from its two contract keys, exactly as `lastError` is.
 const toLastRedrive = (value) =>
   value ? { at: toIsoOrNull(value.at), by: orNull(value.by) } : null;
 
@@ -248,8 +218,6 @@ export const toListRow = (doc) => ({
   lastFailureAt: toIsoOrNull(doc.lastResubmissionDate),
   lastError: toLastError(doc.lastError),
   completedAt: toIsoOrNull(doc.completionDate),
-  // `{ at, reason, by }` while the row is PARKED, null otherwise.
-  parked: toParked(doc.parked),
   // `{ at, by }` for the most recent redrive of this row, null until redriven.
   lastRedrive: toLastRedrive(doc.lastRedrive),
 });
@@ -312,7 +280,6 @@ export const findPage = ({
       lastResubmissionDate: 1,
       completionDate: 1,
       lastError: 1,
-      parked: 1,
       lastRedrive: 1,
     },
     mapDocument: toListRow,
@@ -370,40 +337,9 @@ export const redriveById = async (id, { by } = {}) => {
   return doc ? toListRow(doc) : null;
 };
 
-// Park and unpark, the same single conditional update the redrive is: the
-// expected status IS the precondition, so a concurrent change matches nothing
-// and the use case reports a 409 rather than clobbering it.
-//
-// PARKED is terminal for the pollers - see the PARKED exclusions in the claim,
-// claim-expiry and dead-letter filters above, and the tests that run those
-// real filters against a parked document.
-export const parkById = async (id, { reason, by } = {}) => {
-  const doc = await db
-    .collection(collection)
-    .findOneAndUpdate(
-      { _id: toId(id), status: PARK_FROM_STATUS },
-      parkUpdate({ reason, by }),
-      { returnDocument: "after" },
-    );
-
-  return doc ? toListRow(doc) : null;
-};
-
-export const unparkById = async (id) => {
-  const doc = await db
-    .collection(collection)
-    .findOneAndUpdate(
-      { _id: toId(id), status: UNPARK_FROM_STATUS },
-      unparkUpdate(),
-      { returnDocument: "after" },
-    );
-
-  return doc ? toListRow(doc) : null;
-};
-
 // How the dead letters in this box group by (failure message, event type).
 // Scoped to DEAD_LETTER here rather than by the caller so the breakdown can
-// never accidentally count a PARKED or a still-retrying row.
+// never accidentally count a still-retrying row.
 export const breakdown = async (filter = {}) =>
   toBreakdownGroups(
     await db

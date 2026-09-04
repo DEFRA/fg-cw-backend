@@ -8,7 +8,6 @@ const allStatuses = () => ({
   RESUBMITTED: 4,
   COMPLETED: 5,
   DEAD_LETTER: 6,
-  PARKED: 7,
 });
 
 const aResponse = (overrides = {}) => ({
@@ -17,7 +16,7 @@ const aResponse = (overrides = {}) => ({
 });
 
 describe("boxCountsResponseSchema", () => {
-  it("accepts every status, PARKED included", () => {
+  it("accepts every status", () => {
     expect(boxCountsResponseSchema.validate(aResponse()).error).toBeUndefined();
   });
 

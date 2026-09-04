@@ -18,15 +18,6 @@ const lastError = Joi.object({
   at: Joi.string().isoDate().allow(null).required(),
 }).label("EventLastError");
 
-// Set by park/unpark. Present and null on every row that is not PARKED, so
-// the caller renders a badge on presence of a value rather than branching on a
-// missing key.
-const parked = Joi.object({
-  at: Joi.string().isoDate().allow(null).required(),
-  reason: Joi.string().allow("").required(),
-  by: Joi.string().allow(null).required(),
-}).label("EventParked");
-
 // The most recent redrive of this row - `by` is the operator GAS forwarded
 // from its `x-actor` header, null when nobody named themselves.
 const lastRedrive = Joi.object({
@@ -47,7 +38,7 @@ const commonRow = {
     .required()
     .example("DEAD_LETTER")
     .description(
-      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER|PARKED",
+      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER",
     ),
   // Attempts actually MADE, not granted: incremented in the same operation
   // that records a failure, so it always equals the number of attempt-history
@@ -65,7 +56,6 @@ const commonRow = {
   lastFailureAt: Joi.string().isoDate().allow(null).required(),
   lastError: lastError.allow(null).required(),
   completedAt: Joi.string().isoDate().allow(null).required(),
-  parked: parked.allow(null).required(),
   lastRedrive: lastRedrive.allow(null).required(),
 };
 

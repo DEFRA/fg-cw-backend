@@ -31,7 +31,7 @@ const detailCommon = {
     .required()
     .example("DEAD_LETTER")
     .description(
-      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER|PARKED",
+      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER",
     ),
   // Attempts actually MADE, not granted: incremented in the same operation
   // that records a failure, so it equals `attemptHistory.length` for any row
@@ -46,13 +46,6 @@ const detailCommon = {
   // before attempt history existed. Detail only - the list rows carry
   // `lastError` alone.
   attemptHistory: Joi.array().items(attemptEntry).required(),
-  parked: Joi.object({
-    at: isoOrNull,
-    reason: Joi.string().allow(""),
-    by: Joi.string().allow(null),
-  })
-    .allow(null)
-    .label("EventDetailParked"),
   lastRedrive: Joi.object({ at: isoOrNull, by: Joi.string().allow(null) })
     .allow(null)
     .label("EventDetailLastRedrive"),

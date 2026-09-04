@@ -31,10 +31,6 @@ describe("actuators", () => {
         "/actuators/outbox/counts",
         "/actuators/inbox/breakdown",
         "/actuators/outbox/breakdown",
-        "/actuators/inbox/{id}/park",
-        "/actuators/outbox/{id}/park",
-        "/actuators/inbox/{id}/unpark",
-        "/actuators/outbox/{id}/unpark",
       ]),
     );
   });
@@ -68,20 +64,6 @@ describe("actuators", () => {
     for (const box of ["inbox", "outbox"]) {
       expect(server.match("get", `/actuators/${box}/breakdown`).path).toBe(
         `/actuators/${box}/breakdown`,
-      );
-    }
-  });
-
-  it("routes park and unpark to their own routes, not to redrive", async () => {
-    const server = await registeredServer();
-    const id = "665f1c2e9a1b2c3d4e5f6a7b";
-
-    for (const box of ["inbox", "outbox"]) {
-      expect(server.match("post", `/actuators/${box}/${id}/park`).path).toBe(
-        `/actuators/${box}/{id}/park`,
-      );
-      expect(server.match("post", `/actuators/${box}/${id}/unpark`).path).toBe(
-        `/actuators/${box}/{id}/unpark`,
       );
     }
   });

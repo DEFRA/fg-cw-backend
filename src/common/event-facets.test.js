@@ -6,7 +6,7 @@ const row = (status, count) => ({ _id: status, count });
 
 describe("totalOf", () => {
   it("sums every status", () => {
-    expect(totalOf({ ...zeroCounts(), FAILED: 3, PARKED: 4 })).toBe(7);
+    expect(totalOf({ ...zeroCounts(), FAILED: 3, DEAD_LETTER: 4 })).toBe(7);
   });
 
   it("treats a missing or partial set as zeros", () => {

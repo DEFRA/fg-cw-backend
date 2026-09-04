@@ -12,7 +12,6 @@ const someCounts = () => ({
   RESUBMITTED: 0,
   COMPLETED: 9,
   DEAD_LETTER: 3,
-  PARKED: 0,
 });
 
 const someFacets = () => ({ counts: someCounts() });

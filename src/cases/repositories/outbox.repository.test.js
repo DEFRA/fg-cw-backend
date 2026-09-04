@@ -14,9 +14,7 @@ import {
   findPage,
   findStatusById,
   insertMany,
-  parkById,
   redriveById,
-  unparkById,
   update,
   updateDeadEvents,
   updateExpiredEvents,
@@ -153,7 +151,6 @@ describe("outbox.repository", () => {
             lastResubmissionDate: undefined,
             lastError: null,
             attemptHistory: [],
-            parked: null,
             lastRedrive: null,
             publicationDate: expect.any(Date),
             status: "PROCESSING",
@@ -179,13 +176,7 @@ describe("outbox.repository", () => {
           claimExpiresAt: {
             $lt: expect.any(Date),
           },
-          status: {
-            $nin: [
-              OutboxStatus.DEAD_LETTER,
-              OutboxStatus.COMPLETED,
-              OutboxStatus.PARKED,
-            ],
-          },
+          status: { $nin: [OutboxStatus.DEAD_LETTER, OutboxStatus.COMPLETED] },
         },
         {
           $set: {
@@ -279,7 +270,7 @@ describe("outbox.repository", () => {
       expect(updateMany).toBeCalledWith(
         {
           completionAttempts: { $gte: MAX_RETRIES },
-          status: { $nin: [OutboxStatus.DEAD_LETTER, OutboxStatus.PARKED] },
+          status: { $ne: OutboxStatus.DEAD_LETTER },
         },
         {
           $set: {
@@ -383,7 +374,6 @@ describe("outbox.repository findPage", () => {
       lastResubmissionDate: 1,
       completionDate: 1,
       lastError: 1,
-      parked: 1,
       lastRedrive: 1,
     });
     expect(opts.project).not.toHaveProperty("event");
@@ -499,7 +489,6 @@ describe("outbox.repository findPage", () => {
       lastFailureAt: null,
       lastError: null,
       completedAt: null,
-      parked: null,
       lastRedrive: null,
     });
   });
@@ -836,7 +825,6 @@ describe("outbox.repository detail and redrive", () => {
       lastFailureAt: null,
       lastError: { name: "TypeError", message: "boom", at: null },
       completedAt: null,
-      parked: null,
       lastRedrive: null,
     });
   });
@@ -948,7 +936,6 @@ describe("outbox.repository countFacets", () => {
         RESUBMITTED: 0,
         COMPLETED: 0,
         DEAD_LETTER: 0,
-        PARKED: 0,
       },
     });
   });
@@ -965,57 +952,6 @@ describe("outbox.repository countFacets", () => {
     expect(counts.COMPLETED).toBe(5);
   });
 });
-describe("outbox.repository park and unpark", () => {
-  const ID = "665f1c2e9a1b2c3d4e5f6a7b";
-
-  it("parks with a single conditional update filtered on DEAD_LETTER", async () => {
-    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
-    db.collection.mockReturnValue({ findOneAndUpdate });
-
-    await parkById(ID, { reason: "poison", by: "donatas" });
-
-    const [filter, update] = findOneAndUpdate.mock.calls[0];
-
-    expect(filter).toEqual({
-      _id: new ObjectId(ID),
-      status: OutboxStatus.DEAD_LETTER,
-    });
-    expect(update.$set.status).toBe(OutboxStatus.PARKED);
-    expect(update.$set.parked).toEqual({
-      at: expect.any(String),
-      reason: "poison",
-      by: "donatas",
-    });
-  });
-
-  it("unparks with a single conditional update filtered on PARKED", async () => {
-    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
-    db.collection.mockReturnValue({ findOneAndUpdate });
-
-    await unparkById(ID);
-
-    const [filter, update] = findOneAndUpdate.mock.calls[0];
-
-    expect(filter).toEqual({
-      _id: new ObjectId(ID),
-      status: OutboxStatus.PARKED,
-    });
-    expect(update.$set).toEqual({
-      status: OutboxStatus.DEAD_LETTER,
-      parked: null,
-    });
-  });
-
-  it("answers null when nothing matched, so the use case can tell 404 from 409", async () => {
-    db.collection.mockReturnValue({
-      findOneAndUpdate: vi.fn().mockResolvedValue(null),
-    });
-
-    expect(await parkById(ID, { reason: "poison" })).toBeNull();
-    expect(await unparkById(ID)).toBeNull();
-  });
-});
-
 describe("outbox.repository breakdown", () => {
   const mockAggregate = (rows) => {
     const aggregate = vi.fn().mockReturnValue({
