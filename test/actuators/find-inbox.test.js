@@ -359,3 +359,171 @@ describe("GET /actuators/inbox", () => {
     });
   });
 });
+
+// NOTE: this file cannot be run on this machine - the integration stack's
+// ports clash with the services already running locally - so the cases below
+// are written to the same contract as the unit tests but are unexercised here.
+describe("GET /actuators/inbox?q=", () => {
+  beforeEach(async () => {
+    await inbox.insertMany([
+      aDoc({
+        messageId: "msg-alpha",
+        segregationRef: "GLD-9B2-BWS-alpha",
+        eventTime: at(0),
+      }),
+      aDoc({
+        messageId: "msg-beta",
+        segregationRef: "SFI-1A1-XYZ-beta",
+        eventTime: at(1),
+      }),
+    ]);
+  });
+
+  it("matches a messageId exactly", async () => {
+    const { payload } = await findInbox({ q: "msg-alpha" });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["msg-alpha"]);
+  });
+
+  it("matches a segregationRef exactly", async () => {
+    const { payload } = await findInbox({ q: "SFI-1A1-XYZ-beta" });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["msg-beta"]);
+  });
+
+  it("matches a segregationRef prefix case-insensitively", async () => {
+    const { payload } = await findInbox({ q: "gld-9b2" });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["msg-alpha"]);
+  });
+
+  it("matches a row on its 24-hex _id", async () => {
+    const id = new ObjectId();
+    await inbox.insertOne(aDoc({ _id: id, messageId: "msg-by-id" }));
+
+    const { payload } = await findInbox({ q: id.toHexString() });
+
+    expect(payload.data.map((r) => r._id)).toEqual([id.toHexString()]);
+  });
+
+  it("returns an empty page for a q that matches nothing", async () => {
+    const { payload } = await findInbox({ q: "nonexistent-ref" });
+
+    expect(payload.data).toEqual([]);
+    expect(payload.pagination.startCursor).toBeNull();
+  });
+
+  it("treats regex metacharacters in q as literal text", async () => {
+    const { payload } = await findInbox({ q: ".*" });
+
+    expect(payload.data).toEqual([]);
+  });
+
+  it("treats a whitespace-only q as absent", async () => {
+    const { payload } = await findInbox({ q: "   " });
+
+    expect(payload.data).toHaveLength(2);
+  });
+
+  it("combines q with status", async () => {
+    await inbox.insertOne(
+      aDoc({
+        messageId: "msg-dead",
+        segregationRef: "GLD-9B2-BWS-dead",
+        status: "DEAD_LETTER",
+        eventTime: at(2),
+      }),
+    );
+
+    const { payload } = await findInbox({
+      q: "gld-9b2",
+      status: "DEAD_LETTER",
+    });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["msg-dead"]);
+  });
+
+  it("rejects a q longer than 200 characters with 400", async () => {
+    await expect(findInbox({ q: "a".repeat(201) })).rejects.toThrow(
+      "Response Error: 400 Bad Request",
+    );
+  });
+});
+
+// The TYPE (domain/audit) filter is GONE. `kind` is not a known parameter any
+// more, so a stale caller gets a 400 rather than a silently unfiltered page.
+//
+// NOTE - this file is port-blocked locally and is not run by the local gates;
+// it is updated in step with the unit tests it mirrors.
+describe("GET /actuators/inbox and kind", () => {
+  beforeEach(async () => {
+    await inbox.insertMany([
+      aDoc({ messageId: "msg-1", eventTime: at(0) }),
+      aDoc({ messageId: "msg-2", eventTime: at(1) }),
+    ]);
+  });
+
+  it("returns every row on one unfiltered page", async () => {
+    const { payload } = await findInbox();
+
+    expect(payload.data).toHaveLength(2);
+  });
+
+  it.each([["audit"], ["domain"], ["other"], [""]])(
+    "rejects kind=%s with 400 - it is not a parameter any more",
+    async (kind) => {
+      await expect(findInbox({ kind })).rejects.toThrow(
+        "Response Error: 400 Bad Request",
+      );
+    },
+  );
+});
+
+describe("GET /actuators/inbox lastError", () => {
+  it("returns null lastError for a row written before the field existed", async () => {
+    await inbox.insertOne(aDoc({ messageId: "msg-legacy" }));
+
+    const { payload } = await findInbox();
+
+    expect(payload.data[0].lastError).toBeNull();
+  });
+
+  it("surfaces a stored lastError", async () => {
+    const lastError = {
+      name: "ClaimExpired",
+      message: "claim expired before completion",
+      at: "2026-06-16T10:16:05.000Z",
+    };
+    await inbox.insertOne(
+      aDoc({ messageId: "msg-failed", status: "DEAD_LETTER", lastError }),
+    );
+
+    const { payload } = await findInbox();
+
+    expect(payload.data[0].lastError).toEqual(lastError);
+  });
+
+  it("never returns a stack stored alongside a lastError", async () => {
+    await inbox.insertOne(
+      aDoc({
+        messageId: "msg-stack",
+        status: "DEAD_LETTER",
+        lastError: {
+          name: "Error",
+          message: "boom",
+          at: "2026-06-16T10:16:05.000Z",
+          stack: "SECRET-STACK",
+        },
+      }),
+    );
+
+    const { payload } = await findInbox();
+
+    expect(JSON.stringify(payload)).not.toContain("SECRET-STACK");
+    expect(Object.keys(payload.data[0].lastError)).toEqual([
+      "name",
+      "message",
+      "at",
+    ]);
+  });
+});

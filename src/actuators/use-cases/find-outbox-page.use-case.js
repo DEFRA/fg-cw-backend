@@ -8,8 +8,19 @@ export const findOutboxPageUseCase = async ({
   direction,
   pageSize,
   status,
+  q,
+  from,
+  to,
 }) => {
-  const page = await findPage({ cursor, direction, pageSize, status });
+  const page = await findPage({
+    cursor,
+    direction,
+    pageSize,
+    status,
+    q,
+    from,
+    to,
+  });
 
   return {
     ...page,

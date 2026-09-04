@@ -108,8 +108,8 @@ export class InboxSubscriber {
       logger.info(`Updated "${results?.modifiedCount}" failed inbox events`);
   }
 
-  async markEventFailed(inboxEvent) {
-    inboxEvent.markAsFailed();
+  async markEventFailed(inboxEvent, error) {
+    inboxEvent.markAsFailed(error);
     await update(inboxEvent);
     logger.info(`Marked inbox event failed "${inboxEvent.messageId}"`);
   }
@@ -142,7 +142,7 @@ export class InboxSubscriber {
       await this.markEventComplete(msg);
     } catch (ex) {
       logger.error(ex, `Error handling inbox message "${type}:${messageId}"`);
-      await this.markEventFailed(msg);
+      await this.markEventFailed(msg, ex);
     }
   }
 

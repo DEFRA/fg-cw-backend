@@ -187,10 +187,13 @@ describe("GET /actuators/outbox", () => {
       }
     });
 
-    it("returns no kind field", async () => {
+    // NOTE - this file is port-blocked locally and is not run by the local
+    // gates; it is updated in step with the unit tests it mirrors.
+    it("returns no kind and no auditEntities field", async () => {
       const { payload } = await findOutbox();
 
       expect(payload.data[0]).not.toHaveProperty("kind");
+      expect(payload.data[0]).not.toHaveProperty("auditEntities");
     });
 
     it("omits totalCount from pagination", async () => {
@@ -322,6 +325,9 @@ describe("GET /actuators/outbox", () => {
     });
   });
 
+  // An audit record is not a CloudEvent: it stores no id and no type, so both
+  // are null. Nothing else about its audit-ness reaches the wire - the audit
+  // entities are not projected and not returned.
   describe("audit rows", () => {
     it("maps a CloudEvent row to eventId and type", async () => {
       await outbox.insertOne(aDoc({ event: { id: "evt-1", type: "a.b.c" } }));
@@ -330,58 +336,39 @@ describe("GET /actuators/outbox", () => {
 
       expect(payload.data[0].eventId).toBe("evt-1");
       expect(payload.data[0].type).toBe("a.b.c");
-      expect(payload.data[0].auditEntities).toBeNull();
+      expect(payload.data[0]).not.toHaveProperty("auditEntities");
     });
 
-    it("returns null auditEntities for a CloudEvent row", async () => {
-      await outbox.insertOne(aDoc());
-
-      const { payload } = await findOutbox();
-
-      expect(payload.data[0].auditEntities).toBeNull();
-    });
-
-    it("maps an audit row to null eventId, null type and its audit entities", async () => {
+    it("maps an audit row to a null eventId and a null type", async () => {
       await outbox.insertOne(aDoc({ event: auditEvent() }));
 
       const { payload } = await findOutbox();
 
       expect(payload.data[0].eventId).toBeNull();
       expect(payload.data[0].type).toBeNull();
-      expect(payload.data[0].auditEntities).toEqual([
-        { entity: "CASE", action: "VIEW_CASE_LIST" },
-      ]);
+      expect(payload.data[0]).not.toHaveProperty("auditEntities");
     });
 
-    it("strips entityid from audit entities", async () => {
-      await outbox.insertOne(aDoc({ event: auditEvent() }));
-
-      const { payload } = await findOutbox();
-
-      expect(payload.data[0].auditEntities).toEqual([
-        { entity: "CASE", action: "VIEW_CASE_LIST" },
-      ]);
-    });
-
-    it("never leaks entityid or audit details", async () => {
+    it("never leaks an audit entity, its entityid or its details", async () => {
       await outbox.insertOne(aDoc({ event: auditEvent() }));
 
       const { payload } = await findOutbox();
 
       expect(payload.data).toHaveLength(1);
       expect(JSON.stringify(payload)).not.toMatch(
-        /entityid|details|APPLICATION-REF-1/,
+        /entityid|details|APPLICATION-REF-1|VIEW_CASE_LIST/,
       );
     });
 
-    it("keeps an empty audit entities array as an empty array", async () => {
+    it("returns an audit row with an empty entities array like any other", async () => {
       await outbox.insertOne(
         aDoc({ event: { audit: { entities: [], status: "SUCCESS" } } }),
       );
 
       const { payload } = await findOutbox();
 
-      expect(payload.data[0].auditEntities).toEqual([]);
+      expect(payload.data[0].type).toBeNull();
+      expect(payload.data[0]).not.toHaveProperty("auditEntities");
     });
   });
 
@@ -476,5 +463,188 @@ describe("GET /actuators/outbox", () => {
         /"event"|SECRET-SUBJECT|APPLICATION-REF-1|123456789|fg-cw-backend/,
       );
     });
+  });
+});
+
+// NOTE: this file cannot be run on this machine - the integration stack's
+// ports clash with the services already running locally - so the cases below
+// are written to the same contract as the unit tests but are unexercised here.
+const AUDIT_TOPIC_ARN =
+  "arn:aws:sns:eu-west-2:000000000000:cw__sns__audit_topic_arn";
+
+describe("GET /actuators/outbox?q=", () => {
+  beforeEach(async () => {
+    await outbox.insertMany([
+      aDoc({
+        event: { id: "evt-alpha", type: "cloud.defra.prd.x.y" },
+        segregationRef: "GLD-9B2-BWS-alpha",
+        publicationDate: at(0),
+      }),
+      aDoc({
+        event: { id: "evt-beta", type: "cloud.defra.prd.x.y" },
+        segregationRef: "SFI-1A1-XYZ-beta",
+        publicationDate: at(1),
+      }),
+    ]);
+  });
+
+  it("matches an event.id exactly", async () => {
+    const { payload } = await findOutbox({ q: "evt-alpha" });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["evt-alpha"]);
+  });
+
+  it("matches a segregationRef prefix case-insensitively", async () => {
+    const { payload } = await findOutbox({ q: "gld-9b2" });
+
+    expect(payload.data.map((r) => r.eventId)).toEqual(["evt-alpha"]);
+  });
+
+  it("matches a row on its 24-hex _id", async () => {
+    const id = new ObjectId();
+    await outbox.insertOne(
+      aDoc({
+        _id: id,
+        event: { id: "evt-by-id", type: "cloud.defra.prd.x.y" },
+      }),
+    );
+
+    const { payload } = await findOutbox({ q: id.toHexString() });
+
+    expect(payload.data.map((r) => r._id)).toEqual([id.toHexString()]);
+  });
+
+  it("returns an empty page for a q that matches nothing", async () => {
+    const { payload } = await findOutbox({ q: "nonexistent-ref" });
+
+    expect(payload.data).toEqual([]);
+  });
+
+  it("treats regex metacharacters in q as literal text", async () => {
+    const { payload } = await findOutbox({ q: ".*" });
+
+    expect(payload.data).toEqual([]);
+  });
+
+  it("matches a segregationRef that itself contains metacharacters", async () => {
+    await outbox.insertOne(
+      aDoc({
+        event: { id: "evt-meta", type: "cloud.defra.prd.x.y" },
+        segregationRef: "GLD.9B2+BWS",
+      }),
+    );
+
+    const { payload } = await findOutbox({ q: "GLD.9B2+" });
+
+    expect(payload.data.map((r) => r.segregationRef)).toEqual(["GLD.9B2+BWS"]);
+  });
+
+  it("treats a whitespace-only q as absent", async () => {
+    const { payload } = await findOutbox({ q: "   " });
+
+    expect(payload.data).toHaveLength(2);
+  });
+
+  it("rejects a q longer than 200 characters with 400", async () => {
+    await expect(findOutbox({ q: "a".repeat(201) })).rejects.toThrow(
+      "Response Error: 400 Bad Request",
+    );
+  });
+});
+
+// The TYPE (domain/audit) filter is GONE. `kind` is not a known parameter any
+// more, so a stale caller gets a 400 rather than a silently unfiltered page.
+// Audit rows appear in the list inline with every other row.
+describe("GET /actuators/outbox and audit rows", () => {
+  // both audit shapes the outbox actually stores: an `audit` payload, and a
+  // row addressed to this service's own audit topic
+  beforeEach(async () => {
+    await outbox.insertMany([
+      aDoc({
+        event: { id: "evt-domain", type: "cloud.defra.prd.x.y" },
+        publicationDate: at(0),
+      }),
+      aDoc({ event: auditEvent(), publicationDate: at(1) }),
+      aDoc({
+        event: { id: "evt-audit-target", type: "cloud.defra.prd.x.y" },
+        target: AUDIT_TOPIC_ARN,
+        publicationDate: at(2),
+      }),
+    ]);
+  });
+
+  it("returns all three rows on one unfiltered page", async () => {
+    const { payload } = await findOutbox();
+
+    expect(payload.data).toHaveLength(3);
+    expect(payload.data.map((r) => r.eventId)).toContain("evt-domain");
+    expect(payload.data.map((r) => r.eventId)).toContain("evt-audit-target");
+  });
+
+  it("returns a null type only for the row that stores none", async () => {
+    const { payload } = await findOutbox();
+    const nullTyped = payload.data.filter((r) => r.type === null);
+
+    expect(nullTyped).toHaveLength(1);
+    expect(nullTyped[0].eventId).toBeNull();
+  });
+
+  // The audit TOPIC says nothing about a row's type: a row on that topic that
+  // does carry a CloudEvent type keeps it.
+  it("keeps the stored type on a row addressed at the audit topic", async () => {
+    const { payload } = await findOutbox();
+    const [row] = payload.data.filter((r) => r.eventId === "evt-audit-target");
+
+    expect(row.type).toBe("cloud.defra.prd.x.y");
+  });
+
+  it.each([["audit"], ["domain"], ["other"], [""]])(
+    "rejects kind=%s with 400 - it is not a parameter any more",
+    async (kind) => {
+      await expect(findOutbox({ kind })).rejects.toThrow(
+        "Response Error: 400 Bad Request",
+      );
+    },
+  );
+});
+
+describe("GET /actuators/outbox lastError", () => {
+  it("returns null lastError for a row written before the field existed", async () => {
+    await outbox.insertOne(aDoc());
+
+    const { payload } = await findOutbox();
+
+    expect(payload.data[0].lastError).toBeNull();
+  });
+
+  it("surfaces a stored lastError", async () => {
+    const lastError = {
+      name: "ClaimExpired",
+      message: "claim expired before completion",
+      at: "2026-06-16T10:16:05.000Z",
+    };
+    await outbox.insertOne(aDoc({ status: "DEAD_LETTER", lastError }));
+
+    const { payload } = await findOutbox();
+
+    expect(payload.data[0].lastError).toEqual(lastError);
+  });
+
+  it("never returns a stack stored alongside a lastError", async () => {
+    await outbox.insertOne(
+      aDoc({
+        status: "DEAD_LETTER",
+        lastError: {
+          name: "Error",
+          message: "boom",
+          at: "2026-06-16T10:16:05.000Z",
+          stack: "SECRET-STACK",
+        },
+      }),
+    );
+
+    const { payload } = await findOutbox();
+
+    expect(JSON.stringify(payload)).not.toContain("SECRET-STACK");
   });
 });

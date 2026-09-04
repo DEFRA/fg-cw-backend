@@ -151,3 +151,78 @@ describe("findInboxPageUseCase", () => {
     expect(result.data).toEqual([]);
   });
 });
+
+describe("findInboxPageUseCase q", () => {
+  it("passes q through to the repository", async () => {
+    findPage.mockResolvedValue(aPage([]));
+
+    await findInboxPageUseCase({
+      direction: "forward",
+      pageSize: 20,
+      q: "GLD-9B2",
+    });
+
+    expect(findPage).toHaveBeenCalledWith(
+      expect.objectContaining({ q: "GLD-9B2" }),
+    );
+  });
+
+  it("passes q as undefined when it is not given", async () => {
+    findPage.mockResolvedValue(aPage([]));
+
+    await findInboxPageUseCase({ direction: "forward", pageSize: 20 });
+
+    expect(findPage).toHaveBeenCalledWith(
+      expect.objectContaining({ q: undefined }),
+    );
+  });
+
+  // The TYPE filter is gone: nothing about kind reaches the repository.
+  it("never passes a kind to the repository", async () => {
+    findPage.mockResolvedValue(aPage([]));
+
+    await findInboxPageUseCase({
+      direction: "forward",
+      pageSize: 20,
+      q: "GLD-9B2",
+    });
+
+    expect(findPage.mock.calls.at(-1)[0]).not.toHaveProperty("kind");
+  });
+
+  it("carries a row's lastError through untouched", async () => {
+    const lastError = {
+      name: "ClaimExpired",
+      message: "claim expired before completion",
+      at: "2026-06-16T10:16:05.000Z",
+    };
+    findPage.mockResolvedValue(aPage([aRow({ lastError })]));
+
+    const result = await findInboxPageUseCase({
+      direction: "forward",
+      pageSize: 20,
+    });
+
+    expect(result.data[0].lastError).toEqual(lastError);
+  });
+});
+
+describe("findInboxPageUseCase from and to", () => {
+  it("passes both bounds through to the repository", async () => {
+    findPage.mockResolvedValue(aPage([]));
+
+    await findInboxPageUseCase({
+      direction: "forward",
+      pageSize: 20,
+      from: "2026-06-16T00:00:00.000Z",
+      to: "2026-06-16T23:59:59.999Z",
+    });
+
+    expect(findPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "2026-06-16T00:00:00.000Z",
+        to: "2026-06-16T23:59:59.999Z",
+      }),
+    );
+  });
+});

@@ -110,3 +110,97 @@ describe("findOutboxRoute", () => {
     expect(result).toBe(page);
   });
 });
+
+describe("findOutboxRoute q", () => {
+  it("accepts a q and trims it", () => {
+    const { error, value } = validateQuery({ q: "  GLD-9B2-BWS  " });
+
+    expect(error).toBeUndefined();
+    expect(value.q).toEqual("GLD-9B2-BWS");
+  });
+
+  it("treats an empty or whitespace-only q as absent", () => {
+    expect(validateQuery({ q: "" }).value.q).toBeUndefined();
+    expect(validateQuery({ q: "   " }).value.q).toBeUndefined();
+    expect(validateQuery({ q: "" }).error).toBeUndefined();
+  });
+
+  it("accepts a q of exactly 200 characters", () => {
+    expect(validateQuery({ q: "a".repeat(200) }).error).toBeUndefined();
+  });
+
+  it("rejects a q longer than 200 characters", () => {
+    expect(validateQuery({ q: "a".repeat(201) }).error).toBeDefined();
+  });
+
+  // The TYPE filter is gone: `kind` is not a known parameter any more, so it
+  // is rejected the way any unknown one is rather than quietly ignored.
+  it("rejects kind, domain and audit alike, as an unknown parameter", () => {
+    expect(validateQuery({ kind: "domain" }).error).toBeDefined();
+    expect(validateQuery({ kind: "audit" }).error).toBeDefined();
+    expect(validateQuery({ kind: "other" }).error).toBeDefined();
+    expect(validateQuery({ kind: "" }).error).toBeDefined();
+  });
+
+  it("passes q to the use case, and no kind", async () => {
+    findOutboxPageUseCase.mockResolvedValue({ data: [], pagination: {} });
+
+    await findOutboxRoute.handler({
+      query: { direction: "forward", pageSize: 20, q: "GLD-9B2" },
+    });
+
+    expect(findOutboxPageUseCase).toHaveBeenCalledWith({
+      cursor: undefined,
+      direction: "forward",
+      pageSize: 20,
+      status: undefined,
+      q: "GLD-9B2",
+    });
+  });
+});
+
+describe("findOutboxRoute from and to", () => {
+  it("accepts an ISO from and to", () => {
+    const { error, value } = validateQuery({
+      from: "2026-06-16T00:00:00.000Z",
+      to: "2026-06-16T23:59:59.999Z",
+    });
+
+    expect(error).toBeUndefined();
+    expect(value.from).toBe("2026-06-16T00:00:00.000Z");
+    expect(value.to).toBe("2026-06-16T23:59:59.999Z");
+  });
+
+  it("rejects a non-ISO bound and from after to", () => {
+    expect(validateQuery({ from: "yesterday" }).error).toBeDefined();
+    expect(
+      validateQuery({
+        from: "2026-06-16T10:00:00.000Z",
+        to: "2026-06-15T10:00:00.000Z",
+      }).error,
+    ).toBeDefined();
+  });
+
+  it("passes from and to to the use case", async () => {
+    findOutboxPageUseCase.mockResolvedValue({ data: [], pagination: {} });
+
+    await findOutboxRoute.handler({
+      query: {
+        direction: "forward",
+        pageSize: 20,
+        from: "2026-06-16T00:00:00.000Z",
+        to: "2026-06-16T23:59:59.999Z",
+      },
+    });
+
+    expect(findOutboxPageUseCase).toHaveBeenCalledWith({
+      cursor: undefined,
+      direction: "forward",
+      pageSize: 20,
+      status: undefined,
+      q: undefined,
+      from: "2026-06-16T00:00:00.000Z",
+      to: "2026-06-16T23:59:59.999Z",
+    });
+  });
+});

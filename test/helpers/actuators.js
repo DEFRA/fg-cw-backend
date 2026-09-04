@@ -11,3 +11,68 @@ export const findInbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
 
 export const findOutbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
   get("/actuators/outbox", query, token);
+
+const post = (path, token, payload) =>
+  wreck.post(path, {
+    headers: { authorization: token },
+    ...(payload ? { payload } : {}),
+  });
+
+// `by` travels as a query parameter on every mutation, so all three take the
+// actor the same way - only park has a body at all.
+const withActor = (path, by) =>
+  by ? `${path}?by=${encodeURIComponent(by)}` : path;
+
+export const getInboxEvent = (id, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get(`/actuators/inbox/${id}`, undefined, token);
+
+export const getOutboxEvent = (id, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get(`/actuators/outbox/${id}`, undefined, token);
+
+export const redriveInboxEvent = (
+  id,
+  { by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/inbox/${id}/redrive`, by), token);
+
+export const redriveOutboxEvent = (
+  id,
+  { by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/outbox/${id}/redrive`, by), token);
+
+export const countInbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get("/actuators/inbox/counts", query, token);
+
+export const countOutbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get("/actuators/outbox/counts", query, token);
+
+export const breakdownInbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get("/actuators/inbox/breakdown", query, token);
+
+export const breakdownOutbox = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
+  get("/actuators/outbox/breakdown", query, token);
+
+export const parkInboxEvent = (
+  id,
+  { reason, by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/inbox/${id}/park`, by), token, { reason });
+
+export const parkOutboxEvent = (
+  id,
+  { reason, by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/outbox/${id}/park`, by), token, { reason });
+
+export const unparkInboxEvent = (
+  id,
+  { by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/inbox/${id}/unpark`, by), token);
+
+export const unparkOutboxEvent = (
+  id,
+  { by } = {},
+  token = `Bearer ${SERVICE_TOKEN}`,
+) => post(withActor(`/actuators/outbox/${id}/unpark`, by), token);

@@ -352,3 +352,50 @@ describe("inbox.subscriber", () => {
     });
   });
 });
+
+describe("InboxSubscriber failure reasons", () => {
+  it("passes the caught exception to markAsFailed", async () => {
+    const failure = new Error("use case blew up");
+    submitCaseUseCase.mockRejectedValueOnce(failure);
+    withTraceParent.mockImplementation((_, fn) => fn());
+
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.case.create",
+      source: "GAS",
+      traceparent: "1234-abcd",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber().handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+
+  it("passes the no-handler error to markAsFailed", async () => {
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.nothing.handles.this",
+      source: "GAS",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber().handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(expect.any(Error));
+    expect(message.markAsFailed.mock.calls[0][0].message).toContain(
+      "No handler found for event type",
+    );
+  });
+
+  it("forwards the error through markEventFailed to the model", async () => {
+    const failure = new Error("boom");
+    const message = { messageId: "m-1", markAsFailed: vi.fn() };
+
+    await new InboxSubscriber().markEventFailed(message, failure);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+});
