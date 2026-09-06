@@ -1,25 +1,5 @@
 import Joi from "joi";
-import { createPageResponse } from "../../common/create-page-response.js";
-import { findCaseByIdUseCase } from "../use-cases/find-case-by-id.use-case.js";
-import { findCaseSeries } from "../use-cases/find-case-series.use-case.js";
-
-const constructLinksForCaseSeries = (links, caseSeriesLength) => {
-  if (caseSeriesLength > 1) {
-    const newLinks = links.map((link) => {
-      if (link.id === "timeline") {
-        const timelineLink = {
-          ...link,
-          text: `Timeline (${caseSeriesLength})`,
-        };
-        return timelineLink;
-      }
-      return link;
-    });
-    return newLinks;
-  }
-
-  return links;
-};
+import { viewCaseUseCase } from "../use-cases/view-case.use-case.js";
 
 export const findCaseByIdRoute = {
   method: "GET",
@@ -38,17 +18,6 @@ export const findCaseByIdRoute = {
     const tabId = request.query.tabId;
     const { user } = request.auth.credentials;
 
-    const data = await findCaseByIdUseCase(caseId, user, {
-      params: { caseId, tabId },
-    });
-
-    const caseSeries = await findCaseSeries({
-      tabId,
-      caseRef: data.caseRef,
-      workflowCode: data.workflowCode,
-    });
-
-    const links = constructLinksForCaseSeries(data.links, caseSeries.length);
-    return createPageResponse({ user, data: { ...data, links, caseSeries } });
+    return viewCaseUseCase({ caseId, tabId, user });
   },
 };

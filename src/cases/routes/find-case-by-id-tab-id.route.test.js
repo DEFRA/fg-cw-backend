@@ -5,6 +5,9 @@ import { buildCaseDetailsTabUseCase } from "../use-cases/build-case-details-tab.
 import { findCaseByIdTabIdRoute } from "./find-case-by-id-tab-id.route.js";
 
 vi.mock("../use-cases/build-case-details-tab.use-case.js");
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("findCaseByIdTabIdRoute", () => {
   const mockAuthUser = {

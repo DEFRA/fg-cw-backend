@@ -2,11 +2,16 @@ import Boom from "@hapi/boom";
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { User } from "../models/user.js";
 import { adminFindUsersUseCase } from "../use-cases/admin-find-users.use-case.js";
 import { adminFindUsersRoute } from "./admin-find-users.route.js";
 
 vi.mock("../use-cases/admin-find-users.use-case.js");
+
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("adminFindUsersRoute", () => {
   let server;
@@ -108,5 +113,31 @@ describe("adminFindUsersRoute", () => {
         anyAppRoles: ["ROLE_ANY"],
       },
     });
+  });
+
+  it("writes a VIEW_USER_LIST audit event", async () => {
+    const admin = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    adminFindUsersUseCase.mockResolvedValue([]);
+
+    await server.inject({
+      method: "GET",
+      url: "/admin/users",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user: admin,
+        },
+      },
+    });
+
+    expect(writeAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entities: [{ entity: "USER", action: "VIEW_USER_LIST" }],
+      }),
+      undefined,
+    );
   });
 });
