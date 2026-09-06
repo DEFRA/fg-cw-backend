@@ -19,6 +19,7 @@ export const setup = async ({ globalConfig }) => {
       MONGO_PORT: env.MONGO_PORT,
       FLOCI_PORT: env.FLOCI_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
+      SERVICE_ACCESS_TOKEN_HASH: env.SERVICE_ACCESS_TOKEN_HASH,
     })
     .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
     .withNoRecreate()

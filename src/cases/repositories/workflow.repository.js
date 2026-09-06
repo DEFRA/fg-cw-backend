@@ -83,7 +83,8 @@ const toWorkflowTask = (t) =>
       allOf: t.requiredRoles?.allOf,
       anyOf: t.requiredRoles?.anyOf,
     }),
-    valueOptions: t.valueOptions.map(toWorkflowTaskValueOption),
+    valueOptions: t.valueOptions?.map(toWorkflowTaskValueOption),
+    input: t.input,
     comment: toWorkflowTaskComment(t.comment),
   });
 
@@ -190,6 +191,17 @@ export const findAll = async (query) => {
     .toArray();
 
   return workflowDocuments.map(toWorkflow);
+};
+
+export const findAllCodes = async (query) => {
+  const filter = createWorkflowFilter(query);
+
+  const documents = await db
+    .collection(collection)
+    .find(filter, { projection: { _id: 0, code: 1 } })
+    .toArray();
+
+  return [...new Set(documents.map((doc) => doc.code))];
 };
 
 // Legacy callers get the 0.0.0 workflow (FGP-1224 rollback contract). Latest
