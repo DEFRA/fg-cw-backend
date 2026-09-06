@@ -14,6 +14,8 @@ services:
         condition: service_healthy
     env_file:
       - ".env"
+    environment:
+      SERVICE_ACCESS_TOKEN_HASH: "${SERVICE_ACCESS_TOKEN_HASH:-}"
     networks:
       - cdp-tenant
     develop:
