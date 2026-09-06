@@ -114,6 +114,7 @@ describe("public-api auth", () => {
   it.each([
     ["no authorization header", undefined],
     ["an empty header", ""],
+    ["a bearer scheme with no token", "Bearer   "],
     ["an Entra-shaped header with the wrong scheme", "Basic Zm9vOmJhcg=="],
     ["a bare token", RAW_TOKEN],
   ])(

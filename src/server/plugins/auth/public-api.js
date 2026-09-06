@@ -26,7 +26,11 @@ const getBearerToken = (header) => {
     // a route stacking strategies falls through to the next one
     throw Boom.unauthorized(null, "Bearer");
   }
-  return header.replace(BEARER_PREFIX, "").trim();
+  const token = header.replace(BEARER_PREFIX, "").trim();
+  if (!token) {
+    throw Boom.unauthorized("Invalid token", "Bearer");
+  }
+  return token;
 };
 
 const isExpired = (record, now = new Date()) =>
