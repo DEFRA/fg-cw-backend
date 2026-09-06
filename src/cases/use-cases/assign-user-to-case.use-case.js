@@ -1,6 +1,13 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findUserByIdUseCase } from "../../users/use-cases/find-user-by-id.use-case.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
@@ -11,7 +18,7 @@ import {
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
 
-export const assignUserToCaseUseCase = async (command) => {
+const assignUserToCase = async (command) => {
   const { assignedUserId, caseId, notes, user } = command;
 
   logger.info(`Assigning User "${assignedUserId}" to case "${caseId}"`);
@@ -25,16 +32,48 @@ export const assignUserToCaseUseCase = async (command) => {
     appRoles: workflow.requiredRoles ?? RequiredAppRoles.None,
   });
 
+  let assignedUser = null;
+
   if (assignedUserId === null) {
     await unassignUser({ kase, notes, user, caseId });
   } else {
-    await assignUser({ kase, notes, user, caseId, assignedUserId, workflow });
+    assignedUser = await assignUser({
+      kase,
+      notes,
+      user,
+      caseId,
+      assignedUserId,
+      workflow,
+    });
   }
 
   logger.info(
     `Finished: Assigning User "${assignedUserId}" to case "${caseId}"`,
   );
+
+  return { assignedUser };
 };
+
+export const assignUserToCaseAuditDataBuilder = ([command], result) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.ASSIGN_USER_TO_CASE,
+      entityid: command.caseRef ?? command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user, result?.assignedUser),
+    assignedUserId: command.assignedUserId,
+  },
+  security: buildAuditSecurity(auditActions.ASSIGN_USER_TO_CASE),
+  segregationRef: `assign-user-to-case-${command.caseId}`,
+});
+
+export const assignUserToCaseUseCase = withAudit(
+  assignUserToCase,
+  assignUserToCaseAuditDataBuilder,
+);
 
 const unassignUser = async ({ kase, notes, user }) => {
   kase.unassignUser({
@@ -72,5 +111,7 @@ const assignUser = async ({
     text: notes,
   });
 
-  return update(kase);
+  await update(kase);
+
+  return userToAssign;
 };
