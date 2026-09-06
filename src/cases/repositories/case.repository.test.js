@@ -472,7 +472,7 @@ describe("findById", () => {
 
     // Add commentRefs to the task in the document
     doc.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-      { status: "ACCEPTED", ref: "abc123def456" },
+      { value: "ACCEPTED", ref: "abc123def456" },
     ];
 
     const findOne = vi.fn().mockReturnValue(doc);
@@ -485,7 +485,7 @@ describe("findById", () => {
 
     const task = result.phases[0].stages[0].taskGroups[0].tasks[0];
     expect(task.commentRefs).toEqual([
-      { status: "ACCEPTED", ref: "abc123def456" },
+      { value: "ACCEPTED", ref: "abc123def456" },
     ]);
   });
 });

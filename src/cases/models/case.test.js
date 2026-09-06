@@ -488,7 +488,7 @@ describe("Case", () => {
 
       expect(task.value).toBe("COMPLETE");
       expect(task.commentRefs).toHaveLength(1);
-      expect(task.commentRefs[0].status).toBe("COMPLETE");
+      expect(task.commentRefs[0].value).toBe("COMPLETE");
       expect(task.commentRefs[0].ref).toBeDefined();
     });
 

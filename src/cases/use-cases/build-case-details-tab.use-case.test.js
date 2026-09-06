@@ -46,6 +46,7 @@ describe("buildCaseDetailsTabUseCase", () => {
     );
     expect(result.caseId).toBe("test-case-id");
     expect(result.caseRef).toBe("TEST-REF-001");
+    expect(result.workflowCode).toBe("frps-private-beta");
     expect(result.tabId).toBe("case-details");
     expect(result.banner).toBeDefined();
     expect(result.banner.title.text).toBe("Test Business");
@@ -164,12 +165,14 @@ describe("buildCaseDetailsTabUseCase", () => {
     );
   });
 
-  it("handles tab with renderIf condition that evaluates to true", async () => {
+  it("preserves agreement content and links", async () => {
     const mockCase = Case.createMock({
       _id: "test-case-id",
       caseRef: "TEST-REF-001",
       workflowCode: "test-workflow",
-      supplementaryData: { agreements: [{ agreementRef: "AGR-001" }] },
+      supplementaryData: {
+        agreements: [{ agreementRef: "AGR-001" }],
+      },
     });
 
     const mockWorkflow = Workflow.createMock({
@@ -177,12 +180,18 @@ describe("buildCaseDetailsTabUseCase", () => {
       pages: {
         cases: {
           details: {
-            banner: {
-              title: { text: "Test Title" },
-            },
             tabs: {
               agreements: {
                 renderIf: "$.supplementaryData.agreements[0]",
+                link: {
+                  href: {
+                    urlTemplate: "/cases/{caseId}/agreements",
+                    params: {
+                      caseId: "$._id",
+                    },
+                  },
+                  text: "Agreements",
+                },
                 content: [
                   {
                     id: "agreements",
@@ -208,11 +217,20 @@ describe("buildCaseDetailsTabUseCase", () => {
       query: {},
     });
 
-    expect(result.caseId).toBe("test-case-id");
-    expect(result.caseRef).toBe("TEST-REF-001");
-    expect(result.tabId).toBe("agreements");
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
+    expect(result.workflowCode).toBe("test-workflow");
+    expect(result).not.toHaveProperty("agreements");
+    expect(result.content).toEqual([
+      {
+        id: "agreements",
+        component: "table",
+        title: "Agreements",
+      },
+    ]);
+    expect(result.links).toContainEqual({
+      id: "agreements",
+      href: "/cases/test-case-id/agreements",
+      text: "Agreements",
+    });
   });
 
   it("handles missing pages structure in workflow", async () => {

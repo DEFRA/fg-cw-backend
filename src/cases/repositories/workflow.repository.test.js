@@ -6,6 +6,7 @@ import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import {
   findAll,
+  findAllCodes,
   findByCode,
   findByCodeAndVersion,
   save,
@@ -331,5 +332,62 @@ describe("saveFromDefinition", () => {
     expect(insertOne).toHaveBeenCalled();
     expect(result.code).toBe("pigs-might-fly");
     expect(result.version).toBe("1.0.2");
+  });
+});
+
+describe("findAllCodes", () => {
+  it("returns deduplicated workflow codes", async () => {
+    const documents = [
+      { code: "WORKFLOW_A" },
+      { code: "WORKFLOW_B" },
+      { code: "WORKFLOW_A" },
+    ];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(documents),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const result = await findAllCodes();
+
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith({}, { projection: { _id: 0, code: 1 } });
+    expect(result).toEqual(["WORKFLOW_A", "WORKFLOW_B"]);
+  });
+
+  it("passes role filter to mongodb", async () => {
+    const documents = [{ code: "WORKFLOW_A" }];
+
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(documents),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const query = createRoleFilter(["ROLE_1", "ROLE_3"]);
+    const result = await findAllCodes(query);
+
+    expect(find).toHaveBeenCalledWith(
+      { ...query },
+      { projection: { _id: 0, code: 1 } },
+    );
+    expect(result).toEqual(["WORKFLOW_A"]);
+  });
+
+  it("returns empty array when no workflows match", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    const result = await findAllCodes({ codes: ["NON_EXISTENT"] });
+
+    expect(find).toHaveBeenCalledWith(
+      { code: { $in: ["NON_EXISTENT"] } },
+      { projection: { _id: 0, code: 1 } },
+    );
+    expect(result).toEqual([]);
   });
 });
