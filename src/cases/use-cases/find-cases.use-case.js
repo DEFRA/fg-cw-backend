@@ -2,7 +2,7 @@ import { logger } from "../../common/logger.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
-import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
+import { findWorkflowCodesUseCase } from "./find-workflow-codes.use-case.js";
 import {
   persistResolvedVersion,
   resolveWorkflowForCase,
@@ -95,10 +95,10 @@ const buildDegradedCase = (kase, assignedUsers) => ({
 
 export const findCasesUseCase = async ({ user, query }) => {
   const roleFilter = createRoleFilter(user.getRoles());
-  const workflows = await findWorkflowsUseCase(roleFilter);
+  const workflowCodes = await findWorkflowCodesUseCase(roleFilter);
 
   const results = await findAll({
-    workflowCodes: workflows.map((w) => w.code),
+    workflowCodes,
     search: query.search,
     cursor: query.cursor,
     direction: query.direction,
