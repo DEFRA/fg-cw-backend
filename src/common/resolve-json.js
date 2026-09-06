@@ -1,5 +1,6 @@
 import jsonata from "jsonata";
 import { JSONPath } from "jsonpath-plus";
+import { config } from "./config.js";
 import { applyFormat } from "./format.js";
 import { logger } from "./logger.js";
 
@@ -466,10 +467,15 @@ const resolveRow = ({ path, row }) => {
   return JSONPath({ json: row, path: jsonPath });
 };
 
-export const populateUrlTemplate = (template, params) =>
-  template.replace(/\{([^}]{0,100})}/g, (_, key) =>
+export const populateUrlTemplate = (template, params) => {
+  const withEnvironment = template.replace(
+    "%ENVIRONMENT%",
+    config.get("cdpEnvironment"),
+  );
+  return withEnvironment.replace(/\{([^}]{0,100})}/g, (_, key) =>
     encodeURIComponent(params[key] ?? ""),
   );
+};
 
 export const evaluateTaskCondition = async ({ condition, root }) => {
   if (!condition) {

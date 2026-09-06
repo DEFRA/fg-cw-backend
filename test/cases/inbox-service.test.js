@@ -48,14 +48,38 @@ describe("inbox", () => {
   });
 
   it("should claim events in order", async () => {
+    const segregationRef = "ref_claim_in_order";
+    await fifo.insertOne({
+      segregationRef,
+      actor: "INBOX",
+      locked: true,
+      lockedAt: new Date(Date.now()),
+    });
+
     await inbox.insertMany([
-      createMockInbox("2", new Date(Date.now() - 3000).toISOString(), "ref_1"),
-      createMockInbox("3", new Date(Date.now() - 2000).toISOString(), "ref_1"),
-      createMockInbox("4", new Date(Date.now() - 1000).toISOString(), "ref_1"),
-      createMockInbox("1", new Date(Date.now() - 4000).toISOString(), "ref_1"),
+      createMockInbox(
+        "2",
+        new Date(Date.now() - 3000).toISOString(),
+        segregationRef,
+      ),
+      createMockInbox(
+        "3",
+        new Date(Date.now() - 2000).toISOString(),
+        segregationRef,
+      ),
+      createMockInbox(
+        "4",
+        new Date(Date.now() - 1000).toISOString(),
+        segregationRef,
+      ),
+      createMockInbox(
+        "1",
+        new Date(Date.now() - 4000).toISOString(),
+        segregationRef,
+      ),
     ]);
 
-    const records = await claimEvents(randomUUID(), "ref_1", 4);
+    const records = await claimEvents(randomUUID(), segregationRef, 4);
     expect(records).toHaveLength(4);
     expect(records[0]._id).toBe("1");
     expect(records[1]._id).toBe("2");

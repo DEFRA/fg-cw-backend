@@ -60,7 +60,7 @@ export const loginUserAuditDataBuilder = ([props], result) => {
     ],
     details: { security: buildSecurityContext(actor) },
     security: buildAuditSecurity(auditActions.LOGIN),
-    messageGroupId: `login-${props.idpId}`,
+    segregationRef: `login-${props.idpId}`,
   };
 };
 

@@ -1,9 +1,16 @@
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSystemSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
 import { CasePhase } from "../models/case-phase.js";
 import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseStage } from "./ensure-case-position.use-case.js";
 import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 const temporaryCaveatSourceMap = {
   "hefer-consent-required": "historic-england",
@@ -33,7 +40,27 @@ const mapCaveatSources = (payload) => {
   };
 };
 
-export const newCaseUseCase = async (message, session) => {
+// eslint-disable-next-line complexity
+const extractConfigVersion = (payload) =>
+  payload?.originalConfigVersion ?? payload?.configVersion ?? null;
+
+const resolveLegacyWorkflow = async (workflowCode) => ({
+  workflow: await findWorkflowByCodeUseCase(workflowCode),
+  resolvedVersion: null,
+});
+
+const resolveWorkflow = (workflowCode, payload) => {
+  const configVersion = extractConfigVersion(payload);
+  if (!configVersion) {
+    return resolveLegacyWorkflow(workflowCode);
+  }
+  logger.info(
+    `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,
+  );
+  return resolveAndFetchWorkflowUseCase(workflowCode, configVersion);
+};
+
+const newCase = async (message, session) => {
   const {
     event: { data },
   } = message;
@@ -44,7 +71,10 @@ export const newCaseUseCase = async (message, session) => {
     `Creating new case with caseRef ${caseRef} and workflowCode ${workflowCode}`,
   );
 
-  const workflow = await findWorkflowByCodeUseCase(workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflow(
+    workflowCode,
+    payload,
+  );
 
   const position = workflow.getInitialPosition();
 
@@ -66,6 +96,7 @@ export const newCaseUseCase = async (message, session) => {
     position,
     payload,
     phases,
+    configVersion: resolvedVersion,
   });
 
   const { insertedId } = await save(kase, session);
@@ -76,3 +107,32 @@ export const newCaseUseCase = async (message, session) => {
 
   return insertedId;
 };
+
+export const newCaseAuditDataBuilder = ([message], result) => {
+  const { caseRef, workflowCode } = message.event.data;
+
+  return {
+    entities: [
+      {
+        entity: auditEntities.CASE,
+        action: auditActions.CREATE_CASE,
+        entityid: caseRef,
+      },
+    ],
+    details: {
+      security: buildSystemSecurityContext(),
+      case: {
+        caseRef,
+        workflowCode,
+        caseId: result?.toString(),
+      },
+    },
+    security: buildAuditSecurity(auditActions.CREATE_CASE),
+    segregationRef: `create-case-${caseRef}`,
+  };
+};
+
+// newCaseUseCase is a building block shared by submit-case and replace-case.
+// Auditing is deliberately performed by those callers (a level up), where each
+// owns its transaction, so the CREATE_CASE audit reflects the full operation.
+export const newCaseUseCase = newCase;

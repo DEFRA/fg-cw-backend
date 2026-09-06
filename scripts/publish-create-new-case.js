@@ -29,6 +29,7 @@ const messagePmf = {
     caseRef: Math.random().toString(30).substring(2, 9),
     workflowCode: "pigs-might-fly",
     payload: {
+      configVersion: "1.0.0",
       createdAt: "2025-03-27T10:34:52.000Z",
       submittedAt: "2025-03-28T11:30:52.000Z",
       identifiers: {
@@ -347,6 +348,7 @@ const messageWMPCase = {
     createdAt: "2026-06-08T17:02:59.660Z",
 
     payload: {
+      configVersion: "1.0.1",
       createdAt: "2026-06-08T17:02:59.402Z",
       submittedAt: "2026-06-08T17:02:59.330Z",
 

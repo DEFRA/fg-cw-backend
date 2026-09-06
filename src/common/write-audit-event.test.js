@@ -11,10 +11,6 @@ import {
   writeAuditEvent,
 } from "./write-audit-event.js";
 
-vi.mock("@defra/fcp-audit-publisher", () => ({
-  validateAuditEvent: vi.fn(),
-}));
-
 vi.mock("@defra/hapi-tracing", () => ({
   getTraceId: vi.fn(),
 }));
@@ -52,8 +48,7 @@ vi.mock("../cases/repositories/outbox.repository.js", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   getTraceId.mockReturnValue("trace-id-123");
-  getRequestContext.mockReturnValue(null);
-  validateAuditEvent.mockReturnValue({ valid: true });
+  getRequestContext.mockReturnValue({ ip: "1.2.3.4" });
   Outbox.mockImplementation(function (data) {
     Object.assign(this, data);
   });
@@ -110,7 +105,7 @@ describe("buildPayload", () => {
     expect(result.ip).toBe("10.0.0.1");
   });
 
-  it("sets ip to null when request context has no ip", () => {
+  it("defaults ip to 0.0.0.0 when request context has no ip", () => {
     getRequestContext.mockReturnValue(null);
 
     const result = buildPayload({
@@ -118,7 +113,7 @@ describe("buildPayload", () => {
       status: auditStatus.SUCCESS,
     });
 
-    expect(result.ip).toBeNull();
+    expect(result.ip).toBe("0.0.0.0");
   });
 
   it("includes entities, accounts, status and details under audit", () => {
@@ -177,9 +172,11 @@ describe("writeAuditEvent", () => {
     entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
     accounts: undefined,
     details: { name: "Bob Bill" },
-    messageGroupId: "msg-group-1",
     status: auditStatus.SUCCESS,
   };
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
   it("inserts an outbox entry on a valid payload", async () => {
     const session = {};
@@ -194,32 +191,59 @@ describe("writeAuditEvent", () => {
     await writeAuditEvent(eventData, {});
 
     expect(Outbox).toHaveBeenCalledWith({
-      event: expect.objectContaining({ messageGroupId: "msg-group-1" }),
+      event: expect.objectContaining({ application: "Case Working Service" }),
       target: "arn:aws:sns:eu-west-2:123:audit-topic",
-      segregationRef: "msg-group-1",
+      segregationRef: expect.stringMatching(uuidPattern),
     });
   });
 
-  it("uses provided messageGroupId as segregationRef", async () => {
-    await writeAuditEvent({ ...eventData, messageGroupId: "explicit-id" }, {});
+  it("publishes an event that satisfies the audit schema", async () => {
+    await writeAuditEvent({ ...eventData, security: { pmccode: "0701" } }, {});
 
-    expect(Outbox).toHaveBeenCalledWith(
-      expect.objectContaining({ segregationRef: "explicit-id" }),
-    );
+    const [{ event }] = Outbox.mock.calls[0];
+    const { valid, errors } = validateAuditEvent(event);
+
+    expect(errors).toBeUndefined();
+    expect(valid).toBe(true);
   });
 
-  it("generates a uuid messageGroupId when none is provided", async () => {
-    const { messageGroupId: _omit, ...dataWithoutGroupId } = eventData;
+  it("keeps messageGroupId out of the published event payload", async () => {
+    await writeAuditEvent(eventData, {});
 
-    await writeAuditEvent(dataWithoutGroupId, {});
+    const [{ event }] = Outbox.mock.calls[0];
+    expect(event).not.toHaveProperty("messageGroupId");
+  });
 
-    expect(Outbox).toHaveBeenCalledWith(
-      expect.objectContaining({
-        segregationRef: expect.stringMatching(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-        ),
-      }),
-    );
+  it("uses the caller-supplied segregationRef without publishing it", async () => {
+    await writeAuditEvent({ ...eventData, segregationRef: "login-idp-1" }, {});
+
+    const [{ segregationRef, event }] = Outbox.mock.calls[0];
+    expect(segregationRef).toBe("login-idp-1");
+    expect(event).not.toHaveProperty("segregationRef");
+  });
+
+  it("groups repeat events from the same caller under one segregationRef", async () => {
+    const grouped = { ...eventData, segregationRef: "login-idp-1" };
+
+    await writeAuditEvent(grouped, {});
+    await writeAuditEvent(grouped, {});
+
+    const [{ segregationRef: first }] = Outbox.mock.calls[0];
+    const [{ segregationRef: second }] = Outbox.mock.calls[1];
+
+    expect(first).toBe(second);
+  });
+
+  it("falls back to a unique uuid segregationRef when the caller provides none", async () => {
+    await writeAuditEvent(eventData, {});
+    await writeAuditEvent(eventData, {});
+
+    const [{ segregationRef: first }] = Outbox.mock.calls[0];
+    const [{ segregationRef: second }] = Outbox.mock.calls[1];
+
+    expect(first).toMatch(uuidPattern);
+    expect(second).toMatch(uuidPattern);
+    expect(first).not.toBe(second);
   });
 
   it("nests details under audit in the outbox event", async () => {
@@ -279,12 +303,7 @@ describe("writeAuditEvent", () => {
   });
 
   it("skips insertMany when payload fails validation", async () => {
-    validateAuditEvent.mockReturnValue({
-      valid: false,
-      errors: ["missing field"],
-    });
-
-    await writeAuditEvent(eventData, {});
+    await writeAuditEvent({ ...eventData, entities: "not-an-array" }, {});
 
     expect(insertMany).not.toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-const summariseAppRoles = (appRoles = {}) =>
+export const summariseAppRoles = (appRoles = {}) =>
   Object.fromEntries(
     Object.entries(appRoles).map(([code, role]) => [
       code,
@@ -28,3 +28,10 @@ export const buildSecurityContext = (actor, targetUser) => {
 
   return security;
 };
+
+export const SYSTEM_ACTOR = {
+  id: "fg-gas-backend",
+  name: "GAS (system)",
+};
+
+export const buildSystemSecurityContext = () => ({ actor: SYSTEM_ACTOR });

@@ -2,7 +2,7 @@ import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { PurgeQueueCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { env } from "node:process";
 
-// Force AWS SDK to use static credentials for LocalStack
+// Force AWS SDK to use static credentials for floci
 const awsConfig = {
   region: env.AWS_REGION || "eu-west-2",
   endpoint: env.AWS_ENDPOINT_URL || "http://localhost:4567",

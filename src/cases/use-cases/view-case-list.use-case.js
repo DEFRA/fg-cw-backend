@@ -26,7 +26,7 @@ export const viewCaseListAuditDataBuilder = ([{ user, query }]) => ({
     query,
   },
   security: buildAuditSecurity(auditActions.VIEW_CASE_LIST),
-  messageGroupId: `view-case-list-${user.id}`,
+  segregationRef: `view-case-list-${user.id}`,
 });
 
 export const viewCaseListUseCase = withAudit(

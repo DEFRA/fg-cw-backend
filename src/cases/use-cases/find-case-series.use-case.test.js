@@ -3,13 +3,23 @@ import { CaseSeriesDetail } from "../models/case-series-detail.js";
 import { Case } from "../models/case.js";
 import { Workflow } from "../models/workflow.js";
 import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
-import { findCasesByCaseRefsAndWorkflowCode } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import {
+  findByCaseRefAndWorkflowCode,
+  findCasesByCaseRefsAndWorkflowCode,
+} from "../repositories/case.repository.js";
 import { findCaseSeries } from "./find-case-series.use-case.js";
+import { resolveCurrentWorkflowUseCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../repositories/case-series.repository.js");
-vi.mock("../repositories/workflow.repository.js");
 vi.mock("../repositories/case.repository.js");
+vi.mock("./resolve-current-workflow.use-case.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    resolveCurrentWorkflowUseCase: vi.fn(),
+    persistResolvedVersion: vi.fn(),
+  };
+});
 
 describe("findCaseSeries", () => {
   it("should return basic series information when tabid is not 'timeline'", async () => {
@@ -36,7 +46,15 @@ describe("findCaseSeries", () => {
       createdAt: new Date().toISOString(),
     });
     const mockWorkflow = Workflow.createMock();
-    findByCode.mockResolvedValueOnce(mockWorkflow);
+    const mockCurrentCase = Case.createMock({
+      caseRef: "1234",
+      originalConfigVersion: null,
+    });
+    findByCaseRefAndWorkflowCode.mockResolvedValueOnce(mockCurrentCase);
+    resolveCurrentWorkflowUseCase.mockResolvedValueOnce({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findCasesByCaseRefsAndWorkflowCode.mockResolvedValueOnce([
       mockCase1,
       mockCase2,
@@ -49,7 +67,7 @@ describe("findCaseSeries", () => {
     const workflowCode = "workflow-1";
     const tabId = "timeline";
     const result = await findCaseSeries({ caseRef, workflowCode, tabId });
-    expect(findByCode).toBeCalledTimes(1);
+    expect(resolveCurrentWorkflowUseCase).toHaveBeenCalledTimes(1);
     expect(result.length).toBe(2);
     expect(result.seriesDetails).toHaveLength(2);
     expect(result.seriesDetails[0]).toBeInstanceOf(CaseSeriesDetail);
