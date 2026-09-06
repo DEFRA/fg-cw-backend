@@ -1,6 +1,13 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
@@ -11,7 +18,7 @@ import { WorkflowPhase } from "../models/workflow-phase.js";
 import { WorkflowStageStatus } from "../models/workflow-stage-status.js";
 import { WorkflowStage } from "../models/workflow-stage.js";
 import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
-import { WorkflowTaskStatusOption } from "../models/workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
@@ -110,13 +117,13 @@ const resolveTargetPosition = ({ targetPosition, context, phases }) => {
   });
 };
 
-const createWorkflowTaskStatusOption = (statusOption) =>
-  new WorkflowTaskStatusOption({
-    code: statusOption.code,
-    name: statusOption.name,
-    theme: statusOption.theme,
-    altName: statusOption.altName,
-    completes: statusOption.completes,
+const createWorkflowTaskValueOption = (valueOption) =>
+  new WorkflowTaskValueOption({
+    code: valueOption.code,
+    name: valueOption.name,
+    theme: valueOption.theme,
+    altName: valueOption.altName,
+    completes: valueOption.completes,
   });
 
 const createWorkflowTask = (task) =>
@@ -130,7 +137,8 @@ const createWorkflowTask = (task) =>
       allOf: task.requiredRoles?.allOf,
       anyOf: task.requiredRoles?.anyOf,
     }),
-    statusOptions: task.statusOptions.map(createWorkflowTaskStatusOption),
+    valueOptions: task.valueOptions?.map(createWorkflowTaskValueOption),
+    input: task.input,
     comment: task.comment,
   });
 
@@ -213,7 +221,7 @@ const createWorkflowPhase = (phase, phases) =>
     ),
   });
 
-export const createWorkflowUseCase = async (createWorkflowCommand) => {
+const createWorkflow = async (createWorkflowCommand) => {
   logger.info(`Creating workflow with code "${createWorkflowCommand.code}"`);
 
   AccessControl.authorise(createWorkflowCommand.user, {
@@ -245,6 +253,33 @@ export const createWorkflowUseCase = async (createWorkflowCommand) => {
 
   return workflow;
 };
+
+export const createWorkflowAuditDataBuilder = (
+  [createWorkflowCommand],
+  result,
+) => ({
+  entities: [
+    {
+      entity: auditEntities.WORKFLOW,
+      action: auditActions.CREATE_WORKFLOW,
+      entityid: result?.code ?? createWorkflowCommand.code,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(createWorkflowCommand.user),
+    workflow: {
+      code: createWorkflowCommand.code,
+      version: createWorkflowCommand.version,
+    },
+  },
+  security: buildAuditSecurity(auditActions.CREATE_WORKFLOW),
+  segregationRef: `create-workflow-${createWorkflowCommand.code}`,
+});
+
+export const createWorkflowUseCase = withAudit(
+  createWorkflow,
+  createWorkflowAuditDataBuilder,
+);
 
 const createWorkflowEndpoint = (endpoint) =>
   new WorkflowEndpoint({

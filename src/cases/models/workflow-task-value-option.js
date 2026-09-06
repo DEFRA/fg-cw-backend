@@ -1,4 +1,4 @@
-export class WorkflowTaskStatusOption {
+export class WorkflowTaskValueOption {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;

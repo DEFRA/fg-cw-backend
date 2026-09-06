@@ -183,6 +183,44 @@ describe("outbox.subscriber", () => {
     expect(mockEvent.markAsComplete).toHaveBeenCalled();
   });
 
+  it("should send a message group id for fifo topics", async () => {
+    publish.mockResolvedValue(1);
+
+    const mockEvent = {
+      target: "arn:some:value_fifo.fifo",
+      event: { data: { foo: "bar" }, messageGroupId: "group-1" },
+      markAsComplete: vi.fn(),
+    };
+    const outbox = new OutboxSubscriber();
+    await outbox.sendEvent(mockEvent);
+
+    expect(publish).toHaveBeenCalledWith(
+      mockEvent.target,
+      mockEvent.event,
+      "group-1",
+    );
+  });
+
+  it("should not derive a message group id for standard topics", async () => {
+    publish.mockResolvedValue(1);
+
+    // An audit payload: no messageGroupId, and nothing to derive one from.
+    const mockEvent = {
+      target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__audit_topic_arn",
+      event: { application: "Case Working Service", audit: {} },
+      markAsComplete: vi.fn(),
+    };
+    const outbox = new OutboxSubscriber();
+    await outbox.sendEvent(mockEvent);
+
+    expect(publish).toHaveBeenCalledWith(
+      mockEvent.target,
+      mockEvent.event,
+      undefined,
+    );
+    expect(mockEvent.markAsComplete).toHaveBeenCalled();
+  });
+
   it("should mark event as complete", async () => {
     vi.spyOn(logger, "info").mockImplementation(() => {});
     AsyncLocalStorage.prototype.getStore = vi.fn().mockReturnValue("1234");

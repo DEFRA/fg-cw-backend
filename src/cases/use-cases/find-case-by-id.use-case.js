@@ -16,7 +16,10 @@ import {
   buildAfterContent,
   buildBeforeContent,
 } from "./build-stage-content.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 // eslint-disable-next-line complexity
 const mapUserIdToName = (userId, userMap) => {
@@ -39,17 +42,27 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+// Input tasks get no suffix - the value, not the transition, is the event, and
+// the frontend appends "by <user>" to whatever this returns.
+const formatTaskEvent = (tl, workflow, suffix) => {
+  const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
+  const task = workflow.findTask({
+    phaseCode,
+    stageCode,
+    taskGroupCode,
+    taskCode,
+  });
+
+  return task.input ? `Task '${task.name}'` : `Task '${task.name}' ${suffix}`;
+};
+
 // eslint-disable-next-line complexity
 export const formatTimelineItemDescription = (tl, workflow) => {
   switch (tl.eventType) {
-    case EventEnums.eventTypes.TASK_COMPLETED: {
-      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
-      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' completed`;
-    }
-    case EventEnums.eventTypes.TASK_UPDATED: {
-      const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
-      return `Task '${workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }).name}' updated`;
-    }
+    case EventEnums.eventTypes.TASK_COMPLETED:
+      return formatTaskEvent(tl, workflow, "completed");
+    case EventEnums.eventTypes.TASK_UPDATED:
+      return formatTaskEvent(tl, workflow, "updated");
     case EventEnums.eventTypes.STAGE_COMPLETED: {
       const position = new Position({
         phaseCode: tl.data.phaseCode,
@@ -78,28 +91,27 @@ export const formatTimelineItemDescription = (tl, workflow) => {
 
 const findCommentByRef = (comments, ref) => comments.find((c) => c.ref === ref);
 
-const findStatusOptionByCode = (statusOptions, code) =>
-  statusOptions.find((opt) => opt.code === code);
+const findValueOptionByCode = (code, valueOptions = []) =>
+  valueOptions.find((opt) => opt.code === code);
 
 const getCommentDate = (comment) => comment?.createdAt ?? null;
 const getCommentText = (comment) => comment?.text ?? null;
 const getCommentCreatedBy = (comment) => comment?.createdBy;
-const getOutcomeName = (statusOption, fallback) =>
-  statusOption?.name ?? fallback;
+const getOutcomeName = (valueOption, fallback) => valueOption?.name ?? fallback;
 
 const mapCommentRefToNoteHistory = (
   commentRef,
   comment,
-  statusOption,
+  valueOption,
   userMap,
 ) => ({
   date: getCommentDate(comment),
-  outcome: getOutcomeName(statusOption, commentRef.status),
+  outcome: getOutcomeName(valueOption, commentRef.value),
   note: getCommentText(comment),
   addedBy: mapUserIdToName(getCommentCreatedBy(comment), userMap),
 });
 
-const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
+const mapNotesHistory = (commentRefs, comments, valueOptions, userMap) => {
   if (!commentRefs?.length) {
     return [];
   }
@@ -107,19 +119,21 @@ const mapNotesHistory = (commentRefs, comments, statusOptions, userMap) => {
   return commentRefs
     .map((commentRef) => {
       const comment = findCommentByRef(comments, commentRef.ref);
-      const statusOption = findStatusOptionByCode(
-        statusOptions,
-        commentRef.status,
-      );
+      const valueOption = findValueOptionByCode(commentRef.value, valueOptions);
       return mapCommentRefToNoteHistory(
         commentRef,
         comment,
-        statusOption,
+        valueOption,
         userMap,
       );
     })
     .filter((entry) => entry.date !== null);
 };
+
+const mapInputStatus = (completed) =>
+  completed
+    ? { statusText: "Completed", statusTheme: "SUCCESS" }
+    : { statusText: "Incomplete", statusTheme: "INFO" };
 
 const mapTasks = async (
   caseTaskGroup,
@@ -134,15 +148,17 @@ const mapTasks = async (
         caseTaskGroupTask.code,
       );
 
-      const selectedStatus = mapSelectedStatusOption(
-        caseTaskGroupTask.status,
-        workflowTaskGroupTask.statusOptions,
-      );
+      const selectedStatus = workflowTaskGroupTask.input
+        ? mapInputStatus(caseTaskGroupTask.completed)
+        : mapSelectedValueOption(
+            caseTaskGroupTask.value,
+            workflowTaskGroupTask.valueOptions,
+          );
 
       const notesHistory = mapNotesHistory(
         caseTaskGroupTask.commentRefs,
         comments,
-        workflowTaskGroupTask.statusOptions,
+        workflowTaskGroupTask.valueOptions,
         userMap,
       );
 
@@ -151,8 +167,9 @@ const mapTasks = async (
         name: workflowTaskGroupTask.name,
         description: await mapDescription(workflowTaskGroupTask, root),
         mandatory: workflowTaskGroupTask.mandatory,
-        statusOptions: mapStatusOptions(workflowTaskGroupTask.statusOptions),
-        status: caseTaskGroupTask.status,
+        valueOptions: mapValueOptions(workflowTaskGroupTask.valueOptions),
+        value: caseTaskGroupTask.value,
+        input: workflowTaskGroupTask.input,
         statusText: selectedStatus.statusText,
         statusTheme: selectedStatus.statusTheme,
         completed: caseTaskGroupTask.completed,
@@ -170,8 +187,8 @@ const mapTasks = async (
     }),
   );
 
-export const mapStatusOptions = (statusOptions) =>
-  statusOptions.map((option) => ({
+export const mapValueOptions = (valueOptions = []) =>
+  valueOptions.map((option) => ({
     code: option.code,
     name: option.altName || option.name,
     theme: option.theme,
@@ -179,7 +196,7 @@ export const mapStatusOptions = (statusOptions) =>
     commentInputDef: option.comment,
   }));
 
-export const mapSelectedStatusOption = (statusCode, statusOptions) => {
+export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
     return {
       statusText: "Incomplete",
@@ -187,7 +204,7 @@ export const mapSelectedStatusOption = (statusCode, statusOptions) => {
     };
   }
 
-  const selectedOption = statusOptions.find((opt) => opt.code === statusCode);
+  const selectedOption = valueOptions.find((opt) => opt.code === statusCode);
 
   if (!selectedOption) {
     return {
@@ -233,6 +250,7 @@ export const mapWorkflowCommentDef = (workflowTask) => {
     : DEFAULT_COMMENT;
 };
 
+// eslint-disable-next-line complexity
 export const findCaseByIdUseCase = async (caseId, user, request) => {
   logger.info(`Finding case by id "${caseId}"`);
 
@@ -242,7 +260,13 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     throw Boom.notFound(`Case with id "${caseId}" not found`);
   }
 
-  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
+
+  if (!workflow) {
+    throw Boom.notFound(`Workflow with code "${kase.workflowCode}" not found`);
+  }
+
   const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,
@@ -267,6 +291,8 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     _id: kase._id,
     caseRef: kase.caseRef,
     workflowCode: kase.workflowCode,
+    originalConfigVersion: kase.originalConfigVersion,
+    currentConfigVersion: kase.currentConfigVersion,
     currentStatus: kase.position.statusCode,
     stage: await mapStageData(
       kase,

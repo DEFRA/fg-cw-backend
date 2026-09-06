@@ -1,6 +1,6 @@
 import Boom from "@hapi/boom";
 import { RequiredAppRoles } from "./required-app-roles.js";
-import { WorkflowTaskStatusOption } from "./workflow-task-status-option.js";
+import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
 
 export class WorkflowTaskGroup {
@@ -32,8 +32,8 @@ export class WorkflowTaskGroup {
           name: "Task 1",
           description: "Task 1 description",
           mandatory: true,
-          statusOptions: [
-            new WorkflowTaskStatusOption({
+          valueOptions: [
+            new WorkflowTaskValueOption({
               code: "STATUS_OPTION_1",
               name: "Status option 1",
               theme: "SUCCESS",

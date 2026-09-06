@@ -1,6 +1,5 @@
 import Joi from "joi";
-import { createPageResponse } from "../../common/create-page-response.js";
-import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
+import { viewCaseListUseCase } from "../use-cases/view-case-list.use-case.js";
 
 export const findCasesRoute = {
   method: "GET",
@@ -23,11 +22,6 @@ export const findCasesRoute = {
     const { query } = request;
     const { user } = request.auth.credentials;
 
-    const data = await findCasesUseCase({
-      user,
-      query,
-    });
-
-    return createPageResponse({ user, data });
+    return viewCaseListUseCase({ user, query });
   },
 };

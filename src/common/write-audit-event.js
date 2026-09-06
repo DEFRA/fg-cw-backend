@@ -8,7 +8,10 @@ import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
 
 const getCorrelationId = () => getTraceId() ?? randomUUID();
-const getIP = (context) => context?.ip ?? null;
+// System-originated events (e.g. inbox consumers) have no HTTP request context,
+// so default to the unspecified-address sentinel to satisfy the required `ip` field.
+const SYSTEM_IP = "0.0.0.0";
+const getIP = (context) => context?.ip ?? SYSTEM_IP;
 
 const isPlainObject = (value) => value?.constructor === Object;
 
@@ -54,7 +57,7 @@ export const buildPayload = ({
 };
 
 export const writeAuditEvent = async (
-  { entities, accounts, details, security, messageGroupId, status },
+  { entities, accounts, details, security, segregationRef, status },
   session,
 ) => {
   logger.info("Begin write audit event.");
@@ -68,12 +71,14 @@ export const writeAuditEvent = async (
   if (valid === false) {
     logger.warn(errors, "Audit event failed validation - skipping write.");
   } else {
-    const msgGroupId = messageGroupId ?? randomUUID();
-
+    // The audit topic is not FIFO, so segregationRef carries no ordering
+    // meaning here - it only partitions outbox work. Callers group related
+    // events under a shared ref so they claim in batches and the fifo_locks
+    // collection stays bounded; the uuid is a last resort for ungrouped ones.
     const outboxEntry = new Outbox({
       target: config.get("aws.sns.auditTopicArn"),
-      event: { ...payload, messageGroupId: msgGroupId },
-      segregationRef: msgGroupId,
+      event: payload,
+      segregationRef: segregationRef ?? randomUUID(),
     });
 
     await insertMany([outboxEntry], session);

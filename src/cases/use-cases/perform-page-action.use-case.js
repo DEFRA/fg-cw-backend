@@ -1,19 +1,61 @@
 import Boom from "@hapi/boom";
 import { AccessControl } from "../../common/access-control.js";
+import {
+  auditActions,
+  auditEntities,
+  buildAuditSecurity,
+} from "../../common/audit-constants.js";
+import { buildSecurityContext } from "../../common/audit-security-context.js";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
+import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { update } from "../repositories/case.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
+import { loadCase } from "./load-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
-export const performPageActionUseCase = async ({
-  caseId,
+const applyResponseEffects = (
+  kase,
+  externalAction,
+  response,
   actionCode,
+  caseId,
   user,
-}) => {
-  const kase = await loadCase(caseId);
-  const workflow = await loadWorkflow(kase.workflowCode);
+) => {
+  let caseUpdated = false;
+
+  if (shouldStoreResponse(externalAction, response)) {
+    storeResponseInSupplementaryData(kase, externalAction, response);
+    caseUpdated = true;
+    logger.debug(
+      `Successfully stored response in supplementaryData for action: "${actionCode}" for case: "${caseId}"`,
+    );
+  }
+
+  if (externalAction.display === true) {
+    kase.addExternalActionTimelineEvent({
+      actionName: externalAction.name,
+      createdBy: user.id,
+    });
+    caseUpdated = true;
+  }
+
+  return caseUpdated;
+};
+
+const performPageAction = async (command) => {
+  const { caseId, actionCode, user } = command;
+  const kase = await loadCase(command);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
+
+  if (!workflow) {
+    throw Boom.notFound(`Workflow not found: ${kase.workflowCode}`);
+  }
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],
@@ -35,25 +77,16 @@ export const performPageActionUseCase = async ({
     throwOnError: true,
   });
 
-  let caseUpdated = false;
-
-  if (shouldStoreResponse(externalAction, response)) {
-    storeResponseInSupplementaryData(kase, externalAction, response);
-    caseUpdated = true;
-    logger.debug(
-      `Successfully stored response in supplementaryData for action: "${actionCode}" for case: "${caseId}"`,
-    );
-  }
-
-  if (externalAction.display === true) {
-    kase.addExternalActionTimelineEvent({
-      actionName: externalAction.name,
-      createdBy: user.id,
-    });
-    caseUpdated = true;
-  }
-
-  if (caseUpdated) {
+  if (
+    applyResponseEffects(
+      kase,
+      externalAction,
+      response,
+      actionCode,
+      caseId,
+      user,
+    )
+  ) {
     await update(kase);
   }
 
@@ -64,25 +97,26 @@ export const performPageActionUseCase = async ({
   return response;
 };
 
-const loadCase = async (caseId) => {
-  const kase = await findById(caseId);
+export const performPageActionAuditDataBuilder = ([command]) => ({
+  entities: [
+    {
+      entity: auditEntities.CASE,
+      action: auditActions.PERFORM_PAGE_ACTION,
+      entityid: command.caseRef ?? command.caseId,
+    },
+  ],
+  details: {
+    security: buildSecurityContext(command.user),
+    action: { actionCode: command.actionCode },
+  },
+  security: buildAuditSecurity(auditActions.PERFORM_PAGE_ACTION),
+  segregationRef: `perform-page-action-${command.caseId}`,
+});
 
-  if (!kase) {
-    throw Boom.notFound(`Case not found: ${caseId}`);
-  }
-
-  return kase;
-};
-
-const loadWorkflow = async (workflowCode) => {
-  const workflow = await findByCode(workflowCode);
-
-  if (!workflow) {
-    throw Boom.notFound(`Workflow not found: ${workflowCode}`);
-  }
-
-  return workflow;
-};
+export const performPageActionUseCase = withAudit(
+  performPageAction,
+  performPageActionAuditDataBuilder,
+);
 
 const validateExternalAction = (actionCode, workflow) => {
   const externalAction = workflow.findExternalAction(actionCode);

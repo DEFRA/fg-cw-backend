@@ -8,7 +8,7 @@ import { CaseTask } from "../models/case-task.js";
 export const createCaseTask = (task) =>
   new CaseTask({
     code: task.code,
-    status: null,
+    value: null,
     completed: false,
     updatedAt: null,
     updatedBy: null,

@@ -45,7 +45,36 @@ export const caseData1 = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: "PENDING",
+                  value: "PENDING",
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
+            },
+            {
+              code: "REFERENCE_CAPTURE_TASKS",
+              tasks: [
+                {
+                  code: "CAPTURE_TEXT",
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_NUMBER",
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_DATE",
+                  value: null,
                   completed: false,
                   commentRefs: [],
                   updatedAt: null,
@@ -126,8 +155,37 @@ export const caseData2 = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: "COMPLETE",
+                  value: "COMPLETE",
                   completed: true,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
+            },
+            {
+              code: "REFERENCE_CAPTURE_TASKS",
+              tasks: [
+                {
+                  code: "CAPTURE_TEXT",
+                  value: "SF123456",
+                  completed: true,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_NUMBER",
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_DATE",
+                  value: null,
+                  completed: false,
                   commentRefs: [],
                   updatedAt: null,
                   updatedBy: null,
@@ -163,6 +221,8 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
+  originalConfigVersion: null,
+  currentConfigVersion: null,
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",
@@ -207,7 +267,36 @@ export const caseData3Document = {
               tasks: [
                 {
                   code: "SIMPLE_REVIEW",
-                  status: null,
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+              ],
+            },
+            {
+              code: "REFERENCE_CAPTURE_TASKS",
+              tasks: [
+                {
+                  code: "CAPTURE_TEXT",
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_NUMBER",
+                  value: null,
+                  completed: false,
+                  commentRefs: [],
+                  updatedAt: null,
+                  updatedBy: null,
+                },
+                {
+                  code: "CAPTURE_DATE",
+                  value: null,
                   completed: false,
                   commentRefs: [],
                   updatedAt: null,
