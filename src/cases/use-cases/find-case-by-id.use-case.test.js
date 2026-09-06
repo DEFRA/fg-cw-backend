@@ -15,15 +15,15 @@ import {
   findCaseByIdUseCase,
   formatTimelineItemDescription,
   mapDescription,
-  mapSelectedStatusOption,
-  mapStatusOptions,
+  mapSelectedValueOption,
+  mapValueOptions,
   mapWorkflowCommentDef,
 } from "./find-case-by-id.use-case.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../../users/repositories/user.repository.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("formatTimelineItemDescription", () => {
   it("formats task completed", () => {
@@ -63,6 +63,38 @@ describe("formatTimelineItemDescription", () => {
 
     expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
       "Task 'Task 1' updated",
+    );
+  });
+
+  it.each([
+    [EventEnums.eventTypes.TASK_COMPLETED, "Task Completed"],
+    [EventEnums.eventTypes.TASK_UPDATED, "Task Updated"],
+  ])("omits the suffix for input tasks on %s", (eventType, description) => {
+    const wf = Workflow.createMock();
+    const task = wf.findTask({
+      phaseCode: "PHASE_1",
+      stageCode: "STAGE_1",
+      taskGroupCode: "TASK_GROUP_1",
+      taskCode: "TASK_1",
+    });
+    task.input = { type: "text", label: "Siti/FC reference" };
+    task.valueOptions = undefined;
+
+    const timelineItem = {
+      eventType,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description,
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "Task 'Task 1'",
     );
   });
 
@@ -282,13 +314,18 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith("test-case-id");
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(kase.workflowCode);
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: kase.workflowCode }),
+    );
 
     // TODO: strip to what's necessary when individual endpoints are exposed
     expect(result).toEqual({
@@ -298,6 +335,8 @@ describe("findCaseByIdUseCase", () => {
       comments: [],
       currentStatus: "STATUS_1",
       workflowCode: "workflow-code",
+      originalConfigVersion: kase.originalConfigVersion,
+      currentConfigVersion: kase.currentConfigVersion,
       createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
       supplementaryData: {},
@@ -368,7 +407,7 @@ describe("findCaseByIdUseCase", () => {
                 code: "TASK_1",
                 name: "Task 1",
                 mandatory: true,
-                status: "PENDING",
+                value: "PENDING",
                 updatedAt: undefined,
                 updatedBy: null,
                 commentRefs: [],
@@ -392,7 +431,7 @@ describe("findCaseByIdUseCase", () => {
                   anyOf: ["ROLE_2"],
                 }),
                 canComplete: true,
-                statusOptions: [
+                valueOptions: [
                   {
                     code: "STATUS_OPTION_1",
                     completes: true,
@@ -436,7 +475,10 @@ describe("findCaseByIdUseCase", () => {
     mockWorkflow.phases[0].stages[0].statuses[0].hideTaskGroups = true;
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -458,7 +500,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -483,7 +528,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -521,7 +569,10 @@ describe("findCaseByIdUseCase", () => {
       });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase(
@@ -538,11 +589,14 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
@@ -569,7 +623,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions would normally be available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with only Read role (not ReadWrite)
@@ -579,7 +633,10 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", readOnlyUser);
@@ -594,7 +651,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Complete tasks to ensure actions are available
-    kase.phases[0].stages[0].taskGroups[0].tasks[0].status = "COMPLETE";
+    kase.phases[0].stages[0].taskGroups[0].tasks[0].value = "COMPLETE";
     kase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
     // User with ReadWrite role
@@ -604,7 +661,10 @@ describe("findCaseByIdUseCase", () => {
     });
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(kase);
 
     const result = await findCaseByIdUseCase("test-case-id", readWriteUser);
@@ -660,7 +720,10 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser, mockUserAssigned]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
@@ -672,8 +735,8 @@ describe("findCaseByIdUseCase", () => {
         "64c88faac1f56f71e1b89a33",
       ],
     });
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
-      mockCase.workflowCode,
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
     );
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual(mockWorkflow.requiredRoles);
@@ -687,7 +750,10 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
 
     findById.mockResolvedValue(mockCase);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findAll.mockRejectedValue(userError);
 
     await expect(
@@ -695,8 +761,8 @@ describe("findCaseByIdUseCase", () => {
     ).rejects.toThrow("User not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith(
-      mockCase.workflowCode,
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: mockCase.workflowCode }),
     );
     expect(findAll).toHaveBeenCalledWith({ ids: [mockCase.assignedUser.id] });
   });
@@ -710,12 +776,17 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("TEST_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "TEST_WORKFLOW" }),
+    );
     expect(result.requiredRoles).toEqual({
       allOf: ["ROLE_1", "ROLE_2"],
       anyOf: ["ROLE_3"],
@@ -732,13 +803,18 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
     expect(findAll).toHaveBeenCalledWith({ ids: [mockUser.id] });
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("USER_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "USER_WORKFLOW" }),
+    );
     expect(result.assignedUser.name).toBe(mockUser.name);
     expect(result.requiredRoles).toEqual({
       allOf: ["ROLE_1", "ROLE_2"],
@@ -755,14 +831,16 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockRejectedValue(workflowError);
+    resolveWorkflowForCase.mockRejectedValue(workflowError);
 
     await expect(
       findCaseByIdUseCase(mockCase._id, mockAuthUser),
     ).rejects.toThrow("Workflow not found");
 
     expect(findById).toHaveBeenCalledWith(mockCase._id);
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("INVALID_WORKFLOW");
+    expect(resolveWorkflowForCase).toHaveBeenCalledWith(
+      expect.objectContaining({ workflowCode: "INVALID_WORKFLOW" }),
+    );
   });
 
   it("finds case with assigned user and populates user name", async () => {
@@ -774,7 +852,10 @@ describe("findCaseByIdUseCase", () => {
 
     findById.mockResolvedValue(mockCase);
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
@@ -812,7 +893,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -840,7 +924,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -868,7 +955,10 @@ describe("findCaseByIdUseCase", () => {
       };
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -891,7 +981,10 @@ describe("findCaseByIdUseCase", () => {
       mockCase.getStage().outcome = undefined;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -905,12 +998,12 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set a task status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status =
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value =
         "STATUS_OPTION_1";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = true;
 
       // Add theme and altName to workflow status option
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "STATUS_OPTION_1",
           name: "Accepted",
@@ -928,18 +1021,21 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("STATUS_OPTION_1");
+      expect(task.value).toBe("STATUS_OPTION_1");
       expect(task.statusText).toBe("Accepted");
       expect(task.statusTheme).toBe("NONE");
 
       // Verify statusOptions are transformed
-      expect(task.statusOptions).toEqual([
+      expect(task.valueOptions).toEqual([
         {
           code: "STATUS_OPTION_1",
           name: "Accept",
@@ -961,17 +1057,20 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Ensure task has no status
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = null;
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = null;
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBeNull();
+      expect(task.value).toBeNull();
       expect(task.statusText).toBe("Incomplete");
       expect(task.statusTheme).toBe("INFO");
     });
@@ -982,10 +1081,10 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       // Set task with status but not completed
-      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].status = "RFI";
+      mockCase.phases[0].stages[0].taskGroups[0].tasks[0].value = "RFI";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].completed = false;
 
-      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].statusOptions = [
+      mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions = [
         {
           code: "RFI",
           name: "Information requested",
@@ -1003,13 +1102,16 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
-      expect(task.status).toBe("RFI");
+      expect(task.value).toBe("RFI");
       expect(task.statusText).toBe("Information requested");
       expect(task.statusTheme).toBe("NOTICE");
       expect(task.completed).toBe(false);
@@ -1024,7 +1126,7 @@ describe("findCaseByIdUseCase", () => {
 
       const commentRef = "64c88faac1f56f71e1b89a33";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "STATUS_OPTION_1", ref: commentRef },
+        { value: "STATUS_OPTION_1", ref: commentRef },
       ];
 
       mockCase.comments = [
@@ -1038,7 +1140,10 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1059,12 +1164,15 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "STATUS_OPTION_1", ref: "nonexistent-ref" },
+        { value: "STATUS_OPTION_1", ref: "nonexistent-ref" },
       ];
       mockCase.comments = [];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1073,14 +1181,14 @@ describe("findCaseByIdUseCase", () => {
       expect(task.notesHistory).toEqual([]);
     });
 
-    it("falls back to status code when statusOption is not found", async () => {
+    it("falls back to value code when valueOption is not found", async () => {
       const mockUser = User.createMock();
       const mockWorkflow = Workflow.createMock();
       const mockCase = Case.createMock();
 
       const commentRef = "64c88faac1f56f71e1b89a33";
       mockCase.phases[0].stages[0].taskGroups[0].tasks[0].commentRefs = [
-        { status: "UNKNOWN_STATUS", ref: commentRef },
+        { value: "UNKNOWN_STATUS_VALUE", ref: commentRef },
       ];
 
       mockCase.comments = [
@@ -1094,14 +1202,17 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.notesHistory).toHaveLength(1);
-      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS");
+      expect(task.notesHistory[0].outcome).toBe("UNKNOWN_STATUS_VALUE");
     });
 
     it("returns empty notesHistory when commentRefs is undefined", async () => {
@@ -1113,7 +1224,10 @@ describe("findCaseByIdUseCase", () => {
         undefined;
 
       findAll.mockResolvedValue([mockUser]);
-      findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
       findById.mockResolvedValue(mockCase);
 
       const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1122,11 +1236,119 @@ describe("findCaseByIdUseCase", () => {
       expect(task.notesHistory).toEqual([]);
     });
   });
+
+  describe("input tasks", () => {
+    const setUpInputTask = ({ input, value, completed }) => {
+      const mockUser = User.createMock();
+      const mockWorkflow = Workflow.createMock();
+      const mockCase = Case.createMock();
+
+      const workflowTask = mockWorkflow.findTask({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      });
+      workflowTask.input = input;
+      workflowTask.valueOptions = undefined;
+
+      const caseTask = mockCase.phases[0].stages[0].taskGroups[0].tasks[0];
+      caseTask.value = value;
+      caseTask.completed = completed;
+
+      findAll.mockResolvedValue([mockUser]);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
+      findById.mockResolvedValue(mockCase);
+
+      return { mockUser, mockCase, caseTask };
+    };
+
+    const textInput = { type: "text", label: "Siti/FC reference" };
+
+    it("reports a captured value as Completed", async () => {
+      const { mockCase } = setUpInputTask({
+        input: textInput,
+        value: "SF123456",
+        completed: true,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.statusText).toBe("Completed");
+      expect(task.statusTheme).toBe("SUCCESS");
+      expect(task.value).toBe("SF123456");
+    });
+
+    it("reports a cleared value as Incomplete", async () => {
+      const { mockCase } = setUpInputTask({
+        input: textInput,
+        value: null,
+        completed: false,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.statusText).toBe("Incomplete");
+      expect(task.statusTheme).toBe("INFO");
+    });
+
+    it("passes the input definition through and sends no valueOptions", async () => {
+      const input = {
+        type: "number",
+        label: "Herd size",
+        hint: ["Enter a whole number between 1 and 5000"],
+        min: 1,
+        max: 5000,
+      };
+      const { mockCase } = setUpInputTask({
+        input,
+        value: "1200",
+        completed: true,
+      });
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.input).toEqual(input);
+      expect(task.valueOptions).toEqual([]);
+    });
+
+    it("falls back to the captured value as the notesHistory outcome", async () => {
+      const commentRef = "64c88faac1f56f71e1b89a33";
+      const { mockUser, mockCase, caseTask } = setUpInputTask({
+        input: textInput,
+        value: "SF123456",
+        completed: true,
+      });
+
+      caseTask.commentRefs = [{ value: "SF123456", ref: commentRef }];
+      mockCase.comments = [
+        new Comment({
+          ref: commentRef,
+          type: "TASK_UPDATED",
+          text: "Reference confirmed with the applicant",
+          createdBy: mockUser.id,
+          createdAt: "2025-09-25T14:30:00.000Z",
+        }),
+      ];
+
+      const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
+
+      const task = result.stage.taskGroups[0].tasks[0];
+      expect(task.notesHistory).toHaveLength(1);
+      expect(task.notesHistory[0].outcome).toBe("SF123456");
+    });
+  });
 });
 
-describe("mapSelectedStatusOption", () => {
+describe("mapSelectedValueOption", () => {
   it("returns name as statusText (altName is used only in statusOptions array)", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1143,7 +1365,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1152,7 +1374,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code is null", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1162,7 +1384,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption(null, statusOptions);
+    const result = mapSelectedValueOption(null, valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1171,7 +1393,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("returns Incomplete when status code does not match any option", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1181,7 +1403,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("NONEXISTENT", statusOptions);
+    const result = mapSelectedValueOption("NONEXISTENT", valueOptions);
 
     expect(result).toEqual({
       statusText: "Incomplete",
@@ -1190,7 +1412,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("falls back to name as statusText when altName is not present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1199,7 +1421,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1208,7 +1430,7 @@ describe("mapSelectedStatusOption", () => {
   });
 
   it("handles missing theme gracefully", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1217,7 +1439,7 @@ describe("mapSelectedStatusOption", () => {
       },
     ];
 
-    const result = mapSelectedStatusOption("ACCEPTED", statusOptions);
+    const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
       statusText: "Accepted",
@@ -1226,9 +1448,9 @@ describe("mapSelectedStatusOption", () => {
   });
 });
 
-describe("mapStatusOptions", () => {
+describe("mapValueOptions", () => {
   it("transforms status options using altName when present", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1251,7 +1473,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1276,7 +1498,7 @@ describe("mapStatusOptions", () => {
   });
 
   it("falls back to name when altName is missing", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "COMPLETE",
         name: "Complete",
@@ -1285,7 +1507,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1298,12 +1520,12 @@ describe("mapStatusOptions", () => {
   });
 
   it("handles empty array", () => {
-    const result = mapStatusOptions([]);
+    const result = mapValueOptions([]);
     expect(result).toEqual([]);
   });
 
   it("handles mixed altName presence", () => {
-    const statusOptions = [
+    const valueOptions = [
       {
         code: "ACCEPTED",
         name: "Accepted",
@@ -1319,7 +1541,7 @@ describe("mapStatusOptions", () => {
       },
     ];
 
-    const result = mapStatusOptions(statusOptions);
+    const result = mapValueOptions(valueOptions);
 
     expect(result).toEqual([
       {
@@ -1466,7 +1688,10 @@ describe("beforeContent", () => {
     const mockCase = Case.createMock();
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1494,7 +1719,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1530,7 +1758,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1569,7 +1800,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1608,7 +1842,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1645,7 +1882,10 @@ describe("beforeContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1679,7 +1919,10 @@ describe("afterContent", () => {
     const mockCase = Case.createMock();
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser);
@@ -1706,7 +1949,10 @@ describe("afterContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1740,7 +1986,10 @@ describe("afterContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1779,7 +2028,10 @@ describe("afterContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1817,7 +2069,10 @@ describe("afterContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {
@@ -1852,7 +2107,10 @@ describe("afterContent", () => {
     ];
 
     findAll.mockResolvedValue([mockUser]);
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
     findById.mockResolvedValue(mockCase);
 
     const result = await findCaseByIdUseCase(mockCase._id, mockAuthUser, {

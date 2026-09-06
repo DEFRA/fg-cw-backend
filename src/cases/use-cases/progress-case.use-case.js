@@ -6,7 +6,10 @@ import {
   update,
 } from "../repositories/case.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import {
+  persistResolvedVersion,
+  resolveWorkflowForCase,
+} from "./resolve-current-workflow.use-case.js";
 
 export const progressCaseUseCase = async ({
   caseRef,
@@ -26,7 +29,8 @@ export const progressCaseUseCase = async ({
     );
   }
 
-  const workflow = await findWorkflowByCodeUseCase(kase.workflowCode);
+  const { workflow, resolvedVersion } = await resolveWorkflowForCase(kase);
+  await persistResolvedVersion(kase, resolvedVersion);
 
   const targetPosition = Position.from(newStatus);
   await ensureCasePosition(kase, workflow, targetPosition);

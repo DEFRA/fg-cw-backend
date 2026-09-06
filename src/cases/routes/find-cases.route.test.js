@@ -1,10 +1,15 @@
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { User } from "../../users/models/user.js";
 import { findCasesUseCase } from "../use-cases/find-cases.use-case.js";
 import { findCasesRoute } from "./find-cases.route.js";
 
 vi.mock("../use-cases/find-cases.use-case.js");
+
+vi.mock("../../common/write-audit-event.js", () => ({
+  writeAuditEvent: vi.fn(),
+}));
 
 describe("findCasesRoute", () => {
   let server;
@@ -42,6 +47,13 @@ describe("findCasesRoute", () => {
       user,
       query: { direction: "forward" },
     });
+
+    expect(writeAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entities: [{ entity: "CASE", action: "VIEW_CASE_LIST" }],
+      }),
+      undefined,
+    );
 
     expect(statusCode).toEqual(200);
     expect(result.data).toEqual(cases);

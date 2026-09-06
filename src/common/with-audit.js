@@ -27,7 +27,7 @@ export const withAudit = (f, dataBuilder) =>
               "withAudit: dataBuilder returned no audit data - skipping audit event.",
             );
           } else {
-            const { entities, accounts, details, security, messageGroupId } =
+            const { entities, accounts, details, security, segregationRef } =
               auditData;
 
             await writeAuditEvent(
@@ -36,7 +36,7 @@ export const withAudit = (f, dataBuilder) =>
                 accounts,
                 details,
                 security,
-                messageGroupId,
+                segregationRef,
                 status,
               },
               session,

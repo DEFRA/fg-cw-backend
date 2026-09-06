@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { wreck } from "../helpers/wreck.js";
 
 let client;
@@ -171,6 +172,36 @@ describe("POST /users/login", () => {
       },
       target: expect.stringMatching(/^arn:aws:sns:eu-west-2:\d+:.*audit.*$/),
     });
+  });
+
+  // The audit topic is standard, not FIFO. Asserting the row is merely written
+  // would still pass if the subscriber could not publish it - it would retry
+  // and land in DEAD_LETTER. Wait for it to actually drain.
+  it("publishes the LOGIN audit event and marks the outbox row complete", async () => {
+    const idpId = randomUUID();
+
+    await wreck.post("/users/login", {
+      payload: {
+        idpId,
+        name: "Audit Drain User",
+        email: "audit-drain@example.com",
+        idpRoles: ["some-role"],
+      },
+    });
+
+    const [completed] = await waitForDocuments(
+      client.db().collection("outbox"),
+      15,
+      {
+        "event.audit.entities.entityid": idpId,
+        status: "COMPLETED",
+      },
+    );
+
+    expect(completed.completionDate).toBeDefined();
+    // messageGroupId is an SNS FIFO transport parameter - it must never be
+    // published inside the message body, where it fails the audit schema.
+    expect(completed.event).not.toHaveProperty("messageGroupId");
   });
 
   it("returns 400 when payload is invalid", async () => {

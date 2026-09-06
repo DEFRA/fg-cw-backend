@@ -1,9 +1,9 @@
 import Joi from "joi";
 
-import { statusSchema } from "../cases/stages/tasks/status.schema.js";
+import { valueSchema } from "../cases/stages/tasks/value.schema.js";
 
 export const updateTaskStatusRequestSchema = Joi.object({
-  status: statusSchema,
+  value: valueSchema,
   completed: Joi.boolean().allow(null),
   comment: Joi.string().optional().allow(null),
 })

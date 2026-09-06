@@ -6,9 +6,9 @@ import { updateTaskStatusUseCase } from "../use-cases/update-task-status.use-cas
 
 export const updateTaskStatusRoute = {
   method: "PATCH",
-  path: "/cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/status",
+  path: "/cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/value",
   options: {
-    description: "Update status of a task",
+    description: "Update value of a task",
     tags: ["api"],
     validate: {
       params: Joi.object({
@@ -26,14 +26,14 @@ export const updateTaskStatusRoute = {
   },
   async handler(request, h) {
     const { caseId, taskGroupCode, taskCode } = request.params;
-    const { status, completed, comment } = request.payload;
+    const { value, completed, comment } = request.payload;
     const { user } = request.auth.credentials;
 
     await updateTaskStatusUseCase({
       caseId,
       taskCode,
       taskGroupCode,
-      status,
+      value,
       completed,
       comment,
       user,
