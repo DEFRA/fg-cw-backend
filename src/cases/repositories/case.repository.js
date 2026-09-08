@@ -1,7 +1,12 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { db } from "../../common/mongo-client.js";
-import { paginate } from "../../common/paginate.js";
+import {
+  dateCodec,
+  objectIdCodec,
+  paginate,
+  stringCodec,
+} from "../../common/paginate.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
@@ -116,26 +121,11 @@ export const update = async (kase) => {
 };
 
 const cursorCodecs = {
-  caseRef: {
-    encode: (v) => v,
-    decode: (v) => v,
-  },
-  workflowCode: {
-    encode: (v) => v,
-    decode: (v) => v,
-  },
-  createdAt: {
-    encode: (v) => v.toISOString(),
-    decode: (v) => new Date(v),
-  },
-  closedAt: {
-    encode: (v) => v?.toISOString(),
-    decode: (v) => new Date(v),
-  },
-  _id: {
-    encode: (v) => v.toHexString(),
-    decode: (v) => new ObjectId(v),
-  },
+  caseRef: stringCodec,
+  workflowCode: stringCodec,
+  createdAt: dateCodec,
+  closedAt: dateCodec,
+  _id: objectIdCodec,
 };
 
 const toDir = (d) => (d === "asc" ? 1 : -1);

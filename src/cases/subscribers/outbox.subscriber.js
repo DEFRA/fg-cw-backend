@@ -108,9 +108,9 @@ export class OutboxSubscriber {
       logger.info(`Updated "${results.modifiedCount}" failed outbox events`);
   }
 
-  async markEventUnsent(event) {
+  async markEventUnsent(event, error) {
     const claimedBy = this.asyncLocalStorage.getStore();
-    event.markAsFailed();
+    event.markAsFailed(error);
     await update(event, claimedBy);
     logger.info(`Marked outbox event unsent "${event._id}"`);
   }
@@ -139,7 +139,10 @@ export class OutboxSubscriber {
       await this.markEventComplete(event);
     } catch (ex) {
       logger.error(ex, `Error sending outbox event to topic "${topic}"`);
-      this.markEventUnsent(event);
+      // Awaited, as its inbox twin is: unawaited, a rejected write is an
+      // unhandled rejection and the attempt bookkeeping this records is lost
+      // for the one failure it exists to record.
+      await this.markEventUnsent(event, ex);
     }
   }
 

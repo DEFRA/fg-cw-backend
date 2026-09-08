@@ -2,6 +2,50 @@ import { auditStatus } from "./audit-constants.js";
 import { logger } from "./logger.js";
 import { writeAuditEvent } from "./write-audit-event.js";
 
+/**
+ * Writes one audit event, and answers with the error the caller must rethrow -
+ * or null when there is nothing to be done about it.
+ *
+ * Outside a transaction an audit failure is logged and swallowed: the action
+ * has already happened and refusing to report it would not undo it. Inside
+ * one, the audit insert is part of the same commit as the action, so
+ * swallowing would let the action land with no audit event - the one outcome
+ * auditing exists to prevent. There the error goes back to the caller, which
+ * aborts the transaction.
+ *
+ * A `dataBuilder` answering nothing is NOT that: it is the caller deciding
+ * there is nothing to audit, and it stays a skip either way.
+ */
+const writeAudit = async (dataBuilder, args, result, status, session) => {
+  try {
+    const auditData = dataBuilder(args, result);
+
+    if (!auditData) {
+      logger.info(
+        "withAudit: dataBuilder returned no audit data - skipping audit event.",
+      );
+
+      return null;
+    }
+
+    const { entities, accounts, details, security, segregationRef } = auditData;
+
+    await writeAuditEvent(
+      { entities, accounts, details, security, segregationRef, status },
+      session,
+    );
+
+    return null;
+  } catch (auditError) {
+    logger.error(
+      auditError,
+      `withAudit: Failed to write ${status} audit event.`,
+    );
+
+    return session ? auditError : null;
+  }
+};
+
 export const withAudit = (f, dataBuilder) =>
   new Proxy(f, {
     async apply(target, _, args) {
@@ -9,45 +53,36 @@ export const withAudit = (f, dataBuilder) =>
 
       let result;
       let status = auditStatus.SUCCESS;
+      // The caller's transaction, where there is one - `withTransaction` passes
+      // it as the second argument, and it carries through to the audit event's
+      // own outbox insert so both commit together.
       let session = args[1];
+      let auditFailure = null;
 
       try {
         result = await target.apply(_, args);
       } catch (error) {
         status = auditStatus.FAILURE;
+        // Deliberately outside the aborting transaction: a refused attempt is
+        // still an attempt, and rolling back would erase the record of it.
         session = null;
         throw error;
       } finally {
         logger.debug(result, "withAudit: Use case result within proxy.");
-        try {
-          const auditData = dataBuilder(args, result);
+        auditFailure = await writeAudit(
+          dataBuilder,
+          args,
+          result,
+          status,
+          session,
+        );
+      }
 
-          if (!auditData) {
-            logger.info(
-              "withAudit: dataBuilder returned no audit data - skipping audit event.",
-            );
-          } else {
-            const { entities, accounts, details, security, segregationRef } =
-              auditData;
-
-            await writeAuditEvent(
-              {
-                entities,
-                accounts,
-                details,
-                security,
-                segregationRef,
-                status,
-              },
-              session,
-            );
-          }
-        } catch (auditError) {
-          logger.error(
-            auditError,
-            `withAudit: Failed to write ${status} audit event.`,
-          );
-        }
+      // Reached on the success path alone - a propagating failure never gets
+      // here, which is why this is not thrown from the `finally` above: doing
+      // that would replace the error the caller actually needs to see.
+      if (auditFailure) {
+        throw auditFailure;
       }
 
       logger.info("withAudit: End audit with proxy.");

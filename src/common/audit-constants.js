@@ -3,6 +3,8 @@ export const auditEntities = {
   ROLE: "ROLE",
   CASE: "CASE",
   WORKFLOW: "WORKFLOW",
+  // One inbox/outbox row. Named for the thing acted on, as the others are.
+  EVENT: "EVENT",
 };
 
 export const auditActions = {
@@ -24,6 +26,9 @@ export const auditActions = {
   ADD_NOTE_TO_CASE: "ADD_NOTE_TO_CASE",
   ASSIGN_USER_TO_CASE: "ASSIGN_USER_TO_CASE",
   CREATE_WORKFLOW: "CREATE_WORKFLOW",
+  // Putting one DEAD_LETTER row back in front of the poller. Requested by the
+  // grants admin surface through fg-gas-backend, carried out here.
+  REDRIVE_EVENT: "REDRIVE_EVENT",
 };
 
 export const auditStatus = {
@@ -51,6 +56,7 @@ const pmcCodesByAction = {
   [auditActions.ADD_NOTE_TO_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.ASSIGN_USER_TO_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.CREATE_WORKFLOW]: "0706", // any action an internal/external user or service can execute
+  [auditActions.REDRIVE_EVENT]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({
