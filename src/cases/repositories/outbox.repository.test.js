@@ -1,12 +1,20 @@
+import { ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
+import { paginate } from "../../common/paginate.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
+  breakdown,
   claimEvents,
+  countFacets,
+  findDetailById,
   findNextMessage,
+  findPage,
+  findStatusById,
   insertMany,
+  redriveById,
   update,
   updateDeadEvents,
   updateExpiredEvents,
@@ -15,6 +23,20 @@ import {
 } from "./outbox.repository.js";
 
 vi.mock("../../common/mongo-client.js");
+// Only `paginate` is mocked. The cursor codecs beside it are the real ones on
+// purpose: they are what a tampered cursor is refused by, so a test asserting
+// their behaviour against an auto-mocked stub would assert nothing.
+vi.mock("../../common/paginate.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  paginate: vi.fn(),
+}));
+
+// Where `common/write-audit-event.js` addresses an audit record. Read from the
+// same config key the predicate reads, so this suite cannot drift from it.
+const AUDIT_TOPIC_ARN = config.get("aws.sns.auditTopicArn");
+// Matches the topic by name whatever account id precedes it - see
+// events/event-audit.js.
+const AUDIT_CLAUSE = { $not: /(^|:)cw__sns__audit_topic_arn$/ };
 
 describe("outbox.repository", () => {
   describe("findNextMessage", () => {
@@ -32,7 +54,7 @@ describe("outbox.repository", () => {
           status: { $eq: OutboxStatus.PUBLISHED },
           claimedBy: { $eq: null },
           completionAttempts: {
-            $lte: parseInt(config.get("outbox.outboxMaxRetries")),
+            $lt: parseInt(config.get("outbox.outboxMaxRetries")),
           },
           segregationRef: { $nin: lockIds },
         },
@@ -140,6 +162,9 @@ describe("outbox.repository", () => {
             completionDate: undefined,
             event: {},
             lastResubmissionDate: undefined,
+            lastError: null,
+            attemptHistory: [],
+            lastRedrive: null,
             publicationDate: expect.any(Date),
             status: "PROCESSING",
             target: "arn:foo:bar",
@@ -164,14 +189,34 @@ describe("outbox.repository", () => {
           claimExpiresAt: {
             $lt: expect.any(Date),
           },
-          status: { $nin: [OutboxStatus.COMPLETED, OutboxStatus.DEAD_LETTER] },
+          status: { $nin: [OutboxStatus.DEAD_LETTER, OutboxStatus.COMPLETED] },
         },
         {
           $set: {
             status: OutboxStatus.FAILED,
+            lastError: {
+              name: "ClaimExpired",
+              message: "claim expired before completion",
+              at: expect.any(String),
+            },
             claimedAt: null,
             claimedBy: null,
             claimExpiresAt: null,
+          },
+          $inc: { completionAttempts: 1 },
+          $push: {
+            attemptHistory: {
+              $each: [
+                {
+                  at: expect.any(String),
+                  name: "ClaimExpired",
+                  message: "claim expired before completion",
+                  // Nothing threw, so there is no stack to reveal.
+                  stack: null,
+                },
+              ],
+              $slice: -10,
+            },
           },
         },
       );
@@ -222,7 +267,6 @@ describe("outbox.repository", () => {
             claimExpiresAt: null,
             claimedBy: null,
           },
-          $inc: { completionAttempts: 1 },
         },
       );
     });
@@ -253,5 +297,820 @@ describe("outbox.repository", () => {
         },
       );
     });
+  });
+});
+
+describe("outbox.repository findPage", () => {
+  const callFindPage = async (args = {}) => {
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findPage({ direction: "forward", pageSize: 20, ...args });
+
+    return paginate.mock.calls.at(-1)[1];
+  };
+
+  const mapOne = async (doc, args = {}) => {
+    const opts = await callFindPage(args);
+    return opts.mapDocument(doc);
+  };
+
+  const objectId = new ObjectId("665f1c2e9a1b2c3d4e5f6a7c");
+
+  const aDoc = (overrides = {}) => ({
+    _id: objectId,
+    event: {
+      id: "9b4d2f10",
+      type: "cloud.defra.prd.fg-cw-backend.case.status.updated",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
+    target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+    segregationRef: "GLD-9B2",
+    status: OutboxStatus.COMPLETED,
+    completionAttempts: 1,
+    publicationDate: new Date("2026-06-16T10:00:01.000Z"),
+    lastResubmissionDate: null,
+    completionDate: null,
+    ...overrides,
+  });
+
+  // What `common/write-audit-event.js` actually writes: no CloudEvent id and no
+  // type, addressed at this service's own audit topic.
+  const anAuditDoc = (overrides = {}) =>
+    aDoc({
+      event: {
+        audit: {
+          entities: [
+            {
+              entity: "CASE",
+              action: "CREATE_CASE",
+              entityid: "665f1c2e9a1b2c3d4e5f6a7b",
+            },
+          ],
+        },
+      },
+      target: AUDIT_TOPIC_ARN,
+      ...overrides,
+    });
+
+  beforeEach(() => {
+    vi.mocked(paginate).mockReset();
+  });
+
+  it("sorts newest first with an _id tie-break", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.sort).toEqual({ publicationDate: -1, _id: -1 });
+  });
+
+  it("skips the total count", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.withTotal).toBe(false);
+  });
+
+  it("filters by status when given", async () => {
+    const opts = await callFindPage({ status: OutboxStatus.DEAD_LETTER });
+
+    expect(opts.filter).toEqual({ status: OutboxStatus.DEAD_LETTER });
+  });
+
+  it("uses an empty filter when status is absent", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.filter).toEqual({});
+  });
+
+  // The `exclude` default lives in the query schema, not the repository: a
+  // call that says nothing about audit gets everything.
+  it("leaves audit records in when nothing says otherwise", async () => {
+    const opts = await callFindPage();
+
+    expect(JSON.stringify(opts.filter)).not.toContain(AUDIT_TOPIC_ARN);
+  });
+
+  it("removes the rows addressed at the audit topic when told to exclude", async () => {
+    const opts = await callFindPage({ audit: "exclude" });
+
+    expect(opts.filter).toEqual({ target: AUDIT_CLAUSE });
+  });
+
+  it("keeps them when told to include", async () => {
+    const opts = await callFindPage({ audit: "include" });
+
+    expect(opts.filter).toEqual({});
+  });
+
+  it("ANDs the audit clause with everything else rather than replacing it", async () => {
+    const opts = await callFindPage({
+      status: OutboxStatus.DEAD_LETTER,
+      audit: "exclude",
+    });
+
+    expect(opts.filter).toEqual({
+      $and: [{ status: OutboxStatus.DEAD_LETTER }, { target: AUDIT_CLAUSE }],
+    });
+  });
+
+  // The property the whole predicate exists to hold: the row this projection
+  // labels "audit" is exactly the row the default filter leaves out.
+  it("labels and excludes the same row", async () => {
+    const opts = await callFindPage({ audit: "exclude" });
+    const doc = anAuditDoc();
+
+    expect(opts.mapDocument(doc).type).toBe("audit");
+    expect(doc.target).toMatch(opts.filter.target.$not);
+  });
+
+  // ...and its converse: a row the filter would keep is never labelled "audit".
+  it("keeps and labels unknown the same row", async () => {
+    const opts = await callFindPage({ audit: "exclude" });
+    const doc = aDoc({ event: { id: "9b4d2f10" } });
+
+    expect(opts.mapDocument(doc).type).toBe("unknown");
+    expect(doc.target).not.toBe(AUDIT_TOPIC_ARN);
+  });
+
+  it("passes cursor, direction and pageSize through", async () => {
+    const opts = await callFindPage({
+      cursor: "abc",
+      direction: "backward",
+      pageSize: 7,
+    });
+
+    expect(opts.cursor).toBe("abc");
+    expect(opts.direction).toBe("backward");
+    expect(opts.pageSize).toBe(7);
+  });
+
+  it("projects only event.id and event.type", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.project).toEqual({
+      _id: 1,
+      "event.id": 1,
+      "event.type": 1,
+      target: 1,
+      status: 1,
+      completionAttempts: 1,
+      publicationDate: 1,
+      lastResubmissionDate: 1,
+      completionDate: 1,
+      lastError: 1,
+    });
+    // Searchable, not returned: `q` matches these in the filter, which needs
+    // no projection to do it, and the row draws neither.
+    expect(opts.project).not.toHaveProperty("segregationRef");
+    expect(opts.project).not.toHaveProperty("event.traceparent");
+    expect(opts.project).not.toHaveProperty("event");
+    expect(opts.project).not.toHaveProperty("event.data");
+    expect(opts.project).not.toHaveProperty("event.audit");
+    expect(opts.project).not.toHaveProperty("event.audit.entities");
+    expect(opts.project).not.toHaveProperty("event.audit.details");
+    expect(opts.project).not.toHaveProperty("claimedBy");
+  });
+
+  it("projects no event key beyond id and type", async () => {
+    const opts = await callFindPage();
+
+    const eventKeys = Object.keys(opts.project).filter((k) =>
+      k.startsWith("event"),
+    );
+
+    expect(eventKeys).toEqual(["event.id", "event.type"]);
+  });
+
+  it("maps a CloudEvent row to eventId and type", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.eventId).toBe("9b4d2f10");
+    expect(row.type).toBe("cloud.defra.prd.fg-cw-backend.case.status.updated");
+  });
+
+  // An audit record stores no CloudEvent id or type: the id stays null and
+  // the type is labelled from the target, which only this service can
+  // recognise. The label is the only audit-ness the row carries.
+  it("labels an audit row audit, keeps its eventId null and carries no audit keys", async () => {
+    const row = await mapOne(anAuditDoc());
+
+    expect(row.eventId).toBeNull();
+    expect(row.type).toBe("audit");
+    expect(row).not.toHaveProperty("auditEntities");
+    expect(JSON.stringify(row)).not.toMatch(/CREATE_CASE|entityid/);
+  });
+
+  // A type-less row not addressed at the audit topic is an anomaly, and an
+  // operator scanning for failures should see it - never labelled "audit".
+  it("labels a type-less row that is not an audit record unknown", async () => {
+    const row = await mapOne(aDoc({ event: { id: "9b4d2f10" } }));
+
+    expect(row.type).toBe("unknown");
+  });
+
+  it("puts the stored type on a row that recorded one", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.type).toBe("cloud.defra.prd.fg-cw-backend.case.status.updated");
+  });
+
+  it("carries no audit entities on a CloudEvent row either", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row).not.toHaveProperty("auditEntities");
+  });
+
+  it("never returns audit details", async () => {
+    const row = await mapOne(
+      aDoc({
+        event: {
+          audit: {
+            entities: [{ entity: "CASE", action: "VIEW_CASE_LIST" }],
+            details: { query: { page: 1 }, security: { user: "someone" } },
+          },
+        },
+      }),
+    );
+
+    expect(JSON.stringify(row)).not.toMatch(/details/);
+  });
+
+  it("returns the raw target ARN unmodified", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row.target).toBe(
+      "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+    );
+  });
+
+  it("renders _id as a hex string", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row._id).toBe("665f1c2e9a1b2c3d4e5f6a7c");
+  });
+
+  it("converts a Date publicationDate to an ISO string", async () => {
+    const row = await mapOne(
+      aDoc({ publicationDate: new Date("2026-06-16T10:00:01.000Z") }),
+    );
+
+    expect(row.createdAt).toBe("2026-06-16T10:00:01.000Z");
+  });
+
+  it("returns null rather than undefined for absent optional fields", async () => {
+    const row = await mapOne({
+      _id: objectId,
+      status: OutboxStatus.PUBLISHED,
+    });
+
+    expect(row).toEqual({
+      _id: "665f1c2e9a1b2c3d4e5f6a7c",
+      eventId: null,
+      // never null: a row with no stored type and no audit target is an anomaly
+      type: "unknown",
+      target: null,
+      status: OutboxStatus.PUBLISHED,
+      completionAttempts: null,
+      createdAt: null,
+      lastFailureAt: null,
+      lastError: null,
+      completedAt: null,
+    });
+  });
+
+  it("never returns event or claimedBy", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row).not.toHaveProperty("event");
+    expect(row).not.toHaveProperty("claimedBy");
+  });
+
+  // Detail-only fields - see box-detail-response.schema.js.
+  it("never returns fullType, traceparent, segregationRef or lastRedrive", async () => {
+    const row = await mapOne(aDoc());
+
+    expect(row).not.toHaveProperty("fullType");
+    expect(row).not.toHaveProperty("traceparent");
+    expect(row).not.toHaveProperty("segregationRef");
+    expect(row).not.toHaveProperty("lastRedrive");
+  });
+
+  it("encodes and decodes _id cursor values as ObjectIds", async () => {
+    const opts = await callFindPage();
+
+    expect(opts.codecs._id.encode(objectId)).toBe("665f1c2e9a1b2c3d4e5f6a7c");
+    expect(opts.codecs._id.decode("665f1c2e9a1b2c3d4e5f6a7c")).toEqual(
+      objectId,
+    );
+  });
+
+  it("encodes and decodes publicationDate cursor values as Dates", async () => {
+    const opts = await callFindPage();
+    const date = new Date("2026-06-16T10:00:01.000Z");
+
+    expect(opts.codecs.publicationDate.encode(date)).toBe(
+      "2026-06-16T10:00:01.000Z",
+    );
+    expect(
+      opts.codecs.publicationDate.decode("2026-06-16T10:00:01.000Z"),
+    ).toEqual(date);
+  });
+
+  it("returns the paginate result unchanged", async () => {
+    const page = { data: [], pagination: { hasNextPage: false } };
+    paginate.mockResolvedValue(page);
+
+    await expect(
+      findPage({ direction: "forward", pageSize: 20 }),
+    ).resolves.toBe(page);
+  });
+});
+
+describe("outbox.repository findPage search", () => {
+  const callFindPage = async (args = {}) => {
+    vi.mocked(paginate).mockResolvedValue({ data: [], pagination: {} });
+    await findPage({ direction: "forward", pageSize: 20, ...args });
+    return paginate.mock.calls.at(-1)[1];
+  };
+
+  const filterFor = async (args) => (await callFindPage(args)).filter;
+
+  const mapOne = async (doc) => (await callFindPage()).mapDocument(doc);
+
+  const aDoc = (overrides = {}) => ({
+    _id: new ObjectId("665f1c2e9a1b2c3d4e5f6a7c"),
+    event: { id: "9b4d2f10" },
+    target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated",
+    segregationRef: "GLD-9B2",
+    status: OutboxStatus.FAILED,
+    completionAttempts: 1,
+    publicationDate: new Date("2026-06-16T10:00:01.000Z"),
+    lastResubmissionDate: null,
+    completionDate: null,
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.mocked(paginate).mockReset();
+  });
+
+  it("matches q against event.id, segregationRef and its prefix", async () => {
+    const { $or } = await filterFor({ q: "evt-1" });
+
+    expect($or).toContainEqual({ "event.id": "evt-1" });
+    expect($or).toContainEqual({ segregationRef: "evt-1" });
+    expect($or).toContainEqual({
+      segregationRef: { $regex: "^evt-1", $options: "i" },
+    });
+  });
+
+  it("matches a 24-hex q against _id as well", async () => {
+    const hex = "665f1c2e9a1b2c3d4e5f6a7c";
+
+    expect((await filterFor({ q: hex })).$or).toContainEqual({
+      _id: ObjectId.createFromHexString(hex),
+    });
+  });
+
+  it("escapes regex metacharacters in q", async () => {
+    expect((await filterFor({ q: "GLD.9B2+x" })).$or).toContainEqual({
+      segregationRef: { $regex: "^GLD\\.9B2\\+x", $options: "i" },
+    });
+  });
+
+  it("ignores a whitespace-only q", async () => {
+    expect(await filterFor({ q: "  " })).toEqual({});
+  });
+
+  it("ignores a kind key rather than filtering on it", async () => {
+    expect(await filterFor({ kind: "audit" })).toEqual({});
+    expect(await filterFor({ kind: "domain" })).toEqual({});
+  });
+
+  it("combines status and q with $and", async () => {
+    const filter = await filterFor({ status: "FAILED", q: "evt-1" });
+
+    expect(filter.$and).toHaveLength(2);
+    expect(filter.$and[0]).toEqual({ status: "FAILED" });
+  });
+
+  it("maps a stored lastError onto the row", async () => {
+    const lastError = {
+      name: "TypeError",
+      message: "Topic does not exist",
+      at: "2026-06-16T10:16:05.000Z",
+    };
+
+    expect((await mapOne(aDoc({ lastError }))).lastError).toEqual(lastError);
+  });
+
+  it("returns a null lastError for a row that has never failed", async () => {
+    expect((await mapOne(aDoc())).lastError).toBeNull();
+  });
+
+  it("rebuilds a lastError missing its name and message", async () => {
+    const row = await mapOne(
+      aDoc({ lastError: { at: "2026-06-16T10:16:05.000Z" } }),
+    );
+
+    expect(row.lastError).toEqual({
+      name: "Error",
+      message: "",
+      at: "2026-06-16T10:16:05.000Z",
+    });
+  });
+});
+
+describe("outbox.repository detail and redrive", () => {
+  const ID = "665f1c2e9a1b2c3d4e5f6a7b";
+
+  const aStoredDoc = (overrides = {}) => ({
+    _id: new ObjectId(ID),
+    target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__create_case.fifo",
+    segregationRef: "GLD-9B2",
+    status: OutboxStatus.DEAD_LETTER,
+    completionAttempts: 5,
+    publicationDate: new Date("2026-06-16T10:00:01.000Z"),
+    lastResubmissionDate: null,
+    completionDate: null,
+    lastError: { name: "TypeError", message: "boom", at: null },
+    event: {
+      id: "evt-1",
+      type: "cloud.defra.prd.fg-cw-backend.case.stage.updated",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      data: { clientRef: "REF-1" },
+    },
+    claimedAt: null,
+    claimExpiresAt: null,
+    ...overrides,
+  });
+
+  it("reads the detail by id, projecting the claim token away", async () => {
+    const findOne = vi.fn().mockResolvedValue(aStoredDoc());
+    db.collection.mockReturnValue({ findOne });
+
+    await findDetailById(ID);
+
+    expect(findOne).toHaveBeenCalledWith(
+      { _id: new ObjectId(ID) },
+      { projection: { claimedBy: 0 } },
+    );
+  });
+
+  it("returns the full event payload on the detail", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(aStoredDoc()),
+    });
+
+    const detail = await findDetailById(ID);
+
+    expect(detail.event).toEqual({
+      id: "evt-1",
+      type: "cloud.defra.prd.fg-cw-backend.case.stage.updated",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      data: { clientRef: "REF-1" },
+    });
+  });
+
+  it("never returns claimedBy even if the driver hands one back", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(aStoredDoc({ claimedBy: "token" })),
+    });
+
+    expect(await findDetailById(ID)).not.toHaveProperty("claimedBy");
+  });
+
+  it("stamps maxAttempts on the detail", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(aStoredDoc()),
+    });
+
+    expect((await findDetailById(ID)).maxAttempts).toBe(
+      parseInt(config.get("outbox.outboxMaxRetries")),
+    );
+  });
+
+  it("returns null when there is no such row", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+
+    expect(await findDetailById(ID)).toBeNull();
+  });
+
+  it("reads only the status for the 404-vs-409 decision", async () => {
+    const findOne = vi.fn().mockResolvedValue({ status: "COMPLETED" });
+    db.collection.mockReturnValue({ findOne });
+
+    expect(await findStatusById(ID)).toBe("COMPLETED");
+    expect(findOne).toHaveBeenCalledWith(
+      { _id: new ObjectId(ID) },
+      { projection: { status: 1 } },
+    );
+  });
+
+  it("returns a null status for an unknown id", async () => {
+    db.collection.mockReturnValue({ findOne: vi.fn().mockResolvedValue(null) });
+
+    expect(await findStatusById(ID)).toBeNull();
+  });
+
+  it("redrives with a single conditional update filtered on DEAD_LETTER", async () => {
+    const findOneAndUpdate = vi
+      .fn()
+      .mockResolvedValue(
+        aStoredDoc({ status: OutboxStatus.RESUBMITTED, completionAttempts: 0 }),
+      );
+    db.collection.mockReturnValue({ findOneAndUpdate });
+
+    await redriveById(ID);
+
+    expect(findOneAndUpdate).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: new ObjectId(ID), status: OutboxStatus.DEAD_LETTER },
+      {
+        $set: {
+          status: OutboxStatus.RESUBMITTED,
+          completionAttempts: 0,
+          lastRedrive: { at: expect.any(String), by: null },
+          claimedBy: null,
+          claimedAt: null,
+          claimExpiresAt: null,
+        },
+      },
+      { returnDocument: "after" },
+    );
+  });
+
+  it("returns the updated row in the list projection", async () => {
+    db.collection.mockReturnValue({
+      findOneAndUpdate: vi.fn().mockResolvedValue(
+        aStoredDoc({
+          status: OutboxStatus.RESUBMITTED,
+          completionAttempts: 0,
+        }),
+      ),
+    });
+
+    const row = await redriveById(ID);
+
+    expect(row).toEqual({
+      _id: ID,
+      eventId: "evt-1",
+      type: "cloud.defra.prd.fg-cw-backend.case.stage.updated",
+      target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__create_case.fifo",
+      status: OutboxStatus.RESUBMITTED,
+      completionAttempts: 0,
+      createdAt: "2026-06-16T10:00:01.000Z",
+      lastFailureAt: null,
+      lastError: { name: "TypeError", message: "boom", at: null },
+      completedAt: null,
+    });
+  });
+
+  it("carries no event payload on the redrive response", async () => {
+    db.collection.mockReturnValue({
+      findOneAndUpdate: vi.fn().mockResolvedValue(aStoredDoc()),
+    });
+
+    expect(await redriveById(ID)).not.toHaveProperty("event");
+  });
+
+  it("returns null when the conditional update matched nothing", async () => {
+    db.collection.mockReturnValue({
+      findOneAndUpdate: vi.fn().mockResolvedValue(null),
+    });
+
+    expect(await redriveById(ID)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Time range and per-status counts (the events admin surface)
+// ---------------------------------------------------------------------------
+
+const FROM = "2026-06-16T00:00:00.000Z";
+const TO = "2026-06-16T23:59:59.999Z";
+
+const mockAggregate = (rows) => {
+  const aggregate = vi.fn().mockReturnValue({
+    toArray: vi.fn().mockResolvedValue(rows),
+  });
+
+  db.collection.mockReturnValue({ aggregate });
+
+  return aggregate;
+};
+
+describe("outbox.repository findPage from/to", () => {
+  const filterFor = async (options) => {
+    vi.mocked(paginate).mockResolvedValue({ data: [], pagination: {} });
+
+    await findPage(options);
+
+    return paginate.mock.calls.at(-1)[1].filter;
+  };
+
+  it("filters on publicationDate, inclusive at both ends", async () => {
+    expect(await filterFor({ from: FROM, to: TO })).toEqual({
+      publicationDate: { $gte: new Date(FROM), $lte: new Date(TO) },
+    });
+  });
+
+  it("accepts each bound on its own", async () => {
+    expect(await filterFor({ from: FROM })).toEqual({
+      publicationDate: { $gte: new Date(FROM) },
+    });
+    expect(await filterFor({ to: TO })).toEqual({
+      publicationDate: { $lte: new Date(TO) },
+    });
+  });
+
+  it("filters on nothing when no bound is given", async () => {
+    expect(await filterFor({})).toEqual({});
+  });
+
+  it("combines the range with the other filters", async () => {
+    expect(await filterFor({ status: "FAILED", from: FROM })).toEqual({
+      $and: [
+        { status: "FAILED" },
+        { publicationDate: { $gte: new Date(FROM) } },
+      ],
+    });
+  });
+});
+
+describe("outbox.repository countFacets", () => {
+  it("matches the same rows as the list and groups them by status", async () => {
+    const aggregate = mockAggregate([]);
+
+    await countFacets({ from: FROM, to: TO });
+
+    expect(aggregate).toHaveBeenCalledWith([
+      {
+        $match: {
+          publicationDate: { $gte: new Date(FROM), $lte: new Date(TO) },
+        },
+      },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+  });
+
+  it("counts the whole box when nothing is filtered", async () => {
+    const aggregate = mockAggregate([]);
+
+    await countFacets();
+
+    expect(aggregate.mock.calls[0][0][0]).toEqual({ $match: {} });
+  });
+
+  // The figures have to describe the rows underneath them, so the counts honour
+  // `audit` through the same filter builder the list uses.
+  it("counts the same rows the list would show when audit records are excluded", async () => {
+    const aggregate = mockAggregate([]);
+
+    await countFacets({ audit: "exclude" });
+
+    expect(aggregate.mock.calls[0][0][0]).toEqual({
+      $match: { target: AUDIT_CLAUSE },
+    });
+  });
+
+  it("counts them in when told to include", async () => {
+    const aggregate = mockAggregate([]);
+
+    await countFacets({ audit: "include" });
+
+    expect(aggregate.mock.calls[0][0][0]).toEqual({ $match: {} });
+  });
+
+  it("zero-fills the status block for an empty box", async () => {
+    mockAggregate([]);
+
+    expect(await countFacets()).toEqual({
+      counts: {
+        PUBLISHED: 0,
+        PROCESSING: 0,
+        FAILED: 0,
+        RESUBMITTED: 0,
+        COMPLETED: 0,
+        DEAD_LETTER: 0,
+      },
+    });
+  });
+
+  it("counts the rows the $group emits into their statuses", async () => {
+    mockAggregate([
+      { _id: "FAILED", count: 5 },
+      { _id: "COMPLETED", count: 5 },
+    ]);
+
+    const { counts } = await countFacets();
+
+    expect(counts.FAILED).toBe(5);
+    expect(counts.COMPLETED).toBe(5);
+  });
+});
+describe("outbox.repository breakdown", () => {
+  const mockAggregate = (rows) => {
+    const aggregate = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(rows),
+    });
+    db.collection.mockReturnValue({ aggregate });
+
+    return aggregate;
+  };
+
+  it("scopes itself to DEAD_LETTER, whatever the caller asked for", async () => {
+    const aggregate = mockAggregate([]);
+
+    await breakdown({ q: "GLD-9B2" });
+
+    const [[match]] = aggregate.mock.calls;
+
+    expect(JSON.stringify(match[0].$match)).toContain("DEAD_LETTER");
+  });
+
+  it("groups on the stored error message and the box's own type field", async () => {
+    const aggregate = mockAggregate([]);
+
+    await breakdown({});
+
+    const [[stages]] = aggregate.mock.calls;
+
+    expect(stages[1].$group._id).toEqual({
+      error: { $ifNull: ["$lastError.message", null] },
+      type: { $ifNull: ["$event.type", null] },
+      // an audit record and a type-less anomaly both group under a null type,
+      // and they are not the same thing
+      audit: {
+        $eq: [
+          { $arrayElemAt: [{ $split: ["$target", ":"] }, -1] },
+          "cw__sns__audit_topic_arn",
+        ],
+      },
+    });
+  });
+
+  it("excludes audit records from the breakdown when told to", async () => {
+    const aggregate = mockAggregate([]);
+
+    await breakdown({ audit: "exclude" });
+
+    const [[stages]] = aggregate.mock.calls;
+
+    expect(stages[0].$match.$and).toContainEqual({
+      target: AUDIT_CLAUSE,
+    });
+  });
+
+  it("leaves them in when told to include", async () => {
+    const aggregate = mockAggregate([]);
+
+    await breakdown({ audit: "include" });
+
+    const [[stages]] = aggregate.mock.calls;
+
+    expect(JSON.stringify(stages[0].$match)).not.toContain(AUDIT_TOPIC_ARN);
+  });
+
+  it("takes first-seen and last-seen off the box's own sort key", async () => {
+    const aggregate = mockAggregate([]);
+
+    await breakdown({});
+
+    const [[stages]] = aggregate.mock.calls;
+
+    expect(stages[1].$group.firstAt).toEqual({ $min: "$publicationDate" });
+    expect(stages[1].$group.lastAt).toEqual({ $max: "$publicationDate" });
+  });
+
+  it("maps the aggregation rows into groups", async () => {
+    mockAggregate([
+      {
+        _id: { error: "boom", type: "t" },
+        count: 3,
+        firstAt: "2026-06-16T10:00:00.000Z",
+        lastAt: "2026-06-16T11:00:00.000Z",
+      },
+    ]);
+
+    expect(await breakdown({})).toEqual([
+      {
+        error: "boom",
+        type: "t",
+        audit: false,
+        count: 3,
+        firstAt: "2026-06-16T10:00:00.000Z",
+        lastAt: "2026-06-16T11:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("keeps a null-error group rather than dropping it", async () => {
+    mockAggregate([{ _id: { error: null, type: null }, count: 2 }]);
+
+    const [group] = await breakdown({});
+
+    expect(group.error).toBeNull();
+    expect(group.count).toBe(2);
   });
 });
