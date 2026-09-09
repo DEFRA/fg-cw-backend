@@ -3,6 +3,7 @@ import {
   afterAll,
   afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
   it,
@@ -20,6 +21,7 @@ import {
 import {
   claimEvents,
   findNextMessage,
+  update,
 } from "../repositories/inbox.repository.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
@@ -350,5 +352,116 @@ describe("inbox.subscriber", () => {
       expect(withTraceParent).toHaveBeenCalled();
       expect(mockEvent.markAsComplete).toHaveBeenCalled();
     });
+  });
+});
+
+describe("InboxSubscriber failure reasons", () => {
+  it("passes the caught exception to markAsFailed", async () => {
+    const failure = new Error("use case blew up");
+    submitCaseUseCase.mockRejectedValueOnce(failure);
+    withTraceParent.mockImplementation((_, fn) => fn());
+
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.case.create",
+      source: "GAS",
+      traceparent: "1234-abcd",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber().handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+
+  it("passes the no-handler error to markAsFailed", async () => {
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.nothing.handles.this",
+      source: "GAS",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber().handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(expect.any(Error));
+    expect(message.markAsFailed.mock.calls[0][0].message).toContain(
+      "No handler found for event type",
+    );
+  });
+
+  it("forwards the error through markEventFailed to the model", async () => {
+    const failure = new Error("boom");
+    const message = { messageId: "m-1", markAsFailed: vi.fn() };
+
+    await new InboxSubscriber().markEventFailed(message, failure);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+});
+
+// The write is the whole in-memory document, so a handler that outlived its
+// claim would otherwise put a stale copy back over whatever the expiry sweep
+// did to the row in the meantime - erasing an attempt increment and a
+// `ClaimExpired` history entry that this service's own admin surface reads.
+describe("InboxSubscriber writes only while it holds the claim", () => {
+  const claimed = (subscriber, fn) =>
+    subscriber.asyncLocalStorage.run("claim-token-1", fn);
+
+  beforeEach(() => {
+    update.mockResolvedValue({ matchedCount: 1 });
+  });
+
+  it.each([
+    ["complete", (s, m) => s.markEventComplete(m)],
+    ["failed", (s, m) => s.markEventFailed(m, new Error("boom"))],
+  ])(
+    "carries the claim token when marking an event %s",
+    async (_name, mark) => {
+      const subscriber = new InboxSubscriber();
+      const message = {
+        messageId: "m-1",
+        markAsComplete: vi.fn(),
+        markAsFailed: vi.fn(),
+      };
+
+      await claimed(subscriber, () => mark(subscriber, message));
+
+      expect(update).toHaveBeenCalledWith(message, "claim-token-1");
+    },
+  );
+
+  it("says so when the row moved on rather than claiming it wrote", async () => {
+    update.mockResolvedValue({ matchedCount: 0 });
+    const info = vi.spyOn(logger, "info");
+    const subscriber = new InboxSubscriber();
+    const message = { messageId: "m-1", markAsComplete: vi.fn() };
+
+    await claimed(subscriber, () => subscriber.markEventComplete(message));
+
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("moved on before it was marked complete"),
+    );
+    expect(info).not.toHaveBeenCalledWith(
+      expect.stringContaining("Marked inbox event complete"),
+    );
+  });
+
+  // The claim travels with the work rather than through every handler
+  // signature, which is how the outbox has always carried it.
+  it("runs claimed events inside the claim's own store", async () => {
+    const subscriber = new InboxSubscriber();
+    claimEvents.mockResolvedValue([Inbox.createMock()]);
+    setFifoLock.mockResolvedValue({ upsertedCount: 1, matchedCount: 0 });
+    let seen = null;
+    vi.spyOn(subscriber, "processEvents").mockImplementation(async () => {
+      seen = subscriber.asyncLocalStorage.getStore();
+    });
+
+    await subscriber.processWithLock("claim-token-2", "ref-1");
+
+    expect(seen).toBe("claim-token-2");
   });
 });

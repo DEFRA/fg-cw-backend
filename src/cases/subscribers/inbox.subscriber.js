@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 
@@ -29,6 +30,8 @@ export const useCaseMap = {
 };
 
 export class InboxSubscriber {
+  asyncLocalStorage = new AsyncLocalStorage();
+
   static ACTOR = "INBOX";
   constructor() {
     this.interval = parseInt(config.get("inbox.inboxPollMs"));
@@ -69,7 +72,11 @@ export class InboxSubscriber {
     }
     try {
       const events = await claimEvents(claimToken, segregationRef);
-      await this.processEvents(events);
+      // The claim token travels with the work rather than through every
+      // handler signature, exactly as the outbox carries it.
+      await this.asyncLocalStorage.run(claimToken, async () =>
+        this.processEvents(events),
+      );
     } finally {
       await freeFifoLock(InboxSubscriber.ACTOR, segregationRef);
     }
@@ -108,16 +115,33 @@ export class InboxSubscriber {
       logger.info(`Updated "${results?.modifiedCount}" failed inbox events`);
   }
 
-  async markEventFailed(inboxEvent) {
-    inboxEvent.markAsFailed();
-    await update(inboxEvent);
-    logger.info(`Marked inbox event failed "${inboxEvent.messageId}"`);
+  // Both writes carry the claim this worker holds, so a handler that outlived
+  // its claim writes nothing rather than overwriting the expiry sweep's own
+  // accounting. A write that matched nothing says so: the row moved on without
+  // this worker, and the numbers on it are not the ones in memory here.
+  async writeClaimed(inboxEvent, what) {
+    const claimedBy = this.asyncLocalStorage.getStore();
+    const result = await update(inboxEvent, claimedBy);
+
+    if (result?.matchedCount === 0) {
+      logger.info(
+        `Inbox event "${inboxEvent.messageId}" moved on before it was marked ${what}`,
+      );
+
+      return;
+    }
+
+    logger.info(`Marked inbox event ${what} "${inboxEvent.messageId}"`);
+  }
+
+  async markEventFailed(inboxEvent, error) {
+    inboxEvent.markAsFailed(error);
+    await this.writeClaimed(inboxEvent, "failed");
   }
 
   async markEventComplete(inboxEvent) {
     inboxEvent.markAsComplete();
-    await update(inboxEvent);
-    logger.info(`Marked inbox event as complete "${inboxEvent.messageId}"`);
+    await this.writeClaimed(inboxEvent, "complete");
   }
 
   async handleEvent(msg) {
@@ -142,7 +166,7 @@ export class InboxSubscriber {
       await this.markEventComplete(msg);
     } catch (ex) {
       logger.error(ex, `Error handling inbox message "${type}:${messageId}"`);
-      await this.markEventFailed(msg);
+      await this.markEventFailed(msg, ex);
     }
   }
 

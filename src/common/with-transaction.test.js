@@ -17,11 +17,38 @@ describe("withTransaction", () => {
     await withTransaction(transactionSpy);
 
     expect(mockSession.withTransaction).toHaveBeenCalledWith(
-      transactionSpy,
+      expect.any(Function),
       transactionOptions,
     );
     expect(transactionSpy).toHaveBeenCalled();
     expect(mockSession.endSession).toHaveBeenCalled();
+  });
+
+  // A use case with something to answer - a redrive answers with the updated
+  // row - must not lose it to the transaction wrapper.
+  it("answers with the callback's result", async () => {
+    const mockSession = {
+      withTransaction: vi.fn().mockImplementation((run) => run("the-session")),
+      endSession: vi.fn(),
+    };
+    vi.spyOn(mongoClient, "startSession").mockReturnValue(mockSession);
+
+    await expect(
+      withTransaction(async (session) => ({ ok: true, session })),
+    ).resolves.toEqual({ ok: true, session: "the-session" });
+  });
+
+  it("hands the driver's session to the callback", async () => {
+    const mockSession = {
+      withTransaction: vi.fn().mockImplementation((run) => run("the-session")),
+      endSession: vi.fn(),
+    };
+    vi.spyOn(mongoClient, "startSession").mockReturnValue(mockSession);
+    const callback = vi.fn();
+
+    await withTransaction(callback);
+
+    expect(callback).toHaveBeenCalledWith("the-session");
   });
 
   it("should handle errors", async () => {
@@ -42,7 +69,7 @@ describe("withTransaction", () => {
     }
 
     expect(mockSession.withTransaction).toHaveBeenCalledWith(
-      transactionSpy,
+      expect.any(Function),
       transactionOptions,
     );
     expect(mockSession.endSession).toHaveBeenCalled();

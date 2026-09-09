@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { paginate } from "./paginate.js";
+import { dateCodec, objectIdCodec, paginate, stringCodec } from "./paginate.js";
 
 const identity = {
   encode: (v) => v,
@@ -141,8 +141,12 @@ describe("paginate", () => {
       await paginate(col, { ...baseOpts, cursor, direction: "forward" });
 
       expect(col.find).toHaveBeenCalledWith({
-        active: true,
-        $or: [{ name: { $gt: "Bob" } }, { name: "Bob", _id: { $gt: "2" } }],
+        $and: [
+          { active: true },
+          {
+            $or: [{ name: { $gt: "Bob" } }, { name: "Bob", _id: { $gt: "2" } }],
+          },
+        ],
       });
     });
 
@@ -158,8 +162,12 @@ describe("paginate", () => {
       });
 
       expect(col.find).toHaveBeenCalledWith({
-        active: true,
-        $or: [{ name: { $lt: "Bob" } }, { name: "Bob", _id: { $lt: "2" } }],
+        $and: [
+          { active: true },
+          {
+            $or: [{ name: { $lt: "Bob" } }, { name: "Bob", _id: { $lt: "2" } }],
+          },
+        ],
       });
     });
   });
@@ -238,10 +246,14 @@ describe("paginate", () => {
       });
 
       expect(col.find).toHaveBeenCalledWith({
-        active: true,
-        $or: [
-          { name: { $lt: "Charlie" } },
-          { name: "Charlie", _id: { $lt: "3" } },
+        $and: [
+          { active: true },
+          {
+            $or: [
+              { name: { $lt: "Charlie" } },
+              { name: "Charlie", _id: { $lt: "3" } },
+            ],
+          },
         ],
       });
     });
@@ -262,13 +274,82 @@ describe("paginate", () => {
     });
   });
 
+  // A cursor is this service's own value handed back by a caller, so it
+  // arrives as attacker-controlled JSON and every decoded value goes straight
+  // into query position. These pin that a tampered one is refused rather than
+  // asked.
   describe("cursor decoding", () => {
-    it("throws Boom.badRequest for invalid cursor", async () => {
-      const col = makeCollection([], 0);
+    const strictCodecs = { name: stringCodec, _id: objectIdCodec };
+    const ID = "665f1c2e9a1b2c3d4e5f6a7b";
 
+    const decoding = (cursor, codecOverrides = {}) =>
+      paginate(makeCollection([], 0), {
+        ...baseOpts,
+        codecs: { ...strictCodecs, ...codecOverrides },
+        cursor,
+      });
+
+    it("throws Boom.badRequest for invalid cursor", async () => {
+      await expect(decoding("not-valid-base64!")).rejects.toThrow(
+        "Cannot decode cursor",
+      );
+    });
+
+    it("takes a cursor it wrote itself", async () => {
       await expect(
-        paginate(col, { ...baseOpts, cursor: "not-valid-base64!" }),
-      ).rejects.toThrow("Cannot decode cursor");
+        decoding(makeCursor({ name: "Bob", _id: ID })),
+      ).resolves.toBeDefined();
+    });
+
+    // Valid JSON, valid base64, and a Mongo operator where a value belongs:
+    // spread into query position this is an attacker choosing the predicate.
+    it("refuses an operator object smuggled in where a value belongs", async () => {
+      const tampered = makeCursor({ name: { $gt: "" }, _id: ID });
+
+      await expect(decoding(tampered)).rejects.toMatchObject({
+        output: { statusCode: 400 },
+      });
+    });
+
+    // `new ObjectId(undefined)` FABRICATES an id rather than throwing, so this
+    // used to page from an invented position and answer, confidently, with the
+    // wrong rows.
+    it("refuses a cursor with no id rather than inventing one", async () => {
+      await expect(decoding(makeCursor({ name: "Bob" }))).rejects.toMatchObject(
+        { output: { statusCode: 400 } },
+      );
+    });
+
+    it.each([
+      ["an id that is not hex", "not-an-object-id"],
+      ["an id of the wrong length", "665f1c2e"],
+      ["an id that is not a string", 12345],
+    ])("refuses %s", async (_name, id) => {
+      await expect(
+        decoding(makeCursor({ name: "Bob", _id: id })),
+      ).rejects.toMatchObject({ output: { statusCode: 400 } });
+    });
+
+    it("refuses a sort value of the wrong type", async () => {
+      await expect(
+        decoding(makeCursor({ name: 42, _id: ID })),
+      ).rejects.toMatchObject({ output: { statusCode: 400 } });
+    });
+
+    it("refuses a date that is not an instant", async () => {
+      await expect(
+        decoding(makeCursor({ name: "not-a-date", _id: ID }), {
+          name: dateCodec,
+        }),
+      ).rejects.toMatchObject({ output: { statusCode: 400 } });
+    });
+
+    it("takes a date it wrote itself", async () => {
+      await expect(
+        decoding(makeCursor({ name: "2026-06-16T10:00:00.000Z", _id: ID }), {
+          name: dateCodec,
+        }),
+      ).resolves.toBeDefined();
     });
   });
 
@@ -349,10 +430,86 @@ describe("paginate", () => {
         direction: "forward",
       });
 
-      const findArg = col.find.mock.calls[0][0];
-      expect(findArg.$or[0].createdAt.$lt).toEqual(
+      const [, keyset] = col.find.mock.calls[0][0].$and;
+
+      expect(keyset.$or[0].createdAt.$lt).toEqual(
         new Date("2025-01-15T10:00:00.000Z"),
       );
+    });
+
+    // Both halves of the filter can carry a top-level `$or` - the keyset
+    // always does, and a `?q=` search does whenever it is the only clause -
+    // so they are composed rather than spread together. Spread, the position
+    // replaced the search and page two answered with unfiltered rows.
+    it("keeps a filter that has an $or of its own", async () => {
+      const col = makeCollection([], 0);
+      const search = { $or: [{ name: "Bob" }, { alias: "Bob" }] };
+
+      await paginate(col, {
+        ...baseOpts,
+        filter: search,
+        cursor: makeCursor({ name: "Bob", _id: "2" }),
+        direction: "forward",
+      });
+
+      const [filter, keyset] = col.find.mock.calls[0][0].$and;
+
+      expect(filter).toEqual(search);
+      expect(keyset.$or).toHaveLength(2);
+    });
+  });
+
+  describe("withTotal", () => {
+    it("omits totalCount and does not count when withTotal is false", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: false });
+
+      expect(col.countDocuments).not.toHaveBeenCalled();
+      expect(result.pagination).not.toHaveProperty("totalCount");
+    });
+
+    it("still counts when withTotal is omitted", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, baseOpts);
+
+      expect(col.countDocuments).toHaveBeenCalledWith(baseOpts.filter);
+      expect(result.pagination.totalCount).toBe(5);
+    });
+
+    it("still counts when withTotal is true", async () => {
+      const col = makeCollection([{ name: "Alice", _id: "1" }], 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: true });
+
+      expect(col.countDocuments).toHaveBeenCalledWith(baseOpts.filter);
+      expect(result.pagination.totalCount).toBe(5);
+    });
+
+    it("returns totalCount 0 without treating it as absent", async () => {
+      const col = makeCollection([], 0);
+
+      const result = await paginate(col, baseOpts);
+
+      expect(result.pagination).toHaveProperty("totalCount", 0);
+    });
+
+    it("keeps the rest of the pagination envelope when withTotal is false", async () => {
+      const docs = [
+        { name: "Alice", _id: "1" },
+        { name: "Bob", _id: "2" },
+      ];
+      const col = makeCollection(docs, 5);
+
+      const result = await paginate(col, { ...baseOpts, withTotal: false });
+
+      expect(result.pagination).toEqual({
+        startCursor: makeCursor({ name: "Alice", _id: "1" }),
+        endCursor: makeCursor({ name: "Bob", _id: "2" }),
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     });
   });
 });

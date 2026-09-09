@@ -319,3 +319,29 @@ describe("outbox.subscriber", () => {
     expect(updateDeadEvents).toHaveBeenCalled();
   });
 });
+
+describe("OutboxSubscriber failure reasons", () => {
+  it("passes the caught publish exception to markAsFailed", async () => {
+    const failure = new Error("Topic does not exist");
+    publish.mockRejectedValue(failure);
+
+    const event = {
+      target: "arn:aws:sns:eu-west-2:000000000000:test-topic",
+      event: {},
+      markAsFailed: vi.fn(),
+    };
+
+    await new OutboxSubscriber().sendEvent(event);
+
+    expect(event.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+
+  it("forwards the error through markEventUnsent to the model", async () => {
+    const failure = new Error("boom");
+    const event = { _id: "1", markAsFailed: vi.fn() };
+
+    await new OutboxSubscriber().markEventUnsent(event, failure);
+
+    expect(event.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+});

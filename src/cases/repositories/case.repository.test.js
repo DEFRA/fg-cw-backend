@@ -18,7 +18,13 @@ import {
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
-vi.mock("../../common/paginate.js");
+// Only `paginate` is mocked. The cursor codecs beside it are the real ones on
+// purpose: they are what a tampered cursor is refused by, so a test asserting
+// their behaviour against an auto-mocked stub would assert nothing.
+vi.mock("../../common/paginate.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  paginate: vi.fn(),
+}));
 
 describe("save", () => {
   it("creates a case and returns it", async () => {
