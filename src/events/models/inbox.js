@@ -1,0 +1,159 @@
+import Boom from "@hapi/boom";
+import Joi from "joi";
+import {
+  appendAttempt,
+  normaliseAttemptHistory,
+  toAttemptEntry,
+  toLastError,
+} from "./last-error.js";
+
+export class Inbox {
+  static validationSchema = Joi.object({
+    source: Joi.string().required(),
+    event: Joi.object().required(),
+    segregationRef: Joi.string().required(),
+  });
+
+  // eslint-disable-next-line complexity
+  constructor(props) {
+    const { error } = Inbox.validationSchema.validate(props, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    if (error) {
+      throw Boom.badRequest(
+        `Invalid Inbox: ${error.details.map((d) => d.message).join(", ")}`,
+      );
+    }
+
+    this._id = props._id;
+    this.publicationDate = props.publicationDate || new Date().toISOString();
+    this.traceparent = props.traceparent;
+    this.source = props.source;
+    this.type = props.type;
+    this.event = props.event;
+    this.messageId = props.messageId;
+    this.lastResubmissionDate = props.lastResubmissionDate || null;
+    // Rows written before `lastError` existed have none and must stay null.
+    this.lastError = props.lastError || null;
+    // Rows written before `attemptHistory` existed must read back as [], never
+    // null - the detail view renders the array unconditionally.
+    this.attemptHistory = normaliseAttemptHistory(props.attemptHistory);
+    // ATTEMPT ARITHMETIC - counts attempts actually MADE, not granted: zero on
+    // a fresh row, incremented by `markAsFailed` in the same call that pushes
+    // the attempt-history entry, so counter and history always reconcile.
+    this.completionAttempts = props.completionAttempts ?? 0;
+    this.status = props.status || InboxStatus.PUBLISHED;
+    this.completionDate = props.completionDate || null;
+    // `{ at, by }` of the most recent redrive; null until redriven.
+    this.lastRedrive = props.lastRedrive ?? null;
+    this.claimedBy = null;
+    this.claimedAt = null;
+    this.claimExpiresAt = null;
+    this.eventTime = props.event.time;
+    this.segregationRef = props.segregationRef;
+  }
+
+  markAsComplete() {
+    this.status = InboxStatus.COMPLETED;
+    this.completionDate = new Date().toISOString();
+    this.claimedBy = null;
+    this.claimedAt = null;
+    this.claimExpiresAt = null;
+  }
+
+  // Absent `error` (a resubmission sweep) leaves the previous `lastError`.
+  markAsFailed(error) {
+    this.status = InboxStatus.FAILED;
+    this.lastResubmissionDate = new Date().toISOString();
+    this.lastError = toLastError(error) ?? this.lastError;
+    // `markAsComplete` deliberately leaves the history in place, so a row
+    // that eventually succeeded still shows what it took.
+    this.attemptHistory = appendAttempt(
+      this.attemptHistory,
+      toAttemptEntry(error),
+    );
+    this.completionAttempts += 1;
+    this.claimedBy = null;
+    this.claimedAt = null;
+    this.claimExpiresAt = null;
+  }
+
+  toDocument() {
+    return {
+      _id: this._id,
+      traceparent: this.traceparent,
+      publicationDate: this.publicationDate,
+      source: this.source,
+      type: this.type,
+      messageId: this.messageId,
+      event: this.event,
+      lastResubmissionDate: this.lastResubmissionDate,
+      lastError: this.lastError,
+      attemptHistory: this.attemptHistory,
+      completionAttempts: this.completionAttempts,
+      status: this.status,
+      completionDate: this.completionDate,
+      lastRedrive: this.lastRedrive,
+      claimedAt: this.claimedAt,
+      claimedBy: this.claimedBy,
+      claimExpiresAt: this.claimExpiresAt,
+      eventTime: this.eventTime,
+      segregationRef: this.segregationRef,
+    };
+  }
+
+  static fromDocument(doc) {
+    return new Inbox({
+      _id: doc._id,
+      publicationDate: doc.publicationDate,
+      traceparent: doc.traceparent,
+      source: doc.source,
+      type: doc.type,
+      messageId: doc.messageId,
+      event: doc.event,
+      lastResubmissionDate: doc.lastResubmissionDate,
+      lastError: doc.lastError,
+      attemptHistory: doc.attemptHistory,
+      completionAttempts: doc.completionAttempts,
+      status: doc.status,
+      completionDate: doc.completionDate,
+      lastRedrive: doc.lastRedrive,
+      claimedAt: doc.claimedAt,
+      claimedBy: doc.claimedBy,
+      claimExpiresAt: doc.claimExpiresAt,
+      eventTime: doc.eventTime,
+      segregationRef: doc.segregationRef,
+    });
+  }
+
+  static createMock(obj) {
+    return new Inbox({
+      _id: "1234",
+      publicationDate: new Date(Date.now()),
+      traceparent: "mock-trace-parent",
+      source: "CW",
+      type: "type",
+      messageId: "message-id",
+      event: {
+        time: new Date().toISOString(),
+      },
+      completionAttempts: 1,
+      status: "PUBLISHED",
+      eventTime: new Date().toISOString(),
+      messageGroupId: "mock-group-id",
+      segregationRef: "foo",
+      ...obj,
+    });
+  }
+}
+
+export const InboxStatus = {
+  PROCESSING: "PROCESSING",
+  PUBLISHED: "PUBLISHED",
+  FAILED: "FAILED",
+  COMPLETED: "COMPLETED",
+  RESUBMITTED: "RESUBMITTED",
+  DEAD_LETTER: "DEAD_LETTER",
+};

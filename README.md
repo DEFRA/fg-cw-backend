@@ -33,23 +33,14 @@ Shared modules, referenced by any layer
 
 - `src/common/` - infrastructure with no opinion about the business: the
   logger, the Mongo client, the messaging clients, the paginator
-- `src/events/` - the shared event domain: what an inbox/outbox event IS and
-  means. Which rows are audit records (`event-audit.js`), how a list of them is
-  selected (`event-list-filter.js`), the statuses they move through and how
-  they are counted and grouped (`status-counts.js`, `event-facets.js`,
-  `event-breakdown.js`), what a detail view of one contains
-  (`event-detail.js`), what redriving one means (`event-redrive.js`), and how a
-  failure is recorded (`last-error.js`)
-
-`src/events/` lived in `src/common/` and did not belong there: `common` is
-infrastructure, and these files are nothing but opinion about one part of the
-business. Both the case pollers and the actuator surface depend on them, which
-is what makes them shared rather than either module's own.
+- `src/events/` - the inbox/outbox event slice. It owns the event models,
+  repositories, pollers, use cases, actuator routes and schemas for event
+  listing, detail and redrive.
 
 The rule that keeps it honest: **`src/events/` may import `src/common/` and
-nothing else.** A domain module that reached into a context would tie every
-other context to that one, which is the coupling moving it out of `common` was
-meant to end. Every module may enter it; it enters no module.
+itself, but not another business slice.** Case-specific handling is passed into
+the inbox poller by `src/cases/`, so the event slice stores, claims, lists and
+redrives events without knowing what a case use case does.
 
 `src/cases/events/` - the per-context folder holding published event shapes -
 is a different thing that shares a word: one context's outbound vocabulary,

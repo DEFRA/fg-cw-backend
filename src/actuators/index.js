@@ -1,8 +1,8 @@
-import { findPageRoute } from "./routes/find-page.route.js";
-import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
-import { getOutboxEventRoute } from "./routes/get-outbox-event.route.js";
-import { redriveInboxEventRoute } from "./routes/redrive-inbox-event.route.js";
-import { redriveOutboxEventRoute } from "./routes/redrive-outbox-event.route.js";
+import { findPageRoute } from "../events/routes/find-page.route.js";
+import { getInboxEventRoute } from "../events/routes/get-inbox-event.route.js";
+import { getOutboxEventRoute } from "../events/routes/get-outbox-event.route.js";
+import { redriveInboxEventRoute } from "../events/routes/redrive-inbox-event.route.js";
+import { redriveOutboxEventRoute } from "../events/routes/redrive-outbox-event.route.js";
 
 export const actuators = {
   name: "actuators",

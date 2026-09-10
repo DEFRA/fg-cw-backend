@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { SqsSubscriber } from "../../common/sqs-subscriber.js";
-import { saveInboxMessageUseCase } from "../use-cases/save-inbox-message.use-case.js";
+import { saveInboxMessageUseCase } from "../../events/use-cases/save-inbox-message.use-case.js";
 import { createNewCaseSubscriber } from "./create-new-case.subscriber.js";
 
 vi.mock("../use-cases/create-case.use-case.js");
-vi.mock("../use-cases/save-inbox-message.use-case.js");
+vi.mock("../../events/use-cases/save-inbox-message.use-case.js");
 
 describe("createNewCaseSubscriber", () => {
   it("is an instance of SqsSubscriber", () => {

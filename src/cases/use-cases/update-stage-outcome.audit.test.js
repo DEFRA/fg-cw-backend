@@ -8,7 +8,7 @@ import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { insertMany } from "../repositories/outbox.repository.js";
+import { insertMany } from "../../events/repositories/outbox.repository.js";
 import { findByCode } from "../repositories/workflow.repository.js";
 import {
   updateStageOutcomeAuditDataBuilder,
@@ -17,7 +17,7 @@ import {
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
-vi.mock("../repositories/outbox.repository.js");
+vi.mock("../../events/repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("./ensure-case-position.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({

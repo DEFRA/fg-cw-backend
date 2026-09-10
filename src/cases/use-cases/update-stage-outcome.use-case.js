@@ -11,9 +11,9 @@ import { withAudit } from "../../common/with-audit.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
-import { Outbox } from "../models/outbox.js";
+import { Outbox } from "../../events/models/outbox.js";
 import { update } from "../repositories/case.repository.js";
-import { insertMany } from "../repositories/outbox.repository.js";
+import { insertMany } from "../../events/repositories/outbox.repository.js";
 import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { loadCase } from "./load-case.js";
 import {

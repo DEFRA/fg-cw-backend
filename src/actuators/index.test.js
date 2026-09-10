@@ -2,9 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { createServer } from "../server/index.js";
 import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
 import { actuators } from "./index.js";
-import { eventIdParams } from "./schemas/event-id.schema.js";
+import { eventIdParams } from "../events/schemas/event-id.schema.js";
 
 vi.mock("../common/mongo-client.js");
+vi.mock("../server/plugins/auth/index.js", () => ({
+  auth: {
+    name: "auth",
+    register(server) {
+      server.auth.scheme("service-token", () => ({
+        authenticate: (_request, h) => h.authenticated({ credentials: {} }),
+      }));
+      server.auth.strategy("public-api", "service-token");
+    },
+  },
+}));
 
 const registeredServer = async () => {
   const server = await createServer();

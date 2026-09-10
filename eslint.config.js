@@ -90,16 +90,9 @@ export default [
               message: "Publishers should only import common and events",
             },
             {
-              // The shared events domain: what an event IS, in one place, for
-              // the pollers and the actuator surface alike. It may reach DOWN
-              // to infrastructure and no further - a domain module that
-              // imported a context would tie every context to that one, which
-              // is the coupling moving it out of `common` was meant to end.
-              //
-              // Note `**/events/**` in the exceptions above now matches both
-              // this module and `src/cases/events/`, the context's own
-              // published event shapes. Both are event vocabulary a use case
-              // may legitimately read.
+              // The event slice owns inbox/outbox storage, polling and the
+              // actuator surface. It may reach DOWN to infrastructure and
+              // across to itself, but not into another business slice.
               target: "src/events/**/!(*.test).js",
               from: ["src/**/**"],
               except: ["**/common/**", "**/events/**"],

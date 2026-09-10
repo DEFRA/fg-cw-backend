@@ -11,7 +11,7 @@ import {
   newCaseUseCase,
 } from "./new-case.use-case.js";
 
-vi.mock("../repositories/outbox.repository.js");
+vi.mock("../../events/repositories/outbox.repository.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({
