@@ -1,8 +1,8 @@
 import { validateAuditEvent } from "@defra/fcp-audit-publisher";
 import { getTraceId } from "@defra/hapi-tracing";
 import { randomUUID } from "node:crypto";
-import { Outbox } from "../cases/models/outbox.js";
-import { insertMany } from "../cases/repositories/outbox.repository.js";
+import { Outbox } from "../events/models/outbox.js";
+import { insertMany } from "../events/repositories/outbox.repository.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";

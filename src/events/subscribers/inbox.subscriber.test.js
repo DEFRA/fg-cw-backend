@@ -1,0 +1,474 @@
+import { setTimeout } from "node:timers/promises";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { config } from "../../common/config.js";
+import { logger } from "../../common/logger.js";
+import { withTraceParent } from "../../common/trace-parent.js";
+import { Inbox } from "../models/inbox.js";
+import {
+  freeFifoLock,
+  getFifoLocks,
+  setFifoLock,
+} from "../repositories/fifo-lock.repository.js";
+import {
+  claimEvents,
+  findNextMessage,
+  update,
+} from "../repositories/inbox.repository.js";
+import { handleCaseStatusUpdateUseCase } from "../../cases/use-cases/handle-case-status-update.use-case.js";
+import { submitCaseUseCase } from "../../cases/use-cases/submit-case.use-case.js";
+import { InboxSubscriber } from "./inbox.subscriber.js";
+
+vi.mock("../../cases/use-cases/submit-case.use-case.js");
+vi.mock("../../common/trace-parent.js");
+vi.mock("../use-cases/approve-application.use-case.js");
+vi.mock("../repositories/inbox.repository.js");
+vi.mock("../repositories/fifo-lock.repository.js");
+vi.mock("../services/apply-event-status-change.service.js");
+vi.mock("../../cases/use-cases/handle-case-status-update.use-case.js");
+vi.mock("../../common/logger.js");
+
+const useCaseMap = {
+  "cloud.defra.ENV.fg-gas-backend.case.create": submitCaseUseCase,
+  "cloud.defra.ENV.fg-gas-backend.case.update.status":
+    handleCaseStatusUpdateUseCase,
+};
+
+const createInbox = (doc) =>
+  new Inbox({
+    event: {
+      time: new Date().toISOString(),
+    },
+    ...doc,
+  });
+
+describe("inbox.subscriber", () => {
+  let cdpEnv;
+  beforeAll(() => {
+    vi.useFakeTimers();
+    cdpEnv = config.get("cdpEnvironment");
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+  });
+
+  afterAll(() => {
+    vi.resetAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("should create an inbox subscriber", () => {
+    const subs = new InboxSubscriber();
+    expect(subs).toBeInstanceOf(InboxSubscriber);
+    expect(subs.interval).toBe(parseInt(config.get("inbox.inboxPollMs")));
+    expect(subs.running).toBeFalsy();
+  });
+
+  it("should poll on start()", async () => {
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    );
+    claimEvents.mockResolvedValue([Inbox.createMock()]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue({ upsertedCount: 1, modifiedCount: 1 });
+    freeFifoLock.mockResolvedValue();
+    vi.spyOn(InboxSubscriber.prototype, "processEvents").mockResolvedValue();
+    const subscriber = new InboxSubscriber(useCaseMap);
+    subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
+    expect(claimEvents).toHaveBeenCalled();
+    expect(setFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
+    expect(freeFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
+    expect(subscriber.running).toBeTruthy();
+  });
+
+  it("should continue polling and process events after an error", async () => {
+    const error = new Error("Temporary poll failure");
+    vi.spyOn(logger, "error");
+    vi.spyOn(logger, "info");
+
+    const mockEvent = new Inbox({
+      type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
+      traceparent: "test-trace",
+      source: "GAS",
+      segregationRef: "re_1",
+      event: { data: { foo: "bar" } },
+    });
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    );
+    claimEvents.mockResolvedValue([
+      createInbox({ segregationRef: "ref_1", source: "AS" }),
+    ]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue({ upsertedCount: 1, modifiedCount: 1 });
+    freeFifoLock.mockResolvedValue();
+
+    claimEvents
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce([mockEvent])
+      .mockResolvedValue([]);
+
+    submitCaseUseCase.mockResolvedValue(true);
+    withTraceParent.mockImplementation((_, fn) => fn());
+
+    const subscriber = new InboxSubscriber(useCaseMap);
+    subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith(error, "Error polling inbox");
+    });
+
+    await vi.advanceTimersByTimeAsync(subscriber.interval);
+
+    await vi.waitFor(() => {
+      expect(submitCaseUseCase).toHaveBeenCalled();
+    });
+
+    await vi.advanceTimersByTimeAsync(subscriber.interval);
+
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalledTimes(3);
+    });
+
+    expect(subscriber.running).toBeTruthy();
+
+    subscriber.stop();
+  });
+
+  it("should stop polling after stop()", async () => {
+    findNextMessage.mockResolvedValue(
+      createInbox({ segregationRef: "ref_1", source: "CW" }),
+    );
+    claimEvents.mockResolvedValue([
+      createInbox({ segregationRef: "ref_1", source: "CW" }),
+    ]);
+    getFifoLocks.mockResolvedValue([]);
+    setFifoLock.mockResolvedValue({ upsertedCount: 1, modifiedCount: 1 });
+    freeFifoLock.mockResolvedValue();
+    claimEvents.mockResolvedValue([
+      Inbox.createMock({
+        event: { time: new Date().toISOString(), messageGroupId: "1" },
+      }),
+    ]);
+    const subscriber = new InboxSubscriber();
+    subscriber.start();
+    await vi.waitFor(() => {
+      expect(claimEvents).toHaveBeenCalled();
+    });
+    expect(claimEvents).toHaveBeenCalledTimes(1);
+    subscriber.stop();
+    vi.advanceTimersByTime(500);
+    expect(subscriber.running).toBeFalsy();
+    expect(claimEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it("should skip processing when lock is not acquired", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue({ segregationRef: "ref_1" });
+    setFifoLock.mockResolvedValue({ upsertedCount: 0, matchedCount: 0 });
+
+    const subscriber = new InboxSubscriber();
+    const processEventsSpy = vi
+      .spyOn(subscriber, "processEvents")
+      .mockResolvedValue();
+
+    await subscriber.processWithLock("claim-token", "ref_1");
+
+    expect(setFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
+    expect(claimEvents).not.toHaveBeenCalled();
+    expect(processEventsSpy).not.toHaveBeenCalled();
+  });
+
+  it("should skip polling when no available segregationRef", async () => {
+    getFifoLocks.mockResolvedValue([]);
+    findNextMessage.mockResolvedValue(null);
+    claimEvents.mockResolvedValue([]);
+
+    const subscriber = new InboxSubscriber();
+    subscriber.start();
+
+    await vi.waitFor(() => {
+      expect(findNextMessage).toHaveBeenCalled();
+    });
+
+    expect(setFifoLock).not.toHaveBeenCalled();
+    subscriber.stop();
+  });
+
+  describe("available segregation Ref", () => {
+    it("should claim next available message", async () => {
+      const events = [
+        Inbox.createMock({
+          _id: "1",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-1",
+        }),
+        Inbox.createMock({
+          _id: "2",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-1",
+        }),
+        Inbox.createMock({
+          _id: "3",
+          event: { time: new Date(Date.now()).toISOString() },
+          segregationRef: "ref-2",
+        }),
+      ];
+
+      const spy1 = vi.spyOn(InboxSubscriber.prototype, "processEvents");
+      spy1.mockResolvedValue();
+      setFifoLock.mockResolvedValue({ upsertedCount: 1, modifiedCount: 1 });
+      freeFifoLock.mockResolvedValue();
+      getFifoLocks.mockResolvedValue([]);
+      findNextMessage.mockResolvedValue({ segregationRef: "ref-2" });
+
+      claimEvents.mockResolvedValue([events[2]]);
+      const subscriber = new InboxSubscriber();
+
+      subscriber.start();
+      await vi.waitFor(() => {
+        expect(spy1).toBeCalled();
+      });
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy1.mock.calls[0][0][0]._id).toEqual("3");
+    });
+  });
+
+  describe("processEvents", () => {
+    it("should process events in correct order", async () => {
+      const events = [
+        Inbox.createMock({
+          _id: "1",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+        Inbox.createMock({
+          _id: "2",
+          event: { time: new Date(Date.now()).toISOString() },
+        }),
+      ];
+
+      claimEvents.mockResolvedValue(events);
+      const subscriber = new InboxSubscriber();
+      const spy1 = vi
+        .spyOn(subscriber, "handleEvent")
+        .mockImplementationOnce(async () => {
+          return setTimeout(500);
+        })
+        .mockImplementationOnce(async () => setTimeout(500));
+      await subscriber.processEvents(events);
+      expect(spy1).toHaveBeenCalledTimes(2);
+
+      expect(subscriber.handleEvent.mock.calls[0][0]).toEqual(events[0]);
+      expect(subscriber.handleEvent.mock.calls[1][0]).toEqual(events[1]);
+    });
+
+    it("should use use-cases if mapped", async () => {
+      const mockEventData = {
+        foo: "barr",
+      };
+      submitCaseUseCase.mockResolvedValue(true);
+
+      withTraceParent.mockImplementation((_, fn) => fn());
+      const mockEvent = {
+        type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
+        traceparent: "1234-abcd",
+        event: {
+          data: mockEventData,
+        },
+        markAsComplete: vi.fn(),
+      };
+      const inbox = new InboxSubscriber(useCaseMap);
+      await inbox.processEvents([mockEvent]);
+      expect(withTraceParent).toHaveBeenCalled();
+      expect(submitCaseUseCase).toHaveBeenCalled();
+      expect(withTraceParent.mock.calls[0][0]).toBe("1234-abcd");
+      expect(mockEvent.markAsComplete).toHaveBeenCalled();
+    });
+
+    it("throws if unable to handle inbox message", async () => {
+      const mockEventData = {
+        foo: "barr",
+      };
+
+      const mockMessage = {
+        messageId: "message-1234",
+        type: "u.nknown.event.id",
+        traceparent: "1234-abcd",
+        event: {
+          data: mockEventData,
+        },
+        markAsFailed: vi.fn(),
+      };
+      const inbox = new InboxSubscriber(useCaseMap);
+      inbox.handleEvent(mockMessage);
+      expect(mockMessage.markAsFailed).toHaveBeenCalled();
+    });
+
+    it("should mark events as failed", async () => {
+      withTraceParent.mockImplementation((_, fn) => fn());
+
+      const mockEventData = {
+        currentStatus: "APPROVE",
+        foo: "barr",
+      };
+
+      const mockEvent = {
+        type: "un.known.event.id",
+        source: "Gas",
+        traceparent: "1234-abcd",
+        event: {
+          data: mockEventData,
+        },
+        markAsFailed: vi.fn(),
+      };
+      const inbox = new InboxSubscriber(useCaseMap);
+      await inbox.processEvents([mockEvent]);
+      expect(mockEvent.markAsFailed).toHaveBeenCalled();
+    });
+
+    it("should mark events as complete", async () => {
+      const mockEventData = {
+        foo: "barr",
+      };
+      submitCaseUseCase.mockResolvedValue("COMPLETE");
+
+      withTraceParent.mockImplementationOnce((_, fn) => fn());
+      const mockEvent = {
+        type: `cloud.defra.${cdpEnv}.fg-gas-backend.case.create`,
+        traceparent: "1234-abcd",
+        event: {
+          data: mockEventData,
+        },
+        markAsComplete: vi.fn(),
+        markAsFailed: vi.fn(),
+      };
+      const inbox = new InboxSubscriber(useCaseMap);
+      await inbox.processEvents([mockEvent]);
+      expect(withTraceParent).toHaveBeenCalled();
+      expect(mockEvent.markAsComplete).toHaveBeenCalled();
+    });
+  });
+});
+
+describe("InboxSubscriber failure reasons", () => {
+  it("passes the caught exception to markAsFailed", async () => {
+    const failure = new Error("use case blew up");
+    submitCaseUseCase.mockRejectedValueOnce(failure);
+    withTraceParent.mockImplementation((_, fn) => fn());
+
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.case.create",
+      source: "GAS",
+      traceparent: "1234-abcd",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber(useCaseMap).handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+
+  it("passes the no-handler error to markAsFailed", async () => {
+    const message = {
+      messageId: "message-1234",
+      type: "cloud.defra.local.fg-gas-backend.nothing.handles.this",
+      source: "GAS",
+      event: { data: {} },
+      markAsFailed: vi.fn(),
+    };
+
+    await new InboxSubscriber().handleEvent(message);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(expect.any(Error));
+    expect(message.markAsFailed.mock.calls[0][0].message).toContain(
+      "No handler found for event type",
+    );
+  });
+
+  it("forwards the error through markEventFailed to the model", async () => {
+    const failure = new Error("boom");
+    const message = { messageId: "m-1", markAsFailed: vi.fn() };
+
+    await new InboxSubscriber().markEventFailed(message, failure);
+
+    expect(message.markAsFailed).toHaveBeenCalledWith(failure);
+  });
+});
+
+// The write is the whole in-memory document, so a handler that outlived its
+// claim would otherwise put a stale copy back over whatever the expiry sweep
+// did to the row in the meantime - erasing an attempt increment and a
+// `ClaimExpired` history entry that this service's own admin surface reads.
+describe("InboxSubscriber writes only while it holds the claim", () => {
+  const claimed = (subscriber, fn) =>
+    subscriber.asyncLocalStorage.run("claim-token-1", fn);
+
+  beforeEach(() => {
+    update.mockResolvedValue({ matchedCount: 1 });
+  });
+
+  it.each([
+    ["complete", (s, m) => s.markEventComplete(m)],
+    ["failed", (s, m) => s.markEventFailed(m, new Error("boom"))],
+  ])(
+    "carries the claim token when marking an event %s",
+    async (_name, mark) => {
+      const subscriber = new InboxSubscriber();
+      const message = {
+        messageId: "m-1",
+        markAsComplete: vi.fn(),
+        markAsFailed: vi.fn(),
+      };
+
+      await claimed(subscriber, () => mark(subscriber, message));
+
+      expect(update).toHaveBeenCalledWith(message, "claim-token-1");
+    },
+  );
+
+  it("says so when the row moved on rather than claiming it wrote", async () => {
+    update.mockResolvedValue({ matchedCount: 0 });
+    const info = vi.spyOn(logger, "info");
+    const subscriber = new InboxSubscriber();
+    const message = { messageId: "m-1", markAsComplete: vi.fn() };
+
+    await claimed(subscriber, () => subscriber.markEventComplete(message));
+
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("moved on before it was marked complete"),
+    );
+    expect(info).not.toHaveBeenCalledWith(
+      expect.stringContaining("Marked inbox event complete"),
+    );
+  });
+
+  // The claim travels with the work rather than through every handler
+  // signature, which is how the outbox has always carried it.
+  it("runs claimed events inside the claim's own store", async () => {
+    const subscriber = new InboxSubscriber();
+    claimEvents.mockResolvedValue([Inbox.createMock()]);
+    setFifoLock.mockResolvedValue({ upsertedCount: 1, matchedCount: 0 });
+    let seen = null;
+    vi.spyOn(subscriber, "processEvents").mockImplementation(async () => {
+      seen = subscriber.asyncLocalStorage.getStore();
+    });
+
+    await subscriber.processWithLock("claim-token-2", "ref-1");
+
+    expect(seen).toBe("claim-token-2");
+  });
+});

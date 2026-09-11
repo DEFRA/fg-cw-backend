@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { SqsSubscriber } from "../../common/sqs-subscriber.js";
-import { saveInboxMessageUseCase } from "../use-cases/save-inbox-message.use-case.js";
+import { saveInboxMessageUseCase } from "../../events/use-cases/save-inbox-message.use-case.js";
 import { createUpdateStatusAgreementConsumer } from "./update-case-status-agreement.subscriber.js";
 
-vi.mock("../use-cases/save-inbox-message.use-case.js");
+vi.mock("../../events/use-cases/save-inbox-message.use-case.js");
 vi.mock("../use-cases/update-supplementary-data.use-case.js");
 
 describe("update status command", () => {

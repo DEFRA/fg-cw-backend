@@ -5,8 +5,8 @@ import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
-import { InboxSubscriber } from "./subscribers/inbox.subscriber.js";
-import { OutboxSubscriber } from "./subscribers/outbox.subscriber.js";
+import { InboxSubscriber } from "../events/subscribers/inbox.subscriber.js";
+import { OutboxSubscriber } from "../events/subscribers/outbox.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
 vi.mock("migrate-mongo");

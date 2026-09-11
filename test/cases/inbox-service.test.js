@@ -10,10 +10,10 @@ import {
   it,
   vi,
 } from "vitest";
-import { Inbox } from "../../src/cases/models/inbox.js";
-import { claimEvents } from "../../src/cases/repositories/inbox.repository.js";
+import { Inbox } from "../../src/events/models/inbox.js";
+import { claimEvents } from "../../src/events/repositories/inbox.repository.js";
 
-import { InboxSubscriber } from "../../src/cases/subscribers/inbox.subscriber.js";
+import { InboxSubscriber } from "../../src/events/subscribers/inbox.subscriber.js";
 let client;
 let inbox, fifo;
 

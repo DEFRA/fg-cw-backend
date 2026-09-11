@@ -8,7 +8,7 @@ import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
-vi.mock("../repositories/outbox.repository.js");
+vi.mock("../../events/repositories/outbox.repository.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-workflow-by-code.use-case.js");
 vi.mock("./resolve-and-fetch-workflow.use-case.js");
