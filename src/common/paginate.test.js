@@ -143,6 +143,7 @@ describe("paginate", () => {
       expect(col.find).toHaveBeenCalledWith({
         $and: [
           { active: true },
+          { name: { $gte: "Bob" } },
           {
             $or: [{ name: { $gt: "Bob" } }, { name: "Bob", _id: { $gt: "2" } }],
           },
@@ -164,6 +165,7 @@ describe("paginate", () => {
       expect(col.find).toHaveBeenCalledWith({
         $and: [
           { active: true },
+          { name: { $lte: "Bob" } },
           {
             $or: [{ name: { $lt: "Bob" } }, { name: "Bob", _id: { $lt: "2" } }],
           },
@@ -248,10 +250,53 @@ describe("paginate", () => {
       expect(col.find).toHaveBeenCalledWith({
         $and: [
           { active: true },
+          { name: { $lte: "Charlie" } },
           {
             $or: [
               { name: { $lt: "Charlie" } },
               { name: "Charlie", _id: { $lt: "3" } },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("bounds and keys a cursor page that has no filter of its own", async () => {
+      const col = makeCollection([], 0);
+      const cursor = makeCursor({ name: "Bob", _id: "2" });
+
+      await paginate(col, { ...baseOpts, filter: undefined, cursor });
+
+      expect(col.find).toHaveBeenCalledWith({
+        $and: [
+          {},
+          { name: { $gte: "Bob" } },
+          {
+            $or: [{ name: { $gt: "Bob" } }, { name: "Bob", _id: { $gt: "2" } }],
+          },
+        ],
+      });
+    });
+
+    it("flips the leading-key bound for a descending sort paged backward", async () => {
+      const col = makeCollection([], 0);
+      const cursor = makeCursor({ name: "Charlie", _id: "3" });
+
+      await paginate(col, {
+        ...baseOpts,
+        sort: { name: -1 },
+        cursor,
+        direction: "backward",
+      });
+
+      expect(col.find).toHaveBeenCalledWith({
+        $and: [
+          { active: true },
+          { name: { $gte: "Charlie" } },
+          {
+            $or: [
+              { name: { $gt: "Charlie" } },
+              { name: "Charlie", _id: { $gt: "3" } },
             ],
           },
         ],
@@ -430,7 +475,11 @@ describe("paginate", () => {
         direction: "forward",
       });
 
-      const [, keyset] = col.find.mock.calls[0][0].$and;
+      const [, bound, keyset] = col.find.mock.calls[0][0].$and;
+
+      expect(bound).toEqual({
+        createdAt: { $lte: new Date("2025-01-15T10:00:00.000Z") },
+      });
 
       expect(keyset.$or[0].createdAt.$lt).toEqual(
         new Date("2025-01-15T10:00:00.000Z"),
@@ -452,10 +501,31 @@ describe("paginate", () => {
         direction: "forward",
       });
 
-      const [filter, keyset] = col.find.mock.calls[0][0].$and;
+      const [filter, , keyset] = col.find.mock.calls[0][0].$and;
 
       expect(filter).toEqual(search);
       expect(keyset.$or).toHaveLength(2);
+    });
+  });
+
+  describe("maxTimeMS", () => {
+    it("passes no find options when the caller sets no time limit", async () => {
+      const col = makeCollection([], 0);
+
+      await paginate(col, baseOpts);
+
+      expect(col.find.mock.calls[0]).toEqual([{ active: true }]);
+    });
+
+    it("bounds the find with the caller's time limit", async () => {
+      const col = makeCollection([], 0);
+
+      await paginate(col, { ...baseOpts, maxTimeMS: 3000 });
+
+      expect(col.find).toHaveBeenCalledWith(
+        { active: true },
+        { maxTimeMS: 3000 },
+      );
     });
   });
 

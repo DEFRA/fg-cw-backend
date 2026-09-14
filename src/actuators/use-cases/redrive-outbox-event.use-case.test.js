@@ -22,40 +22,23 @@ beforeEach(() => {
   withTransaction.mockImplementation(async (run) => run(SESSION));
 });
 
-const aRow = () => ({
-  _id: ID,
-  eventId: "evt-1",
-  status: "RESUBMITTED",
-  completionAttempts: 0,
-});
-
 describe("redriveOutboxEventUseCase", () => {
   it("issues the conditional update by id", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID });
 
     expect(redriveById).toHaveBeenCalledWith(ID, { by: undefined, session: SESSION });
   });
 
-  it("returns the updated list row", async () => {
-    redriveById.mockResolvedValue(aRow());
+  it("answers with nothing once the row is redriven", async () => {
+    redriveById.mockResolvedValue(true);
 
-    expect(await redriveOutboxEventUseCase({ id: ID })).toMatchObject({
-      _id: ID,
-      status: "RESUBMITTED",
-      completionAttempts: 0,
-    });
-  });
-
-  it("stamps maxAttempts on the returned row", async () => {
-    redriveById.mockResolvedValue(aRow());
-
-    expect((await redriveOutboxEventUseCase({ id: ID })).maxAttempts).toBe(5);
+    expect(await redriveOutboxEventUseCase({ id: ID })).toBeUndefined();
   });
 
   it("does not read the status again on the happy path", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID });
 
@@ -63,7 +46,7 @@ describe("redriveOutboxEventUseCase", () => {
   });
 
   it("404s when the conditional update matched nothing and the row is gone", async () => {
-    redriveById.mockResolvedValue(null);
+    redriveById.mockResolvedValue(false);
     findStatusById.mockResolvedValue(null);
 
     await expect(redriveOutboxEventUseCase({ id: ID })).rejects.toMatchObject({
@@ -72,7 +55,7 @@ describe("redriveOutboxEventUseCase", () => {
   });
 
   it("409s when the row is no longer DEAD_LETTER", async () => {
-    redriveById.mockResolvedValue(null);
+    redriveById.mockResolvedValue(false);
     findStatusById.mockResolvedValue("COMPLETED");
 
     await expect(redriveOutboxEventUseCase({ id: ID })).rejects.toMatchObject({
@@ -81,7 +64,7 @@ describe("redriveOutboxEventUseCase", () => {
   });
 
   it("puts the current status in the 409 body", async () => {
-    redriveById.mockResolvedValue(null);
+    redriveById.mockResolvedValue(false);
     findStatusById.mockResolvedValue("PUBLISHED");
 
     await expect(redriveOutboxEventUseCase({ id: ID })).rejects.toMatchObject({
@@ -90,7 +73,7 @@ describe("redriveOutboxEventUseCase", () => {
   });
 
   it("loses cleanly to a concurrent state change", async () => {
-    redriveById.mockResolvedValue(null);
+    redriveById.mockResolvedValue(false);
     findStatusById.mockResolvedValue("PROCESSING");
 
     await expect(redriveOutboxEventUseCase({ id: ID })).rejects.toMatchObject({
@@ -102,7 +85,7 @@ describe("redriveOutboxEventUseCase", () => {
 
 describe("redriveOutboxEventUseCase actor", () => {
   it("passes the actor through to the conditional update", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID, by: "donatas" });
 
@@ -114,7 +97,7 @@ describe("redriveOutboxEventUseCase actor", () => {
 // together or not at all.
 describe("redriveOutboxEventUseCase transaction", () => {
   it("runs the redrive and its audit inside one transaction", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID, by: "donatas", caller: "gas" });
 
@@ -132,7 +115,7 @@ describe("redriveOutboxEventUseCase transaction", () => {
   });
 
   it("records the redrive against the event, naming actor and caller", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID, by: "donatas", caller: "gas" });
 
@@ -151,7 +134,7 @@ describe("redriveOutboxEventUseCase transaction", () => {
 
   // "System" is GAS's display wording; storage keeps the absence.
   it("records an unattributed redrive as a null actor", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
 
     await redriveOutboxEventUseCase({ id: ID, by: null, caller: "gas" });
 
@@ -164,7 +147,7 @@ describe("redriveOutboxEventUseCase transaction", () => {
   // A swallowed audit failure would leave the row redriven with nothing
   // recording it. Rethrowing aborts the transaction instead.
   it("fails the redrive when the audit event cannot be written", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
     writeAuditEvent.mockRejectedValue(new Error("outbox insert failed"));
 
     await expect(
@@ -173,7 +156,7 @@ describe("redriveOutboxEventUseCase transaction", () => {
   });
 
   it("fails the redrive when the audit payload will not validate", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
     writeAuditEvent.mockRejectedValue(
       new Error("Audit event failed validation"),
     );
@@ -186,7 +169,7 @@ describe("redriveOutboxEventUseCase transaction", () => {
   // The abort is the transaction's job, so what this pins is that the error
   // escapes the callback - the only way a real transaction rolls the row back.
   it("lets the audit failure escape the transaction callback", async () => {
-    redriveById.mockResolvedValue(aRow());
+    redriveById.mockResolvedValue(true);
     writeAuditEvent.mockRejectedValue(new Error("outbox insert failed"));
 
     let escaped = null;
