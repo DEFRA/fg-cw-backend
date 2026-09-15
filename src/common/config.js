@@ -1,3 +1,4 @@
+import { VARIANT_PATTERN } from "./configuration-variant.js";
 import convict from "convict";
 import convictFormatWithValidator from "convict-format-with-validator";
 import Joi from "joi";
@@ -187,7 +188,7 @@ export const config = convict({
         if (!val || process.env.ENVIRONMENT === "prod") {
           return;
         }
-        if (!/^[a-z0-9-]+$/.test(val)) {
+        if (!VARIANT_PATTERN.test(val)) {
           throw new Error(
             "must be lowercase letters, numbers or hyphens",
           );
