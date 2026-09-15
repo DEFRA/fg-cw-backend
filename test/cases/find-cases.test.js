@@ -102,6 +102,80 @@ describe("GET /cases", () => {
     ]);
   });
 
+  // The list pages 20 at a time on `createdAt` desc, forward and backward,
+  // with its own cursors - the shared paginator the actuator list also uses.
+  it("pages forward and backward through cases with its own cursors", async () => {
+    await createWorkflow();
+
+    const TOTAL = 45;
+    const refOf = (i) => `PAGE-CASE-${String(i).padStart(2, "0")}`;
+
+    await cases.insertMany(
+      Array.from({ length: TOTAL }, (_, i) => ({
+        ...caseData1,
+        caseRef: refOf(i),
+        createdAt: new Date(Date.UTC(2025, 0, 1, 0, i)),
+      })),
+    );
+
+    const page = async (query) => {
+      const params = new URLSearchParams(query);
+      const { res, payload } = await wreck.get(`/cases?${params}`);
+
+      expect(res.statusCode).toBe(200);
+
+      return {
+        refs: payload.data.cases.map((c) => c.caseRef),
+        pagination: payload.data.pagination,
+      };
+    };
+    const refs = (from, to) =>
+      Array.from({ length: from - to + 1 }, (_, i) => refOf(from - i));
+
+    const first = await page({});
+    expect(first.refs).toEqual(refs(44, 25));
+    expect(first.pagination).toMatchObject({
+      hasNextPage: true,
+      hasPreviousPage: false,
+      startCursor: expect.any(String),
+      endCursor: expect.any(String),
+    });
+
+    const second = await page({ cursor: first.pagination.endCursor });
+    expect(second.refs).toEqual(refs(24, 5));
+    expect(second.pagination).toMatchObject({
+      hasNextPage: true,
+      hasPreviousPage: true,
+    });
+
+    const last = await page({ cursor: second.pagination.endCursor });
+    expect(last.refs).toEqual(refs(4, 0));
+    expect(last.pagination).toMatchObject({
+      hasNextPage: false,
+      hasPreviousPage: true,
+    });
+
+    const back = await page({
+      cursor: last.pagination.startCursor,
+      direction: "backward",
+    });
+    expect(back.refs).toEqual(second.refs);
+    expect(back.pagination).toMatchObject({
+      hasNextPage: true,
+      hasPreviousPage: true,
+    });
+
+    const backToFirst = await page({
+      cursor: back.pagination.startCursor,
+      direction: "backward",
+    });
+    expect(backToFirst.refs).toEqual(first.refs);
+    expect(backToFirst.pagination).toMatchObject({
+      hasNextPage: true,
+      hasPreviousPage: false,
+    });
+  });
+
   it("exludes cases user does not have access to", async () => {
     await createWorkflow({
       code: "WF-1",

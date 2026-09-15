@@ -1,3 +1,4 @@
+import hapi from "@hapi/hapi";
 import { describe, expect, it, vi } from "vitest";
 import { findPageUseCase } from "../use-cases/find-page.use-case.js";
 import { findPageRoute } from "./find-page.route.js";
@@ -51,15 +52,53 @@ describe("findPageRoute", () => {
     expect(value).toMatchObject({ inboxCursor: "IN", outboxCursor: "OUT" });
   });
 
-  it("has no single shared cursor to mistake for one of them", () => {
-    expect(validateQuery({ cursor: "IN" }).error).toBeDefined();
+  it("answers 400 to a query key the route does not declare", async () => {
+    const server = hapi.server();
+    server.auth.scheme("stub", () => ({
+      authenticate: (_request, h) =>
+        h.authenticated({ credentials: { service: "gas" } }),
+    }));
+    server.auth.strategy("public-api", "stub");
+    server.route(findPageRoute);
+    await server.initialize();
+
+    const { statusCode } = await server.inject(
+      "/actuators/events?someUnknownKey=x",
+    );
+
+    await server.stop();
+
+    expect(statusCode).toBe(400);
+    expect(findPageUseCase).not.toHaveBeenCalled();
   });
 
-  it("defaults the direction and the page size, as the box lists do", () => {
+  it("defaults the page size and every section", () => {
     const { value } = validateQuery({});
 
-    expect(value).toMatchObject({ direction: "forward", pageSize: 20 });
+    expect(value).toEqual({
+      pageSize: 20,
+      audit: "exclude",
+      sections: ["list", "counts", "breakdown"],
+    });
   });
+
+  it.each([
+    ["list", ["list"]],
+    ["list,counts", ["list", "counts"]],
+    ["breakdown,list,breakdown", ["breakdown", "list"]],
+  ])("reads sections=%s as a list of sections", (sections, expected) => {
+    const { error, value } = validateQuery({ sections });
+
+    expect(error).toBeUndefined();
+    expect(value.sections).toEqual(expected);
+  });
+
+  it.each(["", "rows", "list,", "list,nope", "list counts"])(
+    "refuses sections=%j",
+    (sections) => {
+      expect(validateQuery({ sections }).error).toBeDefined();
+    },
+  );
 
   it.each([
     ["q", { q: "GLD-9B2" }],
@@ -91,9 +130,9 @@ describe("findPageRoute", () => {
     await handle({
       inboxCursor: "IN",
       outboxCursor: "OUT",
-      direction: "forward",
       pageSize: 20,
       status: "DEAD_LETTER",
+      sections: ["list"],
       q: "GLD-9B2",
       error: "boom",
       from: "2026-06-16T00:00:00.000Z",
@@ -104,9 +143,9 @@ describe("findPageRoute", () => {
     expect(findPageUseCase).toHaveBeenCalledWith({
       inboxCursor: "IN",
       outboxCursor: "OUT",
-      direction: "forward",
       pageSize: 20,
       status: "DEAD_LETTER",
+      sections: ["list"],
       q: "GLD-9B2",
       error: "boom",
       from: "2026-06-16T00:00:00.000Z",

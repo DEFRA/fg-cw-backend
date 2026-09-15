@@ -16,6 +16,7 @@ import {
   updateResubmittedEvents as resubmittedOutbox,
 } from "../cases/repositories/outbox.repository.js";
 import { REDRIVE_FROM_STATUS, redriveConflict } from "./event-redrive.js";
+import { anAttemptHistory } from "../../test/fixtures/attempt-history.js";
 import { db } from "../common/mongo-client.js";
 
 vi.mock("../common/mongo-client.js");
@@ -24,10 +25,8 @@ const MAX_RETRIES = 5;
 const ID = "665f1c2e9a1b2c3d4e5f6a7b";
 const SEGREGATION_REF = "GLD-9B2";
 
-// A minimum viable Mongo, so the poller's REAL filters and updates - captured
-// from the repositories, not restated here - run against a redriven document:
-// a change to the claim filter or the dead-letter sweep fails this test rather
-// than the redrive silently going nowhere.
+// A minimal Mongo, so the repositories' real filters and updates run against
+// a redriven document.
 const OPERATORS = {
   $eq: (value, operand) => value === operand,
   $ne: (value, operand) => value !== operand,
@@ -50,8 +49,7 @@ const matchesCondition = (value, condition) =>
       )
     : value === condition;
 
-// `_id` is dropped: it is an ObjectId instance and identity-compares, and the
-// document is already the one the filter selected by id.
+// `_id` is dropped: ObjectIds compare by identity.
 const matchesFilter = (doc, filter) => {
   const { _id, ...rest } = filter;
 
@@ -73,8 +71,8 @@ const applyInc = (doc, increments) => {
 const applyUpdate = (doc, update) =>
   applyInc({ ...doc, ...(update.$set ?? {}) }, update.$inc);
 
-const capture = async (method, run) => {
-  const spy = vi.fn().mockResolvedValue(null);
+const capture = async (method, run, resolved = null) => {
+  const spy = vi.fn().mockResolvedValue(resolved);
   db.collection.mockReturnValue({ [method]: spy });
 
   await run();
@@ -82,7 +80,6 @@ const capture = async (method, run) => {
   return spy.mock.calls.at(-1);
 };
 
-// exactly what the dead-letter sweep leaves behind: attempts at the cap
 const aDeadLetter = () => ({
   status: "DEAD_LETTER",
   completionAttempts: MAX_RETRIES,
@@ -92,8 +89,19 @@ const aDeadLetter = () => ({
   segregationRef: SEGREGATION_REF,
 });
 
-// The minimum a model needs to be constructible; everything the arithmetic
-// cares about comes off the document under test.
+const aDeadLetterWithHistory = () => ({
+  ...aDeadLetter(),
+  attemptHistory: anAttemptHistory({
+    length: MAX_RETRIES,
+    message: "before the redrive",
+  }),
+  lastError: {
+    name: "TypeError",
+    message: "before the redrive",
+    at: "2026-06-16T10:04:00.000Z",
+  },
+});
+
 const INBOX_PROPS = {
   source: "GAS",
   event: { time: "2026-06-16T10:00:00.000Z" },
@@ -106,8 +114,6 @@ const OUTBOX_PROPS = {
   segregationRef: SEGREGATION_REF,
 };
 
-// One real processing failure, recorded by the MODEL - the operation that
-// both pushes the history entry and raises the counter, so they cannot drift.
 const failWithModel = (Model, doc, props) => {
   const model = Model.fromDocument({
     ...props,
@@ -138,8 +144,6 @@ const BOXES = [
     resubmitted: resubmittedInbox,
     failed: failedInbox,
     dead: deadInbox,
-    // The REAL model, so the counter is raised by the code that actually
-    // raises it rather than by a restatement of it here.
     fail: (doc) => failWithModel(Inbox, doc, INBOX_PROPS),
   },
   {
@@ -164,10 +168,9 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
   let failedUpdate;
 
   beforeEach(async () => {
-    [redriveFilter, redriveDoc] = await capture(
-      "findOneAndUpdate",
-      box.redrive,
-    );
+    [redriveFilter, redriveDoc] = await capture("updateOne", box.redrive, {
+      matchedCount: 0,
+    });
     [claimFilter] = await capture("findOneAndUpdate", box.claim);
     [resubmittedFilter, resubmittedUpdate] = await capture(
       "updateMany",
@@ -200,6 +203,26 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(redriven.claimExpiresAt).toBeNull();
   });
 
+  it("clears the attempt history along with the counter", () => {
+    const redriven = applyUpdate(aDeadLetterWithHistory(), redriveDoc);
+
+    expect(redriven.completionAttempts).toBe(0);
+    expect(redriven.attemptHistory).toEqual([]);
+  });
+
+  it("starts the history again with the first failure after a redrive", () => {
+    const redriven = applyUpdate(
+      applyUpdate(aDeadLetterWithHistory(), redriveDoc),
+      resubmittedUpdate,
+    );
+
+    const failed = box.fail(redriven);
+
+    expect(failed.completionAttempts).toBe(1);
+    expect(failed.attemptHistory).toHaveLength(1);
+    expect(failed.attemptHistory[0].message).toBe("boom");
+  });
+
   it("keeps lastError and lastResubmissionDate - the record of why it died", () => {
     const lastError = { name: "TypeError", message: "boom", at: null };
     const redriven = applyUpdate(
@@ -215,8 +238,6 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(redriven.lastResubmissionDate).toBe("2026-06-16T10:00:00.000Z");
   });
 
-  // THE test: a full poll tick over the redriven row, in the order the
-  // subscriber actually runs the sweeps (resubmitted, then failed, then dead).
   it("survives the next poll tick and is claimable", () => {
     const redriven = applyUpdate(aDeadLetter(), redriveDoc);
 
@@ -225,15 +246,12 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     const published = applyUpdate(redriven, resubmittedUpdate);
 
     expect(published.status).toBe("PUBLISHED");
-    // the fresh-insert value: no attempts MADE yet - the counter is raised by
-    // markAsFailed, when an attempt actually fails
     expect(published.completionAttempts).toBe(0);
     expect(matchesFilter(published, deadFilter)).toBe(false);
     expect(matchesFilter(published, claimFilter)).toBe(true);
   });
 
   it("would be unclaimable if the redrive left completionAttempts alone", () => {
-    // the same tick, but with the attempts reset removed from the update
     const withoutReset = {
       $set: { ...redriveDoc.$set, completionAttempts: MAX_RETRIES },
     };
@@ -241,16 +259,11 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     const published = applyUpdate(redriven, resubmittedUpdate);
 
     expect(published.completionAttempts).toBe(MAX_RETRIES);
-    // re-dead-lettered in the same tick, and over the claim cap either way
     expect(matchesFilter(published, deadFilter)).toBe(true);
     expect(matchesFilter(published, claimFilter)).toBe(false);
   });
 
   it("gives a redriven row the same number of fresh attempts as a new one, and the counter and the history agree", () => {
-    // A redriven row, walked through whole poll ticks in the order the
-    // subscriber runs them: claim and process, then the resubmitted, failed
-    // and dead-letter sweeps. Every transition is the repository's REAL update
-    // and every failure is the model's REAL markAsFailed.
     let doc = applyUpdate(
       applyUpdate(aDeadLetter(), redriveDoc),
       resubmittedUpdate,
@@ -272,11 +285,55 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     }
 
     expect(attempts).toBe(MAX_RETRIES);
-    // THE reconciliation: the row is dead-lettered only after its last attempt
-    // has actually RUN, so the counter and the attempt history agree.
     expect(doc.status).toBe("DEAD_LETTER");
     expect(doc.completionAttempts).toBe(MAX_RETRIES);
     expect(doc.attemptHistory).toHaveLength(MAX_RETRIES);
+  });
+
+  it("redrives a row that already has a history into one that agrees with its counter", () => {
+    let doc = applyUpdate(
+      applyUpdate(aDeadLetterWithHistory(), redriveDoc),
+      resubmittedUpdate,
+    );
+    let attempts = 0;
+
+    while (matchesFilter(doc, claimFilter) && attempts < 100) {
+      attempts += 1;
+
+      doc = applyUpdate(
+        applyUpdate(box.fail(doc), failedUpdate),
+        resubmittedUpdate,
+      );
+
+      if (matchesFilter(doc, deadFilter)) {
+        doc = { ...doc, status: "DEAD_LETTER" };
+      }
+    }
+
+    expect(attempts).toBe(MAX_RETRIES);
+    expect(doc.status).toBe("DEAD_LETTER");
+    expect(doc.completionAttempts).toBe(MAX_RETRIES);
+    expect(doc.attemptHistory).toHaveLength(MAX_RETRIES);
+    expect(doc.attemptHistory.map((entry) => entry.message)).not.toContain(
+      "before the redrive",
+    );
+  });
+
+  it("would carry the old history past the counter if the redrive kept it", () => {
+    const withoutClear = Object.fromEntries(
+      Object.entries(redriveDoc.$set).filter(
+        ([key]) => key !== "attemptHistory",
+      ),
+    );
+    const redriven = applyUpdate(
+      applyUpdate(aDeadLetterWithHistory(), { $set: withoutClear }),
+      resubmittedUpdate,
+    );
+
+    const failed = box.fail(redriven);
+
+    expect(failed.completionAttempts).toBe(1);
+    expect(failed.attemptHistory).toHaveLength(MAX_RETRIES + 1);
   });
 });
 

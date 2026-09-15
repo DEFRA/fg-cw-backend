@@ -1,21 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   AUDIT_EXCLUDE,
-  AUDIT_FULL_TYPE,
   AUDIT_INCLUDE,
   AUDIT_MODES,
   AUDIT_TARGET_FIELDS,
   AUDIT_TYPE,
   EVENT_TYPE_FIELDS,
-  UNKNOWN_FULL_TYPE,
   UNKNOWN_TYPE,
   auditClauses,
   auditGroupExpression,
   auditTopicArn,
-  fullTypeForMissingType,
   isAuditTarget,
   labelForMissingType,
-  typeLabels,
+  typeLabel,
 } from "./event-audit.js";
 
 // Inlined rather than referencing the constant below: `vi.mock` is hoisted
@@ -68,73 +65,15 @@ describe("labelForMissingType", () => {
   });
 });
 
-describe("fullTypeForMissingType", () => {
-  it("explains an audit record", () => {
-    expect(fullTypeForMissingType(true)).toBe(
-      "Audit record — not a CloudEvent",
-    );
+describe("typeLabel", () => {
+  it("states a stored type, even on the audit topic", () => {
+    expect(typeLabel(A_TYPE, false)).toBe(A_TYPE);
+    expect(typeLabel(A_TYPE, true)).toBe(A_TYPE);
   });
 
-  it("explains a type-less anomaly", () => {
-    expect(fullTypeForMissingType(false)).toBe(
-      "No event type recorded — not a CloudEvent",
-    );
-  });
-
-  // Shared verbatim with fg-gas-backend, em dash included: a sentence that
-  // read differently here would split one merged population in two.
-  it("uses an em dash, as the other service's do", () => {
-    expect(AUDIT_FULL_TYPE).toContain("—");
-    expect(UNKNOWN_FULL_TYPE).toContain("—");
-  });
-});
-
-describe("typeLabels", () => {
-  it("states a stored type in both fields", () => {
-    expect(typeLabels(A_TYPE, false)).toEqual({
-      type: A_TYPE,
-      fullType: A_TYPE,
-    });
-  });
-
-  it("states a stored type even on the audit topic", () => {
-    expect(typeLabels(A_TYPE, true)).toEqual({
-      type: A_TYPE,
-      fullType: A_TYPE,
-    });
-  });
-
-  it("labels a type-less audit record and explains it", () => {
-    expect(typeLabels(null, true)).toEqual({
-      type: AUDIT_TYPE,
-      fullType: AUDIT_FULL_TYPE,
-    });
-  });
-
-  it("labels any other type-less row unknown and explains that", () => {
-    expect(typeLabels(null, false)).toEqual({
-      type: UNKNOWN_TYPE,
-      fullType: UNKNOWN_FULL_TYPE,
-    });
-  });
-
-  it.each([null, undefined, ""])("treats %p as no type at all", (stored) => {
-    expect(typeLabels(stored, true).type).toBe(AUDIT_TYPE);
-    expect(typeLabels(stored, false).type).toBe(UNKNOWN_TYPE);
-  });
-
-  // The property the parallel change in fg-gas-backend depends on: it defers to
-  // this service's label verbatim, so there must always be one.
-  it.each([
-    [A_TYPE, true],
-    [A_TYPE, false],
-    [null, true],
-    [null, false],
-  ])("never answers null for %p / audit=%p", (stored, isAudit) => {
-    const { type, fullType } = typeLabels(stored, isAudit);
-
-    expect(type).toBeTruthy();
-    expect(fullType).toBeTruthy();
+  it.each([null, undefined, ""])("labels %p as audit or unknown", (stored) => {
+    expect(typeLabel(stored, true)).toBe(AUDIT_TYPE);
+    expect(typeLabel(stored, false)).toBe(UNKNOWN_TYPE);
   });
 });
 
@@ -200,7 +139,7 @@ describe("the audit label and the audit filter agree", () => {
     typeof target === "string" && /(^|:)cw__sns__audit_topic_arn$/.test(target);
 
   const labelledAudit = (storedType, target) =>
-    typeLabels(storedType, isAuditTarget(target)).type === AUDIT_TYPE;
+    typeLabel(storedType, isAuditTarget(target)) === AUDIT_TYPE;
 
   it.each([
     ["an audit row", null, ARN],
@@ -213,7 +152,7 @@ describe("the audit label and the audit filter agree", () => {
   });
 
   it("keeps an unknown row visible while naming it", () => {
-    expect(typeLabels(null, isAuditTarget(OTHER_ARN)).type).toBe(UNKNOWN_TYPE);
+    expect(typeLabel(null, isAuditTarget(OTHER_ARN))).toBe(UNKNOWN_TYPE);
     expect(removedByTheFilter(OTHER_ARN)).toBe(false);
   });
 
