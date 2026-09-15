@@ -184,7 +184,9 @@ export const config = convict({
     variant: {
       doc: "Optional filename variant inserted before .json when selecting definitions from a release manifest. Ignored in prod.",
       format: (val) => {
-        if (!val || process.env.ENVIRONMENT === "prod") return;
+        if (!val || process.env.ENVIRONMENT === "prod") {
+          return;
+        }
         if (!/^[a-z0-9-]+$/.test(val)) {
           throw new Error(
             "must be lowercase letters, numbers or hyphens",
