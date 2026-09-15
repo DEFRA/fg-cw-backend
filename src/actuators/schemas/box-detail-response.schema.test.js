@@ -7,7 +7,6 @@ import {
 const aDetail = (overrides = {}) => ({
   _id: "665f1c2e9a1b2c3d4e5f6a7b",
   type: "cloud.defra.prd.fg-gas-backend.case.create.new",
-  fullType: "cloud.defra.prd.fg-gas-backend.case.create.new",
   status: "DEAD_LETTER",
   completionAttempts: 5,
   maxAttempts: 5,
@@ -17,12 +16,7 @@ const aDetail = (overrides = {}) => ({
   lastResubmissionDate: null,
   completionDate: null,
   publicationDate: "2026-06-16T10:00:00.000Z",
-  claimedAt: null,
-  claimExpiresAt: null,
   attemptHistory: [],
-  // an empty pair is "nothing else here", a null one is "we could not look"
-  hops: { inbox: [], outbox: [] },
-  sectionErrors: [],
   ...overrides,
 });
 
@@ -68,13 +62,16 @@ describe("inboxDetailResponseSchema", () => {
     ).toBeDefined();
   });
 
-  it("rejects a claimedBy, so a claim token can never be returned", () => {
+  it.each([
+    ["claimedBy", "claim-token"],
+    ["claimedAt", "2026-06-16T10:00:00.000Z"],
+    ["claimExpiresAt", "2026-06-16T10:00:05.000Z"],
+  ])("rejects a %s", (field, value) => {
     const { error } = inboxDetailResponseSchema.validate(
-      anInbox({ claimedBy: "claim-token" }),
+      anInbox({ [field]: value }),
     );
 
-    expect(error).toBeDefined();
-    expect(error.message).toContain("claimedBy");
+    expect(error.message).toContain(field);
   });
 
   it("tolerates unknown fields from another service version", () => {
@@ -111,11 +108,14 @@ describe("outboxDetailResponseSchema", () => {
     );
   });
 
-  it("rejects a claimedBy", () => {
-    expect(
-      outboxDetailResponseSchema.validate(anOutbox({ claimedBy: "t" })).error,
-    ).toBeDefined();
-  });
+  it.each(["claimedBy", "claimedAt", "claimExpiresAt"])(
+    "rejects a %s",
+    (field) => {
+      expect(
+        outboxDetailResponseSchema.validate(anOutbox({ [field]: "x" })).error,
+      ).toBeDefined();
+    },
+  );
 });
 
 describe("detail attemptHistory", () => {
@@ -123,8 +123,6 @@ describe("detail attemptHistory", () => {
     at: "2026-06-16T10:00:00.000Z",
     name: "ClaimExpired",
     message: "claim expired before completion",
-    // Null on purpose: the claim-expiry sweep has no exception, so this is
-    // the shape of an attempt with nothing to reveal.
     stack: null,
   };
 

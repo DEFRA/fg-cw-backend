@@ -105,6 +105,12 @@ export const config = convict({
       default: "fg-cw-backend",
       env: "MONGO_DATABASE",
     },
+    actuatorReadMaxTimeMs: {
+      doc: "maxTimeMS on every actuator read, kept below the caller's HTTP timeout",
+      format: "nat",
+      default: 3000,
+      env: "ACTUATOR_READ_MAX_TIME_MS",
+    },
   },
   fifoLock: {
     ttlMs: {

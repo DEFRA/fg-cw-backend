@@ -11,7 +11,6 @@ let outbox;
 const FAR_FUTURE = new Date("2099-01-01T00:00:00.000Z");
 const UNKNOWN_ID = "665f1c2e9a1b2c3d4e5f6aaa";
 
-// held claims with a far-future expiry keep the pollers away from the fixtures
 const anInboxDoc = (overrides = {}) => ({
   _id: new ObjectId(),
   messageId: `msg-${new ObjectId().toHexString()}`,
@@ -122,7 +121,7 @@ describe("GET /actuators/events/inbox/{id}", () => {
     expect(JSON.stringify(payload)).not.toContain("test-holder");
   });
 
-  it("returns the claim window, dates, lastError and maxAttempts", async () => {
+  it("returns the dates, lastError and maxAttempts but not the claim window", async () => {
     const doc = anInboxDoc();
     await inbox.insertOne(doc);
 
@@ -132,16 +131,13 @@ describe("GET /actuators/events/inbox/{id}", () => {
     expect(payload.completionAttempts).toBe(3);
     expect(payload.lastResubmissionDate).toBe("2026-06-16T10:05:00.000Z");
     expect(payload.completionDate).toBe("2026-06-16T10:06:00.000Z");
-    expect(payload.claimExpiresAt).toBe(FAR_FUTURE.toISOString());
+    expect(payload).not.toHaveProperty("claimedAt");
+    expect(payload).not.toHaveProperty("claimExpiresAt");
     expect(payload.lastError.name).toBe("TypeError");
     expect(payload.traceparent).toBe(doc.traceparent);
   });
 
-  // The list rebuilds `lastError` from its three contract keys and this used
-  // to copy the stored object through, so a stack written by another version
-  // was stripped on the list and served on the detail. The response schema
-  // cannot be the guard: every route declares `failAction: "log"`, which logs
-  // the violation and sends the body anyway.
+  // Response schemas only log, so the mapper must be what strips the stack.
   it("never returns a stack stored alongside a lastError", async () => {
     const doc = anInboxDoc({
       lastError: {
@@ -166,7 +162,6 @@ describe("GET /actuators/events/inbox/{id}", () => {
     const { payload } = await getInboxEvent(doc._id.toHexString());
 
     expect(payload.type).toBe("unknown");
-    expect(payload.fullType).toBe("No event type recorded — not a CloudEvent");
   });
 });
 
@@ -197,12 +192,9 @@ describe("GET /actuators/events/outbox/{id}", () => {
     const { payload } = await getOutboxEvent(doc._id.toHexString());
 
     expect(payload.type).toBe("audit");
-    expect(payload.fullType).toBe("Audit record — not a CloudEvent");
-    // the one place the audit payload is returned in full
     expect(payload.event.audit.entities[0].entity).toBe("CASE");
   });
 
-  // The same invariant, symmetrically: both boxes rebuild it now.
   it("never returns a stack stored alongside a lastError", async () => {
     const doc = anOutboxDoc({
       lastError: {
@@ -227,7 +219,6 @@ describe("GET /actuators/events/outbox/{id}", () => {
     const { payload } = await getOutboxEvent(doc._id.toHexString());
 
     expect(payload.type).toBe("unknown");
-    expect(payload.fullType).toBe("No event type recorded — not a CloudEvent");
   });
 
   it("states the stored type at the top level on a CloudEvent row", async () => {
@@ -239,7 +230,6 @@ describe("GET /actuators/events/outbox/{id}", () => {
     expect(payload.type).toBe(
       "cloud.defra.prd.fg-cw-backend.case.stage.updated",
     );
-    expect(payload.fullType).toBe(payload.type);
   });
 
   it("returns the full target ARN, not the topic name", async () => {

@@ -20,18 +20,34 @@ afterAll(async () => {
   await client?.close(true);
 });
 
-// migrations run on boot (src/main.js), so by the time the stack is healthy
-// the actuator sort indexes must exist - without them these endpoints do a
-// collection scan with an in-memory sort
 describe("actuator event indexes", () => {
-  it("indexes the inbox newest-first sort with an _id tie-break", async () => {
-    expect(await keysOf("inbox")).toContainEqual({ eventTime: -1, _id: -1 });
+  it("has no inbox eventTime index without a status prefix", async () => {
+    expect(await keysOf("inbox")).not.toContainEqual({
+      eventTime: -1,
+      _id: -1,
+    });
   });
 
-  it("indexes the inbox status filter with the same sort", async () => {
+  // The poller's `eventTime` sort uses it.
+  it("keeps the inbox status filter with the eventTime sort", async () => {
     expect(await keysOf("inbox")).toContainEqual({
       status: 1,
       eventTime: -1,
+      _id: -1,
+    });
+  });
+
+  it("indexes the inbox publicationDate sort with an _id tie-break", async () => {
+    expect(await keysOf("inbox")).toContainEqual({
+      publicationDate: -1,
+      _id: -1,
+    });
+  });
+
+  it("indexes the inbox status filter with the publicationDate sort", async () => {
+    expect(await keysOf("inbox")).toContainEqual({
+      status: 1,
+      publicationDate: -1,
       _id: -1,
     });
   });

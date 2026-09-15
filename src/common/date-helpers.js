@@ -1,3 +1,6 @@
+export const toIsoOrNull = (value) =>
+  value instanceof Date ? value.toISOString() : (value ?? null);
+
 export const isDateString = (value) => {
   if (typeof value !== "string") {
     return false;

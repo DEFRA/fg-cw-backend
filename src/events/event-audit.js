@@ -18,9 +18,6 @@ import { config } from "../common/config.js";
 export const AUDIT_TYPE = "audit";
 export const UNKNOWN_TYPE = "unknown";
 
-export const AUDIT_FULL_TYPE = "Audit record — not a CloudEvent";
-export const UNKNOWN_FULL_TYPE = "No event type recorded — not a CloudEvent";
-
 // Where each box stores the CloudEvent type, so the breakdown's `$group`, the
 // detail projection and the list projection all read the same field.
 export const EVENT_TYPE_FIELDS = { inbox: "type", outbox: "event.type" };
@@ -56,17 +53,10 @@ export const isAuditTarget = (target) => {
 export const labelForMissingType = (isAudit) =>
   isAudit ? AUDIT_TYPE : UNKNOWN_TYPE;
 
-export const fullTypeForMissingType = (isAudit) =>
-  isAudit ? AUDIT_FULL_TYPE : UNKNOWN_FULL_TYPE;
-
-// `type` is the short label a list renders; `fullType` the long form a detail
-// view shows when it differs. Never null in either field: every row states
-// what it is, so a consumer merging these rows with another service's never
-// has to guess on this service's behalf.
-export const typeLabels = (storedType, isAudit) => ({
-  type: storedType || labelForMissingType(isAudit),
-  fullType: storedType || fullTypeForMissingType(isAudit),
-});
+// Never null: a consumer merging these rows with another service's never has
+// to guess what a row is.
+export const typeLabel = (storedType, isAudit) =>
+  storedType || labelForMissingType(isAudit);
 
 export const AUDIT_INCLUDE = "include";
 export const AUDIT_EXCLUDE = "exclude";

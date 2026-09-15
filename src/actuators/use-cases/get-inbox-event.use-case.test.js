@@ -1,11 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { findDetailById } from "../../cases/repositories/inbox.repository.js";
-import { findHopsUseCase } from "./find-hops.use-case.js";
 import { getInboxEventUseCase } from "./get-inbox-event.use-case.js";
 
 vi.mock("../../common/mongo-client.js");
 vi.mock("../../cases/repositories/inbox.repository.js");
-vi.mock("./find-hops.use-case.js");
 
 const ID = "665f1c2e9a1b2c3d4e5f6a7b";
 const EVENT_ID = "evt-1";
@@ -19,10 +17,6 @@ const aDetail = () => ({
   event: { id: "evt-1", data: { clientRef: "REF-1" } },
 });
 
-beforeEach(() => {
-  findHopsUseCase.mockResolvedValue({ inbox: [], outbox: [] });
-});
-
 describe("getInboxEventUseCase", () => {
   it("reads the row by id", async () => {
     findDetailById.mockResolvedValue(aDetail());
@@ -32,47 +26,11 @@ describe("getInboxEventUseCase", () => {
     expect(findDetailById).toHaveBeenCalledWith(ID);
   });
 
-  it("returns the detail document whole, with this service's hops beside it", async () => {
+  it("returns the detail document whole", async () => {
     const detail = aDetail();
     findDetailById.mockResolvedValue(detail);
-    findHopsUseCase.mockResolvedValue({ inbox: [], outbox: [] });
 
-    expect(await getInboxEventUseCase(ID)).toEqual({
-      ...detail,
-      hops: { inbox: [], outbox: [] },
-      sectionErrors: [],
-    });
-  });
-
-  // The hops are the rows sharing this event's id, so the search is for the id
-  // the event travels under rather than the row's own Mongo `_id`.
-  it("looks the hops up by the id the event travels under", async () => {
-    findDetailById.mockResolvedValue(aDetail());
-    findHopsUseCase.mockResolvedValue({ inbox: [], outbox: [] });
-
-    await getInboxEventUseCase(ID);
-
-    expect(findHopsUseCase).toHaveBeenCalledWith(EVENT_ID, expect.any(Array));
-  });
-
-  it("answers with the event and a named section error when the hops fail", async () => {
-    findDetailById.mockResolvedValue(aDetail());
-    findHopsUseCase.mockImplementation(async (_id, sectionErrors) => {
-      sectionErrors.push({
-        box: "inbox",
-        section: "hops",
-        message: "read failed",
-      });
-
-      return { inbox: null, outbox: [] };
-    });
-
-    const result = await getInboxEventUseCase(ID);
-
-    expect(result.hops).toEqual({ inbox: null, outbox: [] });
-    expect(result.sectionErrors).toEqual([
-      { box: "inbox", section: "hops", message: "read failed" },
-    ]);
+    expect(await getInboxEventUseCase(ID)).toEqual(detail);
   });
 
   it("returns the full event payload", async () => {

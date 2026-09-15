@@ -37,22 +37,6 @@ describe("toDetailDocument", () => {
     });
   });
 
-  it("never returns claimedBy", () => {
-    const detail = toDetailDocument(aDoc({ claimedBy: "claim-token" }), 5);
-
-    expect(detail).not.toHaveProperty("claimedBy");
-  });
-
-  it("keeps the other claim fields", () => {
-    const detail = toDetailDocument(
-      aDoc({ claimedAt: null, claimExpiresAt: null }),
-      5,
-    );
-
-    expect(detail.claimedAt).toBeNull();
-    expect(detail.claimExpiresAt).toBeNull();
-  });
-
   it("renders _id as a hex string", () => {
     expect(toDetailDocument(aDoc(), 5)._id).toBe("665f1c2e9a1b2c3d4e5f6a7b");
   });
@@ -111,9 +95,6 @@ describe("toDetailDocument attemptHistory", () => {
     ).toEqual(attemptHistory);
   });
 
-  // The stack is served now - the admin surface expands an attempt to reveal
-  // it - but still as a declared key built one by one, so a stored key nobody
-  // declared is still dropped.
   it("rebuilds each entry from the four contract keys only", () => {
     const attemptHistory = [
       {
@@ -175,8 +156,6 @@ describe("toDetailDocument attemptHistory", () => {
   });
 });
 
-// The detail view is reached by id and is never filtered, so an audit event's
-// own page stays reachable whatever the list is showing.
 describe("toDetailDocument type labels", () => {
   const anOutboxDoc = (overrides = {}) => ({
     _id: objectId,
@@ -196,7 +175,6 @@ describe("toDetailDocument type labels", () => {
     const detail = toDetailDocument(anOutboxDoc(), 5, "outbox");
 
     expect(detail.type).toBe("cloud.defra.prd.fg-cw-backend.case.create");
-    expect(detail.fullType).toBe(detail.type);
   });
 
   it("labels an outbox row addressed at the audit topic", () => {
@@ -207,11 +185,8 @@ describe("toDetailDocument type labels", () => {
     );
 
     expect(detail.type).toBe("audit");
-    expect(detail.fullType).toBe("Audit record — not a CloudEvent");
   });
 
-  // The audit payload itself is still returned in full: the filter hides audit
-  // rows from a list, it never hides one from its own page.
   it("still returns the audit payload on that page", () => {
     const detail = toDetailDocument(
       anOutboxDoc({
@@ -233,18 +208,14 @@ describe("toDetailDocument type labels", () => {
     );
 
     expect(detail.type).toBe("unknown");
-    expect(detail.fullType).toBe("No event type recorded — not a CloudEvent");
   });
 
   it("states an inbox row's stored top-level type", () => {
     const detail = toDetailDocument(anInboxDoc(), 5, "inbox");
 
     expect(detail.type).toBe("cloud.defra.prd.fg-gas-backend.case.create.new");
-    expect(detail.fullType).toBe(detail.type);
   });
 
-  // Not even an inbox document carrying the audit topic's ARN in some other
-  // key may be labelled audit - only the target field counts.
   it("never labels an inbox row audit", () => {
     const detail = toDetailDocument(
       anInboxDoc({ type: null, source: AUDIT_TOPIC_ARN }),
@@ -253,6 +224,5 @@ describe("toDetailDocument type labels", () => {
     );
 
     expect(detail.type).toBe("unknown");
-    expect(detail.fullType).toBe("No event type recorded — not a CloudEvent");
   });
 });

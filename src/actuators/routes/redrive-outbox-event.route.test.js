@@ -21,44 +21,48 @@ describe("redriveOutboxEventRoute", () => {
     expect(redriveOutboxEventRoute.options.tags).toEqual(["api", "public-api"]);
   });
 
-  it("answers with one list row, not a detail document", () => {
-    expect(
-      redriveOutboxEventRoute.options.response.schema.describe().flags.label,
-    ).toBe("OutboxEvent");
-  });
-
   it("rejects an id that is not a 24-hex ObjectId", () => {
     expect(validateParams({ id: "../../etc" }).error).toBeDefined();
   });
 
-  it("passes the validated id to the use case", async () => {
-    const row = { _id: "665f1c2e9a1b2c3d4e5f6a7b", status: "RESUBMITTED" };
-    redriveOutboxEventUseCase.mockResolvedValue(row);
+  it("passes the validated id to the use case and answers 204 with no body", async () => {
+    redriveOutboxEventUseCase.mockResolvedValue(undefined);
+    const code = vi.fn().mockReturnValue("no-content");
+    const h = { response: vi.fn().mockReturnValue({ code }) };
 
-    const result = await redriveOutboxEventRoute.handler({
-      params: { id: "665f1c2e9a1b2c3d4e5f6a7b" },
-      query: {},
-      auth: { credentials: { service: "fg-gas-backend" } },
-    });
+    const result = await redriveOutboxEventRoute.handler(
+      {
+        params: { id: "665f1c2e9a1b2c3d4e5f6a7b" },
+        query: {},
+        auth: { credentials: { service: "fg-gas-backend" } },
+      },
+      h,
+    );
 
     expect(redriveOutboxEventUseCase).toHaveBeenCalledWith({
       id: "665f1c2e9a1b2c3d4e5f6a7b",
       by: null,
       caller: "fg-gas-backend",
     });
-    expect(result).toBe(row);
+    expect(h.response).toHaveBeenCalledWith();
+    expect(code).toHaveBeenCalledWith(204);
+    expect(result).toBe("no-content");
   });
 });
 
 describe("redriveOutboxEventRoute actor", () => {
   it("passes the `by` query parameter through to the use case", async () => {
-    redriveOutboxEventUseCase.mockResolvedValue({});
+    redriveOutboxEventUseCase.mockResolvedValue(undefined);
+    const h = { response: () => ({ code: () => null }) };
 
-    await redriveOutboxEventRoute.handler({
-      params: { id: "665f1c2e9a1b2c3d4e5f6a7b" },
-      query: { by: "donatas" },
-      auth: { credentials: { service: "fg-gas-backend" } },
-    });
+    await redriveOutboxEventRoute.handler(
+      {
+        params: { id: "665f1c2e9a1b2c3d4e5f6a7b" },
+        query: { by: "donatas" },
+        auth: { credentials: { service: "fg-gas-backend" } },
+      },
+      h,
+    );
 
     expect(redriveOutboxEventUseCase).toHaveBeenCalledWith({
       id: "665f1c2e9a1b2c3d4e5f6a7b",
@@ -69,5 +73,19 @@ describe("redriveOutboxEventRoute actor", () => {
 
   it("validates `by` against the shared actor query schema", () => {
     expect(redriveOutboxEventRoute.options.validate.query).toBeDefined();
+  });
+
+  it("records no caller when the request carries no service credentials", async () => {
+    redriveOutboxEventUseCase.mockResolvedValue(undefined);
+    const h = { response: () => ({ code: () => null }) };
+
+    await redriveOutboxEventRoute.handler(
+      { params: { id: "665f1c2e9a1b2c3d4e5f6a7b" }, query: {}, auth: {} },
+      h,
+    );
+
+    expect(redriveOutboxEventUseCase).toHaveBeenCalledWith(
+      expect.objectContaining({ caller: null }),
+    );
   });
 });

@@ -7,10 +7,9 @@ export const findPageRoute = {
   path: "/actuators/events",
   options: {
     description:
-      "Both boxes in one read: rows, counts and breakdown. Each box pages by " +
-      "its own cursor; a box asked with direction=backward and no cursor of " +
-      "its own answers with its LAST page, so a merged pager must keep an " +
-      "exhausted box's cursor rather than dropping it.",
+      "Both boxes in one read: rows, counts and breakdown, or only the " +
+      "`sections` asked for. Each box pages forward, newest first, from its " +
+      "own cursor.",
     auth: "public-api",
     tags: ["api", "public-api"],
     plugins: {
@@ -28,9 +27,9 @@ export const findPageRoute = {
     const {
       inboxCursor,
       outboxCursor,
-      direction,
       pageSize,
       status,
+      sections,
       q,
       error,
       from,
@@ -41,9 +40,9 @@ export const findPageRoute = {
     return findPageUseCase({
       inboxCursor,
       outboxCursor,
-      direction,
       pageSize,
       status,
+      sections,
       q,
       error,
       from,

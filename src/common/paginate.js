@@ -1,16 +1,9 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 
-// The cursor codecs every paged collection shares.
-//
-// A cursor is a value this service wrote, base64'd, and handed to a caller
-// that hands it back - so it arrives as attacker-controlled JSON, and each
-// decoded value goes straight into query position in `getPagingFilter`. A
-// codec that took whatever it was given would let a tampered cursor put an
-// operator object there (`{"eventTime":{"$gt":""}}` is valid JSON and a valid
-// Mongo predicate), which is why every decode below asserts its own type
-// rather than trusting the shape. A rejection here surfaces as the 400 the
-// route already answers a garbled cursor with.
+// A cursor is base64url JSON of each sort key's value and `_id`, from the
+// cases list or from the actuator list's caller. Decoded values go straight
+// into the query, so every codec asserts its type and rejects with a 400.
 
 const HEX_ID = /^[0-9a-f]{24}$/i;
 
@@ -42,14 +35,7 @@ export const dateCodec = {
   },
 };
 
-/**
- * The tie-breaker every page ends with.
- *
- * The hex assertion is the load-bearing one: `new ObjectId(undefined)`
- * FABRICATES a fresh id rather than failing, so a cursor with the key missing
- * or the value wrong used to page from an invented position and answer with a
- * confidently wrong page.
- */
+// `new ObjectId(undefined)` invents a fresh id rather than failing.
 export const objectIdCodec = {
   encode: (value) => value.toHexString(),
   decode: (value) => {
@@ -68,9 +54,7 @@ const encodeCursor = (doc, sortKeys, codecs) => {
   return Buffer.from(JSON.stringify(data)).toString("base64url");
 };
 
-// A key the payload does not carry is a cursor this service did not write.
-// It matters because an absent value is exactly what the codecs used to be
-// handed on the way to fabricating a position out of nothing.
+// A missing key would reach a codec as undefined, so it is refused here.
 const decodeKey = (data, key, codecs) => {
   if (!Object.hasOwn(data, key)) {
     throw Boom.badRequest(`Cursor is missing ${key}`);
@@ -130,20 +114,32 @@ const countTotal = (collection, opts) =>
 const withTotalCount = (pagination, totalCount) =>
   totalCount === undefined ? pagination : { ...pagination, totalCount };
 
-// The page's position, COMPOSED with its filter under `$and` and never spread
-// together. Both halves can carry a top-level `$or` - the keyset always does,
-// and a `?q=` search does whenever it is the only clause - and spreading them
-// let the position silently replace the search, so page two of a search
-// answered with unfiltered rows.
+// Redundant with the keyset `$or`, but it gives the planner an index range to
+// walk: without it a selective filter could re-scan returned rows or sort in
+// memory. Inclusive, and flipped when paging backward.
+const leadingBound = (cursor, [key, dir], isBackward) => ({
+  [key]: { [(dir === 1) !== isBackward ? "$gte" : "$lte"]: cursor[key] },
+});
+
+// Composed under `$and`, never spread: both the filter and the keyset can carry
+// a top-level `$or`.
 const withKeyset = (filter, cursor, sortEntries, isBackward) => {
   if (!cursor) {
     return filter;
   }
 
   return {
-    $and: [filter ?? {}, getPagingFilter(cursor, sortEntries, isBackward)],
+    $and: [
+      filter ?? {},
+      leadingBound(cursor, sortEntries[0], isBackward),
+      getPagingFilter(cursor, sortEntries, isBackward),
+    ],
   };
 };
+
+// Only a caller that sets a time limit passes find options at all.
+const findArgs = (filter, maxTimeMS) =>
+  maxTimeMS ? [filter, { maxTimeMS }] : [filter];
 
 // eslint-disable-next-line complexity
 export const paginate = async (collection, opts) => {
@@ -158,7 +154,7 @@ export const paginate = async (collection, opts) => {
 
   const [docs, totalCount] = await Promise.all([
     collection
-      .find(filter)
+      .find(...findArgs(filter, opts.maxTimeMS))
       .project(opts.project)
       .sort(effectiveSort)
       .limit(opts.pageSize + 1)

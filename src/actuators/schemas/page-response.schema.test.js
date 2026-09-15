@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { pageResponseSchema } from "./page-response.schema.js";
 
 const pagination = {
-  startCursor: "IN",
-  endCursor: "OUT",
   hasNextPage: false,
-  hasPreviousPage: false,
 };
 
 const counts = {
@@ -22,11 +19,7 @@ const aRow = (overrides = {}) => ({
   eventId: "evt-1",
   type: "case.status.updated",
   status: "DEAD_LETTER",
-  completionAttempts: 5,
-  maxAttempts: 5,
-  createdAt: "2026-06-16T10:00:00.000Z",
-  lastFailureAt: null,
-  lastError: null,
+  publicationDate: "2026-06-16T10:00:00.000Z",
   completedAt: null,
   ...overrides,
 });
@@ -40,9 +33,8 @@ const aBox = (rowOverrides, overrides = {}) => ({
 });
 
 const aPage = (overrides = {}) => ({
-  inbox: aBox({ source: "GAS" }),
-  outbox: aBox({ target: "cw__sns__audit_fifo" }),
-  sectionErrors: [],
+  inbox: aBox({}),
+  outbox: aBox({}),
   ...overrides,
 });
 
@@ -58,9 +50,7 @@ describe("pageResponseSchema", () => {
   });
 
   it("requires both boxes, so a caller never has to guess at a missing one", () => {
-    expect(
-      pageResponseSchema.validate({ inbox: aBox(), sectionErrors: [] }).error,
-    ).toBeDefined();
+    expect(pageResponseSchema.validate({ inbox: aBox() }).error).toBeDefined();
   });
 
   it("keeps each box to its own row shape", () => {
@@ -75,57 +65,27 @@ describe("pageResponseSchema", () => {
     "allows a null %s, which is a section that could not be read",
     (section) => {
       const page = aPage({
-        inbox: aBox({ source: "GAS" }, { [section]: null }),
+        inbox: aBox({}, { [section]: null }),
       });
 
       expect(pageResponseSchema.validate(page).error).toBeUndefined();
     },
   );
 
-  // No rows is a fact about the box; unread is a fact about the request.
   it("allows a null list, and its pagination with it", () => {
     const page = aPage({
-      inbox: aBox({ source: "GAS" }, { events: null, pagination: null }),
+      inbox: aBox({}, { events: null, pagination: null }),
     });
 
     expect(pageResponseSchema.validate(page).error).toBeUndefined();
   });
 
   it("requires every section to be stated, even as a null", () => {
-    const { events, ...withoutEvents } = aBox({ source: "GAS" });
+    const { events, ...withoutEvents } = aBox({});
 
     expect(
       pageResponseSchema.validate(aPage({ inbox: withoutEvents })).error,
     ).toBeDefined();
     expect(events).toHaveLength(1);
-  });
-
-  it("names the box and the section of anything that failed", () => {
-    const page = aPage({
-      sectionErrors: [
-        { box: "inbox", section: "counts", message: "read failed" },
-      ],
-    });
-
-    expect(pageResponseSchema.validate(page).error).toBeUndefined();
-  });
-
-  it.each([
-    ["a box it has never heard of", { box: "deadletter", section: "counts" }],
-    ["a section it has never heard of", { box: "inbox", section: "journey" }],
-  ])("refuses a section error naming %s", (_name, error) => {
-    const page = aPage({
-      sectionErrors: [{ ...error, message: "read failed" }],
-    });
-
-    expect(pageResponseSchema.validate(page).error).toBeDefined();
-  });
-
-  // Never absent, so a caller reads it without a guard.
-  it("requires the section errors, empty on a page that lost nothing", () => {
-    const { sectionErrors, ...withoutErrors } = aPage();
-
-    expect(pageResponseSchema.validate(withoutErrors).error).toBeDefined();
-    expect(sectionErrors).toEqual([]);
   });
 });
