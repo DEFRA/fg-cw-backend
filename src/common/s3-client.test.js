@@ -79,6 +79,43 @@ describe("s3-client", () => {
         "Manifest does not contain a cw config file",
       );
     });
+
+    it("should match the unsuffixed file when variant is empty", () => {
+      const manifest = [
+        "woodland/1.2.3/cw/cw.json",
+        "woodland/1.2.3/cw/cw.next.json",
+      ];
+      expect(findS3KeyInManifest(manifest, "cw", "")).toBe(
+        "woodland/1.2.3/cw/cw.json",
+      );
+    });
+
+    it('should match the variant file when variant is "next"', () => {
+      const manifest = [
+        "woodland/1.2.3/cw/cw.json",
+        "woodland/1.2.3/cw/cw.next.json",
+      ];
+      expect(findS3KeyInManifest(manifest, "cw", "next")).toBe(
+        "woodland/1.2.3/cw/cw.next.json",
+      );
+    });
+
+    it("should fall back to unsuffixed when variant file is missing", () => {
+      const manifest = [
+        "woodland/1.2.3/cw/cw.json",
+        "woodland/1.2.3/metadata.json",
+      ];
+      expect(findS3KeyInManifest(manifest, "cw", "next")).toBe(
+        "woodland/1.2.3/cw/cw.json",
+      );
+    });
+
+    it("should throw when neither variant nor unsuffixed file exists", () => {
+      const manifest = ["woodland/1.2.3/metadata.json"];
+      expect(() => findS3KeyInManifest(manifest, "cw", "next")).toThrow(
+        "Manifest does not contain a cw config file",
+      );
+    });
   });
 
   describe("fetchConfigFile", () => {

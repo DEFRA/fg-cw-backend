@@ -518,12 +518,17 @@ const getMessage = (code) => {
   return messageFrps;
 };
 
+const message = getMessage(process.argv[2]);
+if (process.argv[3]) {
+  message.data.payload.configVersion = process.argv[3];
+}
+
 console.log("Sending message to SQS queue:", queueUrl);
 
 await sqs.send(
   new SendMessageCommand({
     QueueUrl: queueUrl,
-    MessageBody: JSON.stringify(getMessage(process.argv[2])),
+    MessageBody: JSON.stringify(message),
     MessageGroupId: "cw-create-new-case",
     MessageDeduplicationId: randomUUID(),
     DelaySeconds: 0,

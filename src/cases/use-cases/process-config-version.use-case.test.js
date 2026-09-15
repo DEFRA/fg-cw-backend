@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processConfigVersionUseCase } from "./process-config-version.use-case.js";
 
+const { mockConfigGet } = vi.hoisted(() => {
+  const defaults = {
+    "configBroker.s3Bucket": "config-broker-local",
+    cdpEnvironment: "dev",
+    "configBroker.variant": "",
+  };
+  const overrides = {};
+  const mockConfigGet = vi.fn((key) =>
+    key in overrides ? overrides[key] : defaults[key],
+  );
+  mockConfigGet._overrides = overrides;
+  mockConfigGet._defaults = defaults;
+  return { mockConfigGet };
+});
+
 vi.mock("../../common/config.js", () => ({
-  config: {
-    get: (key) => {
-      const values = {
-        "configBroker.s3Bucket": "config-broker-local",
-      };
-      return values[key];
-    },
-  },
+  config: { get: mockConfigGet },
 }));
 
 vi.mock("../../common/logger.js", () => ({
@@ -20,11 +28,17 @@ vi.mock("../../common/logger.js", () => ({
   },
 }));
 
-vi.mock("../../common/s3-client.js", () => ({
-  findS3KeyInManifest: vi.fn((manifest, serviceKey) => {
-    const suffix = `/${serviceKey}/${serviceKey}.json`;
+const { mockFindS3Key } = vi.hoisted(() => ({
+  mockFindS3Key: vi.fn((manifest, serviceKey, variant) => {
+    const suffix = variant
+      ? `/${serviceKey}/${serviceKey}.${variant}.json`
+      : `/${serviceKey}/${serviceKey}.json`;
     return manifest.find((path) => path.endsWith(suffix));
   }),
+}));
+
+vi.mock("../../common/s3-client.js", () => ({
+  findS3KeyInManifest: mockFindS3Key,
 }));
 
 const { upsert } = vi.hoisted(() => ({
@@ -38,6 +52,9 @@ vi.mock("../repositories/config-version.repository.js", () => ({
 describe("processConfigVersionUseCase", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.keys(mockConfigGet._overrides).forEach(
+      (k) => delete mockConfigGet._overrides[k],
+    );
     upsert.mockResolvedValue({ upsertedCount: 1 });
   });
 
@@ -136,5 +153,59 @@ describe("processConfigVersionUseCase", () => {
         manifest: ["woodland/1.0.0/cw/cw.json"],
       }),
     ).rejects.toThrow("Invalid semver");
+  });
+
+  describe("variant behaviour", () => {
+    it('should call findS3KeyInManifest with variant when getConfigurationVariant returns "next"', async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+
+      await processConfigVersionUseCase({
+        grantCode: "woodland",
+        version: "1.0.0",
+        status: "active",
+        manifest: [
+          "woodland/1.0.0/cw/cw.json",
+          "woodland/1.0.0/cw/cw.next.json",
+        ],
+      });
+
+      expect(mockFindS3Key).toHaveBeenCalledWith(
+        expect.any(Array),
+        "cw",
+        "next",
+      );
+    });
+
+    it("should call findS3KeyInManifest without a variant when getConfigurationVariant returns empty", async () => {
+      await processConfigVersionUseCase({
+        grantCode: "woodland",
+        version: "1.0.0",
+        status: "active",
+        manifest: ["woodland/1.0.0/cw/cw.json"],
+      });
+
+      expect(mockFindS3Key).toHaveBeenCalledWith(
+        expect.any(Array),
+        "cw",
+        "",
+      );
+    });
+
+    it("should store the variant s3Key when variant file is selected", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+
+      await processConfigVersionUseCase({
+        grantCode: "woodland",
+        version: "1.0.0",
+        status: "active",
+        manifest: [
+          "woodland/1.0.0/cw/cw.json",
+          "woodland/1.0.0/cw/cw.next.json",
+        ],
+      });
+
+      const cv = upsert.mock.calls[0][0];
+      expect(cv.s3Key).toBe("woodland/1.0.0/cw/cw.next.json");
+    });
   });
 });
