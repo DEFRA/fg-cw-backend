@@ -39,6 +39,7 @@ export class S3FetchError extends Error {
 
 // When a variant is configured, tries the variant filename first
 // (e.g. cw.next.json) then falls back to the unsuffixed file (cw.json).
+// eslint-disable-next-line complexity
 export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
   if (variant) {
     const variantFile = variantFileName(`${serviceKey}.json`, variant);
