@@ -1,3 +1,4 @@
+import { VARIANT_PATTERN } from "./configuration-variant.js";
 import convict from "convict";
 import convictFormatWithValidator from "convict-format-with-validator";
 import Joi from "joi";
@@ -180,6 +181,21 @@ export const config = convict({
       nullable: true,
       default: null,
       env: "CONFIG_BROKER_S3_BUCKET",
+    },
+    variant: {
+      doc: "Optional filename variant inserted before .json when selecting definitions from a release manifest. Ignored in prod.",
+      format: (val) => {
+        if (!val || process.env.ENVIRONMENT === "prod") {
+          return;
+        }
+        if (!VARIANT_PATTERN.test(val)) {
+          throw new Error(
+            "must be lowercase letters, numbers or hyphens",
+          );
+        }
+      },
+      default: "",
+      env: "CONFIGURATION_VARIANT",
     },
   },
   tracing: {

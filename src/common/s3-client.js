@@ -1,5 +1,6 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { config } from "./config.js";
+import { variantFileName } from "./configuration-variant.js";
 import { logger } from "./logger.js";
 
 const endpointUrl = config.get("aws.endpointUrl");
@@ -36,7 +37,21 @@ export class S3FetchError extends Error {
   }
 }
 
-export const findS3KeyInManifest = (manifest, serviceKey) => {
+// When a variant is configured, tries the variant filename first
+// (e.g. cw.next.json) then falls back to the unsuffixed file (cw.json).
+// eslint-disable-next-line complexity
+export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
+  if (variant) {
+    const variantFile = variantFileName(`${serviceKey}.json`, variant);
+    const variantSuffix = `/${serviceKey}/${variantFile}`;
+    const variantMatch = manifest.find((path) =>
+      path.endsWith(variantSuffix),
+    );
+    if (variantMatch) {
+      return variantMatch;
+    }
+  }
+
   const suffix = `/${serviceKey}/${serviceKey}.json`;
   const match = manifest.find((path) => path.endsWith(suffix));
   if (!match) {
