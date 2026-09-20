@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { anAttemptHistory } from "../fixtures/attempt-history.js";
 import { redriveInboxEvent, redriveOutboxEvent } from "../helpers/actuators.js";
 
 let client;
@@ -16,13 +17,15 @@ const bodyOf = (error) => {
   return Buffer.isBuffer(payload) ? JSON.parse(payload.toString()) : payload;
 };
 
+const aHistory = () =>
+  anAttemptHistory({ length: MAX_RETRIES, message: "boom" });
+
 const aDeadInboxDoc = (overrides = {}) => ({
   _id: new ObjectId(),
   messageId: `msg-${new ObjectId().toHexString()}`,
   type: "cloud.defra.prd.fg-gas-backend.case.create.new",
   source: "GAS",
-  // a segregationRef nothing else uses, so the poller cannot claim it out
-  // from under the assertions before they run
+  // unique, so the poller cannot claim it mid-test
   segregationRef: `REDRIVE-${new ObjectId().toHexString()}`,
   status: "DEAD_LETTER",
   completionAttempts: MAX_RETRIES,
@@ -87,21 +90,17 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     );
   });
 
-  it("returns the updated list row", async () => {
+  it("answers 204 with no body and leaves the row RESUBMITTED", async () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
 
-    const { payload } = await redriveInboxEvent(doc._id.toHexString());
+    const { res, payload } = await redriveInboxEvent(doc._id.toHexString());
 
-    expect(payload._id).toBe(doc._id.toHexString());
-    expect(payload.status).toBe("RESUBMITTED");
-    expect(payload.completionAttempts).toBe(0);
-    expect(payload.maxAttempts).toBe(MAX_RETRIES);
+    expect(res.statusCode).toBe(204);
+    expect(payload).toHaveLength(0);
+    expect((await inbox.findOne({ _id: doc._id })).status).toBe("RESUBMITTED");
   });
 
-  // Both halves of one transaction, against real Mongo: this service audits
-  // its own state change, so the row moving and the record of it landing are
-  // the same commit. A commit that dropped either would fail here.
   it("writes its own audit event alongside the redriven row", async () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
@@ -130,10 +129,7 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     });
   });
 
-  // No operator named, and none invented: the builder answers `actor: null`
-  // and `stripNulls` - which every audit payload this service writes goes
-  // through - drops the key entirely. The absence IS the record. "System" is
-  // fg-gas-backend's display wording and must not reach storage here.
+  // `stripNulls` drops a null actor, so none is stored or invented.
   it("records an unattributed redrive with no actor at all", async () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
@@ -147,16 +143,6 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
 
     expect(audit.event.audit.details.event).not.toHaveProperty("actor");
     expect(JSON.stringify(audit.event.audit)).not.toContain("System");
-  });
-
-  it("carries no event payload on the redrive response", async () => {
-    const doc = aDeadInboxDoc();
-    await inbox.insertOne(doc);
-
-    const { payload } = await redriveInboxEvent(doc._id.toHexString());
-
-    expect(payload).not.toHaveProperty("event");
-    expect(payload).not.toHaveProperty("claimedBy");
   });
 
   it("resets the attempt counter and releases the claim in the database", async () => {
@@ -173,21 +159,32 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     expect(stored.claimExpiresAt).toBeNull();
   });
 
+  it("clears the attempt history with the counter in the database", async () => {
+    const doc = aDeadInboxDoc({ attemptHistory: aHistory() });
+    await inbox.insertOne(doc);
+
+    await redriveInboxEvent(doc._id.toHexString());
+
+    const stored = await inbox.findOne({ _id: doc._id });
+
+    expect(stored.completionAttempts).toBe(0);
+    expect(stored.attemptHistory).toEqual([]);
+    expect(stored.lastError.message).toBe("boom");
+  });
+
   it("keeps lastError and lastResubmissionDate", async () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
 
-    const { payload } = await redriveInboxEvent(doc._id.toHexString());
+    await redriveInboxEvent(doc._id.toHexString());
 
-    expect(payload.lastError.name).toBe("TypeError");
-    expect(payload.lastFailureAt).toBe("2026-06-16T10:05:00.000Z");
+    const stored = await inbox.findOne({ _id: doc._id });
+
+    expect(stored.lastError.name).toBe("TypeError");
+    expect(stored.lastResubmissionDate).toBe("2026-06-16T10:05:00.000Z");
   });
 
-  // Below the cap on purpose: the dead-letter sweep matches on
-  // `completionAttempts >= MAX_RETRIES` and `status != DEAD_LETTER`, which a
-  // COMPLETED row at the cap satisfies - so a sweep tick landing mid-test
-  // would turn this row DEAD_LETTER underneath the assertions. The refusal
-  // path being tested keys on the status alone.
+  // Below the cap, so a dead-letter sweep tick cannot flip it mid-test.
   it("409s with the current status when the row is not DEAD_LETTER", async () => {
     const doc = aDeadInboxDoc({
       status: "COMPLETED",
@@ -238,17 +235,29 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
     );
   });
 
-  it("returns the updated list row with the attempt counter reset", async () => {
+  it("answers 204 with no body and resets the attempt counter", async () => {
     const doc = aDeadOutboxDoc();
     await outbox.insertOne(doc);
 
-    const { payload } = await redriveOutboxEvent(doc._id.toHexString());
+    const { res, payload } = await redriveOutboxEvent(doc._id.toHexString());
+    const stored = await outbox.findOne({ _id: doc._id });
 
-    expect(payload.status).toBe("RESUBMITTED");
-    expect(payload.completionAttempts).toBe(0);
-    expect(payload.target).toBe(
-      "arn:aws:sns:eu-west-2:000000000000:cw__sns__create_case_fifo.fifo",
-    );
+    expect(res.statusCode).toBe(204);
+    expect(payload).toHaveLength(0);
+    expect(stored.status).toBe("RESUBMITTED");
+    expect(stored.completionAttempts).toBe(0);
+  });
+
+  it("clears the attempt history with the counter in the database", async () => {
+    const doc = aDeadOutboxDoc({ attemptHistory: aHistory() });
+    await outbox.insertOne(doc);
+
+    await redriveOutboxEvent(doc._id.toHexString());
+
+    const stored = await outbox.findOne({ _id: doc._id });
+
+    expect(stored.completionAttempts).toBe(0);
+    expect(stored.attemptHistory).toEqual([]);
   });
 
   it("409s with the current status when the row is not DEAD_LETTER", async () => {

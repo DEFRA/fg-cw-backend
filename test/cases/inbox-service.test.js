@@ -10,25 +10,36 @@ import {
   it,
   vi,
 } from "vitest";
-import { Inbox } from "../../src/cases/models/inbox.js";
-import { claimEvents } from "../../src/cases/repositories/inbox.repository.js";
 
-import { InboxSubscriber } from "../../src/cases/subscribers/inbox.subscriber.js";
+// Its own database, so the running service's poller cannot claim the fixtures.
+const DATABASE = "fg-cw-backend-inbox-service-test";
+vi.stubEnv("MONGO_DATABASE", DATABASE);
+
+const { Inbox } = await import("../../src/cases/models/inbox.js");
+const { claimEvents } =
+  await import("../../src/cases/repositories/inbox.repository.js");
+const { InboxSubscriber } =
+  await import("../../src/cases/subscribers/inbox.subscriber.js");
+const { mongoClient } = await import("../../src/common/mongo-client.js");
+
 let client;
+let db;
 let inbox, fifo;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
-  inbox = client.db().collection("inbox");
-  fifo = client.db().collection("fifo_locks");
-  await inbox?.deleteMany({});
-
-  fifo = client.db().collection("fifo_locks");
+  db = client.db(DATABASE);
+  inbox = db.collection("inbox");
+  fifo = db.collection("fifo_locks");
+  await inbox.deleteMany({});
   await fifo.deleteMany({});
 });
 
 afterAll(async () => {
+  await db?.dropDatabase();
   await client?.close();
+  await mongoClient.close();
+  vi.unstubAllEnvs();
 });
 
 const createMockInbox = (id, time, segregationRef) => {
@@ -130,10 +141,14 @@ describe("inbox fifo", () => {
 
     const subscriber = new InboxSubscriber(1000);
     subscriber.start();
-    for (let i = 0; i < 10 && processEventsSpy.mock.calls.length === 0; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 20));
+    try {
+      await vi.waitFor(() => expect(processEventsSpy).toHaveBeenCalled(), {
+        timeout: 5000,
+        interval: 20,
+      });
+    } finally {
+      subscriber.stop();
     }
-    subscriber.stop();
     expect(processEventsSpy).toHaveBeenCalledTimes(1);
     const [events] = processEventsSpy.mock.calls[0];
     expect(events).toHaveLength(1);

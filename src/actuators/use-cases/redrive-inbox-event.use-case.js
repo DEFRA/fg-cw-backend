@@ -9,22 +9,13 @@ import {
   buildAuditSecurity,
 } from "../../common/audit-constants.js";
 import { buildSystemSecurityContext } from "../../common/audit-security-context.js";
-import { config } from "../../common/config.js";
 import { withAudit } from "../../common/with-audit.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { redriveConflict } from "../../events/event-redrive.js";
 import { logger } from "../../common/logger.js";
 
-const DECIMAL = 10;
-
-const MAX_ATTEMPTS = Number.parseInt(
-  config.get("inbox.inboxMaxRetries"),
-  DECIMAL,
-);
-
-// Nothing matched the update: either the row is gone (404) or it is no longer
-// DEAD_LETTER (409). One extra read tells them apart, on the failure path
-// alone.
+// Nothing matched the update: one read tells a missing row (404) from one in
+// another status (409).
 const refusal = async (id, session) => {
   const status = await findStatusById(id, session);
 
@@ -37,41 +28,22 @@ const refusal = async (id, session) => {
   return redriveConflict("Inbox", id, status);
 };
 
-// The update is the precondition: it matches only a DEAD_LETTER row, so a
-// concurrent status change loses cleanly.
 const redriveInboxEvent = async ({ id, by }, session) => {
-  // The row records the absence of an operator as a null; this is only what
-  // that absence is called in a log line.
-  //
-  // Interpolated into the message rather than passed as context props, like
-  // the rest of this repo: the log pipeline drops props it does not know, so
-  // the message is the only part that survives ingestion - and this pair is
-  // the service's own record of who redrove what.
+  // Only the log line names a missing operator; the row and audit keep null.
   const actor = by ?? "System";
 
   logger.info(`Redriving inbox event "${id}" for ${actor}`);
 
-  const row = await redriveById(id, { by, session });
-
-  if (row) {
-    // `lastRedrive` on the row is a `$set`, so a later redrive replaces it;
-    // the audit event written alongside it is the record that survives.
+  if (await redriveById(id, { by, session })) {
     logger.info(`Finished: Redriving inbox event "${id}" for ${actor}`);
 
-    return { ...row, maxAttempts: MAX_ATTEMPTS };
+    return;
   }
 
   throw await refusal(id, session);
 };
 
-// This service audits its own state change. GAS records the operator's
-// REQUEST on its own side; this records what Caseworking actually did, so the
-// row and the record of it cannot come apart. Deliberately double-recorded:
-// the two answer different questions.
-//
-// `by` is the operator GAS forwarded, and a null stays a null - "System" is
-// GAS's display wording, not this service's storage. `caller` is the
-// authenticated service client that asked, which is GAS itself.
+// GAS audits the operator's request; this audits what this service changed.
 export const redriveInboxEventAuditBuilder = ([{ id, by, caller }]) => ({
   entities: [
     {
@@ -88,16 +60,8 @@ export const redriveInboxEventAuditBuilder = ([{ id, by, caller }]) => ({
   segregationRef: `redrive-event-${id}`,
 });
 
-/**
- * The row update and the audit event commit together or not at all.
- *
- * The audit is not a publish: `writeAuditEvent` inserts it into this service's
- * own outbox collection, in the same database as the row being redriven, so
- * one transaction covers both. If the audit cannot be written - a failed
- * insert, or a payload that will not validate - `withAudit` rethrows and the
- * transaction aborts: the row stays DEAD_LETTER and GAS is told the redrive
- * failed, rather than a redrive nobody can prove happened.
- */
+// The row update and its audit event commit together, so a failed audit
+// leaves the row DEAD_LETTER.
 export const redriveInboxEventUseCase = (command) =>
   withTransaction((session) =>
     withAudit(redriveInboxEvent, redriveInboxEventAuditBuilder)(

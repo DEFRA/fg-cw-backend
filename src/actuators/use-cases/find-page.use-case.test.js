@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { logger } from "../../common/logger.js";
 import { breakdownInboxUseCase } from "./breakdown-inbox.use-case.js";
 import { breakdownOutboxUseCase } from "./breakdown-outbox.use-case.js";
 import { countInboxUseCase } from "./count-inbox.use-case.js";
 import { countOutboxUseCase } from "./count-outbox.use-case.js";
-import { findInboxPageUseCase } from "./find-inbox-page.use-case.js";
-import { findOutboxPageUseCase } from "./find-outbox-page.use-case.js";
+import { findPage as findInboxPage } from "../../cases/repositories/inbox.repository.js";
+import { findPage as findOutboxPage } from "../../cases/repositories/outbox.repository.js";
 import { findPageUseCase } from "./find-page.use-case.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -12,15 +13,17 @@ vi.mock("./breakdown-inbox.use-case.js");
 vi.mock("./breakdown-outbox.use-case.js");
 vi.mock("./count-inbox.use-case.js");
 vi.mock("./count-outbox.use-case.js");
-vi.mock("./find-inbox-page.use-case.js");
-vi.mock("./find-outbox-page.use-case.js");
+vi.mock("../../cases/repositories/inbox.repository.js");
+vi.mock("../../cases/repositories/outbox.repository.js");
 
 const pagination = {
   startCursor: "IN",
   endCursor: "OUT",
-  hasNextPage: false,
+  hasNextPage: true,
   hasPreviousPage: false,
 };
+
+const served = { hasNextPage: true };
 
 const aPage = (rows = [{ _id: "665f1c2e9a1b2c3d4e5f6a7b" }]) => ({
   data: rows,
@@ -48,8 +51,8 @@ const groups = [
 ];
 
 const givenBothBoxesAnswer = () => {
-  findInboxPageUseCase.mockResolvedValue(aPage());
-  findOutboxPageUseCase.mockResolvedValue(aPage());
+  findInboxPage.mockResolvedValue(aPage());
+  findOutboxPage.mockResolvedValue(aPage());
   countInboxUseCase.mockResolvedValue({ counts });
   countOutboxUseCase.mockResolvedValue({ counts });
   breakdownInboxUseCase.mockResolvedValue({ groups });
@@ -64,21 +67,20 @@ describe("findPageUseCase", () => {
 
     expect(page.inbox).toEqual({
       events: [{ _id: "665f1c2e9a1b2c3d4e5f6a7b" }],
-      pagination,
+      pagination: served,
       counts,
       breakdown: { groups },
     });
     expect(page.outbox).toEqual(page.inbox);
-    expect(page.sectionErrors).toEqual([]);
   });
 
   it("takes a cursor per box, and gives each box its own", async () => {
     await findPageUseCase({ inboxCursor: "IN-2", outboxCursor: "OUT-9" });
 
-    expect(findInboxPageUseCase).toHaveBeenCalledWith(
+    expect(findInboxPage).toHaveBeenCalledWith(
       expect.objectContaining({ cursor: "IN-2" }),
     );
-    expect(findOutboxPageUseCase).toHaveBeenCalledWith(
+    expect(findOutboxPage).toHaveBeenCalledWith(
       expect.objectContaining({ cursor: "OUT-9" }),
     );
   });
@@ -92,7 +94,6 @@ describe("findPageUseCase", () => {
       audit: "include",
       status: "DEAD_LETTER",
       pageSize: 5,
-      direction: "backward",
     });
 
     const selection = {
@@ -103,11 +104,10 @@ describe("findPageUseCase", () => {
       audit: "include",
     };
 
-    expect(findInboxPageUseCase).toHaveBeenCalledWith({
+    expect(findInboxPage).toHaveBeenCalledWith({
       ...selection,
       status: "DEAD_LETTER",
       pageSize: 5,
-      direction: "backward",
       cursor: undefined,
     });
     expect(countInboxUseCase).toHaveBeenCalledWith(selection);
@@ -152,70 +152,99 @@ describe("findPageUseCase", () => {
       () => breakdownOutboxUseCase.mockRejectedValue(new Error("boom")),
     ],
   ])(
-    "nulls a %s that failed on %s and names it, rather than losing the page",
+    "nulls a %s that failed on %s, rather than losing the page",
     async (section, box, fail) => {
       fail();
 
       const page = await findPageUseCase({});
 
       expect(page[box][section]).toBeNull();
-      expect(page.sectionErrors).toEqual([
-        { box, section, message: "read failed" },
-      ]);
       expect(page[box].events).toHaveLength(1);
     },
   );
 
   it("nulls one box's list and keeps the other's", async () => {
-    findInboxPageUseCase.mockRejectedValue(new Error("boom"));
+    findInboxPage.mockRejectedValue(new Error("boom"));
 
     const page = await findPageUseCase({});
 
     expect(page.inbox.events).toBeNull();
     expect(page.inbox.pagination).toBeNull();
     expect(page.outbox.events).toHaveLength(1);
-    expect(page.sectionErrors).toEqual([
-      { box: "inbox", section: "list", message: "read failed" },
-    ]);
   });
 
   it("fails the call when neither box could be read", async () => {
-    findInboxPageUseCase.mockRejectedValue(new Error("boom"));
-    findOutboxPageUseCase.mockRejectedValue(new Error("boom"));
+    findInboxPage.mockRejectedValue(new Error("boom"));
+    findOutboxPage.mockRejectedValue(new Error("boom"));
 
     await expect(findPageUseCase({})).rejects.toMatchObject({
       output: { statusCode: 502 },
     });
   });
 
-  it("names every section that failed", async () => {
+  const ROW = { _id: "665f1c2e9a1b2c3d4e5f6a7b" };
+
+  const queriedTimes = () => ({
+    list: [findInboxPage, findOutboxPage].map(timesCalled),
+    counts: [countInboxUseCase, countOutboxUseCase].map(timesCalled),
+    breakdown: [breakdownInboxUseCase, breakdownOutboxUseCase].map(timesCalled),
+  });
+
+  const timesCalled = (read) => read.mock.calls.length;
+
+  const sectionsOf = (section) => ({
+    events: section.events,
+    counts: section.counts,
+    breakdown: section.breakdown,
+  });
+
+  it.each([
+    [
+      ["list"],
+      { list: [1, 1], counts: [0, 0], breakdown: [0, 0] },
+      { events: [ROW], counts: null, breakdown: null },
+    ],
+    [
+      ["list", "counts"],
+      { list: [1, 1], counts: [1, 1], breakdown: [0, 0] },
+      { events: [ROW], counts, breakdown: null },
+    ],
+    [
+      ["counts", "breakdown"],
+      { list: [0, 0], counts: [1, 1], breakdown: [1, 1] },
+      { events: null, counts, breakdown: { groups } },
+    ],
+  ])(
+    "queries only the sections asked for (%j) and nulls the rest",
+    async (sections, queried, section) => {
+      const error = vi.spyOn(logger, "error");
+
+      const page = await findPageUseCase({ sections });
+
+      expect(queriedTimes()).toEqual(queried);
+      expect(sectionsOf(page.inbox)).toEqual(section);
+      expect(sectionsOf(page.outbox)).toEqual(section);
+      expect(error).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not fail the call for lists that were not asked for", async () => {
+    await expect(
+      findPageUseCase({ sections: ["counts"] }),
+    ).resolves.toMatchObject({ inbox: { events: null, pagination: null } });
+  });
+
+  it("logs and nulls a requested section that fails", async () => {
+    const error = vi.spyOn(logger, "error");
     countInboxUseCase.mockRejectedValue(new Error("boom"));
-    breakdownInboxUseCase.mockRejectedValue(new Error("boom"));
-    breakdownOutboxUseCase.mockRejectedValue(new Error("boom"));
 
-    const { sectionErrors } = await findPageUseCase({});
+    const page = await findPageUseCase({ sections: ["list", "counts"] });
 
-    expect(sectionErrors).toEqual([
-      { box: "inbox", section: "counts", message: "read failed" },
-      { box: "inbox", section: "breakdown", message: "read failed" },
-      { box: "outbox", section: "breakdown", message: "read failed" },
-    ]);
+    expect(page.inbox.counts).toBeNull();
+    expect(error).toHaveBeenCalledTimes(1);
   });
 
-  // A failed section reports a fixed one-liner: nothing the store said
-  // reaches a caller.
-  it("says nothing a driver said", async () => {
-    countOutboxUseCase.mockRejectedValue(
-      new Error("E11000 duplicate key error collection: cw.inbox"),
-    );
-
-    const { sectionErrors } = await findPageUseCase({});
-
-    expect(sectionErrors[0].message).toBe("read failed");
-  });
-
-  // Awaiting the sections one at a time would pay serially the round trips the
-  // composite exists to avoid.
+  // Serial awaits would pay the round trips the composite exists to avoid.
   it("starts every section before waiting on any of them", async () => {
     const started = [];
     const hold = () => new Promise(() => {});
@@ -225,8 +254,8 @@ describe("findPageUseCase", () => {
       return hold();
     };
 
-    findInboxPageUseCase.mockImplementation(record("inbox list"));
-    findOutboxPageUseCase.mockImplementation(record("outbox list"));
+    findInboxPage.mockImplementation(record("inbox list"));
+    findOutboxPage.mockImplementation(record("outbox list"));
     countInboxUseCase.mockImplementation(record("inbox counts"));
     countOutboxUseCase.mockImplementation(record("outbox counts"));
     breakdownInboxUseCase.mockImplementation(record("inbox breakdown"));
