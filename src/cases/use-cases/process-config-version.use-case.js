@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { config } from "../../common/config.js";
+import { getConfigurationVariant } from "../../common/configuration-variant.js";
 import { logger } from "../../common/logger.js";
 import { findS3KeyInManifest } from "../../common/s3-client.js";
 import { parseSemver } from "../../common/semver.js";
@@ -42,7 +43,8 @@ export const processConfigVersionUseCase = async (eventData) => {
   logger.info(`Processing config version: ${grantCode}@${version} (${status})`);
 
   const s3Bucket = config.get("configBroker.s3Bucket");
-  const s3Key = findS3KeyInManifest(manifest, "cw");
+  const variant = getConfigurationVariant(config);
+  const s3Key = findS3KeyInManifest(manifest, "cw", variant);
 
   const configVersion = ConfigVersion.new({
     grantCode,

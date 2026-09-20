@@ -50,6 +50,7 @@ describe("ConfigVersion", () => {
         }),
       ).toThrow("Invalid semver version");
     });
+
   });
 
   describe("fromDocument", () => {
@@ -104,6 +105,7 @@ describe("ConfigVersion", () => {
       expect(doc.fetchStatus).toBe(FetchStatus.Pending);
       expect(doc.fetchAttempts).toBe(0);
     });
+
   });
 
   describe("createMock", () => {
@@ -115,5 +117,6 @@ describe("ConfigVersion", () => {
       expect(cv.fetchStatus).toBe(FetchStatus.Fetched);
       expect(cv.fetchAttempts).toBe(3);
     });
+
   });
 });
