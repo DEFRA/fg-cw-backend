@@ -23,7 +23,7 @@ const detailCommon = {
     .required()
     .example("DEAD_LETTER")
     .description(
-      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER",
+      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER|PURGED",
     ),
   completionAttempts: Joi.number().integer().allow(null),
   maxAttempts: Joi.number().integer().required(),
@@ -37,6 +37,7 @@ const detailCommon = {
   lastResubmissionDate: isoOrNull,
   completionDate: isoOrNull,
   publicationDate: isoOrNull,
+  expireAt: isoOrNull,
   claimedBy: Joi.any().forbidden(),
   claimedAt: Joi.any().forbidden(),
   claimExpiresAt: Joi.any().forbidden(),

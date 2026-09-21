@@ -2,8 +2,14 @@ import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { config } from "../../src/common/config.js";
-import { updateDeadEvents as sweepInbox } from "../../src/cases/repositories/inbox.repository.js";
-import { updateDeadEvents as sweepOutbox } from "../../src/cases/repositories/outbox.repository.js";
+import {
+  processExpiredEvents as claimSweepInbox,
+  updateDeadEvents as sweepInbox,
+} from "../../src/cases/repositories/inbox.repository.js";
+import {
+  updateExpiredEvents as claimSweepOutbox,
+  updateDeadEvents as sweepOutbox,
+} from "../../src/cases/repositories/outbox.repository.js";
 
 // The sweep counts FAILURES, not attempts: `markAsComplete` never increments
 // `completionAttempts`, and a row at the cap can never be claimed again. So a
@@ -23,6 +29,21 @@ const CONTAINER_CAP = 5;
 const ABOVE_CAP = Math.max(INBOX_CAP, OUTBOX_CAP, CONTAINER_CAP) + 1;
 
 const SWEPT_STATUSES = ["PUBLISHED", "FAILED", "RESUBMITTED", "PROCESSING"];
+
+// Seeded with everything that would make a sweep match - an attempt count
+// above the cap, and a claim that expired in the past - so that a row left
+// alone cannot be left alone vacuously.
+const PURGED_CLAIM_EXPIRED_AT = new Date("2026-06-16T10:10:00.000Z");
+const PURGED_EXPIRE_AT = new Date("2026-09-14T10:10:00.000Z");
+
+const purgedFields = () => ({
+  status: "PURGED",
+  completionAttempts: ABOVE_CAP,
+  claimExpiresAt: PURGED_CLAIM_EXPIRED_AT,
+  expireAt: PURGED_EXPIRE_AT,
+});
+
+const rowAfter = async (collection, id) => collection.findOne({ _id: id });
 
 let client;
 let inbox;
@@ -106,12 +127,61 @@ describe("inbox dead-letter sweep", () => {
     },
   );
 
+  // Mongo counts no modification for a `$set` that changes nothing, so only
+  // `matchedCount` says the filter never reached the row.
   it("does not rewrite a row that is already DEAD_LETTER", async () => {
-    await inbox.insertOne(anInboxRow("DEAD_LETTER", ABOVE_CAP));
+    const row = {
+      ...anInboxRow("DEAD_LETTER", ABOVE_CAP),
+      claimedBy: "sweep-test",
+    };
+    await inbox.insertOne(row);
 
-    const { matchedCount } = await sweepInbox();
+    const { matchedCount, modifiedCount } = await sweepInbox();
 
     expect(matchedCount).toBe(0);
+    expect(modifiedCount).toBe(0);
+    expect((await rowAfter(inbox, row._id)).claimedBy).toBe("sweep-test");
+  });
+
+  it("leaves a PURGED row at the cap alone", async () => {
+    const row = { ...anInboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await inbox.insertOne(row);
+
+    await sweepInbox();
+
+    expect(await statusOf(inbox, row._id)).toBe("PURGED");
+  });
+
+  it("leaves a PURGED row's deletion date alone", async () => {
+    const row = { ...anInboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await inbox.insertOne(row);
+
+    await sweepInbox();
+
+    expect((await rowAfter(inbox, row._id)).expireAt).toEqual(PURGED_EXPIRE_AT);
+  });
+});
+
+describe("inbox claim-expiry sweep", () => {
+  it("leaves a PURGED row with a long-expired claim alone", async () => {
+    const row = { ...anInboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await inbox.insertOne(row);
+
+    await claimSweepInbox();
+
+    expect(await statusOf(inbox, row._id)).toBe("PURGED");
+  });
+
+  it("does not count a failed attempt against a PURGED row", async () => {
+    const row = { ...anInboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await inbox.insertOne(row);
+
+    await claimSweepInbox();
+
+    const stored = await rowAfter(inbox, row._id);
+
+    expect(stored.completionAttempts).toBe(ABOVE_CAP);
+    expect(stored.expireAt).toEqual(PURGED_EXPIRE_AT);
   });
 });
 
@@ -146,11 +216,61 @@ describe("outbox dead-letter sweep", () => {
     },
   );
 
+  // See the inbox case for why `matchedCount` is the assertion that counts.
   it("does not rewrite a row that is already DEAD_LETTER", async () => {
-    await outbox.insertOne(anOutboxRow("DEAD_LETTER", ABOVE_CAP));
+    const row = {
+      ...anOutboxRow("DEAD_LETTER", ABOVE_CAP),
+      claimedBy: "sweep-test",
+    };
+    await outbox.insertOne(row);
 
-    const { matchedCount } = await sweepOutbox();
+    const { matchedCount, modifiedCount } = await sweepOutbox();
 
     expect(matchedCount).toBe(0);
+    expect(modifiedCount).toBe(0);
+    expect((await rowAfter(outbox, row._id)).claimedBy).toBe("sweep-test");
+  });
+
+  it("leaves a PURGED row at the cap alone", async () => {
+    const row = { ...anOutboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await outbox.insertOne(row);
+
+    await sweepOutbox();
+
+    expect(await statusOf(outbox, row._id)).toBe("PURGED");
+  });
+
+  it("leaves a PURGED row's deletion date alone", async () => {
+    const row = { ...anOutboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await outbox.insertOne(row);
+
+    await sweepOutbox();
+
+    expect((await rowAfter(outbox, row._id)).expireAt).toEqual(
+      PURGED_EXPIRE_AT,
+    );
+  });
+});
+
+describe("outbox claim-expiry sweep", () => {
+  it("leaves a PURGED row with a long-expired claim alone", async () => {
+    const row = { ...anOutboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await outbox.insertOne(row);
+
+    await claimSweepOutbox();
+
+    expect(await statusOf(outbox, row._id)).toBe("PURGED");
+  });
+
+  it("does not count a failed attempt against a PURGED row", async () => {
+    const row = { ...anOutboxRow("PURGED", ABOVE_CAP), ...purgedFields() };
+    await outbox.insertOne(row);
+
+    await claimSweepOutbox();
+
+    const stored = await rowAfter(outbox, row._id);
+
+    expect(stored.completionAttempts).toBe(ABOVE_CAP);
+    expect(stored.expireAt).toEqual(PURGED_EXPIRE_AT);
   });
 });

@@ -15,7 +15,11 @@ import {
   redriveById as redriveOutbox,
   updateResubmittedEvents as resubmittedOutbox,
 } from "../cases/repositories/outbox.repository.js";
-import { REDRIVE_FROM_STATUS, redriveConflict } from "./event-redrive.js";
+import {
+  DEAD_LETTER,
+  REDRIVABLE_STATUSES,
+  redriveConflict,
+} from "./event-redrive.js";
 import { anAttemptHistory } from "../../test/fixtures/attempt-history.js";
 import { db } from "../common/mongo-client.js";
 
@@ -181,7 +185,7 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
   });
 
   it("only matches a DEAD_LETTER row, so a concurrent change loses cleanly", () => {
-    expect(redriveFilter.status).toBe(REDRIVE_FROM_STATUS);
+    expect(redriveFilter.status).toBe(DEAD_LETTER);
     expect(matchesFilter(aDeadLetter(), redriveFilter)).toBe(true);
     expect(
       matchesFilter({ ...aDeadLetter(), status: "COMPLETED" }, redriveFilter),
@@ -201,6 +205,16 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(redriven.claimedBy).toBeNull();
     expect(redriven.claimedAt).toBeNull();
     expect(redriven.claimExpiresAt).toBeNull();
+  });
+
+  it("clears any deletion deadline, so a row in flight cannot be deleted", () => {
+    const redriven = applyUpdate(
+      { ...aDeadLetter(), expireAt: new Date("2026-12-16T10:00:00.000Z") },
+      redriveDoc,
+    );
+
+    expect(redriveDoc.$set.expireAt).toBeNull();
+    expect(redriven.expireAt).toBeNull();
   });
 
   it("clears the attempt history along with the counter", () => {
@@ -337,6 +351,17 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
   });
 });
 
+describe("redrivable statuses", () => {
+  it("is DEAD_LETTER and PURGED - an operator may change their mind", () => {
+    expect(REDRIVABLE_STATUSES).toEqual(["DEAD_LETTER", "PURGED"]);
+  });
+
+  it("is a wider idea than DEAD_LETTER, which means 'needs attention'", () => {
+    expect(REDRIVABLE_STATUSES).toContain(DEAD_LETTER);
+    expect(DEAD_LETTER).toBe("DEAD_LETTER");
+  });
+});
+
 describe("redriveConflict", () => {
   it("is a 409", () => {
     expect(redriveConflict("Inbox", ID, "COMPLETED").output.statusCode).toBe(
@@ -357,6 +382,6 @@ describe("redriveConflict", () => {
     expect(message).toContain("Outbox");
     expect(message).toContain(ID);
     expect(message).toContain("PUBLISHED");
-    expect(message).toContain(REDRIVE_FROM_STATUS);
+    expect(message).toContain(DEAD_LETTER);
   });
 });

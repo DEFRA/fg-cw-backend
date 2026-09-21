@@ -214,6 +214,7 @@ describe("actuatorBoxQueries redriveById", () => {
           completionAttempts: 0,
           attemptHistory: [],
           lastRedrive: { at: expect.any(String), by: "ada" },
+          expireAt: null,
           claimedBy: null,
           claimedAt: null,
           claimExpiresAt: null,
@@ -255,6 +256,7 @@ describe("actuatorBoxQueries countFacets", () => {
         RESUBMITTED: 0,
         COMPLETED: 0,
         DEAD_LETTER: 0,
+        PURGED: 0,
       },
     });
   });
@@ -268,6 +270,16 @@ describe("actuatorBoxQueries breakdown", () => {
 
     expect(JSON.stringify(aggregate.mock.calls[0][0][0].$match)).toContain(
       "DEAD_LETTER",
+    );
+  });
+
+  it("never widens to PURGED, even though a purged row is redrivable", async () => {
+    const aggregate = mockAggregate([]);
+
+    await queriesFor().breakdown({ status: "PURGED" });
+
+    expect(JSON.stringify(aggregate.mock.calls[0][0][0].$match)).not.toContain(
+      "PURGED",
     );
   });
 

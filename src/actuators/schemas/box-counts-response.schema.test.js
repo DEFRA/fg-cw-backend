@@ -12,6 +12,7 @@ const allStatuses = () => ({
   RESUBMITTED: 4,
   COMPLETED: 5,
   DEAD_LETTER: 6,
+  PURGED: 7,
 });
 
 const validate = (counts) => countsSchema.validate(counts).error;
