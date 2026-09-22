@@ -173,3 +173,36 @@ describe("detail attemptHistory", () => {
     ).toBeUndefined();
   });
 });
+
+describe("detail expireAt", () => {
+  it.each([
+    ["inbox", inboxDetailResponseSchema, anInbox],
+    ["outbox", outboxDetailResponseSchema, anOutbox],
+  ])("accepts an ISO deletion date on a %s detail", (_box, schema, detail) => {
+    const value = detail({ expireAt: "2026-09-14T10:00:00.000Z" });
+
+    expect(schema.validate(value).error).toBeUndefined();
+  });
+
+  it.each([
+    ["inbox", inboxDetailResponseSchema, anInbox],
+    ["outbox", outboxDetailResponseSchema, anOutbox],
+  ])(
+    "accepts a null deletion date on a %s detail - the row is not terminal",
+    (_box, schema, detail) => {
+      expect(schema.validate(detail({ expireAt: null })).error).toBeUndefined();
+    },
+  );
+
+  it("rejects a deletion date that is not a date", () => {
+    const value = anInbox({ expireAt: "never" });
+
+    expect(inboxDetailResponseSchema.validate(value).error).toBeDefined();
+  });
+
+  it("names PURGED among the statuses a row can hold", () => {
+    const { status } = inboxDetailResponseSchema.describe().keys;
+
+    expect(status.flags.description).toContain("PURGED");
+  });
+});

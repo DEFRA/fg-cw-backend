@@ -289,3 +289,92 @@ describe("Outbox attemptHistory", () => {
     expect(event.attemptHistory).toEqual(stored);
   });
 });
+
+describe("Outbox model expireAt", () => {
+  const NOW = new Date("2026-06-16T10:00:00.000Z");
+  const NINETY_DAYS_ON = new Date("2026-09-14T10:00:00.000Z");
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("is null on a new row, so nothing in flight is ever deleted", () => {
+    expect(Outbox.createMock().expireAt).toBeNull();
+  });
+
+  it("is the retention period past completion once the row completes", () => {
+    const event = Outbox.createMock();
+
+    event.markAsComplete();
+
+    expect(event.expireAt).toEqual(NINETY_DAYS_ON);
+  });
+
+  // Two readings of the clock can straddle a millisecond; a clock that moves
+  // on every reading catches a second `new Date()`.
+  it("takes completionDate and expireAt from one reading of the clock", () => {
+    let reading = 0;
+    const Clock = Date;
+    vi.stubGlobal(
+      "Date",
+      class MovingClock extends Clock {
+        constructor(...args) {
+          super(...(args.length > 0 ? args : [NOW.getTime() + reading++]));
+        }
+      },
+    );
+
+    const event = Outbox.createMock();
+    event.markAsComplete();
+
+    expect(event.expireAt.getTime() - Date.parse(event.completionDate)).toBe(
+      NINETY_DAYS_ON.getTime() - NOW.getTime(),
+    );
+  });
+
+  it("is a Date, not a string - a TTL index ignores anything else", () => {
+    const event = Outbox.createMock();
+
+    event.markAsComplete();
+
+    expect(event.expireAt).toBeInstanceOf(Date);
+  });
+
+  it("is cleared again when the row fails", () => {
+    const event = Outbox.createMock();
+    event.markAsComplete();
+
+    event.markAsFailed(new Error("boom"));
+
+    expect(event.expireAt).toBeNull();
+  });
+
+  it("round-trips through a document", () => {
+    const event = Outbox.createMock();
+    event.markAsComplete();
+
+    const stored = Outbox.fromDocument(event.toDocument());
+
+    expect(stored.expireAt).toEqual(NINETY_DAYS_ON);
+  });
+
+  it("is written into the document the repository stores", () => {
+    const event = Outbox.createMock();
+    event.markAsComplete();
+
+    expect(event.toDocument().expireAt).toEqual(NINETY_DAYS_ON);
+  });
+
+  it("reads back as null off a row written before the field existed", () => {
+    const { expireAt, ...legacy } = Outbox.createMock().toDocument();
+
+    expect(expireAt).toBeNull();
+    expect(Outbox.fromDocument(legacy).expireAt).toBeNull();
+  });
+});

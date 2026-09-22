@@ -1,11 +1,15 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
+import { config } from "../../common/config.js";
+import { expiryFrom } from "../../events/event-retention.js";
 import {
   appendAttempt,
   normaliseAttemptHistory,
   toAttemptEntry,
   toLastError,
 } from "../../events/last-error.js";
+
+const RETENTION_DAYS = config.get("events.retentionDays");
 
 export class Inbox {
   static validationSchema = Joi.object({
@@ -48,6 +52,9 @@ export class Inbox {
     this.completionDate = props.completionDate || null;
     // `{ at, by }` of the most recent redrive; null until redriven.
     this.lastRedrive = props.lastRedrive ?? null;
+    // The deletion deadline; null - which is also how a row written before
+    // this field existed reads - means the row is never deleted.
+    this.expireAt = props.expireAt ?? null;
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -56,8 +63,10 @@ export class Inbox {
   }
 
   markAsComplete() {
+    const now = new Date();
     this.status = InboxStatus.COMPLETED;
-    this.completionDate = new Date().toISOString();
+    this.completionDate = now.toISOString();
+    this.expireAt = expiryFrom(now, RETENTION_DAYS);
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -75,6 +84,7 @@ export class Inbox {
       toAttemptEntry(error),
     );
     this.completionAttempts += 1;
+    this.expireAt = null;
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -96,6 +106,7 @@ export class Inbox {
       status: this.status,
       completionDate: this.completionDate,
       lastRedrive: this.lastRedrive,
+      expireAt: this.expireAt,
       claimedAt: this.claimedAt,
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
@@ -120,6 +131,7 @@ export class Inbox {
       status: doc.status,
       completionDate: doc.completionDate,
       lastRedrive: doc.lastRedrive,
+      expireAt: doc.expireAt,
       claimedAt: doc.claimedAt,
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
@@ -156,4 +168,5 @@ export const InboxStatus = {
   COMPLETED: "COMPLETED",
   RESUBMITTED: "RESUBMITTED",
   DEAD_LETTER: "DEAD_LETTER",
+  PURGED: "PURGED",
 };
