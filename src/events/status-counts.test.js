@@ -15,6 +15,7 @@ describe("EVENT_STATUSES", () => {
       "RESUBMITTED",
       "COMPLETED",
       "DEAD_LETTER",
+      "PURGED",
     ]);
   });
 });
@@ -28,6 +29,7 @@ describe("zeroCounts", () => {
       RESUBMITTED: 0,
       COMPLETED: 0,
       DEAD_LETTER: 0,
+      PURGED: 0,
     });
   });
 
@@ -53,6 +55,7 @@ describe("toStatusCounts", () => {
       RESUBMITTED: 0,
       COMPLETED: 7,
       DEAD_LETTER: 0,
+      PURGED: 0,
     });
   });
 

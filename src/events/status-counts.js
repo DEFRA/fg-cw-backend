@@ -9,6 +9,8 @@ export const EVENT_STATUSES = [
   "RESUBMITTED",
   "COMPLETED",
   "DEAD_LETTER",
+  // Last, because the admin renders the tiles in this order.
+  "PURGED",
 ];
 
 // Every key always present: the frontend renders one number per status, and a

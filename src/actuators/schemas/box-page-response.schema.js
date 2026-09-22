@@ -14,7 +14,7 @@ const commonRow = {
     .required()
     .example("DEAD_LETTER")
     .description(
-      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER",
+      "PUBLISHED|PROCESSING|FAILED|RESUBMITTED|COMPLETED|DEAD_LETTER|PURGED",
     ),
   publicationDate: Joi.string().isoDate().allow(null).required(),
   completedAt: Joi.string().isoDate().allow(null).required(),

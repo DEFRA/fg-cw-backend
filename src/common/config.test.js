@@ -70,3 +70,55 @@ describe("config configBroker.variant", () => {
     );
   });
 });
+
+describe("config events.retentionDays", () => {
+  const saved = {};
+
+  beforeEach(async () => {
+    saved.EVENT_RETENTION_DAYS = process.env.EVENT_RETENTION_DAYS;
+    const { vi } = await import("vitest");
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    if (saved.EVENT_RETENTION_DAYS === undefined) {
+      delete process.env.EVENT_RETENTION_DAYS;
+    } else {
+      process.env.EVENT_RETENTION_DAYS = saved.EVENT_RETENTION_DAYS;
+    }
+  });
+
+  it("defaults to 90 days when EVENT_RETENTION_DAYS is unset", async () => {
+    delete process.env.EVENT_RETENTION_DAYS;
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("events.retentionDays")).toBe(90);
+  });
+
+  it("reads the environment as a number, not the string it arrived as", async () => {
+    process.env.EVENT_RETENTION_DAYS = "120";
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("events.retentionDays")).toBe(120);
+  });
+
+  it("accepts the floor of 30", async () => {
+    process.env.EVENT_RETENTION_DAYS = "30";
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("events.retentionDays")).toBe(30);
+  });
+
+  // 0 is the one convict's own `nat` would have let through.
+  it.each(["0", "29", "-1", "abc", "30.5", ""])(
+    "refuses to start on EVENT_RETENTION_DAYS=%s",
+    async (value) => {
+      process.env.EVENT_RETENTION_DAYS = value;
+
+      await expect(loadConfig()).rejects.toThrow();
+    },
+  );
+});

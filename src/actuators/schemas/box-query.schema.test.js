@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { actorQuery } from "./box-query.schema.js";
+import { actorQuery, pageQuery } from "./box-query.schema.js";
+
+describe("pageQuery", () => {
+  it("accepts status=PURGED, so the admin can filter the tile", () => {
+    expect(pageQuery.validate({ status: "PURGED" }).error).toBeUndefined();
+  });
+});
 
 describe("actorQuery", () => {
   it("accepts an operator name", () => {

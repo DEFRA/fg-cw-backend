@@ -63,7 +63,13 @@ export const processExpiredEvents = async () => {
   await db.collection(collection).updateMany(
     {
       claimExpiresAt: { $lt: new Date() },
-      status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
+      status: {
+        $nin: [
+          InboxStatus.DEAD_LETTER,
+          InboxStatus.COMPLETED,
+          InboxStatus.PURGED,
+        ],
+      },
     },
     {
       $set: {
@@ -88,7 +94,15 @@ export const updateDeadEvents = async () => {
       // a success is terminal. The counter counts failures, so a row that
       // succeeded normally sits below the cap and never matches - but lowering
       // `INBOX_MAX_RETRIES` puts already-succeeded rows at or above it.
-      status: { $nin: [InboxStatus.DEAD_LETTER, InboxStatus.COMPLETED] },
+      // PURGED is terminal too, and it always sits at the cap - it got there
+      // by dying - so without it here the sweep would undo every purge.
+      status: {
+        $nin: [
+          InboxStatus.DEAD_LETTER,
+          InboxStatus.COMPLETED,
+          InboxStatus.PURGED,
+        ],
+      },
     },
     {
       $set: {

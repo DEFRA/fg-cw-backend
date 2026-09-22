@@ -19,10 +19,7 @@ import {
 import { toDetailDocument } from "../../events/event-detail.js";
 import { toSourceFacets } from "../../events/event-facets.js";
 import { buildEventListFilter } from "../../events/event-list-filter.js";
-import {
-  REDRIVE_FROM_STATUS,
-  redriveUpdate,
-} from "../../events/event-redrive.js";
+import { DEAD_LETTER, redriveUpdate } from "../../events/event-redrive.js";
 import { toIsoOrNull } from "../../common/date-helpers.js";
 import { statusGroupStage } from "../../events/status-counts.js";
 
@@ -168,7 +165,7 @@ const redriveByIdFor =
     const { matchedCount } = await db
       .collection(collection)
       .updateOne(
-        { _id: toId(id), status: REDRIVE_FROM_STATUS },
+        { _id: toId(id), status: DEAD_LETTER },
         redriveUpdate(resubmittedStatus, { by }),
         { session },
       );
@@ -184,7 +181,9 @@ const breakdownFor =
         .collection(collection)
         .aggregate(
           breakdownStages({
-            filter: listFilter({ ...filter, status: REDRIVE_FROM_STATUS }),
+            // DEAD_LETTER, not the wider redrivable set: Top errors answers
+            // "what still needs attention", and a purged row has been let go.
+            filter: listFilter({ ...filter, status: DEAD_LETTER }),
             typeField: EVENT_TYPE_FIELDS[box],
             auditExpression: auditGroupExpression(AUDIT_TARGET_FIELDS[box]),
             sortKey: SORT_KEY,

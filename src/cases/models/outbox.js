@@ -1,12 +1,16 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
+import { config } from "../../common/config.js";
 import { getMessageGroupId } from "../../common/get-message-group-id.js";
+import { expiryFrom } from "../../events/event-retention.js";
 import {
   appendAttempt,
   normaliseAttemptHistory,
   toAttemptEntry,
   toLastError,
 } from "../../events/last-error.js";
+
+const RETENTION_DAYS = config.get("events.retentionDays");
 
 export const OutboxStatus = {
   PUBLISHED: "PUBLISHED",
@@ -15,6 +19,7 @@ export const OutboxStatus = {
   COMPLETED: "COMPLETED",
   RESUBMITTED: "RESUBMITTED",
   DEAD_LETTER: "DEAD_LETTER",
+  PURGED: "PURGED",
 };
 
 export class Outbox {
@@ -53,6 +58,8 @@ export class Outbox {
     this.completionDate = props.completionDate;
     // `{ at, by }` of the most recent redrive; null until redriven.
     this.lastRedrive = props.lastRedrive ?? null;
+    // The deletion deadline - see the note in models/inbox.js.
+    this.expireAt = props.expireAt ?? null;
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -60,8 +67,10 @@ export class Outbox {
   }
 
   markAsComplete() {
+    const now = new Date();
     this.status = OutboxStatus.COMPLETED;
-    this.completionDate = new Date().toISOString();
+    this.completionDate = now.toISOString();
+    this.expireAt = expiryFrom(now, RETENTION_DAYS);
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -79,6 +88,7 @@ export class Outbox {
       toAttemptEntry(error),
     );
     this.completionAttempts += 1;
+    this.expireAt = null;
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
@@ -97,6 +107,7 @@ export class Outbox {
       status: this.status,
       completionDate: this.completionDate,
       lastRedrive: this.lastRedrive,
+      expireAt: this.expireAt,
       claimedAt: this.claimedAt,
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
@@ -122,6 +133,7 @@ export class Outbox {
       status: doc.status,
       completionDate: doc.completionDate,
       lastRedrive: doc.lastRedrive,
+      expireAt: doc.expireAt,
       claimedAt: doc.claimedAt,
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
