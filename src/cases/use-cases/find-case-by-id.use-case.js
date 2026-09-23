@@ -42,8 +42,10 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+const HTTP_NOT_FOUND = 404;
+
 const isTaskNotFound = (error) =>
-  Boom.isBoom(error) && error.output.statusCode === 404;
+  Boom.isBoom(error) && error.output.statusCode === HTTP_NOT_FOUND;
 
 const storedDescription = (tl) =>
   tl.description || EventEnums.eventDescriptions[tl.eventType];
