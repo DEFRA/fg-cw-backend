@@ -157,6 +157,7 @@ describe("outbox.repository", () => {
             lastError: null,
             attemptHistory: [],
             lastRedrive: null,
+            expireAt: null,
             publicationDate: expect.any(Date),
             status: "PROCESSING",
             target: "arn:foo:bar",
@@ -181,7 +182,13 @@ describe("outbox.repository", () => {
           claimExpiresAt: {
             $lt: expect.any(Date),
           },
-          status: { $nin: [OutboxStatus.DEAD_LETTER, OutboxStatus.COMPLETED] },
+          status: {
+            $nin: [
+              OutboxStatus.DEAD_LETTER,
+              OutboxStatus.COMPLETED,
+              OutboxStatus.PURGED,
+            ],
+          },
         },
         {
           $set: {
@@ -276,7 +283,13 @@ describe("outbox.repository", () => {
       expect(updateMany).toBeCalledWith(
         {
           completionAttempts: { $gte: MAX_RETRIES },
-          status: { $ne: OutboxStatus.DEAD_LETTER },
+          status: {
+            $nin: [
+              OutboxStatus.DEAD_LETTER,
+              OutboxStatus.COMPLETED,
+              OutboxStatus.PURGED,
+            ],
+          },
         },
         {
           $set: {

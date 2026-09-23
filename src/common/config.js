@@ -14,6 +14,25 @@ convict.addFormat({
   },
 });
 
+// The floor keeps inbox message-id dedup intact; convict's own `nat` would
+// accept 0, which expires a completed row the moment it completes.
+const MIN_RETENTION_DAYS = 30;
+
+convict.addFormat({
+  name: "retention-days",
+  validate: function validateRetentionDays(value) {
+    const retentionDaysSchema = Joi.number()
+      .integer()
+      .min(MIN_RETENTION_DAYS)
+      .strict();
+
+    Joi.assert(value, retentionDaysSchema);
+  },
+  // Without this an env var stays the string convict read it as, and the
+  // arithmetic downstream would silently work on a string.
+  coerce: Number,
+});
+
 convict.addFormats(convictFormatWithValidator);
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -304,6 +323,14 @@ export const config = convict({
       format: String,
       default: null,
       env: "INBOX_POLL_MS",
+    },
+  },
+  events: {
+    retentionDays: {
+      doc: "Days a COMPLETED or PURGED inbox/outbox event is kept before the database deletes it. Never below 30 - see the retention-days format",
+      format: "retention-days",
+      default: 90,
+      env: "EVENT_RETENTION_DAYS",
     },
   },
 });

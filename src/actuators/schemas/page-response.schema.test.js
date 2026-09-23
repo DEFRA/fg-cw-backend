@@ -12,6 +12,7 @@ const counts = {
   RESUBMITTED: 0,
   COMPLETED: 2,
   DEAD_LETTER: 3,
+  PURGED: 0,
 };
 
 const aRow = (overrides = {}) => ({
