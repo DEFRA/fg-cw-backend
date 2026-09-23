@@ -53,16 +53,6 @@ const toWorkflowStageStatus = (s) =>
     transitions: s.transitions.map(toWorkflowTransition),
   });
 
-const toWorkflowTaskValueOption = (so) =>
-  new WorkflowTaskValueOption({
-    code: so.code,
-    name: so.name,
-    theme: so.theme,
-    altName: so.altName,
-    completes: so.completes,
-    comment: so.comment,
-  });
-
 const toWorkflowTaskComment = (tc) =>
   tc
     ? new WorkflowTaskComment({
@@ -71,6 +61,16 @@ const toWorkflowTaskComment = (tc) =>
         mandatory: tc.mandatory,
       })
     : null;
+
+const toWorkflowTaskValueOption = (so) =>
+  new WorkflowTaskValueOption({
+    code: so.code,
+    name: so.name,
+    theme: so.theme,
+    altName: so.altName,
+    completes: so.completes,
+    comment: toWorkflowTaskComment(so.comment),
+  });
 
 const toWorkflowTask = (t) =>
   new WorkflowTask({
