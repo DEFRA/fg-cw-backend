@@ -196,6 +196,8 @@ export const mapValueOptions = (valueOptions = []) =>
     commentInputDef: option.comment,
   }));
 
+const displayName = (option) => option.altName || option.name;
+
 export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
     return {
@@ -214,7 +216,7 @@ export const mapSelectedValueOption = (statusCode, valueOptions) => {
   }
 
   return {
-    statusText: selectedOption.altName || selectedOption.name,
+    statusText: displayName(selectedOption),
     statusTheme: selectedOption.theme ?? "NONE",
   };
 };
