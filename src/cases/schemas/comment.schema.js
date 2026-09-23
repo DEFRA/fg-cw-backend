@@ -10,6 +10,6 @@ export const comment = Joi.object({
       }),
     )
     .required(),
-  helpText: Joi.string().required(),
+  helpText: Joi.string().optional().allow(null),
   mandatory: Joi.boolean().required(),
 }).label("Comment");

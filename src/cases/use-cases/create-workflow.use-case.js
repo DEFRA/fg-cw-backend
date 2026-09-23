@@ -124,6 +124,7 @@ const createWorkflowTaskValueOption = (valueOption) =>
     theme: valueOption.theme,
     altName: valueOption.altName,
     completes: valueOption.completes,
+    comment: valueOption.comment ?? null,
   });
 
 const createWorkflowTask = (task) =>
