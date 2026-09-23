@@ -180,6 +180,8 @@ export const {
   findStatusById,
   redriveById,
   purgeById,
+  findEditableById,
+  editPayloadById,
   breakdown,
 } = actuatorBoxQueries({
   collection,
@@ -189,6 +191,8 @@ export const {
   publicationDateStorage: "date",
   eventIdField: "event.id",
   traceparentField: "event.traceparent",
+  // No editColumns: segregationRef is the FIFO lane the row was queued in, so
+  // an edit deliberately leaves it as stored.
   rowFields: {
     eventId: { reads: ["event.id"], map: (doc) => orNull(doc.event?.id) },
     // Never null: only this service can recognise its own audit topic.
