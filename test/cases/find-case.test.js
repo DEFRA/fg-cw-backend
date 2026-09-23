@@ -104,6 +104,7 @@ describe("GET /cases/{caseId}", () => {
                     name: "Complete",
                     theme: "SUCCESS",
                     completes: true,
+                    commentInputDef: null,
                   },
                 ],
                 commentInputDef: {
