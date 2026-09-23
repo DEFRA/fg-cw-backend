@@ -1031,20 +1031,20 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.value).toBe("STATUS_OPTION_1");
-      expect(task.statusText).toBe("Accepted");
+      expect(task.statusText).toBe("Accept");
       expect(task.statusTheme).toBe("NONE");
 
       // Verify statusOptions are transformed
       expect(task.valueOptions).toEqual([
         {
           code: "STATUS_OPTION_1",
-          name: "Accept",
+          name: "Accepted",
           theme: "NONE",
           completes: true,
         },
         {
           code: "STATUS_OPTION_2",
-          name: "Request information from customer",
+          name: "Information requested",
           theme: "NOTICE",
           completes: false,
         },
@@ -1112,7 +1112,7 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.value).toBe("RFI");
-      expect(task.statusText).toBe("Information requested");
+      expect(task.statusText).toBe("Request information from customer");
       expect(task.statusTheme).toBe("NOTICE");
       expect(task.completed).toBe(false);
     });
@@ -1347,7 +1347,7 @@ describe("findCaseByIdUseCase", () => {
 });
 
 describe("mapSelectedValueOption", () => {
-  it("returns name as statusText (altName is used only in statusOptions array)", () => {
+  it("returns altName as statusText when present", () => {
     const valueOptions = [
       {
         code: "ACCEPTED",
@@ -1368,7 +1368,7 @@ describe("mapSelectedValueOption", () => {
     const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
-      statusText: "Accepted",
+      statusText: "Accept",
       statusTheme: "NONE",
     });
   });
@@ -1442,14 +1442,14 @@ describe("mapSelectedValueOption", () => {
     const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
-      statusText: "Accepted",
+      statusText: "Accept",
       statusTheme: "NONE",
     });
   });
 });
 
 describe("mapValueOptions", () => {
-  it("transforms status options using altName when present", () => {
+  it("returns name without altName transformation", () => {
     const valueOptions = [
       {
         code: "ACCEPTED",
@@ -1478,7 +1478,7 @@ describe("mapValueOptions", () => {
     expect(result).toEqual([
       {
         code: "ACCEPTED",
-        name: "Accept",
+        name: "Accepted",
         theme: "NONE",
         completes: true,
         commentInputDef: {
@@ -1489,7 +1489,7 @@ describe("mapValueOptions", () => {
       },
       {
         code: "RFI",
-        name: "Request information from customer",
+        name: "Information requested",
         theme: "NOTICE",
         completes: false,
         commentInputDef: null,
@@ -1546,7 +1546,7 @@ describe("mapValueOptions", () => {
     expect(result).toEqual([
       {
         code: "ACCEPTED",
-        name: "Accept",
+        name: "Accepted",
         theme: "NONE",
         completes: true,
       },
