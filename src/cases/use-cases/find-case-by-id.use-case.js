@@ -193,7 +193,7 @@ export const mapValueOptions = (valueOptions = []) =>
     name: option.name,
     theme: option.theme,
     completes: option.completes,
-    commentInputDef: option.comment,
+    commentInputDef: option.comment ?? null,
   }));
 
 const displayName = (option) => option.altName || option.name;

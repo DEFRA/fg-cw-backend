@@ -437,6 +437,7 @@ describe("findCaseByIdUseCase", () => {
                     completes: true,
                     name: "Status option 1",
                     theme: "SUCCESS",
+                    commentInputDef: null,
                   },
                 ],
                 statusText: "Incomplete",
@@ -1041,12 +1042,14 @@ describe("findCaseByIdUseCase", () => {
           name: "Accepted",
           theme: "NONE",
           completes: true,
+          commentInputDef: null,
         },
         {
           code: "STATUS_OPTION_2",
           name: "Information requested",
           theme: "NOTICE",
           completes: false,
+          commentInputDef: null,
         },
       ]);
     });
@@ -1515,6 +1518,7 @@ describe("mapValueOptions", () => {
         name: "Complete",
         theme: "SUCCESS",
         completes: true,
+        commentInputDef: null,
       },
     ]);
   });
@@ -1549,12 +1553,14 @@ describe("mapValueOptions", () => {
         name: "Accepted",
         theme: "NONE",
         completes: true,
+        commentInputDef: null,
       },
       {
         code: "COMPLETE",
         name: "Complete",
         theme: "SUCCESS",
         completes: true,
+        commentInputDef: null,
       },
     ]);
   });
