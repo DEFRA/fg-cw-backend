@@ -42,18 +42,27 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
+const storedDescription = (tl) =>
+  tl.description || EventEnums.eventDescriptions[tl.eventType];
+
 // Input tasks get no suffix - the value, not the transition, is the event, and
 // the frontend appends "by <user>" to whatever this returns.
+const formatTaskName = (task, suffix) =>
+  task.input ? `Task '${task.name}'` : `Task '${task.name}' ${suffix}`;
+
 const formatTaskEvent = (tl, workflow, suffix) => {
   const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
-  const task = workflow.findTask({
-    phaseCode,
-    stageCode,
-    taskGroupCode,
-    taskCode,
-  });
 
-  return task.input ? `Task '${task.name}'` : `Task '${task.name}' ${suffix}`;
+  const taskGroup = workflow
+    .findPhase(phaseCode)
+    .findStage(stageCode)
+    .findTaskGroup(taskGroupCode);
+
+  if (!taskGroup.hasTask(taskCode)) {
+    return storedDescription(tl);
+  }
+
+  return formatTaskName(taskGroup.findTask(taskCode), suffix);
 };
 
 // eslint-disable-next-line complexity
@@ -85,7 +94,7 @@ export const formatTimelineItemDescription = (tl, workflow) => {
       return `Status changed to '${status.name}'`;
     }
     default:
-      return tl.description || EventEnums.eventDescriptions[tl.eventType];
+      return storedDescription(tl);
   }
 };
 
@@ -143,48 +152,50 @@ const mapTasks = async (
   comments,
 ) =>
   Promise.all(
-    caseTaskGroup.tasks.map(async (caseTaskGroupTask) => {
-      const workflowTaskGroupTask = workflowTaskGroup.findTask(
-        caseTaskGroupTask.code,
-      );
+    caseTaskGroup.tasks
+      .filter((caseTask) => workflowTaskGroup.hasTask(caseTask.code))
+      .map(async (caseTaskGroupTask) => {
+        const workflowTaskGroupTask = workflowTaskGroup.findTask(
+          caseTaskGroupTask.code,
+        );
 
-      const selectedStatus = workflowTaskGroupTask.input
-        ? mapInputStatus(caseTaskGroupTask.completed)
-        : mapSelectedValueOption(
-            caseTaskGroupTask.value,
-            workflowTaskGroupTask.valueOptions,
-          );
+        const selectedStatus = workflowTaskGroupTask.input
+          ? mapInputStatus(caseTaskGroupTask.completed)
+          : mapSelectedValueOption(
+              caseTaskGroupTask.value,
+              workflowTaskGroupTask.valueOptions,
+            );
 
-      const notesHistory = mapNotesHistory(
-        caseTaskGroupTask.commentRefs,
-        comments,
-        workflowTaskGroupTask.valueOptions,
-        userMap,
-      );
+        const notesHistory = mapNotesHistory(
+          caseTaskGroupTask.commentRefs,
+          comments,
+          workflowTaskGroupTask.valueOptions,
+          userMap,
+        );
 
-      return {
-        code: caseTaskGroupTask.code,
-        name: workflowTaskGroupTask.name,
-        description: await mapDescription(workflowTaskGroupTask, root),
-        mandatory: workflowTaskGroupTask.mandatory,
-        valueOptions: mapValueOptions(workflowTaskGroupTask.valueOptions),
-        value: caseTaskGroupTask.value,
-        input: workflowTaskGroupTask.input,
-        statusText: selectedStatus.statusText,
-        statusTheme: selectedStatus.statusTheme,
-        completed: caseTaskGroupTask.completed,
-        commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
-        commentRefs: caseTaskGroupTask.commentRefs,
-        notesHistory,
-        updatedAt: caseTaskGroupTask.updatedAt,
-        updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-        requiredRoles: workflowTaskGroupTask.requiredRoles,
-        canComplete: AccessControl.canAccess(root.user, {
-          idpRoles: [],
-          appRoles: workflowTaskGroupTask.requiredRoles,
-        }),
-      };
-    }),
+        return {
+          code: caseTaskGroupTask.code,
+          name: workflowTaskGroupTask.name,
+          description: await mapDescription(workflowTaskGroupTask, root),
+          mandatory: workflowTaskGroupTask.mandatory,
+          valueOptions: mapValueOptions(workflowTaskGroupTask.valueOptions),
+          value: caseTaskGroupTask.value,
+          input: workflowTaskGroupTask.input,
+          statusText: selectedStatus.statusText,
+          statusTheme: selectedStatus.statusTheme,
+          completed: caseTaskGroupTask.completed,
+          commentInputDef: mapWorkflowCommentDef(workflowTaskGroupTask),
+          commentRefs: caseTaskGroupTask.commentRefs,
+          notesHistory,
+          updatedAt: caseTaskGroupTask.updatedAt,
+          updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
+          requiredRoles: workflowTaskGroupTask.requiredRoles,
+          canComplete: AccessControl.canAccess(root.user, {
+            idpRoles: [],
+            appRoles: workflowTaskGroupTask.requiredRoles,
+          }),
+        };
+      }),
   );
 
 export const mapValueOptions = (valueOptions = []) =>

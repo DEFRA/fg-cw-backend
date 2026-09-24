@@ -5,11 +5,13 @@ import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { findAll } from "../../users/repositories/user.repository.js";
 import { Case } from "../models/case.js";
+import { CaseTask } from "../models/case-task.js";
 import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import { Workflow } from "../models/workflow.js";
+import { WorkflowTask } from "../models/workflow-task.js";
 import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
@@ -144,6 +146,111 @@ describe("formatTimelineItemDescription", () => {
 
     expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
       EventEnums.eventDescriptions[EventEnums.eventTypes.CASE_ASSIGNED],
+    );
+  });
+
+  it.each([
+    EventEnums.eventTypes.TASK_COMPLETED,
+    EventEnums.eventTypes.TASK_UPDATED,
+  ])(
+    "uses the stored description on %s when the task is no longer in the workflow",
+    (eventType) => {
+      const wf = Workflow.createMock();
+      const timelineItem = {
+        eventType,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        description: "SitiAgri FC Reference",
+        createdBy: "System",
+        data: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          taskGroupCode: "TASK_GROUP_1",
+          taskCode: "TASK_SITI_REFERENCE",
+        },
+      };
+
+      expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+        "SitiAgri FC Reference",
+      );
+    },
+  );
+
+  it("falls back to the default event description when the removed task event has no stored description", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_SITI_REFERENCE",
+      },
+    };
+
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      EventEnums.eventDescriptions[EventEnums.eventTypes.TASK_COMPLETED],
+    );
+  });
+
+  it("propagates the error when the stage is missing", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "SitiAgri FC Reference",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_MISSING",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
+      'Stage with code "STAGE_MISSING" not found',
+    );
+  });
+
+  it("propagates the error when the task group is missing", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "SitiAgri FC Reference",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_MISSING",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
+      'TaskGroup with code "TASK_GROUP_MISSING" not found',
+    );
+  });
+
+  it("propagates the error when the phase is missing", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_UPDATED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "SitiAgri FC Reference",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_MISSING",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
+      'Phase with code "PHASE_MISSING" not found',
     );
   });
 });
@@ -465,6 +572,161 @@ describe("findCaseByIdUseCase", () => {
       beforeContent: [],
       afterContent: [],
     });
+  });
+
+  it("ignores stored case tasks that no longer exist in the workflow", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    kase.phases[0].stages[0].taskGroups[0].tasks.push(
+      new CaseTask({
+        code: "TASK_SITI_REFERENCE",
+        value: "COMPLETED",
+        completed: true,
+        commentRefs: [],
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.taskGroups[0].tasks.map((t) => t.code)).toEqual([
+      "TASK_1",
+    ]);
+    expect(
+      kase.phases[0].stages[0].taskGroups[0].tasks.map((t) => t.code),
+    ).toEqual(["TASK_1", "TASK_SITI_REFERENCE"]);
+  });
+
+  it("displays stored case tasks that still exist in the workflow", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.taskGroups[0].tasks).toHaveLength(1);
+    expect(result.stage.taskGroups[0].tasks[0]).toMatchObject({
+      code: "TASK_1",
+      name: "Task 1",
+    });
+  });
+
+  it("does not add workflow tasks that are not stored on the case", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].taskGroups[0].tasks.push(
+      new WorkflowTask({
+        code: "TASK_CONDITIONAL",
+        name: "Conditional task",
+        description: "Conditional task description",
+        mandatory: true,
+        valueOptions: [],
+        requiredRoles: new RequiredAppRoles({ allOf: [], anyOf: [] }),
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.taskGroups[0].tasks.map((t) => t.code)).toEqual([
+      "TASK_1",
+    ]);
+    expect(
+      kase.phases[0].stages[0].taskGroups[0].tasks.map((t) => t.code),
+    ).toEqual(["TASK_1"]);
+  });
+
+  it("loads a case whose timeline refers to a task removed from the workflow", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    kase.timeline.push(
+      new TimelineEvent({
+        eventType: EventEnums.eventTypes.TASK_COMPLETED,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        description: "SitiAgri FC Reference",
+        createdBy: "System",
+        data: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          taskGroupCode: "TASK_GROUP_1",
+          taskCode: "TASK_SITI_REFERENCE",
+        },
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.timeline[1]).toMatchObject({
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      description: "SitiAgri FC Reference",
+      data: {
+        taskCode: "TASK_SITI_REFERENCE",
+      },
+    });
+  });
+
+  it("propagates errors unrelated to a missing workflow task", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    kase.timeline.push(
+      new TimelineEvent({
+        eventType: EventEnums.eventTypes.TASK_COMPLETED,
+        createdAt: "2025-01-01T00:00:00.000Z",
+        description: "Task Completed",
+        createdBy: "System",
+        data: {
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          taskGroupCode: "TASK_GROUP_MISSING",
+          taskCode: "TASK_1",
+        },
+      }),
+    );
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    await expect(
+      findCaseByIdUseCase("test-case-id", mockAuthUser),
+    ).rejects.toThrow('TaskGroup with code "TASK_GROUP_MISSING" not found');
   });
 
   it("omits task groups when the current status hides them", async () => {
