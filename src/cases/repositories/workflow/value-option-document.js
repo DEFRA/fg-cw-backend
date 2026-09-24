@@ -1,3 +1,5 @@
+import { CommentDocument } from "./comment-document.js";
+
 export class ValueOptionDocument {
   constructor(props) {
     this.code = props.code;
@@ -5,5 +7,6 @@ export class ValueOptionDocument {
     this.theme = props.theme;
     this.altName = props.altName;
     this.completes = props.completes;
+    this.comment = props.comment ? new CommentDocument(props.comment) : null;
   }
 }

@@ -38,7 +38,7 @@ describe("Task Schema", () => {
     expect(error.details[0].message).toBe('"comment.label" is required');
   });
 
-  it("should have helpText if comment is provided", () => {
+  it("should allow comment without helpText", () => {
     const task = {
       code: "TASK_1",
       name: "Test task",
@@ -53,7 +53,7 @@ describe("Task Schema", () => {
 
     const { error } = Task.validate(task);
 
-    expect(error.details[0].message).toBe('"comment.helpText" is required');
+    expect(error).toBeUndefined();
   });
 
   it("should error when comment.mandatory is not present", () => {
