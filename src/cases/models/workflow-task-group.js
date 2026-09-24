@@ -21,6 +21,10 @@ export class WorkflowTaskGroup {
     return task;
   }
 
+  hasTask(taskCode) {
+    return this.tasks.some((t) => t.code === taskCode);
+  }
+
   static createMock() {
     return new WorkflowTaskGroup({
       code: "TASK_GROUP_1",
