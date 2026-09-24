@@ -270,6 +270,7 @@ export const workflowData1 = {
                       name: "Complete",
                       theme: "SUCCESS",
                       completes: true,
+                      comment: null,
                     },
                   ],
                   requiredRoles: {
