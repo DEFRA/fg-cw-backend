@@ -196,20 +196,55 @@ describe("formatTimelineItemDescription", () => {
     );
   });
 
-  it("rethrows errors that are not a missing workflow task", () => {
+  it("propagates the error when the stage is missing", () => {
     const wf = Workflow.createMock();
-    const error = Boom.badImplementation("workflow lookup exploded");
-    vi.spyOn(wf, "findTask").mockImplementation(() => {
-      throw error;
-    });
-
     const timelineItem = {
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
       createdAt: "2025-01-01T00:00:00.000Z",
-      description: "Task Completed",
+      description: "SitiAgri FC Reference",
       createdBy: "System",
       data: {
         phaseCode: "PHASE_1",
+        stageCode: "STAGE_MISSING",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
+      'Stage with code "STAGE_MISSING" not found',
+    );
+  });
+
+  it("propagates the error when the task group is missing", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "SitiAgri FC Reference",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "TASK_GROUP_MISSING",
+        taskCode: "TASK_1",
+      },
+    };
+
+    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
+      'TaskGroup with code "TASK_GROUP_MISSING" not found',
+    );
+  });
+
+  it("propagates the error when the phase is missing", () => {
+    const wf = Workflow.createMock();
+    const timelineItem = {
+      eventType: EventEnums.eventTypes.TASK_UPDATED,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "SitiAgri FC Reference",
+      createdBy: "System",
+      data: {
+        phaseCode: "PHASE_MISSING",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
         taskCode: "TASK_1",
@@ -217,21 +252,21 @@ describe("formatTimelineItemDescription", () => {
     };
 
     expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
-      error,
+      'Phase with code "PHASE_MISSING" not found',
     );
   });
 
-  it("rethrows non-boom errors", () => {
+  it("propagates unexpected errors raised while resolving the task group", () => {
     const wf = Workflow.createMock();
-    const error = new Error("unexpected");
-    vi.spyOn(wf, "findTask").mockImplementation(() => {
+    const error = Boom.badImplementation("workflow lookup exploded");
+    vi.spyOn(wf, "findPhase").mockImplementation(() => {
       throw error;
     });
 
     const timelineItem = {
-      eventType: EventEnums.eventTypes.TASK_UPDATED,
+      eventType: EventEnums.eventTypes.TASK_COMPLETED,
       createdAt: "2025-01-01T00:00:00.000Z",
-      description: "Task Updated",
+      description: "Task Completed",
       createdBy: "System",
       data: {
         phaseCode: "PHASE_1",
@@ -709,7 +744,7 @@ describe("findCaseByIdUseCase", () => {
       }),
     );
 
-    vi.spyOn(mockWorkflow, "findTask").mockImplementation(() => {
+    vi.spyOn(mockWorkflow, "findPhase").mockImplementation(() => {
       throw Boom.badImplementation("workflow lookup exploded");
     });
 

@@ -42,11 +42,6 @@ const mapUserIdToUser = (userId, userMap) => {
   return userMap.get(userId);
 };
 
-const HTTP_NOT_FOUND = 404;
-
-const isTaskNotFound = (error) =>
-  Boom.isBoom(error) && error.output.statusCode === HTTP_NOT_FOUND;
-
 const storedDescription = (tl) =>
   tl.description || EventEnums.eventDescriptions[tl.eventType];
 
@@ -58,18 +53,16 @@ const formatTaskName = (task, suffix) =>
 const formatTaskEvent = (tl, workflow, suffix) => {
   const { phaseCode, stageCode, taskGroupCode, taskCode } = tl.data;
 
-  try {
-    return formatTaskName(
-      workflow.findTask({ phaseCode, stageCode, taskGroupCode, taskCode }),
-      suffix,
-    );
-  } catch (error) {
-    if (isTaskNotFound(error)) {
-      return storedDescription(tl);
-    }
+  const taskGroup = workflow
+    .findPhase(phaseCode)
+    .findStage(stageCode)
+    .findTaskGroup(taskGroupCode);
 
-    throw error;
+  if (!taskGroup.hasTask(taskCode)) {
+    return storedDescription(tl);
   }
+
+  return formatTaskName(taskGroup.findTask(taskCode), suffix);
 };
 
 // eslint-disable-next-line complexity
