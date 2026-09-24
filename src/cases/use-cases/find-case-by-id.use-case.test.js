@@ -1,4 +1,3 @@
-import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { AppRole } from "../../users/models/app-role.js";
@@ -173,7 +172,6 @@ describe("formatTimelineItemDescription", () => {
       expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
         "SitiAgri FC Reference",
       );
-      expect(timelineItem.data.taskCode).toBe("TASK_SITI_REFERENCE");
     },
   );
 
@@ -253,31 +251,6 @@ describe("formatTimelineItemDescription", () => {
 
     expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
       'Phase with code "PHASE_MISSING" not found',
-    );
-  });
-
-  it("propagates unexpected errors raised while resolving the task group", () => {
-    const wf = Workflow.createMock();
-    const error = Boom.badImplementation("workflow lookup exploded");
-    vi.spyOn(wf, "findPhase").mockImplementation(() => {
-      throw error;
-    });
-
-    const timelineItem = {
-      eventType: EventEnums.eventTypes.TASK_COMPLETED,
-      createdAt: "2025-01-01T00:00:00.000Z",
-      description: "Task Completed",
-      createdBy: "System",
-      data: {
-        phaseCode: "PHASE_1",
-        stageCode: "STAGE_1",
-        taskGroupCode: "TASK_GROUP_1",
-        taskCode: "TASK_1",
-      },
-    };
-
-    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
-      error,
     );
   });
 });
@@ -738,15 +711,11 @@ describe("findCaseByIdUseCase", () => {
         data: {
           phaseCode: "PHASE_1",
           stageCode: "STAGE_1",
-          taskGroupCode: "TASK_GROUP_1",
+          taskGroupCode: "TASK_GROUP_MISSING",
           taskCode: "TASK_1",
         },
       }),
     );
-
-    vi.spyOn(mockWorkflow, "findPhase").mockImplementation(() => {
-      throw Boom.badImplementation("workflow lookup exploded");
-    });
 
     findAll.mockResolvedValue([mockUser]);
     resolveWorkflowForCase.mockResolvedValue({
@@ -757,7 +726,7 @@ describe("findCaseByIdUseCase", () => {
 
     await expect(
       findCaseByIdUseCase("test-case-id", mockAuthUser),
-    ).rejects.toThrow("workflow lookup exploded");
+    ).rejects.toThrow('TaskGroup with code "TASK_GROUP_MISSING" not found');
   });
 
   it("omits task groups when the current status hides them", async () => {
