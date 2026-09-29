@@ -45,9 +45,13 @@ const handleDuplicateKeyError = (error) => {
   throw error;
 };
 
-const toUser = (doc) => {
+// Users can reach storage without appRoles - adminCreateUser writes `{}` but
+// nothing constrains legacy or externally-written documents, and a missing
+// field would otherwise throw rather than read as "no roles".
+const toAppRoles = (storedAppRoles) => {
   const appRoles = {};
-  for (const [roleName, roleData] of Object.entries(doc.appRoles)) {
+
+  for (const [roleName, roleData] of Object.entries(storedAppRoles ?? {})) {
     appRoles[roleName] = new AppRole({
       name: roleName,
       startDate: roleData.startDate,
@@ -55,19 +59,22 @@ const toUser = (doc) => {
     });
   }
 
-  return new User({
+  return appRoles;
+};
+
+const toUser = (doc) =>
+  new User({
     id: doc._id.toHexString(),
     idpId: doc.idpId,
     email: doc.email,
     name: doc.name,
     idpRoles: doc.idpRoles,
-    appRoles,
+    appRoles: toAppRoles(doc.appRoles),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
     lastLoginAt: doc.lastLoginAt?.toISOString(),
     createdManually: doc.createdManually || false,
   });
-};
 
 export const save = async (user) => {
   const userDocument = new UserDocument(user);
@@ -156,6 +163,17 @@ export const findById = async (userId) => {
   const userDocument = await db.collection(collection).findOne({
     _id: ObjectId.createFromHexString(userId),
   });
+
+  return userDocument && toUser(userDocument);
+};
+
+// Deliberately not `findAll({ idpId })`: that path applies createFilter's
+// name hygiene filter, which drops users whose name is empty or "placeholder".
+// A real user would then read as unknown - indistinguishable from "no roles"
+// to a caller, and near-impossible to diagnose. Identity lookups match on
+// idpId alone, backed by its unique index.
+export const findByIdpId = async (idpId) => {
+  const userDocument = await db.collection(collection).findOne({ idpId });
 
   return userDocument && toUser(userDocument);
 };

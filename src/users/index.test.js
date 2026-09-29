@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createServer } from "../server/index.js";
+import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
 import { users } from "./index.js";
 
 vi.mock("migrate-mongo");
@@ -44,7 +45,25 @@ describe("users", () => {
           method: "get",
           path: "/roles/{code}",
         },
+        {
+          method: "get",
+          path: "/api/users/{entraId}/roles",
+        },
       ]),
     );
+  });
+
+  // The server default is the Entra strategy, so a route that loses its
+  // explicit `auth` silently becomes readable by every logged-in caseworker
+  // instead of the service callers it is meant for.
+  it("serves the roles API on the public API strategy", async () => {
+    await server.register(users);
+    await server.initialize();
+
+    const [route] = server
+      .table()
+      .filter((r) => r.path === "/api/users/{entraId}/roles");
+
+    expect(route.settings.auth.strategies).toEqual([PUBLIC_API_STRATEGY]);
   });
 });

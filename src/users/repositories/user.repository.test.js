@@ -8,6 +8,7 @@ import {
   findAll,
   findByEmail,
   findById,
+  findByIdpId,
   save,
   update,
   upsertLogin,
@@ -810,5 +811,61 @@ describe("findByEmail", () => {
     const result = await findByEmail(123);
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("findByIdpId", () => {
+  it("returns a user by idpId", async () => {
+    const userDocument = UserDocument.createMock();
+    const findOne = vi.fn().mockResolvedValue(userDocument);
+
+    db.collection.mockReturnValue({ findOne });
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(findOne).toHaveBeenCalledWith({ idpId: userDocument.idpId });
+    expect(result).toEqual(
+      User.createMock({ id: userDocument._id.toString() }),
+    );
+  });
+
+  it("returns null when no user is found", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+
+    expect(await findByIdpId("2c3ba1f1-e5cd-4a63-9a90-fcb2bb5b1e8a")).toEqual(
+      null,
+    );
+  });
+
+  // findAll's filter excludes users named "" or "placeholder". Reusing it for
+  // an identity lookup would make those users read as unknown, silently
+  // denying them their roles.
+  it("returns a user whose name would be excluded by the admin list filter", async () => {
+    const userDocument = UserDocument.createMock({ name: "placeholder" });
+    const findOne = vi.fn().mockResolvedValue(userDocument);
+
+    db.collection.mockReturnValue({ findOne });
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(findOne).toHaveBeenCalledWith({ idpId: userDocument.idpId });
+    expect(result.name).toEqual("placeholder");
+  });
+
+  it("reads a document with no appRoles as having no roles", async () => {
+    const userDocument = UserDocument.createMock();
+    delete userDocument.appRoles;
+
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(userDocument),
+    });
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(result.appRoles).toEqual({});
+    expect(result.getRoles()).toEqual([]);
   });
 });
