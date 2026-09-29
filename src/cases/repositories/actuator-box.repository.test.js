@@ -211,6 +211,7 @@ describe("actuatorBoxQueries redriveById", () => {
       {
         $set: {
           status: "AGAIN",
+          retryable: true,
           completionAttempts: 0,
           attemptHistory: [],
           lastRedrive: { at: expect.any(String), by: "ada" },

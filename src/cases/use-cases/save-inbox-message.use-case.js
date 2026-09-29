@@ -8,6 +8,7 @@ import {
 
 export const messageSource = {
   Gas: "GAS",
+  ConfigBroker: "CB",
 };
 
 export const getSegregationRef = (event) => {
@@ -15,7 +16,11 @@ export const getSegregationRef = (event) => {
   return getMessageGroupId(null, data);
 };
 
-export const saveInboxMessageUseCase = async (message, source) => {
+export const saveInboxMessageUseCase = async (
+  message,
+  source,
+  segregationRef,
+) => {
   logger.info("Saving inbox message");
 
   const existing = await findByMessageId(message.id);
@@ -33,7 +38,9 @@ export const saveInboxMessageUseCase = async (message, source) => {
     messageId: message.id,
     type: message.type,
     source,
-    segregationRef: getSegregationRef(message),
+    // Not a default argument: those evaluate before the body, so a redelivered
+    // message with no `data` would throw here rather than at the duplicate check.
+    segregationRef: segregationRef ?? getSegregationRef(message),
   });
 
   await insertOne(inbox);

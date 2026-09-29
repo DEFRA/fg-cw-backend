@@ -220,6 +220,13 @@ export const findByCodeAndVersion = async (code, version) => {
   return doc && toWorkflow(doc);
 };
 
+// The workflow a published definition becomes once stored and read back, built
+// without touching Mongo so a definition can be checked before it is recorded.
+export const buildFromDefinition = (workflowDefinition, version) =>
+  toWorkflow(
+    new WorkflowDocument(new Workflow({ ...workflowDefinition, version })),
+  );
+
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });
   await save(workflow);
