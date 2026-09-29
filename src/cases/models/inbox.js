@@ -8,6 +8,7 @@ import {
   toAttemptEntry,
   toLastError,
 } from "../../events/last-error.js";
+import { isRetryableFailure } from "../../events/retryable.js";
 
 const RETENTION_DAYS = config.get("events.retentionDays");
 
@@ -49,6 +50,8 @@ export class Inbox {
     // the attempt-history entry, so counter and history always reconcile.
     this.completionAttempts = props.completionAttempts ?? 0;
     this.status = props.status || InboxStatus.PUBLISHED;
+    // Missing means retryable, so rows written before this existed are unaffected.
+    this.retryable = props.retryable !== false;
     this.completionDate = props.completionDate || null;
     // `{ at, by }` of the most recent redrive; null until redriven.
     this.lastRedrive = props.lastRedrive ?? null;
@@ -72,9 +75,12 @@ export class Inbox {
     this.claimExpiresAt = null;
   }
 
-  // Absent `error` (a resubmission sweep) leaves the previous `lastError`.
+  // Absent `error` (a resubmission sweep) leaves the previous `lastError`. A
+  // failure retrying cannot fix goes straight to DEAD_LETTER, where it keeps its
+  // reason and an operator can redrive it; parked in FAILED it could do neither.
   markAsFailed(error) {
-    this.status = InboxStatus.FAILED;
+    this.retryable = isRetryableFailure(error);
+    this.status = this.retryable ? InboxStatus.FAILED : InboxStatus.DEAD_LETTER;
     this.lastResubmissionDate = new Date().toISOString();
     this.lastError = toLastError(error) ?? this.lastError;
     // `markAsComplete` deliberately leaves the history in place, so a row
@@ -104,6 +110,7 @@ export class Inbox {
       attemptHistory: this.attemptHistory,
       completionAttempts: this.completionAttempts,
       status: this.status,
+      retryable: this.retryable,
       completionDate: this.completionDate,
       lastRedrive: this.lastRedrive,
       expireAt: this.expireAt,
@@ -129,6 +136,7 @@ export class Inbox {
       attemptHistory: doc.attemptHistory,
       completionAttempts: doc.completionAttempts,
       status: doc.status,
+      retryable: doc.retryable,
       completionDate: doc.completionDate,
       lastRedrive: doc.lastRedrive,
       expireAt: doc.expireAt,

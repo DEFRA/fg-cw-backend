@@ -21,12 +21,15 @@ import {
   updateResubmittedEvents,
 } from "../repositories/inbox.repository.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
+import { processConfigVersionUseCase } from "../use-cases/process-config-version.use-case.js";
+import { CONFIG_VERSION_UPDATED_EVENT_TYPE } from "../use-cases/save-config-version-inbox-message.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 
 export const useCaseMap = {
   "cloud.defra.ENV.fg-gas-backend.case.create": submitCaseUseCase,
   "cloud.defra.ENV.fg-gas-backend.case.update.status":
     handleCaseStatusUpdateUseCase,
+  [CONFIG_VERSION_UPDATED_EVENT_TYPE]: processConfigVersionUseCase,
 };
 
 export class InboxSubscriber {

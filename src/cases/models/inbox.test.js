@@ -391,3 +391,50 @@ describe("inbox model expireAt", () => {
     expect(Inbox.fromDocument(legacy).expireAt).toBeNull();
   });
 });
+
+describe("inbox model retryable", () => {
+  const permanent = (message) =>
+    Object.assign(new Error(message), { retryable: false });
+
+  it("is retryable on a new row", () => {
+    expect(Inbox.createMock().retryable).toBe(true);
+  });
+
+  it("reads a row written before the field existed as retryable", () => {
+    const { retryable, ...legacy } = Inbox.createMock().toDocument();
+
+    expect(Inbox.fromDocument(legacy).retryable).toBe(true);
+  });
+
+  it("stays FAILED for an error that says nothing about retrying", () => {
+    const inbox = Inbox.createMock({ completionAttempts: 0 });
+
+    inbox.markAsFailed(new Error("mongo down"));
+
+    expect(inbox.status).toBe(InboxStatus.FAILED);
+    expect(inbox.retryable).toBe(true);
+  });
+
+  it("goes straight to DEAD_LETTER for an error retrying cannot fix", () => {
+    const inbox = Inbox.createMock({ completionAttempts: 0 });
+
+    inbox.markAsFailed(permanent("cw.json is not valid JSON"));
+
+    expect(inbox.status).toBe(InboxStatus.DEAD_LETTER);
+    expect(inbox.retryable).toBe(false);
+    expect(inbox.completionAttempts).toBe(1);
+    expect(inbox.lastError.message).toBe("cw.json is not valid JSON");
+    expect(inbox.attemptHistory).toHaveLength(1);
+    expect(inbox.claimedBy).toBeNull();
+  });
+
+  it("round-trips through a document", () => {
+    const inbox = Inbox.createMock();
+    inbox.markAsFailed(permanent("bad"));
+
+    const doc = inbox.toDocument();
+
+    expect(doc.retryable).toBe(false);
+    expect(Inbox.fromDocument(doc).retryable).toBe(false);
+  });
+});

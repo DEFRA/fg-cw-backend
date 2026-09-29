@@ -2,9 +2,11 @@ import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
+import { Position } from "../models/position.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import {
+  buildFromDefinition,
   findAll,
   findAllCodes,
   findByCode,
@@ -309,6 +311,33 @@ describe("findByCodeAndVersion", () => {
     const result = await findByCodeAndVersion("DOESNT_EXIST", "1.0.0");
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("buildFromDefinition", () => {
+  it("builds the workflow a stored definition reads back as, without touching Mongo", () => {
+    const { _id, version, ...definition } = JSON.parse(
+      JSON.stringify(Workflow.createMock({ code: "pigs-might-fly" })),
+    );
+
+    const workflow = buildFromDefinition(definition, "1.2.3");
+
+    expect(db.collection).not.toHaveBeenCalled();
+    expect(workflow).toBeInstanceOf(Workflow);
+    expect(workflow.code).toBe("pigs-might-fly");
+    expect(workflow.version).toBe("1.2.3");
+    expect(workflow.getInitialPosition().toString()).toBe(
+      "PHASE_1:STAGE_1:STATUS_1",
+    );
+    expect(
+      workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
+    ).toBeInstanceOf(Position);
+  });
+
+  it("throws on a definition the runtime could not read", () => {
+    expect(() => buildFromDefinition({ code: "x" }, "1.0.0")).toThrow(
+      TypeError,
+    );
   });
 });
 
