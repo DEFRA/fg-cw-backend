@@ -3,10 +3,21 @@ import {
   ReceiveMessageCommand,
   SQSClient,
 } from "@aws-sdk/client-sqs";
+import { randomBytes } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { withTraceParent } from "./trace-parent.js";
+
+// W3C traceparent: version 00, 32-hex trace id, 16-hex span id, sampled.
+const newTraceParent = () =>
+  `00-${randomBytes(16).toString("hex")}-${randomBytes(8).toString("hex")}-01`;
+
+// A Config Broker body is a bare manifest array with no traceparent, so one is
+// made up here; it correlates everything downstream but cannot lead back to the
+// broker.
+export const getOrCreateTraceParent = (body) =>
+  body?.traceparent || newTraceParent();
 
 export class SqsSubscriber {
   constructor(options) {
@@ -59,12 +70,15 @@ export class SqsSubscriber {
       return;
     }
 
-    const traceparent = body.traceparent || message.MessageId;
+    const metadata = {
+      messageId: message.MessageId,
+      sentTimestamp: message.Attributes?.SentTimestamp,
+    };
 
-    await withTraceParent(traceparent, async () => {
+    await withTraceParent(getOrCreateTraceParent(body), async () => {
       logger.info(`Processing SQS message "${message.MessageId}"`);
       try {
-        await this.onMessage(body, message.MessageAttributes);
+        await this.onMessage(body, message.MessageAttributes, metadata);
         await this.deleteMessage(message);
       } catch (err) {
         logger.error(

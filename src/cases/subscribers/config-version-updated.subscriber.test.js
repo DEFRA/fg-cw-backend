@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-const { mockProcessConfigVersion } = vi.hoisted(() => ({
-  mockProcessConfigVersion: vi.fn(),
+const { mockSaveConfigVersion } = vi.hoisted(() => ({
+  mockSaveConfigVersion: vi.fn(),
 }));
 
 vi.mock("../../common/config.js", () => ({
@@ -18,12 +18,8 @@ vi.mock("../../common/config.js", () => ({
   },
 }));
 
-vi.mock("../../common/logger.js", () => ({
-  logger: { warn: vi.fn(), info: vi.fn() },
-}));
-
-vi.mock("../use-cases/process-config-version.use-case.js", () => ({
-  processConfigVersionUseCase: mockProcessConfigVersion,
+vi.mock("../use-cases/save-config-version-inbox-message.use-case.js", () => ({
+  saveConfigVersionInboxMessageUseCase: mockSaveConfigVersion,
 }));
 
 vi.mock("../../common/sqs-subscriber.js", () => ({
@@ -45,7 +41,7 @@ describe("configVersionUpdatedSubscriber", () => {
     expect(configVersionUpdatedSubscriber).not.toBeNull();
   });
 
-  it("should extract message attributes and manifest then call processConfigVersionUseCase", async () => {
+  it("only saves the message to the inbox", async () => {
     const { configVersionUpdatedSubscriber } =
       await import("./config-version-updated.subscriber.js");
 
@@ -54,15 +50,20 @@ describe("configVersionUpdatedSubscriber", () => {
       grant: { DataType: "String", StringValue: "woodland" },
       version: { DataType: "String", StringValue: "1.2.3" },
       status: { DataType: "String", StringValue: "active" },
+      path: { DataType: "String", StringValue: "config-broker-local" },
     };
+    const metadata = { messageId: "msg-1", sentTimestamp: "1758106800000" };
 
-    await configVersionUpdatedSubscriber.onMessage(body, messageAttributes);
+    await configVersionUpdatedSubscriber.onMessage(
+      body,
+      messageAttributes,
+      metadata,
+    );
 
-    expect(mockProcessConfigVersion).toHaveBeenCalledWith({
-      grantCode: "woodland",
-      version: "1.2.3",
-      status: "active",
-      manifest: body,
-    });
+    expect(mockSaveConfigVersion).toHaveBeenCalledWith(
+      body,
+      messageAttributes,
+      metadata,
+    );
   });
 });

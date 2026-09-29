@@ -32,4 +32,27 @@ describe("save inbox message", () => {
     expect(logger.warn).toHaveBeenCalled();
     expect(insertOne).not.toHaveBeenCalled();
   });
+
+  it("uses a segregationRef it is given instead of deriving one", async () => {
+    insertOne.mockResolvedValue(true);
+    findByMessageId.mockResolvedValue(null);
+
+    await saveInboxMessageUseCase(
+      { id: "msg-1", data: { caseRef: "caseref-1234", workflowCode: "wf" } },
+      "CB",
+      "woodland",
+    );
+
+    expect(insertOne.mock.calls.at(-1)[0].segregationRef).toBe("woodland");
+  });
+
+  it("returns at the duplicate check for a redelivery with no data", async () => {
+    insertOne.mockClear();
+    findByMessageId.mockResolvedValue({});
+
+    await expect(
+      saveInboxMessageUseCase({ id: "msg-1" }, "CB", undefined),
+    ).resolves.toBeUndefined();
+    expect(insertOne).not.toHaveBeenCalled();
+  });
 });

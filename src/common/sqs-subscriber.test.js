@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import http from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "./logger.js";
-import { SqsSubscriber } from "./sqs-subscriber.js";
+import { getOrCreateTraceParent, SqsSubscriber } from "./sqs-subscriber.js";
+import { getTraceParent } from "./trace-parent.js";
 
 vi.mock("./logger.js", () => ({
   logger: {
@@ -157,6 +158,33 @@ describe("SqsSubscriber", () => {
       ]);
   });
 
+  it("passes each message's id and sent time to onMessage", async () => {
+    const calls = [];
+
+    const subscriber = new SqsSubscriber({
+      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      async onMessage(body, attributes, metadata) {
+        calls.push({ attributes, metadata, traceparent: getTraceParent() });
+      },
+    });
+
+    subscriber.start();
+
+    await subscriber.stop();
+
+    await expect.poll(() => calls).toHaveLength(2);
+
+    expect(calls[0].metadata).toEqual({
+      messageId: "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+      sentTimestamp: "1695993600000",
+    });
+    expect(calls[0].attributes).toEqual({
+      Priority: { DataType: "String", StringValue: "High" },
+    });
+    expect(calls[0].traceparent).toMatch(W3C_TRACEPARENT);
+    expect(calls[1].traceparent).not.toBe(calls[0].traceparent);
+  });
+
   it("logs errors and continues polling", async () => {
     const subscriber = new SqsSubscriber({
       queueUrl: "http://localhost:3366/000000000000/test-queue",
@@ -175,5 +203,25 @@ describe("SqsSubscriber", () => {
         new Error("Processing error"),
         'Error processing SQS message "19dd0b57-b21e-4ac1-bd88-01bbb068cb78"',
       );
+  });
+});
+
+const W3C_TRACEPARENT = /^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/;
+
+describe("getOrCreateTraceParent", () => {
+  it("keeps the traceparent a message carries", () => {
+    expect(getOrCreateTraceParent({ traceparent: "00-abc-def-01" })).toBe(
+      "00-abc-def-01",
+    );
+  });
+
+  it("makes one up for a body without one, such as a manifest array", () => {
+    expect(getOrCreateTraceParent(["a/1.0.0/cw/cw.json"])).toMatch(
+      W3C_TRACEPARENT,
+    );
+  });
+
+  it("makes one up for an empty body", () => {
+    expect(getOrCreateTraceParent(null)).toMatch(W3C_TRACEPARENT);
   });
 });

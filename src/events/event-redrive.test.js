@@ -223,6 +223,15 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(redriven.completionAttempts).toBe(0);
   });
 
+  it("makes a row dead-lettered as permanent retryable again", () => {
+    const redriven = applyUpdate(
+      { ...aDeadLetter(), retryable: false },
+      redriveDoc,
+    );
+
+    expect(redriven.retryable).toBe(true);
+  });
+
   it("releases any claim", () => {
     const redriven = applyUpdate(aDeadLetter(), redriveDoc);
 
