@@ -1,3 +1,7 @@
+import {
+  editInboxEventPayloadRoute,
+  editOutboxEventPayloadRoute,
+} from "./routes/edit-event-payload.route.js";
 import { findPageRoute } from "./routes/find-page.route.js";
 import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
 import { getOutboxEventRoute } from "./routes/get-outbox-event.route.js";
@@ -26,6 +30,8 @@ export const actuators = {
       redriveOutboxEventRoute,
       purgeInboxEventRoute,
       purgeOutboxEventRoute,
+      editInboxEventPayloadRoute,
+      editOutboxEventPayloadRoute,
     ]);
   },
 };
