@@ -61,6 +61,12 @@ const toAppRoles = (storedAppRoles) => {
   return appRoles;
 };
 
+// The FGP-726 migration wrote dates as ISO strings rather than Dates, and its
+// cleanup migration skips prod, so those rows are still live there. Absent
+// dates stay undefined, as optional chaining produced before.
+const toIsoString = (value) =>
+  value instanceof Date ? value.toISOString() : (value ?? undefined);
+
 const toUser = (doc) =>
   new User({
     id: doc._id.toHexString(),
@@ -69,9 +75,9 @@ const toUser = (doc) =>
     name: doc.name,
     idpRoles: doc.idpRoles,
     appRoles: toAppRoles(doc.appRoles),
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-    lastLoginAt: doc.lastLoginAt?.toISOString(),
+    createdAt: toIsoString(doc.createdAt),
+    updatedAt: toIsoString(doc.updatedAt),
+    lastLoginAt: toIsoString(doc.lastLoginAt),
     createdManually: doc.createdManually || false,
   });
 

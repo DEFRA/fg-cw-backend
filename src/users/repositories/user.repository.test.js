@@ -852,6 +852,25 @@ describe("findByIdpId", () => {
     expect(result.name).toEqual("placeholder");
   });
 
+  it("reads a document whose dates are stored as ISO strings", async () => {
+    const userDocument = UserDocument.createMock({ name: "placeholder" });
+    const createdAt = new Date().toISOString();
+    const updatedAt = new Date().toISOString();
+
+    userDocument.createdAt = createdAt;
+    userDocument.updatedAt = updatedAt;
+    delete userDocument.lastLoginAt;
+
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(userDocument),
+    });
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(result.createdAt).toEqual(createdAt);
+    expect(result.updatedAt).toEqual(updatedAt);
+  });
+
   it("reads a document with no appRoles as having no roles", async () => {
     const userDocument = UserDocument.createMock();
     delete userDocument.appRoles;
