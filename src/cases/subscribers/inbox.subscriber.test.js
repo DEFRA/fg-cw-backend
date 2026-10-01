@@ -24,6 +24,7 @@ import {
   update,
 } from "../repositories/inbox.repository.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
+import { processConfigVersionUseCase } from "../use-cases/process-config-version.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
 import { InboxSubscriber } from "./inbox.subscriber.js";
 
@@ -34,6 +35,7 @@ vi.mock("../repositories/inbox.repository.js");
 vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
 vi.mock("../use-cases/handle-case-status-update.use-case.js");
+vi.mock("../use-cases/process-config-version.use-case.js");
 vi.mock("../../common/logger.js");
 
 const createInbox = (doc) =>
@@ -288,6 +290,23 @@ describe("inbox.subscriber", () => {
       expect(withTraceParent).toHaveBeenCalled();
       expect(submitCaseUseCase).toHaveBeenCalled();
       expect(withTraceParent.mock.calls[0][0]).toBe("1234-abcd");
+      expect(mockEvent.markAsComplete).toHaveBeenCalled();
+    });
+
+    it("hands a config-version.updated event to processConfigVersionUseCase", async () => {
+      processConfigVersionUseCase.mockResolvedValue();
+      withTraceParent.mockImplementation((_, fn) => fn());
+      const mockEvent = {
+        type: "config-version.updated",
+        source: "CB",
+        traceparent: "1234-abcd",
+        event: { data: { grantCode: "woodland" } },
+        markAsComplete: vi.fn(),
+      };
+
+      await new InboxSubscriber().processEvents([mockEvent]);
+
+      expect(processConfigVersionUseCase).toHaveBeenCalledWith(mockEvent);
       expect(mockEvent.markAsComplete).toHaveBeenCalled();
     });
 

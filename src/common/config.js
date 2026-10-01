@@ -200,13 +200,6 @@ export const config = convict({
     },
   },
   configBroker: {
-    s3Bucket: {
-      doc: "S3 bucket name for Config Broker files",
-      format: String,
-      nullable: true,
-      default: null,
-      env: "CONFIG_BROKER_S3_BUCKET",
-    },
     variant: {
       doc: "Optional filename variant inserted before .json when selecting definitions from a release manifest. Ignored in prod.",
       format: (val) => {
@@ -214,9 +207,7 @@ export const config = convict({
           return;
         }
         if (!VARIANT_PATTERN.test(val)) {
-          throw new Error(
-            "must be lowercase letters, numbers or hyphens",
-          );
+          throw new Error("must be lowercase letters, numbers or hyphens");
         }
       },
       default: "",

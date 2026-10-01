@@ -80,6 +80,17 @@ describe("s3-client", () => {
       );
     });
 
+    it("should throw a Boom bad request, so the caller knows retrying will not help", () => {
+      expect(() =>
+        findS3KeyInManifest(["woodland/1.2.3/metadata.json"], "cw"),
+      ).toThrow(
+        expect.objectContaining({
+          isBoom: true,
+          output: expect.objectContaining({ statusCode: 400 }),
+        }),
+      );
+    });
+
     it("should match the unsuffixed file when variant is empty", () => {
       const manifest = [
         "woodland/1.2.3/cw/cw.json",

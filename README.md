@@ -42,8 +42,8 @@ Shared modules, referenced by any layer
   purging one means (`event-purge.js`), what editing one's payload means
   (`event-edit.js`, with `payload-changes.js` saying where an edit landed and
   `plain-json.js` whether a payload survives a JSON round trip), how long a
-  terminal one is kept (`event-retention.js`), and how a failure is recorded
-  (`last-error.js`)
+  terminal one is kept (`event-retention.js`), how a failure is recorded
+  (`last-error.js`), and whether retrying it could ever work (`retryable.js`)
 
 `src/events/` lived in `src/common/` and did not belong there: `common` is
 infrastructure, and these files are nothing but opinion about one part of the
@@ -220,6 +220,26 @@ awslocal sns publish \
     ]
   }
 }'
+```
+
+#### Publish a Config Broker config version
+
+The body is the release manifest and the rest travels as message attributes,
+as the Config Broker sends it. `path` is the bucket the files are in: CW reads
+`cw.json` from that bucket and nowhere else, so a message without it is
+dead-lettered. The event lands in the inbox as `config-version.updated` and the
+version is only recorded once its `cw.json` has been fetched and checked.
+
+```
+awslocal sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:000000000000:gfr__sns___config_update" \
+  --message '["pigs-might-fly/1.0.0/cw/cw.json"]' \
+  --message-attributes '{
+    "grant": {"DataType": "String", "StringValue": "pigs-might-fly"},
+    "version": {"DataType": "String", "StringValue": "1.0.0"},
+    "status": {"DataType": "String", "StringValue": "active"},
+    "path": {"DataType": "String", "StringValue": "config-broker-local"}
+  }'
 ```
 
 #### Check the message has arrived in the queue
