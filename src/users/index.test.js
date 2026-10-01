@@ -53,9 +53,8 @@ describe("users", () => {
     );
   });
 
-  // The server default is the Entra strategy, so a route that loses its
-  // explicit `auth` silently becomes readable by every logged-in caseworker
-  // instead of the service callers it is meant for.
+  // Losing the explicit `auth` would silently fall back to the server's Entra
+  // default, exposing the route to every logged-in caseworker.
   it("serves the roles API on the public API strategy", async () => {
     await server.register(users);
     await server.initialize();

@@ -101,8 +101,6 @@ describe("GET /api/users/{entraId}/roles", () => {
     expect(payload).toEqual({ appRoles: [] });
   });
 
-  // Scenarios 2 and 3 must be indistinguishable to the caller: nothing in the
-  // response may reveal whether the account exists.
   it("answers an unknown user exactly as it answers one with no roles", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000005",

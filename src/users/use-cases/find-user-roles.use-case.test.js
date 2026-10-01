@@ -51,8 +51,6 @@ describe("findUserRolesUseCase", () => {
     });
   });
 
-  // Undefined dates are dropped by JSON.stringify, so the keys would vanish
-  // from the payload entirely rather than appear as null.
   it("serialises open-ended dates as null rather than omitting them", async () => {
     findByIdpId.mockResolvedValue(userWithRoles({ ROLE_WMP_CLAIMS: {} }));
 
@@ -106,8 +104,8 @@ describe("findUserRolesUseCase", () => {
     expect(await findUserRolesUseCase({ entraId })).toEqual({ appRoles: [] });
   });
 
-  // Scenario 3: an unknown user must be indistinguishable from one with no
-  // roles, so that the endpoint never confirms whether an account exists.
+  // Must match the "no roles" response exactly, so the endpoint never confirms
+  // whether an account exists.
   it("returns an empty list for an unknown user", async () => {
     findByIdpId.mockResolvedValue(null);
 

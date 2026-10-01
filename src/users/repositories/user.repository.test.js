@@ -840,9 +840,6 @@ describe("findByIdpId", () => {
     );
   });
 
-  // findAll's filter excludes users named "" or "placeholder". Reusing it for
-  // an identity lookup would make those users read as unknown, silently
-  // denying them their roles.
   it("returns a user whose name would be excluded by the admin list filter", async () => {
     const userDocument = UserDocument.createMock({ name: "placeholder" });
     const findOne = vi.fn().mockResolvedValue(userDocument);
