@@ -849,8 +849,6 @@ describe("findByIdpId", () => {
     );
   });
 
-  // Matches the lookup used to authenticate caseworkers, so that external
-  // systems never receive roles for a user caseworking treats as unknown.
   it("applies the same name filter as the caseworking login lookup", async () => {
     const find = setupFind([]);
 
