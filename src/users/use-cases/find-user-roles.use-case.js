@@ -16,8 +16,17 @@ export const findUserRolesUseCase = async ({ entraId }) => {
   const user = await findByIdpId(entraId);
 
   // An unknown user returns the same empty payload as a known user with no
-  // active roles, so a caller cannot probe whether an account exists.
+  // active roles, so a caller cannot probe whether an account exists. The logs
+  // are therefore the only place that distinction survives for support.
   const appRoles = user ? toResponseRoles(user) : [];
+
+  if (user) {
+    logger.debug(
+      `Found ${appRoles.length} active role(s) for User with idpId: "${entraId}"`,
+    );
+  } else {
+    logger.info(`No User found with idpId: "${entraId}"`);
+  }
 
   logger.info(`Finished: Finding roles for User with idpId: "${entraId}"`);
 
