@@ -45,9 +45,8 @@ const handleDuplicateKeyError = (error) => {
   throw error;
 };
 
-// Users can reach storage without appRoles - adminCreateUser writes `{}` but
-// nothing constrains legacy or externally-written documents, and a missing
-// field would otherwise throw rather than read as "no roles".
+// Documents written outside adminCreateUser may lack appRoles entirely, which
+// would throw here rather than reading as "no roles".
 const toAppRoles = (storedAppRoles) => {
   const appRoles = {};
 
@@ -167,11 +166,9 @@ export const findById = async (userId) => {
   return userDocument && toUser(userDocument);
 };
 
-// Deliberately not `findAll({ idpId })`: that path applies createFilter's
-// name hygiene filter, which drops users whose name is empty or "placeholder".
-// A real user would then read as unknown - indistinguishable from "no roles"
-// to a caller, and near-impossible to diagnose. Identity lookups match on
-// idpId alone, backed by its unique index.
+// Not `findAll({ idpId })`: that applies createFilter's name hygiene filter,
+// so a user named "" or "placeholder" would read as unknown and be silently
+// denied their roles.
 export const findByIdpId = async (idpId) => {
   const userDocument = await db.collection(collection).findOne({ idpId });
 

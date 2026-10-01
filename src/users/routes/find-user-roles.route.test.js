@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import hapi from "@hapi/hapi";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
@@ -62,16 +63,44 @@ describe("findUserRolesRoute", () => {
 
     expect(statusCode).toEqual(400);
   });
+});
 
-  it("requires authentication", async () => {
-    // The stub scheme above always authenticates, so rejection is not
-    // meaningfully testable here - public-api.test.js covers the real scheme
-    // and the integration tests cover the wired-up route. What matters at this
-    // level is that the route is bound to the strategy at all.
-    const [route] = server
-      .table()
-      .filter((r) => r.path === "/api/users/{entraId}/roles");
+describe("findUserRolesRoute when authentication fails", () => {
+  let rejectingServer;
 
-    expect(route.settings.auth.strategies).toEqual([PUBLIC_API_STRATEGY]);
+  beforeAll(async () => {
+    rejectingServer = hapi.server();
+    rejectingServer.auth.scheme(SERVICE_TOKEN_SCHEME, () => ({
+      authenticate: () => {
+        throw Boom.unauthorized("Invalid token", "Bearer");
+      },
+    }));
+    rejectingServer.auth.strategy(PUBLIC_API_STRATEGY, SERVICE_TOKEN_SCHEME);
+    rejectingServer.auth.default(PUBLIC_API_STRATEGY);
+    rejectingServer.route(findUserRolesRoute);
+    await rejectingServer.initialize();
+  });
+
+  afterAll(async () => {
+    await rejectingServer.stop();
+  });
+
+  it("returns a 401 with no response body", async () => {
+    const response = await rejectingServer.inject({
+      method: "GET",
+      url: `/api/users/${entraId}/roles`,
+    });
+
+    expect(response.statusCode).toEqual(401);
+    expect(response.payload).toEqual("");
+  });
+
+  it("keeps the WWW-Authenticate challenge on the stripped 401", async () => {
+    const response = await rejectingServer.inject({
+      method: "GET",
+      url: `/api/users/${entraId}/roles`,
+    });
+
+    expect(response.headers["www-authenticate"]).toMatch(/^Bearer/);
   });
 });

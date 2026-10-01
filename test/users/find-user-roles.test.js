@@ -20,6 +20,19 @@ const getRoles = (entraId, token = `Bearer ${SERVICE_TOKEN}`) =>
     headers: { authorization: token },
   });
 
+const getRolesError = async (entraId, token) => {
+  try {
+    await getRoles(entraId, token);
+  } catch (err) {
+    return {
+      statusCode: err.data.res.statusCode,
+      payload: String(err.data.payload ?? ""),
+    };
+  }
+
+  throw new Error("Expected the request to be rejected");
+};
+
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   users = client.db().collection("users");
@@ -152,6 +165,23 @@ describe("GET /api/users/{entraId}/roles", () => {
     await expect(getRoles(UNKNOWN_ENTRA_ID, `Bearer ${token}`)).rejects.toThrow(
       "Response Error: 401 Unauthorized",
     );
+  });
+
+  it("returns no response body on a 401", async () => {
+    const { statusCode, payload } = await getRolesError(UNKNOWN_ENTRA_ID, null);
+
+    expect(statusCode).toEqual(401);
+    expect(payload).toEqual("");
+  });
+
+  it("returns no response body on a 401 for a bad bearer token", async () => {
+    const { statusCode, payload } = await getRolesError(
+      UNKNOWN_ENTRA_ID,
+      "Bearer 00000000-0000-4000-8000-000000000000",
+    );
+
+    expect(statusCode).toEqual(401);
+    expect(payload).toEqual("");
   });
 
   it("rejects an entraId that is not a uuid with 400", async () => {
