@@ -172,13 +172,13 @@ export const findById = async (userId) => {
   return userDocument && toUser(userDocument);
 };
 
-// Not `findAll({ idpId })`: that applies createFilter's name hygiene filter,
-// so a user named "" or "placeholder" would read as unknown and be silently
-// denied their roles.
+// Mirrors the lookup in server/plugins/auth/entra.js, so roles exposed to
+// external systems can never include users caseworking itself won't
+// authenticate - notably the FGP-726 placeholder accounts still live in prod.
 export const findByIdpId = async (idpId) => {
-  const userDocument = await db.collection(collection).findOne({ idpId });
+  const [user = null] = await findAll({ idpId });
 
-  return userDocument && toUser(userDocument);
+  return user;
 };
 
 /**

@@ -117,7 +117,9 @@ describe("GET /api/users/{entraId}/roles", () => {
     expect(unknown.res.statusCode).toEqual(known.res.statusCode);
   });
 
-  it("returns roles for a user the admin list filter would exclude", async () => {
+  // Caseworking's own login lookup excludes these users, so exposing their
+  // roles externally would grant access CW itself would refuse.
+  it("returns no roles for a user caseworking treats as unknown", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000006",
       email: "roles.placeholder@t.gov.uk",
@@ -132,11 +134,30 @@ describe("GET /api/users/{entraId}/roles", () => {
 
     const { payload } = await getRoles(user.idpId);
 
-    expect(payload).toEqual({
-      appRoles: [
-        { roleName: "ROLE_WMP_CLAIMS", from: "2025-07-01", to: "2100-01-01" },
-      ],
+    expect(payload).toEqual({ appRoles: [] });
+  });
+
+  // The FGP-726 migration wrote these rows with ISO string dates and they are
+  // still live in prod, where the cleanup migration does not run.
+  it("does not error on a legacy user whose dates are ISO strings", async () => {
+    const idpId = "a1b2c3d4-0001-0000-0000-000000000007";
+
+    await users.insertOne({
+      idpId,
+      name: "placeholder",
+      email: "roles.legacy@rpa.gov.uk",
+      idpRoles: [],
+      appRoles: {
+        ROLE_WMP_CLAIMS: { startDate: "2000-01-01", endDate: "2100-01-01" },
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
+
+    const { res, payload } = await getRoles(idpId);
+
+    expect(res.statusCode).toEqual(200);
+    expect(payload).toEqual({ appRoles: [] });
   });
 
   it("rejects a request with no token", async () => {

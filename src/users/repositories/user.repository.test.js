@@ -815,45 +815,55 @@ describe("findByEmail", () => {
 });
 
 describe("findByIdpId", () => {
+  const setupFind = (docs) => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    return find;
+  };
+
   it("returns a user by idpId", async () => {
     const userDocument = UserDocument.createMock();
-    const findOne = vi.fn().mockResolvedValue(userDocument);
-
-    db.collection.mockReturnValue({ findOne });
+    const find = setupFind([userDocument]);
 
     const result = await findByIdpId(userDocument.idpId);
 
     expect(db.collection).toHaveBeenCalledWith("users");
-    expect(findOne).toHaveBeenCalledWith({ idpId: userDocument.idpId });
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      idpId: userDocument.idpId,
+    });
     expect(result).toEqual(
       User.createMock({ id: userDocument._id.toString() }),
     );
   });
 
   it("returns null when no user is found", async () => {
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(null),
-    });
+    setupFind([]);
 
     expect(await findByIdpId("2c3ba1f1-e5cd-4a63-9a90-fcb2bb5b1e8a")).toEqual(
       null,
     );
   });
 
-  it("returns a user whose name would be excluded by the admin list filter", async () => {
-    const userDocument = UserDocument.createMock({ name: "placeholder" });
-    const findOne = vi.fn().mockResolvedValue(userDocument);
+  // Matches the lookup used to authenticate caseworkers, so that external
+  // systems never receive roles for a user caseworking treats as unknown.
+  it("applies the same name filter as the caseworking login lookup", async () => {
+    const find = setupFind([]);
 
-    db.collection.mockReturnValue({ findOne });
+    const result = await findByIdpId("2c3ba1f1-e5cd-4a63-9a90-fcb2bb5b1e8a");
 
-    const result = await findByIdpId(userDocument.idpId);
-
-    expect(findOne).toHaveBeenCalledWith({ idpId: userDocument.idpId });
-    expect(result.name).toEqual("placeholder");
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ name: expectedNameFilter.name }),
+    );
+    expect(result).toEqual(null);
   });
 
   it("reads a document whose dates are stored as ISO strings", async () => {
-    const userDocument = UserDocument.createMock({ name: "placeholder" });
+    const userDocument = UserDocument.createMock();
     const createdAt = new Date().toISOString();
     const updatedAt = new Date().toISOString();
 
@@ -861,9 +871,7 @@ describe("findByIdpId", () => {
     userDocument.updatedAt = updatedAt;
     delete userDocument.lastLoginAt;
 
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(userDocument),
-    });
+    setupFind([userDocument]);
 
     const result = await findByIdpId(userDocument.idpId);
 
@@ -875,9 +883,7 @@ describe("findByIdpId", () => {
     const userDocument = UserDocument.createMock();
     delete userDocument.appRoles;
 
-    db.collection.mockReturnValue({
-      findOne: vi.fn().mockResolvedValue(userDocument),
-    });
+    setupFind([userDocument]);
 
     const result = await findByIdpId(userDocument.idpId);
 
