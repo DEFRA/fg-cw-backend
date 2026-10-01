@@ -16,8 +16,7 @@ export const findUserRolesUseCase = async ({ entraId }) => {
   const user = await findByIdpId(entraId);
 
   // An unknown user returns the same empty payload as a known user with no
-  // active roles, so a caller cannot probe whether an account exists. The logs
-  // are therefore the only place that distinction survives for support.
+  // active roles, so a caller cannot probe whether an account exists.
   const appRoles = user ? toResponseRoles(user) : [];
 
   if (user) {

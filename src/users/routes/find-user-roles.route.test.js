@@ -103,4 +103,42 @@ describe("findUserRolesRoute when authentication fails", () => {
 
     expect(response.headers["www-authenticate"]).toMatch(/^Bearer/);
   });
+
+  // main.js calls createServer (which adds the 4xx log) before registering the
+  // users plugin, so the log runs before this route strips the body. Pinned
+  // because reversing that order would silently lose failed-auth logging.
+  it("still exposes the 401 to a server-level onPreResponse", async () => {
+    const seen = [];
+    const server = hapi.server();
+
+    server.ext("onPreResponse", (request, h) => {
+      const { response } = request;
+
+      if (response.isBoom) {
+        seen.push(response.output.statusCode);
+      }
+
+      return h.continue;
+    });
+
+    server.auth.scheme(SERVICE_TOKEN_SCHEME, () => ({
+      authenticate: () => {
+        throw Boom.unauthorized("Invalid token", "Bearer");
+      },
+    }));
+    server.auth.strategy(PUBLIC_API_STRATEGY, SERVICE_TOKEN_SCHEME);
+    server.auth.default(PUBLIC_API_STRATEGY);
+    server.route(findUserRolesRoute);
+    await server.initialize();
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/users/${entraId}/roles`,
+    });
+
+    expect(seen).toEqual([401]);
+    expect(response.payload).toEqual("");
+
+    await server.stop();
+  });
 });
