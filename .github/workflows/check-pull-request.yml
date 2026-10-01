@@ -56,12 +56,7 @@ jobs:
 
   pact:
     name: Pact
-    # Disabled: provider verification is not run on pull requests for this repo.
-    # This job only verifies (publish-verification: false), so nothing is
-    # written to the shared broker and no other repo is affected.
-    # To re-enable, delete `if: false` and restore the condition below.
-    if: false
-    # if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
     uses: ./.github/workflows/pact-verify.yml
     with:
       publish-verification: false
