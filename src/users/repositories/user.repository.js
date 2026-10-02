@@ -45,9 +45,12 @@ const handleDuplicateKeyError = (error) => {
   throw error;
 };
 
-const toUser = (doc) => {
+// Documents written outside adminCreateUser may lack appRoles entirely, which
+// would throw here rather than reading as "no roles".
+const toAppRoles = (storedAppRoles) => {
   const appRoles = {};
-  for (const [roleName, roleData] of Object.entries(doc.appRoles)) {
+
+  for (const [roleName, roleData] of Object.entries(storedAppRoles ?? {})) {
     appRoles[roleName] = new AppRole({
       name: roleName,
       startDate: roleData.startDate,
@@ -55,19 +58,28 @@ const toUser = (doc) => {
     });
   }
 
-  return new User({
+  return appRoles;
+};
+
+// The FGP-726 migration wrote dates as ISO strings rather than Dates, and its
+// cleanup migration skips prod, so those rows are still live there. Absent
+// dates stay undefined, as optional chaining produced before.
+const toIsoString = (value) =>
+  value instanceof Date ? value.toISOString() : (value ?? undefined);
+
+const toUser = (doc) =>
+  new User({
     id: doc._id.toHexString(),
     idpId: doc.idpId,
     email: doc.email,
     name: doc.name,
     idpRoles: doc.idpRoles,
-    appRoles,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-    lastLoginAt: doc.lastLoginAt?.toISOString(),
+    appRoles: toAppRoles(doc.appRoles),
+    createdAt: toIsoString(doc.createdAt),
+    updatedAt: toIsoString(doc.updatedAt),
+    lastLoginAt: toIsoString(doc.lastLoginAt),
     createdManually: doc.createdManually || false,
   });
-};
 
 export const save = async (user) => {
   const userDocument = new UserDocument(user);
@@ -158,6 +170,15 @@ export const findById = async (userId) => {
   });
 
   return userDocument && toUser(userDocument);
+};
+
+// Mirrors the lookup in server/plugins/auth/entra.js, so roles exposed to
+// external systems can never include users caseworking itself won't
+// authenticate - notably the FGP-726 placeholder accounts still live in prod.
+export const findByIdpId = async (idpId) => {
+  const [user = null] = await findAll({ idpId });
+
+  return user;
 };
 
 /**
