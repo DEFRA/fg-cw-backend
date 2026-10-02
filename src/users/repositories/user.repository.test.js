@@ -8,6 +8,7 @@ import {
   findAll,
   findByEmail,
   findById,
+  findByIdpId,
   save,
   update,
   upsertLogin,
@@ -810,5 +811,81 @@ describe("findByEmail", () => {
     const result = await findByEmail(123);
 
     expect(result).toEqual(null);
+  });
+});
+
+describe("findByIdpId", () => {
+  const setupFind = (docs) => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue(docs),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    return find;
+  };
+
+  it("returns a user by idpId", async () => {
+    const userDocument = UserDocument.createMock();
+    const find = setupFind([userDocument]);
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(db.collection).toHaveBeenCalledWith("users");
+    expect(find).toHaveBeenCalledWith({
+      ...expectedNameFilter,
+      idpId: userDocument.idpId,
+    });
+    expect(result).toEqual(
+      User.createMock({ id: userDocument._id.toString() }),
+    );
+  });
+
+  it("returns null when no user is found", async () => {
+    setupFind([]);
+
+    expect(await findByIdpId("2c3ba1f1-e5cd-4a63-9a90-fcb2bb5b1e8a")).toEqual(
+      null,
+    );
+  });
+
+  it("applies the same name filter as the caseworking login lookup", async () => {
+    const find = setupFind([]);
+
+    const result = await findByIdpId("2c3ba1f1-e5cd-4a63-9a90-fcb2bb5b1e8a");
+
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ name: expectedNameFilter.name }),
+    );
+    expect(result).toEqual(null);
+  });
+
+  it("reads a document whose dates are stored as ISO strings", async () => {
+    const userDocument = UserDocument.createMock();
+    const createdAt = new Date().toISOString();
+    const updatedAt = new Date().toISOString();
+
+    userDocument.createdAt = createdAt;
+    userDocument.updatedAt = updatedAt;
+    delete userDocument.lastLoginAt;
+
+    setupFind([userDocument]);
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(result.createdAt).toEqual(createdAt);
+    expect(result.updatedAt).toEqual(updatedAt);
+  });
+
+  it("reads a document with no appRoles as having no roles", async () => {
+    const userDocument = UserDocument.createMock();
+    delete userDocument.appRoles;
+
+    setupFind([userDocument]);
+
+    const result = await findByIdpId(userDocument.idpId);
+
+    expect(result.appRoles).toEqual({});
+    expect(result.getRoles()).toEqual([]);
   });
 });
