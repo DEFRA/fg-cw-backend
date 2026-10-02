@@ -94,16 +94,20 @@ const asCaseReader = (headers) => ({
   ...headers,
 });
 
+// Both the token and the client are unique, so either may already be held.
+export const seedServiceToken = async (db, { client, token }) => {
+  const accessTokens = db.collection("access_tokens");
+  const id = hashToken(token);
+
+  await accessTokens.deleteMany({ $or: [{ id }, { client }] });
+  await accessTokens.insertOne({ id, client, expiresAt: null });
+};
+
 export const seedCaseReaderToken = (db) =>
-  db.collection("access_tokens").replaceOne(
-    { client: CASE_READER_CLIENT },
-    {
-      id: hashToken(CASE_READER_TOKEN),
-      client: CASE_READER_CLIENT,
-      expiresAt: null,
-    },
-    { upsert: true },
-  );
+  seedServiceToken(db, {
+    client: CASE_READER_CLIENT,
+    token: CASE_READER_TOKEN,
+  });
 
 export const searchCases = (payload, headers = {}) =>
   wreck.post("/actuators/cases/search", {
