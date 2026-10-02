@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import {
   dateCodec,
@@ -13,6 +14,12 @@ import { CaseTaskGroup } from "../models/case-task-group.js";
 import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
+import {
+  browseFilter,
+  caseListBySeriesCursor,
+  caseListPageOptions,
+  storedCasePipeline,
+} from "./case/admin-case-query.js";
 import { CaseDocument } from "./case/case-document.js";
 
 const collection = "cases";
@@ -300,3 +307,42 @@ export const updateCurrentConfigVersion = async (caseId, version) => {
     .collection(collection)
     .updateOne({ _id }, { $set: { currentConfigVersion: version } });
 };
+
+// The admin read model: stored documents as plain data, never a `Case`, and
+// nothing here writes.
+export const findCaseListPage = (query) =>
+  paginate(db.collection(collection), {
+    ...caseListPageOptions(query),
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  });
+
+export const countCaseList = (query, limit) =>
+  db.collection(collection).countDocuments(browseFilter(query), {
+    limit,
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  });
+
+export const findCaseListBySeries = (query, limit) =>
+  caseListBySeriesCursor(db.collection(collection), query, {
+    limit,
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  }).toArray();
+
+export const findStoredCase = async (key, include) => {
+  const [doc] = await db
+    .collection(collection)
+    .aggregate(storedCasePipeline(key, include), {
+      maxTimeMS: actuatorReadMaxTimeMs(),
+    })
+    .toArray();
+
+  return doc ?? null;
+};
+
+export const caseExists = async ({ workflowCode, caseRef }) =>
+  (await db
+    .collection(collection)
+    .findOne(
+      { workflowCode, caseRef },
+      { projection: { _id: 1 }, maxTimeMS: actuatorReadMaxTimeMs() },
+    )) !== null;
