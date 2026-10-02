@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { config } from "../../common/config.js";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import {
   dateCodec,
@@ -32,10 +32,6 @@ import { statusGroupStage } from "../../events/status-counts.js";
 const SORT_KEY = "publicationDate";
 
 const toId = (id) => ObjectId.createFromHexString(id);
-
-// Every read here is bounded, so one that outlives its caller's HTTP timeout
-// stops on the server rather than running on.
-const maxTimeMS = () => config.get("mongo.actuatorReadMaxTimeMs");
 
 export const orNull = (value) => value ?? null;
 
@@ -120,7 +116,7 @@ const findPageFor = (
       codecs,
       project,
       mapDocument: toListRow,
-      maxTimeMS: maxTimeMS(),
+      maxTimeMS: actuatorReadMaxTimeMs(),
     });
 };
 
@@ -132,7 +128,7 @@ const countFacetsFor =
       await db
         .collection(collection)
         .aggregate([{ $match: listFilter(filter) }, statusGroupStage()], {
-          maxTimeMS: maxTimeMS(),
+          maxTimeMS: actuatorReadMaxTimeMs(),
         })
         .toArray(),
     );
@@ -144,7 +140,7 @@ const findDetailByIdFor =
       .collection(collection)
       .findOne(
         { _id: toId(id) },
-        { projection: DETAIL_PROJECTION, maxTimeMS: maxTimeMS() },
+        { projection: DETAIL_PROJECTION, maxTimeMS: actuatorReadMaxTimeMs() },
       );
 
     return doc ? toDetailDocument(doc, maxRetries, box) : null;
@@ -158,7 +154,11 @@ const findStatusByIdFor =
       .collection(collection)
       .findOne(
         { _id: toId(id) },
-        { projection: { status: 1 }, session, maxTimeMS: maxTimeMS() },
+        {
+          projection: { status: 1 },
+          session,
+          maxTimeMS: actuatorReadMaxTimeMs(),
+        },
       );
 
     return doc ? doc.status : null;
@@ -210,7 +210,11 @@ const findEditableByIdFor =
       .collection(collection)
       .findOne(
         { _id: toId(id) },
-        { projection: EDITABLE_PROJECTION, session, maxTimeMS: maxTimeMS() },
+        {
+          projection: EDITABLE_PROJECTION,
+          session,
+          maxTimeMS: actuatorReadMaxTimeMs(),
+        },
       );
 
 // Fenced on the redrivable statuses and on the revision the editor started
@@ -249,7 +253,7 @@ const breakdownFor =
             auditExpression: auditGroupExpression(AUDIT_TARGET_FIELDS[box]),
             sortKey: SORT_KEY,
           }),
-          { maxTimeMS: maxTimeMS() },
+          { maxTimeMS: actuatorReadMaxTimeMs() },
         )
         .toArray(),
     );

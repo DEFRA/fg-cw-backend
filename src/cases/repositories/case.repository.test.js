@@ -6,8 +6,13 @@ import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
+  caseExists,
   countByPosition,
+  countCaseList,
   findAll,
+  findCaseListBySeries,
+  findCaseListPage,
+  findStoredCase,
   findByCaseRefAndWorkflowCode,
   findById,
   findCasesByCaseRefsAndWorkflowCode,
@@ -15,6 +20,10 @@ import {
   update,
   updateStage,
 } from "./case.repository.js";
+import {
+  CASE_ROW_PROJECTION,
+  storedCasePipeline,
+} from "./case/admin-case-query.js";
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -621,5 +630,101 @@ describe("countByPosition", () => {
     const result = await countByPosition(["unknown"]);
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("admin read model", () => {
+  const MAX_TIME_MS = 3000;
+
+  it("pages the browse newest first, 20 at a time, with no total", async () => {
+    const cases = {};
+    db.collection.mockReturnValue(cases);
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findCaseListPage({ workflowCode: "frps", cursor: "c" });
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(paginate).toHaveBeenCalledWith(
+      cases,
+      expect.objectContaining({
+        filter: { workflowCode: "frps" },
+        cursor: "c",
+        sort: { createdAt: -1, _id: -1 },
+        pageSize: 20,
+        withTotal: false,
+        project: CASE_ROW_PROJECTION,
+        maxTimeMS: MAX_TIME_MS,
+      }),
+    );
+  });
+
+  it("counts the browse up to a limit", async () => {
+    const countDocuments = vi.fn().mockResolvedValue(7);
+    db.collection.mockReturnValue({ countDocuments });
+
+    expect(await countCaseList({ workflowCode: "frps" }, 10_001)).toBe(7);
+    expect(countDocuments).toHaveBeenCalledWith(
+      { workflowCode: "frps" },
+      { limit: 10_001, maxTimeMS: MAX_TIME_MS },
+    );
+  });
+
+  it("reads a series match once, bounded, unsorted and on caseRef", async () => {
+    const toArray = vi.fn().mockResolvedValue([]);
+    const find = vi.fn().mockReturnValue({ toArray });
+    db.collection.mockReturnValue({ find });
+
+    await findCaseListBySeries({ ref: "ref-1", series: [] }, 201);
+
+    expect(find).toHaveBeenCalledWith(
+      { $or: [{ caseRef: "ref-1" }] },
+      {
+        projection: CASE_ROW_PROJECTION,
+        limit: 201,
+        hint: { caseRef: 1 },
+        maxTimeMS: MAX_TIME_MS,
+      },
+    );
+  });
+
+  it("reads a stored case through its pipeline", async () => {
+    const doc = { caseRef: "ref-1", storedBytes: 9 };
+    const aggregate = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue([doc]) });
+    db.collection.mockReturnValue({ aggregate });
+    const key = { workflowCode: "frps", caseRef: "ref-1" };
+
+    expect(await findStoredCase(key, "document")).toBe(doc);
+    expect(aggregate).toHaveBeenCalledWith(
+      storedCasePipeline(key, "document"),
+      { maxTimeMS: MAX_TIME_MS },
+    );
+  });
+
+  it("answers null for a stored case that is not there", async () => {
+    db.collection.mockReturnValue({
+      aggregate: () => ({ toArray: vi.fn().mockResolvedValue([]) }),
+    });
+
+    expect(
+      await findStoredCase({ workflowCode: "frps", caseRef: "ref-1" }),
+    ).toBeNull();
+  });
+
+  it.each([
+    [{ _id: "id" }, true],
+    [null, false],
+  ])("checks existence from an _id-only read", async (found, exists) => {
+    const findOne = vi.fn().mockResolvedValue(found);
+    db.collection.mockReturnValue({ findOne });
+
+    expect(await caseExists({ workflowCode: "frps", caseRef: "ref-1" })).toBe(
+      exists,
+    );
+    expect(findOne).toHaveBeenCalledWith(
+      { workflowCode: "frps", caseRef: "ref-1" },
+      { projection: { _id: 1 }, maxTimeMS: MAX_TIME_MS },
+    );
   });
 });

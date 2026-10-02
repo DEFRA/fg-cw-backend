@@ -24,7 +24,7 @@ const isAfter = (from, to) => Date.parse(from) > Date.parse(to);
 
 // Compared as instants: "...T00:00:00Z" and "...T01:00:00+02:00" sort the
 // other way round as strings.
-const assertRange = (value, helpers) => {
+export const assertRange = (value, helpers) => {
   if (value.from && value.to && isAfter(value.from, value.to)) {
     return helpers.error("any.invalid");
   }
@@ -32,7 +32,7 @@ const assertRange = (value, helpers) => {
   return value;
 };
 
-const RANGE_MESSAGES = {
+export const RANGE_MESSAGES = {
   "any.invalid": '"from" must be earlier than or equal to "to"',
 };
 

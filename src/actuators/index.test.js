@@ -16,7 +16,7 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the page, the detail, the redrive, the purge and the edit routes", async () => {
+  it("registers the event routes and the case routes", async () => {
     const server = await registeredServer();
 
     const actuatorPaths = server
@@ -26,6 +26,9 @@ describe("actuators", () => {
       .sort();
 
     expect(actuatorPaths).toEqual([
+      "/actuators/cases/search",
+      "/actuators/cases/{workflowCode}/{caseRef}",
+      "/actuators/cases/{workflowCode}/{caseRef}/existence",
       "/actuators/events",
       "/actuators/events/inbox/{id}",
       "/actuators/events/inbox/{id}/payload",

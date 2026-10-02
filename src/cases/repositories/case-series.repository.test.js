@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { CaseSeries } from "../models/case-series.js";
 import {
+  findByCaseRef,
   findByCaseRefAndWorkflowCode,
   findInCaseRefsAndWorkflowCode,
   save,
@@ -139,5 +140,29 @@ describe("case-series.repository", () => {
         Boom.notFound(`Failed to update case_series with _id "doc-id"`),
       );
     });
+  });
+});
+
+describe("findByCaseRef", () => {
+  it("reads every series containing the ref as plain documents", async () => {
+    const series = [
+      { workflowCode: "frps", caseRefs: ["r"], latestCaseRef: "r" },
+    ];
+    const find = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue(series) });
+    db.collection.mockReturnValue({ find });
+
+    expect(await findByCaseRef({ ref: "r", workflowCode: "frps" })).toBe(
+      series,
+    );
+    expect(db.collection).toHaveBeenCalledWith("case_series");
+    expect(find).toHaveBeenCalledWith(
+      { caseRefs: "r", workflowCode: "frps" },
+      {
+        projection: { _id: 0, workflowCode: 1, caseRefs: 1, latestCaseRef: 1 },
+        maxTimeMS: 3000,
+      },
+    );
   });
 });
