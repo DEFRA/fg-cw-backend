@@ -13,11 +13,11 @@ const getLatestGitTagOrFallback = () => {
 const getProviderVersionBranch = () => env.GITHUB_REF_NAME ?? "main";
 
 /**
- * Build verification options for MessageProviderPact
+ * Build the pact source and version options shared by both provider tests
  * @param {Object} config
  * @param {string} config.providerName - Name of the provider (e.g., "fg-cw-backend")
  * @param {string} config.consumerName - Name of the consumer (e.g., "fg-gas-backend")
- * @returns {Object} Options for MessageProviderPact.verify()
+ * @returns {Object} Options for MessageProviderPact.verify() or new Verifier()
  */
 export const buildMessageVerifierOptions = ({ providerName, consumerName }) => {
   const useLocal = env.PACT_USE_LOCAL === "true";
@@ -36,7 +36,10 @@ export const buildMessageVerifierOptions = ({ providerName, consumerName }) => {
   if (useLocal) {
     const pactDir =
       env.PACT_LOCAL_DIR || path.resolve(process.cwd(), "tmp/pacts");
-    const pactUrls = globSync(`${pactDir}/*.json`, { nodir: true });
+    // Pact files are named `<consumer>-<provider>.json`.
+    const pactUrls = globSync(`${pactDir}/*-${providerName}.json`, {
+      nodir: true,
+    });
     return {
       ...baseOpts,
       pactUrls,

@@ -27,7 +27,9 @@ fg-gas-backend (GAS)
 
 - CW is a **CONSUMER** of case commands from GAS
 - CW is a **PROVIDER** of case status updates to GAS
-- All communication is async via SNS/SQS (no HTTP calls)
+- CW is a **PROVIDER** of the case actuators GAS calls over HTTP for the grants
+  admin's Cases pages, under its own provider name, `fg-cw-backend-actuators`
+- Everything else is async via SNS/SQS
 
 ## Contract Test Files
 
@@ -93,6 +95,40 @@ fg-gas-backend (GAS)
 
 **Integration test**: WMG payload processing is verified in `test/contract/realistic-payload.integration.test.js` — proves `Case.new()` can accept the WMG payload without throwing (the "danger area" check).
 
+### 2. Provider Test for the Case Actuators (HTTP)
+
+**File**: `provider.actuators.test.js`
+
+**Role**:
+
+- **Consumer**: fg-gas-backend (`consumer.cw-backend-actuators.test.js`)
+- **Provider**: fg-cw-backend-actuators
+
+**What it does**: replays GAS's HTTP pact against a running CW and Mongo, the
+same stack the integration tests start (`test/setup.js`). It has its own vitest
+config, `vitest.actuators.config.js`, because the message tests mock config and
+need no service.
+
+Auth runs for real: before every interaction an `access_tokens` record is seeded
+for `fg-gas-backend`, and a request filter puts that token on each replayed
+request, so the `public-api` strategy and `requireCaseReader` both pass.
+
+**Provider states**, each starting from no cases and a workflow catalogue of
+`frps-private-beta` and `woodland`:
+
+| State                              | Params                                        | Seeds                                                                          |
+| ---------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| `cases exist`                      | none                                          | 25 open cases across both workflows, hourly back from 2026-06-16T10:00Z        |
+| `a case series exists`             | `workflowCode`, `caseRefs`                    | the series and a case for each ref                                             |
+| `a case exists`                    | `workflowCode`, `caseRef`                     | the case, in a series of one                                                   |
+| `no case exists`                   | `workflowCode`, `caseRef`                     | nothing                                                                        |
+| `an inbox event names a case`      | `id`, `workflowCode`, `caseRef`, `caseExists` | an inbox row whose `event.data` names the case, and the case when `caseExists` |
+| `the caller is not fg-gas-backend` | none                                          | the same token, issued to another client, for the 403                          |
+
+Seeded payloads are arbitrary objects. The pact matches `payload` and the
+case `document` only as "an object", never by their fields, because their shape
+belongs to each workflow.
+
 ## Running Tests
 
 ### Run Consumer Tests (Generate Pacts)
@@ -115,6 +151,21 @@ npx vitest --config test/contract/vitest.config.js test/contract/provider.gas-ba
 ```
 
 Output will show `pact verifier mode=broker` when running against the broker correctly.
+
+### Run the Case Actuators Provider Test
+
+Needs Docker, as the integration tests do, and a `.env` (`npm run setup:env`):
+
+```bash
+PACT_BROKER_BASE_URL=https://ffc-pact-broker.azure.defra.cloud \
+PACT_USER=<user> \
+PACT_PASS=<pass> \
+npm run test:contract:actuators
+```
+
+With `PACT_USE_LOCAL=true` it verifies `tmp/pacts/fg-gas-backend-fg-cw-backend-actuators.json`
+instead, for example one copied from a local GAS run. In local mode each provider
+test reads only the pact files named for its own provider.
 
 ### Publish Consumer Contracts to Broker
 
@@ -151,21 +202,30 @@ pact broker publish --merge tmp/pacts/*.json \
    - Test: `consumer.gas-backend.test.js`
    - Messages: CreateNewCaseCommand, UpdateCaseStatusCommand (FRPS + WMG)
 
+2. **fg-gas-backend → fg-cw-backend-actuators** (HTTP)
+   - Consumer: fg-gas-backend
+   - Provider: fg-cw-backend-actuators
+   - Type: HTTP contract
+   - Test: `provider.actuators.test.js`
+   - Interactions: the case list and ref search, the case read with and without
+     its document, the existence check, the event detail's case, a missing case
+     and another client
+
 ## CI/CD Workflow
 
 ### GitHub Actions Workflows
 
-| File                       | Trigger                           | What it does                                                                         |
-| -------------------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
-| `check-pull-request.yml`   | PR to main/dev                    | Runs provider verification (`publish-verification: false`)                           |
-| `publish.yml`              | Push to main                      | Publishes consumer pacts + runs provider verification (`publish-verification: true`) |
-| `pact-verify.yml`          | Called by above two               | Reusable: runs `provider.gas-backend.test.js` against broker                         |
-| `pact-webhook.yml`         | Broker webhook (`pact_published`) | Triggered automatically when GAS publishes a pact; runs provider verification        |
-| `create-pact-webhooks.yml` | Manual (`workflow_dispatch`)      | One-time: registers webhook on pact broker                                           |
+| File                       | Trigger                           | What it does                                                                                  |
+| -------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `check-pull-request.yml`   | PR to main/dev                    | Runs provider verification (`publish-verification: false`)                                    |
+| `publish.yml`              | Push to main                      | Publishes consumer pacts + runs provider verification (`publish-verification: true`)          |
+| `pact-verify.yml`          | Called by above two               | Reusable: runs `provider.gas-backend.test.js` and `provider.actuators.test.js` against broker |
+| `pact-webhook.yml`         | Broker webhook (`pact_published`) | Triggered automatically when GAS publishes a pact; runs provider verification                 |
+| `create-pact-webhooks.yml` | Manual (`workflow_dispatch`)      | One-time per pair: registers the chosen pair's webhook on the pact broker                     |
 
 ### Webhook Setup (one-time after deploy)
 
-Run `create-pact-webhooks.yml` manually via GitHub Actions → **Run workflow**. This registers the webhook on the broker so that when `fg-gas-backend` publishes a pact, this repo's provider verification runs automatically.
+Run `create-pact-webhooks.yml` manually via GitHub Actions → **Run workflow**, choosing the consumer/provider pair in its `pair` input; it defaults to `fg-gas-backend:fg-cw-backend-actuators`. It registers that pair's webhook only when the broker has none for the pair yet, and otherwise says so and stops, so running it again is safe. When `fg-gas-backend` publishes either pact, this repo's provider verification runs automatically. A webhook does not say which pact changed, so `pact-verify.yml` verifies both providers every time.
 
 ### For CW Team (Consumer of Case Commands):
 
@@ -357,5 +417,5 @@ WMG does **not** yet have an agreements journey. `UpdateCaseStatusCommand` suppl
 
 ---
 
-**Last Updated**: 2026-05-26
-**Tickets**: FGP-789, FGP-1011, FGP-1117
+**Last Updated**: 2026-10-02
+**Tickets**: FGP-789, FGP-1011, FGP-1117, FGP-1479

@@ -2,6 +2,14 @@ name: Create Pact Webhooks
 
 on:
   workflow_dispatch:
+    inputs:
+      pair:
+        description: "The consumer:provider pact to register a webhook for. A pair that already has one is skipped."
+        type: choice
+        options:
+          - fg-gas-backend:fg-cw-backend-actuators
+          - fg-gas-backend:fg-cw-backend
+        default: fg-gas-backend:fg-cw-backend-actuators
 
 jobs:
   create-webhooks:
@@ -15,29 +23,38 @@ jobs:
           echo "::add-mask::$PACT_PASS"
           echo "::add-mask::$FFCPLATFORM_PAT"
 
-      - name: Create Pact webhooks
+      - name: Create Pact webhook
+        env:
+          PAIR: ${{ inputs.pair }}
         run: |
           #!/usr/bin/env bash
           set -euo pipefail
 
           # ── Configuration ──────────────────────────────────────────────
-          CONSUMERS=(
-            "fg-gas-backend"
-          )
-          PROVIDER="fg-cw-backend"
+          CONSUMER="${PAIR%%:*}"
+          PROVIDER="${PAIR#*:}"
           TARGET_REPO="DEFRA/fg-cw-backend"
           # ───────────────────────────────────────────────────────────────
 
           PACT_BROKER_URL="https://ffc-pact-broker.azure.defra.cloud"
           AUTH_HEADER=$(printf '%s' "${PACT_USER}:${PACT_PASS}" | base64 | tr -d '\n')
 
-          for CONSUMER in "${CONSUMERS[@]}"; do
-            echo "Creating webhook for ${CONSUMER} -> ${PROVIDER}"
+          EXISTING=$(curl -sS --fail-with-body \
+            -H "Authorization: Basic ${AUTH_HEADER}" \
+            "${PACT_BROKER_URL}/webhooks/provider/${PROVIDER}/consumer/${CONSUMER}" |
+            jq '._links["pb:webhooks"] // [] | length')
 
-            curl -i -sS -X POST "${PACT_BROKER_URL}/webhooks" \
-              -H "Authorization: Basic ${AUTH_HEADER}" \
-              -H "Content-Type: application/json" \
-              --data-binary @- <<JSON
+          if [ "${EXISTING}" -gt 0 ]; then
+            echo "A webhook for ${CONSUMER} -> ${PROVIDER} already exists - nothing to do"
+            exit 0
+          fi
+
+          echo "Creating webhook for ${CONSUMER} -> ${PROVIDER}"
+
+          curl -i -sS --fail-with-body -X POST "${PACT_BROKER_URL}/webhooks" \
+            -H "Authorization: Basic ${AUTH_HEADER}" \
+            -H "Content-Type: application/json" \
+            --data-binary @- <<JSON
           {
             "description": "Trigger ${TARGET_REPO} workflow for ${CONSUMER} -> ${PROVIDER}",
             "consumer": {
@@ -74,4 +91,3 @@ jobs:
             ]
           }
           JSON
-          done
