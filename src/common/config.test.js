@@ -122,3 +122,26 @@ describe("config events.retentionDays", () => {
     },
   );
 });
+
+describe("config log.redact", () => {
+  const saved = process.env.NODE_ENV;
+
+  afterEach(() => {
+    process.env.NODE_ENV = saved;
+  });
+
+  it("keeps both operator headers out of production logs", async () => {
+    const { vi } = await import("vitest");
+    vi.resetModules();
+    process.env.NODE_ENV = "production";
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("log.redact")).toEqual(
+      expect.arrayContaining([
+        'req.headers["x-actor"]',
+        'req.headers["x-actor-id"]',
+      ]),
+    );
+  });
+});

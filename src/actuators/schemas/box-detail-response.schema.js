@@ -64,6 +64,14 @@ const detailCommon = {
   // False when saving through the editor would turn a stored BSON value (a
   // date, an ObjectId, a long) into its JSON form.
   payloadIsPlainJson: Joi.boolean().required(),
+  // The case the event names, and whether it exists; null when it names none.
+  case: Joi.object({
+    workflowCode: Joi.string().required(),
+    caseRef: Joi.string().required(),
+    exists: Joi.boolean().required(),
+  })
+    .allow(null)
+    .label("EventDetailCase"),
   claimedBy: Joi.any().forbidden(),
   claimedAt: Joi.any().forbidden(),
   claimExpiresAt: Joi.any().forbidden(),

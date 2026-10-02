@@ -1,5 +1,11 @@
-import { SERVICE_TOKEN } from "./service-token.js";
+import { hashToken } from "../../src/server/plugins/auth/hash-token.js";
+import {
+  CASE_READER_CLIENT,
+  CASE_READER_TOKEN,
+  SERVICE_TOKEN,
+} from "./service-token.js";
 import { wreck } from "./wreck.js";
+import { operatorHeaders } from "./operator.js";
 
 const get = (path, query, token) =>
   wreck.get(query ? `${path}?${new URLSearchParams(query)}` : path, {
@@ -30,7 +36,11 @@ export const redriveInboxEvent = (
   id,
   { by } = {},
   token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/events/inbox/${id}/redrive`, by), token);
+  headers = {},
+) =>
+  wreck.post(withActor(`/actuators/events/inbox/${id}/redrive`, by), {
+    headers: { authorization: token, ...headers },
+  });
 
 export const redriveOutboxEvent = (
   id,
@@ -64,3 +74,37 @@ export const editOutboxPayload = (
   token = `Bearer ${SERVICE_TOKEN}`,
 ) =>
   post(withActor(`/actuators/events/outbox/${id}/payload`, by), token, payload);
+
+const asCaseReader = (headers) => ({
+  authorization: `Bearer ${CASE_READER_TOKEN}`,
+  ...operatorHeaders,
+  ...headers,
+});
+
+export const seedCaseReaderToken = (db) =>
+  db.collection("access_tokens").replaceOne(
+    { client: CASE_READER_CLIENT },
+    {
+      id: hashToken(CASE_READER_TOKEN),
+      client: CASE_READER_CLIENT,
+      expiresAt: null,
+    },
+    { upsert: true },
+  );
+
+export const searchCases = (payload, headers = {}) =>
+  wreck.post("/actuators/cases/search", {
+    headers: asCaseReader(headers),
+    payload,
+  });
+
+export const viewCaseData = (workflowCode, caseRef, query, headers = {}) =>
+  wreck.get(
+    `/actuators/cases/${workflowCode}/${caseRef}${query ? `?${new URLSearchParams(query)}` : ""}`,
+    { headers: asCaseReader(headers) },
+  );
+
+export const caseExistence = (workflowCode, caseRef, headers = {}) =>
+  wreck.get(`/actuators/cases/${workflowCode}/${caseRef}/existence`, {
+    headers: asCaseReader(headers),
+  });
