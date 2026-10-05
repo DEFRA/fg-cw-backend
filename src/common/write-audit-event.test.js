@@ -10,6 +10,7 @@ import {
   stripNulls,
   writeAuditEvent,
 } from "./write-audit-event.js";
+import { OPERATOR_ID } from "../../test/helpers/operator.js";
 
 vi.mock("@defra/hapi-tracing", () => ({
   getTraceId: vi.fn(),
@@ -114,6 +115,28 @@ describe("buildPayload", () => {
     });
 
     expect(result.ip).toBe("0.0.0.0");
+  });
+
+  it("sets user from the request context's operator", () => {
+    getRequestContext.mockReturnValue({
+      ip: "10.0.0.1",
+      user: OPERATOR_ID,
+    });
+
+    const result = buildPayload({
+      entities: [],
+      status: auditStatus.SUCCESS,
+    });
+
+    expect(result.user).toBe(OPERATOR_ID);
+  });
+
+  it("leaves user out when no operator was set", () => {
+    const result = stripNulls(
+      buildPayload({ entities: [], status: auditStatus.SUCCESS }),
+    );
+
+    expect(result).not.toHaveProperty("user");
   });
 
   it("includes entities, accounts, status and details under audit", () => {
@@ -313,7 +336,9 @@ describe("writeAuditEvent", () => {
   // Best-effort without a transaction: the action has already happened and
   // refusing to report it would not undo it.
   it("does not throw on an invalid payload when there is no session", async () => {
-    await expect(writeAuditEvent(invalid(), undefined)).resolves.toBeUndefined();
+    await expect(
+      writeAuditEvent(invalid(), undefined),
+    ).resolves.toBeUndefined();
   });
 
   // Inside a transaction the same skip would let the action commit with no

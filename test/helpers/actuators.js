@@ -1,5 +1,11 @@
-import { SERVICE_TOKEN } from "./service-token.js";
+import { hashToken } from "../../src/server/plugins/auth/hash-token.js";
+import {
+  CASE_READER_CLIENT,
+  CASE_READER_TOKEN,
+  SERVICE_TOKEN,
+} from "./service-token.js";
 import { wreck } from "./wreck.js";
+import { operatorHeaders } from "./operator.js";
 
 const get = (path, query, token) =>
   wreck.get(query ? `${path}?${new URLSearchParams(query)}` : path, {
@@ -11,9 +17,9 @@ const get = (path, query, token) =>
 export const findPage = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
   get("/actuators/events", query, token);
 
-const post = (path, token, payload) =>
+const post = (path, token, payload, headers = {}) =>
   wreck.post(path, {
-    headers: { authorization: token },
+    headers: { authorization: token, ...headers },
     ...(payload ? { payload } : {}),
   });
 
@@ -30,7 +36,11 @@ export const redriveInboxEvent = (
   id,
   { by } = {},
   token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/events/inbox/${id}/redrive`, by), token);
+  headers = {},
+) =>
+  wreck.post(withActor(`/actuators/events/inbox/${id}/redrive`, by), {
+    headers: { authorization: token, ...headers },
+  });
 
 export const redriveOutboxEvent = (
   id,
@@ -42,7 +52,14 @@ export const purgeInboxEvent = (
   id,
   { by, ...payload } = {},
   token = `Bearer ${SERVICE_TOKEN}`,
-) => post(withActor(`/actuators/events/inbox/${id}/purge`, by), token, payload);
+  headers = {},
+) =>
+  post(
+    withActor(`/actuators/events/inbox/${id}/purge`, by),
+    token,
+    payload,
+    headers,
+  );
 
 export const purgeOutboxEvent = (
   id,
@@ -55,8 +72,14 @@ export const editInboxPayload = (
   id,
   { by, ...payload } = {},
   token = `Bearer ${SERVICE_TOKEN}`,
+  headers = {},
 ) =>
-  post(withActor(`/actuators/events/inbox/${id}/payload`, by), token, payload);
+  post(
+    withActor(`/actuators/events/inbox/${id}/payload`, by),
+    token,
+    payload,
+    headers,
+  );
 
 export const editOutboxPayload = (
   id,
@@ -64,3 +87,37 @@ export const editOutboxPayload = (
   token = `Bearer ${SERVICE_TOKEN}`,
 ) =>
   post(withActor(`/actuators/events/outbox/${id}/payload`, by), token, payload);
+
+const asCaseReader = (headers) => ({
+  authorization: `Bearer ${CASE_READER_TOKEN}`,
+  ...operatorHeaders,
+  ...headers,
+});
+
+export const seedCaseReaderToken = (db) =>
+  db.collection("access_tokens").replaceOne(
+    { client: CASE_READER_CLIENT },
+    {
+      id: hashToken(CASE_READER_TOKEN),
+      client: CASE_READER_CLIENT,
+      expiresAt: null,
+    },
+    { upsert: true },
+  );
+
+export const searchCases = (payload, headers = {}) =>
+  wreck.post("/actuators/cases/search", {
+    headers: asCaseReader(headers),
+    payload,
+  });
+
+export const viewCaseData = (workflowCode, caseRef, query, headers = {}) =>
+  wreck.get(
+    `/actuators/cases/${workflowCode}/${caseRef}${query ? `?${new URLSearchParams(query)}` : ""}`,
+    { headers: asCaseReader(headers) },
+  );
+
+export const caseExistence = (workflowCode, caseRef, headers = {}) =>
+  wreck.get(`/actuators/cases/${workflowCode}/${caseRef}/existence`, {
+    headers: asCaseReader(headers),
+  });

@@ -35,3 +35,8 @@ export const SYSTEM_ACTOR = {
 };
 
 export const buildSystemSecurityContext = () => ({ actor: SYSTEM_ACTOR });
+
+// The operator GAS forwarded: their Entra object id and display name.
+export const buildOperatorSecurityContext = ({ id, name }) => ({
+  actor: { id, name },
+});
