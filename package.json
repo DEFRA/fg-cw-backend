@@ -62,7 +62,7 @@
     "joi": "18.2.9",
     "jose": "6.2.12",
     "jsonata": "2.2.2",
-    "jsonpath-plus": "10.4.0",
+    "jsonpath-plus": "11.1.0",
     "migrate-mongo": "14.0.7",
     "mongodb": "7.6.0",
     "pino": "10.3.1",
