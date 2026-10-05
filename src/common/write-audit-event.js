@@ -39,6 +39,7 @@ export const buildPayload = ({
   const context = getRequestContext();
 
   return {
+    user: context?.user,
     datetime: new Date().toISOString(),
     version: config.get("serviceVersion"),
     application: "Case Working Service",

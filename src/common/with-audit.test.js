@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auditStatus } from "./audit-constants.js";
+import { logger } from "./logger.js";
 import { withAudit } from "./with-audit.js";
 import { writeAuditEvent } from "./write-audit-event.js";
 
@@ -35,6 +36,18 @@ describe("withAudit", () => {
       const result = await withAudit(fn, dataBuilder)("arg0");
 
       expect(result).toEqual({ id: "123" });
+    });
+
+    it("never logs the result", async () => {
+      const fn = vi.fn().mockResolvedValue({ payload: "personal data" });
+
+      await withAudit(fn, () => null)("arg0");
+
+      const logged = JSON.stringify(
+        Object.values(logger).flatMap((method) => method.mock.calls),
+      );
+
+      expect(logged).not.toContain("personal data");
     });
 
     it("calls the wrapped function with the provided args", async () => {

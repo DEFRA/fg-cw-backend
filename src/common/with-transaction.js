@@ -10,14 +10,17 @@ export const transactionOptions = {
 // to return - a redrive answers with the updated row - cannot lose it just
 // because it runs in a transaction. `session.withTransaction` discards the
 // callback's value, so it is captured here.
-export const withTransaction = async (callback) => {
+export const withTransaction = async (callback, options = {}) => {
   const session = mongoClient.startSession();
   let result;
 
   try {
-    await session.withTransaction(async (activeSession) => {
-      result = await callback(activeSession);
-    }, transactionOptions);
+    await session.withTransaction(
+      async (activeSession) => {
+        result = await callback(activeSession);
+      },
+      { ...transactionOptions, ...options },
+    );
   } finally {
     await session.endSession();
   }

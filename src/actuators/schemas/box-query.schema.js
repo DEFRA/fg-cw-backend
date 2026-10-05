@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { ACTOR_MAX } from "../../common/actor-header.js";
 import { PAGE_SECTIONS } from "../../common/actuator-page-sections.js";
 import { AUDIT_EXCLUDE, AUDIT_MODES } from "../../events/event-audit.js";
 import { EVENT_STATUSES } from "../../events/status-counts.js";
@@ -11,7 +12,6 @@ const MAX_Q = 200;
 const MIN_ERROR = 1;
 // The stored `lastError.message` cap, so any stored message can be filtered on.
 const MAX_ERROR = 1024;
-const MAX_ACTOR = 128;
 
 const SECTIONS_PATTERN = new RegExp(
   `^(${PAGE_SECTIONS.join("|")})(,(${PAGE_SECTIONS.join("|")}))*$`,
@@ -24,7 +24,7 @@ const isAfter = (from, to) => Date.parse(from) > Date.parse(to);
 
 // Compared as instants: "...T00:00:00Z" and "...T01:00:00+02:00" sort the
 // other way round as strings.
-const assertRange = (value, helpers) => {
+export const assertRange = (value, helpers) => {
   if (value.from && value.to && isAfter(value.from, value.to)) {
     return helpers.error("any.invalid");
   }
@@ -32,7 +32,7 @@ const assertRange = (value, helpers) => {
   return value;
 };
 
-const RANGE_MESSAGES = {
+export const RANGE_MESSAGES = {
   "any.invalid": '"from" must be earlier than or equal to "to"',
 };
 
@@ -94,7 +94,7 @@ export const pageQuery = Joi.object({
 const actor = () =>
   Joi.string()
     .trim()
-    .max(MAX_ACTOR)
+    .max(ACTOR_MAX)
     .empty("")
     .description("operator the mutation is made on behalf of");
 

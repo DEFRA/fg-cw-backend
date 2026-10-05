@@ -364,3 +364,28 @@ describe("detail payload edit fields", () => {
     ).toBeDefined();
   });
 });
+
+describe("the event's case", () => {
+  const SCHEMAS = [
+    ["inbox", inboxDetailResponseSchema, anInbox],
+    ["outbox", outboxDetailResponseSchema, anOutbox],
+  ];
+
+  it.each(SCHEMAS)("accepts a %s row naming a case", (_, schema, aRow) => {
+    const kase = { workflowCode: "frps", caseRef: "ref-1", exists: false };
+
+    expect(schema.validate(aRow({ case: kase })).error).toBeUndefined();
+  });
+
+  it.each(SCHEMAS)("accepts a %s row naming none", (_, schema, aRow) => {
+    expect(schema.validate(aRow({ case: null })).error).toBeUndefined();
+  });
+
+  it("refuses a case with no existence flag", () => {
+    expect(
+      inboxDetailResponseSchema.validate(
+        anInbox({ case: { workflowCode: "frps", caseRef: "ref-1" } }),
+      ).error,
+    ).toBeDefined();
+  });
+});

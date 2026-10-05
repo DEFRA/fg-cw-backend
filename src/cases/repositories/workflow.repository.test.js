@@ -404,6 +404,21 @@ describe("findAllCodes", () => {
     expect(result).toEqual(["WORKFLOW_A"]);
   });
 
+  it("bounds the read when given a time limit", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([]),
+    });
+
+    db.collection.mockReturnValue({ find });
+
+    await findAllCodes({}, { maxTimeMS: 3000 });
+
+    expect(find).toHaveBeenCalledWith(
+      {},
+      { projection: { _id: 0, code: 1 }, maxTimeMS: 3000 },
+    );
+  });
+
   it("returns empty array when no workflows match", async () => {
     const find = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue([]),
