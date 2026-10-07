@@ -1,6 +1,9 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { findStoredCase } from "../../cases/repositories/case.repository.js";
+import {
+  findSeriesMembers,
+  findStoredCase,
+} from "../../cases/repositories/case.repository.js";
 import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
 import { auditStatus } from "../../common/audit-constants.js";
 import { logger } from "../../common/logger.js";
@@ -48,7 +51,24 @@ const SUMMARY = {
   createdAt: "2026-06-16T10:00:00.000Z",
   originalConfigVersion: "1.0.0",
   currentConfigVersion: "1.2.0",
-  series: { latestRef: "ref-2", refs: ["ref-1", "ref-2"] },
+  series: {
+    latestRef: "ref-2",
+    refs: ["ref-1", "ref-2"],
+    members: [
+      {
+        caseRef: "ref-1",
+        position: { phase: "PRE_AWARD", stage: "AWARD", status: "CLOSED" },
+        createdAt: "2026-06-01T10:00:00.000Z",
+        closedAt: "2026-06-10T00:00:00.000Z",
+      },
+      {
+        caseRef: "ref-2",
+        position: { phase: "PRE_AWARD", stage: "REVIEW", status: "NEW" },
+        createdAt: "2026-06-16T10:00:00.000Z",
+        closedAt: "2026-06-20T00:00:00.000Z",
+      },
+    ],
+  },
 };
 
 const run = (include) =>
@@ -71,6 +91,17 @@ beforeEach(() => {
       latestCaseRef: "ref-2",
     },
   ]);
+  // Unordered, as the read gives them.
+  findSeriesMembers.mockResolvedValue([
+    aStoredCase(),
+    aStoredCase({
+      caseRef: "ref-1",
+      currentStage: "AWARD",
+      currentStatus: "CLOSED",
+      closedAt: new Date("2026-06-10T00:00:00Z"),
+      createdAt: new Date("2026-06-01T10:00:00Z"),
+    }),
+  ]);
 });
 
 describe("viewCaseDataUseCase", () => {
@@ -84,6 +115,47 @@ describe("viewCaseDataUseCase", () => {
       ref: "ref-2",
       workflowCode: "frps",
     });
+    expect(findSeriesMembers).toHaveBeenCalledWith({
+      workflowCode: "frps",
+      caseRefs: ["ref-1", "ref-2"],
+    });
+  });
+
+  it("keeps a member whose case is missing in its place, with null facts", async () => {
+    findByCaseRef.mockResolvedValue([
+      {
+        workflowCode: "frps",
+        caseRefs: ["ref-0", "ref-1", "ref-2"],
+        latestCaseRef: "ref-2",
+      },
+    ]);
+
+    const { members } = (await run()).case.series;
+
+    expect(members.map(({ caseRef }) => caseRef)).toEqual([
+      "ref-0",
+      "ref-1",
+      "ref-2",
+    ]);
+    expect(members[0]).toEqual({
+      caseRef: "ref-0",
+      position: { phase: null, stage: null, status: null },
+      createdAt: null,
+      closedAt: null,
+    });
+  });
+
+  it("reads no members for a series of one", async () => {
+    findByCaseRef.mockResolvedValue([
+      { workflowCode: "frps", caseRefs: ["ref-2"], latestCaseRef: "ref-2" },
+    ]);
+
+    expect((await run()).case.series).toEqual({
+      latestRef: "ref-2",
+      refs: ["ref-2"],
+      members: [],
+    });
+    expect(findSeriesMembers).not.toHaveBeenCalled();
   });
 
   it("adds the stored document, with no computed field in it", async () => {
@@ -105,6 +177,7 @@ describe("viewCaseDataUseCase", () => {
     findByCaseRef.mockResolvedValue([]);
 
     expect((await run()).case.series).toBeNull();
+    expect(findSeriesMembers).not.toHaveBeenCalled();
   });
 
   it("answers 404 with reason CASE_NOT_FOUND and audits a FAILURE", async () => {
