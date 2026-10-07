@@ -1,6 +1,7 @@
 import { dateCodec, objectIdCodec } from "../../../common/paginate.js";
 
-// The admin read model's queries over `cases`: top-level platform fields only.
+// The admin read model's queries over `cases` and `case_series`: top-level
+// platform fields only.
 // `payload` and `supplementaryData` are never named here.
 
 export const CASE_ROW_PROJECTION = {
@@ -31,6 +32,16 @@ const CASE_LIST_PAGE_SIZE = 20;
 // Each series branch is an equality on caseRef. Unhinted, the planner can
 // prefer a sort index that walks the range instead.
 const CASE_REF_INDEX = { caseRef: 1 };
+
+// The unique key. The wider sort indexes share its prefix, so it is named.
+const CASE_KEY_INDEX = { workflowCode: 1, caseRef: 1 };
+
+export const SERIES_PROJECTION = {
+  _id: 0,
+  workflowCode: 1,
+  caseRefs: 1,
+  latestCaseRef: 1,
+};
 
 const bound = (operator, value) =>
   value ? { [operator]: new Date(value) } : {};
@@ -65,6 +76,23 @@ export const seriesFilter = ({ ref, workflowCode }) => ({
   caseRefs: ref,
   ...workflowFilter({ workflowCode }),
 });
+
+// Every series holding any of the refs, on the multikey caseRefs index.
+export const seriesContainingCursor = (caseSeries, caseRefs, { maxTimeMS }) =>
+  caseSeries.find(
+    { caseRefs: { $in: caseRefs } },
+    { projection: SERIES_PROJECTION, maxTimeMS },
+  );
+
+export const seriesMembersCursor = (
+  cases,
+  { workflowCode, caseRefs },
+  { maxTimeMS },
+) =>
+  cases.find(
+    { workflowCode, caseRef: { $in: caseRefs } },
+    { projection: CASE_ROW_PROJECTION, hint: CASE_KEY_INDEX, maxTimeMS },
+  );
 
 export const caseListPageOptions = ({ cursor, ...query }) => ({
   filter: browseFilter(query),

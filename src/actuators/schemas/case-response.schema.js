@@ -4,22 +4,35 @@ import Joi from "joi";
 const nullableString = Joi.string().allow(null);
 const nullableIso = Joi.string().isoDate().allow(null);
 
+const casePosition = Joi.object({
+  phase: nullableString,
+  stage: nullableString,
+  status: nullableString,
+}).label("CasePosition");
+
 const caseRow = {
   ref: Joi.object({
     caseRef: nullableString,
     workflowCode: nullableString,
   }).label("CaseKey"),
-  position: Joi.object({
-    phase: nullableString,
-    stage: nullableString,
-    status: nullableString,
-  }).label("CasePosition"),
+  position: casePosition,
   closed: Joi.boolean().allow(null),
   closedAt: nullableIso,
   createdAt: nullableIso,
 };
 
-export const caseRowSchema = Joi.object(caseRow).label("CaseRow");
+export const caseRowSchema = Joi.object({
+  ...caseRow,
+  // A later case in the same workflow's series replaced this one.
+  replaced: Joi.boolean().required(),
+}).label("CaseRow");
+
+const caseSeriesMemberSchema = Joi.object({
+  caseRef: Joi.string().required(),
+  position: casePosition.required(),
+  createdAt: nullableIso,
+  closedAt: nullableIso,
+}).label("CaseSeriesMember");
 
 export const caseSummarySchema = Joi.object({
   ...caseRow,
@@ -28,6 +41,8 @@ export const caseSummarySchema = Joi.object({
   series: Joi.object({
     latestRef: nullableString,
     refs: Joi.array().items(Joi.string()),
+    // Oldest first, and only for a series of two or more.
+    members: Joi.array().items(caseSeriesMemberSchema).required(),
   })
     .allow(null)
     .label("CaseSeries"),

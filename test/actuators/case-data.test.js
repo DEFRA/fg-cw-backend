@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { seriesMembersCursor } from "../../src/cases/repositories/case/admin-case-query.js";
 import {
   caseExistence,
   editInboxPayload,
@@ -68,6 +69,15 @@ const aLegacyCase = () => {
   return legacy;
 };
 
+const aSeries = (workflowCode, caseRefs) => ({
+  workflowCode,
+  caseRefs,
+  latestCaseRef: caseRefs.at(-1),
+  latestCaseId: new ObjectId().toHexString(),
+  createdAt: CREATED_AT.toISOString(),
+  updatedAt: CREATED_AT.toISOString(),
+});
+
 const bsonSizeOf = async (caseRef) => {
   const [{ size }] = await cases
     .aggregate([
@@ -122,10 +132,128 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
         createdAt: "2026-06-16T10:00:00.000Z",
         originalConfigVersion: "1.0.0",
         currentConfigVersion: "1.2.0",
-        series: { latestRef: "case-1", refs: ["case-0", "case-1"] },
+        series: {
+          latestRef: "case-1",
+          refs: ["case-0", "case-1"],
+          members: [
+            {
+              caseRef: "case-0",
+              position: { phase: null, stage: null, status: null },
+              createdAt: null,
+              closedAt: null,
+            },
+            {
+              caseRef: "case-1",
+              position: { phase: "PRE_AWARD", stage: "REVIEW", status: "NEW" },
+              createdAt: "2026-06-16T10:00:00.000Z",
+              closedAt: "2026-06-20T00:00:00.000Z",
+            },
+          ],
+        },
       },
       storedBytes: await bsonSizeOf("case-1"),
     });
+  });
+
+  it("gives each series member's position and dates, oldest first", async () => {
+    await cases.insertMany([
+      aCase({
+        caseRef: "case-2",
+        closed: false,
+        closedAt: null,
+        createdAt: new Date("2026-06-21T00:00:00.000Z"),
+      }),
+      aCase(),
+      aCase({
+        caseRef: "case-0",
+        currentStage: "AWARD",
+        currentStatus: "WITHDRAWN",
+        closedAt: new Date("2026-06-10T00:00:00.000Z"),
+        createdAt: new Date("2026-06-01T00:00:00.000Z"),
+      }),
+      aCase({ caseRef: "case-0", workflowCode: "woodland" }),
+    ]);
+    await db
+      .collection("case_series")
+      .insertMany([
+        aSeries("frps", ["case-0", "case-1", "case-2"]),
+        aSeries("woodland", ["case-0"]),
+      ]);
+
+    const { series } = (await viewCaseData("frps", "case-1")).payload.case;
+
+    expect(series.members).toEqual([
+      {
+        caseRef: "case-0",
+        position: { phase: "PRE_AWARD", stage: "AWARD", status: "WITHDRAWN" },
+        createdAt: "2026-06-01T00:00:00.000Z",
+        closedAt: "2026-06-10T00:00:00.000Z",
+      },
+      {
+        caseRef: "case-1",
+        position: { phase: "PRE_AWARD", stage: "REVIEW", status: "NEW" },
+        createdAt: "2026-06-16T10:00:00.000Z",
+        closedAt: "2026-06-20T00:00:00.000Z",
+      },
+      {
+        caseRef: "case-2",
+        position: { phase: "PRE_AWARD", stage: "REVIEW", status: "NEW" },
+        createdAt: "2026-06-21T00:00:00.000Z",
+        closedAt: null,
+      },
+    ]);
+    expect(JSON.stringify(series)).not.toMatch(/opaque|Farm|caseworker note/);
+  });
+
+  it("gives a series of one no members", async () => {
+    await cases.insertOne(
+      aCase({ caseRef: "case-0", workflowCode: "woodland" }),
+    );
+    await db
+      .collection("case_series")
+      .insertOne(aSeries("woodland", ["case-0"]));
+
+    const { series } = (await viewCaseData("woodland", "case-0")).payload.case;
+
+    expect(series).toEqual({
+      latestRef: "case-0",
+      refs: ["case-0"],
+      members: [],
+    });
+  });
+
+  it("reads the members in one read on the unique key", async () => {
+    await cases.insertMany(
+      ["case-1", "case-2", "case-3", "case-4"].flatMap((caseRef) => [
+        aCase({ caseRef }),
+        aCase({ caseRef, workflowCode: "woodland" }),
+      ]),
+    );
+    const caseRefs = ["case-1", "case-3", "case-5"];
+    const cursor = seriesMembersCursor(
+      cases,
+      { workflowCode: "frps", caseRefs },
+      { maxTimeMS: 5000 },
+    );
+    const { queryPlanner, executionStats } =
+      await cursor.explain("executionStats");
+    const stagesOf = (plan) => [
+      plan,
+      ...(plan.inputStage ? stagesOf(plan.inputStage) : []),
+      ...(plan.inputStages ?? []).flatMap(stagesOf),
+    ];
+
+    expect(
+      stagesOf(queryPlanner.winningPlan)
+        .filter(({ stage }) => stage === "IXSCAN")
+        .map(({ keyPattern }) => keyPattern),
+    ).toEqual([{ workflowCode: 1, caseRef: 1 }]);
+    expect(executionStats.nReturned).toBe(2);
+    // Each point of the $in reads at most its key and the next one.
+    expect(executionStats.totalKeysExamined).toBeLessThanOrEqual(
+      2 * caseRefs.length,
+    );
+    expect(executionStats.totalDocsExamined).toBe(executionStats.nReturned);
   });
 
   it("adds the stored document without the caseworker notes", async () => {

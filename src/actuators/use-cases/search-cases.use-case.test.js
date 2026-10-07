@@ -5,7 +5,10 @@ import {
   findCaseListBySeries,
   findCaseListPage,
 } from "../../cases/repositories/case.repository.js";
-import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
+import {
+  findByCaseRef,
+  findSeriesContaining,
+} from "../../cases/repositories/case-series.repository.js";
 import { findAllCodes } from "../../cases/repositories/workflow.repository.js";
 import { auditStatus } from "../../common/audit-constants.js";
 import { logger } from "../../common/logger.js";
@@ -60,6 +63,7 @@ beforeEach(() => {
   });
   countCaseList.mockResolvedValue(57);
   findByCaseRef.mockResolvedValue([]);
+  findSeriesContaining.mockResolvedValue([]);
   findCaseListBySeries.mockResolvedValue([]);
 });
 
@@ -77,12 +81,67 @@ describe("searchCasesUseCase, browse", () => {
           closed: false,
           closedAt: null,
           createdAt: "2026-06-16T10:00:00.000Z",
+          replaced: false,
         },
       ],
       pagination: { endCursor: "next", hasNextPage: true },
       total: { count: 57, capped: false },
       workflowCodes: ["frps", "woodland"],
     });
+  });
+
+  it("marks each row replaced from one series read for the page", async () => {
+    findCaseListPage.mockResolvedValue({
+      data: [
+        aDoc("ref-2", "2026-06-16T10:00:00Z"),
+        aDoc("ref-1", "2026-06-15T10:00:00Z"),
+        { ...aDoc("ref-1", "2026-06-14T10:00:00Z"), workflowCode: "woodland" },
+        aDoc("loner", "2026-06-13T10:00:00Z"),
+      ],
+      pagination: { endCursor: null, hasNextPage: false },
+    });
+    findSeriesContaining.mockResolvedValue([
+      {
+        workflowCode: "frps",
+        caseRefs: ["ref-1", "ref-2"],
+        latestCaseRef: "ref-2",
+      },
+    ]);
+
+    const result = await run({});
+
+    expect(findSeriesContaining).toHaveBeenCalledTimes(1);
+    expect(findSeriesContaining).toHaveBeenCalledWith({
+      caseRefs: ["ref-2", "ref-1", "loner"],
+    });
+    expect(
+      result.cases.map(({ ref, replaced }) => [
+        `${ref.workflowCode}/${ref.caseRef}`,
+        replaced,
+      ]),
+    ).toEqual([
+      ["frps/ref-2", false],
+      ["frps/ref-1", true],
+      ["woodland/ref-1", false],
+      ["frps/loner", false],
+    ]);
+  });
+
+  it("reads no series for an empty page or a row with no ref", async () => {
+    findCaseListPage.mockResolvedValue({
+      data: [],
+      pagination: { endCursor: null, hasNextPage: false },
+    });
+
+    expect((await run({})).cases).toEqual([]);
+
+    findCaseListPage.mockResolvedValue({
+      data: [{ _id: new ObjectId() }],
+      pagination: { endCursor: null, hasNextPage: false },
+    });
+
+    expect((await run({})).cases[0].replaced).toBe(false);
+    expect(findSeriesContaining).not.toHaveBeenCalled();
   });
 
   it("caps the total at 10,000", async () => {
@@ -144,6 +203,32 @@ describe("searchCasesUseCase, ref search", () => {
     expect(countCaseList).not.toHaveBeenCalled();
   });
 
+  it("marks the members the latest replaced, from one series read for the page", async () => {
+    findCaseListBySeries.mockResolvedValue([
+      aDoc("ref-1", "2026-06-01T00:00:00Z"),
+      aDoc("ref-2", "2026-06-02T00:00:00Z"),
+    ]);
+    findSeriesContaining.mockResolvedValue([
+      {
+        workflowCode: "frps",
+        caseRefs: ["ref-1", "ref-2"],
+        latestCaseRef: "ref-2",
+      },
+    ]);
+
+    const result = await run({ ref: "ref-1" });
+
+    expect(findSeriesContaining).toHaveBeenCalledWith({
+      caseRefs: ["ref-2", "ref-1"],
+    });
+    expect(
+      result.cases.map(({ ref, replaced }) => [ref.caseRef, replaced]),
+    ).toEqual([
+      ["ref-2", false],
+      ["ref-1", true],
+    ]);
+  });
+
   it("breaks a createdAt tie by _id, highest first", async () => {
     const low = aDoc(
       "ref-a",
@@ -176,6 +261,7 @@ describe("searchCasesUseCase, ref search", () => {
 
     expect(result.cases).toHaveLength(200);
     expect(result.total).toEqual({ count: 200, capped: true });
+    expect(findSeriesContaining.mock.calls[0][0].caseRefs).toHaveLength(200);
   });
 });
 

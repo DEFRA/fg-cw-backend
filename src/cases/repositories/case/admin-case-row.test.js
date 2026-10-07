@@ -2,6 +2,8 @@ import { Decimal128, Long, ObjectId } from "mongodb";
 import { describe, expect, it } from "vitest";
 import {
   byNewestFirst,
+  hasMembers,
+  toCaseListRow,
   toCaseRow,
   toCaseSummary,
   toStoredDocument,
@@ -41,10 +43,57 @@ describe("toCaseRow", () => {
   });
 });
 
+describe("toCaseListRow", () => {
+  const SERIES = [
+    {
+      workflowCode: "frps",
+      caseRefs: ["ref-1", "ref-2"],
+      latestCaseRef: "ref-2",
+    },
+  ];
+
+  it.each([
+    ["an older member", { caseRef: "ref-1", workflowCode: "frps" }, true],
+    ["the latest member", { caseRef: "ref-2", workflowCode: "frps" }, false],
+    [
+      "the same ref under another workflow",
+      { caseRef: "ref-1", workflowCode: "woodland" },
+      false,
+    ],
+    ["a case in no series", { caseRef: "loner", workflowCode: "frps" }, false],
+    ["a legacy row with no ref", {}, false],
+  ])("marks %s replaced: %s", (_name, doc, replaced) => {
+    expect(toCaseListRow(doc, SERIES).replaced).toBe(replaced);
+  });
+
+  it("is the row with the flag added", () => {
+    const doc = { caseRef: "ref-1", workflowCode: "frps" };
+
+    expect(toCaseListRow(doc, [])).toEqual({
+      ...toCaseRow(doc),
+      replaced: false,
+    });
+  });
+});
+
+describe("hasMembers", () => {
+  it.each([
+    [undefined, false],
+    [{ caseRefs: ["ref-1"] }, false],
+    [{ caseRefs: ["ref-1", "ref-2"] }, true],
+  ])("for %j is %s", (series, expected) => {
+    expect(hasMembers(series)).toBe(expected);
+  });
+});
+
 describe("toCaseSummary", () => {
   it("falls back to the legacy configVersion for both versions", () => {
     expect(
-      toCaseSummary({ caseRef: "ref-1", configVersion: "0.0.0" }, undefined),
+      toCaseSummary(
+        { caseRef: "ref-1", configVersion: "0.0.0" },
+        undefined,
+        [],
+      ),
     ).toMatchObject({
       originalConfigVersion: "0.0.0",
       currentConfigVersion: "0.0.0",
@@ -52,13 +101,70 @@ describe("toCaseSummary", () => {
     });
   });
 
-  it("maps the series", () => {
+  it("maps the series with its members oldest first, in the series' order", () => {
     expect(
       toCaseSummary(
         { caseRef: "ref-1" },
         { caseRefs: ["ref-0", "ref-1"], latestCaseRef: "ref-1" },
+        [
+          {
+            caseRef: "ref-1",
+            currentPhase: "P",
+            currentStage: "S",
+            currentStatus: "T",
+            createdAt: new Date("2026-06-16T00:00:00Z"),
+            closedAt: null,
+          },
+          {
+            caseRef: "ref-0",
+            currentPhase: "P",
+            currentStage: "S",
+            currentStatus: "DONE",
+            createdAt: new Date("2026-06-01T00:00:00Z"),
+            closedAt: new Date("2026-06-10T00:00:00Z"),
+          },
+        ],
       ).series,
-    ).toEqual({ latestRef: "ref-1", refs: ["ref-0", "ref-1"] });
+    ).toEqual({
+      latestRef: "ref-1",
+      refs: ["ref-0", "ref-1"],
+      members: [
+        {
+          caseRef: "ref-0",
+          position: { phase: "P", stage: "S", status: "DONE" },
+          createdAt: "2026-06-01T00:00:00.000Z",
+          closedAt: "2026-06-10T00:00:00.000Z",
+        },
+        {
+          caseRef: "ref-1",
+          position: { phase: "P", stage: "S", status: "T" },
+          createdAt: "2026-06-16T00:00:00.000Z",
+          closedAt: null,
+        },
+      ],
+    });
+  });
+
+  it("gives a series of one no members", () => {
+    expect(
+      toCaseSummary(
+        { caseRef: "ref-1" },
+        { caseRefs: ["ref-1"], latestCaseRef: "ref-1" },
+        [],
+      ).series,
+    ).toEqual({ latestRef: "ref-1", refs: ["ref-1"], members: [] });
+  });
+
+  it("gives a member's dates as the row does", () => {
+    const [member] = toCaseSummary(
+      { caseRef: "ref-1" },
+      { caseRefs: ["ref-0", "ref-1"], latestCaseRef: "ref-1" },
+      [{ caseRef: "ref-0", createdAt: "not a date" }],
+    ).series.members;
+
+    expect(member.createdAt).toBe(
+      toCaseRow({ createdAt: "not a date" }).createdAt,
+    );
   });
 });
 

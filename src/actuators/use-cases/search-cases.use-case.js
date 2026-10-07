@@ -3,11 +3,14 @@ import {
   findCaseListBySeries,
   findCaseListPage,
 } from "../../cases/repositories/case.repository.js";
-import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
+import {
+  findByCaseRef,
+  findSeriesContaining,
+} from "../../cases/repositories/case-series.repository.js";
 import { findAllCodes } from "../../cases/repositories/workflow.repository.js";
 import {
   byNewestFirst,
-  toCaseRow,
+  toCaseListRow,
 } from "../../cases/repositories/case/admin-case-row.js";
 import {
   auditActions,
@@ -28,6 +31,21 @@ const cappedTotal = (count, cap) => ({
   capped: count > cap,
 });
 
+const withReplaced = async (docs) => {
+  const caseRefs = [
+    ...new Set(
+      docs
+        .map(({ caseRef }) => caseRef)
+        .filter((ref) => typeof ref === "string"),
+    ),
+  ];
+  const series = caseRefs.length
+    ? await findSeriesContaining({ caseRefs })
+    : [];
+
+  return docs.map((doc) => toCaseListRow(doc, series));
+};
+
 const wantsTotal = ({ cursor, withTotal }) => !cursor && withTotal !== false;
 
 const browse = async (query) => {
@@ -37,7 +55,7 @@ const browse = async (query) => {
   ]);
 
   return {
-    cases: page.data.map(toCaseRow),
+    cases: await withReplaced(page.data),
     pagination: {
       endCursor: page.pagination.endCursor,
       hasNextPage: page.pagination.hasNextPage,
@@ -55,7 +73,7 @@ const search = async (query) => {
   );
 
   return {
-    cases: docs.sort(byNewestFirst).slice(0, SEARCH_LIMIT).map(toCaseRow),
+    cases: await withReplaced(docs.sort(byNewestFirst).slice(0, SEARCH_LIMIT)),
     pagination: { endCursor: null, hasNextPage: false },
     total: wantsTotal(query)
       ? cappedTotal(docs.length, SEARCH_LIMIT)

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   caseListBySeriesCursor,
   caseListPageOptions,
+  seriesContainingCursor,
 } from "../../src/cases/repositories/case/admin-case-query.js";
 import { paginate } from "../../src/common/paginate.js";
 import { searchCases, seedCaseReaderToken } from "../helpers/actuators.js";
@@ -141,7 +142,49 @@ describe("POST /actuators/cases/search, browse", () => {
       closed: false,
       closedAt: null,
       createdAt: NOW.toISOString(),
+      replaced: false,
     });
+  });
+
+  it("marks a row replaced when a later case in its workflow's series exists", async () => {
+    await db
+      .collection("case_series")
+      .insertMany([
+        aSeries("frps", ["case-03", "case-02", "case-01"]),
+        aSeries("woodland", ["case-10", "case-00"]),
+      ]);
+    await cases.insertOne(
+      aCase("case-03", { workflowCode: "woodland", createdAt: daysAgo(30) }),
+    );
+
+    const response = await searchCases({});
+    const flags = Object.fromEntries(
+      response.payload.cases.map(({ ref, replaced }) => [
+        `${ref.workflowCode}/${ref.caseRef}`,
+        replaced,
+      ]),
+    );
+
+    expect(flags).toMatchObject({
+      "woodland/case-00": false,
+      "frps/case-01": false,
+      "frps/case-02": true,
+      "frps/case-03": true,
+      "frps/case-04": false,
+      "woodland/case-10": true,
+    });
+    expect(
+      (await searchCases({ workflowCode: "woodland" })).payload.cases.map(
+        ({ ref, replaced }) => [ref.caseRef, replaced],
+      ),
+    ).toEqual([
+      ["case-00", false],
+      ["case-05", false],
+      ["case-10", true],
+      ["case-15", false],
+      ["case-20", false],
+      ["case-03", false],
+    ]);
   });
 
   it("continues from the cursor with no gap or repeat", async () => {
@@ -202,6 +245,7 @@ describe("POST /actuators/cases/search, browse", () => {
       "createdAt",
       "position",
       "ref",
+      "replaced",
     ]);
   });
 });
@@ -229,6 +273,22 @@ describe("POST /actuators/cases/search, ref search", () => {
       hasNextPage: false,
     });
     expect(response.payload.total).toEqual({ count: 3, capped: false });
+  });
+
+  it("marks every member but the series' latest replaced", async () => {
+    const response = await searchCases({ ref: "chain-2" });
+
+    expect(
+      response.payload.cases.map(({ ref, replaced }) => [
+        `${ref.workflowCode}/${ref.caseRef}`,
+        replaced,
+      ]),
+    ).toEqual([
+      ["woodland/chain-2", false],
+      ["frps/chain-3", false],
+      ["frps/chain-2", true],
+      ["frps/chain-1", true],
+    ]);
   });
 
   it("adds the same ref under another workflow, which is outside the series", async () => {
@@ -439,4 +499,28 @@ describe("query plans", () => {
       expect(used).toEqual([{ caseRef: 1 }, { caseRef: 1 }]);
     },
   );
+
+  it("reads a page's series in one read on the caseRefs index", async () => {
+    await db
+      .collection("case_series")
+      .insertMany(
+        Array.from({ length: 500 }, (_, i) =>
+          aSeries(i % 2 ? "frps" : "woodland", [`other-${i}`, `other-${i}-r`]),
+        ),
+      );
+    const page = Array.from({ length: 20 }, (_, i) => `plan-${i}`);
+    const cursor = () =>
+      seriesContainingCursor(db.collection("case_series"), page, {
+        maxTimeMS: 5000,
+      });
+
+    expect(await indexesUsed(cursor())).toEqual([{ caseRefs: 1 }]);
+    expect(await cursor().toArray()).toEqual([
+      {
+        workflowCode: "frps",
+        caseRefs: SERIES_REFS,
+        latestCaseRef: "plan-5",
+      },
+    ]);
+  });
 });

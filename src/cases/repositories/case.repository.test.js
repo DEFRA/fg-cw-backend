@@ -11,6 +11,7 @@ import {
   countCaseList,
   findAll,
   findCaseListBySeries,
+  findSeriesMembers,
   findCaseListPage,
   findStoredCase,
   findByCaseRefAndWorkflowCode,
@@ -682,6 +683,30 @@ describe("admin read model", () => {
         projection: CASE_ROW_PROJECTION,
         limit: 201,
         hint: { caseRef: 1 },
+        maxTimeMS: MAX_TIME_MS,
+      },
+    );
+  });
+
+  it("reads a series' members once, on the unique key", async () => {
+    const rows = [{ caseRef: "ref-1" }];
+    const find = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue(rows) });
+    db.collection.mockReturnValue({ find });
+
+    expect(
+      await findSeriesMembers({
+        workflowCode: "frps",
+        caseRefs: ["ref-0", "ref-1"],
+      }),
+    ).toBe(rows);
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(find).toHaveBeenCalledWith(
+      { workflowCode: "frps", caseRef: { $in: ["ref-0", "ref-1"] } },
+      {
+        projection: CASE_ROW_PROJECTION,
+        hint: { workflowCode: 1, caseRef: 1 },
         maxTimeMS: MAX_TIME_MS,
       },
     );

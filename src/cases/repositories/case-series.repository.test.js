@@ -6,6 +6,7 @@ import {
   findByCaseRef,
   findByCaseRefAndWorkflowCode,
   findInCaseRefsAndWorkflowCode,
+  findSeriesContaining,
   save,
   update,
 } from "./case-series.repository.js";
@@ -159,6 +160,28 @@ describe("findByCaseRef", () => {
     expect(db.collection).toHaveBeenCalledWith("case_series");
     expect(find).toHaveBeenCalledWith(
       { caseRefs: "r", workflowCode: "frps" },
+      {
+        projection: { _id: 0, workflowCode: 1, caseRefs: 1, latestCaseRef: 1 },
+        maxTimeMS: 3000,
+      },
+    );
+  });
+});
+
+describe("findSeriesContaining", () => {
+  it("reads every series holding any of the refs in one read", async () => {
+    const series = [
+      { workflowCode: "frps", caseRefs: ["r1", "r2"], latestCaseRef: "r2" },
+    ];
+    const find = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue(series) });
+    db.collection.mockReturnValue({ find });
+
+    expect(await findSeriesContaining({ caseRefs: ["r1", "r3"] })).toBe(series);
+    expect(db.collection).toHaveBeenCalledWith("case_series");
+    expect(find).toHaveBeenCalledWith(
+      { caseRefs: { $in: ["r1", "r3"] } },
       {
         projection: { _id: 0, workflowCode: 1, caseRefs: 1, latestCaseRef: 1 },
         maxTimeMS: 3000,

@@ -18,6 +18,7 @@ import {
   browseFilter,
   caseListBySeriesCursor,
   caseListPageOptions,
+  seriesMembersCursor,
   storedCasePipeline,
 } from "./case/admin-case-query.js";
 import { CaseDocument } from "./case/case-document.js";
@@ -325,6 +326,11 @@ export const countCaseList = (query, limit) =>
 export const findCaseListBySeries = (query, limit) =>
   caseListBySeriesCursor(db.collection(collection), query, {
     limit,
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  }).toArray();
+
+export const findSeriesMembers = (key) =>
+  seriesMembersCursor(db.collection(collection), key, {
     maxTimeMS: actuatorReadMaxTimeMs(),
   }).toArray();
 

@@ -1,8 +1,12 @@
 import Boom from "@hapi/boom";
-import { findStoredCase } from "../../cases/repositories/case.repository.js";
+import {
+  findSeriesMembers,
+  findStoredCase,
+} from "../../cases/repositories/case.repository.js";
 import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
 import { DOCUMENT_INCLUDE } from "../../cases/repositories/case/admin-case-query.js";
 import {
+  hasMembers,
   toCaseSummary,
   toStoredDocument,
 } from "../../cases/repositories/case/admin-case-row.js";
@@ -26,10 +30,19 @@ const caseNotFound = () => {
   return error;
 };
 
+const findSeriesOf = async ({ workflowCode, caseRef }) => {
+  const [series] = await findByCaseRef({ ref: caseRef, workflowCode });
+  const memberDocs = hasMembers(series)
+    ? await findSeriesMembers({ workflowCode, caseRefs: series.caseRefs })
+    : [];
+
+  return { series, memberDocs };
+};
+
 const viewCaseData = async ({ workflowCode, caseRef, include }) => {
-  const [doc, [series]] = await Promise.all([
+  const [doc, { series, memberDocs }] = await Promise.all([
     findStoredCase({ workflowCode, caseRef }, include),
-    findByCaseRef({ ref: caseRef, workflowCode }),
+    findSeriesOf({ workflowCode, caseRef }),
   ]);
 
   if (!doc) {
@@ -39,7 +52,7 @@ const viewCaseData = async ({ workflowCode, caseRef, include }) => {
   logger.info(`Read case document: ${doc.storedBytes} bytes`);
 
   return {
-    case: toCaseSummary(doc, series),
+    case: toCaseSummary(doc, series, memberDocs),
     storedBytes: doc.storedBytes,
     ...(include === DOCUMENT_INCLUDE
       ? { document: toStoredDocument(doc) }

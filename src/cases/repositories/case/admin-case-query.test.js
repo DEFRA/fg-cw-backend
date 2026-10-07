@@ -3,10 +3,13 @@ import {
   CASE_ROW_PROJECTION,
   CASE_SUMMARY_PROJECTION,
   DOCUMENT_INCLUDE,
+  SERIES_PROJECTION,
   browseFilter,
   caseListBySeriesCursor,
   caseListPageOptions,
+  seriesContainingCursor,
   seriesFilter,
+  seriesMembersCursor,
   seriesSearchFilter,
   storedCasePipeline,
 } from "./admin-case-query.js";
@@ -118,6 +121,42 @@ describe("caseListBySeriesCursor", () => {
         projection: CASE_ROW_PROJECTION,
         limit: 201,
         hint: { caseRef: 1 },
+        maxTimeMS: 3000,
+      },
+    );
+  });
+});
+
+describe("seriesContainingCursor", () => {
+  it("reads every series holding any of the refs, bounded in time", () => {
+    const find = vi.fn().mockReturnValue("the-cursor");
+
+    expect(
+      seriesContainingCursor({ find }, ["r1", "r2"], { maxTimeMS: 3000 }),
+    ).toBe("the-cursor");
+    expect(find).toHaveBeenCalledWith(
+      { caseRefs: { $in: ["r1", "r2"] } },
+      { projection: SERIES_PROJECTION, maxTimeMS: 3000 },
+    );
+  });
+});
+
+describe("seriesMembersCursor", () => {
+  it("reads the members' rows under the workflow on the unique key", () => {
+    const find = vi.fn().mockReturnValue("the-cursor");
+
+    expect(
+      seriesMembersCursor(
+        { find },
+        { workflowCode: "frps", caseRefs: ["r1", "r2"] },
+        { maxTimeMS: 3000 },
+      ),
+    ).toBe("the-cursor");
+    expect(find).toHaveBeenCalledWith(
+      { workflowCode: "frps", caseRef: { $in: ["r1", "r2"] } },
+      {
+        projection: CASE_ROW_PROJECTION,
+        hint: { workflowCode: 1, caseRef: 1 },
         maxTimeMS: 3000,
       },
     );
