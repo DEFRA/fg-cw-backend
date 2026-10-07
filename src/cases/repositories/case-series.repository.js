@@ -2,7 +2,11 @@ import Boom from "@hapi/boom";
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import { CaseSeries } from "../models/case-series.js";
-import { seriesFilter } from "./case/admin-case-query.js";
+import {
+  SERIES_PROJECTION,
+  seriesContainingCursor,
+  seriesFilter,
+} from "./case/admin-case-query.js";
 
 const collection = "case_series";
 
@@ -61,7 +65,12 @@ export const findByCaseRef = ({ ref, workflowCode }) =>
   db
     .collection(collection)
     .find(seriesFilter({ ref, workflowCode }), {
-      projection: { _id: 0, workflowCode: 1, caseRefs: 1, latestCaseRef: 1 },
+      projection: SERIES_PROJECTION,
       maxTimeMS: actuatorReadMaxTimeMs(),
     })
     .toArray();
+
+export const findSeriesContaining = ({ caseRefs }) =>
+  seriesContainingCursor(db.collection(collection), caseRefs, {
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  }).toArray();
