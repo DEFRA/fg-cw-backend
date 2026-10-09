@@ -11,9 +11,7 @@ import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 import { updateStageOutcomeUseCase } from "./update-stage-outcome.use-case.js";
 
-vi.mock("../../common/auth.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../publishers/case-event.publisher.js");
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("./ensure-case-position.use-case.js");
