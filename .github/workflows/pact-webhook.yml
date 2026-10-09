@@ -4,6 +4,10 @@ on:
   repository_dispatch:
     types: [pact_published]
 
+concurrency:
+  group: pact-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pact:
     name: Pact

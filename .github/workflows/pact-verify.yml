@@ -11,6 +11,9 @@ jobs:
   pact:
     name: Verify Pacts
     runs-on: self-hosted
+    env:
+      PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
+      PACT_PUBLISH_VERIFICATION: ${{ inputs.publish-verification }}
 
     steps:
       - name: Mask secrets
@@ -36,8 +39,11 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run provider contract tests
-        env:
-          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
-          PACT_PUBLISH_VERIFICATION: ${{ inputs.publish-verification }}
         run: |
           npm run test:contract -- test/contract/provider.gas-backend.test.js
+
+      - name: Run actuators provider contract tests
+        if: ${{ !cancelled() }}
+        run: |
+          npm run setup:env
+          npm run test:contract:actuators

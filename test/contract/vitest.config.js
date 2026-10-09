@@ -1,6 +1,6 @@
 /* eslint-disable import-x/no-default-export */
 import path from "path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
@@ -15,5 +15,6 @@ export default defineConfig({
     },
     fileParallelism: false,
     setupFiles: [path.resolve(__dirname, "setup.js")],
+    exclude: [...configDefaults.exclude, "**/provider.actuators.test.js"],
   },
 });
