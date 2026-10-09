@@ -197,11 +197,13 @@ describe("loginUserUseCase", () => {
   });
 
   it("writes a FAILURE audit event using the login payload as actor when idpRoles is missing", async () => {
-    await loginUserUseCase({
-      idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
-    }).catch(() => {});
+    await expect(
+      loginUserUseCase({
+        idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
+        name: "Bob Bill",
+        email: "bob.bill@defra.gov.uk",
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

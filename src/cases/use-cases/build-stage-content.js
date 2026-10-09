@@ -7,7 +7,7 @@ const shouldRenderItem = async (item, caseWorkflowContext) => {
     return true;
   }
 
-  return resolveJSONPath({
+  return await resolveJSONPath({
     root: caseWorkflowContext,
     path: item.renderIf,
   });

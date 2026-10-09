@@ -7,5 +7,7 @@ export const up = async (db) => {
   );
 
   await workflows.createIndex({ code: 1, version: 1 }, { unique: true });
-  await workflows.dropIndex("code_1").catch(() => {});
+  try {
+    await workflows.dropIndex("code_1");
+  } catch {}
 };

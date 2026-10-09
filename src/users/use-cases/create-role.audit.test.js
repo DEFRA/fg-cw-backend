@@ -72,12 +72,14 @@ describe("createRoleUseCase auditing", () => {
   it("writes a FAILURE audit event when the user is not an admin", async () => {
     const user = User.createMock({ idpRoles: [IdpRoles.Read] });
 
-    await createRoleUseCase({
-      user,
-      code: "TEST.ROLE",
-      description: "desc",
-      assignable: true,
-    }).catch(() => {});
+    await expect(
+      createRoleUseCase({
+        user,
+        code: "TEST.ROLE",
+        description: "desc",
+        assignable: true,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

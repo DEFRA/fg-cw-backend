@@ -20,7 +20,7 @@ export const adminFindUsersRoute = {
       }),
     },
   },
-  async handler(request) {
+  handler(request) {
     const { user } = request.auth.credentials;
 
     return adminViewUserListUseCase({

@@ -144,13 +144,7 @@ const mapInputStatus = (completed) =>
     ? { statusText: "Completed", statusTheme: "SUCCESS" }
     : { statusText: "Incomplete", statusTheme: "INFO" };
 
-const mapTasks = async (
-  caseTaskGroup,
-  workflowTaskGroup,
-  userMap,
-  root,
-  comments,
-) =>
+const mapTasks = (caseTaskGroup, workflowTaskGroup, userMap, root, comments) =>
   Promise.all(
     caseTaskGroup.tasks
       .filter((caseTask) => workflowTaskGroup.hasTask(caseTask.code))
@@ -413,7 +407,7 @@ const mapVisibleTaskGroups = async (
     return [];
   }
 
-  return mapTaskGroups(
+  return await mapTaskGroups(
     caseStage,
     workflowStage,
     userMap,

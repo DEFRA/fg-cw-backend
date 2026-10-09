@@ -146,12 +146,14 @@ describe("assignUserToCaseUseCase audit", () => {
   it("writes a FAILURE audit event when the case is not found", async () => {
     findById.mockResolvedValue(null);
 
-    await assignUserToCaseUseCase({
-      caseId: "missing",
-      assignedUserId: new ObjectId().toHexString(),
-      notes: "assigning",
-      user: actor,
-    }).catch(() => {});
+    await expect(
+      assignUserToCaseUseCase({
+        caseId: "missing",
+        assignedUserId: new ObjectId().toHexString(),
+        notes: "assigning",
+        user: actor,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

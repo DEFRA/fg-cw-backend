@@ -2,7 +2,7 @@ import { mongoClient } from "../../common/mongo-client.js";
 
 export const mongo = {
   name: "mongo",
-  async register(server) {
+  register(server) {
     server.events.on("start", async () => {
       await mongoClient.connect();
     });

@@ -170,13 +170,15 @@ describe("updateTaskStatusUseCase audit", () => {
     findByCode.mockResolvedValue(Workflow.createMock());
     findById.mockResolvedValue(null);
 
-    await updateTaskStatusUseCase({
-      caseId: "missing",
-      taskGroupCode: "TASK_GROUP_1",
-      taskCode: "TASK_1",
-      value: "COMPLETE",
-      user: mockUser,
-    }).catch(() => {});
+    await expect(
+      updateTaskStatusUseCase({
+        caseId: "missing",
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        value: "COMPLETE",
+        user: mockUser,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

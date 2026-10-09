@@ -9,5 +9,5 @@ export const adminFindUsersUseCase = async ({ user, query = {} }) => {
     appRoles: RequiredAppRoles.None,
   });
 
-  return findAll(query);
+  return await findAll(query);
 };

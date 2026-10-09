@@ -18,7 +18,7 @@ export const findCasesRoute = {
       }),
     },
   },
-  async handler(request) {
+  handler(request) {
     const { query } = request;
     const { user } = request.auth.credentials;
 

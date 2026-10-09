@@ -249,7 +249,9 @@ describe("20260921120000-expire-completed-events", () => {
   );
 
   it("rejects when a conflicting TTL index is already there", async () => {
-    await inbox.dropIndex("expireAt_ttl").catch(() => {});
+    try {
+      await inbox.dropIndex("expireAt_ttl");
+    } catch {}
     await inbox.createIndex(
       { expireAt: 1 },
       { name: "expireAt_ttl", expireAfterSeconds: 60 },

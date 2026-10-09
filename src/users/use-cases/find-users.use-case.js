@@ -1,5 +1,5 @@
 import { findAll } from "../repositories/user.repository.js";
 
-export const findUsersUseCase = async (query) => {
+export const findUsersUseCase = (query) => {
   return findAll(query);
 };

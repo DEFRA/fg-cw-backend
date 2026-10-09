@@ -73,7 +73,11 @@ const logSeedFailure = async (error, entry) => {
 // It also fires when the hash already belongs to another client, or when a
 // rotation race let a different secret version win - those are failures.
 const reportDuplicateKey = async (entry) => {
-  const record = await findByClient(entry.client).catch(() => undefined);
+  let record;
+
+  try {
+    record = await findByClient(entry.client);
+  } catch {}
 
   if (record?.id === entry.id) {
     logger.info(

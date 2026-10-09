@@ -7,7 +7,7 @@ const collection = "config_versions";
 export const upsert = async (configVersion) => {
   const doc = configVersion.toDocument();
 
-  return db.collection(collection).updateOne(
+  return await db.collection(collection).updateOne(
     { grantCode: doc.grantCode, version: doc.version },
     {
       $set: {
@@ -71,7 +71,7 @@ export const updateFetchStatus = async (
     mongoUpdate.$inc = { fetchAttempts: 1 };
   }
 
-  return db
+  return await db
     .collection(collection)
     .updateOne({ grantCode, version }, mongoUpdate);
 };

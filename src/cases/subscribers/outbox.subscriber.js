@@ -73,7 +73,7 @@ export class OutboxSubscriber {
     try {
       const events = await claimEvents(claimToken, segregationRef);
       if (events?.length > 0) {
-        await this.asyncLocalStorage.run(claimToken, async () =>
+        await this.asyncLocalStorage.run(claimToken, () =>
           this.processEvents(events),
         );
       }
@@ -156,7 +156,7 @@ export class OutboxSubscriber {
     return getMessageGroupId(id, data);
   }
 
-  async start() {
+  start() {
     logger.info("Starting outbox subscriber");
     this.running = true;
     this.poll();

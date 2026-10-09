@@ -151,19 +151,21 @@ export const updateResubmittedEvents = async () => {
 };
 
 export const insertMany = async (events, session) => {
-  return db.collection(collection).insertMany(
+  return await db.collection(collection).insertMany(
     events.map((event) => event.toDocument()),
     { session },
   );
 };
 
 export const findByMessageId = async (messageId) => {
-  const doc = db.collection(collection).findOne({ messageId });
+  const doc = await db.collection(collection).findOne({ messageId });
   return doc;
 };
 
 export const insertOne = async (inbox, session) => {
-  return db.collection(collection).insertOne(inbox.toDocument(), { session });
+  return await db
+    .collection(collection)
+    .insertOne(inbox.toDocument(), { session });
 };
 
 // Matching on `claimedBy` stops a handler that outlived its claim from
@@ -172,7 +174,7 @@ export const update = async (inbox, claimedBy) => {
   const document = inbox.toDocument();
   const { _id, ...updateDoc } = document;
 
-  return db
+  return await db
     .collection(collection)
     .updateOne({ _id, claimedBy }, { $set: updateDoc });
 };

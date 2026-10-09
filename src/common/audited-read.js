@@ -15,10 +15,14 @@ export const auditedRead = (read, buildAudit) => async (args) => {
   try {
     result = await read(args);
   } catch (error) {
-    await writeAuditEvent({
-      ...buildAudit(args, null, error),
-      status: auditStatus.FAILURE,
-    }).catch(() => logger.error("Read FAILURE audit event not written"));
+    try {
+      await writeAuditEvent({
+        ...buildAudit(args, null, error),
+        status: auditStatus.FAILURE,
+      });
+    } catch {
+      logger.error("Read FAILURE audit event not written");
+    }
 
     throw error;
   }

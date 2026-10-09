@@ -80,10 +80,12 @@ describe("adminCreateUserUseCase auditing", () => {
     const admin = User.createMock({ idpRoles: [IdpRoles.Admin] });
     findByEmail.mockResolvedValue(User.createMock());
 
-    await adminCreateUserUseCase({
-      user: admin,
-      props: { name: "Dup", email: "dup@example.com" },
-    }).catch(() => {});
+    await expect(
+      adminCreateUserUseCase({
+        user: admin,
+        props: { name: "Dup", email: "dup@example.com" },
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

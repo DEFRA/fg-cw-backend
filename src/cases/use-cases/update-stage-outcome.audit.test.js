@@ -97,11 +97,13 @@ describe("updateStageOutcomeUseCase audit", () => {
   it("writes a FAILURE audit event when the case is not found", async () => {
     findById.mockResolvedValue(null);
 
-    await updateStageOutcomeUseCase({
-      caseId: "missing",
-      actionCode: "APPROVE",
-      user: mockUser,
-    }).catch(() => {});
+    await expect(
+      updateStageOutcomeUseCase({
+        caseId: "missing",
+        actionCode: "APPROVE",
+        user: mockUser,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

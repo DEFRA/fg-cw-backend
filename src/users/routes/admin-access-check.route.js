@@ -7,7 +7,7 @@ export const adminAccessCheckRoute = {
     description: "Check if user has admin access",
     tags: ["api"],
   },
-  async handler(request) {
+  handler(request) {
     const { user } = request.auth.credentials;
 
     return adminViewLandingPageUseCase({ user });

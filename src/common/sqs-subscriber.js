@@ -37,7 +37,7 @@ export class SqsSubscriber {
     await this.poll();
   }
 
-  async stop() {
+  stop() {
     this.isRunning = false;
   }
 

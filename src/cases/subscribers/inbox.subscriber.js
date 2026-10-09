@@ -77,7 +77,7 @@ export class InboxSubscriber {
       const events = await claimEvents(claimToken, segregationRef);
       // The claim token travels with the work rather than through every
       // handler signature, exactly as the outbox carries it.
-      await this.asyncLocalStorage.run(claimToken, async () =>
+      await this.asyncLocalStorage.run(claimToken, () =>
         this.processEvents(events),
       );
     } finally {
@@ -160,7 +160,7 @@ export class InboxSubscriber {
         throw new Error(`No handler found for event type ${eventType}`);
       }
 
-      await withTraceParent(traceparent, async () => handler(msg));
+      await withTraceParent(traceparent, () => handler(msg));
 
       logger.info(
         `Finished: Handling inbox message "${type}:${source}:${messageId}"`,

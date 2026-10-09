@@ -15,7 +15,7 @@ export const adminFindUserByIdRoute = {
       }),
     },
   },
-  async handler(request) {
+  handler(request) {
     const { user } = request.auth.credentials;
     const { userId } = request.params;
 

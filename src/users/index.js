@@ -13,7 +13,7 @@ import { updateUserRoute } from "./routes/update-user.route.js";
 
 export const users = {
   name: "users",
-  async register(server) {
+  register(server) {
     server.route([
       adminAccessCheckRoute,
       adminCreateUserRoute,

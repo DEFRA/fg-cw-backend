@@ -33,7 +33,7 @@ export const cases = {
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();
 
-    server.events.on("start", async () => {
+    server.events.on("start", () => {
       createNewCaseSubscriber.start();
       createUpdateStatusAgreementConsumer.start();
       configVersionUpdatedSubscriber?.start();
@@ -41,7 +41,7 @@ export const cases = {
       inboxSubscriber.start();
     });
 
-    server.events.on("stop", async () => {
+    server.events.on("stop", () => {
       createNewCaseSubscriber.stop();
       createUpdateStatusAgreementConsumer.stop();
       configVersionUpdatedSubscriber?.stop();

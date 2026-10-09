@@ -75,7 +75,7 @@ export const assignUserToCaseUseCase = withAudit(
   assignUserToCaseAuditDataBuilder,
 );
 
-const unassignUser = async ({ kase, notes, user }) => {
+const unassignUser = ({ kase, notes, user }) => {
   kase.unassignUser({
     text: notes,
     createdBy: user.id,

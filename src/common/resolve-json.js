@@ -10,13 +10,13 @@ export const resolveJSONPath = async ({ root, path, row }) => {
     return path;
   }
   if (typeof path === "string") {
-    return resolveJSONString({ path, root, row });
+    return await resolveJSONString({ path, root, row });
   }
   if (Array.isArray(path)) {
-    return resolveJSONArray({ path, root, row });
+    return await resolveJSONArray({ path, root, row });
   }
   if (typeof path === "object") {
-    return resolveJSONObject({ path, root, row });
+    return await resolveJSONObject({ path, root, row });
   }
   return path;
 };
@@ -92,7 +92,7 @@ const resolveJSONObject = async ({ path, root, row }) => {
 };
 
 // eslint-disable-next-line complexity
-const handleSpecialCases = async ({ path, root, row }) => {
+const handleSpecialCases = ({ path, root, row }) => {
   if (isConditional(path)) {
     return resolveConditionalComponent({ path, root, row });
   }

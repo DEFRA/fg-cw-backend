@@ -15,7 +15,7 @@ export const findCaseByIdTabIdRoute = {
       query: Joi.object().unknown(true).options({ stripUnknown: false }),
     },
   },
-  async handler(request) {
+  handler(request) {
     const { caseId, tabId } = request.params;
     const query = request.query ?? {};
     const { user } = request.auth.credentials;

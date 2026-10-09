@@ -163,11 +163,13 @@ describe("createWorkflowUseCase audit", () => {
   });
 
   it("writes a FAILURE audit event when the user is not authorised", async () => {
-    await createWorkflowUseCase({
-      code: "wf-001",
-      version: 1,
-      user: nonAdminUser,
-    }).catch(() => {});
+    await expect(
+      createWorkflowUseCase({
+        code: "wf-001",
+        version: 1,
+        user: nonAdminUser,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

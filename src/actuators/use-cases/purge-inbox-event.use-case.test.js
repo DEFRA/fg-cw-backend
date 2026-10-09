@@ -149,7 +149,7 @@ describe("purgeInboxEventUseCase transaction", () => {
     purgeById.mockResolvedValue(false);
     findStatusById.mockResolvedValue("COMPLETED");
 
-    await purgeInboxEventUseCase(aCommand()).catch(() => {});
+    await expect(purgeInboxEventUseCase(aCommand())).rejects.toThrow();
 
     expect(findStatusById).toHaveBeenCalledWith(ID, SESSION);
   });

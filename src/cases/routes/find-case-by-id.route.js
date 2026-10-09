@@ -13,7 +13,7 @@ export const findCaseByIdRoute = {
       }),
     },
   },
-  async handler(request) {
+  handler(request) {
     const { caseId } = request.params;
     const tabId = request.query.tabId;
     const { user } = request.auth.credentials;

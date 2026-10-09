@@ -33,8 +33,13 @@ const A_ROW = {
   event: STORED,
 };
 
-const refusedWith = async (command) =>
-  editOutboxEventPayloadUseCase(command).catch((error) => error.output);
+const refusedWith = async (command) => {
+  try {
+    return await editOutboxEventPayloadUseCase(command);
+  } catch (error) {
+    return error.output;
+  }
+};
 
 beforeEach(() => {
   withTransaction.mockImplementation(async (run) => run(SESSION));

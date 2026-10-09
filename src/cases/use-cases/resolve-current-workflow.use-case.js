@@ -91,12 +91,12 @@ export const resolveCurrentWorkflowUseCase = async (
   memo,
 ) => {
   if (!pinnedVersion) {
-    return legacyResolution(workflowCode);
+    return await legacyResolution(workflowCode);
   }
 
   const major = parseMajor(pinnedVersion);
   const key = cacheKey(workflowCode, major);
-  return memoResolve(memo, key, () =>
+  return await memoResolve(memo, key, () =>
     resolveRolledForward(workflowCode, major),
   );
 };
