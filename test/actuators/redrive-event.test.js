@@ -17,6 +17,14 @@ const bodyOf = (error) => {
   return Buffer.isBuffer(payload) ? JSON.parse(payload.toString()) : payload;
 };
 
+const rejectionOf = async (promise) => {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+};
+
 const aHistory = () =>
   anAttemptHistory({ length: MAX_RETRIES, message: "boom" });
 
@@ -191,9 +199,7 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     });
     await inbox.insertOne(doc);
 
-    const error = await redriveInboxEvent(doc._id.toHexString()).catch(
-      (e) => e,
-    );
+    const error = await rejectionOf(redriveInboxEvent(doc._id.toHexString()));
 
     expect(error.output.statusCode).toBe(409);
     expect(bodyOf(error).status).toBe("COMPLETED");
@@ -208,7 +214,7 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     });
     await inbox.insertOne(doc);
 
-    await redriveInboxEvent(doc._id.toHexString()).catch(() => {});
+    await expect(redriveInboxEvent(doc._id.toHexString())).rejects.toThrow();
 
     const stored = await inbox.findOne({ _id: doc._id });
 
@@ -221,9 +227,7 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     await inbox.insertOne(doc);
 
     await redriveInboxEvent(doc._id.toHexString());
-    const error = await redriveInboxEvent(doc._id.toHexString()).catch(
-      (e) => e,
-    );
+    const error = await rejectionOf(redriveInboxEvent(doc._id.toHexString()));
 
     expect(error.output.statusCode).toBe(409);
   });
@@ -265,9 +269,7 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
     const doc = aDeadOutboxDoc({ status: "PUBLISHED" });
     await outbox.insertOne(doc);
 
-    const error = await redriveOutboxEvent(doc._id.toHexString()).catch(
-      (e) => e,
-    );
+    const error = await rejectionOf(redriveOutboxEvent(doc._id.toHexString()));
 
     expect(error.output.statusCode).toBe(409);
     expect(bodyOf(error).status).toBe("PUBLISHED");

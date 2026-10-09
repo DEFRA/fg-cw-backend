@@ -106,14 +106,16 @@ describe("updateUserUseCase auditing", () => {
   });
 
   it("writes a FAILURE audit event when the update is forbidden", async () => {
-    await updateUserUseCase({
-      authenticatedUser: User.createMock({
-        id: "other",
-        idpRoles: [IdpRoles.ReadWrite],
+    await expect(
+      updateUserUseCase({
+        authenticatedUser: User.createMock({
+          id: "other",
+          idpRoles: [IdpRoles.ReadWrite],
+        }),
+        userId: "user-123",
+        props: { name: "Name" },
       }),
-      userId: "user-123",
-      props: { name: "Name" },
-    }).catch(() => {});
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

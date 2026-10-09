@@ -77,12 +77,14 @@ describe("updateRoleUseCase auditing", () => {
     const admin = User.createMock({ idpRoles: [IdpRoles.Admin] });
     findByCode.mockResolvedValue(null);
 
-    await updateRoleUseCase({
-      user: admin,
-      code: "MISSING.ROLE",
-      description: "new",
-      assignable: true,
-    }).catch(() => {});
+    await expect(
+      updateRoleUseCase({
+        user: admin,
+        code: "MISSING.ROLE",
+        description: "new",
+        assignable: true,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -35,9 +35,11 @@ const bodyOf = (error) => {
 const statusOf = (error) => error.output.statusCode;
 
 const refusalOf = async (request) => {
-  const error = await request.catch((e) => e);
-
-  return { status: statusOf(error), body: bodyOf(error) };
+  try {
+    await request;
+  } catch (error) {
+    return { status: statusOf(error), body: bodyOf(error) };
+  }
 };
 
 const auditsFor = (doc) =>
@@ -519,9 +521,9 @@ describe("edit refusals", () => {
   it("leaves the row untouched after a refusal", async () => {
     const doc = await aStoredInbox();
 
-    await editInboxPayload(idOf(doc), anEdit({ payload: STORED_EVENT })).catch(
-      () => {},
-    );
+    await expect(
+      editInboxPayload(idOf(doc), anEdit({ payload: STORED_EVENT })),
+    ).rejects.toThrow();
 
     const stored = await inbox.findOne({ _id: doc._id });
 
@@ -578,10 +580,12 @@ describe("the edit's audit event", () => {
     const doc = await aStoredInbox();
     await editInboxPayload(idOf(doc), anEdit());
 
-    await editInboxPayload(
-      idOf(doc),
-      anEdit({ payload: anEditedEvent({ id: "evt-9" }) }),
-    ).catch(() => {});
+    await expect(
+      editInboxPayload(
+        idOf(doc),
+        anEdit({ payload: anEditedEvent({ id: "evt-9" }) }),
+      ),
+    ).rejects.toThrow();
 
     const failure = (await auditsFor(doc)).find(
       (audit) => audit.event.audit.status === "FAILURE",
@@ -599,9 +603,9 @@ describe("the edit's audit event", () => {
   it("records a refused payload as a FAILURE with its reason", async () => {
     const doc = await aStoredInbox();
 
-    await editInboxPayload(idOf(doc), anEdit({ payload: STORED_EVENT })).catch(
-      () => {},
-    );
+    await expect(
+      editInboxPayload(idOf(doc), anEdit({ payload: STORED_EVENT })),
+    ).rejects.toThrow();
 
     const [failure] = await auditsFor(doc);
 
@@ -643,7 +647,7 @@ describe("an edit whose audit event cannot be written", () => {
   it("leaves the revision free for the next save once auditing works", async () => {
     const doc = await aStoredInbox();
     await refuseAuditsFor(doc);
-    await editInboxPayload(idOf(doc), anEdit()).catch(() => {});
+    await expect(editInboxPayload(idOf(doc), anEdit())).rejects.toThrow();
     await db.command({ collMod: "outbox", validator: {} });
 
     const { payload } = await editInboxPayload(idOf(doc), anEdit());

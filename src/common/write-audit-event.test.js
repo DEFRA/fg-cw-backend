@@ -354,9 +354,9 @@ describe("writeAuditEvent", () => {
   // The validation detail can quote the payload it rejected, so it stays in
   // the log and out of the error that travels back to the caller.
   it("keeps the validation detail out of the thrown error", async () => {
-    const error = await writeAuditEvent(invalid(), { id: "s" }).catch((e) => e);
-
-    expect(error.message).toBe("Audit event failed validation");
+    await expect(writeAuditEvent(invalid(), { id: "s" })).rejects.toMatchObject(
+      { message: "Audit event failed validation" },
+    );
   });
 
   it("reads request context via getRequestContext", async () => {

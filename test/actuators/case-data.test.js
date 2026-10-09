@@ -35,6 +35,14 @@ const FRPS_PAYLOAD = {
   actionApplications: [{ code: "CSAM1", appliedFor: { quantity: 20.23 } }],
 };
 
+const rejectionOf = async (promise) => {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+};
+
 const aCase = (overrides = {}) => ({
   _id: new ObjectId(),
   caseRef: "case-1",
@@ -334,7 +342,7 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
   });
 
   it("answers 404 CASE_NOT_FOUND and audits a FAILURE", async () => {
-    const error = await viewCaseData("frps", "no-such-case").catch((e) => e);
+    const error = await rejectionOf(viewCaseData("frps", "no-such-case"));
 
     expect(error.message).toBe("Response Error: 404 Not Found");
     expect(errorBody(error)).toMatchObject({

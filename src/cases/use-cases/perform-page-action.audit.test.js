@@ -98,11 +98,13 @@ describe("performPageActionUseCase audit", () => {
   it("writes a FAILURE audit event when the case is not found", async () => {
     findById.mockResolvedValue(null);
 
-    await performPageActionUseCase({
-      caseId: "missing",
-      actionCode: "ACT",
-      user: mockUser,
-    }).catch(() => {});
+    await expect(
+      performPageActionUseCase({
+        caseId: "missing",
+        actionCode: "ACT",
+        user: mockUser,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

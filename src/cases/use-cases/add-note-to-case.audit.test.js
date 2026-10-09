@@ -85,11 +85,13 @@ describe("addNoteToCaseUseCase audit", () => {
   it("writes a FAILURE audit event when the case is not found", async () => {
     findById.mockResolvedValue(null);
 
-    await addNoteToCaseUseCase({
-      caseId: "missing",
-      text: "A note",
-      user: mockUser,
-    }).catch(() => {});
+    await expect(
+      addNoteToCaseUseCase({
+        caseId: "missing",
+        text: "A note",
+        user: mockUser,
+      }),
+    ).rejects.toThrow();
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: auditStatus.FAILURE }),

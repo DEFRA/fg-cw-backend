@@ -28,8 +28,13 @@ const aCommand = (overrides = {}) => ({
 
 const A_ROW = { _id: ID, status: "DEAD_LETTER", event: STORED };
 
-const refusedWith = async (command) =>
-  editInboxEventPayloadUseCase(command).catch((error) => error.output);
+const refusedWith = async (command) => {
+  try {
+    return await editInboxEventPayloadUseCase(command);
+  } catch (error) {
+    return error.output;
+  }
+};
 
 beforeEach(() => {
   withTransaction.mockImplementation(async (run) => run(SESSION));

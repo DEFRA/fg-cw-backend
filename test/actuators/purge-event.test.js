@@ -27,6 +27,14 @@ const bodyOf = (error) => {
 
 const statusOf = (error) => error.output.statusCode;
 
+const rejectionOf = async (promise) => {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+};
+
 // The audit event this service wrote about the row, which shares the outbox
 // with the events the row itself is one of.
 const auditFor = (doc) =>
@@ -278,7 +286,9 @@ describe("POST /actuators/events/inbox/{id}/purge", () => {
   it("records a refused purge as a FAILURE, leaving the row alone", async () => {
     const doc = await aStoredInbox({ status: "COMPLETED" });
 
-    await purgeInboxEvent(doc._id.toHexString(), aReason()).catch(() => {});
+    await expect(
+      purgeInboxEvent(doc._id.toHexString(), aReason()),
+    ).rejects.toThrow();
 
     expect((await inbox.findOne({ _id: doc._id })).status).toBe("COMPLETED");
     expect((await auditFor(doc)).event.audit.status).toBe("FAILURE");
@@ -291,10 +301,9 @@ describe("the purge fence", () => {
     async (status, overrides) => {
       const doc = await aStoredInbox({ status, ...overrides });
 
-      const error = await purgeInboxEvent(
-        doc._id.toHexString(),
-        aReason(),
-      ).catch((e) => e);
+      const error = await rejectionOf(
+        purgeInboxEvent(doc._id.toHexString(), aReason()),
+      );
 
       expect(statusOf(error)).toBe(409);
       expect(bodyOf(error).status).toBe(status);
@@ -306,7 +315,9 @@ describe("the purge fence", () => {
   it("leaves a non-DEAD_LETTER row untouched", async () => {
     const doc = await aStoredInbox({ status: "COMPLETED" });
 
-    await purgeInboxEvent(doc._id.toHexString(), aReason()).catch(() => {});
+    await expect(
+      purgeInboxEvent(doc._id.toHexString(), aReason()),
+    ).rejects.toThrow();
 
     const stored = await inbox.findOne({ _id: doc._id });
 
@@ -319,8 +330,8 @@ describe("the purge fence", () => {
     const doc = await aStoredInbox();
 
     await purgeInboxEvent(doc._id.toHexString(), aReason());
-    const error = await purgeInboxEvent(doc._id.toHexString(), aReason()).catch(
-      (e) => e,
+    const error = await rejectionOf(
+      purgeInboxEvent(doc._id.toHexString(), aReason()),
     );
 
     expect(statusOf(error)).toBe(409);
@@ -429,10 +440,12 @@ describe("purge validation", () => {
   it("validates before it writes, leaving the row DEAD_LETTER", async () => {
     const doc = await aStoredInbox();
 
-    await purgeInboxEvent(doc._id.toHexString(), {
-      by: "donatas",
-      reasonCode: "OTHER",
-    }).catch(() => {});
+    await expect(
+      purgeInboxEvent(doc._id.toHexString(), {
+        by: "donatas",
+        reasonCode: "OTHER",
+      }),
+    ).rejects.toThrow();
 
     expect((await inbox.findOne({ _id: doc._id })).status).toBe("DEAD_LETTER");
   });
@@ -490,9 +503,7 @@ describe("redrive and purge together", () => {
   it("tells a redrive of a non-redrivable row which statuses are", async () => {
     const doc = await aStoredInbox({ status: "COMPLETED" });
 
-    const error = await redriveInboxEvent(doc._id.toHexString()).catch(
-      (e) => e,
-    );
+    const error = await rejectionOf(redriveInboxEvent(doc._id.toHexString()));
 
     expect(statusOf(error)).toBe(409);
     expect(bodyOf(error).message).toContain(
@@ -601,10 +612,9 @@ describe("POST /actuators/events/outbox/{id}/purge", () => {
   it("409s with the current status when the row is not DEAD_LETTER", async () => {
     const doc = await aStoredOutbox({ status: "COMPLETED" });
 
-    const error = await purgeOutboxEvent(
-      doc._id.toHexString(),
-      aReason(),
-    ).catch((e) => e);
+    const error = await rejectionOf(
+      purgeOutboxEvent(doc._id.toHexString(), aReason()),
+    );
 
     expect(statusOf(error)).toBe(409);
     expect(bodyOf(error).status).toBe("COMPLETED");
