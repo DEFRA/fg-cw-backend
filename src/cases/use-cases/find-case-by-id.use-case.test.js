@@ -666,7 +666,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     kase.timeline.push(
-      new TimelineEvent({
+      TimelineEvent.createMock({
         eventType: EventEnums.eventTypes.TASK_COMPLETED,
         createdAt: "2025-01-01T00:00:00.000Z",
         description: "SitiAgri FC Reference",
@@ -704,7 +704,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     kase.timeline.push(
-      new TimelineEvent({
+      TimelineEvent.createMock({
         eventType: EventEnums.eventTypes.TASK_COMPLETED,
         createdAt: "2025-01-01T00:00:00.000Z",
         description: "Task Completed",
@@ -1139,7 +1139,7 @@ describe("findCaseByIdUseCase", () => {
       const mockCase = Case.createMock();
 
       mockCase.comments = [
-        new Comment({
+        Comment.createMock({
           ref: commentRef,
           type: "STAGE_COMPLETED",
           text: "Application approved with conditions",
@@ -1395,7 +1395,7 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       mockCase.comments = [
-        new Comment({
+        Comment.createMock({
           ref: commentRef,
           type: "TASK_UPDATED",
           text: "This is a test note",
@@ -1457,7 +1457,7 @@ describe("findCaseByIdUseCase", () => {
       ];
 
       mockCase.comments = [
-        new Comment({
+        Comment.createMock({
           ref: commentRef,
           type: "TASK_UPDATED",
           text: "Note with unknown status",
@@ -1593,7 +1593,7 @@ describe("findCaseByIdUseCase", () => {
 
       caseTask.commentRefs = [{ value: "SF123456", ref: commentRef }];
       mockCase.comments = [
-        new Comment({
+        Comment.createMock({
           ref: commentRef,
           type: "TASK_UPDATED",
           text: "Reference confirmed with the applicant",
