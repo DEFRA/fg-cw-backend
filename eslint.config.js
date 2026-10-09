@@ -15,6 +15,13 @@ export default [
     rules: {
       "func-style": ["error", "expression"],
       "no-console": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name='then']",
+          message: "Use await instead of .then() chains",
+        },
+      ],
       complexity: ["error", { max: 4 }],
       "import-x/extensions": ["error", { js: "always", json: "always" }],
       "import-x/no-unresolved": "error",
