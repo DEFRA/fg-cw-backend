@@ -158,7 +158,7 @@ export const insertMany = async (events, session) => {
 };
 
 export const findByMessageId = async (messageId) => {
-  const doc = db.collection(collection).findOne({ messageId });
+  const doc = await db.collection(collection).findOne({ messageId });
   return doc;
 };
 
