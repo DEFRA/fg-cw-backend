@@ -1,7 +1,7 @@
 import { withTransaction } from "../src/common/with-transaction.js";
 export const up = async (db) => {
   const fifoLock = db.collection("fifo_locks");
-  fifoLock.drop().catch(() => {});
+  await fifoLock.drop().catch(() => {});
   fifoLock.createIndex({ segregationRef: 1, actor: 1 }, { unique: true });
   fifoLock.createIndex({ locked: 1, segregationRef: 1, lockedAt: 1 });
   fifoLock.createIndex({ locked: 1, segregationRef: 1, actor: 1 });
