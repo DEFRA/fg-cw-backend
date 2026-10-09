@@ -52,9 +52,9 @@ export const saveConfigVersionInboxMessageUseCase = async (
     },
   };
 
-  await saveInboxMessageUseCase(
-    event,
-    messageSource.ConfigBroker,
-    grantCode || UNGROUPED_SEGREGATION_REF,
-  );
+  await saveInboxMessageUseCase({
+    message: event,
+    source: messageSource.ConfigBroker,
+    segregationRef: grantCode || UNGROUPED_SEGREGATION_REF,
+  });
 };
