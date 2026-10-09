@@ -8,6 +8,6 @@ import {
 export const createNewCaseSubscriber = new SqsSubscriber({
   queueUrl: config.get("aws.sqs.createNewCaseUrl"),
   async onMessage(message) {
-    await saveInboxMessageUseCase(message, messageSource.Gas);
+    await saveInboxMessageUseCase({ message, source: messageSource.Gas });
   },
 });
