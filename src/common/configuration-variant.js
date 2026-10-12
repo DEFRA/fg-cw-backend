@@ -29,5 +29,7 @@ export const logConfigurationVariant = (configInstance, log) => {
     return;
   }
 
-  log.info(`Configuration variant "${rawVariant}" active — selecting variant definition files`);
+  log.info(
+    `Configuration variant "${rawVariant}" active — selecting variant definition files`,
+  );
 };
