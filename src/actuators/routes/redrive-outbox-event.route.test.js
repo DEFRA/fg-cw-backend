@@ -10,7 +10,9 @@ const validateParams = (params) =>
 describe("redriveOutboxEventRoute", () => {
   it("is a POST on /actuators/events/outbox/{id}/redrive", () => {
     expect(redriveOutboxEventRoute.method).toBe("POST");
-    expect(redriveOutboxEventRoute.path).toBe("/actuators/events/outbox/{id}/redrive");
+    expect(redriveOutboxEventRoute.path).toBe(
+      "/actuators/events/outbox/{id}/redrive",
+    );
   });
 
   it("is on the public-api strategy", () => {
