@@ -9,6 +9,7 @@
   },
   "scripts": {
     "lint": "eslint",
+    "format:check": "prettier --check --ignore-unknown .",
     "test": "npm run test:unit -- --run && npm run test:integration -- --run",
     "test:unit": "vitest --config vitest.config.js --dir src",
     "test:unit:file": "vitest --config vitest.config.js --dir src --run",
