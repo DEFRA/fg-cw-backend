@@ -107,7 +107,13 @@ export const config = convict({
       doc: "Log paths to redact",
       format: Array,
       default: isProduction
-        ? ["req.headers.authorization", "req.headers.cookie", "res.headers"]
+        ? [
+            "req.headers.authorization",
+            "req.headers.cookie",
+            'req.headers["x-actor"]',
+            'req.headers["x-actor-id"]',
+            "res.headers",
+          ]
         : ["req", "res", "responseTime"],
     },
   },

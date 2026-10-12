@@ -476,6 +476,18 @@ the route is quietly exposed to the BFF surface - every logged-in CW user -
 instead. The actuators module test guards against exactly that by asserting
 every `/actuators/*` route sits on the `public-api` strategy.
 
+### Case actuators
+
+`/actuators/cases/*` serve the grants admin's Cases pages through
+fg-gas-backend, and only that client: `requireCaseReader` answers any other
+token with a 403. The case list and case read take the operator in two
+headers, `x-actor` (display name) and `x-actor-id` (Entra object id), and are
+audited as `FIND_CASES` and `VIEW_CASE_DATA` before any data is returned. The
+existence check releases only yes or no, and is not audited.
+
+Every actuator request that sends `x-actor-id` has it recorded as the audit
+event's `user`, including redrive, purge and edit.
+
 ### Service access tokens
 
 The public API is for callers with no Entra user behind them, so it uses the

@@ -193,12 +193,12 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
-export const findAllCodes = async (query) => {
+export const findAllCodes = async (query, { maxTimeMS } = {}) => {
   const filter = createWorkflowFilter(query);
 
   const documents = await db
     .collection(collection)
-    .find(filter, { projection: { _id: 0, code: 1 } })
+    .find(filter, { projection: { _id: 0, code: 1 }, maxTimeMS })
     .toArray();
 
   return [...new Set(documents.map((doc) => doc.code))];

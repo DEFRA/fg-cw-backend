@@ -16,11 +16,11 @@ export const getSegregationRef = (event) => {
   return getMessageGroupId(null, data);
 };
 
-export const saveInboxMessageUseCase = async (
+export const saveInboxMessageUseCase = async ({
   message,
   source,
   segregationRef,
-) => {
+}) => {
   logger.info("Saving inbox message");
 
   const existing = await findByMessageId(message.id);

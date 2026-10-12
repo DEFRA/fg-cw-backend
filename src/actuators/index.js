@@ -1,3 +1,5 @@
+import { setAuditActor } from "../common/set-audit-actor.js";
+import { caseExistsRoute } from "./routes/case-exists.route.js";
 import {
   editInboxEventPayloadRoute,
   editOutboxEventPayloadRoute,
@@ -9,10 +11,16 @@ import { purgeInboxEventRoute } from "./routes/purge-inbox-event.route.js";
 import { purgeOutboxEventRoute } from "./routes/purge-outbox-event.route.js";
 import { redriveInboxEventRoute } from "./routes/redrive-inbox-event.route.js";
 import { redriveOutboxEventRoute } from "./routes/redrive-outbox-event.route.js";
+import { searchCasesRoute } from "./routes/search-cases.route.js";
+import { viewCaseDataRoute } from "./routes/view-case-data.route.js";
 
 export const actuators = {
   name: "actuators",
   register(server) {
+    // Every audit event an actuator request writes names the operator GAS
+    // forwarded, so it is set once here for this plugin's routes alone.
+    server.ext("onPostAuth", setAuditActor, { sandbox: "plugin" });
+
     // ROUTE ORDER - nothing here can be confused for anything else. The
     // `/actuators/events` prefix puts the collection at one depth and its
     // members at another, so no literal segment sits where an `{id}` could be
@@ -32,6 +40,9 @@ export const actuators = {
       purgeOutboxEventRoute,
       editInboxEventPayloadRoute,
       editOutboxEventPayloadRoute,
+      searchCasesRoute,
+      viewCaseDataRoute,
+      caseExistsRoute,
     ]);
   },
 };

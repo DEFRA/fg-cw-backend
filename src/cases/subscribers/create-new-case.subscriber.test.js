@@ -29,6 +29,9 @@ describe("createNewCaseSubscriber", () => {
 
     await createNewCaseSubscriber.onMessage(message);
 
-    expect(saveInboxMessageUseCase).toHaveBeenCalledWith(message, "GAS");
+    expect(saveInboxMessageUseCase).toHaveBeenCalledWith({
+      message,
+      source: "GAS",
+    });
   });
 });
