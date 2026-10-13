@@ -1,11 +1,12 @@
-import { actuatorBoxQueries, orNull } from "./actuator-box.repository.js";
+import { actuatorBoxQueries } from "./actuator-box.repository.js";
 import { config } from "../../common/config.js";
-import { isAuditTarget, typeLabel } from "../../events/event-audit.js";
 import {
   claimExpiredAttempt,
   claimExpiredError,
+  withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
+import { withoutStamps } from "../../events/stamps.js";
 import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
@@ -66,8 +67,7 @@ export const claimEvents = async (claimedBy, segregationRef) => {
 };
 
 export const update = async (event, claimedBy) => {
-  const document = event.toDocument();
-  const { _id, ...updateDoc } = document;
+  const { _id, ...updateDoc } = withoutStamps(event.toDocument());
 
   return db
     .collection(collection)
@@ -96,7 +96,7 @@ export const updateExpiredEvents = async () => {
     {
       $set: {
         status: OutboxStatus.FAILED,
-        lastError: claimExpiredError(),
+        ...withErrorKey(claimExpiredError()),
         claimedAt: null,
         claimExpiresAt: null,
         claimedBy: null,
@@ -174,31 +174,17 @@ export const updateDeadEvents = async () => {
 };
 
 export const {
-  findPage,
-  countFacets,
   findDetailById,
   findStatusById,
   redriveById,
   purgeById,
   findEditableById,
   editPayloadById,
-  breakdown,
 } = actuatorBoxQueries({
   collection,
   box: "outbox",
   maxRetries: MAX_RETRIES,
   resubmittedStatus: OutboxStatus.RESUBMITTED,
-  publicationDateStorage: "date",
-  eventIdField: "event.id",
-  traceparentField: "event.traceparent",
   // No editColumns: segregationRef is the FIFO lane the row was queued in, so
   // an edit deliberately leaves it as stored.
-  rowFields: {
-    eventId: { reads: ["event.id"], map: (doc) => orNull(doc.event?.id) },
-    // Never null: only this service can recognise its own audit topic.
-    type: {
-      reads: ["event.type", "target"],
-      map: (doc) => typeLabel(doc.event?.type, isAuditTarget(doc.target)),
-    },
-  },
 });

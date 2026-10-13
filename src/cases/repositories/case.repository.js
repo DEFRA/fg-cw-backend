@@ -15,13 +15,10 @@ import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
 import {
-  browseFilter,
-  caseListBySeriesCursor,
-  caseListPageOptions,
   seriesMembersCursor,
   storedCasePipeline,
 } from "./case/admin-case-query.js";
-import { CaseDocument } from "./case/case-document.js";
+import { CaseDocument, seriesRefs } from "./case/case-document.js";
 
 const collection = "cases";
 
@@ -109,11 +106,14 @@ export const save = async (kase, session) => {
 };
 
 export const update = async (kase) => {
-  const caseDocument = new CaseDocument(kase);
+  const { _id, refs, ...caseDocument } = new CaseDocument(kase);
 
   const result = await db
     .collection(collection)
-    .replaceOne({ _id: kase.objectId }, caseDocument);
+    .updateOne(
+      { _id: kase.objectId },
+      { $set: caseDocument, $addToSet: { refs: { $each: refs } } },
+    );
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${kase._id}" not found`);
@@ -126,6 +126,17 @@ export const update = async (kase) => {
   }
 
   return kase;
+};
+
+// Every member is found by any member's reference.
+export const linkSeries = async ({ workflowCode, caseRefs }, session) => {
+  await db
+    .collection(collection)
+    .updateMany(
+      { workflowCode, caseRef: { $in: caseRefs } },
+      { $addToSet: { refs: { $each: seriesRefs(caseRefs) } } },
+      { session },
+    );
 };
 
 const cursorCodecs = {
@@ -311,24 +322,6 @@ export const updateCurrentConfigVersion = async (caseId, version) => {
 
 // The admin read model: stored documents as plain data, never a `Case`, and
 // nothing here writes.
-export const findCaseListPage = (query) =>
-  paginate(db.collection(collection), {
-    ...caseListPageOptions(query),
-    maxTimeMS: actuatorReadMaxTimeMs(),
-  });
-
-export const countCaseList = (query, limit) =>
-  db.collection(collection).countDocuments(browseFilter(query), {
-    limit,
-    maxTimeMS: actuatorReadMaxTimeMs(),
-  });
-
-export const findCaseListBySeries = (query, limit) =>
-  caseListBySeriesCursor(db.collection(collection), query, {
-    limit,
-    maxTimeMS: actuatorReadMaxTimeMs(),
-  }).toArray();
-
 export const findSeriesMembers = (key) =>
   seriesMembersCursor(db.collection(collection), key, {
     maxTimeMS: actuatorReadMaxTimeMs(),

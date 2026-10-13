@@ -3,6 +3,7 @@ import { getTraceId } from "@defra/hapi-tracing";
 import { randomUUID } from "node:crypto";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
+import { auditStamps } from "../events/stamps.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
@@ -93,6 +94,7 @@ export const writeAuditEvent = async (
       target: config.get("aws.sns.auditTopicArn"),
       event: payload,
       segregationRef: segregationRef ?? randomUUID(),
+      ...auditStamps(payload),
     });
 
     await insertMany([outboxEntry], session);

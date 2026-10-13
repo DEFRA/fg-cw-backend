@@ -8,6 +8,7 @@ import {
   normaliseAttemptHistory,
   toAttemptEntry,
   toLastError,
+  withErrorKey,
 } from "../../events/last-error.js";
 
 const RETENTION_DAYS = config.get("events.retentionDays");
@@ -21,6 +22,9 @@ export const OutboxStatus = {
   DEAD_LETTER: "DEAD_LETTER",
   PURGED: "PURGED",
 };
+
+// The stamps a writer or a backfill gave the row; a row read back from before them has none.
+const stampsOf = ({ eventType = null, refs = [] }) => ({ eventType, refs });
 
 export class Outbox {
   static validationSchema = Joi.object({
@@ -64,6 +68,7 @@ export class Outbox {
     this.claimedAt = null;
     this.claimExpiresAt = null;
     this.segregationRef = props.segregationRef;
+    Object.assign(this, stampsOf(props));
   }
 
   markAsComplete() {
@@ -101,7 +106,7 @@ export class Outbox {
       target: this.target,
       event: this.event,
       lastResubmissionDate: this.lastResubmissionDate,
-      lastError: this.lastError,
+      ...withErrorKey(this.lastError),
       attemptHistory: this.attemptHistory,
       completionAttempts: this.completionAttempts,
       status: this.status,
@@ -112,6 +117,8 @@ export class Outbox {
       claimedBy: this.claimedBy,
       claimExpiresAt: this.claimExpiresAt,
       segregationRef: this.segregationRef,
+      eventType: this.eventType,
+      refs: this.refs,
     };
   }
 
@@ -138,6 +145,8 @@ export class Outbox {
       claimedBy: doc.claimedBy,
       claimExpiresAt: doc.claimExpiresAt,
       segregationRef: doc.segregationRef,
+      eventType: doc.eventType,
+      refs: doc.refs,
     });
   }
 

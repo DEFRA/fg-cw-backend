@@ -16,7 +16,7 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the event routes and the case routes", async () => {
+  it("registers the bucket routes, the event routes and the case routes", async () => {
     const server = await registeredServer();
 
     const actuatorPaths = server
@@ -26,10 +26,11 @@ describe("actuators", () => {
       .sort();
 
     expect(actuatorPaths).toEqual([
-      "/actuators/cases/search",
+      "/actuators/buckets",
+      "/actuators/buckets/{bucketId}/query",
+      "/actuators/buckets/{bucketId}/summaries/{summaryId}",
       "/actuators/cases/{workflowCode}/{caseRef}",
       "/actuators/cases/{workflowCode}/{caseRef}/existence",
-      "/actuators/events",
       "/actuators/events/inbox/{id}",
       "/actuators/events/inbox/{id}/payload",
       "/actuators/events/inbox/{id}/purge",
@@ -38,13 +39,16 @@ describe("actuators", () => {
       "/actuators/events/outbox/{id}/payload",
       "/actuators/events/outbox/{id}/purge",
       "/actuators/events/outbox/{id}/redrive",
+      "/actuators/timeline",
     ]);
   });
 
-  // The six per-box endpoints the page composite replaced. Asserted absent
-  // rather than merely unlisted: they were a service-token API surface, and a
-  // retirement nobody notices is one that quietly comes back.
+  // The list endpoints the bucket routes replaced. Asserted absent rather than
+  // merely unlisted: they were a service-token API surface, and a retirement
+  // nobody notices is one that quietly comes back.
   it.each([
+    "/actuators/events",
+    "/actuators/cases/search",
     "/actuators/inbox",
     "/actuators/outbox",
     "/actuators/inbox/counts",

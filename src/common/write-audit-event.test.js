@@ -210,13 +210,15 @@ describe("writeAuditEvent", () => {
     expect(insertMany).toHaveBeenCalledWith([expect.any(Object)], session);
   });
 
-  it("constructs Outbox with event, target arn and segregationRef", async () => {
+  it("constructs Outbox with event, target arn, segregationRef and its stamps", async () => {
     await writeAuditEvent(eventData, {});
 
     expect(Outbox).toHaveBeenCalledWith({
       event: expect.objectContaining({ application: "Case Working Service" }),
       target: "arn:aws:sns:eu-west-2:123:audit-topic",
       segregationRef: expect.stringMatching(uuidPattern),
+      eventType: "Audit",
+      refs: ["trace:trace-id-123"],
     });
   });
 

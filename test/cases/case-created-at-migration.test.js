@@ -3,7 +3,7 @@ import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { logger } from "../../src/common/logger.js";
 import { up } from "../../migrations/20261005120000-normalise-case-created-at.js";
-import { searchCases, seedCaseReaderToken } from "../helpers/actuators.js";
+import { queryBucket, seedCaseReaderToken } from "../helpers/actuators.js";
 
 const INSERTED_AT = new Date("2026-01-02T03:04:05.000Z");
 
@@ -130,15 +130,14 @@ describe("20261005120000-normalise-case-created-at", () => {
 
     await up(db);
 
-    const response = await searchCases({});
+    const response = await queryBucket("cw.cases", {});
 
-    expect(response.payload.cases.map(({ ref }) => ref.caseRef)).toEqual([
+    expect(response.payload.rows.map(({ title }) => title)).toEqual([
       "dated",
       "offset",
       "missing",
       "unparsable",
       "null",
     ]);
-    expect(response.payload.total).toEqual({ count: 5, capped: false });
   });
 });
