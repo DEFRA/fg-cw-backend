@@ -39,8 +39,11 @@ Shared modules, referenced by any layer
   they are counted and grouped (`status-counts.js`, `event-facets.js`,
   `event-breakdown.js`), what a detail view of one contains
   (`event-detail.js`), what redriving one means (`event-redrive.js`), what
-  purging one means (`event-purge.js`), how long a terminal one is kept
-  (`event-retention.js`), and how a failure is recorded (`last-error.js`)
+  purging one means (`event-purge.js`), what editing one's payload means
+  (`event-edit.js`, with `payload-changes.js` saying where an edit landed and
+  `plain-json.js` whether a payload survives a JSON round trip), how long a
+  terminal one is kept (`event-retention.js`), how a failure is recorded
+  (`last-error.js`), and whether retrying it could ever work (`retryable.js`)
 
 `src/events/` lived in `src/common/` and did not belong there: `common` is
 infrastructure, and these files are nothing but opinion about one part of the
@@ -217,6 +220,26 @@ awslocal sns publish \
     ]
   }
 }'
+```
+
+#### Publish a Config Broker config version
+
+The body is the release manifest and the rest travels as message attributes,
+as the Config Broker sends it. `path` is the bucket the files are in: CW reads
+`cw.json` from that bucket and nowhere else, so a message without it is
+dead-lettered. The event lands in the inbox as `config-version.updated` and the
+version is only recorded once its `cw.json` has been fetched and checked.
+
+```
+awslocal sns publish \
+  --topic-arn "arn:aws:sns:eu-west-2:000000000000:gfr__sns___config_update" \
+  --message '["pigs-might-fly/1.0.0/cw/cw.json"]' \
+  --message-attributes '{
+    "grant": {"DataType": "String", "StringValue": "pigs-might-fly"},
+    "version": {"DataType": "String", "StringValue": "1.0.0"},
+    "status": {"DataType": "String", "StringValue": "active"},
+    "path": {"DataType": "String", "StringValue": "config-broker-local"}
+  }'
 ```
 
 #### Check the message has arrived in the queue
@@ -452,6 +475,18 @@ Forgetting `auth` leaves the route on `entra`: a service caller gets a 401, but
 the route is quietly exposed to the BFF surface - every logged-in CW user -
 instead. The actuators module test guards against exactly that by asserting
 every `/actuators/*` route sits on the `public-api` strategy.
+
+### Case actuators
+
+`/actuators/cases/*` serve the grants admin's Cases pages through
+fg-gas-backend, and only that client: `requireCaseReader` answers any other
+token with a 403. The case list and case read take the operator in two
+headers, `x-actor` (display name) and `x-actor-id` (Entra object id), and are
+audited as `FIND_CASES` and `VIEW_CASE_DATA` before any data is returned. The
+existence check releases only yes or no, and is not audited.
+
+Every actuator request that sends `x-actor-id` has it recorded as the audit
+event's `user`, including redrive, purge and edit.
 
 ### Service access tokens
 

@@ -19,7 +19,7 @@ describe("save inbox message", () => {
         workflowCode: "workflow-1",
       },
     };
-    await saveInboxMessageUseCase(message, "Gas");
+    await saveInboxMessageUseCase({ message, source: "Gas" });
     expect(findByMessageId).toHaveBeenCalledTimes(1);
     expect(insertOne).toHaveBeenCalledWith(expect.any(Inbox));
   });
@@ -28,8 +28,38 @@ describe("save inbox message", () => {
     findByMessageId.mockResolvedValue({});
     vi.spyOn(logger, "warn");
     const message = {};
-    await saveInboxMessageUseCase(message, "Gas");
+    await saveInboxMessageUseCase({ message, source: "Gas" });
     expect(logger.warn).toHaveBeenCalled();
+    expect(insertOne).not.toHaveBeenCalled();
+  });
+
+  it("uses a segregationRef it is given instead of deriving one", async () => {
+    insertOne.mockResolvedValue(true);
+    findByMessageId.mockResolvedValue(null);
+
+    await saveInboxMessageUseCase({
+      message: {
+        id: "msg-1",
+        data: { caseRef: "caseref-1234", workflowCode: "wf" },
+      },
+      source: "CB",
+      segregationRef: "woodland",
+    });
+
+    expect(insertOne.mock.calls.at(-1)[0].segregationRef).toBe("woodland");
+  });
+
+  it("returns at the duplicate check for a redelivery with no data", async () => {
+    insertOne.mockClear();
+    findByMessageId.mockResolvedValue({});
+
+    await expect(
+      saveInboxMessageUseCase({
+        message: { id: "msg-1" },
+        source: "CB",
+        segregationRef: undefined,
+      }),
+    ).resolves.toBeUndefined();
     expect(insertOne).not.toHaveBeenCalled();
   });
 });

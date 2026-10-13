@@ -107,7 +107,13 @@ export const config = convict({
       doc: "Log paths to redact",
       format: Array,
       default: isProduction
-        ? ["req.headers.authorization", "req.headers.cookie", "res.headers"]
+        ? [
+            "req.headers.authorization",
+            "req.headers.cookie",
+            'req.headers["x-actor"]',
+            'req.headers["x-actor-id"]',
+            "res.headers",
+          ]
         : ["req", "res", "responseTime"],
     },
   },
@@ -200,13 +206,6 @@ export const config = convict({
     },
   },
   configBroker: {
-    s3Bucket: {
-      doc: "S3 bucket name for Config Broker files",
-      format: String,
-      nullable: true,
-      default: null,
-      env: "CONFIG_BROKER_S3_BUCKET",
-    },
     variant: {
       doc: "Optional filename variant inserted before .json when selecting definitions from a release manifest. Ignored in prod.",
       format: (val) => {
@@ -214,9 +213,7 @@ export const config = convict({
           return;
         }
         if (!VARIANT_PATTERN.test(val)) {
-          throw new Error(
-            "must be lowercase letters, numbers or hyphens",
-          );
+          throw new Error("must be lowercase letters, numbers or hyphens");
         }
       },
       default: "",

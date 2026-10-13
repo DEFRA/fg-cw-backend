@@ -1,4 +1,5 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import Boom from "@hapi/boom";
 import { config } from "./config.js";
 import { variantFileName } from "./configuration-variant.js";
 import { logger } from "./logger.js";
@@ -44,9 +45,7 @@ export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
   if (variant) {
     const variantFile = variantFileName(`${serviceKey}.json`, variant);
     const variantSuffix = `/${serviceKey}/${variantFile}`;
-    const variantMatch = manifest.find((path) =>
-      path.endsWith(variantSuffix),
-    );
+    const variantMatch = manifest.find((path) => path.endsWith(variantSuffix));
     if (variantMatch) {
       return variantMatch;
     }
@@ -54,8 +53,9 @@ export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
 
   const suffix = `/${serviceKey}/${serviceKey}.json`;
   const match = manifest.find((path) => path.endsWith(suffix));
+  // A published manifest never changes, so retrying cannot find the file.
   if (!match) {
-    throw new Error(
+    throw Boom.badRequest(
       `Manifest does not contain a ${serviceKey} config file (expected path ending with ${suffix})`,
     );
   }

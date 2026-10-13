@@ -193,12 +193,12 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
-export const findAllCodes = async (query) => {
+export const findAllCodes = async (query, { maxTimeMS } = {}) => {
   const filter = createWorkflowFilter(query);
 
   const documents = await db
     .collection(collection)
-    .find(filter, { projection: { _id: 0, code: 1 } })
+    .find(filter, { projection: { _id: 0, code: 1 }, maxTimeMS })
     .toArray();
 
   return [...new Set(documents.map((doc) => doc.code))];
@@ -219,6 +219,13 @@ export const findByCodeAndVersion = async (code, version) => {
   const doc = await db.collection(collection).findOne({ code, version });
   return doc && toWorkflow(doc);
 };
+
+// The workflow a published definition becomes once stored and read back, built
+// without touching Mongo so a definition can be checked before it is recorded.
+export const buildFromDefinition = (workflowDefinition, version) =>
+  toWorkflow(
+    new WorkflowDocument(new Workflow({ ...workflowDefinition, version })),
+  );
 
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });

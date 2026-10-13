@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { config } from "../../common/config.js";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import {
   dateCodec,
@@ -17,6 +17,7 @@ import {
   toBreakdownGroups,
 } from "../../events/event-breakdown.js";
 import { toDetailDocument } from "../../events/event-detail.js";
+import { editFence, editUpdate } from "../../events/event-edit.js";
 import { toSourceFacets } from "../../events/event-facets.js";
 import { buildEventListFilter } from "../../events/event-list-filter.js";
 import { purgeUpdate } from "../../events/event-purge.js";
@@ -31,10 +32,6 @@ import { statusGroupStage } from "../../events/status-counts.js";
 const SORT_KEY = "publicationDate";
 
 const toId = (id) => ObjectId.createFromHexString(id);
-
-// Every read here is bounded, so one that outlives its caller's HTTP timeout
-// stops on the server rather than running on.
-const maxTimeMS = () => config.get("mongo.actuatorReadMaxTimeMs");
 
 export const orNull = (value) => value ?? null;
 
@@ -119,7 +116,7 @@ const findPageFor = (
       codecs,
       project,
       mapDocument: toListRow,
-      maxTimeMS: maxTimeMS(),
+      maxTimeMS: actuatorReadMaxTimeMs(),
     });
 };
 
@@ -131,7 +128,7 @@ const countFacetsFor =
       await db
         .collection(collection)
         .aggregate([{ $match: listFilter(filter) }, statusGroupStage()], {
-          maxTimeMS: maxTimeMS(),
+          maxTimeMS: actuatorReadMaxTimeMs(),
         })
         .toArray(),
     );
@@ -143,7 +140,7 @@ const findDetailByIdFor =
       .collection(collection)
       .findOne(
         { _id: toId(id) },
-        { projection: DETAIL_PROJECTION, maxTimeMS: maxTimeMS() },
+        { projection: DETAIL_PROJECTION, maxTimeMS: actuatorReadMaxTimeMs() },
       );
 
     return doc ? toDetailDocument(doc, maxRetries, box) : null;
@@ -153,12 +150,14 @@ const findDetailByIdFor =
 const findStatusByIdFor =
   ({ collection }) =>
   async (id, session) => {
-    const doc = await db
-      .collection(collection)
-      .findOne(
-        { _id: toId(id) },
-        { projection: { status: 1 }, session, maxTimeMS: maxTimeMS() },
-      );
+    const doc = await db.collection(collection).findOne(
+      { _id: toId(id) },
+      {
+        projection: { status: 1 },
+        session,
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    );
 
     return doc ? doc.status : null;
   };
@@ -194,6 +193,47 @@ const purgeByIdFor =
     return matchedCount === 1;
   };
 
+// What an edit is checked against. The fenced update still decides a race.
+const EDITABLE_PROJECTION = {
+  status: 1,
+  payloadRevision: 1,
+  event: 1,
+  lastEdit: 1,
+};
+
+const findEditableByIdFor =
+  ({ collection }) =>
+  (id, session) =>
+    db.collection(collection).findOne(
+      { _id: toId(id) },
+      {
+        projection: EDITABLE_PROJECTION,
+        session,
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    );
+
+// Fenced on the redrivable statuses and on the revision the editor started
+// from, so a stale editor overwrites nothing.
+const editPayloadByIdFor =
+  ({ collection, editColumns = () => ({}) }) =>
+  async (id, { event, by, note, revision, original, session }) => {
+    const { matchedCount } = await db.collection(collection).updateOne(
+      { _id: toId(id), ...editFence(revision) },
+      editUpdate({
+        event,
+        by,
+        note,
+        revision,
+        original,
+        inboxColumns: editColumns(event),
+      }),
+      { session },
+    );
+
+    return matchedCount === 1;
+  };
+
 const breakdownFor =
   ({ collection, box }, listFilter) =>
   async (filter = {}) =>
@@ -209,7 +249,7 @@ const breakdownFor =
             auditExpression: auditGroupExpression(AUDIT_TARGET_FIELDS[box]),
             sortKey: SORT_KEY,
           }),
-          { maxTimeMS: maxTimeMS() },
+          { maxTimeMS: actuatorReadMaxTimeMs() },
         )
         .toArray(),
     );
@@ -225,6 +265,8 @@ export const actuatorBoxQueries = (boxConfig) => {
     findStatusById: findStatusByIdFor(boxConfig),
     redriveById: redriveByIdFor(boxConfig),
     purgeById: purgeByIdFor(boxConfig),
+    findEditableById: findEditableByIdFor(boxConfig),
+    editPayloadById: editPayloadByIdFor(boxConfig),
     breakdown: breakdownFor(boxConfig, listFilter),
   };
 };

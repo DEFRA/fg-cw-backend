@@ -16,7 +16,7 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the page, the detail, the redrive and the purge routes", async () => {
+  it("registers the event routes and the case routes", async () => {
     const server = await registeredServer();
 
     const actuatorPaths = server
@@ -26,11 +26,16 @@ describe("actuators", () => {
       .sort();
 
     expect(actuatorPaths).toEqual([
+      "/actuators/cases/search",
+      "/actuators/cases/{workflowCode}/{caseRef}",
+      "/actuators/cases/{workflowCode}/{caseRef}/existence",
       "/actuators/events",
       "/actuators/events/inbox/{id}",
+      "/actuators/events/inbox/{id}/payload",
       "/actuators/events/inbox/{id}/purge",
       "/actuators/events/inbox/{id}/redrive",
       "/actuators/events/outbox/{id}",
+      "/actuators/events/outbox/{id}/payload",
       "/actuators/events/outbox/{id}/purge",
       "/actuators/events/outbox/{id}/redrive",
     ]);

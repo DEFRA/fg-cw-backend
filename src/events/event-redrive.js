@@ -20,6 +20,7 @@ const redriveRecord = (by, at) => ({
 export const redriveUpdate = (resubmittedStatus, { by, at } = {}) => ({
   $set: {
     status: resubmittedStatus,
+    retryable: true,
     completionAttempts: RESET_ATTEMPTS,
     attemptHistory: [],
     lastRedrive: redriveRecord(by, at),
@@ -28,6 +29,8 @@ export const redriveUpdate = (resubmittedStatus, { by, at } = {}) => ({
     claimedAt: null,
     claimExpiresAt: null,
   },
+  // An editor opened before the redrive must not save onto what came of it.
+  $inc: { payloadRevision: 1 },
 });
 
 // The blocking status is in the body so the caller needn't re-read the row.

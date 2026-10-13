@@ -1,99 +1,132 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { getInboxEvent, redriveInboxEvent } from "../../helpers/actuators.js";
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
-import { processConfigVersionUseCase } from "../../../src/cases/use-cases/process-config-version.use-case.js";
-import { FetchStatus } from "../../../src/common/fetch-status.js";
+  aGrantCode,
+  CONFIG_BUCKET,
+  cwKey,
+  manifestFor,
+  publishConfigVersion,
+  putConfigFile,
+  workflowDefinition,
+} from "../../helpers/config-broker.js";
+
+// End to end through the running service: the broker's topic, the service's
+// queue, its inbox worker, S3 and Mongo.
+const SETTLE = { timeout: 30000, interval: 200 };
 
 let client;
-let configVersionsCol;
+let inbox;
+let configVersions;
+
+const inboxRowFor = (grantCode) => inbox.findOne({ segregationRef: grantCode });
+
+const settlesAs = async (grantCode, status) => {
+  await expect
+    .poll(async () => (await inboxRowFor(grantCode))?.status, SETTLE)
+    .toBe(status);
+
+  return inboxRowFor(grantCode);
+};
+
+const versionsOf = (grantCode) => configVersions.find({ grantCode }).toArray();
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
-  const db = client.db();
-  configVersionsCol = db.collection("config_versions");
-});
-
-beforeEach(async () => {
-  await configVersionsCol.deleteMany({});
-});
-
-afterEach(async () => {
-  await configVersionsCol.deleteMany({});
+  inbox = client.db().collection("inbox");
+  configVersions = client.db().collection("config_versions");
 });
 
 afterAll(async () => {
+  await configVersions.deleteMany({ grantCode: /^e2e-/ });
   await client?.close();
 });
 
-// Config broker messages are delivered by the SQS subscriber, which calls
-// processConfigVersionUseCase directly (the broker topic is a standard,
-// non-FIFO SNS topic, so the inbox pattern adds nothing here).
-describe("config broker message flow", () => {
-  it("should process a config broker message and create a config_versions record", async () => {
-    await processConfigVersionUseCase({
-      grantCode: "pigs-might-fly",
-      version: "1.2.3",
-      status: "active",
-      manifest: [
-        "pigs-might-fly/1.2.3/cw/cw.json",
-        "pigs-might-fly/1.2.3/metadata.json",
-      ],
-    });
+describe("config broker message flow", { timeout: 60000 }, () => {
+  it("records a published version through the inbox", async () => {
+    const grantCode = aGrantCode("e2e-good");
+    await putConfigFile(
+      cwKey(grantCode, "1.2.3"),
+      workflowDefinition(grantCode),
+    );
 
-    const cvDoc = await configVersionsCol.findOne({
-      grantCode: "pigs-might-fly",
+    await publishConfigVersion({
+      manifest: manifestFor(grantCode, "1.2.3"),
+      grant: grantCode,
       version: "1.2.3",
     });
-    expect(cvDoc).not.toBeNull();
-    expect(cvDoc.major).toBe(1);
-    expect(cvDoc.minor).toBe(2);
-    expect(cvDoc.patch).toBe(3);
-    expect(cvDoc.fetchStatus).toBe(FetchStatus.Pending);
-    expect(cvDoc.s3Key).toBe("pigs-might-fly/1.2.3/cw/cw.json");
-  });
 
-  it("should reject a config version with invalid semver and create no record", async () => {
-    await expect(
-      processConfigVersionUseCase({
-        grantCode: "pigs-might-fly",
-        version: "not-a-version",
-        status: "active",
-        manifest: ["pigs-might-fly/1.0.0/cw/cw.json"],
-      }),
-    ).rejects.toThrow("Invalid semver version");
+    const row = await settlesAs(grantCode, "COMPLETED");
 
-    const cvCount = await configVersionsCol.countDocuments({
-      grantCode: "pigs-might-fly",
+    expect(row).toMatchObject({
+      source: "CB",
+      type: "config-version.updated",
+      completionAttempts: 0,
     });
-    expect(cvCount).toBe(0);
-  });
-
-  it("should handle duplicate messages via upsert without error", async () => {
-    const eventData = {
-      grantCode: "pigs-might-fly",
-      version: "2.0.0",
+    const [version] = await versionsOf(grantCode);
+    expect(version).toMatchObject({
+      version: "1.2.3",
       status: "active",
-      manifest: [
-        "pigs-might-fly/2.0.0/cw/cw.json",
-        "pigs-might-fly/2.0.0/metadata.json",
-      ],
-    };
-
-    await processConfigVersionUseCase(eventData);
-    await processConfigVersionUseCase(eventData);
-
-    const cvCount = await configVersionsCol.countDocuments({
-      grantCode: "pigs-might-fly",
-      version: "2.0.0",
+      s3Bucket: CONFIG_BUCKET,
+      s3Key: cwKey(grantCode, "1.2.3"),
     });
-    expect(cvCount).toBe(1);
+  });
+
+  it("dead-letters a message without a path attribute", async () => {
+    const grantCode = aGrantCode("e2e-nopath");
+    await putConfigFile(
+      cwKey(grantCode, "1.0.0"),
+      workflowDefinition(grantCode),
+    );
+
+    await publishConfigVersion({
+      manifest: manifestFor(grantCode, "1.0.0"),
+      grant: grantCode,
+      version: "1.0.0",
+      path: undefined,
+    });
+
+    const row = await settlesAs(grantCode, "DEAD_LETTER");
+
+    expect(row.completionAttempts).toBe(1);
+    expect(row.retryable).toBe(false);
+    expect(row.lastError.message).toContain("has no bucket (path attribute)");
+    await expect(versionsOf(grantCode)).resolves.toEqual([]);
+  });
+
+  it("completes a dead-lettered version once its cw.json is uploaded and an operator redrives it", async () => {
+    const grantCode = aGrantCode("e2e-redrive");
+
+    await publishConfigVersion({
+      manifest: manifestFor(grantCode, "1.0.0"),
+      grant: grantCode,
+      version: "1.0.0",
+    });
+
+    const dead = await settlesAs(grantCode, "DEAD_LETTER");
+    expect(dead.completionAttempts).toBe(1);
+    expect(dead.lastError.message).toContain("S3 object not found");
+    await expect(versionsOf(grantCode)).resolves.toEqual([]);
+
+    const id = dead._id.toHexString();
+    const { payload: detail } = await getInboxEvent(id);
+    expect(detail).toMatchObject({
+      type: "config-version.updated",
+      source: "CB",
+      segregationRef: grantCode,
+      status: "DEAD_LETTER",
+    });
+
+    await putConfigFile(
+      cwKey(grantCode, "1.0.0"),
+      workflowDefinition(grantCode),
+    );
+    await redriveInboxEvent(id, { by: "operator@defra.gov.uk" });
+
+    const row = await settlesAs(grantCode, "COMPLETED");
+
+    expect(row.retryable).toBe(true);
+    await expect(versionsOf(grantCode)).resolves.toHaveLength(1);
   });
 });
