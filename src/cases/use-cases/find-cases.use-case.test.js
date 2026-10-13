@@ -27,7 +27,7 @@ const mockFindAllResult = (data) => ({
   },
 });
 
-describe("filters", () => {
+describe("createRoleFilter", () => {
   const userRoles = ["ROLE_1", "ROLE_3", "ROLE_APP_1"];
 
   it("creates a filter for user roles", () => {
