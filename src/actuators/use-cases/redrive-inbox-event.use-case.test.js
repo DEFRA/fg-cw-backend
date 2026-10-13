@@ -28,7 +28,10 @@ describe("redriveInboxEventUseCase", () => {
 
     await redriveInboxEventUseCase({ id: ID });
 
-    expect(redriveById).toHaveBeenCalledWith(ID, { by: undefined, session: SESSION });
+    expect(redriveById).toHaveBeenCalledWith(ID, {
+      by: undefined,
+      session: SESSION,
+    });
   });
 
   it("answers with nothing once the row is redriven", async () => {
@@ -92,7 +95,10 @@ describe("redriveInboxEventUseCase actor", () => {
 
     await redriveInboxEventUseCase({ id: ID, by: "donatas" });
 
-    expect(redriveById).toHaveBeenCalledWith(ID, { by: "donatas", session: SESSION });
+    expect(redriveById).toHaveBeenCalledWith(ID, {
+      by: "donatas",
+      session: SESSION,
+    });
   });
 });
 

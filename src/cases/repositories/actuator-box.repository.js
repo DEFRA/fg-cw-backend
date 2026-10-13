@@ -150,16 +150,14 @@ const findDetailByIdFor =
 const findStatusByIdFor =
   ({ collection }) =>
   async (id, session) => {
-    const doc = await db
-      .collection(collection)
-      .findOne(
-        { _id: toId(id) },
-        {
-          projection: { status: 1 },
-          session,
-          maxTimeMS: actuatorReadMaxTimeMs(),
-        },
-      );
+    const doc = await db.collection(collection).findOne(
+      { _id: toId(id) },
+      {
+        projection: { status: 1 },
+        session,
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    );
 
     return doc ? doc.status : null;
   };
@@ -206,16 +204,14 @@ const EDITABLE_PROJECTION = {
 const findEditableByIdFor =
   ({ collection }) =>
   (id, session) =>
-    db
-      .collection(collection)
-      .findOne(
-        { _id: toId(id) },
-        {
-          projection: EDITABLE_PROJECTION,
-          session,
-          maxTimeMS: actuatorReadMaxTimeMs(),
-        },
-      );
+    db.collection(collection).findOne(
+      { _id: toId(id) },
+      {
+        projection: EDITABLE_PROJECTION,
+        session,
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    );
 
 // Fenced on the redrivable statuses and on the revision the editor started
 // from, so a stale editor overwrites nothing.
