@@ -35,22 +35,15 @@ export const createCaseStage = async (stage, root) =>
     ),
   });
 
-export const createCasePhase = async (phase, root) =>
-  new CasePhase({
-    code: phase.code,
-    stages: await Promise.all(
-      phase.stages.map((s) => createCaseStage(s, root)),
-    ),
-  });
+const createTargetStage = (workflow, { phaseCode, stageCode }, root) =>
+  createCaseStage(workflow.findPhase(phaseCode).findStage(stageCode), root);
 
 export const ensureCasePosition = async (kase, workflow, targetPosition) => {
   const { phaseCode, stageCode } = targetPosition;
   const root = { ...kase, position: targetPosition };
 
   if (!kase.hasPhase(phaseCode)) {
-    const workflowPhase = workflow.findPhase(phaseCode);
-    const workflowStage = workflowPhase.findStage(stageCode);
-    const caseStage = await createCaseStage(workflowStage, root);
+    const caseStage = await createTargetStage(workflow, targetPosition, root);
 
     kase.phases.push(
       new CasePhase({
@@ -68,9 +61,7 @@ export const ensureCasePosition = async (kase, workflow, targetPosition) => {
   const casePhase = kase.findPhase(phaseCode);
 
   if (!casePhase.hasStage(stageCode)) {
-    const workflowPhase = workflow.findPhase(phaseCode);
-    const workflowStage = workflowPhase.findStage(stageCode);
-    const caseStage = await createCaseStage(workflowStage, root);
+    const caseStage = await createTargetStage(workflow, targetPosition, root);
 
     casePhase.addStage(caseStage);
 
