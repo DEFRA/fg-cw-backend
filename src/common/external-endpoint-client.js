@@ -6,8 +6,6 @@ import { wreck } from "./wreck.js";
 const HTTP_SUCCESS_MIN = 200;
 const HTTP_SUCCESS_MAX = 300;
 
-const CASEWORKER_EMAIL_HEADER = "Defra-Email";
-
 /**
  * Calls an external endpoint defined in the workflow.
  */
@@ -30,13 +28,6 @@ export const callExternalEndpoint = async (
   }
 };
 
-// Defra-Email is land-grants-api's name for the caseworker a call is made for.
-// externalActionUseCase refuses the call before it gets here if there is none.
-const buildCallerHeaders = (endpoint, caseWorkflowContext) =>
-  endpoint.sendCaseworkerEmail
-    ? { [CASEWORKER_EMAIL_HEADER]: caseWorkflowContext.user.email }
-    : {};
-
 const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const { url: baseUrl, headers: configHeaders } = resolveEndpoint(
     endpoint,
@@ -49,8 +40,8 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const options = buildRequestOptions(
     endpoint.method,
     {
+      ...withoutConfiguredHeaders(params.HEADERS, configHeaders),
       ...configHeaders,
-      ...buildCallerHeaders(endpoint, caseWorkflowContext),
     },
     requestData,
   );
@@ -61,6 +52,20 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const payload = await wreck.read(response, { json: true });
 
   return { response, payload };
+};
+
+// Service config headers carry credentials, so workflow config can add headers
+// but never replace one, whatever case its name is written in.
+const withoutConfiguredHeaders = (headers = {}, configHeaders) => {
+  const configured = new Set(
+    Object.keys(configHeaders).map((name) => name.toLowerCase()),
+  );
+
+  return Object.fromEntries(
+    Object.entries(headers).filter(
+      ([name]) => !configured.has(name.toLowerCase()),
+    ),
+  );
 };
 
 const buildRequestOptions = (method, headers, requestData) => {

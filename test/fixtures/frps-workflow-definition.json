@@ -174,8 +174,7 @@
       "code": "RECALCULATE_RULES_ENDPOINT",
       "service": "RULES_ENGINE",
       "path": "/case-management-adapter/application/validation-run/rerun",
-      "method": "POST",
-      "sendCaseworkerEmail": true
+      "method": "POST"
     }
   ],
   "externalActions": [
@@ -186,6 +185,9 @@
       "endpoint": {
         "code": "RECALCULATE_RULES_ENDPOINT",
         "endpointParams": {
+          "HEADERS": {
+            "Defra-Email": "$.user.email"
+          },
           "BODY": {
             "id": "$.payload.answers.rulesCalculations.id",
             "requesterUsername": "CASEWORKING_SYSTEM"

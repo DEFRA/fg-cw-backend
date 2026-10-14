@@ -1,10 +1,9 @@
 export class WorkflowEndpoint {
-  constructor({ code, service, path, method, sendCaseworkerEmail = false }) {
+  constructor({ code, service, path, method }) {
     this.code = code;
     this.service = service;
     this.path = path;
     this.method = method;
-    this.sendCaseworkerEmail = sendCaseworkerEmail;
   }
 
   static createMock(props) {

@@ -711,19 +711,15 @@ describe("external-endpoint-client", () => {
       });
     });
 
-    describe("caseworker email", () => {
+    describe("HEADERS params", () => {
       const rerunEndpoint = {
         code: "RECALCULATE_RULES_ENDPOINT",
         service: "RULES_ENGINE",
         path: "/case-management-adapter/application/validation-run/rerun",
         method: "POST",
-        sendCaseworkerEmail: true,
       };
 
-      const contextFor = (email) => ({
-        workflow: {},
-        user: { id: "user-1", email },
-      });
+      const caseWorkflowContext = { workflow: {} };
 
       beforeEach(() => {
         resolveEndpoint.mockReturnValue({
@@ -734,11 +730,14 @@ describe("external-endpoint-client", () => {
         wreck.read.mockResolvedValue({ id: 1 });
       });
 
-      it("sends Defra-Email when the endpoint opts in", async () => {
+      it("sends HEADERS alongside the service config headers", async () => {
         await callExternalEndpoint(
           rerunEndpoint,
-          { BODY: { id: 1 } },
-          contextFor("case.worker@defra.gov.uk"),
+          {
+            BODY: { id: 1 },
+            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+          },
+          caseWorkflowContext,
         );
 
         const callArgs = wreck.request.mock.calls[0][2];
@@ -749,45 +748,45 @@ describe("external-endpoint-client", () => {
         });
       });
 
-      it("does not let service config override Defra-Email", async () => {
-        resolveEndpoint.mockReturnValue({
-          url: "https://api.example.com",
-          headers: { "Defra-Email": "someone.else@defra.gov.uk" },
+      it.each(["x-api-key", "X-Api-Key"])(
+        "does not let HEADERS replace a service config header named %s",
+        async (name) => {
+          await callExternalEndpoint(
+            rerunEndpoint,
+            { HEADERS: { [name]: "from-workflow" } },
+            caseWorkflowContext,
+          );
+
+          const callArgs = wreck.request.mock.calls[0][2];
+          expect(callArgs.headers).toEqual({
+            "Content-Type": "application/json",
+            "x-api-key": "secret-key",
+          });
+        },
+      );
+
+      it("sends only the service config headers without HEADERS", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          { BODY: { id: 1 } },
+          caseWorkflowContext,
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers).toEqual({
+          "Content-Type": "application/json",
+          "x-api-key": "secret-key",
         });
-
-        await callExternalEndpoint(
-          rerunEndpoint,
-          { BODY: { id: 1 } },
-          contextFor("case.worker@defra.gov.uk"),
-        );
-
-        const callArgs = wreck.request.mock.calls[0][2];
-        expect(callArgs.headers["Defra-Email"]).toEqual(
-          "case.worker@defra.gov.uk",
-        );
       });
 
-      it("does not send Defra-Email to other endpoints", async () => {
+      it("does not log header values", async () => {
         await callExternalEndpoint(
+          rerunEndpoint,
           {
-            code: "FETCH_RULES_ENDPOINT",
-            service: "RULES_ENGINE",
-            path: "/case-management-adapter/application/validation-run/1",
-            method: "GET",
+            BODY: { id: 1 },
+            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
           },
-          {},
-          contextFor("case.worker@defra.gov.uk"),
-        );
-
-        const callArgs = wreck.request.mock.calls[0][2];
-        expect(callArgs.headers).not.toHaveProperty("Defra-Email");
-      });
-
-      it("does not log the email or other header values", async () => {
-        await callExternalEndpoint(
-          rerunEndpoint,
-          { BODY: { id: 1 } },
-          contextFor("case.worker@defra.gov.uk"),
+          caseWorkflowContext,
         );
 
         const logged = JSON.stringify([
@@ -799,7 +798,7 @@ describe("external-endpoint-client", () => {
         expect(logged).not.toContain("secret-key");
         expect(logger.info).toHaveBeenCalledWith(
           expect.objectContaining({
-            headerNames: ["Content-Type", "x-api-key", "Defra-Email"],
+            headerNames: ["Content-Type", "Defra-Email", "x-api-key"],
           }),
           expect.any(String),
         );

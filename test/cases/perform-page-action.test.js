@@ -102,6 +102,9 @@ describe("POST /cases/{caseId}/page-action", () => {
           endpoint: {
             code: "TEST_ENDPOINT_AS_CASEWORKER",
             endpointParams: {
+              HEADERS: {
+                "Defra-Email": "$.user.email",
+              },
               BODY: {
                 scheme: "$.payload.answers.scheme",
               },
@@ -128,7 +131,6 @@ describe("POST /cases/{caseId}/page-action", () => {
           service: "TEST_EXTERNAL_SERVICE",
           path: "/do-some-work-as-caseworker",
           method: "POST",
-          sendCaseworkerEmail: true,
         },
       ],
     });
@@ -182,7 +184,7 @@ describe("POST /cases/{caseId}/page-action", () => {
     expect(timelineEvent.description).toBe("Action - Perform action");
   });
 
-  it("sends the caseworker's email as Defra-Email to an endpoint that opts in", async () => {
+  it("sends the caseworker's email as Defra-Email when the action's HEADERS ask for it", async () => {
     const kase = await createCase(cases);
 
     const response = await wreck.post(`/cases/${kase._id}/page-action`, {

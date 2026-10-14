@@ -83,14 +83,6 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
       path: "/case-management-adapter/application/validation-run/{runId}",
       method: "GET",
       request: null
-    },
-    {
-      code: "RECALCULATE_RULES_ENDPOINT",
-      service: "RULES_ENGINE",
-      path: "/case-management-adapter/application/validation-run/rerun",
-      method: "POST",
-      // Send the signed-in caseworker's email as a Defra-Email header
-      sendCaseworkerEmail: true
     }
   ],
 
@@ -109,6 +101,10 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
           BODY: {
             // Example: Body parameters for POST/PUT/PATCH requests
             // requesterUsername: "CASEWORKING_SYSTEM"
+          },
+          HEADERS: {
+            // Example: request headers, e.g. who the call is made for
+            // "Defra-Email": "$.user.email"
           }
         }
       }
@@ -150,15 +146,24 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
 8. **HTTP client** builds URL, adds headers, makes request
 9. **Response data** is returned and rendered in the tab
 
-## Caseworker Email Header
+## Request Headers
 
-An endpoint with `sendCaseworkerEmail: true` gets a `Defra-Email` header with
-the signed-in caseworker's email, for the provider to authorise and audit the
-call. No other endpoint gets it, and service config headers cannot override it.
-If the user has no email the call is refused with a 400 before it is sent.
+`HEADERS` in `endpointParams` adds request headers to that action's call only,
+resolved like `PATH` and `BODY`. `$.user` is the signed-in caseworker, so the
+FRPS rerun sends `"Defra-Email": "$.user.email"` for land-grants-api to
+authorise and audit the call.
 
-Requests are logged with header names only, never their values, so neither the
-email nor configured credentials reach the logs.
+- Every header must resolve to a non-empty string, number or boolean (sent as
+  text). Anything else, including a missing value, refuses the call with a 400
+  before it is sent. This is stricter than `BODY`, where a missing value is
+  simply left out.
+- Headers from the service's environment config (`*_HEADERS`) always win: a
+  workflow can add headers but cannot replace one, whatever its case.
+- Never put a secret in `HEADERS` as a literal. Workflow config is not secret;
+  credentials belong in the service's environment config.
+
+Requests are logged with header names only, never their values, so neither
+caseworker details nor credentials reach the logs.
 
 ## Adding a New External Service
 

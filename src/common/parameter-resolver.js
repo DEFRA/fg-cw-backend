@@ -49,11 +49,13 @@ const createEmptyParams = () => {
   };
 };
 
+const PARAM_TYPES = ["PATH", "BODY", "HEADERS"];
+
 const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
   const params = createEmptyParams();
 
   for (const [paramType, paramMap] of Object.entries(endpointParams)) {
-    if (paramType !== "PATH" && paramType !== "BODY") {
+    if (!PARAM_TYPES.includes(paramType)) {
       throw Boom.badRequest(
         `Unsupported endpoint parameter type: ${paramType}`,
       );
@@ -64,18 +66,39 @@ const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
       caseWorkflowContext,
     });
 
-    assignParamsByType(params, paramType, resolvedParams);
+    params[paramType] =
+      paramType === "HEADERS" ? toHeaders(resolvedParams) : resolvedParams;
   }
 
   return params;
 };
 
-const assignParamsByType = (params, paramType, resolvedParams) => {
-  if (paramType === "PATH") {
-    params.PATH = resolvedParams;
-  } else if (paramType === "BODY") {
-    params.BODY = resolvedParams;
-  } else {
-    throw Boom.badRequest(`Unsupported endpoint parameter type: ${paramType}`);
+// Unlike a BODY value, a missing header changes what a request means (it often
+// says who the call is for), so every header must resolve to a value. Values
+// are never put in the error, as they can identify the caseworker.
+const toHeaders = (resolvedParams) =>
+  Object.fromEntries(
+    Object.entries(resolvedParams).map(([name, value]) => [
+      name,
+      toHeaderValue(name, value),
+    ]),
+  );
+
+const HEADER_VALUE_TYPES = ["string", "number", "boolean"];
+
+const isEmpty = (value) =>
+  value === undefined || value === null || value === "";
+
+const toHeaderValue = (name, value) => {
+  if (isEmpty(value)) {
+    throw Boom.badRequest(`Header "${name}" resolved to no value`);
   }
+
+  if (!HEADER_VALUE_TYPES.includes(typeof value)) {
+    throw Boom.badRequest(
+      `Header "${name}" must resolve to a string, number or boolean`,
+    );
+  }
+
+  return String(value);
 };

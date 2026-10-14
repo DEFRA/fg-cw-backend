@@ -5,7 +5,6 @@ export class EndpointDocument {
     this.service = endpoint.service;
     this.path = endpoint.path;
     this.method = endpoint.method;
-    this.sendCaseworkerEmail = endpoint.sendCaseworkerEmail ?? false;
   }
 
   static createMock(props) {

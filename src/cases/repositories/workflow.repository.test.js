@@ -336,7 +336,7 @@ describe("buildFromDefinition", () => {
   });
 
   it("keeps every endpoint field when a definition is stored and read back", () => {
-    const endpoint = WorkflowEndpoint.createMock({ sendCaseworkerEmail: true });
+    const endpoint = WorkflowEndpoint.createMock();
     const { _id, version, ...definition } = JSON.parse(
       JSON.stringify(Workflow.createMock({ endpoints: [endpoint] })),
     );

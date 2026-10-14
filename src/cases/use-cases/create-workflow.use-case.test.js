@@ -154,7 +154,7 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
-      endpoints: [WorkflowEndpoint.createMock({ sendCaseworkerEmail: true })],
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
           code: "RECALCULATE_RULES",
@@ -293,7 +293,7 @@ describe("createWorkflowUseCase", () => {
       definitions: {
         key1: "value1",
       },
-      endpoints: [WorkflowEndpoint.createMock({ sendCaseworkerEmail: true })],
+      endpoints: [WorkflowEndpoint.createMock()],
       externalActions: [
         {
           code: "RECALCULATE_RULES",

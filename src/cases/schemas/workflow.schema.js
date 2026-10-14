@@ -64,7 +64,6 @@ const Endpoint = Joi.object({
   service: Joi.string().required(),
   path: Joi.string().required(),
   method: Joi.string().required(),
-  sendCaseworkerEmail: Joi.boolean().optional(),
 }).label("Endpoint");
 
 const ExternalAction = Joi.object({
