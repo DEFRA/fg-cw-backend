@@ -11,7 +11,7 @@ export const messageSource = {
   ConfigBroker: "CB",
 };
 
-export const getSegregationRef = (event) => {
+const getSegregationRef = (event) => {
   const { data } = event;
   return getMessageGroupId(null, data);
 };

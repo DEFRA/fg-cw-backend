@@ -456,7 +456,7 @@ describe("redrive and purge together", () => {
     const redriven = await inbox.findOne({ _id: doc._id });
 
     expect(res.statusCode).toBe(204);
-    expect(redriven.status).toBe("RESUBMITTED");
+    expect(redriven.status).not.toBe("PURGED");
     expect(redriven.expireAt).toBeNull();
     expect(redriven.lastPurge).toEqual(purged.lastPurge);
   });

@@ -68,13 +68,7 @@ export const buildCaseDetailsTabUseCase = async (request) => {
   };
 };
 
-export const createRootContext = async ({
-  kase,
-  workflow,
-  request,
-  tabId,
-  user,
-}) => {
+const createRootContext = async ({ kase, workflow, request, tabId, user }) => {
   const caseWorkflowContext = createCaseWorkflowContext({
     kase,
     workflow,

@@ -15,7 +15,6 @@ vi.mock("../../common/write-audit-event.js", () => ({
 }));
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("node:crypto");
 
