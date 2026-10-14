@@ -21,7 +21,8 @@ import {
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
 
-// eslint-disable-next-line complexity
+const lookupUserName = (userId, userMap) => userMap.get(userId)?.name ?? null;
+
 const mapUserIdToName = (userId, userMap) => {
   if (userId === "System") {
     return "System";
@@ -29,7 +30,7 @@ const mapUserIdToName = (userId, userMap) => {
   if (!userId) {
     return null;
   }
-  return userMap.get(userId)?.name ?? null;
+  return lookupUserName(userId, userMap);
 };
 
 const mapUserIdToUser = (userId, userMap) => {
@@ -41,6 +42,9 @@ const mapUserIdToUser = (userId, userMap) => {
   }
   return userMap.get(userId);
 };
+
+const formatAssignedUser = (assignedUser) =>
+  assignedUser ? { name: assignedUser.name } : null;
 
 const storedDescription = (tl) =>
   tl.description || EventEnums.eventDescriptions[tl.eventType];
@@ -263,7 +267,6 @@ export const mapWorkflowCommentDef = (workflowTask) => {
     : DEFAULT_COMMENT;
 };
 
-// eslint-disable-next-line complexity
 export const findCaseByIdUseCase = async (caseId, user, request) => {
   logger.info(`Finding case by id "${caseId}"`);
 
@@ -319,7 +322,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     createdAt: kase.createdAt,
     payload: kase.payload,
     supplementaryData: kase.supplementaryData,
-    assignedUser: assignedUser ? { name: assignedUser.name } : null,
+    assignedUser: formatAssignedUser(assignedUser),
     banner: await buildBanner(caseWorkflowContext),
     requiredRoles: {
       allOf: workflow.requiredRoles.allOf,

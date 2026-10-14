@@ -15,38 +15,51 @@ import { checkWorkflowDefinition } from "./check-workflow-definition.js";
 
 const VALID_STATUSES = ["active", "draft"];
 
-// eslint-disable-next-line complexity
-const validateEventData = (eventData) => {
-  const { grantCode, version, status, manifest, s3Bucket } = eventData;
-
+const assertRequiredFields = ({ grantCode, version }) => {
   if (!grantCode || !version) {
     throw Boom.badRequest(
       `Config version event missing required fields: grantCode=${grantCode}, version=${version}`,
     );
   }
+};
 
+const assertBucket = ({ grantCode, version, s3Bucket }) => {
   if (!s3Bucket) {
     throw Boom.badRequest(
       `Config version event for ${grantCode}@${version} has no bucket (path attribute)`,
     );
   }
+};
 
+const assertStatus = ({ status }) => {
   if (!status || !VALID_STATUSES.includes(status)) {
     throw Boom.badRequest(
       `Config version event has invalid status: "${status}" (expected one of: ${VALID_STATUSES.join(", ")})`,
     );
   }
+};
 
+const assertManifest = ({ manifest }) => {
   if (!Array.isArray(manifest) || manifest.length === 0) {
     throw Boom.badRequest(
       "Config version event missing required field: manifest (expected a non-empty array)",
     );
   }
+};
 
+const assertSemver = ({ version }) => {
   const parsed = parseSemver(version);
   if (!parsed) {
     throw Boom.badRequest(`Invalid semver version in config event: ${version}`);
   }
+};
+
+const validateEventData = (eventData) => {
+  assertRequiredFields(eventData);
+  assertBucket(eventData);
+  assertStatus(eventData);
+  assertManifest(eventData);
+  assertSemver(eventData);
 };
 
 // Every Boom on this path is a bad message or a definition that will not build,

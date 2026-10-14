@@ -17,9 +17,10 @@ const temporaryCaveatSourceMap = {
   "ne-consent-required": "natural-england",
 };
 
-// eslint-disable-next-line complexity
+const caveatsOf = (payload) => payload?.answers?.rulesCalculations?.caveats;
+
 const mapCaveatSources = (payload) => {
-  const caveats = payload?.answers?.rulesCalculations?.caveats;
+  const caveats = caveatsOf(payload);
 
   if (!Array.isArray(caveats)) {
     return payload;
