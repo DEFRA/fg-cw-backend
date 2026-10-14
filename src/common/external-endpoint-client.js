@@ -40,7 +40,7 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const options = buildRequestOptions(
     endpoint.method,
     {
-      ...withoutConfiguredHeaders(params.HEADERS, configHeaders),
+      ...withoutConfiguredHeaders(params.HEADERS || {}, configHeaders),
       ...configHeaders,
     },
     requestData,
@@ -56,7 +56,7 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
 
 // Service config headers carry credentials, so workflow config can add headers
 // but never replace one, whatever case its name is written in.
-const withoutConfiguredHeaders = (headers = {}, configHeaders) => {
+const withoutConfiguredHeaders = (headers, configHeaders) => {
   const configured = new Set(
     Object.keys(configHeaders).map((name) => name.toLowerCase()),
   );

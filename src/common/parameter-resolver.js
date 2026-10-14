@@ -49,13 +49,13 @@ const createEmptyParams = () => {
   };
 };
 
-const PARAM_TYPES = ["PATH", "BODY", "HEADERS"];
+const PARAM_TYPES = new Set(["PATH", "BODY", "HEADERS"]);
 
 const resolveEndpointParams = async (endpointParams, caseWorkflowContext) => {
   const params = createEmptyParams();
 
   for (const [paramType, paramMap] of Object.entries(endpointParams)) {
-    if (!PARAM_TYPES.includes(paramType)) {
+    if (!PARAM_TYPES.has(paramType)) {
       throw Boom.badRequest(
         `Unsupported endpoint parameter type: ${paramType}`,
       );
@@ -84,7 +84,7 @@ const toHeaders = (resolvedParams) =>
     ]),
   );
 
-const HEADER_VALUE_TYPES = ["string", "number", "boolean"];
+const HEADER_VALUE_TYPES = new Set(["string", "number", "boolean"]);
 
 const isEmpty = (value) =>
   value === undefined || value === null || value === "";
@@ -94,7 +94,7 @@ const toHeaderValue = (name, value) => {
     throw Boom.badRequest(`Header "${name}" resolved to no value`);
   }
 
-  if (!HEADER_VALUE_TYPES.includes(typeof value)) {
+  if (!HEADER_VALUE_TYPES.has(typeof value)) {
     throw Boom.badRequest(
       `Header "${name}" must resolve to a string, number or boolean`,
     );
