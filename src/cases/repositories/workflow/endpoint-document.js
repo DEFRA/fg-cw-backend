@@ -1,4 +1,5 @@
 export class EndpointDocument {
+  // The fields named here are the only ones stored, whatever else a definition carries.
   constructor(endpoint) {
     this.code = endpoint.code;
     this.service = endpoint.service;
