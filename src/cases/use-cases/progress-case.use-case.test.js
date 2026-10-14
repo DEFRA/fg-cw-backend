@@ -40,7 +40,7 @@ const createTestMessage = (overrides = {}) => ({
   ...overrides,
 });
 
-describe("update supplementary data use case", () => {
+describe("progressCaseUseCase", () => {
   it("should throw if case not found", async () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 
