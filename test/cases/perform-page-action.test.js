@@ -24,6 +24,7 @@ import { wreck } from "../helpers/wreck.js";
 describe("POST /cases/{caseId}/page-action", () => {
   let cases;
   let outbox;
+  let users;
   let client;
   let externalAction;
   let user;
@@ -33,6 +34,7 @@ describe("POST /cases/{caseId}/page-action", () => {
     await client.connect();
     cases = client.db().collection("cases");
     outbox = client.db().collection("outbox");
+    users = client.db().collection("users");
   });
 
   afterAll(async () => {
@@ -56,6 +58,7 @@ describe("POST /cases/{caseId}/page-action", () => {
               authorization: req.headers.authorization,
               "content-type": req.headers["content-type"],
               "x-api-key": req.headers["x-api-key"],
+              "defra-email": req.headers["defra-email"],
             },
             body: JSON.parse(body),
           }),
@@ -92,6 +95,26 @@ describe("POST /cases/{caseId}/page-action", () => {
             place: "append",
           },
         },
+        {
+          code: "TEST_ACTION_AS_CASEWORKER",
+          name: "Perform action as caseworker",
+          description: "Do some work for the caseworker",
+          endpoint: {
+            code: "TEST_ENDPOINT_AS_CASEWORKER",
+            endpointParams: {
+              BODY: {
+                scheme: "$.payload.answers.scheme",
+              },
+            },
+          },
+          display: false,
+          target: {
+            position: null,
+            targetNode: "output",
+            dataType: "ARRAY",
+            place: "append",
+          },
+        },
       ],
       endpoints: [
         {
@@ -99,6 +122,13 @@ describe("POST /cases/{caseId}/page-action", () => {
           service: "TEST_EXTERNAL_SERVICE",
           path: "/do-some-work",
           method: "POST",
+        },
+        {
+          code: "TEST_ENDPOINT_AS_CASEWORKER",
+          service: "TEST_EXTERNAL_SERVICE",
+          path: "/do-some-work-as-caseworker",
+          method: "POST",
+          sendCaseworkerEmail: true,
         },
       ],
     });
@@ -139,6 +169,10 @@ describe("POST /cases/{caseId}/page-action", () => {
       },
     ]);
 
+    expect(updatedCase.supplementaryData.output[0].headers).not.toHaveProperty(
+      "defra-email",
+    );
+
     // Verify timeline event was created for the external action with display: true
     const timelineEvent = updatedCase.timeline.find(
       (event) => event.eventType === "EXTERNAL_ACTION_TRIGGERED",
@@ -146,6 +180,47 @@ describe("POST /cases/{caseId}/page-action", () => {
     expect(timelineEvent).toBeDefined();
     expect(timelineEvent.data.actionName).toBe("Perform action");
     expect(timelineEvent.description).toBe("Action - Perform action");
+  });
+
+  it("sends the caseworker's email as Defra-Email to an endpoint that opts in", async () => {
+    const kase = await createCase(cases);
+
+    const response = await wreck.post(`/cases/${kase._id}/page-action`, {
+      payload: {
+        actionCode: "TEST_ACTION_AS_CASEWORKER",
+      },
+    });
+
+    expect(response.res.statusCode).toBe(204);
+
+    const updatedCase = await findCaseById(kase._id);
+
+    expect(updatedCase.supplementaryData.output).toEqual([
+      expect.objectContaining({
+        url: "/do-some-work-as-caseworker",
+        headers: expect.objectContaining({
+          "defra-email": user.email,
+        }),
+      }),
+    ]);
+  });
+
+  it("returns 400 without calling the endpoint when the caseworker has no email", async () => {
+    await users.updateOne({ idpId: user.idpId }, { $unset: { email: "" } });
+
+    const kase = await createCase(cases);
+
+    await expect(
+      wreck.post(`/cases/${kase._id}/page-action`, {
+        payload: {
+          actionCode: "TEST_ACTION_AS_CASEWORKER",
+        },
+      }),
+    ).rejects.toThrow("Response Error: 400 Bad Request");
+
+    const unchangedCase = await findCaseById(kase._id);
+
+    expect(unchangedCase.supplementaryData?.output).toBeUndefined();
   });
 
   it("returns 403 when user does not have ReadWrite role", async () => {

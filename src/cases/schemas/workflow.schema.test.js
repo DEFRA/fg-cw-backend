@@ -401,6 +401,40 @@ describe("workflowSchema", () => {
         expect(error).toBeUndefined();
       });
 
+      it("accepts sendCaseworkerEmail on an endpoint", () => {
+        const data = structuredClone(workflowData1);
+        data.endpoints = [
+          {
+            code: "RECALCULATE_RULES_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/applications/rerun",
+            method: "POST",
+            sendCaseworkerEmail: true,
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error).toBeUndefined();
+      });
+
+      it("rejects a non-boolean sendCaseworkerEmail", () => {
+        const data = structuredClone(workflowData1);
+        data.endpoints = [
+          {
+            code: "RECALCULATE_RULES_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/applications/rerun",
+            method: "POST",
+            sendCaseworkerEmail: "yes",
+          },
+        ];
+
+        const { error } = WorkflowData.validate(data);
+        expect(error.details[0].message).toEqual(
+          '"endpoints[0].sendCaseworkerEmail" must be a boolean',
+        );
+      });
+
       it("requires service when endpoints are provided", () => {
         const data = structuredClone(workflowData1);
         data.endpoints = [

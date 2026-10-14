@@ -6,6 +6,8 @@ import { wreck } from "./wreck.js";
 const HTTP_SUCCESS_MIN = 200;
 const HTTP_SUCCESS_MAX = 300;
 
+const CASEWORKER_EMAIL_HEADER = "Defra-Email";
+
 /**
  * Calls an external endpoint defined in the workflow.
  */
@@ -16,11 +18,14 @@ export const callExternalEndpoint = async (
   throwOnError = false,
 ) => {
   const resolvedParams = params ?? {};
+  const callerHeaders = buildCallerHeaders(endpoint, caseWorkflowContext);
+
   try {
     const { response, payload } = await executeRequest(
       endpoint,
       resolvedParams,
       caseWorkflowContext,
+      callerHeaders,
     );
     return handleResponse(endpoint, response, payload, throwOnError);
   } catch (error) {
@@ -28,7 +33,41 @@ export const callExternalEndpoint = async (
   }
 };
 
-const executeRequest = async (endpoint, params, caseWorkflowContext) => {
+// Headers that identify the caseworker are sent only to endpoints that opt in,
+// and are checked before the request is made so a missing value is a 400 rather than a failed call.
+// It's very unlikely as an email IS required for sign in. But we guard anyway.
+const buildCallerHeaders = (endpoint, caseWorkflowContext) => {
+  if (!endpoint.sendCaseworkerEmail) {
+    return {};
+  }
+
+  return {
+    [CASEWORKER_EMAIL_HEADER]: requireCaseworkerEmail(
+      endpoint,
+      caseWorkflowContext,
+    ),
+  };
+};
+
+const requireCaseworkerEmail = (endpoint, caseWorkflowContext) => {
+  const email = caseWorkflowContext?.user?.email;
+
+  // this case should never be possible. But here for belt and braces.
+  if (!email) {
+    throw Boom.badRequest(
+      `Caseworker email is required to call external endpoint ${endpoint.code}`,
+    );
+  }
+
+  return email;
+};
+
+const executeRequest = async (
+  endpoint,
+  params,
+  caseWorkflowContext,
+  callerHeaders,
+) => {
   const { url: baseUrl, headers: configHeaders } = resolveEndpoint(
     endpoint,
     caseWorkflowContext,
@@ -39,7 +78,7 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const fullUrl = buildUrl(baseUrl, endpoint.path, pathParams);
   const options = buildRequestOptions(
     endpoint.method,
-    configHeaders,
+    { ...configHeaders, ...callerHeaders },
     requestData,
   );
 
@@ -51,11 +90,11 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   return { response, payload };
 };
 
-const buildRequestOptions = (method, configHeaders, requestData) => {
+const buildRequestOptions = (method, headers, requestData) => {
   const options = {
     headers: {
       "Content-Type": "application/json",
-      ...configHeaders,
+      ...headers,
     },
     json: true,
   };
@@ -76,13 +115,14 @@ const shouldIncludePayload = (method, requestData) => {
   );
 };
 
+// Header values carry credentials and the caseworker's email, so only the names are logged.
 const logRequestStart = (endpoint, url, headers) => {
   logger.info(
     {
       endpoint: endpoint.code,
       method: endpoint.method,
       url,
-      headers,
+      headerNames: Object.keys(headers),
     },
     `Calling external endpoint: ${endpoint.code}`,
   );

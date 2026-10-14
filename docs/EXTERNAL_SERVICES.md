@@ -83,6 +83,14 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
       path: "/case-management-adapter/application/validation-run/{runId}",
       method: "GET",
       request: null
+    },
+    {
+      code: "RECALCULATE_RULES_ENDPOINT",
+      service: "RULES_ENGINE",
+      path: "/case-management-adapter/application/validation-run/rerun",
+      method: "POST",
+      // Send the signed-in caseworker's email as a Defra-Email header
+      sendCaseworkerEmail: true
     }
   ],
 
@@ -141,6 +149,16 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
 7. **Variable references** are resolved (e.g., `${RULES_ENGINE_AUTH_TOKEN}` → actual token)
 8. **HTTP client** builds URL, adds headers, makes request
 9. **Response data** is returned and rendered in the tab
+
+## Caseworker Email Header
+
+An endpoint with `sendCaseworkerEmail: true` gets a `Defra-Email` header with
+the signed-in caseworker's email, for the provider to authorise and audit the
+call. No other endpoint gets it, and service config headers cannot override it.
+If the user has no email the call is refused with a 400 before it is sent.
+
+Requests are logged with header names only, never their values, so neither the
+email nor configured credentials reach the logs.
 
 ## Adding a New External Service
 

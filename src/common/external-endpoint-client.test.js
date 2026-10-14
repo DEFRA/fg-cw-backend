@@ -584,7 +584,7 @@ describe("external-endpoint-client", () => {
     it("should log request details before execution", async () => {
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
-        headers: { "x-custom": "header" },
+        headers: { "x-api-key": "secret-key" },
       });
 
       const mockResponse = { statusCode: 200 };
@@ -612,12 +612,12 @@ describe("external-endpoint-client", () => {
           endpoint: "TEST_ENDPOINT",
           method: "POST",
           url: "https://api.example.com/api/test/789",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-            "x-custom": "header",
-          }),
+          headerNames: ["Content-Type", "x-api-key"],
         }),
         expect.stringContaining("Calling external endpoint"),
+      );
+      expect(JSON.stringify(logger.info.mock.calls)).not.toContain(
+        "secret-key",
       );
     });
 
@@ -708,6 +708,127 @@ describe("external-endpoint-client", () => {
         "Content-Type": "application/json",
         Authorization: "Bearer token",
         "X-Custom-Header": "custom-value",
+      });
+    });
+
+    describe("caseworker email", () => {
+      const rerunEndpoint = {
+        code: "RECALCULATE_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/rerun",
+        method: "POST",
+        sendCaseworkerEmail: true,
+      };
+
+      const contextFor = (email) => ({
+        workflow: {},
+        user: { id: "user-1", email },
+      });
+
+      beforeEach(() => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: { "x-api-key": "secret-key" },
+        });
+        wreck.request.mockResolvedValue({ statusCode: 200 });
+        wreck.read.mockResolvedValue({ id: 1 });
+      });
+
+      it("sends Defra-Email when the endpoint opts in", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          { BODY: { id: 1 } },
+          contextFor("case.worker@defra.gov.uk"),
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers).toEqual({
+          "Content-Type": "application/json",
+          "x-api-key": "secret-key",
+          "Defra-Email": "case.worker@defra.gov.uk",
+        });
+      });
+
+      it("does not let service config override Defra-Email", async () => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: { "Defra-Email": "someone.else@defra.gov.uk" },
+        });
+
+        await callExternalEndpoint(
+          rerunEndpoint,
+          { BODY: { id: 1 } },
+          contextFor("case.worker@defra.gov.uk"),
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers["Defra-Email"]).toEqual(
+          "case.worker@defra.gov.uk",
+        );
+      });
+
+      it("does not send Defra-Email to other endpoints", async () => {
+        await callExternalEndpoint(
+          {
+            code: "FETCH_RULES_ENDPOINT",
+            service: "RULES_ENGINE",
+            path: "/case-management-adapter/application/validation-run/1",
+            method: "GET",
+          },
+          {},
+          contextFor("case.worker@defra.gov.uk"),
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers).not.toHaveProperty("Defra-Email");
+      });
+
+      it.each([undefined, null, ""])(
+        "throws a 400 without sending the request when email is %j",
+        async (email) => {
+          const error = await callExternalEndpoint(
+            rerunEndpoint,
+            { BODY: { id: 1 } },
+            contextFor(email),
+            true,
+          ).catch((e) => e);
+
+          expect(Boom.isBoom(error, 400)).toBe(true);
+          expect(error.message).toEqual(
+            "Caseworker email is required to call external endpoint RECALCULATE_RULES_ENDPOINT",
+          );
+          expect(wreck.request).not.toHaveBeenCalled();
+        },
+      );
+
+      it("throws a 400 even when throwOnError is false", async () => {
+        await expect(
+          callExternalEndpoint(rerunEndpoint, {}, contextFor(undefined)),
+        ).rejects.toSatisfy((e) => Boom.isBoom(e, 400));
+
+        expect(wreck.request).not.toHaveBeenCalled();
+      });
+
+      it("does not log the email or other header values", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          { BODY: { id: 1 } },
+          contextFor("case.worker@defra.gov.uk"),
+        );
+
+        const logged = JSON.stringify([
+          logger.info.mock.calls,
+          logger.warn.mock.calls,
+          logger.error.mock.calls,
+        ]);
+        expect(logged).not.toContain("case.worker@defra.gov.uk");
+        expect(logged).not.toContain("secret-key");
+        expect(logger.info).toHaveBeenCalledWith(
+          expect.objectContaining({
+            headerNames: ["Content-Type", "x-api-key", "Defra-Email"],
+          }),
+          expect.any(String),
+        );
       });
     });
   });

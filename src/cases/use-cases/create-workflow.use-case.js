@@ -289,4 +289,5 @@ const createWorkflowEndpoint = (endpoint) =>
     path: endpoint.path,
     method: endpoint.method,
     request: endpoint.request,
+    sendCaseworkerEmail: endpoint.sendCaseworkerEmail,
   });
