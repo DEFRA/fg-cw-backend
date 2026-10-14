@@ -18,14 +18,11 @@ export const callExternalEndpoint = async (
   throwOnError = false,
 ) => {
   const resolvedParams = params ?? {};
-  const callerHeaders = buildCallerHeaders(endpoint, caseWorkflowContext);
-
   try {
     const { response, payload } = await executeRequest(
       endpoint,
       resolvedParams,
       caseWorkflowContext,
-      callerHeaders,
     );
     return handleResponse(endpoint, response, payload, throwOnError);
   } catch (error) {
@@ -33,41 +30,14 @@ export const callExternalEndpoint = async (
   }
 };
 
-// Headers that identify the caseworker are sent only to endpoints that opt in,
-// and are checked before the request is made so a missing value is a 400 rather than a failed call.
-// It's very unlikely as an email IS required for sign in. But we guard anyway.
-const buildCallerHeaders = (endpoint, caseWorkflowContext) => {
-  if (!endpoint.sendCaseworkerEmail) {
-    return {};
-  }
+// Defra-Email is land-grants-api's name for the caseworker a call is made for.
+// externalActionUseCase refuses the call before it gets here if there is none.
+const buildCallerHeaders = (endpoint, caseWorkflowContext) =>
+  endpoint.sendCaseworkerEmail
+    ? { [CASEWORKER_EMAIL_HEADER]: caseWorkflowContext.user.email }
+    : {};
 
-  return {
-    [CASEWORKER_EMAIL_HEADER]: requireCaseworkerEmail(
-      endpoint,
-      caseWorkflowContext,
-    ),
-  };
-};
-
-const requireCaseworkerEmail = (endpoint, caseWorkflowContext) => {
-  const email = caseWorkflowContext?.user?.email;
-
-  // this case should never be possible. But here for belt and braces.
-  if (!email) {
-    throw Boom.badRequest(
-      `Caseworker email is required to call external endpoint ${endpoint.code}`,
-    );
-  }
-
-  return email;
-};
-
-const executeRequest = async (
-  endpoint,
-  params,
-  caseWorkflowContext,
-  callerHeaders,
-) => {
+const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const { url: baseUrl, headers: configHeaders } = resolveEndpoint(
     endpoint,
     caseWorkflowContext,
@@ -78,7 +48,10 @@ const executeRequest = async (
   const fullUrl = buildUrl(baseUrl, endpoint.path, pathParams);
   const options = buildRequestOptions(
     endpoint.method,
-    { ...configHeaders, ...callerHeaders },
+    {
+      ...configHeaders,
+      ...buildCallerHeaders(endpoint, caseWorkflowContext),
+    },
     requestData,
   );
 

@@ -783,32 +783,6 @@ describe("external-endpoint-client", () => {
         expect(callArgs.headers).not.toHaveProperty("Defra-Email");
       });
 
-      it.each([undefined, null, ""])(
-        "throws a 400 without sending the request when email is %j",
-        async (email) => {
-          const error = await callExternalEndpoint(
-            rerunEndpoint,
-            { BODY: { id: 1 } },
-            contextFor(email),
-            true,
-          ).catch((e) => e);
-
-          expect(Boom.isBoom(error, 400)).toBe(true);
-          expect(error.message).toEqual(
-            "Caseworker email is required to call external endpoint RECALCULATE_RULES_ENDPOINT",
-          );
-          expect(wreck.request).not.toHaveBeenCalled();
-        },
-      );
-
-      it("throws a 400 even when throwOnError is false", async () => {
-        await expect(
-          callExternalEndpoint(rerunEndpoint, {}, contextFor(undefined)),
-        ).rejects.toSatisfy((e) => Boom.isBoom(e, 400));
-
-        expect(wreck.request).not.toHaveBeenCalled();
-      });
-
       it("does not log the email or other header values", async () => {
         await callExternalEndpoint(
           rerunEndpoint,

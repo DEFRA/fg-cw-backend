@@ -56,6 +56,15 @@ const validateEndpoint = (endpointCode, workflow) => {
   return endpoint;
 };
 
+// An endpoint that acts for the caseworker can't be called without knowing who they are.
+const assertCallerIdentified = (endpoint, user) => {
+  if (endpoint.sendCaseworkerEmail && !user?.email) {
+    throw Boom.badRequest(
+      `Caseworker email is required to call external endpoint ${endpoint.code}`,
+    );
+  }
+};
+
 const executeAction = async ({
   actionCode,
   caseWorkflowContext,
@@ -66,6 +75,7 @@ const executeAction = async ({
     action.endpoint.code,
     caseWorkflowContext.workflow,
   );
+  assertCallerIdentified(endpoint, caseWorkflowContext.user);
 
   logger.info(
     `Calling external endpoint: ${endpoint.code} for action: ${actionCode}`,
