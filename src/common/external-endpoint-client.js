@@ -39,7 +39,10 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   const fullUrl = buildUrl(baseUrl, endpoint.path, pathParams);
   const options = buildRequestOptions(
     endpoint.method,
-    configHeaders,
+    {
+      ...withoutConfiguredHeaders(params.HEADERS || {}, configHeaders),
+      ...configHeaders,
+    },
     requestData,
   );
 
@@ -51,11 +54,25 @@ const executeRequest = async (endpoint, params, caseWorkflowContext) => {
   return { response, payload };
 };
 
-const buildRequestOptions = (method, configHeaders, requestData) => {
+// Service config headers carry credentials, so workflow config can add headers
+// but never replace one, whatever case its name is written in.
+const withoutConfiguredHeaders = (headers, configHeaders) => {
+  const configured = new Set(
+    Object.keys(configHeaders).map((name) => name.toLowerCase()),
+  );
+
+  return Object.fromEntries(
+    Object.entries(headers).filter(
+      ([name]) => !configured.has(name.toLowerCase()),
+    ),
+  );
+};
+
+const buildRequestOptions = (method, headers, requestData) => {
   const options = {
     headers: {
       "Content-Type": "application/json",
-      ...configHeaders,
+      ...headers,
     },
     json: true,
   };
@@ -76,13 +93,14 @@ const shouldIncludePayload = (method, requestData) => {
   );
 };
 
+// Header values carry credentials and the caseworker's email, so only the names are logged.
 const logRequestStart = (endpoint, url, headers) => {
   logger.info(
     {
       endpoint: endpoint.code,
       method: endpoint.method,
       url,
-      headers,
+      headerNames: Object.keys(headers),
     },
     `Calling external endpoint: ${endpoint.code}`,
   );

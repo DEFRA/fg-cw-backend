@@ -8,6 +8,7 @@
 //
 // 2. POST /case-management-adapter/application/validation-run/rerun
 //    - Reruns validation for an application
+//    - Sends the requesting caseworker's email in a Defra-Email header
 //    - Returns validation result with pass/fail status
 //
 import { MatchersV3, PactV3 } from "@pact-foundation/pact";
@@ -15,6 +16,8 @@ import path from "path";
 import { describe, expect, it } from "vitest";
 
 const { like, eachLike, integer, boolean } = MatchersV3;
+
+const CASEWORKER_EMAIL = "case.worker@defra.gov.uk";
 
 // Consumer tests for land-grants-api HTTP endpoints
 // Provider implementation completed by Andy Timney's team
@@ -129,6 +132,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
           path: "/case-management-adapter/application/validation-run/rerun",
           headers: {
             "Content-Type": "application/json",
+            "Defra-Email": like(CASEWORKER_EMAIL),
           },
           body: {
             id: 123,
@@ -155,6 +159,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Defra-Email": CASEWORKER_EMAIL,
             },
             body: JSON.stringify({
               id: 123,
@@ -187,6 +192,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
           path: "/case-management-adapter/application/validation-run/rerun",
           headers: {
             "Content-Type": "application/json",
+            "Defra-Email": like(CASEWORKER_EMAIL),
           },
           body: {
             id: 999,
@@ -212,6 +218,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Defra-Email": CASEWORKER_EMAIL,
             },
             body: JSON.stringify({
               id: 999,
@@ -240,6 +247,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
           path: "/case-management-adapter/application/validation-run/rerun",
           headers: {
             "Content-Type": "application/json",
+            "Defra-Email": like(CASEWORKER_EMAIL),
           },
           body: {
             id: 456,
@@ -265,6 +273,7 @@ describe("fg-cw-backend Consumer (calls land-grants-api HTTP endpoints)", () => 
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Defra-Email": CASEWORKER_EMAIL,
             },
             body: JSON.stringify({
               id: 456,

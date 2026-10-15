@@ -282,11 +282,4 @@ export const createWorkflowUseCase = withAudit(
   createWorkflowAuditDataBuilder,
 );
 
-const createWorkflowEndpoint = (endpoint) =>
-  new WorkflowEndpoint({
-    code: endpoint.code,
-    service: endpoint.service,
-    path: endpoint.path,
-    method: endpoint.method,
-    request: endpoint.request,
-  });
+const createWorkflowEndpoint = (endpoint) => new WorkflowEndpoint(endpoint);
