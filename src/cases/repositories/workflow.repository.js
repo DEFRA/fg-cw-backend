@@ -114,14 +114,7 @@ const toWorkflowPhase = (p) =>
     stages: p.stages.map(toWorkflowStage),
   });
 
-const toWorkflowEndpoint = (endpoint) =>
-  new WorkflowEndpoint({
-    code: endpoint.code,
-    service: endpoint.service,
-    path: endpoint.path,
-    method: endpoint.method,
-    request: endpoint.request,
-  });
+const toWorkflowEndpoint = (endpoint) => new WorkflowEndpoint(endpoint);
 
 const toWorkflow = (doc) =>
   new Workflow({

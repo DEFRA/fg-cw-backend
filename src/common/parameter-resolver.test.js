@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import { describe, expect, it } from "vitest";
 import { Workflow } from "../cases/models/workflow.js";
 import {
@@ -487,6 +488,92 @@ describe("parameter-resolver", () => {
           runId: 789,
         },
         BODY: {},
+      });
+    });
+
+    describe("HEADERS parameters", () => {
+      const contextWithHeaders = (headers, user) => ({
+        payload: { sbi: 900000005, approved: true, items: ["a", "b"] },
+        user,
+        workflow: createMockWorkflowWithActions([
+          {
+            code: "RECALCULATE_RULES",
+            endpoint: {
+              code: "RECALCULATE_RULES_ENDPOINT",
+              endpointParams: {
+                BODY: { id: "$.payload.sbi" },
+                HEADERS: headers,
+              },
+            },
+          },
+        ]),
+      });
+
+      it("resolves headers from the caseworker", async () => {
+        const result = await extractEndpointParameters({
+          actionCode: "RECALCULATE_RULES",
+          caseWorkflowContext: contextWithHeaders(
+            { "Defra-Email": "$.user.email" },
+            { email: "case.worker@defra.gov.uk" },
+          ),
+        });
+
+        expect(result).toEqual({
+          PATH: {},
+          BODY: { id: 900000005 },
+          HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+        });
+      });
+
+      it("sends numbers and booleans as text", async () => {
+        const result = await extractEndpointParameters({
+          actionCode: "RECALCULATE_RULES",
+          caseWorkflowContext: contextWithHeaders({
+            "X-Sbi": "$.payload.sbi",
+            "X-Approved": "$.payload.approved",
+          }),
+        });
+
+        expect(result.HEADERS).toEqual({
+          "X-Sbi": "900000005",
+          "X-Approved": "true",
+        });
+      });
+
+      it.each([
+        ["the user has no email", { id: "user-1" }],
+        ["the email is null", { id: "user-1", email: null }],
+        ["the email is empty", { id: "user-1", email: "" }],
+        ["there is no user", undefined],
+      ])(
+        "refuses a header that resolves to no value when %s",
+        async (_, user) => {
+          const error = await extractEndpointParameters({
+            actionCode: "RECALCULATE_RULES",
+            caseWorkflowContext: contextWithHeaders(
+              { "Defra-Email": "$.user.email" },
+              user,
+            ),
+          }).catch((e) => e);
+
+          expect(Boom.isBoom(error, 400)).toBe(true);
+          expect(error.message).toBe(
+            'Header "Defra-Email" resolved to no value',
+          );
+        },
+      );
+
+      it("refuses a header that resolves to a list", async () => {
+        await expect(
+          extractEndpointParameters({
+            actionCode: "RECALCULATE_RULES",
+            caseWorkflowContext: contextWithHeaders({
+              "X-Items": "$.payload.items",
+            }),
+          }),
+        ).rejects.toThrow(
+          'Header "X-Items" must resolve to a string, number or boolean',
+        );
       });
     });
 
