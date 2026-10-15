@@ -41,9 +41,10 @@ const mapCaveatSources = (payload) => {
   };
 };
 
-// eslint-disable-next-line complexity
-const extractConfigVersion = (payload) =>
-  payload?.originalConfigVersion ?? payload?.configVersion ?? null;
+const extractConfigVersion = (payload) => {
+  const { originalConfigVersion, configVersion } = payload ?? {};
+  return originalConfigVersion ?? configVersion ?? null;
+};
 
 const resolveLegacyWorkflow = async (workflowCode) => ({
   workflow: await findWorkflowByCodeUseCase(workflowCode),
