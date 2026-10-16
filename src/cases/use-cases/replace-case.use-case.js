@@ -6,7 +6,10 @@ import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case-series.repository.js";
-import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
+import {
+  findByCaseRefAndWorkflowCode as findCase,
+  linkSeries,
+} from "../repositories/case.repository.js";
 import {
   newCaseAuditDataBuilder,
   newCaseUseCase,
@@ -44,6 +47,13 @@ const replaceCase = async (message) => {
     );
     caseSeries.addCaseRef(caseRef, kaseId.toString());
     await update(caseSeries, session);
+    await linkSeries(
+      {
+        workflowCode: caseSeries.workflowCode,
+        caseRefs: [...caseSeries.caseRefs],
+      },
+      session,
+    );
 
     logger.info(
       `Finished: replacing case with previousCaseRef ${previousCaseRef} and workflowCode ${workflowCode}`,

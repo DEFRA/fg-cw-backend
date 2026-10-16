@@ -1,9 +1,7 @@
 import { Decimal128, Long, ObjectId } from "mongodb";
 import { describe, expect, it } from "vitest";
 import {
-  byNewestFirst,
   hasMembers,
-  toCaseListRow,
   toCaseRow,
   toCaseSummary,
   toStoredDocument,
@@ -39,39 +37,6 @@ describe("toCaseRow", () => {
       closed: null,
       closedAt: null,
       createdAt: null,
-    });
-  });
-});
-
-describe("toCaseListRow", () => {
-  const SERIES = [
-    {
-      workflowCode: "frps",
-      caseRefs: ["ref-1", "ref-2"],
-      latestCaseRef: "ref-2",
-    },
-  ];
-
-  it.each([
-    ["an older member", { caseRef: "ref-1", workflowCode: "frps" }, true],
-    ["the latest member", { caseRef: "ref-2", workflowCode: "frps" }, false],
-    [
-      "the same ref under another workflow",
-      { caseRef: "ref-1", workflowCode: "woodland" },
-      false,
-    ],
-    ["a case in no series", { caseRef: "loner", workflowCode: "frps" }, false],
-    ["a legacy row with no ref", {}, false],
-  ])("marks %s replaced: %s", (_name, doc, replaced) => {
-    expect(toCaseListRow(doc, SERIES).replaced).toBe(replaced);
-  });
-
-  it("is the row with the flag added", () => {
-    const doc = { caseRef: "ref-1", workflowCode: "frps" };
-
-    expect(toCaseListRow(doc, [])).toEqual({
-      ...toCaseRow(doc),
-      replaced: false,
     });
   });
 });
@@ -189,63 +154,5 @@ describe("toStoredDocument", () => {
 
     expect(toStoredDocument({ payload: wmp }).payload).toEqual(wmp);
     expect(toStoredDocument({ payload: frps }).payload).toEqual(frps);
-  });
-});
-
-describe("byNewestFirst", () => {
-  it("orders by createdAt descending, then _id descending", () => {
-    const a = {
-      createdAt: new Date(1),
-      _id: new ObjectId("000000000000000000000002"),
-    };
-    const b = {
-      createdAt: new Date(2),
-      _id: new ObjectId("000000000000000000000001"),
-    };
-    const c = {
-      createdAt: new Date(1),
-      _id: new ObjectId("000000000000000000000003"),
-    };
-
-    expect([a, b, c].sort(byNewestFirst)).toEqual([b, c, a]);
-  });
-
-  it("puts a null, string or missing createdAt last, still by _id", () => {
-    const dated = {
-      createdAt: new Date(1),
-      _id: new ObjectId("000000000000000000000001"),
-    };
-    const nulled = {
-      createdAt: null,
-      _id: new ObjectId("000000000000000000000002"),
-    };
-    const string = {
-      createdAt: "2026-06-16T00:00:00.000Z",
-      _id: new ObjectId("000000000000000000000003"),
-    };
-    const missing = { _id: new ObjectId("000000000000000000000004") };
-
-    expect([nulled, dated, missing, string].sort(byNewestFirst)).toEqual([
-      dated,
-      missing,
-      string,
-      nulled,
-    ]);
-  });
-
-  it("breaks a tie on an _id that is not an ObjectId", () => {
-    const createdAt = new Date(1);
-    const legacy = { createdAt, _id: "legacy-1" };
-    const stringId = { createdAt, _id: "legacy-2" };
-    const objectId = {
-      createdAt,
-      _id: new ObjectId("000000000000000000000001"),
-    };
-
-    expect([objectId, legacy, stringId].sort(byNewestFirst)).toEqual([
-      stringId,
-      legacy,
-      objectId,
-    ]);
   });
 });

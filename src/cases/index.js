@@ -1,7 +1,11 @@
 import { up } from "migrate-mongo";
+import { registerBucket } from "../common/buckets/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 
+import { casesBucket } from "./buckets/cases.bucket.js";
+import { inboxBucket } from "./buckets/inbox.bucket.js";
+import { outboxBucket } from "./buckets/outbox.bucket.js";
 import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
@@ -29,6 +33,10 @@ export const cases = {
 
     migrated.forEach((fileName) => logger.info(`Migrated: "${fileName}"`));
     logger.info("Finished running migrations");
+
+    registerBucket(outboxBucket());
+    registerBucket(inboxBucket());
+    registerBucket(casesBucket());
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();

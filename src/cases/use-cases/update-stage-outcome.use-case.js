@@ -9,6 +9,7 @@ import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { withTransaction } from "../../common/with-transaction.js";
+import { outboxStamps } from "../../events/stamps.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { CaseStatusUpdatedEvent } from "../events/case-status-updated.event.js";
 import { Outbox } from "../models/outbox.js";
@@ -63,12 +64,15 @@ const updateStageOutcome = async (command, session) => {
     currentConfigVersion: kase.currentConfigVersion,
   });
 
+  const segregationRef = Outbox.getSegregationRef(caseStatusEvent);
+
   await insertMany(
     [
       new Outbox({
         event: caseStatusEvent,
         target: config.get("aws.sns.caseStatusUpdatedTopicArn"),
-        segregationRef: Outbox.getSegregationRef(caseStatusEvent),
+        segregationRef,
+        ...outboxStamps(caseStatusEvent, { segregationRef }),
       }),
     ],
     session,

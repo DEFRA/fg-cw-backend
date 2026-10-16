@@ -60,6 +60,7 @@ describe("On CreateNewCase event", () => {
         _id: expect.any(ObjectId),
         createdAt: expect.any(Date),
         closedAt: null,
+        refs: ["ref:case-ref-3", "sbi:sbi001"],
         timeline: [
           {
             commentRef: null,

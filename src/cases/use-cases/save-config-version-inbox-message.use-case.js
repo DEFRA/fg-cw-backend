@@ -1,11 +1,12 @@
 import { logger } from "../../common/logger.js";
 import { getTraceParent } from "../../common/trace-parent.js";
+import { configVersionUpdated } from "../events/inbound-event-types.js";
 import {
   messageSource,
   saveInboxMessageUseCase,
 } from "./save-inbox-message.use-case.js";
 
-export const CONFIG_VERSION_UPDATED_EVENT_TYPE = "config-version.updated";
+export const CONFIG_VERSION_UPDATED_EVENT_TYPE = configVersionUpdated.sentAs;
 
 // An event with no grant cannot be grouped, but must still reach the inbox to
 // be visible.

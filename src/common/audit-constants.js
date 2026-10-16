@@ -5,6 +5,8 @@ export const auditEntities = {
   WORKFLOW: "WORKFLOW",
   // One inbox/outbox row. Named for the thing acted on, as the others are.
   EVENT: "EVENT",
+  // One list the grants admin surface can show, as this service declares it.
+  BUCKET: "BUCKET",
 };
 
 export const auditActions = {
@@ -35,11 +37,13 @@ export const auditActions = {
   // Replacing one DEAD_LETTER or PURGED row's payload, leaving its status
   // alone. Requested the same way a redrive is.
   EDIT_EVENT_PAYLOAD: "EDIT_EVENT_PAYLOAD",
-  // Listing or searching cases for an operator of the grants admin surface,
-  // through fg-gas-backend.
+  // The grants admin surface's case list before buckets. Stored audit rows
+  // carry it.
   FIND_CASES: "FIND_CASES",
   // Reading one case for the same operator, whole document or summary.
   VIEW_CASE_DATA: "VIEW_CASE_DATA",
+  // One page of one audited bucket, for the same operator.
+  QUERY_BUCKET: "QUERY_BUCKET",
 };
 
 export const auditStatus = {
@@ -72,6 +76,7 @@ const pmcCodesByAction = {
   [auditActions.EDIT_EVENT_PAYLOAD]: "0706", // any action an internal/external user or service can execute
   [auditActions.FIND_CASES]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_DATA]: "0706", // any action an internal/external user or service can execute
+  [auditActions.QUERY_BUCKET]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({

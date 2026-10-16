@@ -12,11 +12,6 @@ const get = (path, query, token) =>
     headers: { authorization: token },
   });
 
-// Both boxes in one read: the call the admin surface makes, and since the six
-// per-box endpoints were retired the only list call there is.
-export const findPage = (query, token = `Bearer ${SERVICE_TOKEN}`) =>
-  get("/actuators/events", query, token);
-
 const post = (path, token, payload, headers = {}) =>
   wreck.post(path, {
     headers: { authorization: token, ...headers },
@@ -105,10 +100,19 @@ export const seedCaseReaderToken = (db) =>
     { upsert: true },
   );
 
-export const searchCases = (payload, headers = {}) =>
-  wreck.post("/actuators/cases/search", {
+export const listBuckets = (headers = {}) =>
+  wreck.get("/actuators/buckets", { headers: asCaseReader(headers) });
+
+export const queryBucket = (bucketId, payload, headers = {}) =>
+  wreck.post(`/actuators/buckets/${bucketId}/query`, {
     headers: asCaseReader(headers),
     payload,
+  });
+
+export const readTimeline = (ref, headers = {}) =>
+  wreck.post("/actuators/timeline", {
+    headers: asCaseReader(headers),
+    payload: { ref },
   });
 
 export const viewCaseData = (workflowCode, caseRef, query, headers = {}) =>

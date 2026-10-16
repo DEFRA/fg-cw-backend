@@ -8,12 +8,10 @@ import { TimelineEvent } from "../models/timeline-event.js";
 import {
   caseExists,
   countByPosition,
-  countCaseList,
   findAll,
-  findCaseListBySeries,
   findSeriesMembers,
-  findCaseListPage,
   findStoredCase,
+  linkSeries,
   findByCaseRefAndWorkflowCode,
   findById,
   findCasesByCaseRefsAndWorkflowCode,
@@ -52,7 +50,24 @@ describe("save", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(insertOne.mock.calls[0][0]).toBeInstanceOf(CaseDocument);
+    expect(insertOne.mock.calls[0][0]).toEqual(new CaseDocument(caseMock));
+  });
+
+  it("gives a new case its refs", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne });
+
+    await save(
+      Case.createMock({
+        caseRef: "ABC-123",
+        payload: { identifiers: { sbi: "100000001" } },
+      }),
+    );
+
+    expect(insertOne.mock.calls[0][0].refs).toEqual([
+      "ref:abc-123",
+      "sbi:100000001",
+    ]);
   });
 
   it("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
@@ -107,13 +122,13 @@ describe("save", () => {
 
 describe("update", () => {
   it("updates a case and returns it", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
       matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock({
@@ -123,24 +138,41 @@ describe("update", () => {
 
     const result = await update(caseMock);
 
+    const { _id, refs, ...document } = new CaseDocument(caseMock);
+
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(replaceOne).toHaveBeenCalledWith(
+    expect(updateOne).toHaveBeenCalledWith(
       { _id: caseMock.objectId },
-      new CaseDocument(caseMock),
+      { $set: document, $addToSet: { refs: { $each: refs } } },
     );
 
     expect(result).toBe(caseMock);
   });
 
+  it("sends no whole refs array, so series refs survive", async () => {
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+    });
+    db.collection.mockReturnValue({ updateOne });
+
+    await update(Case.createMock());
+
+    const [, { $set }] = updateOne.mock.calls[0];
+
+    expect($set).not.toHaveProperty("refs");
+    expect($set).not.toHaveProperty("_id");
+  });
+
   it("throws bad request when case is not found", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
       matchedCount: 0,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock();
@@ -151,13 +183,13 @@ describe("update", () => {
   });
 
   it("throws bad request when write is unacknowledged", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: false,
       matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock();
@@ -165,6 +197,37 @@ describe("update", () => {
     await expect(update(caseMock)).rejects.toThrow(
       `Case with caseRef "${caseMock.caseRef}" could not be updated, the operation was not acknowledged`,
     );
+  });
+});
+
+describe("linkSeries", () => {
+  it("gives every member every member's ref, in one write", async () => {
+    const updateMany = vi.fn().mockResolvedValue({});
+    db.collection.mockReturnValue({ updateMany });
+
+    await linkSeries(
+      {
+        workflowCode: "example-workflow",
+        caseRefs: ["ABC-1", "ABC-2", "ABC-3"],
+      },
+      "session",
+    );
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(updateMany.mock.calls).toEqual([
+      [
+        {
+          workflowCode: "example-workflow",
+          caseRef: { $in: ["ABC-1", "ABC-2", "ABC-3"] },
+        },
+        {
+          $addToSet: {
+            refs: { $each: ["ref:abc-1", "ref:abc-2", "ref:abc-3"] },
+          },
+        },
+        { session: "session" },
+      ],
+    ]);
   });
 });
 
@@ -636,57 +699,6 @@ describe("countByPosition", () => {
 
 describe("admin read model", () => {
   const MAX_TIME_MS = 3000;
-
-  it("pages the browse newest first, 20 at a time, with no total", async () => {
-    const cases = {};
-    db.collection.mockReturnValue(cases);
-    paginate.mockResolvedValue({ data: [], pagination: {} });
-
-    await findCaseListPage({ workflowCode: "frps", cursor: "c" });
-
-    expect(db.collection).toHaveBeenCalledWith("cases");
-    expect(paginate).toHaveBeenCalledWith(
-      cases,
-      expect.objectContaining({
-        filter: { workflowCode: "frps" },
-        cursor: "c",
-        sort: { createdAt: -1, _id: -1 },
-        pageSize: 20,
-        withTotal: false,
-        project: CASE_ROW_PROJECTION,
-        maxTimeMS: MAX_TIME_MS,
-      }),
-    );
-  });
-
-  it("counts the browse up to a limit", async () => {
-    const countDocuments = vi.fn().mockResolvedValue(7);
-    db.collection.mockReturnValue({ countDocuments });
-
-    expect(await countCaseList({ workflowCode: "frps" }, 10_001)).toBe(7);
-    expect(countDocuments).toHaveBeenCalledWith(
-      { workflowCode: "frps" },
-      { limit: 10_001, maxTimeMS: MAX_TIME_MS },
-    );
-  });
-
-  it("reads a series match once, bounded, unsorted and on caseRef", async () => {
-    const toArray = vi.fn().mockResolvedValue([]);
-    const find = vi.fn().mockReturnValue({ toArray });
-    db.collection.mockReturnValue({ find });
-
-    await findCaseListBySeries({ ref: "ref-1", series: [] }, 201);
-
-    expect(find).toHaveBeenCalledWith(
-      { $or: [{ caseRef: "ref-1" }] },
-      {
-        projection: CASE_ROW_PROJECTION,
-        limit: 201,
-        hint: { caseRef: 1 },
-        maxTimeMS: MAX_TIME_MS,
-      },
-    );
-  });
 
   it("reads a series' members once, on the unique key", async () => {
     const rows = [{ caseRef: "ref-1" }];
