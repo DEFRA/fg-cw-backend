@@ -154,6 +154,36 @@ describe("updateStageOutcomeUseCase", () => {
       expect(insertMany).toHaveBeenCalled();
     });
 
+    it("stamps the status event with the ordering key it stores", async () => {
+      withTransaction.mockImplementation(async (cb) => cb({}));
+      const mockCase = Case.createMock({ caseRef: "ABC-123" });
+      const mockWorkflow = Workflow.createMock();
+
+      findById.mockResolvedValue(mockCase);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
+      mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
+      mockCase.updateStageOutcome = vi.fn();
+      update.mockResolvedValue(mockCase);
+
+      await updateStageOutcomeUseCase({
+        caseId: mockCase._id,
+        actionCode: "APPROVE",
+        user: User.createMock(),
+      });
+
+      const [[outbox]] = insertMany.mock.calls[0];
+
+      expect(outbox).toMatchObject({
+        segregationRef: `ABC-123-${mockCase.workflowCode}`,
+        eventType: "CaseStatusUpdated",
+      });
+      expect(outbox.refs).toContain("ref:abc-123");
+    });
+
     it("uses authenticated user in stage outcome", async () => {
       const session = {};
       withTransaction.mockImplementation(async (cb) => cb(session));

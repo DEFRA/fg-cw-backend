@@ -1,10 +1,20 @@
 import { ObjectId } from "mongodb";
+import { toRefs } from "../../../common/buckets/refs.js";
 import { Position } from "../../models/position.js";
 import { PhaseDocument } from "./phase-document.js";
 import { StageDocument } from "./stage-document.js";
 import { TaskDocument } from "./task-document.js";
 import { TaskGroupDocument } from "./task-group-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
+
+export const caseRefs = ({ caseRef, payload }) =>
+  toRefs([
+    ["ref", caseRef],
+    ["sbi", payload?.identifiers?.sbi],
+  ]);
+
+export const seriesRefs = (members) =>
+  toRefs(members.map((caseRef) => ["ref", caseRef]));
 
 export class CaseDocument {
   // eslint-disable-next-line complexity
@@ -32,6 +42,7 @@ export class CaseDocument {
       props.originalConfigVersion ?? props.configVersion ?? null;
     this.currentConfigVersion =
       props.currentConfigVersion ?? props.configVersion ?? null;
+    this.refs = caseRefs(props);
   }
 
   static createMock(props) {

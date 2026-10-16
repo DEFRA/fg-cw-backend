@@ -10,13 +10,13 @@ import {
 } from "@pact-foundation/pact";
 import { describe, it, vi } from "vitest";
 
-// Mock config before importing production code
-vi.mock("../../src/common/config.js", () => ({
-  config: {
-    serviceName: "fg-cw-backend",
-    cdpEnvironment: "test",
-  },
-}));
+// Mock config before importing production code. The event module reads it
+// through `get` as it loads, to declare the type it sends.
+vi.mock("../../src/common/config.js", () => {
+  const values = { serviceName: "fg-cw-backend", cdpEnvironment: "test" };
+
+  return { config: { ...values, get: (key) => values[key] } };
+});
 
 // eslint-disable-next-line import-x/first
 import { CaseStatusUpdatedEvent } from "../../src/cases/events/case-status-updated.event.js";

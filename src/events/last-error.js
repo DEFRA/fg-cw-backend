@@ -1,3 +1,5 @@
+import { toErrorKey } from "../common/buckets/error-key.js";
+
 // Why the last attempt at an inbox/outbox event failed, recorded on the
 // document. Flat fields only - never the error object itself, which is not
 // BSON-safe.
@@ -102,6 +104,13 @@ export const toStoredLastError = (value) =>
         at: toIsoOrNull(value.at),
       }
     : null;
+
+// Every write of a `lastError` carries the key Top errors groups it by, so
+// the two can never disagree.
+export const withErrorKey = (lastError) => ({
+  lastError,
+  errorKey: toErrorKey(lastError),
+});
 
 // The claim-expiry sweep has no exception to record: nothing threw, the worker
 // simply stopped answering, so the sweep names itself.

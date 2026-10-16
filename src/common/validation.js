@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { refuse } from "./buckets/refusal.js";
 import { logger } from "./logger.js";
 
 /**
@@ -29,6 +30,12 @@ export const safeFailAction = (_request, _h, error) => {
   logger.warn(`Request failed validation: ${describeDetails(error)}`);
 
   throw Boom.badRequest("Invalid request");
+};
+
+export const bucketFailAction = (_request, _h, error) => {
+  logger.warn(`Query bucket request refused: ${describeDetails(error)}`);
+
+  throw refuse("INVALID_REQUEST");
 };
 
 export const safeResponseFailAction = (_request, _h, error) => {

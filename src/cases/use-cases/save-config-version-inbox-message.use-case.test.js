@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { withTraceParent } from "../../common/trace-parent.js";
+import { configVersionUpdated } from "../events/inbound-event-types.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 import {
   findByMessageId,
@@ -93,6 +94,15 @@ describe("saveConfigVersionInboxMessageUseCase", () => {
     await save({}, { sentTimestamp: "not-a-number" });
 
     expect(Date.parse(saved().eventTime)).toBeGreaterThanOrEqual(before);
+  });
+
+  it("names the type as its declaration sends it, and stamps the row with it", async () => {
+    await save();
+
+    expect(CONFIG_VERSION_UPDATED_EVENT_TYPE).toBe(configVersionUpdated.sentAs);
+    expect(saved()).toMatchObject({
+      eventType: "ConfigVersionUpdated",
+    });
   });
 
   it("does not save the same SQS message twice", async () => {

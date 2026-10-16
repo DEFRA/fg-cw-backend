@@ -378,3 +378,33 @@ describe("Outbox model expireAt", () => {
     expect(Outbox.fromDocument(legacy).expireAt).toBeNull();
   });
 });
+
+describe("Outbox model stamps", () => {
+  const stamps = {
+    eventType: "case.status.updated",
+    refs: ["ref:abc-123"],
+  };
+
+  it("carries the stamps it is given onto the document", () => {
+    expect(Outbox.createMock(stamps).toDocument()).toMatchObject(stamps);
+  });
+
+  it("round-trips through toDocument and fromDocument", () => {
+    const document = Outbox.createMock(stamps).toDocument();
+
+    expect(Outbox.fromDocument(document).toDocument()).toMatchObject(stamps);
+  });
+
+  it("reads a row written before stamps existed without refusing it", () => {
+    const event = Outbox.fromDocument({
+      target: "arn:aws:sns:eu-west-2:000000000000:mock-topic",
+      event: {},
+      segregationRef: "1234",
+    });
+
+    expect(event).toMatchObject({
+      eventType: null,
+      refs: [],
+    });
+  });
+});
