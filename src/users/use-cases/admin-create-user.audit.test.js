@@ -105,26 +105,10 @@ describe("adminCreateUserUseCase auditing", () => {
       props: { name: "Dup", email: "dup@example.com" },
     }).catch(() => {});
 
-    const [{ entities, details }] = writeAuditEvent.mock.calls[0];
+    const [{ entities }] = writeAuditEvent.mock.calls[0];
 
     expect(entities).toEqual([{ entity: "USER", action: "CREATE_USER" }]);
     expect(entities[0]).not.toHaveProperty("entityid");
-    expect(details.security).toEqual({
-      actor: expect.objectContaining({ id: admin.id }),
-      attemptedUser: { email: "dup@example.com" },
-    });
-  });
-
-  it("does not record an attemptedUser on SUCCESS", () => {
-    const admin = User.createMock({ idpRoles: [IdpRoles.Admin] });
-    const created = User.createMock({ id: "new-id", email: "n@e.com" });
-
-    const auditData = adminCreateUserAuditDataBuilder(
-      [{ user: admin, props: { email: "n@e.com" } }],
-      created,
-    );
-
-    expect(auditData.details.security).not.toHaveProperty("attemptedUser");
   });
 
   // The dead-lettered event: the driver serialises with

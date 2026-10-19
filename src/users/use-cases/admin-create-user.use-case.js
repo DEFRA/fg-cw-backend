@@ -49,22 +49,17 @@ const adminCreateUser = async ({ user, props }) => {
 };
 
 // A refused attempt has no user yet, so entityid is left out rather than
-// invented, and the attempted email identifies what was being created.
+// invented.
 const createUserEntity = (createdUser) => ({
   entity: auditEntities.USER,
   action: auditActions.CREATE_USER,
   ...(createdUser && { entityid: createdUser.id }),
 });
 
-const createUserSecurityContext = (actor, createdUser, props) => ({
-  ...buildSecurityContext(actor, createdUser),
-  ...(!createdUser && { attemptedUser: { email: props.email } }),
-});
-
 export const adminCreateUserAuditDataBuilder = ([{ user, props }], result) => ({
   entities: [createUserEntity(result)],
   details: {
-    security: createUserSecurityContext(user, result, props),
+    security: buildSecurityContext(user, result),
   },
   security: buildAuditSecurity(auditActions.CREATE_USER),
   segregationRef: `create-user-${result?.id ?? props.email}`,
