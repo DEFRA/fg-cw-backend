@@ -48,14 +48,16 @@ const adminCreateUser = async ({ user, props }) => {
   return newUser;
 };
 
+// A refused attempt has no user yet, so entityid is left out rather than
+// invented.
+const createUserEntity = (createdUser) => ({
+  entity: auditEntities.USER,
+  action: auditActions.CREATE_USER,
+  ...(createdUser && { entityid: createdUser.id }),
+});
+
 export const adminCreateUserAuditDataBuilder = ([{ user, props }], result) => ({
-  entities: [
-    {
-      entity: auditEntities.USER,
-      action: auditActions.CREATE_USER,
-      entityid: result?.id,
-    },
-  ],
+  entities: [createUserEntity(result)],
   details: {
     security: buildSecurityContext(user, result),
   },
