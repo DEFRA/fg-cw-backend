@@ -16,6 +16,17 @@ const getIP = (context) => context?.ip ?? SYSTEM_IP;
 
 const isPlainObject = (value) => value?.constructor === Object;
 
+const stripNullsFrom = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item != null).map(stripNullsFrom);
+  }
+
+  return isPlainObject(value) ? stripNulls(value) : value;
+};
+
+// The outbox insert stores `undefined` as `null`, which the audit service
+// rejects, so this has to reach into arrays (e.g. `audit.entities`) too:
+// the payload validated must be the payload persisted.
 export const stripNulls = (obj) => {
   const result = {};
 
@@ -24,7 +35,7 @@ export const stripNulls = (obj) => {
       continue;
     }
 
-    result[key] = isPlainObject(value) ? stripNulls(value) : value;
+    result[key] = stripNullsFrom(value);
   }
 
   return result;
