@@ -1,8 +1,8 @@
 import Boom from "@hapi/boom";
 import { buildFromDefinition } from "../repositories/workflow.repository.js";
 
-// Checks the workflow a case would actually get, not the POST /workflows request
-// schema, which rejects definitions the runtime serves happily.
+// Checks the workflow a case would actually get, not the WorkflowData schema,
+// which rejects definitions the runtime serves happily.
 const build = (definition, { version, label }) => {
   try {
     return buildFromDefinition(definition, version);

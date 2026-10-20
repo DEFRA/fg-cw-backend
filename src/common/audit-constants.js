@@ -27,6 +27,8 @@ export const auditActions = {
   PERFORM_PAGE_ACTION: "PERFORM_PAGE_ACTION",
   ADD_NOTE_TO_CASE: "ADD_NOTE_TO_CASE",
   ASSIGN_USER_TO_CASE: "ASSIGN_USER_TO_CASE",
+  // Workflows posted directly, before config versions. Stored audit rows
+  // carry it.
   CREATE_WORKFLOW: "CREATE_WORKFLOW",
   // Putting one DEAD_LETTER row back in front of the poller. Requested by the
   // grants admin surface through fg-gas-backend, carried out here.
