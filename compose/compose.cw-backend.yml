@@ -18,8 +18,9 @@ services:
       MONGO_URI: mongodb://mongodb:27017/?replicaSet=mongoRepl
       OIDC_JWKS_URI: http://entra:3010/jwks
       AWS_ENDPOINT_URL: http://floci:4566
-      # Queue URLs name the host the SDK calls, so inside a container they must
-      # point at floci rather than the localhost URLs in .env.
+      # Container URLs, the same as the rest of the stack uses. The SDK sends
+      # every request to AWS_ENDPOINT_URL, so only the queue name in the path
+      # is actually used.
       CW__SQS__CREATE_NEW_CASE_URL: http://floci:4566/000000000000/cw__sqs__create_new_case_fifo.fifo
       CW__SQS__UPDATE_STATUS_URL: http://floci:4566/000000000000/cw__sqs__update_status_fifo.fifo
       CW__SQS__CONFIG_VERSION_QUEUE_URL: http://floci:4566/000000000000/cw__sqs__config_version_updated
