@@ -121,6 +121,32 @@ describe("claim data ingestion into MongoDB", () => {
     expect(stored.storedMarker).toBe("$literal");
   });
 
+  it("updates another supplementary node without overwriting newly received claims", async () => {
+    const stale = await caseRepository.findByCaseRefAndWorkflowCode(
+      original.caseRef,
+      original.workflowCode,
+    );
+    await handleClaimSubmittedUseCase(message());
+    stale.updateSupplementaryData({
+      targetNode: "agreements",
+      dataType: "ARRAY",
+      key: "agreementRef",
+      data: {
+        agreementRef: "agreement-1",
+        status: "ACCEPTED",
+        note: "$literal",
+      },
+    });
+    await caseRepository.update(stale);
+    const stored = await cases.findOne({ _id: original._id });
+    expect(stored.supplementaryData).toEqual({
+      claims: [entry],
+      agreements: [
+        { agreementRef: "agreement-1", status: "ACCEPTED", note: "$literal" },
+      ],
+    });
+  });
+
   it("persists claims idempotently without altering the remaining case document", async () => {
     await handleClaimSubmittedUseCase(message());
     await handleClaimSubmittedUseCase(message());

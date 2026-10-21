@@ -123,36 +123,25 @@ export const updateClaimSupplementaryData = async (kase) => {
 };
 
 export const update = async (kase) => {
-  const { _id, refs, ...caseDocument } = new CaseDocument(kase);
+  const { _id, refs, supplementaryData, ...caseDocument } = new CaseDocument(
+    kase,
+  );
 
-  const supplementaryData = { ...caseDocument.supplementaryData };
-  delete supplementaryData.claims;
+  // Save other supplementary nodes individually so a stale case edit cannot
+  // overwrite claims received since the case was read.
+  const supplementaryUpdates = Object.fromEntries(
+    Object.entries(supplementaryData ?? {})
+      .filter(([node]) => node !== "claims")
+      .map(([node, data]) => [`supplementaryData.${node}`, data]),
+  );
 
-  // A caseworker may have read before claim ingestion. Preserve the current
-  // claims atomically, rather than replacing them with that stale snapshot.
-  const result = await db
-    .collection(collection)
-    .updateOne({ _id: kase.objectId }, [
-      {
-        $replaceWith: {
-          $mergeObjects: [
-            "$$ROOT",
-            { $literal: caseDocument },
-            {
-              supplementaryData: {
-                $mergeObjects: [
-                  { $literal: supplementaryData },
-                  { claims: "$supplementaryData.claims" },
-                ],
-              },
-              refs: {
-                $setUnion: [{ $ifNull: ["$refs", []] }, { $literal: refs }],
-              },
-            },
-          ],
-        },
-      },
-    ]);
+  const result = await db.collection(collection).updateOne(
+    { _id: kase.objectId },
+    {
+      $set: { ...caseDocument, ...supplementaryUpdates },
+      $addToSet: { refs: { $each: refs } },
+    },
+  );
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${kase._id}" not found`);

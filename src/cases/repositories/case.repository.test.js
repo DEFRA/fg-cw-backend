@@ -135,35 +135,30 @@ describe("update", () => {
     const caseMock = Case.createMock({
       closed: true,
       closedAt: new Date(),
+      supplementaryData: {
+        agreements: [{ agreementRef: "updated" }],
+        claims: [{ gasClaimId: "stale" }],
+      },
     });
 
     const result = await update(caseMock);
 
-    const { _id, refs, ...document } = new CaseDocument(caseMock);
+    const { _id, refs, supplementaryData, ...document } = new CaseDocument(
+      caseMock,
+    );
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(updateOne).toHaveBeenCalledWith({ _id: caseMock.objectId }, [
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: caseMock.objectId },
       {
-        $replaceWith: {
-          $mergeObjects: [
-            "$$ROOT",
-            { $literal: document },
-            {
-              supplementaryData: {
-                $mergeObjects: [
-                  { $literal: caseMock.supplementaryData },
-                  { claims: "$supplementaryData.claims" },
-                ],
-              },
-              refs: {
-                $setUnion: [{ $ifNull: ["$refs", []] }, { $literal: refs }],
-              },
-            },
-          ],
+        $set: {
+          ...document,
+          "supplementaryData.agreements": supplementaryData.agreements,
         },
+        $addToSet: { refs: { $each: refs } },
       },
-    ]);
+    );
 
     expect(result).toBe(caseMock);
   });
@@ -177,8 +172,7 @@ describe("update", () => {
 
     await update(Case.createMock());
 
-    const [, pipeline] = updateOne.mock.calls[0];
-    const document = pipeline[0].$replaceWith.$mergeObjects[1].$literal;
+    const [, { $set: document }] = updateOne.mock.calls[0];
 
     expect(document).not.toHaveProperty("refs");
     expect(document).not.toHaveProperty("_id");
