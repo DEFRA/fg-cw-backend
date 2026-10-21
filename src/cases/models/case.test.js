@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { logger } from "../../common/logger.js";
 import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
@@ -961,6 +962,7 @@ describe("Case", () => {
       const workflow = Workflow.createMock();
       const initialPosition = kase.position;
       const initialTimelineLength = kase.timeline.length;
+      vi.spyOn(logger, "warn");
 
       kase.progressTo({
         position: initialPosition,
@@ -970,6 +972,9 @@ describe("Case", () => {
 
       expect(kase.position).toEqual(initialPosition);
       expect(kase.timeline).toHaveLength(initialTimelineLength);
+      expect(logger.warn).toHaveBeenCalledWith(
+        "Case with caseRef case-ref and workflowCode workflow-code is already at position PHASE_1:STAGE_1:STATUS_1",
+      );
     });
 
     it("should not check tasks if transition.checkTasks is false", () => {
@@ -1018,18 +1023,51 @@ describe("Case", () => {
         stageCode: "STAGE_2",
         statusCode: "STATUS_1",
       });
+      const initialPosition = kase.position;
+      const initialTimelineLength = kase.timeline.length;
 
-      try {
+      expect(() =>
+        kase.progressTo({
+          position: newPosition,
+          workflow,
+          createdBy: validUserId,
+        }),
+      ).toThrow(
+        "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
+      );
+      expect(kase.position).toEqual(initialPosition);
+      expect(kase.timeline).toHaveLength(initialTimelineLength);
+    });
+
+    it("throws when no transition exists", () => {
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock();
+
+      const newPosition = new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_3",
+        statusCode: "STATUS_3",
+      });
+      const initialPosition = kase.position;
+      const initialTimelineLength = kase.timeline.length;
+
+      const progress = () =>
         kase.progressTo({
           position: newPosition,
           workflow,
           createdBy: validUserId,
         });
-      } catch (e) {
-        expect(e.message).toBe(
-          "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_2:STATUS_1: all mandatory tasks must be completed",
-        );
-      }
+
+      expect(progress).toThrow(
+        "Case with case-ref and workflowCode workflow-code cannot transition from PHASE_1:STAGE_1:STATUS_1 to PHASE_1:STAGE_3:STATUS_3: transition does not exist",
+      );
+      expect(progress).toThrow(
+        expect.objectContaining({
+          output: expect.objectContaining({ statusCode: 412 }),
+        }),
+      );
+      expect(kase.position).toEqual(initialPosition);
+      expect(kase.timeline).toHaveLength(initialTimelineLength);
     });
 
     it("creates CASE_STATUS_CHANGED event when transitioning to different status", () => {
