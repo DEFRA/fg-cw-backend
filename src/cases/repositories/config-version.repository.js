@@ -109,3 +109,11 @@ export const findCurrent = async (grantCode) => {
 
   return ConfigVersion.fromDocument(doc);
 };
+
+export const configVersionExists = async ({ grantCode, version }) =>
+  (await db
+    .collection(collection)
+    .findOne(
+      { grantCode, version },
+      { projection: { _id: 1 }, maxTimeMS: actuatorReadMaxTimeMs() },
+    )) !== null;

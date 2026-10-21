@@ -61,3 +61,7 @@ export const workflowVersionResponseSchema = Joi.object({
 export const workflowDefinitionFetchResponseSchema = Joi.object({
   files: Joi.array().items(WorkflowDefinitionFetch.validationSchema).required(),
 }).label("WorkflowDefinitionFetchResponse");
+
+export const workflowVersionExistenceResponseSchema = Joi.object({
+  exists: Joi.boolean().required(),
+}).label("WorkflowVersionExistenceResponse");

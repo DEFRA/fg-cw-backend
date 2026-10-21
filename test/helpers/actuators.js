@@ -137,6 +137,11 @@ export const viewWorkflowVersion = (code, version, query, headers = {}) =>
     { headers: asCaseReader(headers) },
   );
 
+export const workflowVersionExistence = (code, version, headers = {}) =>
+  wreck.get(`/actuators/workflows/${code}/versions/${version}/existence`, {
+    headers: { authorization: `Bearer ${CASE_READER_TOKEN}`, ...headers },
+  });
+
 export const fetchWorkflowDefinition = (code, version, { by }, headers = {}) =>
   wreck.post(
     withActor(`/actuators/workflows/${code}/versions/${version}/fetch`, by),

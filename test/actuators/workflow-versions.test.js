@@ -7,6 +7,7 @@ import {
   seedCaseReaderToken,
   viewWorkflowVersion,
   viewWorkflowVersions,
+  workflowVersionExistence,
 } from "../helpers/actuators.js";
 import {
   aGrantCode,
@@ -231,6 +232,33 @@ describe("GET /actuators/workflows/{code}/versions/{version}", () => {
   it("answers 403 to a client other than fg-gas-backend", async () => {
     await expect(
       viewWorkflowVersion("woodland", "1.0.0", undefined, {
+        authorization: `Bearer ${SERVICE_TOKEN}`,
+      }),
+    ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+});
+
+describe("GET /actuators/workflows/{code}/versions/{version}/existence", () => {
+  it("says yes or no without an operator, and audits nothing", async () => {
+    const code = aGrantCode("woodland");
+    await seedConfigVersion(db, code, "1.2.0", { status: "draft" });
+    const audited = await db.collection("outbox").countDocuments();
+
+    expect((await workflowVersionExistence(code, "1.2.0")).payload).toEqual({
+      exists: true,
+    });
+    expect((await workflowVersionExistence(code, "1.3.0")).payload).toEqual({
+      exists: false,
+    });
+    expect(
+      (await workflowVersionExistence(aGrantCode("nope"), "1.2.0")).payload,
+    ).toEqual({ exists: false });
+    expect(await db.collection("outbox").countDocuments()).toBe(audited);
+  });
+
+  it("answers 403 to a client other than fg-gas-backend", async () => {
+    await expect(
+      workflowVersionExistence("woodland", "1.0.0", {
         authorization: `Bearer ${SERVICE_TOKEN}`,
       }),
     ).rejects.toThrow("Response Error: 403 Forbidden");

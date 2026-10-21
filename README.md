@@ -553,6 +553,8 @@ workflow and the address each endpoint resolves to from `{SERVICE}_URL`
 not stored and the definition is a valid workflow for that code, and is audited
 as `FETCH_CONFIG_DEFINITION`. It never changes the config version record, so
 the lazy fetch a case triggers works as before.
+`GET …/{version}/existence` releases only whether the version exists, takes no
+operator headers and is not audited, like the case existence check.
 
 Every actuator request that sends `x-actor-id` has it recorded as the audit
 event's `user`, including redrive, purge and edit.

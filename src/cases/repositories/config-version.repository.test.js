@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { ConfigVersion } from "../models/config-version.js";
 import {
+  configVersionExists,
   findAllForCode,
   findByGrantCodeAndVersion,
   findCurrent,
@@ -177,6 +178,23 @@ describe("config-version.repository", () => {
       mockCollection.findOne.mockResolvedValue(null);
 
       expect(await findCurrent("woodland")).toBeNull();
+    });
+  });
+
+  describe("configVersionExists", () => {
+    it.each([
+      [{ _id: "id" }, true],
+      [null, false],
+    ])("checks existence from an _id-only read", async (found, exists) => {
+      mockCollection.findOne.mockResolvedValue(found);
+
+      expect(
+        await configVersionExists({ grantCode: "woodland", version: "1.2.0" }),
+      ).toBe(exists);
+      expect(mockCollection.findOne).toHaveBeenCalledWith(
+        { grantCode: "woodland", version: "1.2.0" },
+        { projection: { _id: 1 }, maxTimeMS: 3000 },
+      );
     });
   });
 });

@@ -18,6 +18,7 @@ import { viewCaseDataRoute } from "./routes/view-case-data.route.js";
 import { fetchWorkflowDefinitionRoute } from "./routes/fetch-workflow-definition.route.js";
 import { viewWorkflowVersionRoute } from "./routes/view-workflow-version.route.js";
 import { viewWorkflowVersionsRoute } from "./routes/view-workflow-versions.route.js";
+import { workflowVersionExistsRoute } from "./routes/workflow-version-exists.route.js";
 
 export const actuators = {
   name: "actuators",
@@ -48,6 +49,7 @@ export const actuators = {
       viewWorkflowVersionsRoute,
       viewWorkflowVersionRoute,
       fetchWorkflowDefinitionRoute,
+      workflowVersionExistsRoute,
     ]);
   },
 };
