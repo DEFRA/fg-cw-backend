@@ -37,18 +37,6 @@ Authorization: Bearer {{generateToken.response.body.access_token}}
 }
 
 
-### Create pigs-might-fly workflow
-
-# @name createPmfWorkflow
-
-POST {{host}}/workflows HTTP/1.1
-Content-Type: application/json
-Accept: application/json
-Authorization: Bearer {{generateToken.response.body.access_token}}
-
-< ./test/fixtures/pmf-workflow-definition.json
-
-
 ### Get workflow by code
 
 # @name getWorkflowByCode
