@@ -34,7 +34,8 @@ const compressIp = (ip) =>
 // The shortest equivalent form of `address`, or undefined when it is not an
 // IP: IPv4-mapped addresses become plain IPv4 and IPv6 is compressed.
 export const normaliseIp = (address = "") => {
-  const ip = address.replace(/%.*$/, "").replace(IPV4_MAPPED, "$1");
+  // Drop any IPv6 zone id (e.g. `fe80::1%eth0`).
+  const ip = address.split("%")[0].replace(IPV4_MAPPED, "$1");
 
   return isIP(ip) ? compressIp(ip) : undefined;
 };
