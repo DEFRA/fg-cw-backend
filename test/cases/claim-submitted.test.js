@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   afterAll,
   beforeAll,
@@ -22,7 +23,7 @@ const entry = {
   status: "SUBMITTED",
   submittedAt: "2026-08-07T11:16:05.745Z",
 };
-const DATABASE = "fgp-1382-claim-ingestion-test";
+const testCases = { caseRef: /^fgp-1382-/ };
 const cases = db.collection("cases");
 let original;
 const message = (claims = [entry]) => ({
@@ -38,19 +39,60 @@ beforeAll(async () => {
   await mongoClient.connect();
 });
 afterAll(async () => {
-  await cases.deleteMany({ _claimDeliveryTest: DATABASE });
+  await cases.deleteMany(testCases);
   await mongoClient.close();
 });
 beforeEach(async () => {
-  await cases.deleteMany({ _claimDeliveryTest: DATABASE });
+  await cases.deleteMany(testCases);
   const kase = Case.createMock();
   kase.supplementaryData = { agreements: [{ agreementRef: "agreement-1" }] };
-  original = { ...new CaseDocument(kase), _claimDeliveryTest: DATABASE };
+  kase.caseRef = `fgp-1382-${randomUUID()}`;
+  original = new CaseDocument(kase);
   await cases.insertOne(original);
   original = await cases.findOne({ _id: original._id });
 });
 
 describe("claim data ingestion into MongoDB", () => {
+  it("keeps ordinary case updates literal and does not introduce a claims node", async () => {
+    const kase = await caseRepository.findByCaseRefAndWorkflowCode(
+      original.caseRef,
+      original.workflowCode,
+    );
+    kase.payload = { literal: "$notAnExpression", nested: { value: "$$ROOT" } };
+    await caseRepository.update(kase);
+    const stored = await cases.findOne({ _id: original._id });
+    expect(stored.payload).toEqual(kase.payload);
+    expect(stored.supplementaryData).toEqual(original.supplementaryData);
+  });
+  it.each([false, true])(
+    "retains new claims when a stale case edit commits afterward (prior claims: %s)",
+    async (priorClaims) => {
+      const initial = priorClaims
+        ? [{ ...entry, gasClaimId: "earlier-claim" }]
+        : [];
+      if (priorClaims) {
+        await cases.updateOne(
+          { _id: original._id },
+          { $set: { "supplementaryData.claims": initial } },
+        );
+      }
+      const stale = await caseRepository.findByCaseRefAndWorkflowCode(
+        original.caseRef,
+        original.workflowCode,
+      );
+      await handleClaimSubmittedUseCase(message());
+      stale.assignedUser = { id: "new-assignee" };
+      stale.position.statusCode = "EDITED_STATUS";
+      await caseRepository.update(stale);
+      const stored = await cases.findOne({ _id: original._id });
+      expect(stored.supplementaryData.claims).toEqual([...initial, entry]);
+      expect(stored).toMatchObject({
+        assignedUserId: "new-assignee",
+        currentStatus: "EDITED_STATUS",
+      });
+    },
+  );
+
   it("persists claims idempotently without altering the remaining case document", async () => {
     await handleClaimSubmittedUseCase(message());
     await handleClaimSubmittedUseCase(message());

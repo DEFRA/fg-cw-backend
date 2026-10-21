@@ -98,13 +98,13 @@ describe("save", () => {
 
 describe("update", () => {
   it("updates a case and returns it", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
       matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock({
@@ -116,22 +116,35 @@ describe("update", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(replaceOne).toHaveBeenCalledWith(
-      { _id: caseMock.objectId },
-      new CaseDocument(caseMock),
-    );
+    expect(updateOne).toHaveBeenCalledWith({ _id: caseMock.objectId }, [
+      {
+        $replaceWith: {
+          $mergeObjects: [
+            { $literal: new CaseDocument(caseMock) },
+            {
+              supplementaryData: {
+                $mergeObjects: [
+                  { $literal: caseMock.supplementaryData },
+                  { claims: "$supplementaryData.claims" },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
     expect(result).toBe(caseMock);
   });
 
   it("throws bad request when case is not found", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
       matchedCount: 0,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock();
@@ -142,13 +155,13 @@ describe("update", () => {
   });
 
   it("throws bad request when write is unacknowledged", async () => {
-    const replaceOne = vi.fn().mockResolvedValue({
+    const updateOne = vi.fn().mockResolvedValue({
       acknowledged: false,
       matchedCount: 1,
     });
 
     db.collection.mockReturnValue({
-      replaceOne,
+      updateOne,
     });
 
     const caseMock = Case.createMock();

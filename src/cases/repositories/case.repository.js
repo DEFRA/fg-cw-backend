@@ -120,9 +120,30 @@ export const updateClaimSupplementaryData = async (kase) => {
 export const update = async (kase) => {
   const caseDocument = new CaseDocument(kase);
 
+  const supplementaryData = { ...caseDocument.supplementaryData };
+  delete supplementaryData.claims;
+
+  // A caseworker may have read before claim ingestion. Preserve the current
+  // claims atomically, rather than replacing them with that stale snapshot.
   const result = await db
     .collection(collection)
-    .replaceOne({ _id: kase.objectId }, caseDocument);
+    .updateOne({ _id: kase.objectId }, [
+      {
+        $replaceWith: {
+          $mergeObjects: [
+            { $literal: caseDocument },
+            {
+              supplementaryData: {
+                $mergeObjects: [
+                  { $literal: supplementaryData },
+                  { claims: "$supplementaryData.claims" },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${kase._id}" not found`);
