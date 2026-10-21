@@ -3,6 +3,7 @@ import { validateProps } from "../../common/validation.js";
 import { comment } from "../schemas/comment.schema.js";
 import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { Code, InputSchema, ValueOption } from "../schemas/task.schema.js";
+import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 
 export class WorkflowTask {
   constructor(props) {
@@ -21,6 +22,16 @@ export class WorkflowTask {
     this.input = value.input;
     this.requiredRoles = value.requiredRoles;
     this.comment = value.comment;
+  }
+
+  static fromDefinition(definition) {
+    validateProps(
+      definition,
+      WorkflowTask.definitionSchema,
+      `WorkflowTask "${definition?.code}"`,
+    );
+
+    return new WorkflowTask(definition);
   }
 
   hasInput() {
@@ -69,3 +80,7 @@ WorkflowTask.validationSchema = Joi.object({
       "At least one status option must have completes set to true",
   })
   .label("Task");
+
+WorkflowTask.definitionSchema = Joi.object({
+  valueOptions: uniqueCodes.optional(),
+}).unknown();
