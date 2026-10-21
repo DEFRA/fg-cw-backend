@@ -13,6 +13,7 @@ import {
   findCasesByCaseRefsAndWorkflowCode,
   save,
   update,
+  updateClaimSupplementaryData,
   updateStage,
 } from "./case.repository.js";
 import { CaseDocument } from "./case/case-document.js";
@@ -621,5 +622,32 @@ describe("countByPosition", () => {
     const result = await countByPosition(["unknown"]);
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("updateClaimSupplementaryData", () => {
+  it("sets only the claims node, preserving concurrent unrelated case edits", async () => {
+    const kase = Case.createMock();
+    kase.supplementaryData.claims = [{ gasClaimId: "id-1" }];
+    const updateOne = vi
+      .fn()
+      .mockResolvedValue({ acknowledged: true, matchedCount: 1 });
+    db.collection.mockReturnValue({ updateOne });
+    await updateClaimSupplementaryData(kase);
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: kase.objectId },
+      { $set: { "supplementaryData.claims": kase.supplementaryData.claims } },
+    );
+  });
+  it.each([
+    { acknowledged: true, matchedCount: 0 },
+    { acknowledged: false, matchedCount: 1 },
+  ])("rejects failed write %j", async (result) => {
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue(result),
+    });
+    await expect(
+      updateClaimSupplementaryData(Case.createMock()),
+    ).rejects.toThrow();
   });
 });

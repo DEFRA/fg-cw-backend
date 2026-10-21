@@ -100,6 +100,23 @@ export const save = async (kase, session) => {
   return result;
 };
 
+// Persist the claims node only: a status or task edit made after the read
+// must survive ingestion of supplementary data.
+export const updateClaimSupplementaryData = async (kase) => {
+  const result = await db
+    .collection(collection)
+    .updateOne(
+      { _id: kase.objectId },
+      { $set: { "supplementaryData.claims": kase.supplementaryData.claims } },
+    );
+  if (result.matchedCount === 0) {
+    throw Boom.notFound(`Case with id "${kase._id}" not found`);
+  }
+  if (!result.acknowledged) {
+    throw Boom.internal("Claim supplementary data update was not acknowledged");
+  }
+};
+
 export const update = async (kase) => {
   const caseDocument = new CaseDocument(kase);
 
