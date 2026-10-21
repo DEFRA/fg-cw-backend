@@ -17,7 +17,7 @@ import {
   findCasesByCaseRefsAndWorkflowCode,
   save,
   update,
-  updateClaimSupplementaryData,
+  updateSupplementaryData,
   updateStage,
 } from "./case.repository.js";
 import {
@@ -137,10 +137,16 @@ describe("update", () => {
       closedAt: new Date(),
       supplementaryData: {
         agreements: [{ agreementRef: "updated" }],
-        claims: [{ gasClaimId: "stale" }],
+        other: [{ id: "unchanged" }],
       },
     });
 
+    caseMock.updateSupplementaryData({
+      targetNode: "agreements",
+      dataType: "ARRAY",
+      key: "agreementRef",
+      data: { agreementRef: "updated" },
+    });
     const result = await update(caseMock);
 
     const { _id, refs, supplementaryData, ...document } = new CaseDocument(
@@ -710,18 +716,23 @@ describe("countByPosition", () => {
   });
 });
 
-describe("updateClaimSupplementaryData", () => {
-  it("sets only the claims node, preserving concurrent unrelated case edits", async () => {
+describe("updateSupplementaryData", () => {
+  it("sets only changed supplementary nodes, preserving unrelated case edits", async () => {
     const kase = Case.createMock();
-    kase.supplementaryData.claims = [{ gasClaimId: "id-1" }];
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "id-1" },
+    });
     const updateOne = vi
       .fn()
       .mockResolvedValue({ acknowledged: true, matchedCount: 1 });
     db.collection.mockReturnValue({ updateOne });
-    await updateClaimSupplementaryData(kase);
+    await updateSupplementaryData(kase);
     expect(updateOne).toHaveBeenCalledWith(
       { _id: kase.objectId },
-      { $set: { "supplementaryData.claims": kase.supplementaryData.claims } },
+      { $set: { "supplementaryData.results": kase.supplementaryData.results } },
     );
   });
   it.each([
@@ -731,9 +742,7 @@ describe("updateClaimSupplementaryData", () => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue(result),
     });
-    await expect(
-      updateClaimSupplementaryData(Case.createMock()),
-    ).rejects.toThrow();
+    await expect(updateSupplementaryData(Case.createMock())).rejects.toThrow();
   });
 });
 

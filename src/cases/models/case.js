@@ -15,6 +15,8 @@ import {
 } from "./timeline-event.js";
 
 export class Case {
+  #updatedSupplementaryNodes = new Set();
+
   // eslint-disable-next-line complexity
   constructor(props) {
     const comments = toComments(props.comments);
@@ -163,11 +165,17 @@ export class Case {
   }
 
   getSupplementaryDataNode(targetNode, dataType) {
-    if (this.supplementaryData[targetNode]) {
+    if (
+      Object.hasOwn(this.supplementaryData, targetNode) &&
+      this.supplementaryData[targetNode]
+    ) {
       return this.supplementaryData[targetNode];
     }
 
-    this.supplementaryData[targetNode] = dataType === "ARRAY" ? [] : {};
+    this.supplementaryData = {
+      ...this.supplementaryData,
+      [targetNode]: dataType === "ARRAY" ? [] : {},
+    };
     return this.supplementaryData[targetNode];
   }
 
@@ -205,8 +213,7 @@ export class Case {
         `Can not update supplementaryData "${targetNode}" as an object without a key`,
       );
     }
-    targetData[data[key]] = data;
-    return targetData;
+    return { ...targetData, [data[key]]: data };
   }
 
   updateSupplementaryDataArray({ targetData, key, data }) {
@@ -228,7 +235,21 @@ export class Case {
   }
 
   addSupplementaryData(targetNode, data) {
-    this.supplementaryData[targetNode] = data;
+    this.supplementaryData = { ...this.supplementaryData, [targetNode]: data };
+    this.#updatedSupplementaryNodes.add(targetNode);
+  }
+
+  getSupplementaryDataUpdates() {
+    return Object.fromEntries(
+      [...this.#updatedSupplementaryNodes].map((node) => [
+        node,
+        this.supplementaryData[node],
+      ]),
+    );
+  }
+
+  clearSupplementaryDataUpdates() {
+    this.#updatedSupplementaryNodes.clear();
   }
 
   updateStageOutcome({ workflow, actionCode, comment, createdBy }) {

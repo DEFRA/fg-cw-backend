@@ -25,10 +25,10 @@ describe("declared event types", () => {
 
   it("lists every type the inbox receives", () => {
     expect(eventTypeNames(INBOX)).toEqual([
-      "ClaimSubmitted",
       "ConfigVersionUpdated",
       "CreateCase",
       "UpdateCaseStatus",
+      "UpdateCaseSupplementaryData",
       "Unrecognised",
     ]);
   });
@@ -38,9 +38,9 @@ describe("declared event types", () => {
   it("names the events that cross to and from GAS as GAS does", () => {
     const sent = ["CaseStatusUpdated"];
     const received = [
-      "ClaimSubmitted",
       "CreateCase",
       "UpdateCaseStatus",
+      "UpdateCaseSupplementaryData",
       "ConfigVersionUpdated",
     ];
 

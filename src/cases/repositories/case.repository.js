@@ -105,21 +105,26 @@ export const save = async (kase, session) => {
   return result;
 };
 
-// Persist the claims node only: a status or task edit made after the read
-// must survive ingestion of supplementary data.
-export const updateClaimSupplementaryData = async (kase) => {
+const supplementaryDataFields = (kase) =>
+  Object.fromEntries(
+    Object.entries(kase.getSupplementaryDataUpdates()).map(([node, data]) => [
+      `supplementaryData.${node}`,
+      data,
+    ]),
+  );
+
+// Persist only changed supplementary nodes, without writing stale case fields.
+export const updateSupplementaryData = async (kase) => {
   const result = await db
     .collection(collection)
-    .updateOne(
-      { _id: kase.objectId },
-      { $set: { "supplementaryData.claims": kase.supplementaryData.claims } },
-    );
+    .updateOne({ _id: kase.objectId }, { $set: supplementaryDataFields(kase) });
   if (result.matchedCount === 0) {
     throw Boom.notFound(`Case with id "${kase._id}" not found`);
   }
   if (!result.acknowledged) {
-    throw Boom.internal("Claim supplementary data update was not acknowledged");
+    throw Boom.internal("Supplementary data update was not acknowledged");
   }
+  kase.clearSupplementaryDataUpdates();
 };
 
 export const update = async (kase) => {
@@ -127,18 +132,10 @@ export const update = async (kase) => {
     kase,
   );
 
-  // Save other supplementary nodes individually so a stale case edit cannot
-  // overwrite claims received since the case was read.
-  const supplementaryUpdates = Object.fromEntries(
-    Object.entries(supplementaryData ?? {})
-      .filter(([node]) => node !== "claims")
-      .map(([node, data]) => [`supplementaryData.${node}`, data]),
-  );
-
   const result = await db.collection(collection).updateOne(
     { _id: kase.objectId },
     {
-      $set: { ...caseDocument, ...supplementaryUpdates },
+      $set: { ...caseDocument, ...supplementaryDataFields(kase) },
       $addToSet: { refs: { $each: refs } },
     },
   );
@@ -153,6 +150,7 @@ export const update = async (kase) => {
     );
   }
 
+  kase.clearSupplementaryDataUpdates();
   return kase;
 };
 

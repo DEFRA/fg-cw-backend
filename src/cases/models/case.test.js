@@ -1553,3 +1553,36 @@ describe("Case", () => {
     });
   });
 });
+
+describe("supplementary data changes", () => {
+  it("does not mark loaded data as changed", () => {
+    const kase = Case.createMock({
+      supplementaryData: { anything: [{ id: "original" }] },
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+  it("records only explicitly updated arbitrary nodes", () => {
+    const kase = Case.createMock({
+      supplementaryData: { untouched: ["existing"] },
+    });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "one", arbitrary: true },
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({
+      results: [{ id: "one", arbitrary: true }],
+    });
+    expect(kase.supplementaryData.untouched).toEqual(["existing"]);
+  });
+  it("clears recorded changes without changing the stored blob", () => {
+    const kase = Case.createMock();
+    kase.addSupplementaryData("anything", { nested: [1, null, "text"] });
+    kase.clearSupplementaryDataUpdates();
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.supplementaryData.anything).toEqual({
+      nested: [1, null, "text"],
+    });
+  });
+});

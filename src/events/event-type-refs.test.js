@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { caseStatusUpdated } from "../cases/events/case-status-updated.event.js";
 import {
-  claimSubmitted,
+  caseUpdateSupplementaryData,
   caseCreate,
   caseUpdateStatus,
   configVersionUpdated,
@@ -12,8 +12,8 @@ const GAS = "cloud.defra.local.fg-gas-backend.";
 
 const declared = [
   {
-    eventType: claimSubmitted,
-    sentAs: `${GAS}claim.submitted`,
+    eventType: caseUpdateSupplementaryData,
+    sentAs: `${GAS}case.update.supplementary.data`,
     boxes: [INBOX],
     event: { data: { workflowCode: "woodland", caseRef: "abc-123" } },
     refs: [

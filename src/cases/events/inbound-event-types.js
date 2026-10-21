@@ -31,9 +31,9 @@ export const configVersionUpdated = defineEventType({
   boxes: [INBOX],
 });
 
-export const claimSubmitted = defineEventType({
-  name: "ClaimSubmitted",
-  sentAs: `${GAS}claim.submitted`,
+export const caseUpdateSupplementaryData = defineEventType({
+  name: "UpdateCaseSupplementaryData",
+  sentAs: `${GAS}case.update.supplementary.data`,
   boxes: [INBOX],
   refs: ({ data }) => caseRefsOf(data?.workflowCode, data?.caseRef),
 });
