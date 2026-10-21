@@ -2,7 +2,29 @@
 
 ## Running with other services
 
-If you want to run this service with other farming grants applications see [fg-grants-core](https://github.com/DEFRA/fg-grants-core)
+There are two ways to run fg-cw-backend locally:
+
+- **On its own:** `docker compose up --build --watch` in this repo. It uses this
+  repo's `compose.yml`, which runs its own MongoDB, floci and Entra stub, and the integration tests
+  use the same file. See [Docker](#docker).
+- **With the rest of Farming Grants:** check out [fg-grants-core](https://github.com/DEFRA/fg-grants-core) alongside this repo and
+  run `npm run stack cw` there (add `grants-ui`, `agreements` and so on as
+  needed). fg-grants-core runs the shared infrastructure and wires the services
+  together.
+
+Both ways use this repo's `compose/compose.cw-backend.yml`, so:
+
+- Container env goes in the `environment:` block of `compose/compose.cw-backend.yml`.
+  `.env` is for running node on your machine, so values that differ inside a
+  container, such as `MONGO_URI` and other services' hostnames, are set there.
+- Values that only make sense in the full stack, such as other services' URLs
+  and tokens, stay in fg-grants-core's `compose/compose.override.yml`.
+- New queues and topics go in `compose/floci/start.d/10-setup-resources.sh`.
+  fg-grants-core mounts that script into its own floci, alongside other repos'
+  scripts, so a queue or topic that another repo also creates must keep the
+  same attributes.
+- Keep the infrastructure versions in `compose.yml` the same as
+  fg-grants-core's. `npm run stack` there warns when they differ.
 
 ## Documentation
 
