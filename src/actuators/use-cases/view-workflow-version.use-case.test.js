@@ -5,7 +5,10 @@ import {
   findAllForCode,
   findCurrent,
 } from "../../cases/repositories/config-version.repository.js";
-import { findStoredWorkflowRow } from "../../cases/repositories/workflow.repository.js";
+import {
+  findStoredVersions,
+  findStoredWorkflowRow,
+} from "../../cases/repositories/workflow.repository.js";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { viewWorkflowVersionUseCase } from "./view-workflow-version.use-case.js";
 
@@ -62,6 +65,7 @@ beforeEach(() => {
   ]);
   findCurrent.mockResolvedValue(aRow("1.2.0"));
   findStoredWorkflowRow.mockResolvedValue(aStoredWorkflow());
+  findStoredVersions.mockResolvedValue(new Set(["2.0.0"]));
 });
 
 afterEach(() => {
@@ -77,10 +81,27 @@ describe("viewWorkflowVersionUseCase", () => {
         status: "draft",
         receivedAt: RECEIVED_AT,
         fetchStatus: "pending",
+        stored: true,
+        fetchError: null,
+        fetchAttempts: 0,
+        s3Key: "pigs-might-fly/1.0.0/cw/cw.json",
+        s3Bucket: "config-broker-local",
       },
       versions: [
-        { version: "2.0.0", status: "draft", receivedAt: RECEIVED_AT },
-        { version: "1.2.0", status: "active", receivedAt: RECEIVED_AT },
+        {
+          version: "2.0.0",
+          status: "draft",
+          receivedAt: RECEIVED_AT,
+          fetchStatus: "pending",
+          stored: true,
+        },
+        {
+          version: "1.2.0",
+          status: "active",
+          receivedAt: RECEIVED_AT,
+          fetchStatus: "pending",
+          stored: false,
+        },
       ],
       current: "1.2.0",
       storedBytes: 5120,
@@ -93,6 +114,29 @@ describe("viewWorkflowVersionUseCase", () => {
       { code: "woodland", version: "2.0.0" },
       undefined,
     );
+  });
+
+  it("answers the version's last fetch error, attempts and S3 location", async () => {
+    findAllForCode.mockResolvedValue([
+      aRow("2.0.0", {
+        fetchStatus: FetchStatus.TransientError,
+        fetchError: "NoSuchKey",
+        fetchAttempts: 3,
+        s3Key: "woodland/2.0.0/cw/cw.json",
+        s3Bucket: "config-broker",
+      }),
+    ]);
+    findStoredVersions.mockResolvedValue(new Set());
+
+    expect((await read()).version).toMatchObject({
+      fetchStatus: "transient_error",
+      stored: false,
+      fetchError: "NoSuchKey",
+      fetchAttempts: 3,
+      s3Key: "woodland/2.0.0/cw/cw.json",
+      s3Bucket: "config-broker",
+    });
+    expect(findStoredVersions).toHaveBeenCalledWith("woodland", ["2.0.0"]);
   });
 
   it("answers nulls for a version whose workflow is not stored", async () => {

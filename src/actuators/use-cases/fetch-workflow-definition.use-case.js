@@ -3,7 +3,7 @@ import { WorkflowDefinitionFetch } from "../../cases/models/workflow-definition-
 import { findByGrantCodeAndVersion } from "../../cases/repositories/config-version.repository.js";
 import { Workflow } from "../../cases/models/workflow.js";
 import {
-  findStoredWorkflowRow,
+  findStoredVersions,
   saveFromDefinition,
 } from "../../cases/repositories/workflow.repository.js";
 import {
@@ -80,7 +80,9 @@ const fetchWorkflowDefinition = async ({ grantCode, version }) => {
     throw workflowVersionNotFound();
   }
 
-  if (await findStoredWorkflowRow({ code: grantCode, version })) {
+  const storedVersions = await findStoredVersions(grantCode, [version]);
+
+  if (storedVersions.has(version)) {
     return { files: [] };
   }
 

@@ -9,6 +9,9 @@ const versionEntry = {
   version: Joi.string().required(),
   status: Joi.string().required(),
   receivedAt: nullableIso.required(),
+  fetchStatus: nullableString.required(),
+  // Whether the workflow is in the workflows collection, however it got there.
+  stored: Joi.boolean().required(),
 };
 
 // Newest first.
@@ -44,7 +47,10 @@ export const workflowVersionResponseSchema = Joi.object({
   version: Joi.object({
     grantCode: Joi.string().required(),
     ...versionEntry,
-    fetchStatus: nullableString.required(),
+    fetchError: nullableString.required(),
+    fetchAttempts: Joi.number().integer().min(0).required(),
+    s3Key: nullableString.required(),
+    s3Bucket: nullableString.required(),
   })
     .required()
     .label("WorkflowConfigVersion"),

@@ -549,6 +549,9 @@ take the operator headers and are not audited here: fg-gas-backend audits the
 page view. With `include=document`, a version read also returns the stored
 workflow and the address each endpoint resolves to from `{SERVICE}_URL`
 (scheme, host and path only; `{SERVICE}_HEADERS` is never read).
+Each version listed carries its fetch status and whether its workflow is
+stored, however it got there; a version read adds its last fetch error, failed
+attempts and S3 location.
 `POST …/{version}/fetch?by=` stores a version's workflow from S3 when it is
 not stored and the definition is a valid workflow for that code, and is audited
 as `FETCH_CONFIG_DEFINITION`. It never changes the config version record, so

@@ -117,7 +117,32 @@ describe("GET /actuators/workflows/{code}/versions", () => {
       version: "2.0.0",
       status: "draft",
       receivedAt: expect.any(String),
+      fetchStatus: "pending",
+      stored: false,
     });
+  });
+
+  it("answers each version's fetch status, and whether its workflow is stored however it got there", async () => {
+    const code = aGrantCode("woodland");
+    await seedConfigVersion(db, code, "1.0.0", { fetchStatus: "fetched" });
+    await seedConfigVersion(db, code, "1.1.0");
+    await seedConfigVersion(db, code, "1.2.0");
+    await storeWorkflow(code, "1.0.0");
+    await storeWorkflow(code, "1.1.0");
+
+    const { payload } = await viewWorkflowVersions(code);
+
+    expect(
+      payload.versions.map(({ version, fetchStatus, stored }) => ({
+        version,
+        fetchStatus,
+        stored,
+      })),
+    ).toEqual([
+      { version: "1.2.0", fetchStatus: "pending", stored: false },
+      { version: "1.1.0", fetchStatus: "pending", stored: true },
+      { version: "1.0.0", fetchStatus: "fetched", stored: true },
+    ]);
   });
 
   it("answers a null current version when none is active", async () => {
@@ -152,12 +177,35 @@ describe("GET /actuators/workflows/{code}/versions/{version}", () => {
         version: "2.0.0",
         status: "draft",
         fetchStatus: "pending",
+        stored: false,
+        fetchError: null,
+        fetchAttempts: 0,
+        s3Key: `${code}/2.0.0/cw/cw.json`,
+        s3Bucket: "config-broker-local",
       },
       current: null,
       storedBytes: null,
       summary: null,
       document: null,
       addresses: [],
+    });
+  });
+
+  it("answers a failing version's last fetch error and attempts", async () => {
+    const code = aGrantCode("woodland");
+    await seedConfigVersion(db, code, "1.0.0", {
+      fetchStatus: "transient_error",
+      fetchError: "The specified key does not exist.",
+      fetchAttempts: 3,
+    });
+
+    const { payload } = await viewWorkflowVersion(code, "1.0.0");
+
+    expect(payload.version).toMatchObject({
+      fetchStatus: "transient_error",
+      stored: false,
+      fetchError: "The specified key does not exist.",
+      fetchAttempts: 3,
     });
   });
 

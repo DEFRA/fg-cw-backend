@@ -10,6 +10,7 @@ import {
   findAllCodes,
   findByCode,
   findByCodeAndVersion,
+  findStoredVersions,
   findStoredWorkflowRow,
   save,
   saveFromDefinition,
@@ -443,5 +444,23 @@ describe("findStoredWorkflowRow", () => {
     });
 
     expect(await findStoredWorkflowRow(key)).toBeNull();
+  });
+});
+
+describe("findStoredVersions", () => {
+  it("answers those of the versions whose workflow is stored under the code", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ version: "1.2.0" }]),
+    });
+    db.collection.mockReturnValue({ find });
+
+    const stored = await findStoredVersions("woodland", ["2.0.0", "1.2.0"]);
+
+    expect(stored).toEqual(new Set(["1.2.0"]));
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith(
+      { code: "woodland", version: { $in: ["2.0.0", "1.2.0"] } },
+      { projection: { _id: 0, version: 1 }, maxTimeMS: expect.any(Number) },
+    );
   });
 });

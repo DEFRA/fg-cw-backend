@@ -6,12 +6,16 @@ import {
   findCurrent,
 } from "../../cases/repositories/config-version.repository.js";
 import { toWorkflowSummary } from "../../cases/repositories/workflow/admin-workflow-row.js";
-import { findStoredWorkflowRow } from "../../cases/repositories/workflow.repository.js";
+import {
+  findStoredVersions,
+  findStoredWorkflowRow,
+} from "../../cases/repositories/workflow.repository.js";
 import { notFoundWithReason } from "../../common/not-found-with-reason.js";
 import { toServiceAddress } from "../../common/service-config-builder.js";
 import {
   toVersionEntry,
   toVersions,
+  versionsOf,
 } from "./view-workflow-versions.use-case.js";
 
 export const WORKFLOW_VERSION_NOT_FOUND = "WORKFLOW_VERSION_NOT_FOUND";
@@ -62,14 +66,18 @@ export const viewWorkflowVersionUseCase = async ({
   ]);
 
   const row = findRow(rows, version);
+  const storedVersions = await findStoredVersions(code, versionsOf(rows));
 
   return {
     version: {
       grantCode: row.grantCode,
-      ...toVersionEntry(row),
-      fetchStatus: row.fetchStatus,
+      ...toVersionEntry(row, storedVersions),
+      fetchError: row.fetchError,
+      fetchAttempts: row.fetchAttempts,
+      s3Key: row.s3Key,
+      s3Bucket: row.s3Bucket,
     },
-    ...toVersions(rows, current),
+    ...toVersions(rows, current, storedVersions),
     ...toStoredParts(doc),
     ...toDocumentParts(doc, include),
   };

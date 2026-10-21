@@ -10,7 +10,7 @@ import {
   upsert,
 } from "../../cases/repositories/config-version.repository.js";
 import {
-  findStoredWorkflowRow,
+  findStoredVersions,
   saveFromDefinition,
 } from "../../cases/repositories/workflow.repository.js";
 import { auditStatus } from "../../common/audit-constants.js";
@@ -64,7 +64,7 @@ const s3Error = (code, statusCode) =>
 beforeEach(() => {
   writeAuditEvent.mockResolvedValue(undefined);
   findByGrantCodeAndVersion.mockResolvedValue(aRow("pigs-might-fly"));
-  findStoredWorkflowRow.mockResolvedValue(null);
+  findStoredVersions.mockResolvedValue(new Set());
   fetchConfigFile.mockResolvedValue(DEFINITION);
   saveFromDefinition.mockResolvedValue({});
 });
@@ -82,13 +82,12 @@ describe("fetchWorkflowDefinitionUseCase", () => {
   });
 
   it("answers no files, and reads nothing from S3, when the workflow is already stored", async () => {
-    findStoredWorkflowRow.mockResolvedValue({ storedBytes: 10 });
+    findStoredVersions.mockResolvedValue(new Set(["2.0.0"]));
 
     expect(await fetch()).toEqual({ files: [] });
-    expect(findStoredWorkflowRow).toHaveBeenCalledWith({
-      code: "pigs-might-fly",
-      version: "2.0.0",
-    });
+    expect(findStoredVersions).toHaveBeenCalledWith("pigs-might-fly", [
+      "2.0.0",
+    ]);
     expect(fetchConfigFile).not.toHaveBeenCalled();
   });
 
@@ -215,7 +214,10 @@ describe("fetchWorkflowDefinitionUseCase", () => {
       "fails",
       () => fetchConfigFile.mockRejectedValue(s3Error("NoSuchKey", 404)),
     ],
-    ["finds it stored", () => findStoredWorkflowRow.mockResolvedValue({})],
+    [
+      "finds it stored",
+      () => findStoredVersions.mockResolvedValue(new Set(["2.0.0"])),
+    ],
   ])("never writes the config version record when it %s", async (_, given) => {
     given();
 

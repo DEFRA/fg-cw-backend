@@ -20,7 +20,15 @@ const get = async (url, headers = asGas()) =>
 const ANSWER = {
   code: "Casework-Smoke",
   current: null,
-  versions: [{ version: "0.0.0", status: "draft", receivedAt: null }],
+  versions: [
+    {
+      version: "0.0.0",
+      status: "draft",
+      receivedAt: null,
+      fetchStatus: "pending",
+      stored: true,
+    },
+  ],
 };
 
 beforeEach(() => {
@@ -37,6 +45,19 @@ describe("viewWorkflowVersionsRoute", () => {
       code: "Casework-Smoke",
     });
     expect(response.headers["cache-control"]).toBe("no-store");
+  });
+
+  it("answers 500 rather than a version without its stored state", async () => {
+    const [entry] = ANSWER.versions;
+    const { stored: _, ...unstated } = entry;
+    viewWorkflowVersionsUseCase.mockResolvedValue({
+      ...ANSWER,
+      versions: [unstated],
+    });
+
+    expect(
+      (await get("/actuators/workflows/woodland/versions")).statusCode,
+    ).toBe(500);
   });
 
   it("answers 400 to a code with other characters", async () => {

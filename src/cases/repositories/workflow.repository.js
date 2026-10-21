@@ -226,6 +226,21 @@ export const findStoredWorkflowRow = async (key, include) => {
   return doc ?? null;
 };
 
+export const findStoredVersions = async (code, versions) => {
+  const docs = await db
+    .collection(collection)
+    .find(
+      { code, version: { $in: versions } },
+      {
+        projection: { _id: 0, version: 1 },
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    )
+    .toArray();
+
+  return new Set(docs.map(({ version }) => version));
+};
+
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });
   await save(workflow);

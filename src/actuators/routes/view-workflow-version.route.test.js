@@ -21,10 +21,19 @@ const VERSION = {
   version: "2.0.0",
   status: "draft",
   receivedAt: "2026-10-15T10:04:00.000Z",
+  fetchStatus: "transient_error",
+  stored: false,
 };
 
 const NOT_STORED = {
-  version: { grantCode: "woodland", ...VERSION, fetchStatus: "pending" },
+  version: {
+    grantCode: "woodland",
+    ...VERSION,
+    fetchError: "NoSuchKey",
+    fetchAttempts: 2,
+    s3Key: "woodland/2.0.0/cw/cw.json",
+    s3Bucket: "config-broker",
+  },
   versions: [VERSION],
   current: null,
   storedBytes: null,
