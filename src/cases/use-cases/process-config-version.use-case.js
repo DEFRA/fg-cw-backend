@@ -9,11 +9,14 @@ import {
 } from "../../common/s3-client.js";
 import { parseSemver } from "../../common/semver.js";
 import { markPermanentFailure } from "../../events/retryable.js";
-import { ConfigVersion } from "../models/config-version.js";
+import {
+  ConfigVersion,
+  ConfigVersionStatus,
+} from "../models/config-version.js";
 import { Workflow } from "../models/workflow.js";
 import { upsert } from "../repositories/config-version.repository.js";
 
-const VALID_STATUSES = ["active", "draft"];
+const VALID_STATUSES = Object.values(ConfigVersionStatus);
 
 const assertRequiredFields = ({ grantCode, version }) => {
   if (!grantCode || !version) {
