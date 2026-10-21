@@ -20,6 +20,7 @@
 //     - dataType: "ARRAY" or "OBJECT"
 //     - data: The actual data to store
 //
+import { claimSubmittedDataSchema } from "../../src/cases/models/claim-submitted-data.schema.js";
 import { MatchersV2, MessageConsumerPact } from "@pact-foundation/pact";
 import path from "path";
 import { describe, expect, it } from "vitest";
@@ -577,5 +578,54 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           expect(cloudEvent.data.supplementaryData.data).toBeUndefined();
         });
     });
+  });
+});
+
+describe("Submitted claim event", () => {
+  it("accepts a submitted claim event from GAS", async () => {
+    const pact = new MessageConsumerPact({
+      consumer: "fg-cw-backend",
+      provider: "fg-gas-backend",
+      dir: path.resolve(process.cwd(), "tmp/pacts"),
+      logLevel: "warn",
+    });
+    await pact
+      .expectsToReceive("a submitted claim event from GAS")
+      .withContent({
+        id: uuid("12345678-1234-1234-1234-123456789001"),
+        type: term({
+          generate: "cloud.defra.test.fg-gas-backend.claim.submitted",
+          matcher:
+            "^cloud\\.defra\\.[a-z-]+\\.fg-gas-backend\\.claim\\.submitted$",
+        }),
+        source: "fg-gas-backend",
+        specversion: "1.0",
+        datacontenttype: "application/json",
+        time: iso8601DateTimeWithMillis("2026-08-07T11:16:06.124Z"),
+        data: {
+          caseRef: like("wmp-6hb-j8e"),
+          workflowCode: like("woodland"),
+          claims: [
+            {
+              gasClaimId: like("507f1f77bcf86cd799439011"),
+              clientClaimRef: like("WMP-6HB-J8E-C0001"),
+              claimCode: like("ENT_CS_CAPITAL_PA3"),
+              claimAmountPence: like(150000),
+              sbi: like("113593357"),
+              status: "SUBMITTED",
+              submittedAt: iso8601DateTimeWithMillis(
+                "2026-08-07T11:16:05.745Z",
+              ),
+            },
+          ],
+        },
+      })
+      .withMetadata({ contentType: "application/json" })
+      .verify(async (message) => {
+        const { data } = message.contents;
+        expect(claimSubmittedDataSchema.validate(data).error).toBeUndefined();
+        expect(data).not.toHaveProperty("newStatus");
+        expect(data).not.toHaveProperty("supplementaryData");
+      });
   });
 });
