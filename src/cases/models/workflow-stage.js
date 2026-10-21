@@ -1,4 +1,9 @@
 import Boom from "@hapi/boom";
+import Joi from "joi";
+import { validateProps } from "../../common/validation.js";
+import { uniqueCodes } from "../schemas/unique-codes.schema.js";
+import { WorkflowStageStatus } from "./workflow-stage-status.js";
+import { WorkflowTaskGroup } from "./workflow-task-group.js";
 
 export class WorkflowStage {
   constructor(props) {
@@ -9,6 +14,20 @@ export class WorkflowStage {
     this.taskGroups = props.taskGroups;
     this.beforeContent = props.beforeContent || [];
     this.afterContent = props.afterContent || [];
+  }
+
+  static fromDefinition(definition) {
+    validateProps(
+      definition,
+      WorkflowStage.definitionSchema,
+      `WorkflowStage "${definition?.code}"`,
+    );
+
+    return new WorkflowStage({
+      ...definition,
+      statuses: definition.statuses.map(WorkflowStageStatus.fromDefinition),
+      taskGroups: definition.taskGroups.map(WorkflowTaskGroup.fromDefinition),
+    });
   }
 
   findTaskGroup(taskGroupCode) {
@@ -50,3 +69,8 @@ export class WorkflowStage {
     return status.getActions();
   }
 }
+
+WorkflowStage.definitionSchema = Joi.object({
+  statuses: uniqueCodes.required(),
+  taskGroups: uniqueCodes.required(),
+}).unknown();

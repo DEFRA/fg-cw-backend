@@ -1,4 +1,7 @@
 import Boom from "@hapi/boom";
+import Joi from "joi";
+import { validateProps } from "../../common/validation.js";
+import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { Position } from "./position.js";
 import { WorkflowActionComment } from "./workflow-action-comment.js";
 import { WorkflowAction } from "./workflow-action.js";
@@ -12,6 +15,19 @@ export class WorkflowPhase {
     this.code = props.code;
     this.name = props.name;
     this.stages = props.stages;
+  }
+
+  static fromDefinition(definition) {
+    validateProps(
+      definition,
+      WorkflowPhase.definitionSchema,
+      `WorkflowPhase "${definition?.code}"`,
+    );
+
+    return new WorkflowPhase({
+      ...definition,
+      stages: definition.stages.map(WorkflowStage.fromDefinition),
+    });
   }
 
   findStage(stageCode) {
@@ -145,3 +161,7 @@ export class WorkflowPhase {
     });
   }
 }
+
+WorkflowPhase.definitionSchema = Joi.object({
+  stages: uniqueCodes.required(),
+}).unknown();

@@ -1,4 +1,7 @@
 import Boom from "@hapi/boom";
+import Joi from "joi";
+import { validateProps } from "../../common/validation.js";
+import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowTaskValueOption } from "./workflow-task-value-option.js";
 import { WorkflowTask } from "./workflow-task.js";
@@ -9,6 +12,19 @@ export class WorkflowTaskGroup {
     this.name = props.name;
     this.description = props.description;
     this.tasks = props.tasks;
+  }
+
+  static fromDefinition(definition) {
+    validateProps(
+      definition,
+      WorkflowTaskGroup.definitionSchema,
+      `WorkflowTaskGroup "${definition?.code}"`,
+    );
+
+    return new WorkflowTaskGroup({
+      ...definition,
+      tasks: definition.tasks.map(WorkflowTask.fromDefinition),
+    });
   }
 
   findTask(taskCode) {
@@ -54,3 +70,7 @@ export class WorkflowTaskGroup {
     });
   }
 }
+
+WorkflowTaskGroup.definitionSchema = Joi.object({
+  tasks: uniqueCodes.required(),
+}).unknown();

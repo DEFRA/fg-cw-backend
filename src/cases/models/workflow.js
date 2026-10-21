@@ -1,10 +1,17 @@
 import Boom from "@hapi/boom";
+import Joi from "joi";
 import { ObjectId } from "mongodb";
+import { validateProps } from "../../common/validation.js";
+import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
+import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Position } from "./position.js";
 import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowEndpoint } from "./workflow-endpoint.js";
+import { WorkflowExternalAction } from "./workflow-external-action.js";
 import { WorkflowPhase } from "./workflow-phase.js";
+
+const caseDetailsTabs = (pages) => pages?.cases?.details?.tabs;
 
 export class Workflow {
   constructor(props) {
@@ -19,6 +26,117 @@ export class Workflow {
     this.templates = props.templates;
     this.externalActions = props.externalActions;
     this.endpoints = props.endpoints;
+  }
+
+  // Only a published definition is held to these rules: a stored workflow has
+  // to load as it is.
+  static fromDefinition(definition, version) {
+    validateProps(
+      definition,
+      Workflow.definitionSchema,
+      `Workflow "${definition?.code}"`,
+    );
+
+    const endpoints = (definition.endpoints ?? []).map(
+      WorkflowEndpoint.fromDefinition,
+    );
+
+    const workflow = new Workflow({
+      ...definition,
+      version,
+      phases: definition.phases.map(WorkflowPhase.fromDefinition),
+      endpoints,
+      externalActions: definition.externalActions?.map((action) =>
+        WorkflowExternalAction.fromDefinition(action, endpoints),
+      ),
+    });
+
+    workflow.#assertInitialPosition();
+    workflow.#assertTransitionTargetsExist();
+    workflow.#assertTabActionsExist();
+
+    return workflow;
+  }
+
+  #invalid(message) {
+    return Boom.badRequest(`Invalid Workflow "${this.code}": ${message}`);
+  }
+
+  #assertInitialPosition() {
+    const status = this.phases[0]?.stages[0]?.statuses[0];
+
+    if (!status) {
+      throw this.#invalid(
+        "it has no initial position, its first phase needs a stage with a status",
+      );
+    }
+  }
+
+  #hasPosition(position) {
+    return this.phases.some(
+      (phase) =>
+        phase.code === position.phaseCode &&
+        phase.stages.some(
+          (stage) =>
+            stage.code === position.stageCode &&
+            stage.statuses.some(
+              (status) => status.code === position.statusCode,
+            ),
+        ),
+    );
+  }
+
+  #transitions() {
+    return this.phases.flatMap((phase) =>
+      phase.stages.flatMap((stage) =>
+        stage.statuses.flatMap((status) =>
+          status.transitions.map((transition) => ({
+            from: new Position({
+              phaseCode: phase.code,
+              stageCode: stage.code,
+              statusCode: status.code,
+            }),
+            to: transition.targetPosition,
+          })),
+        ),
+      ),
+    );
+  }
+
+  #assertTransitionTargetsExist() {
+    const missing = this.#transitions()
+      .filter(({ to }) => !this.#hasPosition(to))
+      .map(({ from, to }) => `${from} -> ${to}`);
+
+    if (missing.length > 0) {
+      throw this.#invalid(
+        `it has transitions to positions it does not contain: ${missing.join(", ")}`,
+      );
+    }
+  }
+
+  #tabActions() {
+    const tabs = caseDetailsTabs(this.pages) ?? {};
+
+    return Object.entries(tabs).flatMap(([tabId, tab]) =>
+      Object.entries(tab.action ?? {}).map(([key, actionCode]) => ({
+        tabId,
+        key,
+        actionCode,
+      })),
+    );
+  }
+
+  #assertTabActionsExist() {
+    const missing = this.#tabActions().find(
+      ({ actionCode }) => !this.findExternalAction(actionCode),
+    );
+
+    if (missing) {
+      throw this.#invalid(
+        `tab "${missing.tabId}" action "${missing.key}" names external action "${missing.actionCode}", which is not defined`,
+      );
+    }
   }
 
   findTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
@@ -183,3 +301,14 @@ export class Workflow {
     });
   }
 }
+
+Workflow.definitionSchema = Joi.object({
+  _id: Joi.string().hex().length(24).optional(),
+  code: Joi.string()
+    .pattern(/^[a-zA-Z0-9-]+$/)
+    .required(),
+  requiredRoles: requiredRolesSchema.required(),
+  phases: uniqueCodes.required(),
+  endpoints: uniqueCodes.optional(),
+  externalActions: uniqueCodes.allow(null).optional(),
+}).unknown();

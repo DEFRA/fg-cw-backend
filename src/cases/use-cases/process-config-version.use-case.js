@@ -10,8 +10,8 @@ import {
 import { parseSemver } from "../../common/semver.js";
 import { markPermanentFailure } from "../../events/retryable.js";
 import { ConfigVersion } from "../models/config-version.js";
+import { Workflow } from "../models/workflow.js";
 import { upsert } from "../repositories/config-version.repository.js";
-import { checkWorkflowDefinition } from "./check-workflow-definition.js";
 
 const VALID_STATUSES = ["active", "draft"];
 
@@ -89,7 +89,7 @@ const applyConfigVersion = async (eventData) => {
   // Checked before the version is recorded, so a definition no case can use
   // never becomes one a case resolves to.
   const definition = await fetchConfigFile(s3Bucket, s3Key);
-  checkWorkflowDefinition(definition, { grantCode, version });
+  Workflow.fromDefinition(definition, version);
 
   const configVersion = ConfigVersion.new({
     grantCode,
