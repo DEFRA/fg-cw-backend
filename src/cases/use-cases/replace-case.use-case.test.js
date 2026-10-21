@@ -9,7 +9,10 @@ import {
   findByCaseRefAndWorkflowCode,
   update,
 } from "../repositories/case-series.repository.js";
-import { findByCaseRefAndWorkflowCode as findCase } from "../repositories/case.repository.js";
+import {
+  findByCaseRefAndWorkflowCode as findCase,
+  linkSeries,
+} from "../repositories/case.repository.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
 import { replaceCaseUseCase } from "./replace-case.use-case.js";
 
@@ -69,6 +72,39 @@ describe("replaceCaseUseCase", () => {
     expect(addCaseRefSpy).toHaveBeenCalledWith(
       "TEST-001",
       "123333333344455555666666",
+    );
+  });
+
+  it("links the series it has just updated, in the same transaction", async () => {
+    newCaseUseCase.mockResolvedValue(new ObjectId("123333333344455555666666"));
+    findByCaseRefAndWorkflowCode.mockResolvedValue(
+      CaseSeries.new({
+        workflowCode: "example-workflow",
+        caseRef: "ABC-1",
+        caseId: "old-id",
+      }),
+    );
+    findCase.mockResolvedValue(Case.createMock({ closed: true }));
+
+    await replaceCaseUseCase({
+      event: {
+        data: {
+          caseRef: "ABC-2",
+          previousCaseRef: "ABC-1",
+          workflowCode: "example-workflow",
+        },
+      },
+    });
+
+    expect(linkSeries).toHaveBeenCalledWith(
+      {
+        workflowCode: "example-workflow",
+        caseRefs: ["ABC-1", "ABC-2"],
+      },
+      session,
+    );
+    expect(update.mock.invocationCallOrder[0]).toBeLessThan(
+      linkSeries.mock.invocationCallOrder[0],
     );
   });
 

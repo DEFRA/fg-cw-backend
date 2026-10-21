@@ -3,6 +3,7 @@ import { getTraceId } from "@defra/hapi-tracing";
 import { randomUUID } from "node:crypto";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
+import { auditStamps } from "../events/stamps.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
@@ -15,6 +16,17 @@ const getIP = (context) => context?.ip ?? SYSTEM_IP;
 
 const isPlainObject = (value) => value?.constructor === Object;
 
+const stripNullsFrom = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item != null).map(stripNullsFrom);
+  }
+
+  return isPlainObject(value) ? stripNulls(value) : value;
+};
+
+// The outbox insert stores `undefined` as `null`, which the audit service
+// rejects, so this has to reach into arrays (e.g. `audit.entities`) too:
+// the payload validated must be the payload persisted.
 export const stripNulls = (obj) => {
   const result = {};
 
@@ -23,7 +35,7 @@ export const stripNulls = (obj) => {
       continue;
     }
 
-    result[key] = isPlainObject(value) ? stripNulls(value) : value;
+    result[key] = stripNullsFrom(value);
   }
 
   return result;
@@ -93,6 +105,7 @@ export const writeAuditEvent = async (
       target: config.get("aws.sns.auditTopicArn"),
       event: payload,
       segregationRef: segregationRef ?? randomUUID(),
+      ...auditStamps(payload),
     });
 
     await insertMany([outboxEntry], session);

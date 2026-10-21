@@ -114,14 +114,7 @@ const toWorkflowPhase = (p) =>
     stages: p.stages.map(toWorkflowStage),
   });
 
-const toWorkflowEndpoint = (endpoint) =>
-  new WorkflowEndpoint({
-    code: endpoint.code,
-    service: endpoint.service,
-    path: endpoint.path,
-    method: endpoint.method,
-    request: endpoint.request,
-  });
+const toWorkflowEndpoint = (endpoint) => new WorkflowEndpoint(endpoint);
 
 const toWorkflow = (doc) =>
   new Workflow({
@@ -193,12 +186,12 @@ export const findAll = async (query) => {
   return workflowDocuments.map(toWorkflow);
 };
 
-export const findAllCodes = async (query, { maxTimeMS } = {}) => {
+export const findAllCodes = async (query) => {
   const filter = createWorkflowFilter(query);
 
   const documents = await db
     .collection(collection)
-    .find(filter, { projection: { _id: 0, code: 1 }, maxTimeMS })
+    .find(filter, { projection: { _id: 0, code: 1 } })
     .toArray();
 
   return [...new Set(documents.map((doc) => doc.code))];

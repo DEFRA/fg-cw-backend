@@ -6,7 +6,7 @@ import { orNull } from "../actuator-box.repository.js";
 // document is exactly what is stored.
 const COMPUTED_FIELDS = new Set(["storedBytes"]);
 
-const toPosition = (doc) => ({
+export const toPosition = (doc) => ({
   phase: orNull(doc.currentPhase),
   stage: orNull(doc.currentStage),
   status: orNull(doc.currentStatus),
@@ -18,21 +18,6 @@ export const toCaseRow = (doc) => ({
   closed: orNull(doc.closed),
   closedAt: toIsoOrNull(doc.closedAt),
   createdAt: toIsoOrNull(doc.createdAt),
-});
-
-// Matched on the row's own workflow: a ref reused under another workflow is a
-// different case.
-const isReplaced = (series, { caseRef, workflowCode }) =>
-  series.some(
-    (s) =>
-      s.workflowCode === workflowCode &&
-      s.caseRefs?.includes(caseRef) &&
-      s.latestCaseRef !== caseRef,
-  );
-
-export const toCaseListRow = (doc, series) => ({
-  ...toCaseRow(doc),
-  replaced: isReplaced(series, doc),
 });
 
 export const hasMembers = (series) => series?.caseRefs?.length > 1;
@@ -80,11 +65,3 @@ export const toStoredDocument = (doc) =>
       Object.entries(doc).filter(([key]) => !COMPUTED_FIELDS.has(key)),
     ),
   );
-
-const timeOf = (date) => date?.getTime?.() ?? 0;
-
-// Newest first, then by `_id`, as the browse pages are ordered. A `createdAt`
-// that is not a Date sorts last.
-export const byNewestFirst = (a, b) =>
-  timeOf(b.createdAt) - timeOf(a.createdAt) ||
-  String(b._id).localeCompare(String(a._id));

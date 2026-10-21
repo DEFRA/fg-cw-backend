@@ -1,7 +1,11 @@
 import Joi from "joi";
 import { describe, expect, it, vi } from "vitest";
 import { logger } from "./logger.js";
-import { safeFailAction, safeResponseFailAction } from "./validation.js";
+import {
+  bucketFailAction,
+  safeFailAction,
+  safeResponseFailAction,
+} from "./validation.js";
 
 vi.mock("./logger.js", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -29,6 +33,33 @@ describe("safeFailAction", () => {
 
     expect(logger.warn).toHaveBeenCalledWith(
       "Request failed validation: ref:string.pattern.base",
+    );
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(SECRET);
+  });
+});
+
+describe("bucketFailAction", () => {
+  it("refuses INVALID_REQUEST with its fixed message", () => {
+    expect(() => bucketFailAction({}, {}, failureOf({ ref: SECRET }))).toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({
+          statusCode: 400,
+          payload: expect.objectContaining({
+            reason: "INVALID_REQUEST",
+            message: "The request is not a bucket query",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("logs each failing path and rule, never the value", () => {
+    expect(() =>
+      bucketFailAction({}, {}, failureOf({ ref: SECRET })),
+    ).toThrow();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Query bucket request refused: ref:string.pattern.base",
     );
     expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(SECRET);
   });

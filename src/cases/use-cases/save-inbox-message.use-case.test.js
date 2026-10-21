@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { logger } from "../../common/logger.js";
+import { caseUpdateStatus } from "../events/inbound-event-types.js";
 import { Inbox } from "../models/inbox.js";
 import {
   findByMessageId,
@@ -47,6 +48,30 @@ describe("saveInboxMessageUseCase", () => {
     });
 
     expect(insertOne.mock.calls.at(-1)[0].segregationRef).toBe("woodland");
+  });
+
+  it("stamps the row with the type's facts and the message's refs", async () => {
+    insertOne.mockResolvedValue(true);
+    findByMessageId.mockResolvedValue(null);
+
+    await saveInboxMessageUseCase({
+      message: {
+        id: "MSG-1",
+        type: caseUpdateStatus.sentAs,
+        data: { caseRef: "ABC-123", workflowCode: "example-workflow" },
+      },
+      source: "GAS",
+    });
+
+    expect(insertOne.mock.calls.at(-1)[0]).toMatchObject({
+      segregationRef: "ABC-123-example-workflow",
+      eventType: "UpdateCaseStatus",
+      refs: [
+        "ref:abc-123",
+        "case:example-workflow:~41.~42.~43.-123",
+        "id:msg-1",
+      ],
+    });
   });
 
   it("returns at the duplicate check for a redelivery with no data", async () => {

@@ -584,7 +584,7 @@ describe("external-endpoint-client", () => {
     it("should log request details before execution", async () => {
       resolveEndpoint.mockReturnValue({
         url: "https://api.example.com",
-        headers: { "x-custom": "header" },
+        headers: { "x-api-key": "secret-key" },
       });
 
       const mockResponse = { statusCode: 200 };
@@ -612,12 +612,12 @@ describe("external-endpoint-client", () => {
           endpoint: "TEST_ENDPOINT",
           method: "POST",
           url: "https://api.example.com/api/test/789",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-            "x-custom": "header",
-          }),
+          headerNames: ["Content-Type", "x-api-key"],
         }),
         expect.stringContaining("Calling external endpoint"),
+      );
+      expect(JSON.stringify(logger.info.mock.calls)).not.toContain(
+        "secret-key",
       );
     });
 
@@ -708,6 +708,100 @@ describe("external-endpoint-client", () => {
         "Content-Type": "application/json",
         Authorization: "Bearer token",
         "X-Custom-Header": "custom-value",
+      });
+    });
+
+    describe("HEADERS params", () => {
+      const rerunEndpoint = {
+        code: "RECALCULATE_RULES_ENDPOINT",
+        service: "RULES_ENGINE",
+        path: "/case-management-adapter/application/validation-run/rerun",
+        method: "POST",
+      };
+
+      const caseWorkflowContext = { workflow: {} };
+
+      beforeEach(() => {
+        resolveEndpoint.mockReturnValue({
+          url: "https://api.example.com",
+          headers: { "x-api-key": "secret-key" },
+        });
+        wreck.request.mockResolvedValue({ statusCode: 200 });
+        wreck.read.mockResolvedValue({ id: 1 });
+      });
+
+      it("sends HEADERS alongside the service config headers", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          {
+            BODY: { id: 1 },
+            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+          },
+          caseWorkflowContext,
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers).toEqual({
+          "Content-Type": "application/json",
+          "x-api-key": "secret-key",
+          "Defra-Email": "case.worker@defra.gov.uk",
+        });
+      });
+
+      it.each(["x-api-key", "X-Api-Key"])(
+        "does not let HEADERS replace a service config header named %s",
+        async (name) => {
+          await callExternalEndpoint(
+            rerunEndpoint,
+            { HEADERS: { [name]: "from-workflow" } },
+            caseWorkflowContext,
+          );
+
+          const callArgs = wreck.request.mock.calls[0][2];
+          expect(callArgs.headers).toEqual({
+            "Content-Type": "application/json",
+            "x-api-key": "secret-key",
+          });
+        },
+      );
+
+      it("sends only the service config headers without HEADERS", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          { BODY: { id: 1 } },
+          caseWorkflowContext,
+        );
+
+        const callArgs = wreck.request.mock.calls[0][2];
+        expect(callArgs.headers).toEqual({
+          "Content-Type": "application/json",
+          "x-api-key": "secret-key",
+        });
+      });
+
+      it("does not log header values", async () => {
+        await callExternalEndpoint(
+          rerunEndpoint,
+          {
+            BODY: { id: 1 },
+            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+          },
+          caseWorkflowContext,
+        );
+
+        const logged = JSON.stringify([
+          logger.info.mock.calls,
+          logger.warn.mock.calls,
+          logger.error.mock.calls,
+        ]);
+        expect(logged).not.toContain("case.worker@defra.gov.uk");
+        expect(logged).not.toContain("secret-key");
+        expect(logger.info).toHaveBeenCalledWith(
+          expect.objectContaining({
+            headerNames: ["Content-Type", "Defra-Email", "x-api-key"],
+          }),
+          expect.any(String),
+        );
       });
     });
   });

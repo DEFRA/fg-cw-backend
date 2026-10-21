@@ -1,12 +1,13 @@
-import { actuatorBoxQueries, orNull } from "./actuator-box.repository.js";
+import { actuatorBoxQueries } from "./actuator-box.repository.js";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
-import { typeLabel } from "../../events/event-audit.js";
 import {
   claimExpiredAttempt,
   claimExpiredError,
+  withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
+import { withoutStamps } from "../../events/stamps.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 
 const collection = "inbox";
@@ -74,7 +75,7 @@ export const processExpiredEvents = async () => {
     {
       $set: {
         status: InboxStatus.FAILED,
-        lastError: claimExpiredError(),
+        ...withErrorKey(claimExpiredError()),
         claimedBy: null,
         claimedAt: null,
         claimExpiresAt: null,
@@ -169,41 +170,29 @@ export const insertOne = async (inbox, session) => {
 // Matching on `claimedBy` stops a handler that outlived its claim from
 // overwriting the expiry sweep's attempt count and history.
 export const update = async (inbox, claimedBy) => {
-  const document = inbox.toDocument();
-  const { _id, ...updateDoc } = document;
+  const { _id, ...updateDoc } = withoutStamps(inbox.toDocument());
 
   return db
     .collection(collection)
     .updateOne({ _id, claimedBy }, { $set: updateDoc });
 };
 
-// The pollers deliberately keep claiming in `eventTime` order, not `publicationDate`.
 export const {
-  findPage,
-  countFacets,
   findDetailById,
   findStatusById,
   redriveById,
   purgeById,
   findEditableById,
   editPayloadById,
-  breakdown,
 } = actuatorBoxQueries({
   collection,
   box: "inbox",
   maxRetries: MAX_RETRIES,
   resubmittedStatus: InboxStatus.RESUBMITTED,
-  publicationDateStorage: "string",
-  eventIdField: "messageId",
-  traceparentField: "traceparent",
   // Derived as the model derives them, so an edited envelope is claimed in
   // its new order straight away rather than after the next poller save.
   editColumns: (event) => ({
     type: event.type ?? null,
     eventTime: event.time ?? null,
   }),
-  rowFields: {
-    eventId: { reads: ["messageId"], map: (doc) => orNull(doc.messageId) },
-    type: { reads: ["type"], map: (doc) => typeLabel(doc.type, false) },
-  },
 });

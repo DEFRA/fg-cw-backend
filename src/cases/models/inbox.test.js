@@ -438,3 +438,41 @@ describe("inbox model retryable", () => {
     expect(Inbox.fromDocument(doc).retryable).toBe(false);
   });
 });
+
+describe("inbox model stamps", () => {
+  const stamps = {
+    eventType: "case.create",
+    refs: ["ref:abc-123"],
+  };
+
+  it("carries the stamps it is given onto the document", () => {
+    expect(Inbox.createMock(stamps).toDocument()).toMatchObject(stamps);
+  });
+
+  it("round-trips through toDocument and fromDocument", () => {
+    const document = Inbox.createMock(stamps).toDocument();
+
+    expect(Inbox.fromDocument(document).toDocument()).toMatchObject(stamps);
+  });
+
+  it("holds no kind, audit entity or audit action", () => {
+    const document = Inbox.createMock(stamps).toDocument();
+
+    expect(document).not.toHaveProperty("kind");
+    expect(document).not.toHaveProperty("auditEntity");
+    expect(document).not.toHaveProperty("auditAction");
+  });
+
+  it("reads a row written before stamps existed without refusing it", () => {
+    const inbox = Inbox.fromDocument({
+      source: "GAS",
+      event: {},
+      segregationRef: "1234",
+    });
+
+    expect(inbox).toMatchObject({
+      eventType: null,
+      refs: [],
+    });
+  });
+});

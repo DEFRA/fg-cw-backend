@@ -1,17 +1,15 @@
 import { ObjectId } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { config } from "../../common/config.js";
 import { db } from "../../common/mongo-client.js";
-import { paginate } from "../../common/paginate.js";
+import { STAMPED_FIELDS } from "../../events/stamps.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
-  breakdown,
   claimEvents,
   editPayloadById,
   findDetailById,
   findNextMessage,
-  findPage,
   insertMany,
   redriveById,
   update,
@@ -22,14 +20,6 @@ import {
 } from "./outbox.repository.js";
 
 vi.mock("../../common/mongo-client.js");
-// Real codecs, so the tampered-cursor tests assert real behaviour.
-vi.mock("../../common/paginate.js", async (importOriginal) => ({
-  ...(await importOriginal()),
-  paginate: vi.fn(),
-}));
-
-const AUDIT_TOPIC_ARN = config.get("aws.sns.auditTopicArn");
-const AUDIT_CLAUSE = { $not: /(^|:)cw__sns__audit_topic_arn$/ };
 
 describe("outbox.repository", () => {
   describe("findNextMessage", () => {
@@ -87,9 +77,12 @@ describe("outbox.repository", () => {
 
       await insertMany(events, mockSession);
 
-      expect(mockInsertMany).toHaveBeenCalledWith(events, {
-        session: mockSession,
-      });
+      expect(mockInsertMany).toHaveBeenCalledWith(
+        events.map((event) => ({ ...event, errorKey: null })),
+        {
+          session: mockSession,
+        },
+      );
     });
   });
 
@@ -156,6 +149,7 @@ describe("outbox.repository", () => {
             event: {},
             lastResubmissionDate: undefined,
             lastError: null,
+            errorKey: null,
             attemptHistory: [],
             lastRedrive: null,
             expireAt: null,
@@ -199,6 +193,7 @@ describe("outbox.repository", () => {
               message: "claim expired before completion",
               at: expect.any(String),
             },
+            errorKey: "ClaimExpired: claim expired before completion",
             claimedAt: null,
             claimedBy: null,
             claimExpiresAt: null,
@@ -333,21 +328,36 @@ describe("outbox.repository update and an edited row", () => {
     expect($set).not.toHaveProperty("originalPayload");
     expect($set).not.toHaveProperty("payloadRevision");
   });
+
+  it("sends no stamped field", async () => {
+    const updateOne = vi.fn();
+    db.collection.mockReturnValue({ updateOne });
+
+    const outbox = Outbox.fromDocument({
+      _id: new ObjectId(),
+      target: "arn:foo:bar",
+      segregationRef: "ref",
+      status: OutboxStatus.COMPLETED,
+      event: { id: "evt-1", time: "2026-06-16T10:00:00.000Z", data: {} },
+      eventType: "case.status.updated",
+      refs: ["ref:abc-123"],
+    });
+
+    await update(outbox, "claim");
+
+    const [, { $set }] = updateOne.mock.calls.at(-1);
+
+    expect(Object.keys($set)).toContain("status");
+    expect(
+      Object.keys($set).filter((key) => STAMPED_FIELDS.includes(key)),
+    ).toEqual([]);
+  });
 });
 
 describe("outbox.repository actuator wiring", () => {
   const ID = "665f1c2e9a1b2c3d4e5f6a7c";
-  const FROM = "2026-06-16T00:00:00.000Z";
   const TARGET =
     "arn:aws:sns:eu-west-2:000000000000:cw__sns__case_status_updated";
-
-  const pageOptions = async (args = {}) => {
-    paginate.mockResolvedValue({ data: [], pagination: {} });
-
-    await findPage({ pageSize: 20, ...args });
-
-    return paginate.mock.calls.at(-1)[1];
-  };
 
   const aDoc = (overrides = {}) => ({
     _id: new ObjectId(ID),
@@ -368,83 +378,6 @@ describe("outbox.repository actuator wiring", () => {
     ...overrides,
   });
 
-  // What `common/write-audit-event.js` writes: no CloudEvent id or type.
-  const anAuditDoc = () =>
-    aDoc({
-      event: { audit: { entities: [{ entity: "CASE" }], details: {} } },
-      target: AUDIT_TOPIC_ARN,
-    });
-
-  beforeEach(() => {
-    vi.mocked(paginate).mockReset();
-  });
-
-  it("maps an outbox document to exactly the list row", async () => {
-    const { mapDocument } = await pageOptions();
-
-    expect(mapDocument(aDoc())).toEqual({
-      _id: ID,
-      eventId: "9b4d2f10",
-      type: "cloud.defra.prd.fg-cw-backend.case.status.updated",
-      status: OutboxStatus.COMPLETED,
-      publicationDate: "2026-06-16T10:00:01.000Z",
-      completedAt: "2026-06-16T10:00:02.000Z",
-    });
-  });
-
-  it("labels an audit record audit, with no id and nothing of its payload", async () => {
-    const { mapDocument } = await pageOptions();
-    const row = mapDocument(anAuditDoc());
-
-    expect(row).toMatchObject({ eventId: null, type: "audit" });
-    expect(JSON.stringify(row)).not.toMatch(/CASE|details/);
-  });
-
-  it("labels a type-less row with no event or target unknown", async () => {
-    const { mapDocument } = await pageOptions();
-
-    expect(
-      mapDocument(aDoc({ event: undefined, target: undefined })),
-    ).toMatchObject({ eventId: null, type: "unknown" });
-  });
-
-  it("projects the fields the row reads", async () => {
-    const { project } = await pageOptions();
-
-    expect(project).toEqual({
-      _id: 1,
-      "event.id": 1,
-      "event.type": 1,
-      target: 1,
-      status: 1,
-      publicationDate: 1,
-      completionDate: 1,
-    });
-  });
-
-  it("searches event.id and event.traceparent", async () => {
-    const { filter } = await pageOptions({ q: "evt-1" });
-
-    expect(filter.$or).toContainEqual({ "event.id": "evt-1" });
-    expect(filter.$or).toContainEqual({ "event.traceparent": "evt-1" });
-  });
-
-  it("excludes on the target the row is labelled audit from", async () => {
-    const { filter, mapDocument } = await pageOptions({ audit: "exclude" });
-    const doc = anAuditDoc();
-
-    expect(filter).toEqual({ target: AUDIT_CLAUSE });
-    expect(mapDocument(doc).type).toBe("audit");
-    expect(doc.target).toMatch(filter.target.$not);
-  });
-
-  it("reads and bounds publicationDate as a BSON Date", async () => {
-    const { codecs, filter } = await pageOptions({ from: FROM });
-
-    expect(codecs.publicationDate.decode(FROM)).toEqual(new Date(FROM));
-    expect(filter).toEqual({ publicationDate: { $gte: new Date(FROM) } });
-  });
-
   it("stamps the outbox retry cap on the detail", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(aDoc()),
@@ -463,26 +396,6 @@ describe("outbox.repository actuator wiring", () => {
     expect(updateOne.mock.calls[0][1].$set.status).toBe(
       OutboxStatus.RESUBMITTED,
     );
-  });
-
-  it("groups the breakdown on the outbox type field and audit target", async () => {
-    const aggregate = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue([]),
-    });
-    db.collection.mockReturnValue({ aggregate });
-
-    await breakdown({});
-
-    expect(aggregate.mock.calls[0][0][1].$group._id).toEqual({
-      error: { $ifNull: ["$lastError.message", null] },
-      type: { $ifNull: ["$event.type", null] },
-      audit: {
-        $eq: [
-          { $arrayElemAt: [{ $split: ["$target", ":"] }, -1] },
-          "cw__sns__audit_topic_arn",
-        ],
-      },
-    });
   });
 });
 

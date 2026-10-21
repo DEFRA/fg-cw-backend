@@ -3,6 +3,7 @@ import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { Position } from "../models/position.js";
+import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import {
@@ -334,6 +335,30 @@ describe("buildFromDefinition", () => {
     ).toBeInstanceOf(Position);
   });
 
+  it("keeps every endpoint field when a definition is stored and read back", () => {
+    const endpoint = WorkflowEndpoint.createMock();
+    const { _id, version, ...definition } = JSON.parse(
+      JSON.stringify(Workflow.createMock({ endpoints: [endpoint] })),
+    );
+
+    const workflow = buildFromDefinition(definition, "1.0.0");
+
+    expect(workflow.endpoints).toEqual([endpoint]);
+  });
+
+  it("stores only the endpoint fields the workflow knows about", () => {
+    const { _id, version, ...definition } = JSON.parse(
+      JSON.stringify(Workflow.createMock()),
+    );
+    definition.endpoints = [
+      { ...definition.endpoints[0], unexpected: "not stored" },
+    ];
+
+    const workflow = buildFromDefinition(definition, "1.0.0");
+
+    expect(workflow.endpoints[0]).not.toHaveProperty("unexpected");
+  });
+
   it("throws on a definition the runtime could not read", () => {
     expect(() => buildFromDefinition({ code: "x" }, "1.0.0")).toThrow(
       TypeError,
@@ -402,21 +427,6 @@ describe("findAllCodes", () => {
       { projection: { _id: 0, code: 1 } },
     );
     expect(result).toEqual(["WORKFLOW_A"]);
-  });
-
-  it("bounds the read when given a time limit", async () => {
-    const find = vi.fn().mockReturnValue({
-      toArray: vi.fn().mockResolvedValue([]),
-    });
-
-    db.collection.mockReturnValue({ find });
-
-    await findAllCodes({}, { maxTimeMS: 3000 });
-
-    expect(find).toHaveBeenCalledWith(
-      {},
-      { projection: { _id: 0, code: 1 }, maxTimeMS: 3000 },
-    );
   });
 
   it("returns empty array when no workflows match", async () => {
