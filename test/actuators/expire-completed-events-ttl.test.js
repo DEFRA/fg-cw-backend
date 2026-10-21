@@ -5,7 +5,7 @@ import { up } from "../../migrations/20260921120000-expire-completed-events.js";
 
 // Its own mongod rather than the compose stack, with the TTL monitor wound
 // down from its 60 second default so the suite never waits on it.
-const IMAGE = "mongo:6.0.13";
+const IMAGE = "mongo:7.0";
 const TTL_MONITOR_SECONDS = 1;
 
 const PAST = new Date("2020-01-01T00:00:00.000Z");

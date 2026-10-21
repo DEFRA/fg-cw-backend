@@ -4,7 +4,7 @@ include:
 
 services:
   floci:
-    image: floci/floci:latest-compat
+    image: floci/floci:1.5.33-compat
     ports:
       - "${FLOCI_PORT:-4566}:4566"
     env_file:
@@ -31,7 +31,7 @@ services:
       - cdp-tenant
 
   mongodb:
-    image: mongo:6.0.13
+    image: mongo:7.0
     networks:
       - cdp-tenant
     ports:
@@ -47,14 +47,15 @@ services:
       retries: 10
     command: ["mongod", "--replSet", "mongoRepl", "--bind_ip", "0.0.0.0"]
     volumes:
-      - mongodb-data:/data
+      - mongodb-data:/data/db
 
   mongo-ready:
-    image: mongo:6.0.13
+    image: mongo:7.0
     networks: [cdp-tenant]
     environment:
       PRIMARY: "mongodb:27017"
       REPLSET: "mongoRepl"
+      RS_HOST: "mongodb:27017"
     volumes:
       - ./scripts/wait-for-replicaset.sh:/wait-for-replicaset.sh:ro
     entrypoint: ["/bin/bash", "/wait-for-replicaset.sh"]
@@ -69,7 +70,7 @@ services:
       retries: 60
 
   entra:
-    image: defradigital/fg-entra-stub-frontend:0.13.0
+    image: defradigital/fg-entra-stub-frontend:0.19.0
     ports:
       - "${ENTRA_PORT:-3010}:3010"
     networks:
