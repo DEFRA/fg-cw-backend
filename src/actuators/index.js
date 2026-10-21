@@ -15,6 +15,9 @@ import { summariseBucketRoute } from "./routes/summarise-bucket.route.js";
 import { redriveInboxEventRoute } from "./routes/redrive-inbox-event.route.js";
 import { redriveOutboxEventRoute } from "./routes/redrive-outbox-event.route.js";
 import { viewCaseDataRoute } from "./routes/view-case-data.route.js";
+import { fetchWorkflowDefinitionRoute } from "./routes/fetch-workflow-definition.route.js";
+import { viewWorkflowVersionRoute } from "./routes/view-workflow-version.route.js";
+import { viewWorkflowVersionsRoute } from "./routes/view-workflow-versions.route.js";
 
 export const actuators = {
   name: "actuators",
@@ -42,6 +45,9 @@ export const actuators = {
       editOutboxEventPayloadRoute,
       viewCaseDataRoute,
       caseExistsRoute,
+      viewWorkflowVersionsRoute,
+      viewWorkflowVersionRoute,
+      fetchWorkflowDefinitionRoute,
     ]);
   },
 };

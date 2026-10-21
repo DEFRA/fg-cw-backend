@@ -2,15 +2,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { ConfigVersion } from "../models/config-version.js";
 import {
+  findAllForCode,
   findByGrantCodeAndVersion,
+  findCurrent,
   findLatestForMajor,
   updateFetchStatus,
   upsert,
 } from "./config-version.repository.js";
 
+const mockCursor = {
+  toArray: vi.fn(),
+};
+
 const mockCollection = {
   updateOne: vi.fn(),
   findOne: vi.fn(),
+  find: vi.fn(() => mockCursor),
 };
 
 vi.mock("../../common/mongo-client.js", () => ({
@@ -128,6 +135,48 @@ describe("config-version.repository", () => {
 
       const result = await findByGrantCodeAndVersion("nonexistent", "1.0.0");
       expect(result).toBeNull();
+    });
+  });
+
+  describe("findAllForCode", () => {
+    it("reads every version of a code, newest first by number", async () => {
+      mockCursor.toArray.mockResolvedValue([
+        ConfigVersion.createMock({ version: "1.10.0", minor: 10 }).toDocument(),
+        ConfigVersion.createMock({ version: "1.9.0", minor: 9 }).toDocument(),
+      ]);
+
+      const result = await findAllForCode("pigs-might-fly");
+
+      expect(mockCollection.find).toHaveBeenCalledWith(
+        { grantCode: "pigs-might-fly" },
+        expect.objectContaining({ sort: { major: -1, minor: -1, patch: -1 } }),
+      );
+      expect(result.map(({ version }) => version)).toEqual(["1.10.0", "1.9.0"]);
+      expect(result[0]).toBeInstanceOf(ConfigVersion);
+    });
+  });
+
+  describe("findCurrent", () => {
+    it("reads the newest active version, whatever its fetch status", async () => {
+      mockCollection.findOne.mockResolvedValue(
+        ConfigVersion.createMock({
+          fetchStatus: FetchStatus.PermanentError,
+        }).toDocument(),
+      );
+
+      const result = await findCurrent("pigs-might-fly");
+
+      expect(mockCollection.findOne).toHaveBeenCalledWith(
+        { grantCode: "pigs-might-fly", status: "active" },
+        expect.objectContaining({ sort: { major: -1, minor: -1, patch: -1 } }),
+      );
+      expect(result).toBeInstanceOf(ConfigVersion);
+    });
+
+    it("is null for a code with no active version", async () => {
+      mockCollection.findOne.mockResolvedValue(null);
+
+      expect(await findCurrent("woodland")).toBeNull();
     });
   });
 });

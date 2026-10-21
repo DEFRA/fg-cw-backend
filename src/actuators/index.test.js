@@ -16,7 +16,7 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the bucket routes, the event routes and the case routes", async () => {
+  it("registers the bucket, event, case and workflow version routes", async () => {
     const server = await registeredServer();
 
     const actuatorPaths = server
@@ -40,6 +40,9 @@ describe("actuators", () => {
       "/actuators/events/outbox/{id}/purge",
       "/actuators/events/outbox/{id}/redrive",
       "/actuators/timeline",
+      "/actuators/workflows/{code}/versions",
+      "/actuators/workflows/{code}/versions/{version}",
+      "/actuators/workflows/{code}/versions/{version}/fetch",
     ]);
   });
 
