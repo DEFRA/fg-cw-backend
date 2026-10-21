@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildActorSummary,
   buildSecurityContext,
+  buildOperatorSecurityContext,
   buildSystemSecurityContext,
   buildUserSummary,
   SYSTEM_ACTOR,
 } from "./audit-security-context.js";
+import { OPERATOR_ID } from "../../test/helpers/operator.js";
 
 const actor = {
   id: "actor-1",
@@ -93,6 +95,19 @@ describe("buildSystemSecurityContext", () => {
     expect(SYSTEM_ACTOR).toEqual({
       id: "fg-gas-backend",
       name: "GAS (system)",
+    });
+  });
+});
+
+describe("buildOperatorSecurityContext", () => {
+  it("names the operator GAS forwarded as the actor", () => {
+    expect(
+      buildOperatorSecurityContext({
+        id: OPERATOR_ID,
+        name: "Jane Smith",
+      }),
+    ).toEqual({
+      actor: { id: OPERATOR_ID, name: "Jane Smith" },
     });
   });
 });

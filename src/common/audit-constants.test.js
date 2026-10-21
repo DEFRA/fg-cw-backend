@@ -13,4 +13,12 @@ describe("pmc codes", () => {
       pmccode: "0706",
     });
   });
+
+  it.each([
+    auditActions.FIND_CASES,
+    auditActions.VIEW_CASE_DATA,
+    auditActions.QUERY_BUCKET,
+  ])("files %s as an action a user or service can execute", (action) => {
+    expect(buildAuditSecurity(action)).toEqual({ pmccode: "0706" });
+  });
 });

@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import {
   dateCodec,
@@ -13,7 +14,11 @@ import { CaseTaskGroup } from "../models/case-task-group.js";
 import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
-import { CaseDocument } from "./case/case-document.js";
+import {
+  seriesMembersCursor,
+  storedCasePipeline,
+} from "./case/admin-case-query.js";
+import { CaseDocument, seriesRefs } from "./case/case-document.js";
 
 const collection = "cases";
 
@@ -118,7 +123,7 @@ export const updateClaimSupplementaryData = async (kase) => {
 };
 
 export const update = async (kase) => {
-  const caseDocument = new CaseDocument(kase);
+  const { _id, refs, ...caseDocument } = new CaseDocument(kase);
 
   const supplementaryData = { ...caseDocument.supplementaryData };
   delete supplementaryData.claims;
@@ -131,6 +136,7 @@ export const update = async (kase) => {
       {
         $replaceWith: {
           $mergeObjects: [
+            "$$ROOT",
             { $literal: caseDocument },
             {
               supplementaryData: {
@@ -138,6 +144,9 @@ export const update = async (kase) => {
                   { $literal: supplementaryData },
                   { claims: "$supplementaryData.claims" },
                 ],
+              },
+              refs: {
+                $setUnion: [{ $ifNull: ["$refs", []] }, { $literal: refs }],
               },
             },
           ],
@@ -156,6 +165,17 @@ export const update = async (kase) => {
   }
 
   return kase;
+};
+
+// Every member is found by any member's reference.
+export const linkSeries = async ({ workflowCode, caseRefs }, session) => {
+  await db
+    .collection(collection)
+    .updateMany(
+      { workflowCode, caseRef: { $in: caseRefs } },
+      { $addToSet: { refs: { $each: seriesRefs(caseRefs) } } },
+      { session },
+    );
 };
 
 const cursorCodecs = {
@@ -338,3 +358,29 @@ export const updateCurrentConfigVersion = async (caseId, version) => {
     .collection(collection)
     .updateOne({ _id }, { $set: { currentConfigVersion: version } });
 };
+
+// The admin read model: stored documents as plain data, never a `Case`, and
+// nothing here writes.
+export const findSeriesMembers = (key) =>
+  seriesMembersCursor(db.collection(collection), key, {
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  }).toArray();
+
+export const findStoredCase = async (key, include) => {
+  const [doc] = await db
+    .collection(collection)
+    .aggregate(storedCasePipeline(key, include), {
+      maxTimeMS: actuatorReadMaxTimeMs(),
+    })
+    .toArray();
+
+  return doc ?? null;
+};
+
+export const caseExists = async ({ workflowCode, caseRef }) =>
+  (await db
+    .collection(collection)
+    .findOne(
+      { workflowCode, caseRef },
+      { projection: { _id: 1 }, maxTimeMS: actuatorReadMaxTimeMs() },
+    )) !== null;

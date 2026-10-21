@@ -2,7 +2,29 @@
 
 ## Running with other services
 
-If you want to run this service with other farming grants applications see [fg-grants-core](https://github.com/DEFRA/fg-grants-core)
+There are two ways to run fg-cw-backend locally:
+
+- **On its own:** `docker compose up --build --watch` in this repo. It uses this
+  repo's `compose.yml`, which runs its own MongoDB, floci and Entra stub, and the integration tests
+  use the same file. See [Docker](#docker).
+- **With the rest of Farming Grants:** check out [fg-grants-core](https://github.com/DEFRA/fg-grants-core) alongside this repo and
+  run `npm run stack cw` there (add `grants-ui`, `agreements` and so on as
+  needed). fg-grants-core runs the shared infrastructure and wires the services
+  together.
+
+Both ways use this repo's `compose/compose.cw-backend.yml`, so:
+
+- Container env goes in the `environment:` block of `compose/compose.cw-backend.yml`.
+  `.env` is for running node on your machine, so values that differ inside a
+  container, such as `MONGO_URI` and other services' hostnames, are set there.
+- Values that only make sense in the full stack, such as other services' URLs
+  and tokens, stay in fg-grants-core's `compose/compose.override.yml`.
+- New queues and topics go in `compose/floci/start.d/10-setup-resources.sh`.
+  fg-grants-core mounts that script into its own floci, alongside other repos'
+  scripts, so a queue or topic that another repo also creates must keep the
+  same attributes.
+- Keep the infrastructure versions in `compose.yml` the same as
+  fg-grants-core's. `npm run stack` there warns when they differ.
 
 ## Documentation
 
@@ -32,12 +54,14 @@ Output adaptors (referenced by use cases)
 Shared modules, referenced by any layer
 
 - `src/common/` - infrastructure with no opinion about the business: the
-  logger, the Mongo client, the messaging clients, the paginator
+  logger, the Mongo client, the messaging clients, the paginator, and the
+  bucket engine (`buckets/`, see [Buckets](#buckets))
 - `src/events/` - the shared event domain: what an inbox/outbox event IS and
-  means. Which rows are audit records (`event-audit.js`), how a list of them is
-  selected (`event-list-filter.js`), the statuses they move through and how
-  they are counted and grouped (`status-counts.js`, `event-facets.js`,
-  `event-breakdown.js`), what a detail view of one contains
+  means. Which event types this service sends and receives (`event-types.js`,
+  declared by each context beside its event class), the event type and refs a
+  writer stamps on a row at insert (`stamps.js`), which rows are audit records
+  (`event-audit.js`), the statuses they move through
+  (`event-status-values.js`), what a detail view of one contains
   (`event-detail.js`), what redriving one means (`event-redrive.js`), what
   purging one means (`event-purge.js`), what editing one's payload means
   (`event-edit.js`, with `payload-changes.js` saying where an edit landed and
@@ -476,6 +500,50 @@ the route is quietly exposed to the BFF surface - every logged-in CW user -
 instead. The actuators module test guards against exactly that by asserting
 every `/actuators/*` route sits on the `public-api` strategy.
 
+### Buckets
+
+A bucket is one list the grants admin can show: one collection, with
+the facts a filter or grouping may name, the
+ref kinds a search may name, a time field and its index lines. A fact may lead
+every index key (`lead`), and a value of a fact may stay out of the list until
+a switch shows it (`hidden`, `toggle`): `cw.outbox` leads with its event type
+and hides the `Audit` type that way, because that type is declared
+`hiddenByDefault`. A bucket may also read by `links`, ref kinds no search
+offers: the inbox and outbox read a case's Events tab by
+`case:<workflowCode>:<caseRef>`, since two workflows may hold the same case
+reference. It is declared
+once, with `defineBucket`, in `src/cases/buckets/`, and registered with
+`registerBucket` in `cases/index.js` once the migrations have run:
+
+| Bucket      | Declared in                      | Lists                          |
+| :---------- | :------------------------------- | :----------------------------- |
+| `cw.outbox` | `cases/buckets/outbox.bucket.js` | every outbox row               |
+| `cw.inbox`  | `cases/buckets/inbox.bucket.js`  | every inbox row                |
+| `cw.cases`  | `cases/buckets/cases.bucket.js`  | every case, by platform fields |
+
+`src/common/buckets/` is the engine, the same code as fg-gas-backend's: it
+turns any query into one read on one declared index, and every read is exact,
+bounded by a scan budget, or refused, and says which. Three routes serve every
+bucket to fg-gas-backend, and only that client: `GET /actuators/buckets` (the
+catalogue), `POST /actuators/buckets/{bucketId}/query` and
+`POST /actuators/buckets/{bucketId}/summaries/{summaryId}` (a ranked count a
+bucket declares, such as an event list's top errors). A query takes the
+operator in two headers, `x-actor` (display name) and `x-actor-id` (Entra
+object id); a read of an `audited` bucket is audited as `QUERY_BUCKET` before
+any data is returned. A new list is a new declaration and an index migration,
+and needs no route.
+
+### Case actuators
+
+`/actuators/cases/*` serve the grants admin's case pages through
+fg-gas-backend, and only that client: `requireCaseReader` answers any other
+token with a 403. The case read takes the operator in the same two headers and
+is audited as `VIEW_CASE_DATA` before any data is returned. The existence
+check releases only yes or no, and is not audited.
+
+Every actuator request that sends `x-actor-id` has it recorded as the audit
+event's `user`, including redrive, purge and edit.
+
 ### Service access tokens
 
 The public API is for callers with no Entra user behind them, so it uses the
@@ -561,10 +629,11 @@ Check the startup logs, which will show one of:
 | `SERVICE_ACCESS_TOKEN_HASH is not a client:sha256hex pair - nothing seeded` | The value is malformed. Nothing was issued or removed.                                                                   |
 | `Failed to seed access token for <client>`                                  | The database write failed. The service started anyway; retry by redeploying.                                             |
 
-Then call the endpoint with the raw token:
+Then call an endpoint with the raw token. A 404 for this unknown event means
+the token was accepted; a 401 means it was not:
 
 ```bash
-curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/events
+curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/events/inbox/000000000000000000000000
 ```
 
 ## Development helpers

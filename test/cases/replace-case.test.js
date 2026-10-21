@@ -92,6 +92,7 @@ describe("Replaces a case on CreateNewCase event", () => {
         caseRef: "CASE-REF-4",
         closed: false,
         closedAt: null,
+        refs: ["ref:case-ref-4", "sbi:sbi001", "ref:case-ref-3"],
         _id: expect.any(ObjectId),
         createdAt: expect.any(Date),
         timeline: [

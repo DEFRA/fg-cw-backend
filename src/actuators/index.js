@@ -1,29 +1,37 @@
+import { setAuditActor } from "../common/set-audit-actor.js";
+import { caseExistsRoute } from "./routes/case-exists.route.js";
 import {
   editInboxEventPayloadRoute,
   editOutboxEventPayloadRoute,
 } from "./routes/edit-event-payload.route.js";
-import { findPageRoute } from "./routes/find-page.route.js";
 import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
 import { getOutboxEventRoute } from "./routes/get-outbox-event.route.js";
+import { listBucketsRoute } from "./routes/list-buckets.route.js";
 import { purgeInboxEventRoute } from "./routes/purge-inbox-event.route.js";
 import { purgeOutboxEventRoute } from "./routes/purge-outbox-event.route.js";
+import { queryBucketRoute } from "./routes/query-bucket.route.js";
+import { readTimelineRoute } from "./routes/read-timeline.route.js";
+import { summariseBucketRoute } from "./routes/summarise-bucket.route.js";
 import { redriveInboxEventRoute } from "./routes/redrive-inbox-event.route.js";
 import { redriveOutboxEventRoute } from "./routes/redrive-outbox-event.route.js";
+import { viewCaseDataRoute } from "./routes/view-case-data.route.js";
 
 export const actuators = {
   name: "actuators",
   register(server) {
-    // ROUTE ORDER - nothing here can be confused for anything else. The
-    // `/actuators/events` prefix puts the collection at one depth and its
-    // members at another, so no literal segment sits where an `{id}` could be
-    // read. `{id}` is constrained to 24 hex characters anyway
-    // (schemas/event-id.schema.js), which is what keeps a word out of the
-    // detail route; index.test.js asserts both. This note used to explain a
-    // real ambiguity, when the page lived at `/actuators/page` alongside
-    // `/actuators/<box>/{id}` and the retired counts/breakdown routes - the
-    // prefix is what removed it.
+    // Every audit event an actuator request writes names the operator GAS
+    // forwarded, so it is set once here for this plugin's routes alone.
+    server.ext("onPostAuth", setAuditActor, { sandbox: "plugin" });
+
+    // Nothing here can be confused for anything else: a member of
+    // `/actuators/events` sits one segment deeper than its box, and `{id}` is
+    // constrained to 24 hex characters (schemas/event-id.schema.js);
+    // index.test.js asserts both.
     server.route([
-      findPageRoute,
+      listBucketsRoute,
+      queryBucketRoute,
+      readTimelineRoute,
+      summariseBucketRoute,
       getInboxEventRoute,
       getOutboxEventRoute,
       redriveInboxEventRoute,
@@ -32,6 +40,8 @@ export const actuators = {
       purgeOutboxEventRoute,
       editInboxEventPayloadRoute,
       editOutboxEventPayloadRoute,
+      viewCaseDataRoute,
+      caseExistsRoute,
     ]);
   },
 };

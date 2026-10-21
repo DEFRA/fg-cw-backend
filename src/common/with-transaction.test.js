@@ -74,4 +74,19 @@ describe("withTransaction", () => {
     );
     expect(mockSession.endSession).toHaveBeenCalled();
   });
+
+  it("adds the caller's options to the transaction options", async () => {
+    const mockSession = {
+      withTransaction: vi.fn().mockImplementation((run) => run("the-session")),
+      endSession: vi.fn(),
+    };
+    vi.spyOn(mongoClient, "startSession").mockReturnValue(mockSession);
+
+    await withTransaction(vi.fn(), { maxCommitTimeMS: 500 });
+
+    expect(mockSession.withTransaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      { ...transactionOptions, maxCommitTimeMS: 500 },
+    );
+  });
 });

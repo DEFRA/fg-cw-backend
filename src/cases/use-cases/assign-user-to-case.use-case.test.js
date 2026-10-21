@@ -10,13 +10,11 @@ import { findById, update } from "../repositories/case.repository.js";
 import { assignUserToCaseUseCase } from "./assign-user-to-case.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
-vi.mock("../../common/auth.js");
 vi.mock("../../common/write-audit-event.js", () => ({
   writeAuditEvent: vi.fn(),
 }));
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");
 vi.mock("node:crypto");
 

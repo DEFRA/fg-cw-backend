@@ -1,6 +1,8 @@
 import Boom from "@hapi/boom";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import { CaseSeries } from "../models/case-series.js";
+import { SERIES_PROJECTION, seriesFilter } from "./case/admin-case-query.js";
 
 const collection = "case_series";
 
@@ -52,3 +54,14 @@ export const update = async (series, session) => {
   }
   return result;
 };
+
+// Plain documents for the admin read model: every series the ref is in, under
+// one workflow when one is given.
+export const findByCaseRef = ({ ref, workflowCode }) =>
+  db
+    .collection(collection)
+    .find(seriesFilter({ ref, workflowCode }), {
+      projection: SERIES_PROJECTION,
+      maxTimeMS: actuatorReadMaxTimeMs(),
+    })
+    .toArray();

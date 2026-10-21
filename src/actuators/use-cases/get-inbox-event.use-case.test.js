@@ -1,9 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { findDetailById } from "../../cases/repositories/inbox.repository.js";
+import { findEventCaseUseCase } from "./find-event-case.use-case.js";
 import { getInboxEventUseCase } from "./get-inbox-event.use-case.js";
 
 vi.mock("../../common/mongo-client.js");
 vi.mock("../../cases/repositories/inbox.repository.js");
+vi.mock("./find-event-case.use-case.js");
 
 const ID = "665f1c2e9a1b2c3d4e5f6a7b";
 const EVENT_ID = "evt-1";
@@ -15,6 +17,10 @@ const aDetail = () => ({
   completionAttempts: 5,
   maxAttempts: 5,
   event: { id: "evt-1", data: { clientRef: "REF-1" } },
+});
+
+beforeEach(() => {
+  findEventCaseUseCase.mockResolvedValue(null);
 });
 
 describe("getInboxEventUseCase", () => {
@@ -30,7 +36,17 @@ describe("getInboxEventUseCase", () => {
     const detail = aDetail();
     findDetailById.mockResolvedValue(detail);
 
-    expect(await getInboxEventUseCase(ID)).toEqual(detail);
+    expect(await getInboxEventUseCase(ID)).toEqual({ ...detail, case: null });
+  });
+
+  it("adds the case the event names, and whether it exists", async () => {
+    const detail = aDetail();
+    const kase = { workflowCode: "frps", caseRef: "ref-1", exists: false };
+    findDetailById.mockResolvedValue(detail);
+    findEventCaseUseCase.mockResolvedValue(kase);
+
+    expect(await getInboxEventUseCase(ID)).toEqual({ ...detail, case: kase });
+    expect(findEventCaseUseCase).toHaveBeenCalledWith(detail.event);
   });
 
   it("returns the full event payload", async () => {

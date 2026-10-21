@@ -1,6 +1,7 @@
 import hapi from "@hapi/hapi";
 import { up } from "migrate-mongo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearBuckets, listBuckets } from "../common/buckets/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { cases } from "./index.js";
@@ -26,6 +27,7 @@ describe("cases", () => {
   beforeEach(() => {
     server = hapi.server();
     up.mockResolvedValue([]);
+    clearBuckets();
   });
 
   it("runs migrations on startup", async () => {
@@ -49,6 +51,25 @@ describe("cases", () => {
       'Migrated: "002-add-some-data.js"',
     );
     expect(logger.info).toHaveBeenCalledWith("Finished running migrations");
+  });
+
+  it("registers its buckets once the migrations have run", async () => {
+    const registeredDuringMigrations = [];
+    up.mockImplementation(async () => {
+      registeredDuringMigrations.push(...listBuckets());
+
+      return [];
+    });
+
+    await server.register(cases);
+    await server.initialize();
+
+    expect(registeredDuringMigrations).toEqual([]);
+    expect(listBuckets().map(({ id }) => id)).toEqual([
+      "cw.outbox",
+      "cw.inbox",
+      "cw.cases",
+    ]);
   });
 
   it("starts subscribers on startup", async () => {
@@ -112,7 +133,6 @@ describe("cases", () => {
         method: "patch",
         path: "/cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/value",
       },
-      { method: "post", path: "/workflows" },
       { method: "post", path: "/cases/{caseId}/page-action" },
       { method: "post", path: "/cases/{caseId}/notes" },
     ]);

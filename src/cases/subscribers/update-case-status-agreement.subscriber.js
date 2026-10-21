@@ -8,6 +8,6 @@ import {
 export const createUpdateStatusAgreementConsumer = new SqsSubscriber({
   queueUrl: config.get("aws.sqs.updateStatusUrl"),
   async onMessage(message) {
-    await saveInboxMessageUseCase(message, messageSource.Gas);
+    await saveInboxMessageUseCase({ message, source: messageSource.Gas });
   },
 });

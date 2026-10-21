@@ -1,5 +1,6 @@
 import { validateAuditEvent } from "@defra/fcp-audit-publisher";
 import { getTraceId } from "@defra/hapi-tracing";
+import { BSON } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
@@ -10,6 +11,7 @@ import {
   stripNulls,
   writeAuditEvent,
 } from "./write-audit-event.js";
+import { OPERATOR_ID } from "../../test/helpers/operator.js";
 
 vi.mock("@defra/hapi-tracing", () => ({
   getTraceId: vi.fn(),
@@ -116,6 +118,28 @@ describe("buildPayload", () => {
     expect(result.ip).toBe("0.0.0.0");
   });
 
+  it("sets user from the request context's operator", () => {
+    getRequestContext.mockReturnValue({
+      ip: "10.0.0.1",
+      user: OPERATOR_ID,
+    });
+
+    const result = buildPayload({
+      entities: [],
+      status: auditStatus.SUCCESS,
+    });
+
+    expect(result.user).toBe(OPERATOR_ID);
+  });
+
+  it("leaves user out when no operator was set", () => {
+    const result = stripNulls(
+      buildPayload({ entities: [], status: auditStatus.SUCCESS }),
+    );
+
+    expect(result).not.toHaveProperty("user");
+  });
+
   it("includes entities, accounts, status and details under audit", () => {
     const result = buildPayload({
       entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
@@ -165,6 +189,27 @@ describe("stripNulls", () => {
 
     expect(result).toEqual({ a: "keep", d: { f: "keep" } });
   });
+
+  it("removes null and undefined entries from objects inside arrays", () => {
+    const result = stripNulls({
+      entities: [
+        { entity: "USER", entityid: undefined },
+        { entity: "CASE", entityid: null },
+        null,
+      ],
+    });
+
+    expect(result).toEqual({
+      entities: [{ entity: "USER" }, { entity: "CASE" }],
+    });
+    expect(result.entities[0]).not.toHaveProperty("entityid");
+  });
+
+  it("leaves arrays of primitives intact", () => {
+    expect(stripNulls({ idpRoles: ["a", "b"] })).toEqual({
+      idpRoles: ["a", "b"],
+    });
+  });
 });
 
 describe("writeAuditEvent", () => {
@@ -187,13 +232,15 @@ describe("writeAuditEvent", () => {
     expect(insertMany).toHaveBeenCalledWith([expect.any(Object)], session);
   });
 
-  it("constructs Outbox with event, target arn and segregationRef", async () => {
+  it("constructs Outbox with event, target arn, segregationRef and its stamps", async () => {
     await writeAuditEvent(eventData, {});
 
     expect(Outbox).toHaveBeenCalledWith({
       event: expect.objectContaining({ application: "Case Working Service" }),
       target: "arn:aws:sns:eu-west-2:123:audit-topic",
       segregationRef: expect.stringMatching(uuidPattern),
+      eventType: "Audit",
+      refs: ["trace:trace-id-123"],
     });
   });
 
@@ -205,6 +252,46 @@ describe("writeAuditEvent", () => {
 
     expect(errors).toBeUndefined();
     expect(valid).toBe(true);
+  });
+
+  // The driver serialises with `ignoreUndefined: false`, storing `undefined` as
+  // `null`, and the audit service rejects a null entityid - so the persisted
+  // event must not carry the key at all.
+  it("writes no entityid key when an entity has none", async () => {
+    await writeAuditEvent(
+      {
+        ...eventData,
+        entities: [
+          { entity: "USER", action: "CREATE_USER", entityid: undefined },
+        ],
+        security: { pmccode: "1204" },
+      },
+      {},
+    );
+
+    const [{ event }] = Outbox.mock.calls[0];
+    const persisted = BSON.deserialize(
+      BSON.serialize(event, { ignoreUndefined: false }),
+    );
+
+    expect(persisted.audit.entities).toEqual([
+      { entity: "USER", action: "CREATE_USER" },
+    ]);
+    expect(validateAuditEvent(persisted).valid).toBe(true);
+  });
+
+  it("writes no entityid key when an entity's entityid is null", async () => {
+    await writeAuditEvent(
+      {
+        ...eventData,
+        entities: [{ entity: "USER", action: "CREATE_USER", entityid: null }],
+        security: { pmccode: "1204" },
+      },
+      {},
+    );
+
+    const [{ event }] = Outbox.mock.calls[0];
+    expect(event.audit.entities[0]).not.toHaveProperty("entityid");
   });
 
   it("keeps messageGroupId out of the published event payload", async () => {
@@ -313,7 +400,9 @@ describe("writeAuditEvent", () => {
   // Best-effort without a transaction: the action has already happened and
   // refusing to report it would not undo it.
   it("does not throw on an invalid payload when there is no session", async () => {
-    await expect(writeAuditEvent(invalid(), undefined)).resolves.toBeUndefined();
+    await expect(
+      writeAuditEvent(invalid(), undefined),
+    ).resolves.toBeUndefined();
   });
 
   // Inside a transaction the same skip would let the action commit with no

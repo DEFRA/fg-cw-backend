@@ -277,7 +277,6 @@ export class Case {
     this.position = position;
   }
 
-  // eslint-disable-next-line complexity
   progressTo({ position, workflow, createdBy }) {
     if (this.position.equals(position)) {
       logger.warn(
@@ -286,6 +285,16 @@ export class Case {
       return;
     }
 
+    this.#assertCanTransitionTo(workflow, position);
+
+    this.#addProgressEvents(position, createdBy);
+
+    this.#attemptClose(workflow, position);
+
+    this.position = position;
+  }
+
+  #assertCanTransitionTo(workflow, position) {
     const transition = workflow.getTransitionForTargetPosition(
       this.position,
       position,
@@ -302,7 +311,9 @@ export class Case {
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );
     }
+  }
 
+  #addProgressEvents(position, createdBy) {
     if (!this.position.isSamePhase(position)) {
       this.#addTimelineEvent(
         TimelineEvent.createPhaseCompleted({
@@ -339,10 +350,6 @@ export class Case {
         createdBy,
       }),
     );
-
-    this.#attemptClose(workflow, position);
-
-    this.position = position;
   }
 
   #attemptClose(workflow, position) {

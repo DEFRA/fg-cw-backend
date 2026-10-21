@@ -17,9 +17,10 @@ const temporaryCaveatSourceMap = {
   "ne-consent-required": "natural-england",
 };
 
-// eslint-disable-next-line complexity
+const caveatsOf = (payload) => payload?.answers?.rulesCalculations?.caveats;
+
 const mapCaveatSources = (payload) => {
-  const caveats = payload?.answers?.rulesCalculations?.caveats;
+  const caveats = caveatsOf(payload);
 
   if (!Array.isArray(caveats)) {
     return payload;
@@ -40,9 +41,10 @@ const mapCaveatSources = (payload) => {
   };
 };
 
-// eslint-disable-next-line complexity
-const extractConfigVersion = (payload) =>
-  payload?.originalConfigVersion ?? payload?.configVersion ?? null;
+const extractConfigVersion = (payload) => {
+  const { originalConfigVersion, configVersion } = payload ?? {};
+  return originalConfigVersion ?? configVersion ?? null;
+};
 
 const resolveLegacyWorkflow = async (workflowCode) => ({
   workflow: await findWorkflowByCodeUseCase(workflowCode),

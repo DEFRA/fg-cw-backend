@@ -11,9 +11,7 @@ import { ensureCasePosition } from "./ensure-case-position.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 import { updateStageOutcomeUseCase } from "./update-stage-outcome.use-case.js";
 
-vi.mock("../../common/auth.js");
 vi.mock("../repositories/case.repository.js");
-vi.mock("../publishers/case-event.publisher.js");
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("./ensure-case-position.use-case.js");
@@ -154,6 +152,36 @@ describe("updateStageOutcomeUseCase", () => {
 
       await updateStageOutcomeUseCase(command);
       expect(insertMany).toHaveBeenCalled();
+    });
+
+    it("stamps the status event with the ordering key it stores", async () => {
+      withTransaction.mockImplementation(async (cb) => cb({}));
+      const mockCase = Case.createMock({ caseRef: "ABC-123" });
+      const mockWorkflow = Workflow.createMock();
+
+      findById.mockResolvedValue(mockCase);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: mockWorkflow,
+        resolvedVersion: null,
+      });
+      mockWorkflow.validateStageActionComment = vi.fn();
+      mockWorkflow.getNextPosition = vi.fn().mockReturnValue(mockCase.position);
+      mockCase.updateStageOutcome = vi.fn();
+      update.mockResolvedValue(mockCase);
+
+      await updateStageOutcomeUseCase({
+        caseId: mockCase._id,
+        actionCode: "APPROVE",
+        user: User.createMock(),
+      });
+
+      const [[outbox]] = insertMany.mock.calls[0];
+
+      expect(outbox).toMatchObject({
+        segregationRef: `ABC-123-${mockCase.workflowCode}`,
+        eventType: "CaseStatusUpdated",
+      });
+      expect(outbox.refs).toContain("ref:abc-123");
     });
 
     it("uses authenticated user in stage outcome", async () => {

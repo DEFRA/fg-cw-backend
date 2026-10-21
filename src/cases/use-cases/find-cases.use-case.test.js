@@ -13,7 +13,6 @@ vi.mock("../repositories/case-series.repository.js");
 vi.mock("../../users/use-cases/find-users.use-case.js");
 vi.mock("./find-workflow-codes.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");
-vi.mock("../../common/auth.js");
 
 const defaultQuery = { direction: "forward", createdAt: "desc" };
 
@@ -28,7 +27,7 @@ const mockFindAllResult = (data) => ({
   },
 });
 
-describe("filters", () => {
+describe("createRoleFilter", () => {
   const userRoles = ["ROLE_1", "ROLE_3", "ROLE_APP_1"];
 
   it("creates a filter for user roles", () => {

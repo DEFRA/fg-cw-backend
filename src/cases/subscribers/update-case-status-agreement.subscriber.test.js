@@ -35,6 +35,6 @@ describe("update status command", () => {
     };
 
     await createUpdateStatusAgreementConsumer.onMessage(message);
-    expect(saveInboxMessageUseCase).toBeCalledWith(message, "GAS");
+    expect(saveInboxMessageUseCase).toBeCalledWith({ message, source: "GAS" });
   });
 });

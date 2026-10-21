@@ -93,6 +93,34 @@ describe("claim data ingestion into MongoDB", () => {
     },
   );
 
+  it("retains series references and stored fields when a stale edit follows ingestion", async () => {
+    const stale = await caseRepository.findByCaseRefAndWorkflowCode(
+      original.caseRef,
+      original.workflowCode,
+    );
+    await cases.updateOne(
+      { _id: original._id },
+      {
+        $addToSet: { refs: "ref:linked-case" },
+        $set: { storedMarker: "$literal" },
+      },
+    );
+    await handleClaimSubmittedUseCase(message());
+    stale.payload = { identifiers: { sbi: "100000002" } };
+    await caseRepository.update(stale);
+    const stored = await cases.findOne({ _id: original._id });
+    expect(stored.refs).toEqual(
+      expect.arrayContaining([
+        ...original.refs,
+        "ref:linked-case",
+        "sbi:100000002",
+      ]),
+    );
+    expect(new Set(stored.refs).size).toBe(stored.refs.length);
+    expect(stored.supplementaryData.claims).toEqual([entry]);
+    expect(stored.storedMarker).toBe("$literal");
+  });
+
   it("persists claims idempotently without altering the remaining case document", async () => {
     await handleClaimSubmittedUseCase(message());
     await handleClaimSubmittedUseCase(message());

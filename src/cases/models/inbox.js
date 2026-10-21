@@ -7,10 +7,14 @@ import {
   normaliseAttemptHistory,
   toAttemptEntry,
   toLastError,
+  withErrorKey,
 } from "../../events/last-error.js";
 import { isRetryableFailure } from "../../events/retryable.js";
 
 const RETENTION_DAYS = config.get("events.retentionDays");
+
+// The stamps a writer or a backfill gave the row; a row read back from before them has none.
+const stampsOf = ({ eventType = null, refs = [] }) => ({ eventType, refs });
 
 export class Inbox {
   static validationSchema = Joi.object({
@@ -63,6 +67,7 @@ export class Inbox {
     this.claimExpiresAt = null;
     this.eventTime = props.event.time;
     this.segregationRef = props.segregationRef;
+    Object.assign(this, stampsOf(props));
   }
 
   markAsComplete() {
@@ -106,7 +111,7 @@ export class Inbox {
       messageId: this.messageId,
       event: this.event,
       lastResubmissionDate: this.lastResubmissionDate,
-      lastError: this.lastError,
+      ...withErrorKey(this.lastError),
       attemptHistory: this.attemptHistory,
       completionAttempts: this.completionAttempts,
       status: this.status,
@@ -119,6 +124,8 @@ export class Inbox {
       claimExpiresAt: this.claimExpiresAt,
       eventTime: this.eventTime,
       segregationRef: this.segregationRef,
+      eventType: this.eventType,
+      refs: this.refs,
     };
   }
 
@@ -145,6 +152,8 @@ export class Inbox {
       claimExpiresAt: doc.claimExpiresAt,
       eventTime: doc.eventTime,
       segregationRef: doc.segregationRef,
+      eventType: doc.eventType,
+      refs: doc.refs,
     });
   }
 

@@ -6,8 +6,12 @@ import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
 import {
+  caseExists,
   countByPosition,
   findAll,
+  findSeriesMembers,
+  findStoredCase,
+  linkSeries,
   findByCaseRefAndWorkflowCode,
   findById,
   findCasesByCaseRefsAndWorkflowCode,
@@ -16,6 +20,10 @@ import {
   updateClaimSupplementaryData,
   updateStage,
 } from "./case.repository.js";
+import {
+  CASE_ROW_PROJECTION,
+  storedCasePipeline,
+} from "./case/admin-case-query.js";
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -43,7 +51,24 @@ describe("save", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(insertOne.mock.calls[0][0]).toBeInstanceOf(CaseDocument);
+    expect(insertOne.mock.calls[0][0]).toEqual(new CaseDocument(caseMock));
+  });
+
+  it("gives a new case its refs", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne });
+
+    await save(
+      Case.createMock({
+        caseRef: "ABC-123",
+        payload: { identifiers: { sbi: "100000001" } },
+      }),
+    );
+
+    expect(insertOne.mock.calls[0][0].refs).toEqual([
+      "ref:abc-123",
+      "sbi:100000001",
+    ]);
   });
 
   it("throws Boom.conflict when case with caseRef and workflowCode exists", async () => {
@@ -114,19 +139,25 @@ describe("update", () => {
 
     const result = await update(caseMock);
 
+    const { _id, refs, ...document } = new CaseDocument(caseMock);
+
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith({ _id: caseMock.objectId }, [
       {
         $replaceWith: {
           $mergeObjects: [
-            { $literal: new CaseDocument(caseMock) },
+            "$$ROOT",
+            { $literal: document },
             {
               supplementaryData: {
                 $mergeObjects: [
                   { $literal: caseMock.supplementaryData },
                   { claims: "$supplementaryData.claims" },
                 ],
+              },
+              refs: {
+                $setUnion: [{ $ifNull: ["$refs", []] }, { $literal: refs }],
               },
             },
           ],
@@ -135,6 +166,22 @@ describe("update", () => {
     ]);
 
     expect(result).toBe(caseMock);
+  });
+
+  it("sends no whole refs array, so series refs survive", async () => {
+    const updateOne = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      matchedCount: 1,
+    });
+    db.collection.mockReturnValue({ updateOne });
+
+    await update(Case.createMock());
+
+    const [, pipeline] = updateOne.mock.calls[0];
+    const document = pipeline[0].$replaceWith.$mergeObjects[1].$literal;
+
+    expect(document).not.toHaveProperty("refs");
+    expect(document).not.toHaveProperty("_id");
   });
 
   it("throws bad request when case is not found", async () => {
@@ -169,6 +216,37 @@ describe("update", () => {
     await expect(update(caseMock)).rejects.toThrow(
       `Case with caseRef "${caseMock.caseRef}" could not be updated, the operation was not acknowledged`,
     );
+  });
+});
+
+describe("linkSeries", () => {
+  it("gives every member every member's ref, in one write", async () => {
+    const updateMany = vi.fn().mockResolvedValue({});
+    db.collection.mockReturnValue({ updateMany });
+
+    await linkSeries(
+      {
+        workflowCode: "example-workflow",
+        caseRefs: ["ABC-1", "ABC-2", "ABC-3"],
+      },
+      "session",
+    );
+
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(updateMany.mock.calls).toEqual([
+      [
+        {
+          workflowCode: "example-workflow",
+          caseRef: { $in: ["ABC-1", "ABC-2", "ABC-3"] },
+        },
+        {
+          $addToSet: {
+            refs: { $each: ["ref:abc-1", "ref:abc-2", "ref:abc-3"] },
+          },
+        },
+        { session: "session" },
+      ],
+    ]);
   });
 });
 
@@ -662,5 +740,74 @@ describe("updateClaimSupplementaryData", () => {
     await expect(
       updateClaimSupplementaryData(Case.createMock()),
     ).rejects.toThrow();
+  });
+});
+
+describe("admin read model", () => {
+  const MAX_TIME_MS = 3000;
+
+  it("reads a series' members once, on the unique key", async () => {
+    const rows = [{ caseRef: "ref-1" }];
+    const find = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue(rows) });
+    db.collection.mockReturnValue({ find });
+
+    expect(
+      await findSeriesMembers({
+        workflowCode: "frps",
+        caseRefs: ["ref-0", "ref-1"],
+      }),
+    ).toBe(rows);
+    expect(db.collection).toHaveBeenCalledWith("cases");
+    expect(find).toHaveBeenCalledWith(
+      { workflowCode: "frps", caseRef: { $in: ["ref-0", "ref-1"] } },
+      {
+        projection: CASE_ROW_PROJECTION,
+        hint: { workflowCode: 1, caseRef: 1 },
+        maxTimeMS: MAX_TIME_MS,
+      },
+    );
+  });
+
+  it("reads a stored case through its pipeline", async () => {
+    const doc = { caseRef: "ref-1", storedBytes: 9 };
+    const aggregate = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue([doc]) });
+    db.collection.mockReturnValue({ aggregate });
+    const key = { workflowCode: "frps", caseRef: "ref-1" };
+
+    expect(await findStoredCase(key, "document")).toBe(doc);
+    expect(aggregate).toHaveBeenCalledWith(
+      storedCasePipeline(key, "document"),
+      { maxTimeMS: MAX_TIME_MS },
+    );
+  });
+
+  it("answers null for a stored case that is not there", async () => {
+    db.collection.mockReturnValue({
+      aggregate: () => ({ toArray: vi.fn().mockResolvedValue([]) }),
+    });
+
+    expect(
+      await findStoredCase({ workflowCode: "frps", caseRef: "ref-1" }),
+    ).toBeNull();
+  });
+
+  it.each([
+    [{ _id: "id" }, true],
+    [null, false],
+  ])("checks existence from an _id-only read", async (found, exists) => {
+    const findOne = vi.fn().mockResolvedValue(found);
+    db.collection.mockReturnValue({ findOne });
+
+    expect(await caseExists({ workflowCode: "frps", caseRef: "ref-1" })).toBe(
+      exists,
+    );
+    expect(findOne).toHaveBeenCalledWith(
+      { workflowCode: "frps", caseRef: "ref-1" },
+      { projection: { _id: 1 }, maxTimeMS: MAX_TIME_MS },
+    );
   });
 });

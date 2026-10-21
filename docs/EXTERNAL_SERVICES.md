@@ -101,6 +101,10 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
           BODY: {
             // Example: Body parameters for POST/PUT/PATCH requests
             // requesterUsername: "CASEWORKING_SYSTEM"
+          },
+          HEADERS: {
+            // Example: request headers, e.g. who the call is made for
+            // "Defra-Email": "$.user.email"
           }
         }
       }
@@ -141,6 +145,25 @@ External actions and endpoints are defined in the workflow definition (MongoDB):
 7. **Variable references** are resolved (e.g., `${RULES_ENGINE_AUTH_TOKEN}` → actual token)
 8. **HTTP client** builds URL, adds headers, makes request
 9. **Response data** is returned and rendered in the tab
+
+## Request Headers
+
+`HEADERS` in `endpointParams` adds request headers to that action's call only,
+resolved like `PATH` and `BODY`. `$.user` is the signed-in caseworker, so the
+FRPS rerun sends `"Defra-Email": "$.user.email"` for land-grants-api to
+authorise and audit the call.
+
+- Every header must resolve to a non-empty string, number or boolean (sent as
+  text). Anything else, including a missing value, refuses the call with a 400
+  before it is sent. This is stricter than `BODY`, where a missing value is
+  simply left out.
+- Headers from the service's environment config (`*_HEADERS`) always win: a
+  workflow can add headers but cannot replace one, whatever its case.
+- Never put a secret in `HEADERS` as a literal. Workflow config is not secret;
+  credentials belong in the service's environment config.
+
+Requests are logged with header names only, never their values, so neither
+caseworker details nor credentials reach the logs.
 
 ## Adding a New External Service
 
