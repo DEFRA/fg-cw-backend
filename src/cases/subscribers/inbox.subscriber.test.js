@@ -495,7 +495,7 @@ it("dispatches case.update.supplementary.data and records success without a stat
   const msg = {
     type: `cloud.defra.${config.get("cdpEnvironment")}.fg-gas-backend.case.update.supplementary.data`,
     source: "GAS",
-    messageId: "claim-message",
+    messageId: "supplementary-message",
     event: { data: {} },
   };
   await subscriber.handleEvent(msg);
@@ -503,7 +503,7 @@ it("dispatches case.update.supplementary.data and records success without a stat
   expect(handleCaseStatusUpdateUseCase).not.toHaveBeenCalled();
   expect(subscriber.markEventComplete).toHaveBeenCalledWith(msg);
 });
-it("records a claim handler failure for inbox retry", async () => {
+it("records a supplementary data handler failure for inbox retry", async () => {
   withTraceParent.mockImplementation((_, fn) => fn());
   const subscriber = new InboxSubscriber();
   vi.spyOn(subscriber, "markEventFailed").mockResolvedValue();
@@ -513,7 +513,7 @@ it("records a claim handler failure for inbox retry", async () => {
   const msg = {
     type: `cloud.defra.${config.get("cdpEnvironment")}.fg-gas-backend.case.update.supplementary.data`,
     source: "GAS",
-    messageId: "claim-message",
+    messageId: "supplementary-message",
   };
   await subscriber.handleEvent(msg);
   expect(subscriber.markEventFailed).toHaveBeenCalledWith(msg, error);
