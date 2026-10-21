@@ -203,4 +203,43 @@ describe("WorkflowTask", () => {
       });
     });
   });
+
+  describe("fromDefinition", () => {
+    const option = (code) => ({
+      code,
+      name: code,
+      theme: "SUCCESS",
+      completes: true,
+    });
+
+    const definition = (valueOptions) => ({
+      code: "CHECK_APPLICATION",
+      name: "Check application",
+      mandatory: true,
+      description: null,
+      valueOptions,
+    });
+
+    it("builds a task from a published definition", () => {
+      const task = WorkflowTask.fromDefinition(
+        definition([option("ACCEPTED"), option("REJECTED")]),
+      );
+
+      expect(task).toBeInstanceOf(WorkflowTask);
+      expect(task.valueOptions.map(({ code }) => code)).toEqual([
+        "ACCEPTED",
+        "REJECTED",
+      ]);
+    });
+
+    it("rejects a value option code used twice", () => {
+      expect(() =>
+        WorkflowTask.fromDefinition(
+          definition([option("ACCEPTED"), option("ACCEPTED")]),
+        ),
+      ).toThrow(
+        'Invalid WorkflowTask "CHECK_APPLICATION": "valueOptions[1]" repeats code "ACCEPTED"',
+      );
+    });
+  });
 });
