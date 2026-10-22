@@ -7,6 +7,8 @@ import {
   readTimeline,
   seedCaseReaderToken,
 } from "../helpers/actuators.js";
+import { toRefs } from "../../src/common/buckets/refs.js";
+import { configRefsOf, toConfigLink } from "../../src/events/case-refs.js";
 import { OPERATOR_ID, OPERATOR_NAME } from "../helpers/operator.js";
 import { CASE_READER_CLIENT, SERVICE_TOKEN } from "../helpers/service-token.js";
 
@@ -15,6 +17,7 @@ let db;
 let cases;
 let outbox;
 let configVersions;
+let inbox;
 
 const NOW = new Date("2026-10-09T12:00:00.000Z");
 
@@ -51,6 +54,23 @@ const aWorkflowVersion = (grantCode, version, overrides = {}) => ({
   status: "active",
   fetchStatus: "fetched",
   receivedAt: NOW.toISOString(),
+  ...overrides,
+});
+
+// Stamped as its writer stamps it, and held as the outbox rows are.
+const aConfigVersionRow = (grantCode, version, overrides = {}) => ({
+  _id: new ObjectId(),
+  source: "ConfigBroker",
+  segregationRef: grantCode,
+  status: "COMPLETED",
+  publicationDate: NOW.toISOString(),
+  completionDate: NOW.toISOString(),
+  claimedBy: "test-holder",
+  claimExpiresAt: new Date("2099-01-01T00:00:00.000Z"),
+  messageId: "0b7c1d1e-0000-4000-8000-000000000002",
+  event: { data: { grantCode, version } },
+  eventType: "ConfigVersionUpdated",
+  refs: toRefs(configRefsOf(grantCode, version)),
   ...overrides,
 });
 
@@ -93,6 +113,7 @@ beforeAll(async () => {
   cases = db.collection("cases");
   outbox = db.collection("outbox");
   configVersions = db.collection("config_versions");
+  inbox = db.collection("inbox");
   await seedCaseReaderToken(db);
 });
 
@@ -458,6 +479,42 @@ describe("POST /actuators/timeline", () => {
       expect.objectContaining({ title: "CaseStatusUpdated" }),
     ]);
     expect(payload.buckets[0].rows).toHaveLength(1);
+  });
+});
+
+describe("POST /actuators/buckets/{bucketId}/query, cw.inbox by config link", () => {
+  const idsOf = ({ payload }) => payload.rows.map(({ link }) => link.id);
+
+  it("answers only the config version events of that code and version, keeping codes that differ in case apart", async () => {
+    const lower = aConfigVersionRow("abc", "1.0.0");
+    const upper = aConfigVersionRow("ABC", "1.0.0");
+    const next = aConfigVersionRow("abc", "1.0.1");
+    await inbox.insertMany([
+      lower,
+      upper,
+      next,
+      aConfigVersionRow("other-workflow", "1.0.0"),
+      aConfigVersionRow("abc", "1.0.0", {
+        eventType: "CreateCase",
+        refs: ["ref:abc", "case:example-workflow:abc"],
+      }),
+    ]);
+
+    expect(
+      idsOf(
+        await queryBucket("cw.inbox", { ref: toConfigLink("abc", "1.0.0") }),
+      ),
+    ).toEqual([lower._id.toString()]);
+    expect(
+      idsOf(
+        await queryBucket("cw.inbox", { ref: toConfigLink("ABC", "1.0.0") }),
+      ),
+    ).toEqual([upper._id.toString()]);
+    expect(
+      idsOf(
+        await queryBucket("cw.inbox", { ref: toConfigLink("abc", "1.0.1") }),
+      ),
+    ).toEqual([next._id.toString()]);
   });
 });
 
