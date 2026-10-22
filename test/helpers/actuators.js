@@ -125,3 +125,25 @@ export const caseExistence = (workflowCode, caseRef, headers = {}) =>
   wreck.get(`/actuators/cases/${workflowCode}/${caseRef}/existence`, {
     headers: asCaseReader(headers),
   });
+
+export const viewWorkflowVersions = (code, headers = {}) =>
+  wreck.get(`/actuators/workflows/${code}/versions`, {
+    headers: asCaseReader(headers),
+  });
+
+export const viewWorkflowVersion = (code, version, query, headers = {}) =>
+  wreck.get(
+    `/actuators/workflows/${code}/versions/${version}${query ? `?${new URLSearchParams(query)}` : ""}`,
+    { headers: asCaseReader(headers) },
+  );
+
+export const workflowVersionExistence = (code, version, headers = {}) =>
+  wreck.get(`/actuators/workflows/${code}/versions/${version}/existence`, {
+    headers: { authorization: `Bearer ${CASE_READER_TOKEN}`, ...headers },
+  });
+
+export const fetchWorkflowDefinition = (code, version, { by }, headers = {}) =>
+  wreck.post(
+    withActor(`/actuators/workflows/${code}/versions/${version}/fetch`, by),
+    { headers: asCaseReader(headers) },
+  );

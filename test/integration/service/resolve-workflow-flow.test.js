@@ -10,11 +10,13 @@ import {
   it,
   vi,
 } from "vitest";
+import { fetchWorkflowDefinitionUseCase } from "../../../src/actuators/use-cases/fetch-workflow-definition.use-case.js";
 import { ConfigVersion } from "../../../src/cases/models/config-version.js";
 import { Workflow } from "../../../src/cases/models/workflow.js";
 import { upsert } from "../../../src/cases/repositories/config-version.repository.js";
 import { resolveAndFetchWorkflowUseCase } from "../../../src/cases/use-cases/resolve-and-fetch-workflow.use-case.js";
 import { FetchStatus } from "../../../src/common/fetch-status.js";
+import { workflowDefinition } from "../../helpers/config-broker.js";
 
 vi.mock("../../../src/common/s3-client.js", async (importOriginal) => {
   const original = await importOriginal();
@@ -157,5 +159,57 @@ describe("resolve-and-fetch-workflow integration", () => {
     await expect(
       resolveAndFetchWorkflowUseCase("pigs-might-fly", "9.0.0"),
     ).rejects.toThrow(/No active config version found/);
+  });
+
+  // The lazy fetch ignores a stored document while the row is not fetched: it
+  // reads S3 again, meets the stored one and marks the row fetched.
+  it("resolves a version an operator's fetch stored, as before", async () => {
+    await upsert(
+      ConfigVersion.createMock({
+        grantCode: "pigs-might-fly",
+        version: "1.0.0",
+        fetchStatus: FetchStatus.Pending,
+      }),
+    );
+    fetchConfigFile.mockResolvedValue(workflowDefinition("pigs-might-fly"));
+
+    const { files } = await fetchWorkflowDefinitionUseCase({
+      grantCode: "pigs-might-fly",
+      version: "1.0.0",
+      by: "Jane Smith",
+      caller: "fg-gas-backend",
+    });
+
+    expect(files).toEqual([{ file: "workflow", outcome: "stored" }]);
+    expect(
+      (
+        await configVersionsCol.findOne({
+          grantCode: "pigs-might-fly",
+          version: "1.0.0",
+        })
+      ).fetchStatus,
+    ).toBe(FetchStatus.Pending);
+
+    const result = await resolveAndFetchWorkflowUseCase(
+      "pigs-might-fly",
+      "1.0.0",
+    );
+
+    expect(result.resolvedVersion).toBe("1.0.0");
+    expect(result.workflow.code).toBe("pigs-might-fly");
+    expect(
+      await workflowsCol.countDocuments({
+        code: "pigs-might-fly",
+        version: "1.0.0",
+      }),
+    ).toBe(1);
+    expect(
+      (
+        await configVersionsCol.findOne({
+          grantCode: "pigs-might-fly",
+          version: "1.0.0",
+        })
+      ).fetchStatus,
+    ).toBe(FetchStatus.Fetched);
   });
 });
