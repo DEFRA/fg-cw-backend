@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { isIP, isIPv6 } from "node:net";
+import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
 import { logger } from "./logger.js";
 
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -63,17 +64,55 @@ const wrapCycle = (request, cycle, store) => {
   request[cycle] = () => asyncLocalStorage.run(store, requestCycle);
 };
 
+// Seeded before auth, so a caller cannot put its own address on the event
+// just by sending the header. The forwarded value is applied afterwards,
+// and only for the frontend's Entra requests.
+const connectionIp = (request) => {
+  const ip = normaliseIp(request.info.remoteAddress);
+
+  return fitsAuditSchema(ip) ? ip : undefined;
+};
+
+const seedConnectionIp = (request, h) => {
+  const store = { ip: connectionIp(request) };
+  wrapCycle(request, "_lifecycle", store);
+  wrapCycle(request, "_postCycle", store);
+  return h.continue;
+};
+
+const honoursForwardedIp = (request) =>
+  request.auth?.strategy === ENTRA_STRATEGY;
+
+const logChosenIp = (request, ip) => {
+  logger.debug(
+    {
+      forwardedFor: request.headers?.["x-forwarded-for"],
+      remoteAddress: request.info.remoteAddress,
+      strategy: request.auth.strategy,
+      ip,
+    },
+    "Chosen audit client IP from x-forwarded-for",
+  );
+};
+
+const applyForwardedIp = (request, h) => {
+  const context = getRequestContext();
+
+  if (honoursForwardedIp(request) && context) {
+    context.ip = getAuditIp(request, TRUSTED_PROXY_COUNT);
+    logChosenIp(request, context.ip);
+  }
+
+  return h.continue;
+};
+
 export const requestContext = {
   plugin: {
     name: "request-context",
     once: true,
     register(server) {
-      server.ext("onRequest", (request, h) => {
-        const store = { ip: getAuditIp(request, TRUSTED_PROXY_COUNT) };
-        wrapCycle(request, "_lifecycle", store);
-        wrapCycle(request, "_postCycle", store);
-        return h.continue;
-      });
+      server.ext("onRequest", seedConnectionIp);
+      server.ext("onPostAuth", applyForwardedIp);
     },
   },
 };

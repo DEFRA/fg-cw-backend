@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
+import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
 import { logger } from "./logger.js";
 import {
   getAuditIp,
@@ -9,7 +11,7 @@ import {
 } from "./request-context.js";
 
 vi.mock("./logger.js", () => ({
-  logger: { warn: vi.fn() },
+  logger: { warn: vi.fn(), debug: vi.fn() },
 }));
 
 const requestWith = (forwardedFor, remoteAddress = "127.0.0.1") => ({
@@ -24,29 +26,34 @@ afterEach(() => {
 
 describe("requestContext", () => {
   const register = () => {
-    let onRequestHandler;
+    const handlers = {};
     const server = {
       ext: (event, handler) => {
-        if (event === "onRequest") {
-          onRequestHandler = handler;
-        }
+        handlers[event] = handler;
       },
     };
 
     requestContext.plugin.register(server);
 
-    return onRequestHandler;
+    return handlers;
   };
 
-  const captureContext = async (request) => {
+  const continueSymbol = Symbol("continue");
+
+  const captureContext = async (request, strategy) => {
+    const handlers = register();
     let capturedContext;
     request._lifecycle = async () => {
+      if (strategy) {
+        request.auth = { strategy };
+        handlers.onPostAuth(request, { continue: continueSymbol });
+      }
       capturedContext = getRequestContext();
     };
     request._postCycle = async () => {};
 
-    const h = { continue: Symbol("continue") };
-    const result = register()(request, h);
+    const h = { continue: continueSymbol };
+    const result = handlers.onRequest(request, h);
 
     expect(result).toBe(h.continue);
 
@@ -59,7 +66,7 @@ describe("requestContext", () => {
     expect(getRequestContext()).toBeNull();
   });
 
-  it("registers an onRequest extension that makes ip available for the rest of the request lifecycle", async () => {
+  it("registers an onRequest extension that makes the connection address available for the rest of the request lifecycle", async () => {
     const context = await captureContext({
       info: { remoteAddress: "127.0.0.1" },
     });
@@ -68,10 +75,37 @@ describe("requestContext", () => {
     expect(getRequestContext()).toBeNull();
   });
 
-  it("stores the client ip forwarded through the trusted local proxy", async () => {
+  it("keeps the connection address when a forwarded header arrives before auth", async () => {
     const context = await captureContext(requestWith("203.0.113.7"));
 
+    expect(context).toEqual({ ip: "127.0.0.1" });
+  });
+
+  it("stores the trusted forwarded ip for an Entra request and logs how it was chosen", async () => {
+    const request = requestWith("6.6.6.6, 203.0.113.7");
+
+    const context = await captureContext(request, ENTRA_STRATEGY);
+
     expect(context).toEqual({ ip: "203.0.113.7" });
+    expect(logger.debug).toHaveBeenCalledWith(
+      {
+        forwardedFor: "6.6.6.6, 203.0.113.7",
+        remoteAddress: "127.0.0.1",
+        strategy: ENTRA_STRATEGY,
+        ip: "203.0.113.7",
+      },
+      "Chosen audit client IP from x-forwarded-for",
+    );
+  });
+
+  it("ignores a forwarded header from a service-token caller", async () => {
+    const context = await captureContext(
+      requestWith("203.0.113.7"),
+      PUBLIC_API_STRATEGY,
+    );
+
+    expect(context).toEqual({ ip: "127.0.0.1" });
+    expect(logger.debug).not.toHaveBeenCalled();
   });
 });
 
