@@ -110,6 +110,23 @@ describe("GET /actuators/buckets", () => {
     expect(facts.map(({ name }) => name)).not.toContain("currentStatus");
   });
 
+  it("describes the version of a case as a fact within its workflow", async () => {
+    const { payload } = await listBuckets();
+    const { facts, indexes } = payload.buckets.find(
+      ({ id }) => id === "cw.cases",
+    );
+
+    expect(facts.find(({ name }) => name === "currentConfigVersion")).toEqual({
+      name: "currentConfigVersion",
+      param: "version",
+      label: "Version",
+      values: null,
+      toggle: null,
+      within: "workflowCode",
+    });
+    expect(indexes).toContainEqual(["workflowCode", "currentConfigVersion"]);
+  });
+
   it("answers 403 to a client other than fg-gas-backend", async () => {
     await expect(
       listBuckets({ authorization: `Bearer ${SERVICE_TOKEN}` }),
@@ -161,6 +178,43 @@ describe("POST /actuators/buckets/{bucketId}/query, cw.cases", () => {
       index: ["workflowCode", "createdAt", "_id"],
     });
     expect(payload.rows.map(({ title }) => title)).toEqual(["abc-2", "abc-1"]);
+  });
+
+  it("lists the cases on one version of a workflow exactly, showing the version", async () => {
+    await cases.insertMany([
+      aCase("abc-1", { currentConfigVersion: "1.2.0" }),
+      aCase("abc-2", { currentConfigVersion: "1.1.0" }),
+      aCase("abc-3", {
+        workflowCode: "other-workflow",
+        currentConfigVersion: "1.2.0",
+      }),
+    ]);
+
+    const { payload } = await queryBucket("cw.cases", {
+      where: {
+        workflowCode: "example-workflow",
+        currentConfigVersion: "1.2.0",
+      },
+    });
+    const [row] = await auditRows();
+
+    expect(payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["workflowCode", "currentConfigVersion", "createdAt", "_id"],
+      bound: ["workflowCode", "currentConfigVersion"],
+      residual: [],
+    });
+    expect(
+      payload.rows.map(({ title, cells }) => [title, cells.workflowCode]),
+    ).toEqual([["abc-1", "example-workflow@1.2.0"]]);
+    expect(payload.rows[0].link).toMatchObject({
+      workflowCode: "example-workflow",
+    });
+    expect(row.event.audit.details.facts).toEqual([
+      "workflowCode",
+      "currentConfigVersion",
+    ]);
+    expect(JSON.stringify(row.event.audit.details)).not.toContain("1.2.0");
   });
 
   it("finds every member of a series by any member's reference", async () => {

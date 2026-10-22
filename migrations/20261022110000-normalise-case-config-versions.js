@@ -1,0 +1,115 @@
+import { FetchStatus } from "../src/common/fetch-status.js";
+import { logger } from "../src/common/logger.js";
+
+// Gives every case `originalConfigVersion` and `currentConfigVersion` and drops
+// the legacy `configVersion`, so the Cases list and the case page read the same
+// version. A case missing one version takes it from the legacy one, or else the
+// other. A case with no version at all takes `0.0.0` and its workflow's newest
+// version that resolves, as `20260806100000-remove-sentinel-config-versions.js`
+// chose one.
+//
+// A case whose workflow has no version that resolves is left unversioned on
+// purpose, and its workflow code logged as a warning with a count: CW no longer
+// holds `0.0.0` as a current version, and failing here would stop CW starting.
+
+const legacy = {
+  $or: [
+    { configVersion: { $exists: true } },
+    { currentConfigVersion: null, originalConfigVersion: { $ne: null } },
+    { originalConfigVersion: null, currentConfigVersion: { $ne: null } },
+  ],
+};
+
+const fromLegacy = [
+  {
+    $set: {
+      originalConfigVersion: {
+        $ifNull: [
+          "$originalConfigVersion",
+          { $ifNull: ["$configVersion", "$currentConfigVersion"] },
+        ],
+      },
+      currentConfigVersion: {
+        $ifNull: [
+          "$currentConfigVersion",
+          { $ifNull: ["$configVersion", "$originalConfigVersion"] },
+        ],
+      },
+    },
+  },
+  { $unset: "configVersion" },
+];
+
+const versionless = { currentConfigVersion: null };
+
+const newestActiveVersion = async (configVersions, workflowCode) => {
+  const [newest] = await configVersions
+    .find({
+      grantCode: workflowCode,
+      status: "active",
+      version: { $ne: "0.0.0" },
+      fetchStatus: { $ne: FetchStatus.PermanentError },
+    })
+    .sort({ major: -1, minor: -1, patch: -1 })
+    .limit(1)
+    .toArray();
+
+  return newest?.version ?? null;
+};
+
+const giveVersions = async (cases, configVersions) => {
+  let modified = 0;
+
+  for (const workflowCode of await cases.distinct(
+    "workflowCode",
+    versionless,
+  )) {
+    const version = await newestActiveVersion(configVersions, workflowCode);
+
+    if (version) {
+      const { modifiedCount } = await cases.updateMany(
+        { ...versionless, workflowCode },
+        {
+          $set: {
+            originalConfigVersion: "0.0.0",
+            currentConfigVersion: version,
+          },
+        },
+      );
+      modified += modifiedCount;
+    }
+  }
+
+  return modified;
+};
+
+const warnUnversioned = async (cases) => {
+  const unversioned = await cases
+    .aggregate([
+      { $match: versionless },
+      { $group: { _id: "$workflowCode", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ])
+    .toArray();
+
+  if (unversioned.length > 0) {
+    const counts = unversioned.map(({ _id, count }) => `${_id} (${count})`);
+
+    logger.warn(
+      `Cases left without a config version, as their workflow has no version to take: ${counts.join(", ")}`,
+    );
+  }
+};
+
+export const up = async (db) => {
+  const cases = db.collection("cases");
+
+  const { modifiedCount } = await cases.updateMany(legacy, fromLegacy);
+  const given = await giveVersions(cases, db.collection("config_versions"));
+
+  logger.info(
+    `Normalised ${modifiedCount} legacy or partly versioned and ${given} versionless case config versions`,
+  );
+
+  await warnUnversioned(cases);
+};
