@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { isIP, isIPv6 } from "node:net";
 import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
+import { config } from "./config.js";
 import { logger } from "./logger.js";
 
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -73,7 +74,24 @@ const connectionIp = (request) => {
   return fitsAuditSchema(ip) ? ip : undefined;
 };
 
+const logClientIpDebug = (request) => {
+  // TEMP FGP-1520: confirm proxy hop count in dev. Remove before merge.
+  if (config.get("cdpEnvironment") !== "dev") {
+    return;
+  }
+
+  logger.info(
+    {
+      xForwardedFor: request.headers["x-forwarded-for"] ?? null,
+      remoteAddress: request.info.remoteAddress,
+      path: request.path,
+    },
+    "FGP-1520 client ip debug",
+  );
+};
+
 const seedConnectionIp = (request, h) => {
+  logClientIpDebug(request);
   const store = { ip: connectionIp(request) };
   wrapCycle(request, "_lifecycle", store);
   wrapCycle(request, "_postCycle", store);

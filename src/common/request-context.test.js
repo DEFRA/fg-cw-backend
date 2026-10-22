@@ -11,7 +11,7 @@ import {
 } from "./request-context.js";
 
 vi.mock("./logger.js", () => ({
-  logger: { warn: vi.fn(), debug: vi.fn() },
+  logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }));
 
 const requestWith = (forwardedFor, remoteAddress = "127.0.0.1") => ({
