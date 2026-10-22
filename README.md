@@ -542,6 +542,24 @@ token with a 403. The case read takes the operator in the same two headers and
 is audited as `VIEW_CASE_DATA` before any data is returned. The existence
 check releases only yes or no, and is not audited.
 
+### Workflow version actuators
+
+`/actuators/workflows/{code}/versions[/{version}]` serve the grants admin's
+workflow version pages through fg-gas-backend, behind the same guard. The reads
+take the operator headers and are not audited here: fg-gas-backend audits the
+page view. With `include=document`, a version read also returns the stored
+workflow and the address each endpoint resolves to from `{SERVICE}_URL`
+(scheme, host and path only; `{SERVICE}_HEADERS` is never read).
+Each version listed carries its fetch status and whether its workflow is
+stored, however it got there; a version read adds its last fetch error, failed
+attempts and S3 location.
+`POST …/{version}/fetch?by=` stores a version's workflow from S3 when it is
+not stored and the definition is a valid workflow for that code, and is audited
+as `FETCH_CONFIG_DEFINITION`. It never changes the config version record, so
+the lazy fetch a case triggers works as before.
+`GET …/{version}/existence` releases only whether the version exists, takes no
+operator headers and is not audited, like the case existence check.
+
 Every actuator request that sends `x-actor-id` has it recorded as the audit
 event's `user`, including redrive, purge and edit.
 
