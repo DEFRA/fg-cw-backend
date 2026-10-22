@@ -7,6 +7,8 @@ import {
   updateSupplementaryData,
 } from "../repositories/case.repository.js";
 
+const MAX_UPDATE_ATTEMPTS = 3;
+
 const shouldRetry = (error, remainingAttempts) =>
   error.data === SUPPLEMENTARY_DATA_CONFLICT && remainingAttempts > 1;
 
@@ -25,7 +27,7 @@ const applyUpdate = async (instruction, remainingAttempts) => {
     if (!shouldRetry(error, remainingAttempts)) {
       throw error;
     }
-    return applyUpdate(instruction, remainingAttempts - 1);
+    await applyUpdate(instruction, remainingAttempts - 1);
   }
 };
 
@@ -40,7 +42,7 @@ export const updateSupplementaryDataUseCase = async (message) => {
   logger.info(
     `Updating supplementary data for case "${caseRef}" and workflow "${workflowCode}"`,
   );
-  await applyUpdate(value, 3);
+  await applyUpdate(value, MAX_UPDATE_ATTEMPTS);
   logger.info(
     `Finished: Updating supplementary data for case "${caseRef}" and workflow "${workflowCode}"`,
   );
