@@ -117,13 +117,20 @@ describe("every insert into the inbox", () => {
   it("stamps a config version message", async () => {
     await saveConfigVersionInboxMessageUseCase(
       [],
-      { grant: { DataType: "String", StringValue: "example-workflow" } },
+      {
+        grant: { DataType: "String", StringValue: "woodland-creation" },
+        version: { DataType: "String", StringValue: "1.0.0" },
+      },
       { messageId: "0b7c1d1e-0000-4000-8000-000000000002" },
     );
 
     expect(insertedInboxRow()).toMatchObject({
       eventType: "ConfigVersionUpdated",
-      refs: ["id:0b7c1d1e-0000-4000-8000-000000000002"],
+      refs: [
+        "ref:woodland-creation",
+        "config:woodland-creation@1~2e.0~2e.0",
+        "id:0b7c1d1e-0000-4000-8000-000000000002",
+      ],
     });
   });
 

@@ -511,11 +511,14 @@ and hides the `Audit` type that way, because that type is declared
 `hiddenByDefault`. A bucket may also read by `links`, ref kinds no search
 offers: the inbox and outbox read a case's Events tab by
 `case:<workflowCode>:<caseRef>`, since two workflows may hold the same case
-reference. A fact may be `within` another when its values mean something only
-for one value of that other fact, as `cw.cases`' version is within its
-workflow, and then needs an index line of the two. A bucket is declared
-once, with `defineBucket`, in `src/cases/buckets/`, and registered with
-`registerBucket` in `cases/index.js` once the migrations have run:
+reference, and the inbox reads a workflow's config version events by
+`config:<grantCode>@<version>`, one link per version, kept apart from a code or
+version that differs only in case. A fact may be `within` another when its
+values mean something only for one value of that other fact, as `cw.cases`'
+version is within its workflow, and then needs an index line of the two. A
+bucket is declared once, with `defineBucket`, in `src/cases/buckets/`, and
+registered with `registerBucket` in `cases/index.js` once the migrations have
+run:
 
 | Bucket      | Declared in                      | Lists                          |
 | :---------- | :------------------------------- | :----------------------------- |
