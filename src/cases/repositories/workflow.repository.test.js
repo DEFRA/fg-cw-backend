@@ -10,9 +10,12 @@ import {
   findAllCodes,
   findByCode,
   findByCodeAndVersion,
+  findStoredVersions,
+  findStoredWorkflowRow,
   save,
   saveFromDefinition,
 } from "./workflow.repository.js";
+import { storedWorkflowPipeline } from "./workflow/admin-workflow-query.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -415,5 +418,49 @@ describe("findAllCodes", () => {
       { projection: { _id: 0, code: 1 } },
     );
     expect(result).toEqual([]);
+  });
+});
+
+describe("findStoredWorkflowRow", () => {
+  const key = { code: "woodland", version: "1.2.0" };
+
+  it("reads a stored workflow through its pipeline", async () => {
+    const doc = { code: "woodland", storedBytes: 9 };
+    const aggregate = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue([doc]) });
+    db.collection.mockReturnValue({ aggregate });
+
+    expect(await findStoredWorkflowRow(key, "document")).toBe(doc);
+    expect(aggregate).toHaveBeenCalledWith(
+      storedWorkflowPipeline(key, "document"),
+      { maxTimeMS: expect.any(Number) },
+    );
+  });
+
+  it("answers null for a workflow that is not stored", async () => {
+    db.collection.mockReturnValue({
+      aggregate: () => ({ toArray: vi.fn().mockResolvedValue([]) }),
+    });
+
+    expect(await findStoredWorkflowRow(key)).toBeNull();
+  });
+});
+
+describe("findStoredVersions", () => {
+  it("answers those of the versions whose workflow is stored under the code", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ version: "1.2.0" }]),
+    });
+    db.collection.mockReturnValue({ find });
+
+    const stored = await findStoredVersions("woodland", ["2.0.0", "1.2.0"]);
+
+    expect(stored).toEqual(new Set(["1.2.0"]));
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith(
+      { code: "woodland", version: { $in: ["2.0.0", "1.2.0"] } },
+      { projection: { _id: 0, version: 1 }, maxTimeMS: expect.any(Number) },
+    );
   });
 });

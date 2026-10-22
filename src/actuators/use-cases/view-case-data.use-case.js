@@ -1,4 +1,3 @@
-import Boom from "@hapi/boom";
 import {
   findSeriesMembers,
   findStoredCase,
@@ -18,17 +17,11 @@ import {
 import { buildOperatorSecurityContext } from "../../common/audit-security-context.js";
 import { auditedRead } from "../../common/audited-read.js";
 import { logger } from "../../common/logger.js";
+import { notFoundWithReason } from "../../common/not-found-with-reason.js";
 
 export const CASE_NOT_FOUND = "CASE_NOT_FOUND";
 
-// The reason tells the caller a missing case from a missing route.
-const caseNotFound = () => {
-  const error = Boom.notFound("Case not found");
-
-  error.output.payload.reason = CASE_NOT_FOUND;
-
-  return error;
-};
+const caseNotFound = () => notFoundWithReason("Case not found", CASE_NOT_FOUND);
 
 const findSeriesOf = async ({ workflowCode, caseRef }) => {
   const [series] = await findByCaseRef({ ref: caseRef, workflowCode });
