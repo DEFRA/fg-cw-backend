@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
 import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
+import { config } from "./config.js";
 import { logger } from "./logger.js";
 import {
-  getAuditIp,
   getRequestContext,
-  normaliseIp,
   readClientIp,
   requestContext,
 } from "./request-context.js";
@@ -14,14 +13,34 @@ vi.mock("./logger.js", () => ({
   logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() },
 }));
 
+// Only `cdpEnvironment` is controlled here; everything else (e.g. the mongo
+// uri pulled in via entra.js) keeps its real value.
+vi.mock("./config.js", async (importOriginal) => {
+  const { config } = await importOriginal();
+  const realGet = config.get.bind(config);
+
+  config.get = vi.fn((key) =>
+    key === "cdpEnvironment" ? config.get.cdpEnvironment : realGet(key),
+  );
+  config.get.cdpEnvironment = "test";
+
+  return { config };
+});
+
+const setCdpEnvironment = (value) => {
+  config.get.cdpEnvironment = value;
+};
+
 const requestWith = (forwardedFor, remoteAddress = "127.0.0.1") => ({
   headers:
     forwardedFor === undefined ? {} : { "x-forwarded-for": forwardedFor },
   info: { remoteAddress },
+  path: "/cases",
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  setCdpEnvironment("test");
 });
 
 describe("requestContext", () => {
@@ -71,30 +90,33 @@ describe("requestContext", () => {
       info: { remoteAddress: "127.0.0.1" },
     });
 
-    expect(context).toEqual({ ip: "127.0.0.1" });
+    expect(context).toEqual({ remoteAddress: "127.0.0.1" });
     expect(getRequestContext()).toBeNull();
   });
 
-  it("keeps the connection address when a forwarded header arrives before auth", async () => {
+  it("stores no client ip when a forwarded header arrives before auth", async () => {
     const context = await captureContext(requestWith("203.0.113.7"));
 
-    expect(context).toEqual({ ip: "127.0.0.1" });
+    expect(context).toEqual({ remoteAddress: "127.0.0.1" });
   });
 
-  it("stores the trusted forwarded ip for an Entra request and logs how it was chosen", async () => {
-    const request = requestWith("6.6.6.6, 203.0.113.7");
+  it("stores the trusted forwarded ip, untouched, for an Entra request and logs how it was chosen", async () => {
+    const request = requestWith("6.6.6.6, ::ffff:203.0.113.7");
 
     const context = await captureContext(request, ENTRA_STRATEGY);
 
-    expect(context).toEqual({ ip: "203.0.113.7" });
+    expect(context).toEqual({
+      remoteAddress: "127.0.0.1",
+      clientIp: "::ffff:203.0.113.7",
+    });
     expect(logger.debug).toHaveBeenCalledWith(
       {
-        forwardedFor: "6.6.6.6, 203.0.113.7",
+        forwardedFor: "6.6.6.6, ::ffff:203.0.113.7",
         remoteAddress: "127.0.0.1",
         strategy: ENTRA_STRATEGY,
-        ip: "203.0.113.7",
+        clientIp: "::ffff:203.0.113.7",
       },
-      "Chosen audit client IP from x-forwarded-for",
+      "Chosen client IP from x-forwarded-for",
     );
   });
 
@@ -104,8 +126,30 @@ describe("requestContext", () => {
       PUBLIC_API_STRATEGY,
     );
 
-    expect(context).toEqual({ ip: "127.0.0.1" });
+    expect(context).toEqual({ remoteAddress: "127.0.0.1" });
     expect(logger.debug).not.toHaveBeenCalled();
+  });
+
+  it("logs the raw forwarding facts in dev only", async () => {
+    setCdpEnvironment("dev");
+
+    await captureContext(requestWith("6.6.6.6, 203.0.113.7"));
+
+    expect(config.get).toHaveBeenCalledWith("cdpEnvironment");
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        xForwardedFor: "6.6.6.6, 203.0.113.7",
+        remoteAddress: "127.0.0.1",
+        path: "/cases",
+      },
+      "FGP-1520 client ip debug",
+    );
+  });
+
+  it("does not log the raw forwarding facts outside dev", async () => {
+    await captureContext(requestWith("6.6.6.6, 203.0.113.7"));
+
+    expect(logger.info).not.toHaveBeenCalled();
   });
 });
 
@@ -146,66 +190,5 @@ describe("readClientIp", () => {
     expect(readClientIp(requestWith(" , 203.0.113.7 , "), 1)).toBe(
       "203.0.113.7",
     );
-  });
-});
-
-describe("normaliseIp", () => {
-  it("leaves IPv4 unchanged", () => {
-    expect(normaliseIp("203.0.113.7")).toBe("203.0.113.7");
-  });
-
-  it("turns an IPv4-mapped IPv6 address into plain IPv4", () => {
-    expect(normaliseIp("::ffff:203.0.113.7")).toBe("203.0.113.7");
-  });
-
-  it("compresses IPv6", () => {
-    expect(normaliseIp("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
-      "2001:db8::1",
-    );
-  });
-
-  it("drops an IPv6 zone id", () => {
-    expect(normaliseIp("fe80::1%eth0")).toBe("fe80::1");
-  });
-
-  it("answers undefined for something that is not an IP", () => {
-    expect(normaliseIp("not-an-ip")).toBeUndefined();
-    expect(normaliseIp(undefined)).toBeUndefined();
-  });
-});
-
-describe("getAuditIp", () => {
-  it("answers the normalised client ip", () => {
-    expect(getAuditIp(requestWith("2001:0db8::0001"), 1)).toBe("2001:db8::1");
-    expect(logger.warn).not.toHaveBeenCalled();
-  });
-
-  it("falls back to the connection address, with a warning, when the client IPv6 is longer than the audit schema allows", () => {
-    expect(
-      getAuditIp(
-        requestWith("2001:db8:85a3:1234:5678:8a2e:370:7334", "198.51.100.4"),
-        1,
-      ),
-    ).toBe("198.51.100.4");
-    expect(logger.warn).toHaveBeenCalledOnce();
-  });
-
-  it("falls back to the connection address when the forwarded value is not an IP", () => {
-    expect(getAuditIp(requestWith("not-an-ip", "198.51.100.4"), 1)).toBe(
-      "198.51.100.4",
-    );
-    expect(logger.warn).toHaveBeenCalledOnce();
-  });
-
-  it("answers undefined when neither address fits the audit schema", () => {
-    expect(
-      getAuditIp(
-        requestWith(
-          "2001:db8:85a3:1234:5678:8a2e:370:7334",
-          "2001:db8:85a3:1234:5678:8a2e:370:7335",
-        ),
-        1,
-      ),
-    ).toBeUndefined();
   });
 });

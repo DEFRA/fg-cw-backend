@@ -1,5 +1,4 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { isIP, isIPv6 } from "node:net";
 import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
@@ -9,11 +8,10 @@ const asyncLocalStorage = new AsyncLocalStorage();
 // How many proxies in front of this service append to x-forwarded-for.
 const TRUSTED_PROXY_COUNT = 1;
 
-// The audit schema caps `ip` at 20 characters.
-const MAX_AUDIT_IP_LENGTH = 20;
-
-const IPV4_MAPPED = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i;
-
+// The store holds raw request facts only: `remoteAddress` is the connection,
+// `clientIp` is the forwarded address once a trusted caller has been
+// authenticated. How those become an audit `ip` is the audit layer's rule
+// (write-audit-event.js).
 export const getRequestContext = () => asyncLocalStorage.getStore() ?? null;
 
 // Each trusted proxy appends the address it received the request from, so
@@ -30,48 +28,9 @@ export const readClientIp = (request, trustedProxyCount) => {
   return chain[Math.max(0, chain.length - 1 - trustedProxyCount)];
 };
 
-const compressIp = (ip) =>
-  isIPv6(ip) ? new URL(`http://[${ip}]`).hostname.slice(1, -1) : ip;
-
-// The shortest equivalent form of `address`, or undefined when it is not an
-// IP: IPv4-mapped addresses become plain IPv4 and IPv6 is compressed.
-export const normaliseIp = (address = "") => {
-  // Drop any IPv6 zone id (e.g. `fe80::1%eth0`).
-  const ip = address.split("%")[0].replace(IPV4_MAPPED, "$1");
-
-  return isIP(ip) ? compressIp(ip) : undefined;
-};
-
-const fitsAuditSchema = (ip) => ip?.length <= MAX_AUDIT_IP_LENGTH;
-
-export const getAuditIp = (request, trustedProxyCount) => {
-  const clientIp = normaliseIp(readClientIp(request, trustedProxyCount));
-
-  if (fitsAuditSchema(clientIp)) {
-    return clientIp;
-  }
-
-  logger.warn(
-    `Client IP is not an IP of at most ${MAX_AUDIT_IP_LENGTH} characters - auditing the connection address instead.`,
-  );
-
-  const remoteAddress = normaliseIp(request.info.remoteAddress);
-
-  return fitsAuditSchema(remoteAddress) ? remoteAddress : undefined;
-};
-
 const wrapCycle = (request, cycle, store) => {
   const requestCycle = request[cycle].bind(request);
   request[cycle] = () => asyncLocalStorage.run(store, requestCycle);
-};
-
-// Seeded before auth, so a caller cannot put its own address on the event
-// just by sending the header. The forwarded value is applied afterwards,
-// and only for the frontend's Entra requests.
-const connectionIp = (request) => {
-  const ip = normaliseIp(request.info.remoteAddress);
-
-  return fitsAuditSchema(ip) ? ip : undefined;
 };
 
 const logClientIpDebug = (request) => {
@@ -82,7 +41,7 @@ const logClientIpDebug = (request) => {
 
   logger.info(
     {
-      xForwardedFor: request.headers["x-forwarded-for"] ?? null,
+      xForwardedFor: request.headers?.["x-forwarded-for"] ?? null,
       remoteAddress: request.info.remoteAddress,
       path: request.path,
     },
@@ -90,9 +49,12 @@ const logClientIpDebug = (request) => {
   );
 };
 
+// Seeded before auth, so a caller cannot put its own address on the event
+// just by sending the header. The forwarded value is applied afterwards,
+// and only for the frontend's Entra requests.
 const seedConnectionIp = (request, h) => {
   logClientIpDebug(request);
-  const store = { ip: connectionIp(request) };
+  const store = { remoteAddress: request.info.remoteAddress };
   wrapCycle(request, "_lifecycle", store);
   wrapCycle(request, "_postCycle", store);
   return h.continue;
@@ -101,15 +63,15 @@ const seedConnectionIp = (request, h) => {
 const honoursForwardedIp = (request) =>
   request.auth?.strategy === ENTRA_STRATEGY;
 
-const logChosenIp = (request, ip) => {
+const logChosenIp = (request, clientIp) => {
   logger.debug(
     {
       forwardedFor: request.headers?.["x-forwarded-for"],
       remoteAddress: request.info.remoteAddress,
       strategy: request.auth.strategy,
-      ip,
+      clientIp,
     },
-    "Chosen audit client IP from x-forwarded-for",
+    "Chosen client IP from x-forwarded-for",
   );
 };
 
@@ -117,8 +79,8 @@ const applyForwardedIp = (request, h) => {
   const context = getRequestContext();
 
   if (honoursForwardedIp(request) && context) {
-    context.ip = getAuditIp(request, TRUSTED_PROXY_COUNT);
-    logChosenIp(request, context.ip);
+    context.clientIp = readClientIp(request, TRUSTED_PROXY_COUNT);
+    logChosenIp(request, context.clientIp);
   }
 
   return h.continue;
