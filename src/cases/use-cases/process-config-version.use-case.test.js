@@ -23,8 +23,6 @@ vi.mock("../../common/config.js", () => ({
   config: { get: mockConfigGet },
 }));
 
-vi.mock("../../common/mongo-client.js", () => ({ db: {}, mongoClient: {} }));
-
 vi.mock("../../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
@@ -195,7 +193,22 @@ describe("processConfigVersionUseCase", () => {
 
       const error = await failureOf();
 
-      expect(error.message).toContain("has no initial position");
+      expect(error.message).toContain(
+        'Invalid Workflow "woodland": it has no initial position',
+      );
+      expect(isRetryableFailure(error)).toBe(false);
+      expect(upsert).not.toHaveBeenCalled();
+    });
+
+    it("dead-letters a definition whose _id could not be stored", async () => {
+      fetchConfigFile.mockResolvedValue({
+        ...definitionFor("woodland"),
+        _id: "not-an-object-id",
+      });
+
+      const error = await failureOf();
+
+      expect(error.message).toContain('"_id" must only contain hexadecimal');
       expect(isRetryableFailure(error)).toBe(false);
       expect(upsert).not.toHaveBeenCalled();
     });
