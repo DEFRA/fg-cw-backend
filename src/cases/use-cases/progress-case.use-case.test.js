@@ -41,6 +41,31 @@ const createTestMessage = (overrides = {}) => ({
 });
 
 describe("progressCaseUseCase", () => {
+  it("rejects a dotted supplementary target before saving the case", async () => {
+    const kase = Case.createMock();
+    vi.spyOn(kase, "progressTo").mockReturnValue();
+    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: null,
+    });
+
+    await expect(
+      progressCaseUseCase(
+        createTestMessage({
+          supplementaryData: {
+            targetNode: "bad.path",
+            dataType: "ARRAY",
+            key: "id",
+            data: { id: "one" },
+          },
+        }),
+      ),
+    ).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+    expect(kase.supplementaryData).toEqual({});
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
   it("should throw if case not found", async () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 

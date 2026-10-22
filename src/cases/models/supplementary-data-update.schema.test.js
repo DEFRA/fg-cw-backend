@@ -27,6 +27,30 @@ describe("supplementary data update envelope", () => {
         .error,
     ).toBeUndefined();
   });
+  it("rejects NUL in an OBJECT identity", () => {
+    expect(
+      updateCaseSupplementaryDataSchema.validate(
+        event({ dataType: "OBJECT", data: { id: "bad\0identity" } }),
+      ).error,
+    ).toBeDefined();
+  });
+  it("keeps NUL valid in an ARRAY identity", () => {
+    const value = event({ dataType: "ARRAY", data: { id: "literal\0value" } });
+    const result = updateCaseSupplementaryDataSchema.validate(value);
+
+    expect(result.error).toBeUndefined();
+    expect(result.value).toEqual(value);
+  });
+  it.each(["a.b", "$value", "__proto__", 0])(
+    "accepts literal OBJECT identity %j",
+    (id) => {
+      const value = event({ dataType: "OBJECT", data: { id } });
+      const result = updateCaseSupplementaryDataSchema.validate(value);
+
+      expect(result.error).toBeUndefined();
+      expect(result.value).toEqual(value);
+    },
+  );
   it.each([
     "bad.path",
     "$bad",

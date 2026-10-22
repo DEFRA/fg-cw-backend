@@ -8,6 +8,7 @@ import { CaseTask } from "./case-task.js";
 import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
+import { assertIsSupplementaryDataNode } from "./supplementary-data-node.schema.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -185,6 +186,7 @@ export class Case {
       return null;
     }
 
+    assertIsSupplementaryDataNode(targetNode);
     this.#rememberSupplementaryData(targetNode);
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
@@ -246,6 +248,7 @@ export class Case {
   }
 
   addSupplementaryData(targetNode, data) {
+    assertIsSupplementaryDataNode(targetNode);
     this.#rememberSupplementaryData(targetNode);
     this.supplementaryData = { ...this.supplementaryData, [targetNode]: data };
     this.#updatedSupplementaryNodes.add(targetNode);

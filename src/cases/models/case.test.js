@@ -1555,6 +1555,89 @@ describe("Case", () => {
 });
 
 describe("supplementary data changes", () => {
+  it.each([
+    "bad.path",
+    "$bad",
+    "bad$node",
+    "bad\0node",
+    "__proto__",
+    "constructor",
+    "prototype",
+    "toString",
+    " results ",
+  ])(
+    "rejects unsafe target %j before changing supplementary data",
+    (targetNode) => {
+      const kase = Case.createMock({
+        supplementaryData: { untouched: [{ id: "original" }] },
+      });
+
+      expect(() =>
+        kase.updateSupplementaryData({
+          targetNode,
+          dataType: "ARRAY",
+          key: "id",
+          data: { id: "one" },
+        }),
+      ).toThrow();
+      expect(kase.supplementaryData).toEqual({
+        untouched: [{ id: "original" }],
+      });
+      expect(kase.getSupplementaryDataUpdates()).toEqual({});
+      expect(kase.getOriginalSupplementaryData()).toEqual({});
+    },
+  );
+  it("rejects an existing literal dotted target without changing it", () => {
+    const kase = Case.createMock({
+      supplementaryData: { "bad.path": [{ id: "original" }] },
+    });
+
+    expect(() =>
+      kase.updateSupplementaryData({
+        targetNode: "bad.path",
+        dataType: "ARRAY",
+        key: "id",
+        data: { id: "one" },
+      }),
+    ).toThrow();
+    expect(kase.supplementaryData).toEqual({
+      "bad.path": [{ id: "original" }],
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it.each([
+    "bad.path",
+    "$bad",
+    "bad\0node",
+    "__proto__",
+    "constructor",
+    "prototype",
+    "toString",
+  ])("rejects direct additions to unsafe target %j", (targetNode) => {
+    const kase = Case.createMock();
+
+    expect(() => kase.addSupplementaryData(targetNode, [])).toThrow();
+    expect(kase.supplementaryData).toEqual({});
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it.each([undefined, null, ""])(
+    "keeps missing target %j as a no-op",
+    (targetNode) => {
+      const kase = Case.createMock();
+
+      expect(
+        kase.updateSupplementaryData({
+          targetNode,
+          dataType: "ARRAY",
+          data: { id: "one" },
+        }),
+      ).toBeNull();
+      expect(kase.supplementaryData).toEqual({});
+      expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    },
+  );
   it("does not mark loaded data as changed", () => {
     const kase = Case.createMock({
       supplementaryData: { anything: [{ id: "original" }] },
