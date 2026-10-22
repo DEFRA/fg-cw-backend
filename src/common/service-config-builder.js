@@ -31,3 +31,23 @@ export const buildServiceConfigMap = (workflow = {}) => {
     {},
   );
 };
+
+const withoutTrailingSlash = (path) =>
+  path.endsWith("/") ? path.slice(0, -1) : path;
+
+const withLeadingSlash = (path) => (path.startsWith("/") ? path : `/${path}`);
+
+/**
+ * Where an endpoint resolves to in this environment, for display: the scheme,
+ * host and path of {SERVICE}_URL joined to the endpoint's path. User info,
+ * query and fragment are dropped, and {SERVICE}_HEADERS is never read.
+ */
+export const toServiceAddress = ({ service, path }) => {
+  const url = URL.parse(process.env[`${service}_URL`] ?? "");
+
+  if (!url) {
+    return null;
+  }
+
+  return `${url.protocol}//${url.host}${withoutTrailingSlash(url.pathname)}${withLeadingSlash(path)}`;
+};

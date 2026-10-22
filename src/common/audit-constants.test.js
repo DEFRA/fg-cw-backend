@@ -18,6 +18,7 @@ describe("pmc codes", () => {
     auditActions.FIND_CASES,
     auditActions.VIEW_CASE_DATA,
     auditActions.QUERY_BUCKET,
+    auditActions.FETCH_CONFIG_DEFINITION,
   ])("files %s as an action a user or service can execute", (action) => {
     expect(buildAuditSecurity(action)).toEqual({ pmccode: "0706" });
   });
