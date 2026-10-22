@@ -1,3 +1,4 @@
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { db } from "../../common/mongo-client.js";
 import { ConfigVersion } from "../models/config-version.js";
@@ -81,3 +82,38 @@ export const findByGrantCodeAndVersion = async (grantCode, version) => {
 
   return ConfigVersion.fromDocument(doc);
 };
+
+const NEWEST_FIRST = { major: -1, minor: -1, patch: -1 };
+
+export const findAllForCode = async (grantCode) => {
+  const docs = await db
+    .collection(collection)
+    .find(
+      { grantCode },
+      { sort: NEWEST_FIRST, maxTimeMS: actuatorReadMaxTimeMs() },
+    )
+    .toArray();
+
+  return docs.map(ConfigVersion.fromDocument);
+};
+
+// The version a code's bare page opens: the newest active one. Unlike
+// findLatestForMajor, a permanent fetch error does not skip it.
+export const findCurrent = async (grantCode) => {
+  const doc = await db
+    .collection(collection)
+    .findOne(
+      { grantCode, status: "active" },
+      { sort: NEWEST_FIRST, maxTimeMS: actuatorReadMaxTimeMs() },
+    );
+
+  return ConfigVersion.fromDocument(doc);
+};
+
+export const configVersionExists = async ({ grantCode, version }) =>
+  (await db
+    .collection(collection)
+    .findOne(
+      { grantCode, version },
+      { projection: { _id: 1 }, maxTimeMS: actuatorReadMaxTimeMs() },
+    )) !== null;
