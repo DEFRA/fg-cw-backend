@@ -191,6 +191,65 @@ describe("generic supplementary data persistence", () => {
       (await cases.findOne({ _id: original._id })).supplementaryData.results,
     ).toEqual([{ ...entry, changedLater: true }]);
   });
+  it.each([
+    ["ARRAY", false],
+    ["ARRAY", true],
+    ["OBJECT", false],
+    ["OBJECT", true],
+  ])(
+    "reloads a stale %s node and retains newer entries (replay: %s)",
+    async (dataType, replay) => {
+      const first = { id: "first", opaque: { original: true } };
+      const second = { id: "second", opaque: { newer: true } };
+      if (replay)
+        await updateSupplementaryDataUseCase(
+          message(first, "results", dataType),
+        );
+      const stale = await find();
+      await updateSupplementaryDataUseCase(
+        message(second, "results", dataType),
+      );
+      vi.spyOn(
+        caseRepository,
+        "findByCaseRefAndWorkflowCode",
+      ).mockResolvedValueOnce(stale);
+      await updateSupplementaryDataUseCase(message(first, "results", dataType));
+      const stored = (await cases.findOne({ _id: original._id }))
+        .supplementaryData.results;
+      expect(dataType === "ARRAY" ? stored : Object.values(stored)).toEqual(
+        expect.arrayContaining([first, second]),
+      );
+      expect(
+        dataType === "ARRAY" ? stored : Object.values(stored),
+      ).toHaveLength(2);
+    },
+  );
+  it.each(["ARRAY", "OBJECT"])(
+    "rejects an ordinary case save with a stale %s supplementary node",
+    async (dataType) => {
+      const stale = await find();
+      stale.updateSupplementaryData({
+        targetNode: "results",
+        dataType,
+        key: "id",
+        data: { id: "late" },
+      });
+      stale.payload = { edit: "must not commit on conflict" };
+      await updateSupplementaryDataUseCase(
+        message({ id: "newer" }, "results", dataType),
+      );
+      await expect(caseRepository.update(stale)).rejects.toMatchObject({
+        output: { statusCode: 409 },
+      });
+      const stored = await cases.findOne({ _id: original._id });
+      expect(stored.payload).toEqual(original.payload);
+      expect(
+        dataType === "ARRAY"
+          ? stored.supplementaryData.results
+          : Object.values(stored.supplementaryData.results),
+      ).toEqual([{ id: "newer" }]);
+    },
+  );
   it("rejects malformed instructions before writing", async () => {
     await expect(
       updateSupplementaryDataUseCase(message({ notTheKey: true })),

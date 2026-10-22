@@ -156,7 +156,13 @@ describe("update", () => {
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
-      { _id: caseMock.objectId },
+      {
+        _id: caseMock.objectId,
+        "supplementaryData.agreements": {
+          $exists: true,
+          $eq: [{ agreementRef: "updated" }],
+        },
+      },
       {
         $set: {
           ...document,
@@ -192,6 +198,7 @@ describe("update", () => {
 
     db.collection.mockReturnValue({
       updateOne,
+      findOne: vi.fn().mockResolvedValue(null),
     });
 
     const caseMock = Case.createMock();
@@ -731,7 +738,7 @@ describe("updateSupplementaryData", () => {
     db.collection.mockReturnValue({ updateOne });
     await updateSupplementaryData(kase);
     expect(updateOne).toHaveBeenCalledWith(
-      { _id: kase.objectId },
+      { _id: kase.objectId, "supplementaryData.results": { $exists: false } },
       { $set: { "supplementaryData.results": kase.supplementaryData.results } },
     );
   });
@@ -741,6 +748,7 @@ describe("updateSupplementaryData", () => {
   ])("rejects failed write %j", async (result) => {
     db.collection.mockReturnValue({
       updateOne: vi.fn().mockResolvedValue(result),
+      findOne: vi.fn().mockResolvedValue(null),
     });
     await expect(updateSupplementaryData(Case.createMock())).rejects.toThrow();
   });

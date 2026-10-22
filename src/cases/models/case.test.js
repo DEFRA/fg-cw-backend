@@ -1576,6 +1576,36 @@ describe("supplementary data changes", () => {
     });
     expect(kase.supplementaryData.untouched).toEqual(["existing"]);
   });
+  it("retains the original node before any keyed merges", () => {
+    const original = [{ id: "before", nested: { retained: true } }];
+    const kase = Case.createMock({ supplementaryData: { results: original } });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "one" },
+    });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "two" },
+    });
+    expect(kase.getOriginalSupplementaryData()).toEqual({
+      results: [{ id: "before", nested: { retained: true } }],
+    });
+    kase.clearSupplementaryDataUpdates();
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it("distinguishes an absent node from a stored null node", () => {
+    const kase = Case.createMock({ supplementaryData: { storedNull: null } });
+    kase.addSupplementaryData("missing", []);
+    kase.addSupplementaryData("storedNull", []);
+    expect(kase.getOriginalSupplementaryData()).toEqual({
+      missing: undefined,
+      storedNull: null,
+    });
+  });
   it("clears recorded changes without changing the stored blob", () => {
     const kase = Case.createMock();
     kase.addSupplementaryData("anything", { nested: [1, null, "text"] });

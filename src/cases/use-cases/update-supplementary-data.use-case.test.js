@@ -1,7 +1,9 @@
+import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Case } from "../models/case.js";
 import {
   findByCaseRefAndWorkflowCode,
+  SUPPLEMENTARY_DATA_CONFLICT,
   update,
   updateSupplementaryData,
 } from "../repositories/case.repository.js";
@@ -85,10 +87,37 @@ describe("generic supplementary data updates", () => {
     ).rejects.toMatchObject({ output: { statusCode: 404 } });
     expect(updateSupplementaryData).not.toHaveBeenCalled();
   });
+  it("reloads and reapplies the instruction after a supplementary conflict", async () => {
+    const fresh = Case.createMock({
+      supplementaryData: { results: [{ id: "newer" }] },
+    });
+    findByCaseRefAndWorkflowCode
+      .mockResolvedValueOnce(kase)
+      .mockResolvedValueOnce(fresh);
+    updateSupplementaryData
+      .mockRejectedValueOnce(
+        Boom.conflict("changed", SUPPLEMENTARY_DATA_CONFLICT),
+      )
+      .mockResolvedValueOnce();
+    await updateSupplementaryDataUseCase(message());
+    expect(updateSupplementaryData).toHaveBeenCalledTimes(2);
+    expect(fresh.supplementaryData.results).toEqual([
+      { id: "newer" },
+      { id: "result-1", arbitrary: { score: -10 } },
+    ]);
+  });
+  it("leaves persistent conflicts to inbox retry after three attempts", async () => {
+    const error = Boom.conflict("changed", SUPPLEMENTARY_DATA_CONFLICT);
+    updateSupplementaryData.mockRejectedValue(error);
+    await expect(updateSupplementaryDataUseCase(message())).rejects.toBe(error);
+    expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledTimes(3);
+    expect(updateSupplementaryData).toHaveBeenCalledTimes(3);
+  });
   it("propagates failed writes for retry", async () => {
     updateSupplementaryData.mockRejectedValue(new Error("write failed"));
     await expect(updateSupplementaryDataUseCase(message())).rejects.toThrow(
       "write failed",
     );
+    expect(updateSupplementaryData).toHaveBeenCalledTimes(1);
   });
 });

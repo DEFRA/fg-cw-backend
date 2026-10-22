@@ -113,17 +113,45 @@ const supplementaryDataFields = (kase) =>
     ]),
   );
 
-// Persist only changed supplementary nodes, without writing stale case fields.
+export const SUPPLEMENTARY_DATA_CONFLICT = "SUPPLEMENTARY_DATA_CONFLICT";
+
+const caseWriteFilter = (kase) => ({
+  _id: kase.objectId,
+  ...Object.fromEntries(
+    Object.entries(kase.getOriginalSupplementaryData()).map(([node, data]) => [
+      `supplementaryData.${node}`,
+      data === undefined ? { $exists: false } : { $exists: true, $eq: data },
+    ]),
+  ),
+});
+
+const assertCaseUpdated = async (kase, result) => {
+  if (!result.acknowledged) {
+    throw Boom.internal(
+      `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
+    );
+  }
+  if (result.matchedCount !== 0) {
+    return;
+  }
+  const exists = await db
+    .collection(collection)
+    .findOne({ _id: kase.objectId }, { projection: { _id: 1 } });
+  if (!exists) {
+    throw Boom.notFound(`Case with id "${kase._id}" not found`);
+  }
+  throw Boom.conflict(
+    "Case supplementary data changed; reload the case and try again",
+    SUPPLEMENTARY_DATA_CONFLICT,
+  );
+};
+
+// Compare the original node values so a late writer cannot erase newer data.
 export const updateSupplementaryData = async (kase) => {
   const result = await db
     .collection(collection)
-    .updateOne({ _id: kase.objectId }, { $set: supplementaryDataFields(kase) });
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(`Case with id "${kase._id}" not found`);
-  }
-  if (!result.acknowledged) {
-    throw Boom.internal("Supplementary data update was not acknowledged");
-  }
+    .updateOne(caseWriteFilter(kase), { $set: supplementaryDataFields(kase) });
+  await assertCaseUpdated(kase, result);
   kase.clearSupplementaryDataUpdates();
 };
 
@@ -132,24 +160,13 @@ export const update = async (kase) => {
     kase,
   );
 
-  const result = await db.collection(collection).updateOne(
-    { _id: kase.objectId },
-    {
+  const result = await db
+    .collection(collection)
+    .updateOne(caseWriteFilter(kase), {
       $set: { ...caseDocument, ...supplementaryDataFields(kase) },
       $addToSet: { refs: { $each: refs } },
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    throw Boom.notFound(`Case with id "${kase._id}" not found`);
-  }
-
-  if (!result.acknowledged) {
-    throw Boom.internal(
-      `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
-    );
-  }
-
+    });
+  await assertCaseUpdated(kase, result);
   kase.clearSupplementaryDataUpdates();
   return kase;
 };

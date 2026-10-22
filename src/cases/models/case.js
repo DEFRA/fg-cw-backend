@@ -16,6 +16,7 @@ import {
 
 export class Case {
   #updatedSupplementaryNodes = new Set();
+  #originalSupplementaryNodes = new Map();
 
   // eslint-disable-next-line complexity
   constructor(props) {
@@ -184,6 +185,7 @@ export class Case {
       return null;
     }
 
+    this.#rememberSupplementaryData(targetNode);
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
     if (dataType === "ARRAY") {
@@ -234,7 +236,17 @@ export class Case {
     }
   }
 
+  #rememberSupplementaryData(targetNode) {
+    if (!this.#originalSupplementaryNodes.has(targetNode)) {
+      this.#originalSupplementaryNodes.set(
+        targetNode,
+        structuredClone(this.supplementaryData[targetNode]),
+      );
+    }
+  }
+
   addSupplementaryData(targetNode, data) {
+    this.#rememberSupplementaryData(targetNode);
     this.supplementaryData = { ...this.supplementaryData, [targetNode]: data };
     this.#updatedSupplementaryNodes.add(targetNode);
   }
@@ -248,8 +260,18 @@ export class Case {
     );
   }
 
+  getOriginalSupplementaryData() {
+    return Object.fromEntries(
+      [...this.#updatedSupplementaryNodes].map((node) => [
+        node,
+        this.#originalSupplementaryNodes.get(node),
+      ]),
+    );
+  }
+
   clearSupplementaryDataUpdates() {
     this.#updatedSupplementaryNodes.clear();
+    this.#originalSupplementaryNodes.clear();
   }
 
   updateStageOutcome({ workflow, actionCode, comment, createdBy }) {
