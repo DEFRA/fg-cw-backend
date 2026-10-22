@@ -2,7 +2,29 @@
 
 ## Running with other services
 
-If you want to run this service with other farming grants applications see [fg-grants-core](https://github.com/DEFRA/fg-grants-core)
+There are two ways to run fg-cw-backend locally:
+
+- **On its own:** `docker compose up --build --watch` in this repo. It uses this
+  repo's `compose.yml`, which runs its own MongoDB, floci and Entra stub, and the integration tests
+  use the same file. See [Docker](#docker).
+- **With the rest of Farming Grants:** check out [fg-grants-core](https://github.com/DEFRA/fg-grants-core) alongside this repo and
+  run `npm run stack cw` there (add `grants-ui`, `agreements` and so on as
+  needed). fg-grants-core runs the shared infrastructure and wires the services
+  together.
+
+Both ways use this repo's `compose/compose.cw-backend.yml`, so:
+
+- Container env goes in the `environment:` block of `compose/compose.cw-backend.yml`.
+  `.env` is for running node on your machine, so values that differ inside a
+  container, such as `MONGO_URI` and other services' hostnames, are set there.
+- Values that only make sense in the full stack, such as other services' URLs
+  and tokens, stay in fg-grants-core's `compose/compose.override.yml`.
+- New queues and topics go in `compose/floci/start.d/10-setup-resources.sh`.
+  fg-grants-core mounts that script into its own floci, alongside other repos'
+  scripts, so a queue or topic that another repo also creates must keep the
+  same attributes.
+- Keep the infrastructure versions in `compose.yml` the same as
+  fg-grants-core's. `npm run stack` there warns when they differ.
 
 ## Documentation
 
@@ -489,9 +511,11 @@ and hides the `Audit` type that way, because that type is declared
 `hiddenByDefault`. A bucket may also read by `links`, ref kinds no search
 offers: the inbox and outbox read a case's Events tab by
 `case:<workflowCode>:<caseRef>`, since two workflows may hold the same case
-reference. It is declared
-once, with `defineBucket`, in `src/cases/buckets/`, and registered with
-`registerBucket` in `cases/index.js` once the migrations have run:
+reference, and the inbox reads a workflow's config version events by
+`config:<grantCode>@<version>`, one link per version, kept apart from a code or
+version that differs only in case. It is declared once, with `defineBucket`, in
+`src/cases/buckets/`, and registered with `registerBucket` in `cases/index.js`
+once the migrations have run:
 
 | Bucket      | Declared in                      | Lists                          |
 | :---------- | :------------------------------- | :----------------------------- |
@@ -518,6 +542,24 @@ fg-gas-backend, and only that client: `requireCaseReader` answers any other
 token with a 403. The case read takes the operator in the same two headers and
 is audited as `VIEW_CASE_DATA` before any data is returned. The existence
 check releases only yes or no, and is not audited.
+
+### Workflow version actuators
+
+`/actuators/workflows/{code}/versions[/{version}]` serve the grants admin's
+workflow version pages through fg-gas-backend, behind the same guard. The reads
+take the operator headers and are not audited here: fg-gas-backend audits the
+page view. With `include=document`, a version read also returns the stored
+workflow and the address each endpoint resolves to from `{SERVICE}_URL`
+(scheme, host and path only; `{SERVICE}_HEADERS` is never read).
+Each version listed carries its fetch status and whether its workflow is
+stored, however it got there; a version read adds its last fetch error, failed
+attempts and S3 location.
+`POST …/{version}/fetch?by=` stores a version's workflow from S3 when it is
+not stored and the definition is a valid workflow for that code, and is audited
+as `FETCH_CONFIG_DEFINITION`. It never changes the config version record, so
+the lazy fetch a case triggers works as before.
+`GET …/{version}/existence` releases only whether the version exists, takes no
+operator headers and is not audited, like the case existence check.
 
 Every actuator request that sends `x-actor-id` has it recorded as the audit
 event's `user`, including redrive, purge and edit.

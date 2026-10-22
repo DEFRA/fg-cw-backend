@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
@@ -14,6 +15,7 @@ import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
+import { storedWorkflowPipeline } from "./workflow/admin-workflow-query.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 const collection = "workflows";
@@ -213,12 +215,31 @@ export const findByCodeAndVersion = async (code, version) => {
   return doc && toWorkflow(doc);
 };
 
-// The workflow a published definition becomes once stored and read back, built
-// without touching Mongo so a definition can be checked before it is recorded.
-export const buildFromDefinition = (workflowDefinition, version) =>
-  toWorkflow(
-    new WorkflowDocument(new Workflow({ ...workflowDefinition, version })),
-  );
+export const findStoredWorkflowRow = async (key, include) => {
+  const [doc] = await db
+    .collection(collection)
+    .aggregate(storedWorkflowPipeline(key, include), {
+      maxTimeMS: actuatorReadMaxTimeMs(),
+    })
+    .toArray();
+
+  return doc ?? null;
+};
+
+export const findStoredVersions = async (code, versions) => {
+  const docs = await db
+    .collection(collection)
+    .find(
+      { code, version: { $in: versions } },
+      {
+        projection: { _id: 0, version: 1 },
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    )
+    .toArray();
+
+  return new Set(docs.map(({ version }) => version));
+};
 
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });

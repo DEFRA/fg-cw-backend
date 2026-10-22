@@ -16,7 +16,7 @@ const registeredServer = async () => {
 };
 
 describe("actuators", () => {
-  it("registers the bucket routes, the event routes and the case routes", async () => {
+  it("registers the bucket, event, case and workflow version routes", async () => {
     const server = await registeredServer();
 
     const actuatorPaths = server
@@ -40,6 +40,10 @@ describe("actuators", () => {
       "/actuators/events/outbox/{id}/purge",
       "/actuators/events/outbox/{id}/redrive",
       "/actuators/timeline",
+      "/actuators/workflows/{code}/versions",
+      "/actuators/workflows/{code}/versions/{version}",
+      "/actuators/workflows/{code}/versions/{version}/existence",
+      "/actuators/workflows/{code}/versions/{version}/fetch",
     ]);
   });
 
@@ -68,6 +72,18 @@ describe("actuators", () => {
       server.match("get", "/actuators/events/inbox/665f1c2e9a1b2c3d4e5f6a7b")
         .path,
     ).toBe("/actuators/events/inbox/{id}");
+  });
+
+  it("routes a version's existence and its fetch apart", async () => {
+    const server = await registeredServer();
+    const version = "/actuators/workflows/woodland/versions/1.2.0";
+
+    expect(server.match("get", `${version}/existence`).path).toBe(
+      "/actuators/workflows/{code}/versions/{version}/existence",
+    );
+    expect(server.match("post", `${version}/fetch`).path).toBe(
+      "/actuators/workflows/{code}/versions/{version}/fetch",
+    );
   });
 
   // The `/actuators/events` prefix put the collection and its members on

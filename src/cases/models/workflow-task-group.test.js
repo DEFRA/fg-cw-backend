@@ -31,4 +31,69 @@ describe("WorkflowTaskGroup", () => {
       );
     });
   });
+
+  describe("fromDefinition", () => {
+    const task = (
+      code,
+      valueOptions = [
+        { code: "DONE", name: "Done", theme: "SUCCESS", completes: true },
+      ],
+    ) => ({
+      code,
+      name: code,
+      mandatory: true,
+      description: null,
+      valueOptions,
+    });
+
+    const definition = (tasks) => ({
+      code: "CHECKS",
+      name: "Checks",
+      description: null,
+      tasks,
+    });
+
+    it("builds a task group whose tasks are built from their definitions", () => {
+      const taskGroup = WorkflowTaskGroup.fromDefinition(
+        definition([task("CHECK_ONE"), task("CHECK_TWO")]),
+      );
+
+      expect(taskGroup).toBeInstanceOf(WorkflowTaskGroup);
+      expect(taskGroup.tasks.map(({ code }) => code)).toEqual([
+        "CHECK_ONE",
+        "CHECK_TWO",
+      ]);
+    });
+
+    it("rejects a task code used twice", () => {
+      expect(() =>
+        WorkflowTaskGroup.fromDefinition(
+          definition([task("CHECK_ONE"), task("CHECK_ONE")]),
+        ),
+      ).toThrow(
+        'Invalid WorkflowTaskGroup "CHECKS": "tasks[1]" repeats code "CHECK_ONE"',
+      );
+    });
+
+    it("rejects a task the task group holds that its own rules reject", () => {
+      const done = {
+        code: "DONE",
+        name: "Done",
+        theme: "SUCCESS",
+        completes: true,
+      };
+
+      expect(() =>
+        WorkflowTaskGroup.fromDefinition(
+          definition([task("CHECK_ONE", [done, done])]),
+        ),
+      ).toThrow('Invalid WorkflowTask "CHECK_ONE"');
+    });
+
+    it("rejects a task group with no tasks", () => {
+      expect(() =>
+        WorkflowTaskGroup.fromDefinition(definition(undefined)),
+      ).toThrow('Invalid WorkflowTaskGroup "CHECKS": "tasks" is required');
+    });
+  });
 });

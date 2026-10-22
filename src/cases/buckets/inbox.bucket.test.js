@@ -64,8 +64,9 @@ describe("cw.inbox", () => {
     });
   });
 
-  it("reads a case's events by its workflow-qualified link, offered as no search", () => {
-    expect(bucket.links).toEqual(["case"]);
+  it("reads a case's events by its workflow-qualified link, and a config version's by its code and version, offered as no search", () => {
+    expect(bucket.links).toEqual(["case", "config"]);
+    expect(Object.keys(bucket.refs)).not.toContain("config");
   });
 
   it("holds only its lines in its index keys", () => {

@@ -27,6 +27,8 @@ export const auditActions = {
   PERFORM_PAGE_ACTION: "PERFORM_PAGE_ACTION",
   ADD_NOTE_TO_CASE: "ADD_NOTE_TO_CASE",
   ASSIGN_USER_TO_CASE: "ASSIGN_USER_TO_CASE",
+  // Workflows posted directly, before config versions. Stored audit rows
+  // carry it.
   CREATE_WORKFLOW: "CREATE_WORKFLOW",
   // Putting one DEAD_LETTER row back in front of the poller. Requested by the
   // grants admin surface through fg-gas-backend, carried out here.
@@ -44,6 +46,9 @@ export const auditActions = {
   VIEW_CASE_DATA: "VIEW_CASE_DATA",
   // One page of one audited bucket, for the same operator.
   QUERY_BUCKET: "QUERY_BUCKET",
+  // Storing one config version's workflow from S3, leaving the version's
+  // record alone. Requested the same way a redrive is.
+  FETCH_CONFIG_DEFINITION: "FETCH_CONFIG_DEFINITION",
 };
 
 export const auditStatus = {
@@ -77,6 +82,7 @@ const pmcCodesByAction = {
   [auditActions.FIND_CASES]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_DATA]: "0706", // any action an internal/external user or service can execute
   [auditActions.QUERY_BUCKET]: "0706", // any action an internal/external user or service can execute
+  [auditActions.FETCH_CONFIG_DEFINITION]: "0706", // any action an internal/external user or service can execute
 };
 
 export const buildAuditSecurity = (action) => ({
