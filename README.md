@@ -520,11 +520,12 @@ bucket is declared once, with `defineBucket`, in `src/cases/buckets/`, and
 registered with `registerBucket` in `cases/index.js` once the migrations have
 run:
 
-| Bucket      | Declared in                      | Lists                          |
-| :---------- | :------------------------------- | :----------------------------- |
-| `cw.outbox` | `cases/buckets/outbox.bucket.js` | every outbox row               |
-| `cw.inbox`  | `cases/buckets/inbox.bucket.js`  | every inbox row                |
-| `cw.cases`  | `cases/buckets/cases.bucket.js`  | every case, by platform fields |
+| Bucket         | Declared in                         | Lists                          |
+| :------------- | :---------------------------------- | :----------------------------- |
+| `cw.outbox`    | `cases/buckets/outbox.bucket.js`    | every outbox row               |
+| `cw.inbox`     | `cases/buckets/inbox.bucket.js`     | every inbox row                |
+| `cw.cases`     | `cases/buckets/cases.bucket.js`     | every case, by platform fields |
+| `cw.workflows` | `cases/buckets/workflows.bucket.js` | every config version           |
 
 `src/common/buckets/` is the engine, the same code as fg-gas-backend's: it
 turns any query into one read on one declared index, and every read is exact,
