@@ -187,6 +187,7 @@ export class Case {
     }
 
     assertIsSupplementaryDataNode(targetNode);
+    this.#assertSupplementaryDataType(targetNode, dataType);
     this.#rememberSupplementaryData(targetNode);
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
@@ -235,6 +236,21 @@ export class Case {
     } else {
       targetData.push(data);
       return targetData;
+    }
+  }
+
+  #assertSupplementaryDataType(targetNode, dataType) {
+    if (!["ARRAY", "OBJECT"].includes(dataType)) {
+      return;
+    }
+    if (
+      Object.hasOwn(this.supplementaryData, targetNode) &&
+      Array.isArray(this.supplementaryData[targetNode]) !==
+        (dataType === "ARRAY")
+    ) {
+      throw Boom.badData(
+        `Supplementary data node "${targetNode}" is not an ${dataType} container`,
+      );
     }
   }
 

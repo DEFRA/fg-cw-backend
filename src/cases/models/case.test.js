@@ -135,6 +135,36 @@ describe("Case", () => {
   });
 
   describe("updateSupplementaryData", () => {
+    it.each([
+      ["OBJECT", [{ id: "existing" }]],
+      ["ARRAY", { existing: { id: "existing" } }],
+    ])(
+      "rejects %s updates to an incompatible existing node",
+      (dataType, node) => {
+        const caseInstance = createTestCase({
+          ...createValidProps(),
+          supplementaryData: { claims: node },
+        });
+        const original = structuredClone(node);
+
+        expect(() =>
+          caseInstance.updateSupplementaryData({
+            targetNode: "claims",
+            dataType,
+            key: "id",
+            data: { id: "new" },
+          }),
+        ).toThrow(
+          expect.objectContaining({
+            output: expect.objectContaining({ statusCode: 422 }),
+          }),
+        );
+        expect(caseInstance.supplementaryData.claims).toEqual(original);
+        expect(caseInstance.getSupplementaryDataUpdates()).toEqual({});
+        expect(caseInstance.getOriginalSupplementaryData()).toEqual({});
+      },
+    );
+
     it("should add data when it deosn't exists", () => {
       const caseInstance = createTestCase();
       const data = {
