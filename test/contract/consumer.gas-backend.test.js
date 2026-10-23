@@ -20,6 +20,7 @@
 //     - dataType: "ARRAY" or "OBJECT"
 //     - data: The actual data to store
 //
+import { updateCaseSupplementaryDataSchema } from "../../src/cases/models/supplementary-data-update.schema.js";
 import { MatchersV2, MessageConsumerPact } from "@pact-foundation/pact";
 import path from "path";
 import { describe, expect, it } from "vitest";
@@ -577,5 +578,49 @@ describe("fg-cw-backend Consumer (receives messages from fg-gas-backend)", () =>
           expect(cloudEvent.data.supplementaryData.data).toBeUndefined();
         });
     });
+  });
+});
+
+describe("Supplementary data update command", () => {
+  it("accepts a generic supplementary data update from GAS", async () => {
+    const pact = new MessageConsumerPact({
+      consumer: "fg-cw-backend",
+      provider: "fg-gas-backend",
+      dir: path.resolve(process.cwd(), "tmp/pacts"),
+      logLevel: "warn",
+    });
+    await pact
+      .expectsToReceive("a supplementary data update command from GAS")
+      .withContent({
+        id: uuid("e472a81b-84cc-429b-9815-36f5742c88e9"),
+        type: term({
+          generate:
+            "cloud.defra.local.fg-gas-backend.case.update.supplementary.data",
+          matcher:
+            "^cloud\\.defra\\.[a-z-]+\\.fg-gas-backend\\.case\\.update\\.supplementary\\.data$",
+        }),
+        source: "fg-gas-backend",
+        specversion: "1.0",
+        datacontenttype: "application/json",
+        time: iso8601DateTimeWithMillis("2026-08-07T11:16:06.124Z"),
+        data: {
+          caseRef: like("case-1"),
+          workflowCode: like("example"),
+          supplementaryData: {
+            targetNode: like("results"),
+            dataType: "ARRAY",
+            key: "id",
+            data: like({ id: "record-1", arbitrary: { score: -100 } }),
+          },
+        },
+      })
+      .withMetadata({ contentType: "application/json" })
+      .verify(async (message) => {
+        expect(
+          updateCaseSupplementaryDataSchema.validate(message.contents.data)
+            .error,
+        ).toBeUndefined();
+        expect(message.contents.data).not.toHaveProperty("newStatus");
+      });
   });
 });

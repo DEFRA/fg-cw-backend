@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { toRefs } from "../../../common/buckets/refs.js";
 import { Position } from "../../models/position.js";
+import { SupplementaryData } from "../../models/supplementary-data.js";
 import { PhaseDocument } from "./phase-document.js";
 import { StageDocument } from "./stage-document.js";
 import { TaskDocument } from "./task-document.js";
@@ -37,7 +38,7 @@ export class CaseDocument {
     this.timeline = props.timeline.map(
       (timelineProps) => new TimelineEventDocument(timelineProps),
     );
-    this.supplementaryData = props.supplementaryData;
+    this.supplementaryData = props.supplementaryData.toJSON();
     this.originalConfigVersion =
       props.originalConfigVersion ?? props.configVersion ?? null;
     this.currentConfigVersion =
@@ -45,7 +46,7 @@ export class CaseDocument {
     this.refs = caseRefs(props);
   }
 
-  static createMock(props) {
+  static createMock(props = {}) {
     return new CaseDocument({
       workflowCode: "workflow-code",
       caseRef: "case-ref",
@@ -56,7 +57,6 @@ export class CaseDocument {
       }),
       closed: false,
       createdAt: "2025-01-01T00:00:00.000Z",
-      supplementaryData: {},
       payload: {},
       phases: [
         new PhaseDocument({
@@ -101,6 +101,7 @@ export class CaseDocument {
         id: "64c88faac1f56f71e1b89a33",
       },
       ...props,
+      supplementaryData: new SupplementaryData(props.supplementaryData ?? {}),
     });
   }
 }

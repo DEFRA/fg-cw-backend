@@ -31,3 +31,10 @@ export const configVersionUpdated = defineEventType({
   boxes: [INBOX],
   refs: ({ data }) => configRefsOf(data?.grantCode, data?.version),
 });
+
+export const caseUpdateSupplementaryData = defineEventType({
+  name: "UpdateCaseSupplementaryData",
+  sentAs: `${GAS}case.update.supplementary.data`,
+  boxes: [INBOX],
+  refs: ({ data }) => caseRefsOf(data?.workflowCode, data?.caseRef),
+});

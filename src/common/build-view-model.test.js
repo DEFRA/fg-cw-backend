@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { AppRole } from "../users/models/app-role.js";
 import { IdpRoles } from "../users/models/idp-roles.js";
 import { User } from "../users/models/user.js";
+import { Case } from "../cases/models/case.js";
+import { Workflow } from "../cases/models/workflow.js";
+import { SupplementaryData } from "../cases/models/supplementary-data.js";
 import {
   assertPathExists,
   buildBanner,
@@ -15,10 +18,32 @@ const createCaseWorkflowContext = (params) => {
 
   workflow.getSchemeName ??= () => workflow.schemeName ?? workflow.code;
 
-  return buildCaseWorkflowContext(params);
+  return buildCaseWorkflowContext({
+    ...params,
+    kase: {
+      ...params.kase,
+      supplementaryData: new SupplementaryData(
+        params.kase.supplementaryData ?? {},
+      ),
+    },
+  });
 };
 
 describe("buildViewModel", () => {
+  it("serializes supplementary data before evaluating workflow paths", async () => {
+    const kase = Case.createMock({
+      supplementaryData: { results: [{ id: "one" }] },
+    });
+    const context = buildCaseWorkflowContext({
+      kase,
+      workflow: Workflow.createMock(),
+    });
+
+    expect(context.supplementaryData).toEqual({ results: [{ id: "one" }] });
+    expect(await pathExists(context, "$.supplementaryData.results[0]")).toBe(
+      true,
+    );
+  });
   // Links are sorted by index, so this array reflects the sorted order
   const knownLinks = [
     { id: "tasks", href: "/cases/case-123", text: "Tasks", index: 0 },
@@ -63,6 +88,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         caseRef: "REF-001",
         status: "active",
@@ -97,6 +123,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
@@ -154,6 +181,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
@@ -188,6 +216,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
@@ -236,6 +265,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
@@ -283,6 +313,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,
@@ -332,6 +363,7 @@ describe("buildViewModel", () => {
       const result = createCaseWorkflowContext({ kase, workflow, user });
 
       expect(result).toEqual({
+        supplementaryData: {},
         _id: "case-123",
         position: { phaseCode: "P1", stageCode: "S1", statusCode: "ST1" },
         workflow,

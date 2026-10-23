@@ -40,7 +40,11 @@ const createTargetStage = (workflow, { phaseCode, stageCode }, root) =>
 
 export const ensureCasePosition = async (kase, workflow, targetPosition) => {
   const { phaseCode, stageCode } = targetPosition;
-  const root = { ...kase, position: targetPosition };
+  const root = {
+    ...kase,
+    supplementaryData: kase.supplementaryData.toJSON(),
+    position: targetPosition,
+  };
 
   if (!kase.hasPhase(phaseCode)) {
     const caseStage = await createTargetStage(workflow, targetPosition, root);
