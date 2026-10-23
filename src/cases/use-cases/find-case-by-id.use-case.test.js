@@ -418,7 +418,10 @@ describe("findCaseByIdUseCase", () => {
   it("finds case by id", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
-    const kase = Case.createMock({ _id: "test-case-id" });
+    const kase = Case.createMock({
+      _id: "test-case-id",
+      supplementaryData: { results: [{ id: "opaque" }] },
+    });
 
     findAll.mockResolvedValue([mockUser]);
     resolveWorkflowForCase.mockResolvedValue({
@@ -446,7 +449,7 @@ describe("findCaseByIdUseCase", () => {
       currentConfigVersion: kase.currentConfigVersion,
       createdAt: "2025-01-01T00:00:00.000Z",
       payload: {},
-      supplementaryData: {},
+      supplementaryData: { results: [{ id: "opaque" }] },
       requiredRoles: {
         allOf: ["ROLE_1", "ROLE_2"],
         anyOf: ["ROLE_3"],

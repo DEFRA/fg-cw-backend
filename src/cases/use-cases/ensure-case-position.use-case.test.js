@@ -4,6 +4,7 @@ import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
 import { CaseTask } from "../models/case-task.js";
 import { Position } from "../models/position.js";
+import { SupplementaryData } from "../models/supplementary-data.js";
 import { Workflow } from "../models/workflow.js";
 import {
   createCaseStage,
@@ -104,6 +105,7 @@ describe("createCaseStage", () => {
 
 describe("ensureCasePosition", () => {
   const buildKase = ({ phases = [], caseRef = "TEST-REF" } = {}) => ({
+    supplementaryData: new SupplementaryData(),
     caseRef,
     phases,
     hasPhase: vi.fn((code) => phases.some((p) => p.code === code)),

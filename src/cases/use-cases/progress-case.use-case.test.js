@@ -41,6 +41,31 @@ const createTestMessage = (overrides = {}) => ({
 });
 
 describe("progressCaseUseCase", () => {
+  it("rejects a dotted supplementary target before saving the case", async () => {
+    const kase = Case.createMock();
+    vi.spyOn(kase, "progressTo").mockReturnValue();
+    findByCaseRefAndWorkflowCode.mockResolvedValue(kase);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: null,
+    });
+
+    await expect(
+      progressCaseUseCase(
+        createTestMessage({
+          supplementaryData: {
+            targetNode: "bad.path",
+            dataType: "ARRAY",
+            key: "id",
+            data: { id: "one" },
+          },
+        }),
+      ),
+    ).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+    expect(kase.supplementaryData.toJSON()).toEqual({});
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
   it("should throw if case not found", async () => {
     findByCaseRefAndWorkflowCode.mockResolvedValue(null);
 
@@ -78,7 +103,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
@@ -135,7 +160,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
@@ -172,7 +197,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    expect(kase.supplementaryData.customData).toEqual({
+    expect(kase.supplementaryData.toJSON().customData).toEqual({
       customValue: {
         customField: "customValue",
       },
@@ -196,7 +221,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(caseAgreements).toHaveLength(1);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);

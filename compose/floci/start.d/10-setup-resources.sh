@@ -2,6 +2,11 @@
 
 set -e
 
+# How many times a message may be received before it is moved to the DLQ.
+# Defaults to 1 (a single failed receive dead-letters).
+# Set MAX_READS=2 in aws.env when you want to peek at the queues.
+MAX_READS="${MAX_READS:-1}"
+
 function create_topic() {
   local topic_name=$1
   # Two masking hazards, so every command-substitution assignment carries an
@@ -34,13 +39,17 @@ function create_standard_topic() {
 function create_queue() {
   local queue_name=$1
 
-  local base="${queue_name%%_fifo.fifo}"
-  # Create the DLQ
+  local base="${queue_name%%.fifo}"
+  # Create the DLQ. A FIFO source queue requires a FIFO dead-letter queue -
+  # the two types must match. Kept identical to fg-gas-backend's create_queue:
+  # both scripts run in fg-grants-core's floci and create some of the same
+  # queues, and floci rejects a queue created again with different attributes.
   local dlq_url
   dlq_url=$(
     awslocal sqs create-queue \
-    --queue-name "$base-dead-letter-queue" \
-    --query "QueueUrl" --output text
+      --queue-name "$base-dead-letter-queue.fifo" \
+      --attributes '{ "FifoQueue":"true", "ContentBasedDeduplication":"true" }' \
+      --query "QueueUrl" --output text
   ) || return
 
   local dlq_arn
@@ -57,7 +66,7 @@ function create_queue() {
   queue_url=$(
     awslocal sqs create-queue \
       --queue-name $queue_name \
-      --attributes '{ "FifoQueue":"true", "ContentBasedDeduplication":"true", "RedrivePolicy": "{\"deadLetterTargetArn\":\"'$dlq_arn'\",\"maxReceiveCount\":\"1\"}" }' \
+      --attributes '{ "FifoQueue":"true", "ContentBasedDeduplication":"true", "RedrivePolicy": "{\"deadLetterTargetArn\":\"'$dlq_arn'\",\"maxReceiveCount\":\"'$MAX_READS'\"}" }' \
       --query "QueueUrl" \
       --output text
   ) || return
@@ -183,14 +192,18 @@ done
 
 echo "SNS/SQS ready"
 
-# Create S3 bucket for config broker and seed with sample workflow config
-if ! awslocal s3api head-bucket --bucket config-broker-local >/dev/null 2>&1; then
-  awslocal s3 mb s3://config-broker-local
-fi
-awslocal s3 cp /etc/floci/seed/pigs-might-fly/1.0.0/cw/cw.json \
-  s3://config-broker-local/pigs-might-fly/1.0.0/cw/cw.json
+# Create S3 bucket for config broker and seed with sample workflow config.
+# The seed folder is only mounted when cw runs on its own. In the full stack
+# (fg-grants-core) the config broker supplies the configs, so skip it there.
+if [ -d /etc/floci/seed ]; then
+  if ! awslocal s3api head-bucket --bucket config-broker-local >/dev/null 2>&1; then
+    awslocal s3 mb s3://config-broker-local
+  fi
+  awslocal s3 cp /etc/floci/seed/pigs-might-fly/1.0.0/cw/cw.json \
+    s3://config-broker-local/pigs-might-fly/1.0.0/cw/cw.json
 
-echo "S3 config broker bucket ready"
+  echo "S3 config broker bucket ready"
+fi
 
 # Marker the compose healthcheck waits on - see the floci service in compose.yml
 echo READY > /tmp/READY

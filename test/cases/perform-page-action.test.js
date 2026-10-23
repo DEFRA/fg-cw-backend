@@ -154,8 +154,9 @@ describe("POST /cases/{caseId}/page-action", () => {
     expect(response.res.statusCode).toBe(204);
 
     const updatedCase = await findCaseById(kase._id);
+    const output = updatedCase.supplementaryData.getNode("output");
 
-    expect(updatedCase.supplementaryData.output).toEqual([
+    expect(output).toEqual([
       {
         method: "POST",
         url: "/do-some-work",
@@ -171,9 +172,7 @@ describe("POST /cases/{caseId}/page-action", () => {
       },
     ]);
 
-    expect(updatedCase.supplementaryData.output[0].headers).not.toHaveProperty(
-      "defra-email",
-    );
+    expect(output[0].headers).not.toHaveProperty("defra-email");
 
     // Verify timeline event was created for the external action with display: true
     const timelineEvent = updatedCase.timeline.find(
@@ -197,7 +196,7 @@ describe("POST /cases/{caseId}/page-action", () => {
 
     const updatedCase = await findCaseById(kase._id);
 
-    expect(updatedCase.supplementaryData.output).toEqual([
+    expect(updatedCase.supplementaryData.getNode("output")).toEqual([
       expect.objectContaining({
         url: "/do-some-work-as-caseworker",
         headers: expect.objectContaining({
@@ -222,7 +221,7 @@ describe("POST /cases/{caseId}/page-action", () => {
 
     const unchangedCase = await findCaseById(kase._id);
 
-    expect(unchangedCase.supplementaryData?.output).toBeUndefined();
+    expect(unchangedCase.supplementaryData.getNode("output")).toBeUndefined();
   });
 
   it("returns 403 when user does not have ReadWrite role", async () => {

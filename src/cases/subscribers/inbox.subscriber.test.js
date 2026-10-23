@@ -23,6 +23,7 @@ import {
   findNextMessage,
   update,
 } from "../repositories/inbox.repository.js";
+import { updateSupplementaryDataUseCase } from "../use-cases/update-supplementary-data.use-case.js";
 import { handleCaseStatusUpdateUseCase } from "../use-cases/handle-case-status-update.use-case.js";
 import { processConfigVersionUseCase } from "../use-cases/process-config-version.use-case.js";
 import { submitCaseUseCase } from "../use-cases/submit-case.use-case.js";
@@ -35,6 +36,7 @@ vi.mock("../repositories/inbox.repository.js");
 vi.mock("../repositories/fifo-lock.repository.js");
 vi.mock("../services/apply-event-status-change.service.js");
 vi.mock("../use-cases/handle-case-status-update.use-case.js");
+vi.mock("../use-cases/update-supplementary-data.use-case.js");
 vi.mock("../use-cases/process-config-version.use-case.js");
 vi.mock("../../common/logger.js");
 
@@ -483,4 +485,37 @@ describe("InboxSubscriber writes only while it holds the claim", () => {
 
     expect(seen).toBe("claim-token-2");
   });
+});
+
+it("dispatches case.update.supplementary.data and records success without a status handler", async () => {
+  withTraceParent.mockImplementation((_, fn) => fn());
+  const subscriber = new InboxSubscriber();
+  vi.spyOn(subscriber, "markEventComplete").mockResolvedValue();
+  vi.spyOn(subscriber, "markEventFailed").mockResolvedValue();
+  const msg = {
+    type: `cloud.defra.${config.get("cdpEnvironment")}.fg-gas-backend.case.update.supplementary.data`,
+    source: "GAS",
+    messageId: "supplementary-message",
+    event: { data: {} },
+  };
+  await subscriber.handleEvent(msg);
+  expect(updateSupplementaryDataUseCase).toHaveBeenCalledWith(msg);
+  expect(handleCaseStatusUpdateUseCase).not.toHaveBeenCalled();
+  expect(subscriber.markEventComplete).toHaveBeenCalledWith(msg);
+});
+it("records a supplementary data handler failure for inbox retry", async () => {
+  withTraceParent.mockImplementation((_, fn) => fn());
+  const subscriber = new InboxSubscriber();
+  vi.spyOn(subscriber, "markEventFailed").mockResolvedValue();
+  vi.spyOn(subscriber, "markEventComplete").mockResolvedValue();
+  const error = new Error("missing case");
+  updateSupplementaryDataUseCase.mockRejectedValue(error);
+  const msg = {
+    type: `cloud.defra.${config.get("cdpEnvironment")}.fg-gas-backend.case.update.supplementary.data`,
+    source: "GAS",
+    messageId: "supplementary-message",
+  };
+  await subscriber.handleEvent(msg);
+  expect(subscriber.markEventFailed).toHaveBeenCalledWith(msg, error);
+  expect(subscriber.markEventComplete).not.toHaveBeenCalled();
 });

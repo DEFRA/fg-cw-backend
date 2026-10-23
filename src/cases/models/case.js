@@ -8,6 +8,7 @@ import { CaseTask } from "./case-task.js";
 import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
+import { SupplementaryData } from "./supplementary-data.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -15,6 +16,9 @@ import {
 } from "./timeline-event.js";
 
 export class Case {
+  #updatedSupplementaryNodes = new Set();
+  #originalSupplementaryNodes = new Map();
+
   // eslint-disable-next-line complexity
   constructor(props) {
     const comments = toComments(props.comments);
@@ -30,7 +34,9 @@ export class Case {
     this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.supplementaryData = props.supplementaryData || {};
+    this.supplementaryData = new SupplementaryData(
+      props.supplementaryData || {},
+    );
     this.originalConfigVersion =
       props.originalConfigVersion ?? props.configVersion ?? null;
     this.currentConfigVersion =
@@ -162,73 +168,54 @@ export class Case {
     this.#addTimelineEvent(timelineEvent);
   }
 
-  getSupplementaryDataNode(targetNode, dataType) {
-    if (this.supplementaryData[targetNode]) {
-      return this.supplementaryData[targetNode];
+  updateSupplementaryData(instruction) {
+    const updated = this.supplementaryData.merge(instruction);
+    if (updated !== this.supplementaryData) {
+      this.#applySupplementaryData(instruction.targetNode, updated);
     }
-
-    this.supplementaryData[targetNode] = dataType === "ARRAY" ? [] : {};
-    return this.supplementaryData[targetNode];
   }
 
-  updateSupplementaryData({ targetNode, key, dataType, data }) {
-    if (!targetNode) {
-      return null;
-    }
-
-    const targetData = this.getSupplementaryDataNode(targetNode, dataType);
-
-    if (dataType === "ARRAY") {
-      const updated = this.updateSupplementaryDataArray({
-        targetData,
-        key,
-        data,
-      });
-
-      return this.addSupplementaryData(targetNode, updated);
-    } else if (dataType === "OBJECT") {
-      const updated = this.updateSupplementaryDataObject({
+  #rememberSupplementaryData(targetNode) {
+    if (!this.#originalSupplementaryNodes.has(targetNode)) {
+      this.#originalSupplementaryNodes.set(
         targetNode,
-        targetData,
-        key,
-        data,
-      });
-      return this.addSupplementaryData(targetNode, updated);
-    } else {
-      return null;
-    }
-  }
-
-  updateSupplementaryDataObject({ targetData, key, data, targetNode }) {
-    if (!key) {
-      throw new Error(
-        `Can not update supplementaryData "${targetNode}" as an object without a key`,
+        this.supplementaryData.getNode(targetNode),
       );
-    }
-    targetData[data[key]] = data;
-    return targetData;
-  }
-
-  updateSupplementaryDataArray({ targetData, key, data }) {
-    const inArray = !!key && !!targetData.find((d) => d[key] === data[key]);
-
-    if (inArray) {
-      return targetData.reduce((acc, c) => {
-        if (c[key] === data[key]) {
-          acc.push(data);
-        } else {
-          acc.push(c);
-        }
-        return acc;
-      }, []);
-    } else {
-      targetData.push(data);
-      return targetData;
     }
   }
 
   addSupplementaryData(targetNode, data) {
-    this.supplementaryData[targetNode] = data;
+    const updated = this.supplementaryData.withNode(targetNode, data);
+    this.#applySupplementaryData(targetNode, updated);
+  }
+
+  #applySupplementaryData(targetNode, updated) {
+    this.#rememberSupplementaryData(targetNode);
+    this.supplementaryData = updated;
+    this.#updatedSupplementaryNodes.add(targetNode);
+  }
+
+  getSupplementaryDataUpdates() {
+    return Object.fromEntries(
+      [...this.#updatedSupplementaryNodes].map((node) => [
+        node,
+        this.supplementaryData.getNode(node),
+      ]),
+    );
+  }
+
+  getOriginalSupplementaryData() {
+    return Object.fromEntries(
+      [...this.#updatedSupplementaryNodes].map((node) => [
+        node,
+        this.#originalSupplementaryNodes.get(node),
+      ]),
+    );
+  }
+
+  clearSupplementaryDataUpdates() {
+    this.#updatedSupplementaryNodes.clear();
+    this.#originalSupplementaryNodes.clear();
   }
 
   updateStageOutcome({ workflow, actionCode, comment, createdBy }) {
@@ -277,7 +264,6 @@ export class Case {
     this.position = position;
   }
 
-  // eslint-disable-next-line complexity
   progressTo({ position, workflow, createdBy }) {
     if (this.position.equals(position)) {
       logger.warn(
@@ -286,6 +272,16 @@ export class Case {
       return;
     }
 
+    this.#assertCanTransitionTo(workflow, position);
+
+    this.#addProgressEvents(position, createdBy);
+
+    this.#attemptClose(workflow, position);
+
+    this.position = position;
+  }
+
+  #assertCanTransitionTo(workflow, position) {
     const transition = workflow.getTransitionForTargetPosition(
       this.position,
       position,
@@ -302,7 +298,9 @@ export class Case {
         `Case with ${this.caseRef} and workflowCode ${this.workflowCode} cannot transition from ${this.position} to ${position}: all mandatory tasks must be completed`,
       );
     }
+  }
 
+  #addProgressEvents(position, createdBy) {
     if (!this.position.isSamePhase(position)) {
       this.#addTimelineEvent(
         TimelineEvent.createPhaseCompleted({
@@ -339,10 +337,6 @@ export class Case {
         createdBy,
       }),
     );
-
-    this.#attemptClose(workflow, position);
-
-    this.position = position;
   }
 
   #attemptClose(workflow, position) {

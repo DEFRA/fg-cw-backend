@@ -6,13 +6,13 @@ import { db, mongoClient } from "../common/mongo-client.js";
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";
 import { outboxBucket } from "./buckets/outbox.bucket.js";
+import { workflowsBucket } from "./buckets/workflows.bucket.js";
 import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
 
 import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
-import { createWorkflowRoute } from "./routes/create-workflow.route.js";
 import { findCaseByIdTabIdRoute } from "./routes/find-case-by-id-tab-id.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
@@ -37,6 +37,7 @@ export const cases = {
     registerBucket(outboxBucket());
     registerBucket(inboxBucket());
     registerBucket(casesBucket());
+    registerBucket(workflowsBucket());
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();
@@ -64,7 +65,6 @@ export const cases = {
       updateStageOutcomeRoute,
       assignUserToCaseRoute,
       addNoteToCaseRoute,
-      createWorkflowRoute,
       findWorkflowsRoute,
       findWorkflowByCodeRoute,
       updateTaskStatusRoute,

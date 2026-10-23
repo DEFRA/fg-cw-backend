@@ -1,13 +1,18 @@
 import { validateAuditEvent } from "@defra/fcp-audit-publisher";
 import { getTraceId } from "@defra/hapi-tracing";
+import { BSON } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
 import { auditStatus } from "./audit-constants.js";
 import { getRequestContext } from "./request-context.js";
+import { logger } from "./logger.js";
 import {
+  UNRECORDED_IP,
   buildPayload,
+  normaliseIp,
   stripNulls,
+  toAuditIp,
   writeAuditEvent,
 } from "./write-audit-event.js";
 import { OPERATOR_ID } from "../../test/helpers/operator.js";
@@ -49,7 +54,7 @@ vi.mock("../cases/repositories/outbox.repository.js", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   getTraceId.mockReturnValue("trace-id-123");
-  getRequestContext.mockReturnValue({ ip: "1.2.3.4" });
+  getRequestContext.mockReturnValue({ clientIp: "1.2.3.4" });
   Outbox.mockImplementation(function (data) {
     Object.assign(this, data);
   });
@@ -95,8 +100,11 @@ describe("buildPayload", () => {
     );
   });
 
-  it("uses ip from request context when present", () => {
-    getRequestContext.mockReturnValue({ ip: "10.0.0.1" });
+  it("uses the client ip from the request context when present", () => {
+    getRequestContext.mockReturnValue({
+      clientIp: "10.0.0.1",
+      remoteAddress: "127.0.0.1",
+    });
 
     const result = buildPayload({
       entities: [],
@@ -106,7 +114,7 @@ describe("buildPayload", () => {
     expect(result.ip).toBe("10.0.0.1");
   });
 
-  it("defaults ip to 0.0.0.0 when request context has no ip", () => {
+  it("defaults ip to 0.0.0.0 when there is no request context", () => {
     getRequestContext.mockReturnValue(null);
 
     const result = buildPayload({
@@ -119,7 +127,7 @@ describe("buildPayload", () => {
 
   it("sets user from the request context's operator", () => {
     getRequestContext.mockReturnValue({
-      ip: "10.0.0.1",
+      clientIp: "10.0.0.1",
       user: OPERATOR_ID,
     });
 
@@ -177,6 +185,91 @@ describe("buildPayload", () => {
   });
 });
 
+describe("normaliseIp", () => {
+  it("leaves IPv4 unchanged", () => {
+    expect(normaliseIp("203.0.113.7")).toBe("203.0.113.7");
+  });
+
+  it("turns an IPv4-mapped IPv6 address into plain IPv4", () => {
+    expect(normaliseIp("::ffff:203.0.113.7")).toBe("203.0.113.7");
+  });
+
+  it("compresses IPv6", () => {
+    expect(normaliseIp("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
+      "2001:db8::1",
+    );
+  });
+
+  it("drops an IPv6 zone id", () => {
+    expect(normaliseIp("fe80::1%eth0")).toBe("fe80::1");
+  });
+
+  it("answers undefined for something that is not an IP", () => {
+    expect(normaliseIp("not-an-ip")).toBeUndefined();
+    expect(normaliseIp(undefined)).toBeUndefined();
+  });
+});
+
+describe("toAuditIp", () => {
+  const LONG_IPV6 = "2001:db8:85a3:1234:5678:8a2e:370:7334";
+
+  it("records 0.0.0.0 for system work with no request context", () => {
+    expect(toAuditIp(null)).toBe("0.0.0.0");
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it("prefers the normalised client ip", () => {
+    expect(
+      toAuditIp({ clientIp: "::ffff:203.0.113.7", remoteAddress: "127.0.0.1" }),
+    ).toBe("203.0.113.7");
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it("compresses a short IPv6 client ip", () => {
+    expect(
+      toAuditIp({ clientIp: "2001:0db8::0001", remoteAddress: "127.0.0.1" }),
+    ).toBe("2001:db8::1");
+  });
+
+  it("falls back to the connection address when the client ip is too long for the schema", () => {
+    expect(
+      toAuditIp({ clientIp: LONG_IPV6, remoteAddress: "198.51.100.4" }),
+    ).toBe("198.51.100.4");
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the connection address when the client ip is not an IP", () => {
+    expect(
+      toAuditIp({ clientIp: "not-an-ip", remoteAddress: "198.51.100.4" }),
+    ).toBe("198.51.100.4");
+  });
+
+  it("uses the connection address when no client ip was trusted", () => {
+    expect(toAuditIp({ remoteAddress: "127.0.0.1" })).toBe("127.0.0.1");
+  });
+
+  it("records the unrecorded marker, never 0.0.0.0, when no address fits, with a warning", () => {
+    const ip = toAuditIp({
+      clientIp: LONG_IPV6,
+      remoteAddress: "2001:db8:85a3:1234:5678:8a2e:370:7335",
+    });
+
+    expect(ip).toBe(UNRECORDED_IP);
+    expect(ip).not.toBe("0.0.0.0");
+    expect(logger.warn).toHaveBeenCalledOnce();
+  });
+
+  it("produces a schema-valid ip in every case", () => {
+    for (const ip of [
+      toAuditIp(null),
+      toAuditIp({ clientIp: LONG_IPV6, remoteAddress: LONG_IPV6 }),
+      toAuditIp({ clientIp: "2001:0db8::0001" }),
+    ]) {
+      expect(ip.length).toBeLessThanOrEqual(20);
+    }
+  });
+});
+
 describe("stripNulls", () => {
   it("removes null and undefined entries, including nested objects", () => {
     const result = stripNulls({
@@ -187,6 +280,27 @@ describe("stripNulls", () => {
     });
 
     expect(result).toEqual({ a: "keep", d: { f: "keep" } });
+  });
+
+  it("removes null and undefined entries from objects inside arrays", () => {
+    const result = stripNulls({
+      entities: [
+        { entity: "USER", entityid: undefined },
+        { entity: "CASE", entityid: null },
+        null,
+      ],
+    });
+
+    expect(result).toEqual({
+      entities: [{ entity: "USER" }, { entity: "CASE" }],
+    });
+    expect(result.entities[0]).not.toHaveProperty("entityid");
+  });
+
+  it("leaves arrays of primitives intact", () => {
+    expect(stripNulls({ idpRoles: ["a", "b"] })).toEqual({
+      idpRoles: ["a", "b"],
+    });
   });
 });
 
@@ -230,6 +344,46 @@ describe("writeAuditEvent", () => {
 
     expect(errors).toBeUndefined();
     expect(valid).toBe(true);
+  });
+
+  // The driver serialises with `ignoreUndefined: false`, storing `undefined` as
+  // `null`, and the audit service rejects a null entityid - so the persisted
+  // event must not carry the key at all.
+  it("writes no entityid key when an entity has none", async () => {
+    await writeAuditEvent(
+      {
+        ...eventData,
+        entities: [
+          { entity: "USER", action: "CREATE_USER", entityid: undefined },
+        ],
+        security: { pmccode: "1204" },
+      },
+      {},
+    );
+
+    const [{ event }] = Outbox.mock.calls[0];
+    const persisted = BSON.deserialize(
+      BSON.serialize(event, { ignoreUndefined: false }),
+    );
+
+    expect(persisted.audit.entities).toEqual([
+      { entity: "USER", action: "CREATE_USER" },
+    ]);
+    expect(validateAuditEvent(persisted).valid).toBe(true);
+  });
+
+  it("writes no entityid key when an entity's entityid is null", async () => {
+    await writeAuditEvent(
+      {
+        ...eventData,
+        entities: [{ entity: "USER", action: "CREATE_USER", entityid: null }],
+        security: { pmccode: "1204" },
+      },
+      {},
+    );
+
+    const [{ event }] = Outbox.mock.calls[0];
+    expect(event.audit.entities[0]).not.toHaveProperty("entityid");
   });
 
   it("keeps messageGroupId out of the published event payload", async () => {
@@ -362,7 +516,7 @@ describe("writeAuditEvent", () => {
   });
 
   it("reads request context via getRequestContext", async () => {
-    getRequestContext.mockReturnValue({ ip: "1.2.3.4" });
+    getRequestContext.mockReturnValue({ clientIp: "1.2.3.4" });
 
     await writeAuditEvent(eventData, {});
 

@@ -3,6 +3,11 @@ import Joi from "joi";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { parseSemver } from "../../common/semver.js";
 
+export const ConfigVersionStatus = {
+  Active: "active",
+  Draft: "draft",
+};
+
 export class ConfigVersion {
   static validationSchema = Joi.object({
     grantCode: Joi.string().required(),

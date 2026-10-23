@@ -262,14 +262,16 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
   });
 
   it("409s with the current status when the row is not DEAD_LETTER", async () => {
-    const doc = aDeadOutboxDoc({ status: "PUBLISHED" });
+    // COMPLETED stays terminal even at the retry cap; the poller would
+    // dead-letter a PUBLISHED row and make it redrivable mid-test.
+    const doc = aDeadOutboxDoc({ status: "COMPLETED" });
     await outbox.insertOne(doc);
 
     const error = await redriveOutboxEvent(doc._id.toHexString()).catch(
       (e) => e,
     );
 
-    expect(error.output.statusCode).toBe(409);
-    expect(bodyOf(error).status).toBe("PUBLISHED");
+    expect(error).toMatchObject({ output: { statusCode: 409 } });
+    expect(bodyOf(error).status).toBe("COMPLETED");
   });
 });

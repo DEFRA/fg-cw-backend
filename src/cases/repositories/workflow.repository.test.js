@@ -2,19 +2,20 @@ import Boom from "@hapi/boom";
 import { MongoServerError } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
-import { Position } from "../models/position.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { Workflow } from "../models/workflow.js";
 import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
 import {
-  buildFromDefinition,
   findAll,
   findAllCodes,
   findByCode,
   findByCodeAndVersion,
+  findStoredVersions,
+  findStoredWorkflowRow,
   save,
   saveFromDefinition,
 } from "./workflow.repository.js";
+import { storedWorkflowPipeline } from "./workflow/admin-workflow-query.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -36,6 +37,20 @@ describe("save", () => {
     expect(db.collection).toHaveBeenCalledWith("workflows");
     expect(insertOne.mock.calls[0][0]).toBeInstanceOf(WorkflowDocument);
     expect(insertOne.mock.calls[0][0]).toEqual(new WorkflowDocument(workflow));
+  });
+
+  it("stores only the endpoint fields the workflow knows about", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne });
+    const endpoint = WorkflowEndpoint.createMock();
+
+    await save(
+      Workflow.createMock({
+        endpoints: [{ ...endpoint, unexpected: "not stored" }],
+      }),
+    );
+
+    expect(insertOne.mock.calls[0][0].endpoints).toEqual([{ ...endpoint }]);
   });
 
   it("throws Boom.conflict when a workflow with the same code exists", async () => {
@@ -304,6 +319,17 @@ describe("findByCodeAndVersion", () => {
     expect(result._id.toString()).toEqual(workflowDocument._id.toString());
   });
 
+  it("keeps every endpoint field when a workflow is read back", async () => {
+    const workflowDocument = WorkflowDocument.createMock();
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(workflowDocument),
+    });
+
+    const result = await findByCodeAndVersion("frps-private-beta", "1.0.0");
+
+    expect(result.endpoints).toEqual([WorkflowEndpoint.createMock()]);
+  });
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),
@@ -312,57 +338,6 @@ describe("findByCodeAndVersion", () => {
     const result = await findByCodeAndVersion("DOESNT_EXIST", "1.0.0");
 
     expect(result).toEqual(null);
-  });
-});
-
-describe("buildFromDefinition", () => {
-  it("builds the workflow a stored definition reads back as, without touching Mongo", () => {
-    const { _id, version, ...definition } = JSON.parse(
-      JSON.stringify(Workflow.createMock({ code: "pigs-might-fly" })),
-    );
-
-    const workflow = buildFromDefinition(definition, "1.2.3");
-
-    expect(db.collection).not.toHaveBeenCalled();
-    expect(workflow).toBeInstanceOf(Workflow);
-    expect(workflow.code).toBe("pigs-might-fly");
-    expect(workflow.version).toBe("1.2.3");
-    expect(workflow.getInitialPosition().toString()).toBe(
-      "PHASE_1:STAGE_1:STATUS_1",
-    );
-    expect(
-      workflow.phases[0].stages[0].statuses[0].transitions[0].targetPosition,
-    ).toBeInstanceOf(Position);
-  });
-
-  it("keeps every endpoint field when a definition is stored and read back", () => {
-    const endpoint = WorkflowEndpoint.createMock();
-    const { _id, version, ...definition } = JSON.parse(
-      JSON.stringify(Workflow.createMock({ endpoints: [endpoint] })),
-    );
-
-    const workflow = buildFromDefinition(definition, "1.0.0");
-
-    expect(workflow.endpoints).toEqual([endpoint]);
-  });
-
-  it("stores only the endpoint fields the workflow knows about", () => {
-    const { _id, version, ...definition } = JSON.parse(
-      JSON.stringify(Workflow.createMock()),
-    );
-    definition.endpoints = [
-      { ...definition.endpoints[0], unexpected: "not stored" },
-    ];
-
-    const workflow = buildFromDefinition(definition, "1.0.0");
-
-    expect(workflow.endpoints[0]).not.toHaveProperty("unexpected");
-  });
-
-  it("throws on a definition the runtime could not read", () => {
-    expect(() => buildFromDefinition({ code: "x" }, "1.0.0")).toThrow(
-      TypeError,
-    );
   });
 });
 
@@ -443,5 +418,49 @@ describe("findAllCodes", () => {
       { projection: { _id: 0, code: 1 } },
     );
     expect(result).toEqual([]);
+  });
+});
+
+describe("findStoredWorkflowRow", () => {
+  const key = { code: "woodland", version: "1.2.0" };
+
+  it("reads a stored workflow through its pipeline", async () => {
+    const doc = { code: "woodland", storedBytes: 9 };
+    const aggregate = vi
+      .fn()
+      .mockReturnValue({ toArray: vi.fn().mockResolvedValue([doc]) });
+    db.collection.mockReturnValue({ aggregate });
+
+    expect(await findStoredWorkflowRow(key, "document")).toBe(doc);
+    expect(aggregate).toHaveBeenCalledWith(
+      storedWorkflowPipeline(key, "document"),
+      { maxTimeMS: expect.any(Number) },
+    );
+  });
+
+  it("answers null for a workflow that is not stored", async () => {
+    db.collection.mockReturnValue({
+      aggregate: () => ({ toArray: vi.fn().mockResolvedValue([]) }),
+    });
+
+    expect(await findStoredWorkflowRow(key)).toBeNull();
+  });
+});
+
+describe("findStoredVersions", () => {
+  it("answers those of the versions whose workflow is stored under the code", async () => {
+    const find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ version: "1.2.0" }]),
+    });
+    db.collection.mockReturnValue({ find });
+
+    const stored = await findStoredVersions("woodland", ["2.0.0", "1.2.0"]);
+
+    expect(stored).toEqual(new Set(["1.2.0"]));
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(find).toHaveBeenCalledWith(
+      { code: "woodland", version: { $in: ["2.0.0", "1.2.0"] } },
+      { projection: { _id: 0, version: 1 }, maxTimeMS: expect.any(Number) },
+    );
   });
 });

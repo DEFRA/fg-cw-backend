@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildServiceConfigMap } from "./service-config-builder.js";
+import {
+  buildServiceConfigMap,
+  toServiceAddress,
+} from "./service-config-builder.js";
 
 describe("service-config-builder", () => {
   const originalEnv = process.env;
@@ -76,5 +79,59 @@ describe("service-config-builder", () => {
 
     const result = buildServiceConfigMap(workflow);
     expect(result).toEqual({});
+  });
+});
+
+describe("toServiceAddress", () => {
+  const originalEnv = process.env;
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  const withEnv = (env) => {
+    process.env = { ...originalEnv, ...env };
+  };
+
+  it("is null when the service has no URL configured", () => {
+    withEnv({ LAND_DATA_URL: undefined });
+
+    expect(toServiceAddress({ service: "LAND_DATA", path: "/x" })).toBeNull();
+  });
+
+  it("is null when the configured URL does not parse", () => {
+    withEnv({ LAND_DATA_URL: "not a url" });
+
+    expect(toServiceAddress({ service: "LAND_DATA", path: "/x" })).toBeNull();
+  });
+
+  it("keeps only the scheme, host and path, with path placeholders as written", () => {
+    withEnv({ LAND_DATA_URL: "https://u:p@h:8443/base/?k=v#f" });
+
+    expect(toServiceAddress({ service: "LAND_DATA", path: "/x/{sbi}" })).toBe(
+      "https://h:8443/base/x/{sbi}",
+    );
+  });
+
+  it.each([
+    ["https://h/base/", "/x"],
+    ["https://h/base", "x"],
+  ])("joins %s and %s with one slash", (url, path) => {
+    withEnv({ LAND_DATA_URL: url });
+
+    expect(toServiceAddress({ service: "LAND_DATA", path })).toBe(
+      "https://h/base/x",
+    );
+  });
+
+  it("never reads the service's headers", () => {
+    withEnv({
+      LAND_DATA_URL: "https://h",
+      LAND_DATA_HEADERS: "x-api-key: HEADER_SENTINEL",
+    });
+
+    expect(
+      toServiceAddress({ service: "LAND_DATA", path: "/x" }),
+    ).not.toContain("HEADER_SENTINEL");
   });
 });

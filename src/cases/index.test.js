@@ -69,6 +69,7 @@ describe("cases", () => {
       "cw.outbox",
       "cw.inbox",
       "cw.cases",
+      "cw.workflows",
     ]);
   });
 
@@ -133,7 +134,6 @@ describe("cases", () => {
         method: "patch",
         path: "/cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/value",
       },
-      { method: "post", path: "/workflows" },
       { method: "post", path: "/cases/{caseId}/page-action" },
       { method: "post", path: "/cases/{caseId}/notes" },
     ]);
