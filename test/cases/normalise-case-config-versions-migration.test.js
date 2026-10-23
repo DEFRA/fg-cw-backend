@@ -376,6 +376,43 @@ describe("20261022110000-normalise-case-config-versions", () => {
     );
   });
 
+  it("leaves a case in a series with a case at a status the newest version lacks unversioned", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db.collection("workflows").insertOne(aWorkflow("1.1.0"));
+    const inSeries = aCase("in-series");
+    await cases().insertMany([
+      inSeries,
+      aCase("series-member", {
+        originalConfigVersion: "1.0.0",
+        currentConfigVersion: "1.0.0",
+        currentStatus: "ON_HOLD",
+      }),
+      aCase("in-readable-series"),
+      aCase("readable-member", {
+        originalConfigVersion: "1.0.0",
+        currentConfigVersion: "1.0.0",
+      }),
+    ]);
+    await db.collection("case_series").insertMany([
+      {
+        workflowCode: "example-workflow",
+        caseRefs: ["in-series", "series-member"],
+      },
+      {
+        workflowCode: "example-workflow",
+        caseRefs: ["in-readable-series", "readable-member"],
+      },
+    ]);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "in-series" })).toEqual(inSeries);
+    expect(await versionsOf("in-readable-series")).toEqual({
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.1.0",
+    });
+  });
+
   it("leaves the cases of a workflow whose newest version is not stored unversioned", async () => {
     await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
     const unstored = aCase("unstored");

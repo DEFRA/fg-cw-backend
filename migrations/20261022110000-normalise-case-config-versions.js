@@ -8,9 +8,9 @@ import { logger } from "../src/common/logger.js";
 // version that resolves, as `20260806100000-remove-sentinel-config-versions.js`
 // chose one, when that version's stored definition holds everything the case
 // page reads from it: the case's position, the same task groups in its current
-// stage as the version's, and the phase, stage, status or task group of each
-// timeline entry. A case pinned to its current version is not checked against
-// it again.
+// stage as the version's, the phase, stage, status or task group of each
+// timeline entry, and the position of every case in its series. A case pinned
+// to its current version is not checked against it again.
 //
 // A case whose workflow has no such version is left unversioned on purpose, so
 // it still opens on `0.0.0`, and its workflow code logged as a warning with a
@@ -127,11 +127,14 @@ const currentTaskGroupsOf = ({ phases, currentPhase, currentStage }) =>
       ?.stages?.find((stage) => stage.code === currentStage)?.taskGroups ?? []
   ).map((taskGroup) => taskGroup.code);
 
+const positionOf = ({ currentPhase, currentStage, currentStatus }) =>
+  key("status", currentPhase, currentStage, currentStatus);
+
 const caseReferences = (kase, taskGroups) => {
-  const { currentPhase, currentStage, currentStatus } = kase;
+  const { currentPhase, currentStage } = kase;
 
   return [
-    key("status", currentPhase, currentStage, currentStatus),
+    positionOf(kase),
     ...taskGroups.map((taskGroup) =>
       key("taskGroup", currentPhase, currentStage, taskGroup),
     ),
@@ -153,12 +156,53 @@ const isReadable = (kase, { references, taskGroupsOf }) => {
   );
 };
 
-const readableCaseIds = async (cases, workflowCode, definition) => {
-  const ids = [];
-  const candidates = cases.find(
+const caseRefsInUnreadableSeries = async (
+  db,
+  workflowCode,
+  caseRefs,
+  references,
+) => {
+  const series = await db
+    .collection("case_series")
+    .find(
+      { workflowCode, caseRefs: { $in: caseRefs } },
+      { projection: { _id: 0, caseRefs: 1 } },
+    )
+    .toArray();
+  const members = [...new Set(series.flatMap((one) => one.caseRefs))];
+  const unreadable = new Set();
+
+  for await (const member of db.collection("cases").find(
+    { workflowCode, caseRef: { $in: members } },
+    {
+      projection: {
+        _id: 0,
+        caseRef: 1,
+        currentPhase: 1,
+        currentStage: 1,
+        currentStatus: 1,
+      },
+    },
+  )) {
+    if (!references.has(positionOf(member))) {
+      unreadable.add(member.caseRef);
+    }
+  }
+
+  return new Set(
+    series
+      .filter((one) => one.caseRefs.some((ref) => unreadable.has(ref)))
+      .flatMap((one) => one.caseRefs),
+  );
+};
+
+const readableCaseIds = async (db, workflowCode, definition) => {
+  const readable = [];
+  const candidates = db.collection("cases").find(
     { ...versionless, workflowCode },
     {
       projection: {
+        caseRef: 1,
         currentPhase: 1,
         currentStage: 1,
         currentStatus: 1,
@@ -173,11 +217,20 @@ const readableCaseIds = async (cases, workflowCode, definition) => {
 
   for await (const kase of candidates) {
     if (isReadable(kase, definition)) {
-      ids.push(kase._id);
+      readable.push({ _id: kase._id, caseRef: kase.caseRef });
     }
   }
 
-  return ids;
+  const inUnreadableSeries = await caseRefsInUnreadableSeries(
+    db,
+    workflowCode,
+    readable.map((kase) => kase.caseRef),
+    definition.references,
+  );
+
+  return readable
+    .filter((kase) => !inUnreadableSeries.has(kase.caseRef))
+    .map((kase) => kase._id);
 };
 
 const giveVersions = async (db, cases) => {
@@ -196,7 +249,7 @@ const giveVersions = async (db, cases) => {
       : null;
     const ids =
       definition?.references.size > 0
-        ? await readableCaseIds(cases, workflowCode, definition)
+        ? await readableCaseIds(db, workflowCode, definition)
         : [];
 
     if (ids.length > 0) {
