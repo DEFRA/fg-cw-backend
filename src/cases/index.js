@@ -6,6 +6,7 @@ import { db, mongoClient } from "../common/mongo-client.js";
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";
 import { outboxBucket } from "./buckets/outbox.bucket.js";
+import { workflowsBucket } from "./buckets/workflows.bucket.js";
 import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
@@ -36,6 +37,7 @@ export const cases = {
     registerBucket(outboxBucket());
     registerBucket(inboxBucket());
     registerBucket(casesBucket());
+    registerBucket(workflowsBucket());
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();
