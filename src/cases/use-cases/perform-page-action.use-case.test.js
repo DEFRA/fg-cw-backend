@@ -358,7 +358,7 @@ describe("performPageActionUseCase", () => {
       expect(findById).toHaveBeenCalledTimes(2);
       expect(update).toHaveBeenCalledTimes(2);
       expect(update).toHaveBeenLastCalledWith(latest);
-      expect(latest.supplementaryData).toEqual({
+      expect(latest.supplementaryData.toJSON()).toEqual({
         rulesCalculations: [{ id: 905 }, { id: 907 }, response],
         claims: [{ id: "concurrent" }],
       });

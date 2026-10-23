@@ -63,7 +63,7 @@ describe("progressCaseUseCase", () => {
       ),
     ).rejects.toThrow();
     expect(update).not.toHaveBeenCalled();
-    expect(kase.supplementaryData).toEqual({});
+    expect(kase.supplementaryData.toJSON()).toEqual({});
     expect(kase.getSupplementaryDataUpdates()).toEqual({});
   });
   it("should throw if case not found", async () => {
@@ -103,7 +103,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
@@ -160,7 +160,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(findByCaseRefAndWorkflowCode).toHaveBeenCalledWith(
       data.caseRef,
       data.workflowCode,
@@ -197,7 +197,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    expect(kase.supplementaryData.customData).toEqual({
+    expect(kase.supplementaryData.toJSON().customData).toEqual({
       customValue: {
         customField: "customValue",
       },
@@ -221,7 +221,7 @@ describe("progressCaseUseCase", () => {
 
     const returnValue = await progressCaseUseCase(data);
 
-    const caseAgreements = kase.supplementaryData.agreements;
+    const caseAgreements = kase.supplementaryData.toJSON().agreements;
     expect(caseAgreements).toHaveLength(1);
     expect(update).toHaveBeenCalledWith(kase);
     expect(returnValue).toBe(kase);

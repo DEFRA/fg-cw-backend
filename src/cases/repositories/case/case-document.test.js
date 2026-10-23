@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Case } from "../../models/case.js";
 import { CaseDocument, caseRefs, seriesRefs } from "./case-document.js";
 
 describe("caseRefs", () => {
@@ -35,6 +36,13 @@ describe("seriesRefs", () => {
 });
 
 describe("CaseDocument", () => {
+  it("serializes the supplementary value object to a plain stored document", () => {
+    const kase = Case.createMock({
+      supplementaryData: { results: [{ id: "one" }] },
+    });
+    const document = new CaseDocument(kase);
+    expect(document.supplementaryData).toEqual({ results: [{ id: "one" }] });
+  });
   it("carries its own refs", () => {
     const document = CaseDocument.createMock({
       caseRef: "ABC-123",

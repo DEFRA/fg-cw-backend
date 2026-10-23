@@ -15,6 +15,7 @@ export const createCaseWorkflowContext = ({
 
   return {
     ...kase,
+    supplementaryData: kase.supplementaryData.toJSON(),
     workflow,
     schemeName,
     definitions: { ...workflow.definitions },

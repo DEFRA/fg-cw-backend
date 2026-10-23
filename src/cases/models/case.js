@@ -16,7 +16,6 @@ import {
 } from "./timeline-event.js";
 
 export class Case {
-  #supplementaryData;
   #updatedSupplementaryNodes = new Set();
   #originalSupplementaryNodes = new Map();
 
@@ -35,14 +34,9 @@ export class Case {
     this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.#supplementaryData = new SupplementaryData(
+    this.supplementaryData = new SupplementaryData(
       props.supplementaryData || {},
     );
-    // Keep the plain-data view enumerable for workflow contexts and responses.
-    Object.defineProperty(this, "supplementaryData", {
-      enumerable: true,
-      get: () => this.#supplementaryData.toJSON(),
-    });
     this.originalConfigVersion =
       props.originalConfigVersion ?? props.configVersion ?? null;
     this.currentConfigVersion =
@@ -175,30 +169,29 @@ export class Case {
   }
 
   updateSupplementaryData(instruction) {
-    const updated = this.#supplementaryData.merge(instruction);
-    if (updated === this.#supplementaryData) {
-      return null;
+    const updated = this.supplementaryData.merge(instruction);
+    if (updated !== this.supplementaryData) {
+      this.#applySupplementaryData(instruction.targetNode, updated);
     }
-    this.#applySupplementaryData(instruction.targetNode, updated);
   }
 
   #rememberSupplementaryData(targetNode) {
     if (!this.#originalSupplementaryNodes.has(targetNode)) {
       this.#originalSupplementaryNodes.set(
         targetNode,
-        this.#supplementaryData.getNode(targetNode),
+        this.supplementaryData.getNode(targetNode),
       );
     }
   }
 
   addSupplementaryData(targetNode, data) {
-    const updated = this.#supplementaryData.withNode(targetNode, data);
+    const updated = this.supplementaryData.withNode(targetNode, data);
     this.#applySupplementaryData(targetNode, updated);
   }
 
   #applySupplementaryData(targetNode, updated) {
     this.#rememberSupplementaryData(targetNode);
-    this.#supplementaryData = updated;
+    this.supplementaryData = updated;
     this.#updatedSupplementaryNodes.add(targetNode);
   }
 
@@ -206,7 +199,7 @@ export class Case {
     return Object.fromEntries(
       [...this.#updatedSupplementaryNodes].map((node) => [
         node,
-        this.#supplementaryData.getNode(node),
+        this.supplementaryData.getNode(node),
       ]),
     );
   }

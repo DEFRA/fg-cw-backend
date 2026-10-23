@@ -44,7 +44,7 @@ describe("generic supplementary data updates", () => {
         instruction({ id: "result-2", arbitrary: [1, "anything", null] }),
       ),
     );
-    expect(kase.supplementaryData).toEqual({
+    expect(kase.supplementaryData.toJSON()).toEqual({
       other: { retained: true },
       results: [
         { id: "result-1", completelyDifferent: true },
@@ -67,7 +67,7 @@ describe("generic supplementary data updates", () => {
     await updateSupplementaryDataUseCase(
       message({ ...instruction(), dataType: "OBJECT" }),
     );
-    expect(kase.supplementaryData.results).toEqual({
+    expect(kase.supplementaryData.toJSON().results).toEqual({
       "result-1": { id: "result-1", arbitrary: { score: -10 } },
     });
   });
@@ -101,7 +101,7 @@ describe("generic supplementary data updates", () => {
       .mockResolvedValueOnce();
     await updateSupplementaryDataUseCase(message());
     expect(updateSupplementaryData).toHaveBeenCalledTimes(2);
-    expect(fresh.supplementaryData.results).toEqual([
+    expect(fresh.supplementaryData.toJSON().results).toEqual([
       { id: "newer" },
       { id: "result-1", arbitrary: { score: -10 } },
     ]);

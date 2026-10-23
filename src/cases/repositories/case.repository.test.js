@@ -739,7 +739,11 @@ describe("updateSupplementaryData", () => {
     await updateSupplementaryData(kase);
     expect(updateOne).toHaveBeenCalledWith(
       { _id: kase.objectId, "supplementaryData.results": { $exists: false } },
-      { $set: { "supplementaryData.results": kase.supplementaryData.results } },
+      {
+        $set: {
+          "supplementaryData.results": kase.supplementaryData.toJSON().results,
+        },
+      },
     );
   });
   it.each([
