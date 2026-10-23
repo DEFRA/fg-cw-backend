@@ -361,6 +361,21 @@ describe("20261022110000-normalise-case-config-versions", () => {
     );
   });
 
+  it("leaves a case whose current stage lacks a task group the newest version adds unversioned", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db
+      .collection("workflows")
+      .insertOne(aWorkflow("1.1.0", undefined, ["CHECKS", "EXTRA_CHECKS"]));
+    const missingTaskGroup = aCase("missing-task-group");
+    await cases().insertOne(missingTaskGroup);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "missing-task-group" })).toEqual(
+      missingTaskGroup,
+    );
+  });
+
   it("leaves the cases of a workflow whose newest version is not stored unversioned", async () => {
     await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
     const unstored = aCase("unstored");

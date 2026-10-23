@@ -7,9 +7,10 @@ import { logger } from "../src/common/logger.js";
 // other. A case with no version at all takes `0.0.0` and its workflow's newest
 // version that resolves, as `20260806100000-remove-sentinel-config-versions.js`
 // chose one, when that version's stored definition holds everything the case
-// page reads from it: the case's position, its current stage's task groups,
-// and the phase, stage, status or task group of each timeline entry. A case
-// pinned to its current version is not checked against it again.
+// page reads from it: the case's position, the same task groups in its current
+// stage as the version's, and the phase, stage, status or task group of each
+// timeline entry. A case pinned to its current version is not checked against
+// it again.
 //
 // A case whose workflow has no such version is left unversioned on purpose, so
 // it still opens on `0.0.0`, and its workflow code logged as a warning with a
@@ -63,7 +64,7 @@ const newestActiveVersion = async (configVersions, workflowCode) => {
 
 const key = (...codes) => JSON.stringify(codes);
 
-const referencesOf = async (workflows, code, version) => {
+const definitionOf = async (workflows, code, version) => {
   const workflow = await workflows.findOne(
     { code, version },
     {
@@ -76,19 +77,30 @@ const referencesOf = async (workflows, code, version) => {
     },
   );
 
-  return new Set(
-    (workflow?.phases ?? []).flatMap((phase) => [
-      key("phase", phase.code),
-      ...phase.stages.flatMap((stage) => [
+  const phases = workflow?.phases ?? [];
+  const stages = phases.flatMap((phase) =>
+    phase.stages.map((stage) => ({ phase: phase.code, stage })),
+  );
+
+  return {
+    references: new Set([
+      ...phases.map((phase) => key("phase", phase.code)),
+      ...stages.flatMap(({ phase, stage }) => [
         ...stage.statuses.map((status) =>
-          key("status", phase.code, stage.code, status.code),
+          key("status", phase, stage.code, status.code),
         ),
         ...stage.taskGroups.map((taskGroup) =>
-          key("taskGroup", phase.code, stage.code, taskGroup.code),
+          key("taskGroup", phase, stage.code, taskGroup.code),
         ),
       ]),
     ]),
-  );
+    taskGroupsOf: new Map(
+      stages.map(({ phase, stage }) => [
+        key(phase, stage.code),
+        stage.taskGroups.map((taskGroup) => taskGroup.code),
+      ]),
+    ),
+  };
 };
 
 const timelineReferences = ({ eventType, data }) => {
@@ -108,23 +120,40 @@ const timelineReferences = ({ eventType, data }) => {
   }
 };
 
-const caseReferences = (kase) => {
-  const { currentPhase, currentStage, currentStatus } = kase;
-  const taskGroups =
-    kase.phases
+const currentTaskGroupsOf = ({ phases, currentPhase, currentStage }) =>
+  (
+    phases
       ?.find((phase) => phase.code === currentPhase)
-      ?.stages?.find((stage) => stage.code === currentStage)?.taskGroups ?? [];
+      ?.stages?.find((stage) => stage.code === currentStage)?.taskGroups ?? []
+  ).map((taskGroup) => taskGroup.code);
+
+const caseReferences = (kase, taskGroups) => {
+  const { currentPhase, currentStage, currentStatus } = kase;
 
   return [
     key("status", currentPhase, currentStage, currentStatus),
     ...taskGroups.map((taskGroup) =>
-      key("taskGroup", currentPhase, currentStage, taskGroup.code),
+      key("taskGroup", currentPhase, currentStage, taskGroup),
     ),
     ...(kase.timeline ?? []).flatMap(timelineReferences),
   ];
 };
 
-const readableCaseIds = async (cases, workflowCode, references) => {
+// The case page checks every task group of the version's current stage on the
+// case, and every one of the case's against the version.
+const isReadable = (kase, { references, taskGroupsOf }) => {
+  const taskGroups = currentTaskGroupsOf(kase);
+  const versionTaskGroups =
+    taskGroupsOf.get(key(kase.currentPhase, kase.currentStage)) ?? [];
+
+  return (
+    caseReferences(kase, taskGroups).every((reference) =>
+      references.has(reference),
+    ) && versionTaskGroups.every((taskGroup) => taskGroups.includes(taskGroup))
+  );
+};
+
+const readableCaseIds = async (cases, workflowCode, definition) => {
   const ids = [];
   const candidates = cases.find(
     { ...versionless, workflowCode },
@@ -143,7 +172,7 @@ const readableCaseIds = async (cases, workflowCode, references) => {
   );
 
   for await (const kase of candidates) {
-    if (caseReferences(kase).every((reference) => references.has(reference))) {
+    if (isReadable(kase, definition)) {
       ids.push(kase._id);
     }
   }
@@ -162,12 +191,12 @@ const giveVersions = async (db, cases) => {
       db.collection("config_versions"),
       workflowCode,
     );
-    const references = version
-      ? await referencesOf(db.collection("workflows"), workflowCode, version)
-      : new Set();
+    const definition = version
+      ? await definitionOf(db.collection("workflows"), workflowCode, version)
+      : null;
     const ids =
-      references.size > 0
-        ? await readableCaseIds(cases, workflowCode, references)
+      definition?.references.size > 0
+        ? await readableCaseIds(cases, workflowCode, definition)
         : [];
 
     if (ids.length > 0) {
