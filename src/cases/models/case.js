@@ -10,6 +10,11 @@ import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
 import { assertIsSupplementaryDataNode } from "./supplementary-data-node.schema.js";
 import {
+  assertSupplementaryDataType,
+  mergeSupplementaryDataArray,
+  mergeSupplementaryDataObject,
+} from "./supplementary-data.js";
+import {
   assertIsTimelineEvent,
   TimelineEvent,
   toTimelineEvents,
@@ -187,7 +192,7 @@ export class Case {
     }
 
     assertIsSupplementaryDataNode(targetNode);
-    this.#assertSupplementaryDataType(targetNode, dataType);
+    assertSupplementaryDataType(this.supplementaryData, targetNode, dataType);
     this.#rememberSupplementaryData(targetNode);
     const targetData = this.getSupplementaryDataNode(targetNode, dataType);
 
@@ -212,46 +217,12 @@ export class Case {
     }
   }
 
-  updateSupplementaryDataObject({ targetData, key, data, targetNode }) {
-    if (!key) {
-      throw new Error(
-        `Can not update supplementaryData "${targetNode}" as an object without a key`,
-      );
-    }
-    return { ...targetData, [data[key]]: data };
+  updateSupplementaryDataObject(instruction) {
+    return mergeSupplementaryDataObject(instruction);
   }
 
-  updateSupplementaryDataArray({ targetData, key, data }) {
-    const inArray = !!key && !!targetData.find((d) => d[key] === data[key]);
-
-    if (inArray) {
-      return targetData.reduce((acc, c) => {
-        if (c[key] === data[key]) {
-          acc.push(data);
-        } else {
-          acc.push(c);
-        }
-        return acc;
-      }, []);
-    } else {
-      targetData.push(data);
-      return targetData;
-    }
-  }
-
-  #assertSupplementaryDataType(targetNode, dataType) {
-    if (!["ARRAY", "OBJECT"].includes(dataType)) {
-      return;
-    }
-    if (
-      Object.hasOwn(this.supplementaryData, targetNode) &&
-      Array.isArray(this.supplementaryData[targetNode]) !==
-        (dataType === "ARRAY")
-    ) {
-      throw Boom.badData(
-        `Supplementary data node "${targetNode}" is not an ${dataType} container`,
-      );
-    }
+  updateSupplementaryDataArray(instruction) {
+    return mergeSupplementaryDataArray(instruction);
   }
 
   #rememberSupplementaryData(targetNode) {
