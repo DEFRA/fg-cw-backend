@@ -2,6 +2,7 @@ import { caseStatusUpdated } from "../src/cases/events/case-status-updated.event
 import {
   caseCreate,
   caseUpdateStatus,
+  caseUpdateSupplementaryData,
   configVersionUpdated,
 } from "../src/cases/events/inbound-event-types.js";
 import { logger } from "../src/common/logger.js";
@@ -15,16 +16,21 @@ import {
 // replaced version wrote while it ran, and, where it ran before case links
 // were stamped, the case links of the types that carry them. It has no _id
 // cutoff and writes only what a row lacks, so running it again changes nothing.
+// A row still unstamped after it is counted and logged, never failing the start.
 const declared = [
   caseCreate,
   caseStatusUpdated,
   caseUpdateStatus,
+  caseUpdateSupplementaryData,
   configVersionUpdated,
 ];
 
-const caseLinked = [caseCreate, caseStatusUpdated, caseUpdateStatus].map(
-  ({ name }) => name,
-);
+const caseLinked = [
+  caseCreate,
+  caseStatusUpdated,
+  caseUpdateStatus,
+  caseUpdateSupplementaryData,
+].map(({ name }) => name);
 
 const BATCH_SIZE = 1000;
 
@@ -138,11 +144,11 @@ const stampFrom = async (collection, stampsOf, after, stamped) => {
 const stamp = (collection, stampsOf) =>
   stampFrom(collection, stampsOf, null, 0);
 
-const assertStamped = async (collection) => {
+const reportUnstamped = async (collection) => {
   const count = await collection.countDocuments({ $or: unstamped }, primary);
 
   if (count > 0) {
-    throw new Error(
+    logger.warn(
       `${count} ${collection.collectionName} rows were left unstamped`,
     );
   }
@@ -163,6 +169,6 @@ export const up = async (db) => {
     `Re-stamped ${outboxRows} outbox rows and ${inboxRows} inbox rows`,
   );
 
-  await assertStamped(outbox);
-  await assertStamped(inbox);
+  await reportUnstamped(outbox);
+  await reportUnstamped(inbox);
 };

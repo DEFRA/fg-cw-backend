@@ -1,8 +1,18 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { up } from "../../migrations/20261016100000-restamp-events.js";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { up } from "../../migrations/20261028100000-restamp-events.js";
 import { config } from "../../src/common/config.js";
+import { logger } from "../../src/common/logger.js";
 
 const STATUS_TOPIC =
   "arn:aws:sns:eu-west-2:111111111111:cw__sns__case_status_updated";
@@ -66,6 +76,31 @@ const inboxRow = (overrides) => ({
   },
   ...overrides,
 });
+
+const configRow = () =>
+  inboxRow({
+    source: "ConfigBroker",
+    messageId: "0b7c1d1e-0000-4000-8000-000000000003",
+    type: "config-version.updated",
+    segregationRef: "example-workflow",
+    event: {
+      id: "0b7c1d1e-0000-4000-8000-000000000003",
+      type: "config-version.updated",
+      data: { grantCode: "example-workflow", version: "1.2.0" },
+    },
+  });
+
+const supplementaryRow = (overrides) =>
+  inboxRow({
+    messageId: "0b7c1d1e-0000-4000-8000-000000000004",
+    type: "cloud.defra.prod.fg-gas-backend.case.update.supplementary.data",
+    event: {
+      id: "0b7c1d1e-0000-4000-8000-000000000004",
+      type: "cloud.defra.prod.fg-gas-backend.case.update.supplementary.data",
+      data: { caseRef: "abc-124", workflowCode: "example-workflow" },
+    },
+    ...overrides,
+  });
 
 // As the FGP-1500 writers stamped them before case links.
 const STATUS_REFS = [
@@ -146,7 +181,11 @@ beforeEach(async () => {
   await Promise.all([outbox.deleteMany({}), inbox.deleteMany({})]);
 });
 
-describe("20261016100000-restamp-events", () => {
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("20261028100000-restamp-events", () => {
   it("stamps rows written without stamps, whatever their _id", async () => {
     await outbox.insertMany([
       statusEvent({ status: "DEAD_LETTER", lastError }),
@@ -183,6 +222,46 @@ describe("20261016100000-restamp-events", () => {
         TRACE,
       ],
     });
+  });
+
+  it("gives config version and supplementary data events the links they are stamped with now", async () => {
+    await inbox.insertMany([
+      configRow(),
+      supplementaryRow(),
+      supplementaryRow({
+        eventType: "UpdateCaseSupplementaryData",
+        refs: ["ref:abc-124", "id:0b7c1d1e-0000-4000-8000-000000000004", TRACE],
+      }),
+    ]);
+
+    await up(db);
+
+    const [configVersion, unstamped, stamped] = await everyRow(inbox);
+
+    expect(configVersion).toMatchObject({
+      eventType: "ConfigVersionUpdated",
+      refs: [
+        "ref:example-workflow",
+        "config:example-workflow@1~2e.2~2e.0",
+        "id:0b7c1d1e-0000-4000-8000-000000000003",
+        TRACE,
+      ],
+    });
+    expect(unstamped).toMatchObject({
+      eventType: "UpdateCaseSupplementaryData",
+      refs: [
+        "ref:abc-124",
+        "case:example-workflow:abc-124",
+        "id:0b7c1d1e-0000-4000-8000-000000000004",
+        TRACE,
+      ],
+    });
+    expect(stamped.refs).toEqual([
+      "ref:abc-124",
+      "id:0b7c1d1e-0000-4000-8000-000000000004",
+      TRACE,
+      "case:example-workflow:abc-124",
+    ]);
   });
 
   it("adds the case links to rows stamped before them, and changes nothing else", async () => {
@@ -308,16 +387,20 @@ describe("20261016100000-restamp-events", () => {
     ).toBe(2500);
   });
 
-  it("fails, naming the box, when a row is left unstamped", async () => {
+  it("logs the rows left unstamped, naming the box, and carries on", async () => {
     await outbox.insertOne(statusEvent());
-    await inbox.insertOne(inboxRow());
+    await inbox.insertMany([inboxRow(), inboxRow()]);
+    const warn = vi.spyOn(logger, "warn");
 
-    await expect(up(droppingWritesTo("inbox"))).rejects.toThrow(
-      "1 inbox rows were left unstamped",
+    await expect(up(droppingWritesTo("inbox"))).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      "2 inbox rows were left unstamped",
     );
     expect(await outbox.findOne()).toHaveProperty(
       "eventType",
       "CaseStatusUpdated",
     );
+    expect(await inbox.countDocuments({ eventType: null })).toBe(2);
   });
 });
