@@ -69,6 +69,7 @@ describe("cases", () => {
       "cw.outbox",
       "cw.inbox",
       "cw.cases",
+      "cw.workflows",
     ]);
   });
 

@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   listBuckets,
   queryBucket,
@@ -16,6 +16,7 @@ let client;
 let db;
 let cases;
 let outbox;
+let configVersions;
 let inbox;
 
 const NOW = new Date("2026-10-09T12:00:00.000Z");
@@ -36,6 +37,23 @@ const aCase = (caseRef, overrides = {}) => ({
   comments: [],
   timeline: [],
   refs: [`ref:${caseRef}`, "sbi:900000001"],
+  ...overrides,
+});
+
+const LISTED = /^list-/;
+
+const WINDOW = {
+  from: minutesAgo(60).toISOString(),
+  to: NOW.toISOString(),
+};
+
+const aWorkflowVersion = (grantCode, version, overrides = {}) => ({
+  _id: new ObjectId(),
+  grantCode,
+  version,
+  status: "active",
+  fetchStatus: "fetched",
+  receivedAt: NOW.toISOString(),
   ...overrides,
 });
 
@@ -94,6 +112,7 @@ beforeAll(async () => {
   db = client.db();
   cases = db.collection("cases");
   outbox = db.collection("outbox");
+  configVersions = db.collection("config_versions");
   inbox = db.collection("inbox");
   await seedCaseReaderToken(db);
 });
@@ -103,13 +122,14 @@ afterAll(async () => {
 });
 
 describe("GET /actuators/buckets", () => {
-  it("lists this service's four buckets in their order", async () => {
+  it("lists this service's buckets in their order", async () => {
     const response = await listBuckets();
 
     expect(response.payload.buckets.map(({ id }) => id)).toEqual([
       "cw.outbox",
       "cw.inbox",
       "cw.cases",
+      "cw.workflows",
     ]);
   });
 
@@ -223,6 +243,145 @@ describe("POST /actuators/buckets/{bucketId}/query, cw.cases", () => {
     const { payload } = await queryBucket("cw.cases", {});
 
     expect(JSON.stringify(payload)).not.toContain("identifiers");
+  });
+});
+
+describe("POST /actuators/buckets/{bucketId}/query, cw.workflows", () => {
+  const forget = () => configVersions.deleteMany({ grantCode: LISTED });
+
+  beforeEach(forget);
+  afterAll(forget);
+
+  it("reads the stored workflow codes of the config versions", async () => {
+    await configVersions.insertMany([
+      aWorkflowVersion("list-workflow", "1.0.0"),
+      aWorkflowVersion("list-workflow", "1.1.0"),
+      aWorkflowVersion("list-other-workflow", "1.0.0"),
+    ]);
+
+    const { payload } = await listBuckets();
+    const facts = payload.buckets.find(({ id }) => id === "cw.workflows").facts;
+
+    const listed = facts
+      .find(({ name }) => name === "grantCode")
+      .values.filter(({ value }) => LISTED.test(value));
+
+    expect(listed).toEqual([
+      { value: "list-other-workflow", label: "list-other-workflow" },
+      { value: "list-workflow", label: "list-workflow" },
+    ]);
+  });
+
+  it("pages config versions newest received first, each once", async () => {
+    await configVersions.insertMany(
+      Array.from({ length: 25 }, (_, n) =>
+        aWorkflowVersion("list-workflow", `1.${n}.0`, {
+          receivedAt: minutesAgo(n).toISOString(),
+        }),
+      ),
+    );
+
+    const first = await queryBucket("cw.workflows", WINDOW);
+    const second = await queryBucket("cw.workflows", {
+      ...WINDOW,
+      cursor: first.payload.page.next,
+    });
+
+    expect(first.payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["receivedAt", "_id"],
+    });
+    expect(
+      [...first.payload.rows, ...second.payload.rows].map(
+        ({ cells }) => cells.version,
+      ),
+    ).toEqual(Array.from({ length: 25 }, (_, n) => `1.${n}.0`));
+    expect(second.payload.page).toMatchObject({ next: null, complete: true });
+  });
+
+  it("presents a row linked to its workflow version", async () => {
+    await configVersions.insertOne(
+      aWorkflowVersion("list-workflow", "1.2.0", {
+        fetchStatus: "permanent_error",
+        s3Key: "list-workflow/1.2.0/cw/cw.json",
+      }),
+    );
+
+    const { payload } = await queryBucket("cw.workflows", WINDOW);
+
+    expect(payload.rows).toEqual([
+      {
+        id: expect.any(String),
+        time: NOW.toISOString(),
+        title: "list-workflow",
+        subtitle: null,
+        cells: {
+          version: "1.2.0",
+          status: "active",
+          definition: "permanent_error",
+        },
+        link: { kind: "workflow", code: "list-workflow", version: "1.2.0" },
+      },
+    ]);
+  });
+
+  it("lists only drafts when asked for Draft, on an exact plan", async () => {
+    await configVersions.insertMany([
+      aWorkflowVersion("list-workflow", "1.0.0"),
+      aWorkflowVersion("list-workflow", "2.0.0", { status: "draft" }),
+      aWorkflowVersion("list-other-workflow", "3.0.0", {
+        status: "draft",
+        fetchStatus: "pending",
+      }),
+    ]);
+
+    const { payload } = await queryBucket("cw.workflows", {
+      ...WINDOW,
+      where: { status: "draft" },
+    });
+
+    expect(payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["status", "fetchStatus", "receivedAt", "_id"],
+    });
+    expect(payload.rows.map(({ cells }) => cells.version).toSorted()).toEqual([
+      "2.0.0",
+      "3.0.0",
+    ]);
+  });
+
+  it("reads one workflow's versions exactly", async () => {
+    await configVersions.insertMany([
+      aWorkflowVersion("list-workflow", "1.0.0", {
+        receivedAt: minutesAgo(2).toISOString(),
+      }),
+      aWorkflowVersion("list-workflow", "1.1.0", {
+        receivedAt: minutesAgo(1).toISOString(),
+      }),
+      aWorkflowVersion("list-other-workflow", "1.0.0"),
+    ]);
+
+    const { payload } = await queryBucket("cw.workflows", {
+      ...WINDOW,
+      where: { grantCode: "list-workflow" },
+    });
+
+    expect(payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["grantCode", "status", "fetchStatus", "receivedAt", "_id"],
+    });
+    expect(payload.rows.map(({ cells }) => cells.version)).toEqual([
+      "1.1.0",
+      "1.0.0",
+    ]);
+  });
+
+  it("writes no audit row for a read of the workflows list", async () => {
+    await configVersions.insertOne(aWorkflowVersion("list-workflow", "1.0.0"));
+
+    await queryBucket("cw.workflows", WINDOW);
+
+    expect(await auditRows()).toEqual([]);
   });
 });
 
