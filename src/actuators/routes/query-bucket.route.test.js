@@ -8,6 +8,7 @@ import {
   operatorHeaders,
 } from "../../../test/helpers/operator.js";
 import { refuse } from "../../common/buckets/refusal.js";
+import { toConfigLink } from "../../events/case-refs.js";
 import { CASE_READER_CLIENT } from "../../common/require-case-reader.js";
 import { queryBucketRoute } from "./query-bucket.route.js";
 
@@ -94,6 +95,20 @@ describe("queryBucketRoute", () => {
       caller: CASE_READER_CLIENT,
       repeat: true,
     });
+  });
+
+  it("passes on the config link of a 64-character workflow code", async () => {
+    const ref = toConfigLink("W".repeat(64), "1.0.0");
+
+    const response = await post({ ref }, asGas(), "cw.inbox");
+
+    expect(response.statusCode).toBe(200);
+    expect(queryBucketUseCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bucketId: "cw.inbox",
+        body: { ...EMPTY_QUERY, ref },
+      }),
+    );
   });
 
   it("takes no body as the empty query", async () => {
