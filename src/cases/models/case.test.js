@@ -120,20 +120,6 @@ describe("Case", () => {
     });
   });
 
-  describe("getSupplementaryDataNode", () => {
-    it("should get data node if it exists", () => {
-      const agreements = {};
-      const caseInstance = createTestCase();
-      caseInstance.supplementaryData = {
-        agreements,
-      };
-
-      expect(caseInstance.getSupplementaryDataNode("agreements")).toEqual(
-        agreements,
-      );
-    });
-  });
-
   describe("updateSupplementaryData", () => {
     it.each([
       ["OBJECT", [{ id: "existing" }]],
@@ -191,90 +177,6 @@ describe("Case", () => {
       };
       caseInstance.updateSupplementaryData(data);
       expect(caseInstance.supplementaryData.foo).toBeDefined();
-    });
-  });
-
-  describe("updateSupplementaryDataObject", () => {
-    it("should throw if no key is provided", () => {
-      const caseInstance = createTestCase();
-      try {
-        caseInstance.updateSupplementaryDataObject({
-          targetData: {},
-          targetNode: "Foo",
-          data: {
-            someData: "barr",
-          },
-        });
-      } catch (e) {
-        expect(e.message).toBe(
-          'Can not update supplementaryData "Foo" as an object without a key',
-        );
-      }
-    });
-
-    it("should add data at key within object", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataObject({
-        targetData: {},
-        key: "dataRef",
-        targetNode: "Foo",
-        data: {
-          dataRef: "REF-1234-5678",
-          someData: "barr",
-        },
-      });
-      expect(result["REF-1234-5678"]).toBeDefined();
-      expect(result["REF-1234-5678"].someData).toBe("barr");
-    });
-  });
-
-  describe("updateSupplementaryDataArray", () => {
-    it("should add element to array if does not exist", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [],
-        key: undefined,
-        data: { agreementRef: "1234" },
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0].agreementRef).toBe("1234");
-    });
-
-    it("should add new element to existing", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [{ agreementRef: "1234", foo: "foo" }],
-        key: "agreementRef",
-        data: { agreementRef: "5678", foo: "barr" },
-      });
-      expect(result).toHaveLength(2);
-      expect(result[0].foo).toBe("foo");
-      expect(result[1].agreementRef).toBe("5678");
-    });
-
-    it("should update existing ref", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [
-          { agreementRef: "5678" },
-          { agreementRef: "1234", foo: "foo" },
-        ],
-        key: "agreementRef",
-        data: { agreementRef: "1234", foo: "barr" },
-      });
-      expect(result).toHaveLength(2);
-      expect(result[1].foo).toBe("barr");
-    });
-
-    it("should do nothing if no target node is passed", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryData({
-        targetNode: undefined,
-        key: "agreementRef",
-        dataType: "ARRAY",
-        data: { agreementRef: "1234", foo: "barr" },
-      });
-      expect(result).toBe(null);
     });
   });
 
@@ -610,7 +512,7 @@ describe("Case", () => {
         createdAt,
       };
       kase.addSupplementaryData("agreements", [agreement]);
-      expect(kase.supplementaryData.agreements[0]).toBe(agreement);
+      expect(kase.supplementaryData.agreements[0]).toEqual(agreement);
     });
   });
 
@@ -1585,6 +1487,25 @@ describe("Case", () => {
 });
 
 describe("supplementary data changes", () => {
+  it("exposes plain supplementary data in workflow spreads and JSON serialization", () => {
+    const data = { arbitrary: [{ id: "one", nested: { value: true } }] };
+    const kase = Case.createMock({ supplementaryData: data });
+
+    expect({ ...kase }.supplementaryData).toEqual(data);
+    expect(JSON.parse(JSON.stringify(kase)).supplementaryData).toEqual(data);
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+
+  it("prevents changes through a returned supplementary data view", () => {
+    const kase = Case.createMock({
+      supplementaryData: { results: [{ id: "one" }] },
+    });
+    kase.supplementaryData.results.push({ id: "outside" });
+
+    expect(kase.supplementaryData).toEqual({ results: [{ id: "one" }] });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+
   it.each([
     "bad.path",
     "$bad",

@@ -8,12 +8,7 @@ import { CaseTask } from "./case-task.js";
 import { assertIsComment, Comment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
-import { assertIsSupplementaryDataNode } from "./supplementary-data-node.schema.js";
-import {
-  assertSupplementaryDataType,
-  mergeSupplementaryDataArray,
-  mergeSupplementaryDataObject,
-} from "./supplementary-data.js";
+import { SupplementaryData } from "./supplementary-data.js";
 import {
   assertIsTimelineEvent,
   TimelineEvent,
@@ -21,6 +16,7 @@ import {
 } from "./timeline-event.js";
 
 export class Case {
+  #supplementaryData;
   #updatedSupplementaryNodes = new Set();
   #originalSupplementaryNodes = new Map();
 
@@ -39,7 +35,14 @@ export class Case {
     this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.supplementaryData = props.supplementaryData || {};
+    this.#supplementaryData = new SupplementaryData(
+      props.supplementaryData || {},
+    );
+    // Keep the plain-data view enumerable for workflow contexts and responses.
+    Object.defineProperty(this, "supplementaryData", {
+      enumerable: true,
+      get: () => this.#supplementaryData.toJSON(),
+    });
     this.originalConfigVersion =
       props.originalConfigVersion ?? props.configVersion ?? null;
     this.currentConfigVersion =
@@ -171,73 +174,31 @@ export class Case {
     this.#addTimelineEvent(timelineEvent);
   }
 
-  getSupplementaryDataNode(targetNode, dataType) {
-    if (
-      Object.hasOwn(this.supplementaryData, targetNode) &&
-      this.supplementaryData[targetNode]
-    ) {
-      return this.supplementaryData[targetNode];
-    }
-
-    this.supplementaryData = {
-      ...this.supplementaryData,
-      [targetNode]: dataType === "ARRAY" ? [] : {},
-    };
-    return this.supplementaryData[targetNode];
-  }
-
-  updateSupplementaryData({ targetNode, key, dataType, data }) {
-    if (!targetNode) {
+  updateSupplementaryData(instruction) {
+    const updated = this.#supplementaryData.merge(instruction);
+    if (updated === this.#supplementaryData) {
       return null;
     }
-
-    assertIsSupplementaryDataNode(targetNode);
-    assertSupplementaryDataType(this.supplementaryData, targetNode, dataType);
-    this.#rememberSupplementaryData(targetNode);
-    const targetData = this.getSupplementaryDataNode(targetNode, dataType);
-
-    if (dataType === "ARRAY") {
-      const updated = this.updateSupplementaryDataArray({
-        targetData,
-        key,
-        data,
-      });
-
-      return this.addSupplementaryData(targetNode, updated);
-    } else if (dataType === "OBJECT") {
-      const updated = this.updateSupplementaryDataObject({
-        targetNode,
-        targetData,
-        key,
-        data,
-      });
-      return this.addSupplementaryData(targetNode, updated);
-    } else {
-      return null;
-    }
-  }
-
-  updateSupplementaryDataObject(instruction) {
-    return mergeSupplementaryDataObject(instruction);
-  }
-
-  updateSupplementaryDataArray(instruction) {
-    return mergeSupplementaryDataArray(instruction);
+    this.#applySupplementaryData(instruction.targetNode, updated);
   }
 
   #rememberSupplementaryData(targetNode) {
     if (!this.#originalSupplementaryNodes.has(targetNode)) {
       this.#originalSupplementaryNodes.set(
         targetNode,
-        structuredClone(this.supplementaryData[targetNode]),
+        this.#supplementaryData.getNode(targetNode),
       );
     }
   }
 
   addSupplementaryData(targetNode, data) {
-    assertIsSupplementaryDataNode(targetNode);
+    const updated = this.#supplementaryData.withNode(targetNode, data);
+    this.#applySupplementaryData(targetNode, updated);
+  }
+
+  #applySupplementaryData(targetNode, updated) {
     this.#rememberSupplementaryData(targetNode);
-    this.supplementaryData = { ...this.supplementaryData, [targetNode]: data };
+    this.#supplementaryData = updated;
     this.#updatedSupplementaryNodes.add(targetNode);
   }
 
@@ -245,7 +206,7 @@ export class Case {
     return Object.fromEntries(
       [...this.#updatedSupplementaryNodes].map((node) => [
         node,
-        this.supplementaryData[node],
+        this.#supplementaryData.getNode(node),
       ]),
     );
   }
