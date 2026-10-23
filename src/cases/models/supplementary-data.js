@@ -7,17 +7,19 @@ const assertIsObject = (data) => {
   }
 };
 
+const isSupplementaryDataContainer = (node, dataType) =>
+  node !== null &&
+  typeof node === "object" &&
+  Array.isArray(node) === (dataType === "ARRAY");
+
 const assertSupplementaryDataType = (
   supplementaryData,
   targetNode,
   dataType,
 ) => {
-  if (!["ARRAY", "OBJECT"].includes(dataType)) {
-    return;
-  }
   if (
     Object.hasOwn(supplementaryData, targetNode) &&
-    Array.isArray(supplementaryData[targetNode]) !== (dataType === "ARRAY")
+    !isSupplementaryDataContainer(supplementaryData[targetNode], dataType)
   ) {
     throw Boom.badData(
       `Supplementary data node "${targetNode}" is not an ${dataType} container`,

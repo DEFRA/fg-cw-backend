@@ -116,6 +116,44 @@ describe("SupplementaryData", () => {
     expect(original.toJSON()).toEqual({ results: node });
   });
 
+  describe.each(["ARRAY", "OBJECT"])("%s merges", (dataType) => {
+    it.each([null, "text", "", 42, 0, true, false, undefined])(
+      "rejects an existing non-container node %j without changing it",
+      (node) => {
+        const original = new SupplementaryData({ results: node });
+
+        expect(() =>
+          original.merge({
+            targetNode: "results",
+            dataType,
+            key: "id",
+            data: { id: "one" },
+          }),
+        ).toThrow(
+          expect.objectContaining({
+            output: expect.objectContaining({ statusCode: 422 }),
+          }),
+        );
+        expect(original.toJSON()).toStrictEqual({ results: node });
+      },
+    );
+  });
+
+  it.each([
+    ["ARRAY", [{ id: "one" }]],
+    ["OBJECT", { one: { id: "one" } }],
+  ])("initializes an absent node for %s merges", (dataType, expected) => {
+    const original = new SupplementaryData();
+    const updated = original.merge({
+      targetNode: "results",
+      dataType,
+      key: "id",
+      data: { id: "one" },
+    });
+    expect(updated.toJSON()).toEqual({ results: expected });
+    expect(original.toJSON()).toEqual({});
+  });
+
   it.each(["bad.path", "$bad", "__proto__"])(
     "rejects unsafe target %s for merges and node replacement",
     (targetNode) => {
