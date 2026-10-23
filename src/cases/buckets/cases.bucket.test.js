@@ -23,13 +23,21 @@ describe("cw.cases", () => {
     });
   });
 
-  it("reads its workflows from the stored rows, and declares no other fact to filter by", () => {
+  it("reads its workflows from the stored rows, and filters by a version within a workflow", () => {
     expect(bucket.facts).toEqual({
       workflowCode: {
         label: "Workflow",
         values: STORED,
         toggle: null,
+        within: null,
         param: "workflow",
+      },
+      currentConfigVersion: {
+        label: "Version",
+        values: null,
+        toggle: null,
+        within: "workflowCode",
+        param: "version",
       },
     });
   });
@@ -42,6 +50,7 @@ describe("cw.cases", () => {
     expect(indexKeysOf(bucket).map(Object.keys)).toEqual([
       ["createdAt", "_id"],
       ["workflowCode", "createdAt", "_id"],
+      ["workflowCode", "currentConfigVersion", "createdAt", "_id"],
       ["refs", "createdAt", "_id"],
     ]);
   });
@@ -52,6 +61,25 @@ describe("cw.cases", () => {
       line: ["workflowCode"],
       filled: [],
       residual: [],
+    });
+  });
+
+  it("reads a version of a workflow exactly", () => {
+    expect(
+      choosePlan(bucket, ["workflowCode", "currentConfigVersion"], false),
+    ).toEqual({
+      kind: "exact",
+      line: ["workflowCode", "currentConfigVersion"],
+      filled: [],
+      residual: [],
+    });
+  });
+
+  it("reads a version without its workflow in time order, checking each row", () => {
+    expect(choosePlan(bucket, ["currentConfigVersion"], false)).toMatchObject({
+      kind: "bounded",
+      line: [],
+      residual: ["currentConfigVersion"],
     });
   });
 
@@ -68,6 +96,7 @@ describe("cw.cases", () => {
     expect(bucket.row.projection).toEqual({
       caseRef: 1,
       workflowCode: 1,
+      currentConfigVersion: 1,
       currentPhase: 1,
       currentStage: 1,
       currentStatus: 1,
@@ -79,6 +108,7 @@ describe("cw.cases", () => {
       bucket.row.present({
         caseRef: "abc-123",
         workflowCode: "example-workflow",
+        currentConfigVersion: "1.2.0",
         currentPhase: "PRE_AWARD",
         currentStage: "REVIEW",
         currentStatus: "IN_REVIEW",
@@ -88,7 +118,7 @@ describe("cw.cases", () => {
       title: "abc-123",
       subtitle: null,
       cells: {
-        workflowCode: "example-workflow",
+        workflowCode: "example-workflow@1.2.0",
         position: { phase: "PRE_AWARD", stage: "REVIEW", status: "IN_REVIEW" },
       },
       link: {
@@ -97,6 +127,13 @@ describe("cw.cases", () => {
         caseRef: "abc-123",
       },
     });
+  });
+
+  it("presents the bare workflow code for a case with no version", () => {
+    expect(
+      bucket.row.present({ caseRef: "abc-123", workflowCode: "w" }).cells
+        .workflowCode,
+    ).toBe("w");
   });
 
   it("presents null for what an open case with no position does not hold", () => {
