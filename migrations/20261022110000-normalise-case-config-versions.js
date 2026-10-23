@@ -6,11 +6,13 @@ import { logger } from "../src/common/logger.js";
 // version. A case missing one version takes it from the legacy one, or else the
 // other. A case with no version at all takes `0.0.0` and its workflow's newest
 // version that resolves, as `20260806100000-remove-sentinel-config-versions.js`
-// chose one.
+// chose one, when that version's stored definition holds the case's phase and
+// stage. A case pinned to its current version is not checked against it again.
 //
-// A case whose workflow has no version that resolves is left unversioned on
-// purpose, and its workflow code logged as a warning with a count: CW no longer
-// holds `0.0.0` as a current version, and failing here would stop CW starting.
+// A case whose workflow has no such version is left unversioned on purpose, so
+// it still opens on `0.0.0`, and its workflow code logged as a warning with a
+// count: CW no longer holds `0.0.0` as a current version, and failing here
+// would stop CW starting.
 
 const legacy = {
   $or: [
@@ -57,18 +59,38 @@ const newestActiveVersion = async (configVersions, workflowCode) => {
   return newest?.version ?? null;
 };
 
-const giveVersions = async (cases, configVersions) => {
+const stagesOf = async (workflows, code, version) => {
+  const workflow = await workflows.findOne(
+    { code, version },
+    { projection: { "phases.code": 1, "phases.stages.code": 1 } },
+  );
+
+  return (workflow?.phases ?? []).flatMap((phase) =>
+    phase.stages.map((stage) => ({
+      currentPhase: phase.code,
+      currentStage: stage.code,
+    })),
+  );
+};
+
+const giveVersions = async (db, cases) => {
   let modified = 0;
 
   for (const workflowCode of await cases.distinct(
     "workflowCode",
     versionless,
   )) {
-    const version = await newestActiveVersion(configVersions, workflowCode);
+    const version = await newestActiveVersion(
+      db.collection("config_versions"),
+      workflowCode,
+    );
+    const stages = version
+      ? await stagesOf(db.collection("workflows"), workflowCode, version)
+      : [];
 
-    if (version) {
+    if (stages.length > 0) {
       const { modifiedCount } = await cases.updateMany(
-        { ...versionless, workflowCode },
+        { ...versionless, workflowCode, $or: stages },
         {
           $set: {
             originalConfigVersion: "0.0.0",
@@ -96,7 +118,7 @@ const warnUnversioned = async (cases) => {
     const counts = unversioned.map(({ _id, count }) => `${_id} (${count})`);
 
     logger.warn(
-      `Cases left without a config version, as their workflow has no version to take: ${counts.join(", ")}`,
+      `Cases left without a config version, as their workflow has no version that holds their stage: ${counts.join(", ")}`,
     );
   }
 };
@@ -105,7 +127,7 @@ export const up = async (db) => {
   const cases = db.collection("cases");
 
   const { modifiedCount } = await cases.updateMany(legacy, fromLegacy);
-  const given = await giveVersions(cases, db.collection("config_versions"));
+  const given = await giveVersions(db, cases);
 
   logger.info(
     `Normalised ${modifiedCount} legacy or partly versioned and ${given} versionless case config versions`,

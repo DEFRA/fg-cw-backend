@@ -20,7 +20,21 @@ const aCase = (caseRef, versions) => ({
   caseRef,
   workflowCode: "example-workflow",
   createdAt: new Date("2026-09-01T10:00:00.000Z"),
+  currentPhase: "PRE_AWARD",
+  currentStage: "REVIEW",
+  currentStatus: "RECEIVED",
   ...versions,
+});
+
+const aWorkflow = (version, stages = ["REVIEW"]) => ({
+  code: "example-workflow",
+  version,
+  phases: [
+    {
+      code: "PRE_AWARD",
+      stages: stages.map((code) => ({ code, statuses: [] })),
+    },
+  ],
 });
 
 const aConfigVersion = (version, overrides = {}) => {
@@ -148,6 +162,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
         aConfigVersion("3.0.0", { status: "inactive" }),
         aConfigVersion("0.0.0"),
       ]);
+    await db.collection("workflows").insertOne(aWorkflow("1.10.0"));
     await cases().insertOne(aCase("versionless"));
 
     await normaliseConfigVersions(db);
@@ -159,6 +174,44 @@ describe("20261022110000-normalise-case-config-versions", () => {
     });
     expect(logger.info).toHaveBeenLastCalledWith(
       "Normalised 0 legacy or partly versioned and 1 versionless case config versions",
+    );
+  });
+
+  it("leaves a case whose stage the newest version lacks unversioned, and warns of it", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db
+      .collection("workflows")
+      .insertMany([
+        aWorkflow("0.0.0", ["REVIEW", "LEGACY_CHECK"]),
+        aWorkflow("1.1.0"),
+      ]);
+    const legacyStage = aCase("legacy-stage", { currentStage: "LEGACY_CHECK" });
+    await cases().insertMany([legacyStage, aCase("current-stage")]);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "legacy-stage" })).toEqual(
+      legacyStage,
+    );
+    expect(await versionsOf("current-stage")).toEqual({
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.1.0",
+    });
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (1)",
+    );
+  });
+
+  it("leaves the cases of a workflow whose newest version is not stored unversioned", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    const unstored = aCase("unstored");
+    await cases().insertOne(unstored);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "unstored" })).toEqual(unstored);
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (1)",
     );
   });
 
@@ -177,7 +230,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
       unknown,
     );
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version to take: example-workflow (2), other-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (2), other-workflow (1)",
     );
   });
 
@@ -199,6 +252,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
 
   it("is safe to run again", async () => {
     await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db.collection("workflows").insertOne(aWorkflow("1.1.0"));
     await cases().insertMany([
       aCase("legacy", { configVersion: "1.1.0" }),
       aCase("unresolved", { originalConfigVersion: "1.0.0" }),
