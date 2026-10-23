@@ -570,6 +570,18 @@ describe("POST /actuators/buckets/{bucketId}/query, cw.inbox by config link", ()
       ),
     ).toEqual([next._id.toString()]);
   });
+
+  it("answers the events of a 64-character upper-case workflow code", async () => {
+    const code = "W".repeat(64);
+    const row = aConfigVersionRow(code, "1.0.0");
+    await inbox.insertMany([row, aConfigVersionRow(code, "1.0.1")]);
+
+    expect(
+      idsOf(
+        await queryBucket("cw.inbox", { ref: toConfigLink(code, "1.0.0") }),
+      ),
+    ).toEqual([row._id.toString()]);
+  });
 });
 
 describe("POST /actuators/buckets/{bucketId}/query, refusals", () => {
