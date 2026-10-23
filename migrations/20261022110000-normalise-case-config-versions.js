@@ -6,9 +6,10 @@ import { logger } from "../src/common/logger.js";
 // version. A case missing one version takes it from the legacy one, or else the
 // other. A case with no version at all takes `0.0.0` and its workflow's newest
 // version that resolves, as `20260806100000-remove-sentinel-config-versions.js`
-// chose one, when that version's stored definition holds the case's phase,
-// stage and status. A case pinned to its current version is not checked
-// against it again.
+// chose one, when that version's stored definition holds everything the case
+// page reads from it: the case's position, its current stage's task groups,
+// and the phase, stage, status or task group of each timeline entry. A case
+// pinned to its current version is not checked against it again.
 //
 // A case whose workflow has no such version is left unversioned on purpose, so
 // it still opens on `0.0.0`, and its workflow code logged as a warning with a
@@ -60,7 +61,9 @@ const newestActiveVersion = async (configVersions, workflowCode) => {
   return newest?.version ?? null;
 };
 
-const positionsOf = async (workflows, code, version) => {
+const key = (...codes) => JSON.stringify(codes);
+
+const referencesOf = async (workflows, code, version) => {
   const workflow = await workflows.findOne(
     { code, version },
     {
@@ -68,19 +71,84 @@ const positionsOf = async (workflows, code, version) => {
         "phases.code": 1,
         "phases.stages.code": 1,
         "phases.stages.statuses.code": 1,
+        "phases.stages.taskGroups.code": 1,
       },
     },
   );
 
-  return (workflow?.phases ?? []).flatMap((phase) =>
-    phase.stages.flatMap((stage) =>
-      stage.statuses.map((status) => ({
-        currentPhase: phase.code,
-        currentStage: stage.code,
-        currentStatus: status.code,
-      })),
-    ),
+  return new Set(
+    (workflow?.phases ?? []).flatMap((phase) => [
+      key("phase", phase.code),
+      ...phase.stages.flatMap((stage) => [
+        ...stage.statuses.map((status) =>
+          key("status", phase.code, stage.code, status.code),
+        ),
+        ...stage.taskGroups.map((taskGroup) =>
+          key("taskGroup", phase.code, stage.code, taskGroup.code),
+        ),
+      ]),
+    ]),
   );
+};
+
+const timelineReferences = ({ eventType, data }) => {
+  const { phaseCode, stageCode, statusCode, taskGroupCode } = data ?? {};
+
+  switch (eventType) {
+    case "CASE_STATUS_CHANGED":
+    case "STAGE_COMPLETED":
+      return [key("status", phaseCode, stageCode, statusCode)];
+    case "PHASE_COMPLETED":
+      return [key("phase", phaseCode)];
+    case "TASK_COMPLETED":
+    case "TASK_UPDATED":
+      return [key("taskGroup", phaseCode, stageCode, taskGroupCode)];
+    default:
+      return [];
+  }
+};
+
+const caseReferences = (kase) => {
+  const { currentPhase, currentStage, currentStatus } = kase;
+  const taskGroups =
+    kase.phases
+      ?.find((phase) => phase.code === currentPhase)
+      ?.stages?.find((stage) => stage.code === currentStage)?.taskGroups ?? [];
+
+  return [
+    key("status", currentPhase, currentStage, currentStatus),
+    ...taskGroups.map((taskGroup) =>
+      key("taskGroup", currentPhase, currentStage, taskGroup.code),
+    ),
+    ...(kase.timeline ?? []).flatMap(timelineReferences),
+  ];
+};
+
+const readableCaseIds = async (cases, workflowCode, references) => {
+  const ids = [];
+  const candidates = cases.find(
+    { ...versionless, workflowCode },
+    {
+      projection: {
+        currentPhase: 1,
+        currentStage: 1,
+        currentStatus: 1,
+        "phases.code": 1,
+        "phases.stages.code": 1,
+        "phases.stages.taskGroups.code": 1,
+        "timeline.eventType": 1,
+        "timeline.data": 1,
+      },
+    },
+  );
+
+  for await (const kase of candidates) {
+    if (caseReferences(kase).every((reference) => references.has(reference))) {
+      ids.push(kase._id);
+    }
+  }
+
+  return ids;
 };
 
 const giveVersions = async (db, cases) => {
@@ -94,13 +162,17 @@ const giveVersions = async (db, cases) => {
       db.collection("config_versions"),
       workflowCode,
     );
-    const positions = version
-      ? await positionsOf(db.collection("workflows"), workflowCode, version)
-      : [];
+    const references = version
+      ? await referencesOf(db.collection("workflows"), workflowCode, version)
+      : new Set();
+    const ids =
+      references.size > 0
+        ? await readableCaseIds(cases, workflowCode, references)
+        : [];
 
-    if (positions.length > 0) {
+    if (ids.length > 0) {
       const { modifiedCount } = await cases.updateMany(
-        { ...versionless, workflowCode, $or: positions },
+        { ...versionless, _id: { $in: ids } },
         {
           $set: {
             originalConfigVersion: "0.0.0",
@@ -128,7 +200,7 @@ const warnUnversioned = async (cases) => {
     const counts = unversioned.map(({ _id, count }) => `${_id} (${count})`);
 
     logger.warn(
-      `Cases left without a config version, as their workflow has no version that holds their position: ${counts.join(", ")}`,
+      `Cases left without a config version, as their workflow has no version that holds their position and history: ${counts.join(", ")}`,
     );
   }
 };

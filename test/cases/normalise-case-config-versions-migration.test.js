@@ -23,10 +23,21 @@ const aCase = (caseRef, versions) => ({
   currentPhase: "PRE_AWARD",
   currentStage: "REVIEW",
   currentStatus: "RECEIVED",
+  phases: [
+    {
+      code: "PRE_AWARD",
+      stages: [{ code: "REVIEW", taskGroups: [{ code: "CHECKS", tasks: [] }] }],
+    },
+  ],
+  timeline: [{ eventType: "CASE_CREATED", data: { caseRef } }],
   ...versions,
 });
 
-const aWorkflow = (version, stages = { REVIEW: ["RECEIVED"] }) => ({
+const aWorkflow = (
+  version,
+  stages = { REVIEW: ["RECEIVED"] },
+  taskGroups = ["CHECKS"],
+) => ({
   code: "example-workflow",
   version,
   phases: [
@@ -35,6 +46,7 @@ const aWorkflow = (version, stages = { REVIEW: ["RECEIVED"] }) => ({
       stages: Object.entries(stages).map(([code, statuses]) => ({
         code,
         statuses: statuses.map((status) => ({ code: status })),
+        taskGroups: taskGroups.map((taskGroup) => ({ code: taskGroup })),
       })),
     },
   ],
@@ -202,7 +214,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
       currentConfigVersion: "1.1.0",
     });
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position and history: example-workflow (1)",
     );
   });
 
@@ -227,7 +239,125 @@ describe("20261022110000-normalise-case-config-versions", () => {
       currentConfigVersion: "1.1.0",
     });
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position and history: example-workflow (1)",
+    );
+  });
+
+  it.each([
+    [
+      "a status",
+      {
+        eventType: "CASE_STATUS_CHANGED",
+        data: {
+          phaseCode: "PRE_AWARD",
+          stageCode: "REVIEW",
+          statusCode: "ON_HOLD",
+        },
+      },
+    ],
+    [
+      "a completed stage's status",
+      {
+        eventType: "STAGE_COMPLETED",
+        data: {
+          phaseCode: "PRE_AWARD",
+          stageCode: "REVIEW",
+          statusCode: "ON_HOLD",
+          actionCode: "APPROVE",
+        },
+      },
+    ],
+    [
+      "a phase",
+      { eventType: "PHASE_COMPLETED", data: { phaseCode: "LEGACY_PHASE" } },
+    ],
+    [
+      "a task group",
+      {
+        eventType: "TASK_COMPLETED",
+        data: {
+          phaseCode: "PRE_AWARD",
+          stageCode: "REVIEW",
+          taskGroupCode: "LEGACY_CHECKS",
+          taskCode: "CHECK",
+        },
+      },
+    ],
+  ])(
+    "leaves a case whose history names %s the newest version lacks unversioned",
+    async (_, entry) => {
+      await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+      await db.collection("workflows").insertOne(aWorkflow("1.1.0"));
+      const base = aCase("legacy-history");
+      const legacyHistory = { ...base, timeline: [entry, ...base.timeline] };
+      await cases().insertMany([legacyHistory, aCase("current-history")]);
+
+      await normaliseConfigVersions(db);
+
+      expect(await cases().findOne({ caseRef: "legacy-history" })).toEqual(
+        legacyHistory,
+      );
+      expect(await versionsOf("current-history")).toEqual({
+        originalConfigVersion: "0.0.0",
+        currentConfigVersion: "1.1.0",
+      });
+      expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+        "Cases left without a config version, as their workflow has no version that holds their position and history: example-workflow (1)",
+      );
+    },
+  );
+
+  it("gives a case whose history the newest version holds its versions", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db
+      .collection("workflows")
+      .insertOne(aWorkflow("1.1.0", { REVIEW: ["RECEIVED", "ON_HOLD"] }));
+    const base = aCase("held-history");
+    await cases().insertOne({
+      ...base,
+      timeline: [
+        {
+          eventType: "CASE_STATUS_CHANGED",
+          data: {
+            phaseCode: "PRE_AWARD",
+            stageCode: "REVIEW",
+            statusCode: "ON_HOLD",
+          },
+        },
+        {
+          eventType: "TASK_UPDATED",
+          data: {
+            phaseCode: "PRE_AWARD",
+            stageCode: "REVIEW",
+            taskGroupCode: "CHECKS",
+            taskCode: "REMOVED_TASK",
+          },
+        },
+        { eventType: "NOTE_ADDED", data: null },
+        ...base.timeline,
+      ],
+    });
+
+    await normaliseConfigVersions(db);
+
+    expect(await versionsOf("held-history")).toEqual({
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.1.0",
+    });
+  });
+
+  it("leaves a case whose current stage holds a task group the newest version lacks unversioned", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db
+      .collection("workflows")
+      .insertOne(aWorkflow("1.1.0", undefined, ["OTHER_CHECKS"]));
+    const legacyTaskGroup = aCase("legacy-task-group");
+    await cases().insertOne(legacyTaskGroup);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "legacy-task-group" })).toEqual(
+      legacyTaskGroup,
     );
   });
 
@@ -240,7 +370,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
 
     expect(await cases().findOne({ caseRef: "unstored" })).toEqual(unstored);
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position and history: example-workflow (1)",
     );
   });
 
@@ -259,7 +389,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
       unknown,
     );
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (2), other-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position and history: example-workflow (2), other-workflow (1)",
     );
   });
 
