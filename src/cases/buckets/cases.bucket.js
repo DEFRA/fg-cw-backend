@@ -3,6 +3,11 @@ import { toPosition } from "../repositories/case/admin-case-row.js";
 
 const orNull = (value) => value ?? null;
 
+const toVersioned = ({ workflowCode, currentConfigVersion }) =>
+  workflowCode && currentConfigVersion
+    ? `${workflowCode}@${currentConfigVersion}`
+    : orNull(workflowCode);
+
 export const casesBucket = () =>
   defineBucket({
     id: "cw.cases",
@@ -17,9 +22,14 @@ export const casesBucket = () =>
     time: { field: "createdAt", type: "date", label: "Created" },
     facts: {
       workflowCode: { label: "Workflow", param: "workflow", values: STORED },
+      currentConfigVersion: {
+        label: "Version",
+        param: "version",
+        within: "workflowCode",
+      },
     },
     refs: { ref: "Reference", sbi: "SBI" },
-    indexes: [["workflowCode"]],
+    indexes: [["workflowCode"], ["workflowCode", "currentConfigVersion"]],
     audited: true,
     timeline: false,
     title: { label: "Reference", format: "mono" },
@@ -31,6 +41,7 @@ export const casesBucket = () =>
       projection: {
         caseRef: 1,
         workflowCode: 1,
+        currentConfigVersion: 1,
         currentPhase: 1,
         currentStage: 1,
         currentStatus: 1,
@@ -39,7 +50,7 @@ export const casesBucket = () =>
         title: orNull(doc.caseRef),
         subtitle: null,
         cells: {
-          workflowCode: orNull(doc.workflowCode),
+          workflowCode: toVersioned(doc),
           position: toPosition(doc),
         },
         link: {

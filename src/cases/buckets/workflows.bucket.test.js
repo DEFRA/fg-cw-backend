@@ -68,6 +68,7 @@ describe("cw.workflows", () => {
         param: "workflow",
         values: STORED,
         toggle: null,
+        within: null,
       },
       status: {
         label: "Status",
@@ -87,12 +88,14 @@ describe("cw.workflows", () => {
           },
         ],
         toggle: null,
+        within: null,
       },
       fetchStatus: {
         label: "Definition",
         param: "definition",
         values: DEFINITION_VALUES,
         toggle: null,
+        within: null,
       },
     });
   });
