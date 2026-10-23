@@ -28,6 +28,7 @@ describe("declared event types", () => {
       "ConfigVersionUpdated",
       "CreateCase",
       "UpdateCaseStatus",
+      "UpdateCaseSupplementaryData",
       "Unrecognised",
     ]);
   });
@@ -36,7 +37,12 @@ describe("declared event types", () => {
   // one name in the sender's outbox and the receiver's inbox.
   it("names the events that cross to and from GAS as GAS does", () => {
     const sent = ["CaseStatusUpdated"];
-    const received = ["CreateCase", "UpdateCaseStatus", "ConfigVersionUpdated"];
+    const received = [
+      "CreateCase",
+      "UpdateCaseStatus",
+      "UpdateCaseSupplementaryData",
+      "ConfigVersionUpdated",
+    ];
 
     expect(eventTypeNames(OUTBOX)).toEqual(expect.arrayContaining(sent));
     expect(eventTypeNames(INBOX)).toEqual(expect.arrayContaining(received));

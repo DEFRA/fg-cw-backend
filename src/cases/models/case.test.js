@@ -9,6 +9,7 @@ import { Case } from "./case.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
+import { SupplementaryData } from "./supplementary-data.js";
 import { TimelineEvent } from "./timeline-event.js";
 import { WorkflowAction } from "./workflow-action.js";
 import { WorkflowStageStatus } from "./workflow-stage-status.js";
@@ -120,21 +121,39 @@ describe("Case", () => {
     });
   });
 
-  describe("getSupplementaryDataNode", () => {
-    it("should get data node if it exists", () => {
-      const agreements = {};
-      const caseInstance = createTestCase();
-      caseInstance.supplementaryData = {
-        agreements,
-      };
-
-      expect(caseInstance.getSupplementaryDataNode("agreements")).toEqual(
-        agreements,
-      );
-    });
-  });
-
   describe("updateSupplementaryData", () => {
+    it.each([
+      ["OBJECT", [{ id: "existing" }]],
+      ["ARRAY", { existing: { id: "existing" } }],
+    ])(
+      "rejects %s updates to an incompatible existing node",
+      (dataType, node) => {
+        const caseInstance = createTestCase({
+          ...createValidProps(),
+          supplementaryData: { claims: node },
+        });
+        const original = structuredClone(node);
+
+        expect(() =>
+          caseInstance.updateSupplementaryData({
+            targetNode: "claims",
+            dataType,
+            key: "id",
+            data: { id: "new" },
+          }),
+        ).toThrow(
+          expect.objectContaining({
+            output: expect.objectContaining({ statusCode: 422 }),
+          }),
+        );
+        expect(caseInstance.supplementaryData.toJSON().claims).toEqual(
+          original,
+        );
+        expect(caseInstance.getSupplementaryDataUpdates()).toEqual({});
+        expect(caseInstance.getOriginalSupplementaryData()).toEqual({});
+      },
+    );
+
     it("should add data when it deosn't exists", () => {
       const caseInstance = createTestCase();
       const data = {
@@ -145,8 +164,8 @@ describe("Case", () => {
         },
       };
       caseInstance.updateSupplementaryData(data);
-      expect(caseInstance.supplementaryData.foo).toBeDefined();
-      expect(caseInstance.supplementaryData.foo).toHaveLength(1);
+      expect(caseInstance.supplementaryData.toJSON().foo).toBeDefined();
+      expect(caseInstance.supplementaryData.toJSON().foo).toHaveLength(1);
     });
 
     it("should add data as object when it doesn't exist", () => {
@@ -160,91 +179,7 @@ describe("Case", () => {
         },
       };
       caseInstance.updateSupplementaryData(data);
-      expect(caseInstance.supplementaryData.foo).toBeDefined();
-    });
-  });
-
-  describe("updateSupplementaryDataObject", () => {
-    it("should throw if no key is provided", () => {
-      const caseInstance = createTestCase();
-      try {
-        caseInstance.updateSupplementaryDataObject({
-          targetData: {},
-          targetNode: "Foo",
-          data: {
-            someData: "barr",
-          },
-        });
-      } catch (e) {
-        expect(e.message).toBe(
-          'Can not update supplementaryData "Foo" as an object without a key',
-        );
-      }
-    });
-
-    it("should add data at key within object", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataObject({
-        targetData: {},
-        key: "dataRef",
-        targetNode: "Foo",
-        data: {
-          dataRef: "REF-1234-5678",
-          someData: "barr",
-        },
-      });
-      expect(result["REF-1234-5678"]).toBeDefined();
-      expect(result["REF-1234-5678"].someData).toBe("barr");
-    });
-  });
-
-  describe("updateSupplementaryDataArray", () => {
-    it("should add element to array if does not exist", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [],
-        key: undefined,
-        data: { agreementRef: "1234" },
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0].agreementRef).toBe("1234");
-    });
-
-    it("should add new element to existing", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [{ agreementRef: "1234", foo: "foo" }],
-        key: "agreementRef",
-        data: { agreementRef: "5678", foo: "barr" },
-      });
-      expect(result).toHaveLength(2);
-      expect(result[0].foo).toBe("foo");
-      expect(result[1].agreementRef).toBe("5678");
-    });
-
-    it("should update existing ref", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryDataArray({
-        targetData: [
-          { agreementRef: "5678" },
-          { agreementRef: "1234", foo: "foo" },
-        ],
-        key: "agreementRef",
-        data: { agreementRef: "1234", foo: "barr" },
-      });
-      expect(result).toHaveLength(2);
-      expect(result[1].foo).toBe("barr");
-    });
-
-    it("should do nothing if no target node is passed", () => {
-      const caseInstance = createTestCase();
-      const result = caseInstance.updateSupplementaryData({
-        targetNode: undefined,
-        key: "agreementRef",
-        dataType: "ARRAY",
-        data: { agreementRef: "1234", foo: "barr" },
-      });
-      expect(result).toBe(null);
+      expect(caseInstance.supplementaryData.toJSON().foo).toBeDefined();
     });
   });
 
@@ -580,7 +515,7 @@ describe("Case", () => {
         createdAt,
       };
       kase.addSupplementaryData("agreements", [agreement]);
-      expect(kase.supplementaryData.agreements[0]).toBe(agreement);
+      expect(kase.supplementaryData.toJSON().agreements[0]).toEqual(agreement);
     });
   });
 
@@ -1473,7 +1408,7 @@ describe("Case", () => {
       expect(kase.position).toEqual(position);
       expect(kase.payload).toEqual(payload);
       expect(kase.phases).toEqual(phases);
-      expect(kase.supplementaryData).toEqual({});
+      expect(kase.supplementaryData.toJSON()).toEqual({});
       expect(kase.createdAt).toBeDefined();
     });
 
@@ -1522,7 +1457,7 @@ describe("Case", () => {
         phases: [],
       });
 
-      expect(kase.supplementaryData).toEqual({});
+      expect(kase.supplementaryData.toJSON()).toEqual({});
     });
   });
 
@@ -1550,6 +1485,179 @@ describe("Case", () => {
       }).toThrow(
         "Action with code NONEXISTENT_ACTION not found for position PHASE_1:STAGE_1:STATUS_1",
       );
+    });
+  });
+});
+
+describe("supplementary data changes", () => {
+  it("holds supplementary data as a normal value-object property", () => {
+    const data = { arbitrary: [{ id: "one", nested: { value: true } }] };
+    const kase = Case.createMock({ supplementaryData: data });
+
+    expect(kase.supplementaryData).toBeInstanceOf(SupplementaryData);
+    expect(
+      Object.getOwnPropertyDescriptor(kase, "supplementaryData"),
+    ).toMatchObject({
+      value: kase.supplementaryData,
+      writable: true,
+    });
+    expect(JSON.parse(JSON.stringify(kase)).supplementaryData).toEqual(data);
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+
+  it("prevents changes through a returned supplementary data view", () => {
+    const kase = Case.createMock({
+      supplementaryData: { results: [{ id: "one" }] },
+    });
+    kase.supplementaryData.toJSON().results.push({ id: "outside" });
+
+    expect(kase.supplementaryData.toJSON()).toEqual({
+      results: [{ id: "one" }],
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+
+  it.each([
+    "bad.path",
+    "$bad",
+    "bad$node",
+    "bad\0node",
+    "__proto__",
+    "constructor",
+    "prototype",
+    "toString",
+    " results ",
+  ])(
+    "rejects unsafe target %j before changing supplementary data",
+    (targetNode) => {
+      const kase = Case.createMock({
+        supplementaryData: { untouched: [{ id: "original" }] },
+      });
+
+      expect(() =>
+        kase.updateSupplementaryData({
+          targetNode,
+          dataType: "ARRAY",
+          key: "id",
+          data: { id: "one" },
+        }),
+      ).toThrow();
+      expect(kase.supplementaryData.toJSON()).toEqual({
+        untouched: [{ id: "original" }],
+      });
+      expect(kase.getSupplementaryDataUpdates()).toEqual({});
+      expect(kase.getOriginalSupplementaryData()).toEqual({});
+    },
+  );
+  it("rejects an existing literal dotted target without changing it", () => {
+    const kase = Case.createMock({
+      supplementaryData: { "bad.path": [{ id: "original" }] },
+    });
+
+    expect(() =>
+      kase.updateSupplementaryData({
+        targetNode: "bad.path",
+        dataType: "ARRAY",
+        key: "id",
+        data: { id: "one" },
+      }),
+    ).toThrow();
+    expect(kase.supplementaryData.toJSON()).toEqual({
+      "bad.path": [{ id: "original" }],
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it.each([
+    "bad.path",
+    "$bad",
+    "bad\0node",
+    "__proto__",
+    "constructor",
+    "prototype",
+    "toString",
+  ])("rejects direct additions to unsafe target %j", (targetNode) => {
+    const kase = Case.createMock();
+
+    expect(() => kase.addSupplementaryData(targetNode, [])).toThrow();
+    expect(kase.supplementaryData.toJSON()).toEqual({});
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it.each([undefined, null, ""])(
+    "keeps missing target %j as a no-op",
+    (targetNode) => {
+      const kase = Case.createMock();
+
+      expect(
+        kase.updateSupplementaryData({
+          targetNode,
+          dataType: "ARRAY",
+          data: { id: "one" },
+        }),
+      ).toBeUndefined();
+      expect(kase.supplementaryData.toJSON()).toEqual({});
+      expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    },
+  );
+  it("does not mark loaded data as changed", () => {
+    const kase = Case.createMock({
+      supplementaryData: { anything: [{ id: "original" }] },
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+  });
+  it("records only explicitly updated arbitrary nodes", () => {
+    const kase = Case.createMock({
+      supplementaryData: { untouched: ["existing"] },
+    });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "one", arbitrary: true },
+    });
+    expect(kase.getSupplementaryDataUpdates()).toEqual({
+      results: [{ id: "one", arbitrary: true }],
+    });
+    expect(kase.supplementaryData.toJSON().untouched).toEqual(["existing"]);
+  });
+  it("retains the original node before any keyed merges", () => {
+    const original = [{ id: "before", nested: { retained: true } }];
+    const kase = Case.createMock({ supplementaryData: { results: original } });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "one" },
+    });
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "two" },
+    });
+    expect(kase.getOriginalSupplementaryData()).toEqual({
+      results: [{ id: "before", nested: { retained: true } }],
+    });
+    kase.clearSupplementaryDataUpdates();
+    expect(kase.getOriginalSupplementaryData()).toEqual({});
+  });
+  it("distinguishes an absent node from a stored null node", () => {
+    const kase = Case.createMock({ supplementaryData: { storedNull: null } });
+    kase.addSupplementaryData("missing", []);
+    kase.addSupplementaryData("storedNull", []);
+    expect(kase.getOriginalSupplementaryData()).toEqual({
+      missing: undefined,
+      storedNull: null,
+    });
+  });
+  it("clears recorded changes without changing the stored blob", () => {
+    const kase = Case.createMock();
+    kase.addSupplementaryData("anything", { nested: [1, null, "text"] });
+    kase.clearSupplementaryDataUpdates();
+    expect(kase.getSupplementaryDataUpdates()).toEqual({});
+    expect(kase.supplementaryData.toJSON().anything).toEqual({
+      nested: [1, null, "text"],
     });
   });
 });

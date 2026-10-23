@@ -17,6 +17,7 @@ import {
   findCasesByCaseRefsAndWorkflowCode,
   save,
   update,
+  updateSupplementaryData,
   updateStage,
 } from "./case.repository.js";
 import {
@@ -134,17 +135,41 @@ describe("update", () => {
     const caseMock = Case.createMock({
       closed: true,
       closedAt: new Date(),
+      supplementaryData: {
+        agreements: [{ agreementRef: "updated" }],
+        other: [{ id: "unchanged" }],
+      },
     });
 
+    caseMock.updateSupplementaryData({
+      targetNode: "agreements",
+      dataType: "ARRAY",
+      key: "agreementRef",
+      data: { agreementRef: "updated" },
+    });
     const result = await update(caseMock);
 
-    const { _id, refs, ...document } = new CaseDocument(caseMock);
+    const { _id, refs, supplementaryData, ...document } = new CaseDocument(
+      caseMock,
+    );
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(updateOne).toHaveBeenCalledWith(
-      { _id: caseMock.objectId },
-      { $set: document, $addToSet: { refs: { $each: refs } } },
+      {
+        _id: caseMock.objectId,
+        "supplementaryData.agreements": {
+          $exists: true,
+          $eq: [{ agreementRef: "updated" }],
+        },
+      },
+      {
+        $set: {
+          ...document,
+          "supplementaryData.agreements": supplementaryData.agreements,
+        },
+        $addToSet: { refs: { $each: refs } },
+      },
     );
 
     expect(result).toBe(caseMock);
@@ -159,10 +184,10 @@ describe("update", () => {
 
     await update(Case.createMock());
 
-    const [, { $set }] = updateOne.mock.calls[0];
+    const [, { $set: document }] = updateOne.mock.calls[0];
 
-    expect($set).not.toHaveProperty("refs");
-    expect($set).not.toHaveProperty("_id");
+    expect(document).not.toHaveProperty("refs");
+    expect(document).not.toHaveProperty("_id");
   });
 
   it("throws bad request when case is not found", async () => {
@@ -173,6 +198,7 @@ describe("update", () => {
 
     db.collection.mockReturnValue({
       updateOne,
+      findOne: vi.fn().mockResolvedValue(null),
     });
 
     const caseMock = Case.createMock();
@@ -694,6 +720,41 @@ describe("countByPosition", () => {
     const result = await countByPosition(["unknown"]);
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("updateSupplementaryData", () => {
+  it("sets only changed supplementary nodes, preserving unrelated case edits", async () => {
+    const kase = Case.createMock();
+    kase.updateSupplementaryData({
+      targetNode: "results",
+      dataType: "ARRAY",
+      key: "id",
+      data: { id: "id-1" },
+    });
+    const updateOne = vi
+      .fn()
+      .mockResolvedValue({ acknowledged: true, matchedCount: 1 });
+    db.collection.mockReturnValue({ updateOne });
+    await updateSupplementaryData(kase);
+    expect(updateOne).toHaveBeenCalledWith(
+      { _id: kase.objectId, "supplementaryData.results": { $exists: false } },
+      {
+        $set: {
+          "supplementaryData.results": kase.supplementaryData.toJSON().results,
+        },
+      },
+    );
+  });
+  it.each([
+    { acknowledged: true, matchedCount: 0 },
+    { acknowledged: false, matchedCount: 1 },
+  ])("rejects failed write %j", async (result) => {
+    db.collection.mockReturnValue({
+      updateOne: vi.fn().mockResolvedValue(result),
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+    await expect(updateSupplementaryData(Case.createMock())).rejects.toThrow();
   });
 });
 

@@ -321,7 +321,7 @@ export const findCaseByIdUseCase = async (caseId, user, request) => {
     ),
     createdAt: kase.createdAt,
     payload: kase.payload,
-    supplementaryData: kase.supplementaryData,
+    supplementaryData: kase.supplementaryData.toJSON(),
     assignedUser: formatAssignedUser(assignedUser),
     banner: await buildBanner(caseWorkflowContext),
     requiredRoles: {

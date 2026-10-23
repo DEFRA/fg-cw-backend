@@ -10,13 +10,18 @@ import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { logger } from "../../common/logger.js";
 import { withAudit } from "../../common/with-audit.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
-import { update } from "../repositories/case.repository.js";
+import {
+  SUPPLEMENTARY_DATA_CONFLICT,
+  update,
+} from "../repositories/case.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 import { loadCase } from "./load-case.js";
 import {
   persistResolvedVersion,
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
+
+const MAX_UPDATE_ATTEMPTS = 3;
 
 const applyResponseEffects = (
   kase,
@@ -45,6 +50,48 @@ const applyResponseEffects = (
   }
 
   return caseUpdated;
+};
+
+const shouldRetryResponseSave = (error, remainingAttempts) =>
+  error.data === SUPPLEMENTARY_DATA_CONFLICT && remainingAttempts > 1;
+
+const persistResponseEffects = async (
+  kase,
+  externalAction,
+  response,
+  command,
+  remainingAttempts,
+) => {
+  const { actionCode, caseId, user } = command;
+
+  if (
+    !applyResponseEffects(
+      kase,
+      externalAction,
+      response,
+      actionCode,
+      caseId,
+      user,
+    )
+  ) {
+    return;
+  }
+
+  try {
+    await update(kase);
+  } catch (error) {
+    if (!shouldRetryResponseSave(error, remainingAttempts)) {
+      throw error;
+    }
+    const latestCase = await loadCase(command);
+    await persistResponseEffects(
+      latestCase,
+      externalAction,
+      response,
+      command,
+      remainingAttempts - 1,
+    );
+  }
 };
 
 const performPageAction = async (command) => {
@@ -77,18 +124,13 @@ const performPageAction = async (command) => {
     throwOnError: true,
   });
 
-  if (
-    applyResponseEffects(
-      kase,
-      externalAction,
-      response,
-      actionCode,
-      caseId,
-      user,
-    )
-  ) {
-    await update(kase);
-  }
+  await persistResponseEffects(
+    kase,
+    externalAction,
+    response,
+    command,
+    MAX_UPDATE_ATTEMPTS,
+  );
 
   logger.info(
     `Finished: Performing page action: "${actionCode}" for case: "${caseId}"`,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { caseStatusUpdated } from "../cases/events/case-status-updated.event.js";
 import {
+  caseUpdateSupplementaryData,
   caseCreate,
   caseUpdateStatus,
   configVersionUpdated,
@@ -11,6 +12,17 @@ import { INBOX, OUTBOX, findEventType } from "./event-types.js";
 const GAS = "cloud.defra.local.fg-gas-backend.";
 
 const declared = [
+  {
+    eventType: caseUpdateSupplementaryData,
+    sentAs: `${GAS}case.update.supplementary.data`,
+    boxes: [INBOX],
+    event: { data: { workflowCode: "woodland", caseRef: "abc-123" } },
+    refs: [
+      ["ref", "abc-123"],
+      ["case", "woodland:abc-123"],
+    ],
+  },
+
   {
     eventType: caseStatusUpdated,
     sentAs: "cloud.defra.local.fg-cw-backend.case.status.updated",
