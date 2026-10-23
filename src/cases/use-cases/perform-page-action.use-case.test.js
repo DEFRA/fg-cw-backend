@@ -1,10 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import Boom from "@hapi/boom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCaseWorkflowContext } from "../../common/build-view-model.js";
 import { AppRole } from "../../users/models/app-role.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { Workflow } from "../models/workflow.js";
-import { findById, update } from "../repositories/case.repository.js";
+import { Case } from "../models/case.js";
+import {
+  findById,
+  SUPPLEMENTARY_DATA_CONFLICT,
+  update,
+} from "../repositories/case.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 import { performPageActionUseCase } from "./perform-page-action.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
@@ -305,6 +311,85 @@ describe("performPageActionUseCase", () => {
       createdBy: "user-123",
     });
     expect(update).toHaveBeenCalledWith(mockCase);
+  });
+
+  describe("saving a response after a conflict", () => {
+    const response = { id: 906, valid: true };
+    const command = () => ({
+      caseId: "64c88faac1f56f71e1b89a33",
+      actionCode: "RECALCULATE_RULES",
+      user: User.createMock({
+        id: "64c88faac1f56f71e1b89a34",
+        idpRoles: [IdpRoles.ReadWrite],
+      }),
+    });
+    const conflict = () =>
+      Boom.conflict("Supplementary data changed", SUPPLEMENTARY_DATA_CONFLICT);
+
+    beforeEach(() => {
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow: createMockWorkflow(),
+        resolvedVersion: null,
+      });
+      externalActionUseCase.mockResolvedValue(response);
+    });
+
+    it("reloads and reapplies the captured response while preserving concurrent entries and one timeline event", async () => {
+      const original = Case.createMock({
+        _id: command().caseId,
+        supplementaryData: { rulesCalculations: [{ id: 905 }] },
+      });
+      const latest = Case.createMock({
+        _id: original._id,
+        supplementaryData: {
+          rulesCalculations: [{ id: 905 }, { id: 907 }],
+          claims: [{ id: "concurrent" }],
+        },
+      });
+      const timelineLength = latest.timeline.length;
+      findById.mockResolvedValueOnce(original).mockResolvedValueOnce(latest);
+      update.mockRejectedValueOnce(conflict()).mockResolvedValueOnce(latest);
+
+      await expect(performPageActionUseCase(command())).resolves.toEqual(
+        response,
+      );
+
+      expect(externalActionUseCase).toHaveBeenCalledTimes(1);
+      expect(findById).toHaveBeenCalledTimes(2);
+      expect(update).toHaveBeenCalledTimes(2);
+      expect(update).toHaveBeenLastCalledWith(latest);
+      expect(latest.supplementaryData).toEqual({
+        rulesCalculations: [{ id: 905 }, { id: 907 }, response],
+        claims: [{ id: "concurrent" }],
+      });
+      expect(latest.timeline).toHaveLength(timelineLength + 1);
+    });
+
+    it("stops after three conflicting saves without repeating the external action", async () => {
+      findById.mockImplementation(async () =>
+        Case.createMock({ _id: command().caseId }),
+      );
+      const error = conflict();
+      update.mockRejectedValue(error);
+
+      await expect(performPageActionUseCase(command())).rejects.toBe(error);
+
+      expect(update).toHaveBeenCalledTimes(3);
+      expect(findById).toHaveBeenCalledTimes(3);
+      expect(externalActionUseCase).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not retry an unrelated save error", async () => {
+      findById.mockResolvedValue(Case.createMock({ _id: command().caseId }));
+      const error = Boom.conflict("Unrelated conflict");
+      update.mockRejectedValue(error);
+
+      await expect(performPageActionUseCase(command())).rejects.toBe(error);
+
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(findById).toHaveBeenCalledTimes(1);
+      expect(externalActionUseCase).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("should throw error when case is not found", async () => {
