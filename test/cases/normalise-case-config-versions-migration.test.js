@@ -26,13 +26,16 @@ const aCase = (caseRef, versions) => ({
   ...versions,
 });
 
-const aWorkflow = (version, stages = ["REVIEW"]) => ({
+const aWorkflow = (version, stages = { REVIEW: ["RECEIVED"] }) => ({
   code: "example-workflow",
   version,
   phases: [
     {
       code: "PRE_AWARD",
-      stages: stages.map((code) => ({ code, statuses: [] })),
+      stages: Object.entries(stages).map(([code, statuses]) => ({
+        code,
+        statuses: statuses.map((status) => ({ code: status })),
+      })),
     },
   ],
 });
@@ -179,12 +182,13 @@ describe("20261022110000-normalise-case-config-versions", () => {
 
   it("leaves a case whose stage the newest version lacks unversioned, and warns of it", async () => {
     await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
-    await db
-      .collection("workflows")
-      .insertMany([
-        aWorkflow("0.0.0", ["REVIEW", "LEGACY_CHECK"]),
-        aWorkflow("1.1.0"),
-      ]);
+    await db.collection("workflows").insertMany([
+      aWorkflow("0.0.0", {
+        REVIEW: ["RECEIVED"],
+        LEGACY_CHECK: ["RECEIVED"],
+      }),
+      aWorkflow("1.1.0"),
+    ]);
     const legacyStage = aCase("legacy-stage", { currentStage: "LEGACY_CHECK" });
     await cases().insertMany([legacyStage, aCase("current-stage")]);
 
@@ -198,7 +202,32 @@ describe("20261022110000-normalise-case-config-versions", () => {
       currentConfigVersion: "1.1.0",
     });
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
+    );
+  });
+
+  it("leaves a case whose status the newest version's stage lacks unversioned", async () => {
+    await db.collection("config_versions").insertOne(aConfigVersion("1.1.0"));
+    await db
+      .collection("workflows")
+      .insertMany([
+        aWorkflow("0.0.0", { REVIEW: ["RECEIVED", "ON_HOLD"] }),
+        aWorkflow("1.1.0"),
+      ]);
+    const legacyStatus = aCase("legacy-status", { currentStatus: "ON_HOLD" });
+    await cases().insertMany([legacyStatus, aCase("current-status")]);
+
+    await normaliseConfigVersions(db);
+
+    expect(await cases().findOne({ caseRef: "legacy-status" })).toEqual(
+      legacyStatus,
+    );
+    expect(await versionsOf("current-status")).toEqual({
+      originalConfigVersion: "0.0.0",
+      currentConfigVersion: "1.1.0",
+    });
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
     );
   });
 
@@ -211,7 +240,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
 
     expect(await cases().findOne({ caseRef: "unstored" })).toEqual(unstored);
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (1)",
     );
   });
 
@@ -230,7 +259,7 @@ describe("20261022110000-normalise-case-config-versions", () => {
       unknown,
     );
     expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-      "Cases left without a config version, as their workflow has no version that holds their stage: example-workflow (2), other-workflow (1)",
+      "Cases left without a config version, as their workflow has no version that holds their position: example-workflow (2), other-workflow (1)",
     );
   });
 
