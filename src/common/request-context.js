@@ -1,7 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
-import { config } from "./config.js";
-import { logger } from "./logger.js";
 
 const asyncLocalStorage = new AsyncLocalStorage();
 
@@ -33,27 +31,10 @@ const wrapCycle = (request, cycle, store) => {
   request[cycle] = () => asyncLocalStorage.run(store, requestCycle);
 };
 
-const logClientIpDebug = (request) => {
-  // TEMP FGP-1520: confirm proxy hop count in dev. Remove before merge.
-  if (config.get("cdpEnvironment") !== "dev") {
-    return;
-  }
-
-  logger.info(
-    {
-      xForwardedFor: request.headers?.["x-forwarded-for"] ?? null,
-      remoteAddress: request.info.remoteAddress,
-      path: request.path,
-    },
-    "FGP-1520 client ip debug",
-  );
-};
-
 // Seeded before auth, so a caller cannot put its own address on the event
 // just by sending the header. The forwarded value is applied afterwards,
 // and only for the frontend's Entra requests.
 const seedConnectionIp = (request, h) => {
-  logClientIpDebug(request);
   const store = { remoteAddress: request.info.remoteAddress };
   wrapCycle(request, "_lifecycle", store);
   wrapCycle(request, "_postCycle", store);
@@ -63,24 +44,11 @@ const seedConnectionIp = (request, h) => {
 const honoursForwardedIp = (request) =>
   request.auth?.strategy === ENTRA_STRATEGY;
 
-const logChosenIp = (request, clientIp) => {
-  logger.debug(
-    {
-      forwardedFor: request.headers?.["x-forwarded-for"],
-      remoteAddress: request.info.remoteAddress,
-      strategy: request.auth.strategy,
-      clientIp,
-    },
-    "Chosen client IP from x-forwarded-for",
-  );
-};
-
 const applyForwardedIp = (request, h) => {
   const context = getRequestContext();
 
   if (honoursForwardedIp(request) && context) {
     context.clientIp = readClientIp(request, TRUSTED_PROXY_COUNT);
-    logChosenIp(request, context.clientIp);
   }
 
   return h.continue;

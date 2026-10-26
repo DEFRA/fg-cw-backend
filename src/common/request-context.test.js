@@ -1,46 +1,16 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { ENTRA_STRATEGY } from "../server/plugins/auth/entra.js";
 import { PUBLIC_API_STRATEGY } from "../server/plugins/auth/public-api.js";
-import { config } from "./config.js";
-import { logger } from "./logger.js";
 import {
   getRequestContext,
   readClientIp,
   requestContext,
 } from "./request-context.js";
 
-vi.mock("./logger.js", () => ({
-  logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() },
-}));
-
-// Only `cdpEnvironment` is controlled here; everything else (e.g. the mongo
-// uri pulled in via entra.js) keeps its real value.
-vi.mock("./config.js", async (importOriginal) => {
-  const { config } = await importOriginal();
-  const realGet = config.get.bind(config);
-
-  config.get = vi.fn((key) =>
-    key === "cdpEnvironment" ? config.get.cdpEnvironment : realGet(key),
-  );
-  config.get.cdpEnvironment = "test";
-
-  return { config };
-});
-
-const setCdpEnvironment = (value) => {
-  config.get.cdpEnvironment = value;
-};
-
 const requestWith = (forwardedFor, remoteAddress = "127.0.0.1") => ({
   headers:
     forwardedFor === undefined ? {} : { "x-forwarded-for": forwardedFor },
   info: { remoteAddress },
-  path: "/cases",
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-  setCdpEnvironment("test");
 });
 
 describe("requestContext", () => {
@@ -100,7 +70,7 @@ describe("requestContext", () => {
     expect(context).toEqual({ remoteAddress: "127.0.0.1" });
   });
 
-  it("stores the trusted forwarded ip, untouched, for an Entra request and logs how it was chosen", async () => {
+  it("stores the trusted forwarded ip, untouched, for an Entra request", async () => {
     const request = requestWith("6.6.6.6, ::ffff:203.0.113.7");
 
     const context = await captureContext(request, ENTRA_STRATEGY);
@@ -109,15 +79,6 @@ describe("requestContext", () => {
       remoteAddress: "127.0.0.1",
       clientIp: "::ffff:203.0.113.7",
     });
-    expect(logger.debug).toHaveBeenCalledWith(
-      {
-        forwardedFor: "6.6.6.6, ::ffff:203.0.113.7",
-        remoteAddress: "127.0.0.1",
-        strategy: ENTRA_STRATEGY,
-        clientIp: "::ffff:203.0.113.7",
-      },
-      "Chosen client IP from x-forwarded-for",
-    );
   });
 
   it("ignores a forwarded header from a service-token caller", async () => {
@@ -127,29 +88,6 @@ describe("requestContext", () => {
     );
 
     expect(context).toEqual({ remoteAddress: "127.0.0.1" });
-    expect(logger.debug).not.toHaveBeenCalled();
-  });
-
-  it("logs the raw forwarding facts in dev only", async () => {
-    setCdpEnvironment("dev");
-
-    await captureContext(requestWith("6.6.6.6, 203.0.113.7"));
-
-    expect(config.get).toHaveBeenCalledWith("cdpEnvironment");
-    expect(logger.info).toHaveBeenCalledWith(
-      {
-        xForwardedFor: "6.6.6.6, 203.0.113.7",
-        remoteAddress: "127.0.0.1",
-        path: "/cases",
-      },
-      "FGP-1520 client ip debug",
-    );
-  });
-
-  it("does not log the raw forwarding facts outside dev", async () => {
-    await captureContext(requestWith("6.6.6.6, 203.0.113.7"));
-
-    expect(logger.info).not.toHaveBeenCalled();
   });
 });
 
