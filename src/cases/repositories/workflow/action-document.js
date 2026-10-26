@@ -4,6 +4,7 @@ export class ActionDocument {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.hint = props.hint;
     this.checkTasks = props.checkTasks;
     this.classes = props.classes;
     this.confirm = props.confirm;

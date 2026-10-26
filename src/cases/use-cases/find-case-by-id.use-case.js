@@ -396,6 +396,7 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
     return {
       code: a.code,
       name: a.name,
+      hint: a.hint,
       comment: a.comment,
       confirm: a.confirm,
       classes: a.classes,

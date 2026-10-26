@@ -102,6 +102,7 @@ const Confirm = Joi.alternatives()
 const Action = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  hint: Joi.string().optional().allow(null),
   comment: comment.allow(null).required(),
   checkTasks: Joi.boolean().required(),
   confirm: Confirm.optional(),

@@ -24,6 +24,7 @@ const toWorkflowAction = (a) =>
   new WorkflowAction({
     code: a.code,
     name: a.name,
+    hint: a.hint,
     checkTasks: a.checkTasks,
     classes: a.classes,
     comment: a.comment
