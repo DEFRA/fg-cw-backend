@@ -446,6 +446,7 @@ const mapStageData = async (
     description: workflowStage.description,
     interactive: currentStatus.interactive,
     hideTaskGroups: currentStatus.hideTaskGroups,
+    cancelHref: currentStatus.cancelHref,
     canPerformActions,
     taskGroups: await mapVisibleTaskGroups(
       currentStatus,
