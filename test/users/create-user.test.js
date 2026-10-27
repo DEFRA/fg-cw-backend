@@ -27,7 +27,7 @@ describe("POST /admin/users (admin only)", () => {
     const createResponse = await wreck.post("/admin/users", {
       payload: {
         name: "Created By Admin",
-        email: "created.by.admin@defra.gov.uk",
+        email: "created.by.admin@example.com",
       },
     });
 
@@ -58,7 +58,7 @@ describe("POST /admin/users (admin only)", () => {
               }),
               targetUser: expect.objectContaining({
                 id: createdUserId,
-                email: "created.by.admin@defra.gov.uk",
+                email: "created.by.admin@example.com",
               }),
             },
           },
@@ -81,7 +81,7 @@ describe("POST /admin/users (admin only)", () => {
         },
         payload: {
           name: "Should Not Create",
-          email: "should.not.create@defra.gov.uk",
+          email: "should.not.create@example.com",
         },
       }),
     ).rejects.toThrow("Response Error: 403 Forbidden");

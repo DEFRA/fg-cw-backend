@@ -14,7 +14,7 @@ const getToken = async () => {
     json: true,
     payload: {
       clientId: "client1",
-      username: "admin@t.gov.uk",
+      username: "admin@example.com",
     },
   });
 

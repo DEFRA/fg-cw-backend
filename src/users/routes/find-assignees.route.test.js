@@ -21,8 +21,8 @@ describe("findAssigneesRoute", () => {
 
   it("returns assignees with minimal fields", async () => {
     findAssigneesUseCase.mockResolvedValue([
-      { id: "543cd5d9a0812661c318fb24", name: "Alice Able" },
-      { id: "5aaea69249c6d1beec839899", name: "Zara Zee" },
+      { id: "543cd5d9a0812661c318fb24", name: "Example Alpha" },
+      { id: "5aaea69249c6d1beec839899", name: "Example Zulu" },
     ]);
 
     const { statusCode, result } = await server.inject({
@@ -32,8 +32,8 @@ describe("findAssigneesRoute", () => {
 
     expect(statusCode).toEqual(200);
     expect(result).toEqual([
-      { id: "543cd5d9a0812661c318fb24", name: "Alice Able" },
-      { id: "5aaea69249c6d1beec839899", name: "Zara Zee" },
+      { id: "543cd5d9a0812661c318fb24", name: "Example Alpha" },
+      { id: "5aaea69249c6d1beec839899", name: "Example Zulu" },
     ]);
     expect(findAssigneesUseCase).toHaveBeenCalledWith({
       allAppRoles: [],

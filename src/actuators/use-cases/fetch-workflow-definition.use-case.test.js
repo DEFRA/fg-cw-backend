@@ -46,7 +46,7 @@ const fetch = (grantCode = "pigs-might-fly") =>
   fetchWorkflowDefinitionUseCase({
     grantCode,
     version: "2.0.0",
-    by: "Jane Smith",
+    by: "Example Assignee",
     caller: "fg-gas-backend",
   });
 
@@ -265,7 +265,7 @@ describe("fetchWorkflowDefinitionUseCase", () => {
           fetch: {
             grantCode: "pigs-might-fly",
             version: "2.0.0",
-            actor: "Jane Smith",
+            actor: "Example Assignee",
             caller: "fg-gas-backend",
             files: [{ file: "workflow", outcome: "stored" }],
           },
@@ -283,13 +283,19 @@ describe("fetchWorkflowDefinitionAuditBuilder", () => {
   it("records no files for a fetch that threw", () => {
     expect(
       fetchWorkflowDefinitionAuditBuilder(
-        [{ grantCode: "pigs-might-fly", version: "2.0.0", by: "Jane Smith" }],
+        [
+          {
+            grantCode: "pigs-might-fly",
+            version: "2.0.0",
+            by: "Example Assignee",
+          },
+        ],
         undefined,
       ).details.fetch,
     ).toEqual({
       grantCode: "pigs-might-fly",
       version: "2.0.0",
-      actor: "Jane Smith",
+      actor: "Example Assignee",
       caller: null,
       files: null,
     });

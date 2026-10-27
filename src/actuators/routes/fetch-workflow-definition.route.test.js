@@ -26,7 +26,7 @@ beforeEach(() => {
 describe("fetchWorkflowDefinitionRoute", () => {
   it("fetches for the operator GAS named, answering each file's outcome", async () => {
     const response = await post(
-      "/actuators/workflows/Woodland/versions/2.0.0/fetch?by=Jane%20Smith",
+      "/actuators/workflows/Woodland/versions/2.0.0/fetch?by=Example%20Assignee",
     );
 
     expect(response.statusCode).toBe(200);
@@ -34,7 +34,7 @@ describe("fetchWorkflowDefinitionRoute", () => {
     expect(fetchWorkflowDefinitionUseCase).toHaveBeenCalledWith({
       grantCode: "Woodland",
       version: "2.0.0",
-      by: "Jane Smith",
+      by: "Example Assignee",
       caller: "fg-gas-backend",
     });
   });

@@ -135,10 +135,10 @@ describe("adminCreateUserUseCase auditing", () => {
 
   it("produces a schema-valid audit payload", () => {
     const admin = User.createMock({ idpRoles: [IdpRoles.Admin] });
-    const created = User.createMock({ id: "new-id", email: "n@e.com" });
+    const created = User.createMock({ id: "new-id", email: "n@example.com" });
 
     const auditData = adminCreateUserAuditDataBuilder(
-      [{ user: admin, props: { email: "n@e.com" } }],
+      [{ user: admin, props: { email: "n@example.com" } }],
       created,
     );
 

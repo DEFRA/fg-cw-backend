@@ -735,7 +735,7 @@ describe("external-endpoint-client", () => {
           rerunEndpoint,
           {
             BODY: { id: 1 },
-            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+            HEADERS: { "Defra-Email": "case.worker@example.com" },
           },
           caseWorkflowContext,
         );
@@ -744,7 +744,7 @@ describe("external-endpoint-client", () => {
         expect(callArgs.headers).toEqual({
           "Content-Type": "application/json",
           "x-api-key": "secret-key",
-          "Defra-Email": "case.worker@defra.gov.uk",
+          "Defra-Email": "case.worker@example.com",
         });
       });
 
@@ -784,7 +784,7 @@ describe("external-endpoint-client", () => {
           rerunEndpoint,
           {
             BODY: { id: 1 },
-            HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+            HEADERS: { "Defra-Email": "case.worker@example.com" },
           },
           caseWorkflowContext,
         );
@@ -794,7 +794,7 @@ describe("external-endpoint-client", () => {
           logger.warn.mock.calls,
           logger.error.mock.calls,
         ]);
-        expect(logged).not.toContain("case.worker@defra.gov.uk");
+        expect(logged).not.toContain("case.worker@example.com");
         expect(logged).not.toContain("secret-key");
         expect(logger.info).toHaveBeenCalledWith(
           expect.objectContaining({
