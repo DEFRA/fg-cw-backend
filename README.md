@@ -31,6 +31,20 @@ Both ways use this repo's `compose/compose.cw-backend.yml`, so:
 - [External Services Configuration](./docs/EXTERNAL_SERVICES.md) - How to configure and call external APIs
 - [Workflow Components](./docs/WORKFLOW_COMPONENTS.md) - Workflow component reference
 
+## Synthetic customer examples
+
+Tests, fixtures and example publishing payloads must use invented customer data.
+The numeric identifiers beginning with `900000`, `910000` or `990000` and the
+`ZZ99` postcodes are local examples, not reserved or assigned customer identifiers
+or addresses. Check for collisions before adding an identifier and keep related
+fixtures, assertions and references consistent across services.
+
+Use `example.test` for customer email addresses and Ofcom drama ranges for phone
+numbers, such as `020 7946 0900` or `07700 900000`. Keep clearly synthetic contract
+placeholders such as `SBI001`, `CUST0001` and `FIRM0001` distinct from realistic
+customer examples; preserve shared Pact provider states and routes when editing
+fixture data. Never copy live customer details into tests or example scripts.
+
 ## Coding standards
 
 ### System architecture

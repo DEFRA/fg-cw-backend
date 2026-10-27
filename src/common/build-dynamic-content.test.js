@@ -291,7 +291,7 @@ describe("buildDynamicContent", () => {
         business: {
           name: "Example Ridge Farm Ltd",
           email: {
-            address: "test@example.com",
+            address: "contact@example.test",
           },
         },
       },

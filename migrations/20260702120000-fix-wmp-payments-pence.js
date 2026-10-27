@@ -1,39 +1,12 @@
-const CASE_REF = "wmp-000-168";
-const WORKFLOW_CODE = "woodland";
-const BAD_PENCE = { $gt: 238769, $lt: 238770 };
-const CASE_CREATE_EVENT_TYPE =
-  /^cloud\.defra\.[^.]+\.fg-gas-backend\.case\.create$/;
-const FIXED_PENCE = 238770;
-
-export const up = async (db) => {
-  await db.collection("cases").updateOne(
-    {
-      caseRef: CASE_REF,
-      workflowCode: WORKFLOW_CODE,
-      "payload.answers.totalAgreementPaymentPence": BAD_PENCE,
-    },
-    {
-      $set: {
-        "payload.answers.totalAgreementPaymentPence": FIXED_PENCE,
-        "payload.answers.payments.agreement.0.agreementTotalPence": FIXED_PENCE,
-      },
-    },
-  );
-
-  await db.collection("inbox").updateOne(
-    {
-      source: "GAS",
-      "event.type": CASE_CREATE_EVENT_TYPE,
-      "event.data.caseRef": CASE_REF,
-      "event.data.workflowCode": WORKFLOW_CODE,
-      "event.data.payload.answers.totalAgreementPaymentPence": BAD_PENCE,
-    },
-    {
-      $set: {
-        "event.data.payload.answers.totalAgreementPaymentPence": FIXED_PENCE,
-        "event.data.payload.answers.payments.agreement.0.agreementTotalPence":
-          FIXED_PENCE,
-      },
-    },
-  );
+/**
+ * Retired data repair: Correct a completed Woodland case payment amount repair.
+ *
+ * FGP-1543: the team lead confirmed this migration has completed in production.
+ * Customer-specific selectors and values were redacted on 2026-10-26.
+ * Keep the filename and no-op export to preserve migrate-mongo history.
+ * Restores that predate this repair require an authorised recovery procedure
+ * using securely held data; do not reintroduce customer data into this file.
+ */
+export const up = async () => {
+  // Intentionally retired: do not replay the completed data repair.
 };

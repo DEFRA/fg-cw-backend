@@ -46,7 +46,7 @@ describe("Outbox model", () => {
           clientRef: "julian-test-003",
           code: "pigs-might-fly",
           identifiers: {
-            sbi: "123456789",
+            sbi: "900000201",
             frn: "900000202",
             crn: "CRN123456",
             defraId: "DEFRA123456",
