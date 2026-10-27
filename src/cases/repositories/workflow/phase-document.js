@@ -1,4 +1,5 @@
 import { Position } from "../../models/position.js";
+import { RequiredRolesDocument } from "./required-roles-document.js";
 import { ActionDocument } from "./action-document.js";
 import { CommentDocument } from "./comment-document.js";
 import { StageDocument } from "./stage-document.js";
@@ -10,6 +11,9 @@ export class PhaseDocument {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.requiredRoles = props.requiredRoles
+      ? new RequiredRolesDocument(props.requiredRoles)
+      : null;
     this.stages = props.stages.map((stage) => new StageDocument(stage));
   }
 

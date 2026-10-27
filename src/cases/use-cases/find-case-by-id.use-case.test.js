@@ -759,6 +759,7 @@ describe("findCaseByIdUseCase", () => {
     const kase = Case.createMock({ _id: "test-case-id" });
 
     // Set task requiredRoles to have empty arrays (simulating null in database)
+    mockWorkflow.requiredRoles = { allOf: [], anyOf: [] };
     mockWorkflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles =
       new RequiredAppRoles({
         allOf: [],
@@ -804,6 +805,48 @@ describe("findCaseByIdUseCase", () => {
 
     const task = result.stage.taskGroups[0].tasks[0];
     expect(task.canComplete).toBe(false);
+  });
+
+  it("keeps a task visible but prevents completion when the inherited stage roles are missing", async () => {
+    const user = User.createMock();
+    const workflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+    const stage = workflow.phases[0].stages[0];
+    stage.requiredRoles = { allOf: ["ROLE_RPA_ADMIN"], anyOf: [] };
+    stage.taskGroups[0].tasks[0].requiredRoles = null;
+    findAll.mockResolvedValue([user]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", user);
+    const task = result.stage.taskGroups[0].tasks[0];
+    expect(result.stage.canPerformActions).toBe(false);
+    expect(task.code).toBe("TASK_1");
+    expect(task.canComplete).toBe(false);
+    expect(task.requiredRoles).toEqual(stage.requiredRoles);
+  });
+
+  it("uses the stage role instead of the case role for stage actions", async () => {
+    const user = User.createMock();
+    const workflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+    workflow.requiredRoles = { allOf: ["ROLE_OTHER"], anyOf: [] };
+    workflow.phases[0].stages[0].requiredRoles = {
+      allOf: ["ROLE_1"],
+      anyOf: [],
+    };
+    findAll.mockResolvedValue([user]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", user);
+    expect(result.stage.canPerformActions).toBe(true);
   });
 
   it("sets canComplete to true when user has required roles", async () => {

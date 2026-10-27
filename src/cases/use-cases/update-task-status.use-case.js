@@ -49,7 +49,7 @@ const updateTaskStatus = async (command) => {
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],
-    appRoles: task.getRequiredRoles(),
+    appRoles: workflow.getTaskRoles(kase.position, task),
   });
 
   validatePayloadComment(comment, task.comment?.mandatory === true);

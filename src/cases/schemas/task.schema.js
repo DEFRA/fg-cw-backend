@@ -160,6 +160,7 @@ const TaskGroup = Joi.object({
 }).label("TaskGroup");
 
 export const Stage = Joi.object({
+  requiredRoles: requiredRolesSchema.allow(null),
   code: Code.required(),
   name: Joi.string().required(),
   description: Joi.string().allow(null).required(),
@@ -172,6 +173,7 @@ export const Stage = Joi.object({
 }).label("Stage");
 
 export const Phase = Joi.object({
+  requiredRoles: requiredRolesSchema.allow(null),
   code: Code.required(),
   name: Joi.string().required(),
   stages: Joi.array().items(Stage).min(1).required(),

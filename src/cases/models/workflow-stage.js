@@ -9,6 +9,7 @@ export class WorkflowStage {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.requiredRoles = props.requiredRoles;
     this.description = props.description;
     this.statuses = props.statuses;
     this.taskGroups = props.taskGroups;

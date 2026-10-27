@@ -18,6 +18,60 @@ vi.mock("./ensure-case-position.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("updateStageOutcomeUseCase", () => {
+  it("allows a stage action with the stage role even without the case role", async () => {
+    withTransaction.mockImplementation(async (cb) => cb({}));
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    workflow.requiredRoles = { allOf: ["ROLE_OTHER"], anyOf: [] };
+    workflow.phases[0].stages[0].requiredRoles = {
+      allOf: ["ROLE_1"],
+      anyOf: [],
+    };
+    workflow.validateStageActionComment = vi.fn();
+    workflow.getNextPosition = vi.fn().mockReturnValue(
+      new Position({
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_2",
+        statusCode: "STATUS_1",
+      }),
+    );
+    kase.updateStageOutcome = vi.fn();
+    findById.mockResolvedValue(kase);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
+    await updateStageOutcomeUseCase({
+      caseId: kase._id,
+      actionCode: "APPROVE",
+      user: User.createMock(),
+    });
+    expect(kase.updateStageOutcome).toHaveBeenCalled();
+  });
+  it("rejects a stage action when the user lacks the applicable stage role", async () => {
+    withTransaction.mockImplementation(async (cb) => cb({}));
+    const kase = Case.createMock();
+    const workflow = Workflow.createMock();
+    workflow.phases[0].stages[0].requiredRoles = {
+      allOf: ["ROLE_RESTRICTED"],
+      anyOf: [],
+    };
+    findById.mockResolvedValue(kase);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
+    const user = User.createMock();
+
+    await expect(
+      updateStageOutcomeUseCase({
+        caseId: kase._id,
+        actionCode: "APPROVE",
+        user,
+      }),
+    ).rejects.toThrow("does not have required roles");
+  });
+
   describe("successful stage outcome update", () => {
     it("updates stage outcome with comment", async () => {
       const session = {};

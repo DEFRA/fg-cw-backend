@@ -185,6 +185,20 @@ export class Workflow {
     return this.findPhase(position.phaseCode).findStage(position.stageCode);
   }
 
+  getApplicableRoles(position, task) {
+    const phase = this.findPhase(position.phaseCode);
+    const stage = phase.findStage(position.stageCode);
+    return (
+      [task?.requiredRoles, stage.requiredRoles, phase.requiredRoles].find(
+        (roles) => roles && (roles.allOf.length || roles.anyOf.length),
+      ) ?? this.requiredRoles
+    );
+  }
+
+  getTaskRoles(position, task) {
+    return this.getApplicableRoles(position, task) ?? task.getRequiredRoles();
+  }
+
   getStatus(position) {
     return this.getStage(position).getStatus(position.statusCode);
   }

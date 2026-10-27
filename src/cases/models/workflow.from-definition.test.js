@@ -83,6 +83,34 @@ describe("Workflow.fromDefinition", () => {
   const fromDefinition = (published) => () =>
     Workflow.fromDefinition(published, "1.2.3");
 
+  it("uses the closest defined roles for a task or stage", () => {
+    const published = definition();
+    const phase = published.phases[0];
+    const stage = phase.stages[0];
+    phase.requiredRoles = { allOf: ["ROLE_PHASE"], anyOf: [] };
+    stage.requiredRoles = { allOf: ["ROLE_STAGE"], anyOf: [] };
+    const workflow = fromDefinition(published)();
+    const position = workflow.getInitialPosition();
+    const task = { requiredRoles: { allOf: ["ROLE_TASK"], anyOf: [] } };
+    expect(workflow.getApplicableRoles(position, task)).toEqual(
+      task.requiredRoles,
+    );
+    task.requiredRoles = { allOf: [], anyOf: [] };
+    expect(workflow.getApplicableRoles(position, task)).toEqual(
+      stage.requiredRoles,
+    );
+    expect(workflow.getApplicableRoles(position)).toEqual(stage.requiredRoles);
+    workflow.getStage(position).requiredRoles = { allOf: [], anyOf: [] };
+    expect(workflow.getApplicableRoles(position)).toEqual(phase.requiredRoles);
+    workflow.findPhase(position.phaseCode).requiredRoles = {
+      allOf: [],
+      anyOf: [],
+    };
+    expect(workflow.getApplicableRoles(position, task)).toEqual(
+      workflow.requiredRoles,
+    );
+  });
+
   const withStatuses = (statuses) => {
     const published = definition();
     published.phases[0].stages[0].statuses = statuses;

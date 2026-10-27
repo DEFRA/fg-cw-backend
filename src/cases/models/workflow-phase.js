@@ -14,6 +14,7 @@ export class WorkflowPhase {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.requiredRoles = props.requiredRoles;
     this.stages = props.stages;
   }
 

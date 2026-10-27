@@ -291,6 +291,29 @@ describe("findByCode", () => {
     });
   });
 
+  it("preserves phase and stage roles and an absent task override", async () => {
+    const workflow = Workflow.createMock();
+    workflow.phases[0].requiredRoles = { allOf: ["ROLE_PHASE"], anyOf: [] };
+    workflow.phases[0].stages[0].requiredRoles = {
+      allOf: ["ROLE_STAGE"],
+      anyOf: [],
+    };
+    workflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles = null;
+    const document = new WorkflowDocument(workflow);
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(document),
+    });
+    const result = await findByCode(workflow.code, workflow.version);
+    const position = result.getInitialPosition();
+    const task = result.phases[0].stages[0].taskGroups[0].tasks[0];
+    expect(result.phases[0].requiredRoles).toEqual(
+      workflow.phases[0].requiredRoles,
+    );
+    expect(result.getApplicableRoles(position, task)).toEqual(
+      workflow.phases[0].stages[0].requiredRoles,
+    );
+  });
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),
