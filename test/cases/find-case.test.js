@@ -76,6 +76,7 @@ describe("GET /cases/{caseId}", () => {
         description: "Application received",
         interactive: true,
         hideTaskGroups: false,
+        cancelHref: null,
         canPerformActions: true,
         taskGroups: [
           {
