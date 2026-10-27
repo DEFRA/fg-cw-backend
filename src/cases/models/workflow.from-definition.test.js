@@ -111,6 +111,38 @@ describe("Workflow.fromDefinition", () => {
     );
   });
 
+  it.each(["phase", "stage"])(
+    "rejects malformed %s role requirements",
+    (level) => {
+      for (const roles of [
+        { allOf: [] },
+        { anyOf: [] },
+        { allOf: ["invalid-role"], anyOf: [] },
+        { allOf: [], anyOf: "ROLE_1" },
+      ]) {
+        const published = definition();
+        const target =
+          level === "phase"
+            ? published.phases[0]
+            : published.phases[0].stages[0];
+        target.requiredRoles = roles;
+        expect(fromDefinition(published)).toThrow(/requiredRoles/);
+      }
+    },
+  );
+
+  it.each([
+    undefined,
+    null,
+    { allOf: [], anyOf: [] },
+    { allOf: ["ROLE_1"], anyOf: [] },
+  ])("accepts optional and valid phase and stage roles: %j", (roles) => {
+    const published = definition();
+    published.phases[0].requiredRoles = roles;
+    published.phases[0].stages[0].requiredRoles = roles;
+    expect(fromDefinition(published)).not.toThrow();
+  });
+
   const withStatuses = (statuses) => {
     const published = definition();
     published.phases[0].stages[0].statuses = statuses;

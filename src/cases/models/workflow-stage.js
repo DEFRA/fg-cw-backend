@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
 import { validateProps } from "../../common/validation.js";
+import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { WorkflowStageStatus } from "./workflow-stage-status.js";
 import { WorkflowTaskGroup } from "./workflow-task-group.js";
@@ -72,6 +73,7 @@ export class WorkflowStage {
 }
 
 WorkflowStage.definitionSchema = Joi.object({
+  requiredRoles: requiredRolesSchema.allow(null),
   statuses: uniqueCodes.required(),
   taskGroups: uniqueCodes.required(),
 }).unknown();
