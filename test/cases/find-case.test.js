@@ -221,6 +221,7 @@ describe("GET /cases/{caseId}", () => {
           {
             code: "APPROVE",
             name: "Approve",
+            hint: null,
             classes: null,
             comment: null,
             confirm: null,
