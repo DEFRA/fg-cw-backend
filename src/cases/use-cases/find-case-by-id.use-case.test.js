@@ -829,6 +829,24 @@ describe("findCaseByIdUseCase", () => {
     expect(task.requiredRoles).toEqual(stage.requiredRoles);
   });
 
+  it("returns inherited case roles for tasks without their own roles", async () => {
+    const user = User.createMock();
+    const workflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+    workflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles = null;
+    findAll.mockResolvedValue([user]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", user);
+    const task = result.stage.taskGroups[0].tasks[0];
+    expect(task.requiredRoles).toEqual(workflow.requiredRoles);
+    expect(task.canComplete).toBe(true);
+  });
+
   it("uses the stage role instead of the case role for stage actions", async () => {
     const user = User.createMock();
     const workflow = Workflow.createMock();
