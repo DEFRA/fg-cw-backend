@@ -537,7 +537,7 @@ describe("resolveWorkflowForCase structured logging", () => {
     findLatestForMajor.mockResolvedValue(null);
 
     const kase = aCase({
-      payload: { sbi: "123456789" },
+      payload: { sbi: "900000201" },
       assignedUser: { id: "user-1", name: "Test User" },
     });
 
@@ -550,7 +550,7 @@ describe("resolveWorkflowForCase structured logging", () => {
     const logMessage = errorCall[1];
     const logPayload = JSON.stringify(logObj) + logMessage;
     expect(logPayload).not.toContain("user-1");
-    expect(logPayload).not.toContain("123456789");
+    expect(logPayload).not.toContain("900000201");
     expect(logObj).not.toHaveProperty("payload");
     expect(logObj).not.toHaveProperty("request");
     expect(logObj).not.toHaveProperty("response");

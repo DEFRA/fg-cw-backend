@@ -26,9 +26,9 @@ export const realisticFrpsPayload = {
         name: "Example Ridge Farm Ltd",
         reference: "9100000002",
         email: {
-          address: "test@example.com",
+          address: "contact@example.test",
         },
-        phone: "01632 960020",
+        phone: "02079460901",
         address: {
           line1: "3 Example Lane",
           line2: "Example Village",

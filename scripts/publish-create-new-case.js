@@ -443,7 +443,7 @@ const messageWMPCase = {
               line3: null,
               line4: null,
               line5: null,
-              street: "Arncliffe",
+              street: "Example Village",
               city: "Exampleton",
               postalCode: "ZZ99 7ZZ",
               uprn: "990000000003",
