@@ -780,8 +780,7 @@ describe("findCaseByIdUseCase", () => {
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
 
-    mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action.checkTasks =
-      false;
+    mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action.checkTasks = false;
 
     findAll.mockResolvedValue([mockUser]);
     resolveWorkflowForCase.mockResolvedValue({
