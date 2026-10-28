@@ -14,7 +14,8 @@ const getToken = async () => {
     json: true,
     payload: {
       clientId: "client1",
-      username: "admin@example.com",
+      // This synthetic account is bundled in fg-entra-stub-frontend.
+      username: "admin@t.gov.uk",
     },
   });
 
