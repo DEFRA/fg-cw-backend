@@ -13,7 +13,7 @@ const actor = {
   id: "actor-1",
   idpId: "idp-actor-1",
   name: "Admin Alice",
-  email: "alice@defra.gov.uk",
+  email: "alice@example.com",
   idpRoles: ["FCP.Casework.Admin"],
   appRoles: { ROLE_1: { startDate: "2025-01-01", endDate: "2100-01-01" } },
 };
@@ -21,8 +21,8 @@ const actor = {
 const targetUser = {
   id: "target-1",
   idpId: "idp-target-1",
-  name: "Bob Bill",
-  email: "bob.bill@defra.gov.uk",
+  name: "Casey Test",
+  email: "casey.test@example.com",
   idpRoles: ["FCP.Casework.ReadWrite"],
   appRoles: {
     ROLE_1: { startDate: "2025-01-01", endDate: "2100-01-01" },
@@ -36,7 +36,7 @@ describe("buildActorSummary", () => {
       id: "actor-1",
       idpId: "idp-actor-1",
       name: "Admin Alice",
-      email: "alice@defra.gov.uk",
+      email: "alice@example.com",
       idpRoles: ["FCP.Casework.Admin"],
     });
   });
@@ -51,8 +51,8 @@ describe("buildUserSummary", () => {
     expect(buildUserSummary(targetUser)).toEqual({
       id: "target-1",
       idpId: "idp-target-1",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["FCP.Casework.ReadWrite"],
       appRoles: {
         ROLE_1: { startDate: "2025-01-01", endDate: "2100-01-01" },
@@ -104,10 +104,10 @@ describe("buildOperatorSecurityContext", () => {
     expect(
       buildOperatorSecurityContext({
         id: OPERATOR_ID,
-        name: "Jane Smith",
+        name: "Example Assignee",
       }),
     ).toEqual({
-      actor: { id: OPERATOR_ID, name: "Jane Smith" },
+      actor: { id: OPERATOR_ID, name: "Example Assignee" },
     });
   });
 });

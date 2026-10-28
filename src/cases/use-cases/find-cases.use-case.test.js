@@ -182,7 +182,7 @@ describe("findCasesUseCase", () => {
   });
 
   it("finds cases with assigned users and populates user", async () => {
-    const user1 = User.createMock({ id: "user-1", name: "John Smith" });
+    const user1 = User.createMock({ id: "user-1", name: "Example Caseworker" });
     const user2 = User.createMock({ id: "user-2", name: "Jane Jones" });
     const users = [user1, user2];
 
@@ -251,7 +251,7 @@ describe("findCasesUseCase", () => {
   });
 
   it("finds cases with and without assigned users", async () => {
-    const user1 = User.createMock({ id: "user-1", name: "John Smith" });
+    const user1 = User.createMock({ id: "user-1", name: "Example Caseworker" });
     const user2 = User.createMock({ id: "user-2", name: "Jane Jones" });
     const users = [user1, user2];
 
@@ -326,7 +326,7 @@ describe("findCasesUseCase", () => {
   });
 
   it("handles cases where assigned user is not found", async () => {
-    const user1 = User.createMock({ id: "user-1", name: "John Smith" });
+    const user1 = User.createMock({ id: "user-1", name: "Example Caseworker" });
     const users = [user1];
 
     const casesWithUsers = [
@@ -373,7 +373,7 @@ describe("findCasesUseCase", () => {
   });
 
   it("throws when user lookup fails", async () => {
-    const user1 = User.createMock({ id: "user-1", name: "John Smith" });
+    const user1 = User.createMock({ id: "user-1", name: "Example Caseworker" });
     const casesWithUsers = [
       {
         _id: "id-1",

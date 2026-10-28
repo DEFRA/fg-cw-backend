@@ -3,7 +3,7 @@ import { decodeActor } from "./actor-header.js";
 
 describe("decodeActor", () => {
   it("keeps a plain name verbatim", () => {
-    expect(decodeActor("Jane Smith")).toBe("Jane Smith");
+    expect(decodeActor("Example Assignee")).toBe("Example Assignee");
   });
 
   it("decodes an RFC 8187 name", () => {

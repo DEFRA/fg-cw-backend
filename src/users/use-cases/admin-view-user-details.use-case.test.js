@@ -17,8 +17,8 @@ vi.mock("../../common/write-audit-event.js", () => ({
 const user = {
   id: "507f1f77bcf86cd799439011",
   idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-  name: "Bob Bill",
-  email: "bob.bill@defra.gov.uk",
+  name: "Casey Test",
+  email: "casey.test@example.com",
   idpRoles: ["FCP.Casework.Admin"],
 };
 
@@ -28,7 +28,7 @@ const targetUser = {
   id: userId,
   idpId: "70b3e2d9-1234-4f8b-967d-99d41ae38999",
   name: "Target User",
-  email: "target.user@defra.gov.uk",
+  email: "target.user@example.com",
   idpRoles: ["FCP.Casework.ReadWrite"],
   appRoles: {
     ROLE_RPA_CASES_APPROVE: {

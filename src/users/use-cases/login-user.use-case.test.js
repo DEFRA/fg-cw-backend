@@ -29,8 +29,8 @@ describe("loginUserUseCase", () => {
     const mockUser = {
       id: "507f1f77bcf86cd799439011",
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {},
       createdAt: "2025-01-15T10:30:00.000Z",
@@ -42,8 +42,8 @@ describe("loginUserUseCase", () => {
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {},
     });
@@ -52,8 +52,8 @@ describe("loginUserUseCase", () => {
     const calledWith = upsertLogin.mock.calls[0][0];
     expect(calledWith).toMatchObject({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       createdAt: "2025-01-15T10:30:00.000Z",
       updatedAt: "2025-01-15T10:30:00.000Z",
@@ -66,8 +66,8 @@ describe("loginUserUseCase", () => {
     const mockUser = {
       id: "507f1f77bcf86cd799439011",
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill Updated",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test Updated",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite", "Admin"],
       appRoles: {},
       createdAt: "2024-01-01T00:00:00.000Z",
@@ -79,8 +79,8 @@ describe("loginUserUseCase", () => {
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill Updated",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test Updated",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite", "Admin"],
       appRoles: {},
     });
@@ -93,8 +93,8 @@ describe("loginUserUseCase", () => {
     await expect(
       loginUserUseCase({
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-        name: "Bob Bill",
-        email: "bob.bill@defra.gov.uk",
+        name: "Casey Test",
+        email: "casey.test@example.com",
       }),
     ).rejects.toThrow(
       "User with IDP id '6a232710-1c66-4f8b-967d-41d41ae38478' has no 'roles'",
@@ -107,8 +107,8 @@ describe("loginUserUseCase", () => {
     const mockUser = {
       id: "507f1f77bcf86cd799439011",
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {
         ROLE_1: {
@@ -126,8 +126,8 @@ describe("loginUserUseCase", () => {
 
     const result = await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {
         ROLE_1: {
@@ -149,8 +149,8 @@ describe("loginUserUseCase", () => {
     const mockUser = {
       id: "507f1f77bcf86cd799439011",
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {},
       createdAt: "2025-01-15T10:30:00.000Z",
@@ -162,8 +162,8 @@ describe("loginUserUseCase", () => {
 
     await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
       idpRoles: ["ReadWrite"],
       appRoles: {},
     });
@@ -182,8 +182,8 @@ describe("loginUserUseCase", () => {
             actor: {
               id: "507f1f77bcf86cd799439011",
               idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-              name: "Bob Bill",
-              email: "bob.bill@defra.gov.uk",
+              name: "Casey Test",
+              email: "casey.test@example.com",
               idpRoles: ["ReadWrite"],
             },
           },
@@ -199,8 +199,8 @@ describe("loginUserUseCase", () => {
   it("writes a FAILURE audit event using the login payload as actor when idpRoles is missing", async () => {
     await loginUserUseCase({
       idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-      name: "Bob Bill",
-      email: "bob.bill@defra.gov.uk",
+      name: "Casey Test",
+      email: "casey.test@example.com",
     }).catch(() => {});
 
     expect(writeAuditEvent).toHaveBeenCalledWith(
@@ -217,8 +217,8 @@ describe("loginUserUseCase", () => {
             actor: {
               id: undefined,
               idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-              name: "Bob Bill",
-              email: "bob.bill@defra.gov.uk",
+              name: "Casey Test",
+              email: "casey.test@example.com",
               idpRoles: undefined,
             },
           },
@@ -246,13 +246,13 @@ describe("loginUserAuditDataBuilder", () => {
   });
 
   it("falls back to the login payload as actor when the use-case has no result", () => {
-    const props = { idpId: "idp-1", name: "Bob Bill" };
+    const props = { idpId: "idp-1", name: "Casey Test" };
 
     const auditData = loginUserAuditDataBuilder([props], undefined);
 
     expect(auditData.details.security.actor).toMatchObject({
       idpId: "idp-1",
-      name: "Bob Bill",
+      name: "Casey Test",
     });
   });
 

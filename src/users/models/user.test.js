@@ -37,7 +37,7 @@ describe("User", () => {
         id: "custom-id",
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
         name: "John Doe",
-        email: "john.doe@defra.gov.uk",
+        email: "example.user@example.com",
         idpRoles: ["FCP.Casework.ReadWrite"],
         appRoles: {
           ROLE_RPA_CASES_APPROVE: {
@@ -54,7 +54,7 @@ describe("User", () => {
       expect(user.id).toBe("custom-id");
       expect(user.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
       expect(user.name).toBe("John Doe");
-      expect(user.email).toBe("john.doe@defra.gov.uk");
+      expect(user.email).toBe("example.user@example.com");
       expect(user.idpRoles).toEqual(["FCP.Casework.ReadWrite"]);
       expect(user.appRoles).toEqual({
         ROLE_RPA_CASES_APPROVE: {
@@ -70,7 +70,7 @@ describe("User", () => {
       const props = {
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
         name: "John Doe",
-        email: "john.doe@defra.gov.uk",
+        email: "example.user@example.com",
       };
 
       const user = new User(props);
@@ -83,7 +83,7 @@ describe("User", () => {
       const props = {
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
         name: "John Doe",
-        email: "john.doe@defra.gov.uk",
+        email: "example.user@example.com",
       };
 
       const user = new User(props);
@@ -536,8 +536,8 @@ describe("User", () => {
 
       expect(mockUser).toBeInstanceOf(User);
       expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
-      expect(mockUser.name).toBe("Bob Bill");
-      expect(mockUser.email).toBe("bob.bill@defra.gov.uk");
+      expect(mockUser.name).toBe("Casey Test");
+      expect(mockUser.email).toBe("casey.test@example.com");
       expect(mockUser.idpRoles).toEqual(["FCP.Casework.ReadWrite"]);
       expect(mockUser.appRoles.ROLE_1).toBeInstanceOf(AppRole);
       expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
@@ -547,14 +547,14 @@ describe("User", () => {
     it("creates a mock user with overridden properties", () => {
       const overrides = {
         name: "Jane Doe",
-        email: "jane.doe@defra.gov.uk",
+        email: "jane.doe@example.com",
         idpRoles: ["CUSTOM_ROLE"],
       };
 
       const mockUser = User.createMock(overrides);
 
       expect(mockUser.name).toBe("Jane Doe");
-      expect(mockUser.email).toBe("jane.doe@defra.gov.uk");
+      expect(mockUser.email).toBe("jane.doe@example.com");
       expect(mockUser.idpRoles).toEqual(["CUSTOM_ROLE"]);
       expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
       expect(mockUser.createdAt).toBe("2025-01-01T00:00:00.000Z");
@@ -580,7 +580,7 @@ describe("User", () => {
 
       expect(mockUser).toBeInstanceOf(User);
       expect(mockUser.idpId).toBe("6a232710-1c66-4f8b-967d-41d41ae38478");
-      expect(mockUser.name).toBe("Bob Bill");
+      expect(mockUser.name).toBe("Casey Test");
     });
 
     it("creates mock user with null overrides", () => {
@@ -619,7 +619,7 @@ describe("User", () => {
         id: "test-id",
         idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
         name: "Test User",
-        email: "test@defra.gov.uk",
+        email: "test@example.com",
         createdAt: "2025-01-01T00:00:00.000Z",
       });
 
