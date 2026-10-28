@@ -314,6 +314,30 @@ describe("findByCode", () => {
     );
   });
 
+  it.each(["phase", "stage"])(
+    "normalises incomplete stored %s roles",
+    async (level) => {
+      const document = WorkflowDocument.createMock();
+      const phase = document.phases[0];
+      const stage = phase.stages[0];
+      const target = level === "phase" ? phase : stage;
+      target.requiredRoles = { allOf: ["ROLE_1"] };
+      stage.taskGroups[0].tasks[0].requiredRoles = null;
+      db.collection.mockReturnValue({
+        findOne: vi.fn().mockResolvedValue(document),
+      });
+      const workflow = await findByCode(document.code, document.version);
+      const task = workflow.phases[0].stages[0].taskGroups[0].tasks[0];
+
+      expect(
+        workflow.getApplicableRoles(workflow.getInitialPosition(), task),
+      ).toEqual({
+        allOf: ["ROLE_1"],
+        anyOf: [],
+      });
+    },
+  );
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),

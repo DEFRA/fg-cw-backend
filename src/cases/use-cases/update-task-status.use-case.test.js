@@ -258,6 +258,50 @@ describe("updateTaskStatusUseCase", () => {
     ).rejects.toThrow("does not have required roles");
   });
 
+  it.each(["task", "phase"])(
+    "allows updates using the %s role when higher roles are absent from the user",
+    async (level) => {
+      const kase = Case.createMock();
+      const workflow = Workflow.createMock();
+      const phase = workflow.phases[0];
+      const stage = phase.stages[0];
+      workflow.requiredRoles = { allOf: ["ROLE_CASE"], anyOf: [] };
+      phase.requiredRoles = {
+        allOf: [level === "phase" ? "ROLE_1" : "ROLE_PHASE"],
+        anyOf: [],
+      };
+      stage.requiredRoles =
+        level === "task" ? { allOf: ["ROLE_STAGE"], anyOf: [] } : null;
+      stage.taskGroups[0].tasks[0].requiredRoles =
+        level === "task" ? { allOf: ["ROLE_1"], anyOf: [] } : null;
+      findById.mockResolvedValue(kase);
+      resolveWorkflowForCase.mockResolvedValue({
+        workflow,
+        resolvedVersion: null,
+      });
+      const user = User.createMock({
+        idpRoles: [IdpRoles.ReadWrite],
+        appRoles: {
+          ROLE_1: new AppRole({
+            name: "ROLE_1",
+            startDate: "2025-01-01",
+            endDate: "2100-01-01",
+          }),
+        },
+      });
+
+      await updateTaskStatusUseCase({
+        caseId: kase._id,
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        value: "STATUS_OPTION_1",
+        completed: true,
+        user,
+      });
+      expect(kase.getStage().taskGroups[0].tasks[0].completed).toBe(true);
+    },
+  );
+
   it("sets completed flag based on valueOption when valueOptions exist", async () => {
     const { WorkflowStageStatus } =
       await import("../models/workflow-stage-status.js");

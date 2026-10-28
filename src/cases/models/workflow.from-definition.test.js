@@ -83,33 +83,42 @@ describe("Workflow.fromDefinition", () => {
   const fromDefinition = (published) => () =>
     Workflow.fromDefinition(published, "1.2.3");
 
-  it("uses the closest defined roles for a task or stage", () => {
-    const published = definition();
-    const phase = published.phases[0];
-    const stage = phase.stages[0];
-    phase.requiredRoles = { allOf: ["ROLE_PHASE"], anyOf: [] };
-    stage.requiredRoles = { allOf: ["ROLE_STAGE"], anyOf: [] };
-    const workflow = fromDefinition(published)();
-    const position = workflow.getInitialPosition();
-    const task = { requiredRoles: { allOf: ["ROLE_TASK"], anyOf: [] } };
-    expect(workflow.getApplicableRoles(position, task)).toEqual(
-      task.requiredRoles,
-    );
-    task.requiredRoles = { allOf: [], anyOf: [] };
-    expect(workflow.getApplicableRoles(position, task)).toEqual(
-      stage.requiredRoles,
-    );
-    expect(workflow.getApplicableRoles(position)).toEqual(stage.requiredRoles);
-    workflow.getStage(position).requiredRoles = { allOf: [], anyOf: [] };
-    expect(workflow.getApplicableRoles(position)).toEqual(phase.requiredRoles);
-    workflow.findPhase(position.phaseCode).requiredRoles = {
-      allOf: [],
-      anyOf: [],
-    };
-    expect(workflow.getApplicableRoles(position, task)).toEqual(
-      workflow.requiredRoles,
-    );
-  });
+  it.each([
+    [
+      "task",
+      { allOf: ["ROLE_TASK"], anyOf: [] },
+      { allOf: ["ROLE_STAGE"], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_TASK",
+    ],
+    [
+      "stage",
+      { allOf: [], anyOf: [] },
+      { allOf: ["ROLE_STAGE"], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_STAGE",
+    ],
+    [
+      "phase",
+      null,
+      { allOf: [], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_PHASE",
+    ],
+    ["case", null, null, { allOf: [], anyOf: [] }, "ROLE_SFI_REFORM"],
+  ])(
+    "uses the %s roles when they are the closest non-empty requirement",
+    (_, taskRoles, stageRoles, phaseRoles, expectedRole) => {
+      const published = definition();
+      published.phases[0].requiredRoles = phaseRoles;
+      published.phases[0].stages[0].requiredRoles = stageRoles;
+      const workflow = fromDefinition(published)();
+      const position = workflow.getInitialPosition();
+      expect(
+        workflow.getApplicableRoles(position, { requiredRoles: taskRoles }),
+      ).toEqual({ allOf: [expectedRole], anyOf: [] });
+    },
+  );
 
   it.each(["phase", "stage"])(
     "rejects malformed %s role requirements",

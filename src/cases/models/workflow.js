@@ -195,10 +195,6 @@ export class Workflow {
     );
   }
 
-  getTaskRoles(position, task) {
-    return this.getApplicableRoles(position, task) ?? task.getRequiredRoles();
-  }
-
   getStatus(position) {
     return this.getStage(position).getStatus(position.statusCode);
   }

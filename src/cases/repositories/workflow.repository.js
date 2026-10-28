@@ -101,7 +101,7 @@ const toWorkflowStage = (s) =>
   new WorkflowStage({
     code: s.code,
     name: s.name,
-    requiredRoles: s.requiredRoles,
+    requiredRoles: toRequiredRoles(s.requiredRoles),
     description: s.description,
     statuses: s.statuses.map(toWorkflowStageStatus),
     taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
@@ -113,7 +113,7 @@ const toWorkflowPhase = (p) =>
   new WorkflowPhase({
     code: p.code,
     name: p.name,
-    requiredRoles: p.requiredRoles,
+    requiredRoles: toRequiredRoles(p.requiredRoles),
     stages: p.stages.map(toWorkflowStage),
   });
 

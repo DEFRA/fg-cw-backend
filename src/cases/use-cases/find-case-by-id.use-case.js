@@ -177,6 +177,11 @@ const mapTasks = async (
           userMap,
         );
 
+        const requiredRoles = root.workflow.getApplicableRoles(
+          root.position,
+          workflowTaskGroupTask,
+        );
+
         return {
           code: caseTaskGroupTask.code,
           name: workflowTaskGroupTask.name,
@@ -193,16 +198,10 @@ const mapTasks = async (
           notesHistory,
           updatedAt: caseTaskGroupTask.updatedAt,
           updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-          requiredRoles: root.workflow.getTaskRoles(
-            root.position,
-            workflowTaskGroupTask,
-          ),
+          requiredRoles,
           canComplete: AccessControl.canAccess(root.user, {
             idpRoles: [],
-            appRoles: root.workflow.getTaskRoles(
-              root.position,
-              workflowTaskGroupTask,
-            ),
+            appRoles: requiredRoles,
           }),
         };
       }),

@@ -1,7 +1,7 @@
 import { Position } from "../../models/position.js";
-import { RequiredRolesDocument } from "./required-roles-document.js";
 import { ActionDocument } from "./action-document.js";
 import { CommentDocument } from "./comment-document.js";
+import { RequiredRolesDocument } from "./required-roles-document.js";
 import { StageDocument } from "./stage-document.js";
 import { StatusDocument } from "./status-document.js";
 import { TaskGroupDocument } from "./task-group-document.js";
