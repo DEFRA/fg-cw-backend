@@ -51,7 +51,7 @@ describe("toErrorKey", () => {
       "sbi 900000005 frn 9100000006 crn 9000000006",
       "Error: sbi <n> frn <n> crn <n>",
     ],
-    ["mail jo.bloggs+test@example.co.uk failed", "Error: mail <email> failed"],
+    ["mail jo.bloggs+test@example.com failed", "Error: mail <email> failed"],
     [
       "request to https://cw.example/actuators/cases/x?ref=abc-1 failed",
       "Error: request to <url> failed",

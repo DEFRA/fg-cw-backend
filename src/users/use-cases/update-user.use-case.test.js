@@ -42,7 +42,7 @@ describe("updateUserUseCase", () => {
         id: userId,
         idpId,
         name: "Name",
-        email: "bob.bill@defra.gov.uk",
+        email: "casey.test@example.com",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: {
           ROLE_ADMIN: {
@@ -60,7 +60,7 @@ describe("updateUserUseCase", () => {
         id: userId,
         idpId,
         name: "Name",
-        email: "bob.bill@defra.gov.uk",
+        email: "casey.test@example.com",
         idpRoles: ["FCP.Casework.Read"],
         appRoles: {
           ROLE_ADMIN: {
@@ -84,14 +84,14 @@ describe("updateUserUseCase", () => {
       authenticatedUser: { id: userId },
       userId,
       props: {
-        email: "new.email@defra.gov.uk",
+        email: "new.email@example.com",
       },
     });
 
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: userId,
-        email: "new.email@defra.gov.uk",
+        email: "new.email@example.com",
       }),
     );
   });
@@ -165,8 +165,8 @@ describe("updateUserUseCase", () => {
       new User({
         id: userId,
         idpId,
-        name: "Bob Bill",
-        email: "bob.bill@defra.gov.uk",
+        name: "Casey Test",
+        email: "casey.test@example.com",
         idpRoles: ["FCP.Casework.ReadWrite"],
         appRoles,
         createdAt: expect.any(String),

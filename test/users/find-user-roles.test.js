@@ -46,7 +46,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("returns an active role with its date range", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000001",
-      email: "roles.active@t.gov.uk",
+      email: "roles.active@example.com",
     });
     await changeUserAppRoles(user, {
       ROLE_WMP_CLAIMS: { startDate: "2025-07-01", endDate: "2100-01-01" },
@@ -64,7 +64,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("returns null dates for an open-ended role", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000002",
-      email: "roles.openended@t.gov.uk",
+      email: "roles.openended@example.com",
     });
     await changeUserAppRoles(user, { ROLE_WMP_CLAIMS: {} });
 
@@ -78,7 +78,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("excludes a role that is out of its date range", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000003",
-      email: "roles.expired@t.gov.uk",
+      email: "roles.expired@example.com",
     });
     await changeUserAppRoles(user, {
       ROLE_WMP_CLAIMS: { startDate: "2020-01-01", endDate: "2020-12-31" },
@@ -92,7 +92,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("returns an empty list for a user with no roles", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000004",
-      email: "roles.none@t.gov.uk",
+      email: "roles.none@example.com",
     });
     await changeUserAppRoles(user, {});
 
@@ -104,7 +104,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("answers an unknown user exactly as it answers one with no roles", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000005",
-      email: "roles.compare@t.gov.uk",
+      email: "roles.compare@example.com",
     });
     await changeUserAppRoles(user, {});
 
@@ -120,7 +120,7 @@ describe("GET /api/users/{entraId}/roles", () => {
   it("returns no roles for a user caseworking treats as unknown", async () => {
     const user = await createUser({
       idpId: "a1b2c3d4-0001-0000-0000-000000000006",
-      email: "roles.placeholder@t.gov.uk",
+      email: "roles.placeholder@example.com",
     });
     await changeUserAppRoles(user, {
       ROLE_WMP_CLAIMS: { startDate: "2025-07-01", endDate: "2100-01-01" },
@@ -143,7 +143,7 @@ describe("GET /api/users/{entraId}/roles", () => {
     await users.insertOne({
       idpId,
       name: "Legacy User",
-      email: "roles.legacy@rpa.gov.uk",
+      email: "roles.legacy@example.com",
       idpRoles: [],
       appRoles: {
         ROLE_WMP_CLAIMS: { startDate: "2000-01-01", endDate: "2100-01-01" },

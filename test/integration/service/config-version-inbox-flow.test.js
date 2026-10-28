@@ -509,13 +509,13 @@ describe("config broker events through the inbox", { timeout: 60000 }, () => {
       workflowDefinition(grantCode),
     );
     await expect(
-      redriveById(dead._id.toHexString(), { by: "operator@defra.gov.uk" }),
+      redriveById(dead._id.toHexString(), { by: "operator@example.com" }),
     ).resolves.toBe(true);
 
     const row = await settlesAs(received.MessageId, "COMPLETED");
 
     expect(row.retryable).toBe(true);
-    expect(row.lastRedrive.by).toBe("operator@defra.gov.uk");
+    expect(row.lastRedrive.by).toBe("operator@example.com");
     const [version] = await versionsOf(grantCode);
     expect(version).toMatchObject({
       version: "2.0.0",

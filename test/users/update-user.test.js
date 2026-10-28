@@ -24,7 +24,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
     const testUser = await createUser({
       idpId: "00000000-0000-0000-0000-000000000001",
       name: "Name",
-      email: "name.surname@defra.gov.uk",
+      email: "name.surname@example.com",
       idpRoles: ["FCP.Casework.Read"],
     });
 
@@ -127,7 +127,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
     const testUser = await createUser({
       idpId: "00000000-0000-0000-0000-000000000042",
       name: "Audit Target",
-      email: "audit.target@defra.gov.uk",
+      email: "audit.target@example.com",
       idpRoles: ["FCP.Casework.Read"],
     });
 
@@ -184,7 +184,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
 
     const adminUser = await createAdminUser({
       name: "Admin User",
-      email: "admin@t.gov.uk",
+      email: "admin@example.com",
       appRoles: {
         ROLE_RPA_CASES_APPROVE: {
           startDate: "2025-07-01",

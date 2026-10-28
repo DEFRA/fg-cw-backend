@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
 
 const { like, eachLike, integer, boolean } = MatchersV3;
 
-const CASEWORKER_EMAIL = "case.worker@defra.gov.uk";
+const CASEWORKER_EMAIL = "case.worker@example.com";
 
 // Consumer tests for land-grants-api HTTP endpoints
 // Provider implementation completed by Andy Timney's team

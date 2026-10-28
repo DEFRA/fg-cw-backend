@@ -4,6 +4,7 @@ import { env } from "node:process";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
 
+// These synthetic accounts are bundled in fg-entra-stub-frontend.
 export const TestUser = {
   Admin: {
     idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
@@ -28,7 +29,7 @@ export const TestUser = {
 const defaultUserPayload = {
   idpId: "abcd1234-5678-90ab-cdef-1234567890ab",
   name: "Name",
-  email: "name.surname@defra.gov.uk",
+  email: "name.surname@example.com",
   idpRoles: ["FCP.Casework.ReadWrite"],
   appRoles: {
     ROLE_1: {
