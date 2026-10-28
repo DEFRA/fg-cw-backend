@@ -176,7 +176,7 @@ describe("resolve-and-fetch-workflow integration", () => {
     const { files } = await fetchWorkflowDefinitionUseCase({
       grantCode: "pigs-might-fly",
       version: "1.0.0",
-      by: "Jane Smith",
+      by: "Example Assignee",
       caller: "fg-gas-backend",
     });
 

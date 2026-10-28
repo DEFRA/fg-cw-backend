@@ -514,14 +514,14 @@ describe("parameter-resolver", () => {
           actionCode: "RECALCULATE_RULES",
           caseWorkflowContext: contextWithHeaders(
             { "Defra-Email": "$.user.email" },
-            { email: "case.worker@defra.gov.uk" },
+            { email: "case.worker@example.com" },
           ),
         });
 
         expect(result).toEqual({
           PATH: {},
           BODY: { id: 900000005 },
-          HEADERS: { "Defra-Email": "case.worker@defra.gov.uk" },
+          HEADERS: { "Defra-Email": "case.worker@example.com" },
         });
       });
 

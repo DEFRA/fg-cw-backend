@@ -22,7 +22,7 @@ describe("GET /admin/users/{userId} (admin only)", () => {
     const testUser = await createUser({
       idpId: "00000000-0000-0000-0000-000000000077",
       name: "View Target",
-      email: "view.target@defra.gov.uk",
+      email: "view.target@example.com",
       idpRoles: ["FCP.Casework.Read"],
     });
 
@@ -52,7 +52,7 @@ describe("GET /admin/users/{userId} (admin only)", () => {
                 id: testUser.id,
                 idpId: "00000000-0000-0000-0000-000000000077",
                 name: "View Target",
-                email: "view.target@defra.gov.uk",
+                email: "view.target@example.com",
                 idpRoles: ["FCP.Casework.Read"],
               }),
             },

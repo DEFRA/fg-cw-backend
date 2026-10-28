@@ -578,7 +578,7 @@ describe("upsert", () => {
     const user = User.createMock({
       idpId: "existing-idp-id",
       name: "Updated Name",
-      email: "updated.name@defra.gov.uk",
+      email: "updated.name@example.com",
     });
 
     const existingDoc = UserDocument.createMock({
@@ -627,7 +627,7 @@ describe("upsert", () => {
   it("throws Boom.conflict when duplicate email race condition occurs", async () => {
     const user = User.createMock({
       idpId: "new-entra-id",
-      email: "duplicate@defra.gov.uk",
+      email: "duplicate@example.com",
     });
 
     const error = new MongoServerError("E11000 duplicate key error");
@@ -653,12 +653,12 @@ describe("upsert", () => {
   it("links manually-created user on first Entra ID login", async () => {
     const user = User.createMock({
       idpId: "new-entra-id",
-      email: "manual@defra.gov.uk",
+      email: "manual@example.com",
     });
 
     const manualUserDoc = UserDocument.createMock({
       _id: new ObjectId(),
-      email: "manual@defra.gov.uk",
+      email: "manual@example.com",
       createdManually: true,
     });
 
@@ -691,7 +691,7 @@ describe("upsert", () => {
 
     // 2. Check for manual user (exact match on normalized email)
     expect(findOne).toHaveBeenCalledWith({
-      email: "manual@defra.gov.uk",
+      email: "manual@example.com",
       createdManually: true,
     });
 
@@ -715,7 +715,7 @@ describe("upsert", () => {
   it("does not link if user was not created manually", async () => {
     const user = User.createMock({
       idpId: "new-entra-id",
-      email: "existing@defra.gov.uk",
+      email: "existing@example.com",
     });
 
     const findOne = vi.fn().mockResolvedValue(null);
@@ -743,7 +743,7 @@ describe("upsert", () => {
 
     // 2. Check for manual user (exact match on normalized email)
     expect(findOne).toHaveBeenCalledWith({
-      email: "existing@defra.gov.uk",
+      email: "existing@example.com",
       createdManually: true,
     });
 
@@ -769,13 +769,13 @@ describe("findByEmail", () => {
     });
 
     // Input has mixed case, but query should use lowercase
-    const result = await findByEmail("Bob.Bill@defra.gov.uk");
+    const result = await findByEmail("Casey.Test@example.com");
 
     expect(db.collection).toHaveBeenCalledWith("users");
 
     // Should query with exact lowercase email, not regex
     expect(findOne).toHaveBeenCalledWith({
-      email: "bob.bill@defra.gov.uk",
+      email: "casey.test@example.com",
     });
 
     expect(result).toEqual(

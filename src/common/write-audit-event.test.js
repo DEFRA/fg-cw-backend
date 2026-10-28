@@ -152,14 +152,14 @@ describe("buildPayload", () => {
       entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
       accounts: { sbi: "sbi-1" },
       status: auditStatus.SUCCESS,
-      details: { name: "Bob Bill" },
+      details: { name: "Casey Test" },
     });
 
     expect(result.audit).toEqual({
       entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
       accounts: { sbi: "sbi-1" },
       status: auditStatus.SUCCESS,
-      details: { name: "Bob Bill" },
+      details: { name: "Casey Test" },
     });
   });
 
@@ -308,7 +308,7 @@ describe("writeAuditEvent", () => {
   const eventData = {
     entities: [{ entity: "USER", action: "LOGIN", entityid: "user-1" }],
     accounts: undefined,
-    details: { name: "Bob Bill" },
+    details: { name: "Casey Test" },
     status: auditStatus.SUCCESS,
   };
 
@@ -432,7 +432,7 @@ describe("writeAuditEvent", () => {
       expect.objectContaining({
         event: expect.objectContaining({
           audit: expect.objectContaining({
-            details: { name: "Bob Bill" },
+            details: { name: "Casey Test" },
           }),
         }),
       }),
@@ -444,7 +444,7 @@ describe("writeAuditEvent", () => {
 
   it("strips nulls from within details before writing", async () => {
     await writeAuditEvent(
-      { ...eventData, details: { name: "Bob Bill", note: null } },
+      { ...eventData, details: { name: "Casey Test", note: null } },
       {},
     );
 
@@ -452,7 +452,7 @@ describe("writeAuditEvent", () => {
       expect.objectContaining({
         event: expect.objectContaining({
           audit: expect.objectContaining({
-            details: { name: "Bob Bill" },
+            details: { name: "Casey Test" },
           }),
         }),
       }),

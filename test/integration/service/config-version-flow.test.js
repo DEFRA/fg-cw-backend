@@ -122,7 +122,7 @@ describe("config broker message flow", { timeout: 60000 }, () => {
       cwKey(grantCode, "1.0.0"),
       workflowDefinition(grantCode),
     );
-    await redriveInboxEvent(id, { by: "operator@defra.gov.uk" });
+    await redriveInboxEvent(id, { by: "operator@example.com" });
 
     const row = await settlesAs(grantCode, "COMPLETED");
 

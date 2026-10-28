@@ -6,7 +6,7 @@ import {
 import { OPERATOR_ID } from "../../../test/helpers/operator.js";
 
 const valid = {
-  "x-actor": "Jane Smith",
+  "x-actor": "Example Assignee",
   "x-actor-id": OPERATOR_ID,
   host: "cw",
 };

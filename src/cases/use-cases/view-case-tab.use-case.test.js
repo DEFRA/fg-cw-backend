@@ -16,8 +16,8 @@ vi.mock("../../common/write-audit-event.js", () => ({
 const user = {
   id: "507f1f77bcf86cd799439011",
   idpId: "6a232710-1c66-4f8b-967d-41d41ae38478",
-  name: "Bob Bill",
-  email: "bob.bill@defra.gov.uk",
+  name: "Casey Test",
+  email: "casey.test@example.com",
   idpRoles: ["FCP.Casework.ReadWrite"],
 };
 
