@@ -19,6 +19,23 @@ describe("role requirements across the workflow hierarchy", () => {
     await client.close(true);
   });
 
+  const createCaseWithSeries = async () => {
+    const kase = await createCase(cases);
+    const now = new Date().toISOString();
+    await client
+      .db()
+      .collection("case_series")
+      .insertOne({
+        caseRefs: [kase.caseRef],
+        workflowCode: kase.workflowCode,
+        latestCaseRef: kase.caseRef,
+        latestCaseId: kase._id.toHexString(),
+        createdAt: now,
+        updatedAt: now,
+      });
+    return kase;
+  };
+
   it("applies a task override while restricting its stage and other tasks", async () => {
     const user = await createAdminUser();
     await changeUserAppRoles(user, {
@@ -34,7 +51,7 @@ describe("role requirements across the workflow hierarchy", () => {
         anyOf: [],
       };
     });
-    const kase = await createCase(cases);
+    const kase = await createCaseWithSeries();
     const response = await wreck.get(`/cases/${kase._id}`);
     const stage = response.payload.data.stage;
     expect(stage.canPerformActions).toBe(false);
@@ -78,7 +95,7 @@ describe("role requirements across the workflow hierarchy", () => {
       phase.stages[0].requiredRoles = { allOf: [], anyOf: [] };
       phase.stages[0].taskGroups[0].tasks[0].requiredRoles = null;
     });
-    const kase = await createCase(cases);
+    const kase = await createCaseWithSeries();
     const response = await wreck.get(`/cases/${kase._id}`);
     const stage = response.payload.data.stage;
     expect(stage.canPerformActions).toBe(true);

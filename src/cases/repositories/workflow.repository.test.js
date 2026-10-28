@@ -338,6 +338,18 @@ describe("findByCode", () => {
     },
   );
 
+  it("preserves absent phase and stage role fields when loading legacy workflows", async () => {
+    const document = WorkflowDocument.createMock();
+    delete document.phases[0].requiredRoles;
+    delete document.phases[0].stages[0].requiredRoles;
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(document),
+    });
+    const workflow = await findByCode(document.code, document.version);
+    expect(workflow.phases[0].requiredRoles).toBeUndefined();
+    expect(workflow.phases[0].stages[0].requiredRoles).toBeUndefined();
+  });
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),
