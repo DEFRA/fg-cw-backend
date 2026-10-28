@@ -4,23 +4,24 @@ import { env } from "node:process";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
 import { wreck } from "./wreck.js";
 
+// These synthetic accounts are bundled in fg-entra-stub-frontend.
 export const TestUser = {
   Admin: {
     idpId: "9f6b80d3-99d3-42dc-ac42-b184595b1ef1",
     name: "Test Admin",
-    email: "admin@example.com",
+    email: "admin@t.gov.uk",
     idpRoles: [IdpRoles.Admin, IdpRoles.ReadWrite],
   },
   ReadWrite: {
     idpId: "df20f4bd-d009-4bf4-b499-46e93e0f005a",
     name: "Test ReaderWriter",
-    email: "readerwriter@example.com",
+    email: "readerwriter@t.gov.uk",
     idpRoles: [IdpRoles.ReadWrite],
   },
   ReadOnly: {
     idpId: "8b7e28f3-44de-453a-a775-77d11ea9b9a3",
     name: "Test Reader",
-    email: "reader@example.com",
+    email: "reader@t.gov.uk",
     idpRoles: [IdpRoles.Read],
   },
 };
