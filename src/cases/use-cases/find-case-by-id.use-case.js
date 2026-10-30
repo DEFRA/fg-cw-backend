@@ -177,6 +177,11 @@ const mapTasks = async (
           userMap,
         );
 
+        const requiredRoles = root.workflow.getApplicableRoles(
+          root.position,
+          workflowTaskGroupTask,
+        );
+
         return {
           code: caseTaskGroupTask.code,
           name: workflowTaskGroupTask.name,
@@ -193,10 +198,10 @@ const mapTasks = async (
           notesHistory,
           updatedAt: caseTaskGroupTask.updatedAt,
           updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-          requiredRoles: workflowTaskGroupTask.requiredRoles,
+          requiredRoles,
           canComplete: AccessControl.canAccess(root.user, {
             idpRoles: [],
-            appRoles: workflowTaskGroupTask.requiredRoles,
+            appRoles: requiredRoles,
           }),
         };
       }),
@@ -376,10 +381,10 @@ const mapTaskGroups = async (
   );
 };
 
-const canPerformStageActions = (user, workflow) => {
+const canPerformStageActions = (user, workflow, position) => {
   return AccessControl.canAccess(user, {
     idpRoles: [IdpRoles.ReadWrite],
-    appRoles: workflow.requiredRoles,
+    appRoles: workflow.getApplicableRoles(position),
   });
 };
 
@@ -438,6 +443,7 @@ const mapStageData = async (
   const canPerformActions = canPerformStageActions(
     caseWorkflowContext.user,
     workflow,
+    kase.position,
   );
 
   return {

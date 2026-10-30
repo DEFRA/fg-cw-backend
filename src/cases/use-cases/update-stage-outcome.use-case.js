@@ -33,7 +33,7 @@ const updateStageOutcome = async (command, session) => {
 
   AccessControl.authorise(user, {
     idpRoles: [IdpRoles.ReadWrite],
-    appRoles: workflow.requiredRoles,
+    appRoles: workflow.getApplicableRoles(kase.position),
   });
 
   workflow.validateStageActionComment({

@@ -154,7 +154,10 @@ describe("GET /cases/{caseId}", () => {
                 notesHistory: [],
                 updatedAt: null,
                 updatedBy: null,
-                requiredRoles: { allOf: [], anyOf: [] },
+                requiredRoles: {
+                  allOf: ["ROLE_1", "ROLE_2"],
+                  anyOf: ["ROLE_3"],
+                },
                 canComplete: true,
               },
               {
@@ -186,7 +189,10 @@ describe("GET /cases/{caseId}", () => {
                 notesHistory: [],
                 updatedAt: null,
                 updatedBy: null,
-                requiredRoles: { allOf: [], anyOf: [] },
+                requiredRoles: {
+                  allOf: ["ROLE_1", "ROLE_2"],
+                  anyOf: ["ROLE_3"],
+                },
                 canComplete: true,
               },
               {
@@ -212,7 +218,10 @@ describe("GET /cases/{caseId}", () => {
                 notesHistory: [],
                 updatedAt: null,
                 updatedBy: null,
-                requiredRoles: { allOf: [], anyOf: [] },
+                requiredRoles: {
+                  allOf: ["ROLE_1", "ROLE_2"],
+                  anyOf: ["ROLE_3"],
+                },
                 canComplete: true,
               },
             ],

@@ -291,6 +291,65 @@ describe("findByCode", () => {
     });
   });
 
+  it("preserves phase and stage roles and an absent task override", async () => {
+    const workflow = Workflow.createMock();
+    workflow.phases[0].requiredRoles = { allOf: ["ROLE_PHASE"], anyOf: [] };
+    workflow.phases[0].stages[0].requiredRoles = {
+      allOf: ["ROLE_STAGE"],
+      anyOf: [],
+    };
+    workflow.phases[0].stages[0].taskGroups[0].tasks[0].requiredRoles = null;
+    const document = new WorkflowDocument(workflow);
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(document),
+    });
+    const result = await findByCode(workflow.code, workflow.version);
+    const position = result.getInitialPosition();
+    const task = result.phases[0].stages[0].taskGroups[0].tasks[0];
+    expect(result.phases[0].requiredRoles).toEqual(
+      workflow.phases[0].requiredRoles,
+    );
+    expect(result.getApplicableRoles(position, task)).toEqual(
+      workflow.phases[0].stages[0].requiredRoles,
+    );
+  });
+
+  it.each(["phase", "stage"])(
+    "normalises incomplete stored %s roles",
+    async (level) => {
+      const document = WorkflowDocument.createMock();
+      const phase = document.phases[0];
+      const stage = phase.stages[0];
+      const target = level === "phase" ? phase : stage;
+      target.requiredRoles = { allOf: ["ROLE_1"] };
+      stage.taskGroups[0].tasks[0].requiredRoles = null;
+      db.collection.mockReturnValue({
+        findOne: vi.fn().mockResolvedValue(document),
+      });
+      const workflow = await findByCode(document.code, document.version);
+      const task = workflow.phases[0].stages[0].taskGroups[0].tasks[0];
+
+      expect(
+        workflow.getApplicableRoles(workflow.getInitialPosition(), task),
+      ).toEqual({
+        allOf: ["ROLE_1"],
+        anyOf: [],
+      });
+    },
+  );
+
+  it("preserves absent phase and stage role fields when loading legacy workflows", async () => {
+    const document = WorkflowDocument.createMock();
+    delete document.phases[0].requiredRoles;
+    delete document.phases[0].stages[0].requiredRoles;
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(document),
+    });
+    const workflow = await findByCode(document.code, document.version);
+    expect(workflow.phases[0].requiredRoles).toBeUndefined();
+    expect(workflow.phases[0].stages[0].requiredRoles).toBeUndefined();
+  });
+
   it("returns null when no workflow is found", async () => {
     db.collection.mockReturnValue({
       findOne: vi.fn().mockResolvedValue(null),
