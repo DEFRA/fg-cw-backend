@@ -396,6 +396,7 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
     return {
       code: a.code,
       name: a.name,
+      hint: a.hint,
       comment: a.comment,
       confirm: a.confirm,
       classes: a.classes,
@@ -445,6 +446,7 @@ const mapStageData = async (
     description: workflowStage.description,
     interactive: currentStatus.interactive,
     hideTaskGroups: currentStatus.hideTaskGroups,
+    cancelHref: currentStatus.cancelHref,
     canPerformActions,
     taskGroups: await mapVisibleTaskGroups(
       currentStatus,

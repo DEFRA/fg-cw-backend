@@ -102,6 +102,10 @@ const Confirm = Joi.alternatives()
 const Action = Joi.object({
   code: Code.required(),
   name: Joi.string().required(),
+  // Single string: rendered as a GOV.UK radio hint beneath the label.
+  // Task input.hint (line 32) is an array joined into one string for
+  // multi-line input hints — action radios only need one line.
+  hint: Joi.string().optional().allow(null),
   comment: comment.allow(null).required(),
   checkTasks: Joi.boolean().required(),
   confirm: Confirm.optional(),

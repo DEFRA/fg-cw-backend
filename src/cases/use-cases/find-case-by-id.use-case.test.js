@@ -753,6 +753,66 @@ describe("findCaseByIdUseCase", () => {
     expect(result.stage.taskGroups).toEqual([]);
   });
 
+  it("includes hint in mapped stage actions", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    const action =
+      mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action;
+    action.hint = "Progress to next stage";
+    action.checkTasks = false;
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions[0].hint).toBe("Progress to next stage");
+  });
+
+  it("returns undefined hint when action has no hint", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action.checkTasks = false;
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions[0].hint).toBeUndefined();
+  });
+
+  it("passes cancelHref from the current status", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].statuses[0].cancelHref = "/cases";
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.cancelHref).toBe("/cases");
+  });
+
   it("sets canComplete to true when task has no required roles", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
