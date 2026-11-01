@@ -26,9 +26,9 @@ vi.mock("../../common/write-audit-event.js", () => ({
 const toAuditEvent = (auditData, status) => ({
   datetime: new Date().toISOString(),
   version: "1.0.0",
-  application: "Case Working Service",
+  application: "Grants",
   component: "fg-cw-backend",
-  environment: "test",
+  environment: "cdp-test",
   correlationid: "test-correlation-id",
   ip: "10.0.0.1",
   security: auditData.security,

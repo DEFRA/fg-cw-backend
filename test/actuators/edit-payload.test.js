@@ -310,7 +310,7 @@ describe("the edit fence", () => {
     );
     const stored = await inbox.findOne({ _id: doc._id });
     const failure = (await auditsFor(doc)).find(
-      (audit) => audit.event.audit.status === "FAILURE",
+      (audit) => audit.event.audit.status === "failure",
     );
 
     expect(refusal.status).toBe(412);
@@ -543,7 +543,7 @@ describe("the edit's audit event", () => {
     expect(audit.target).toMatch(/cw__sns__audit_topic_arn$/);
     expect(audit.segregationRef).toBe(`edit-event-${idOf(doc)}`);
     expect(audit.event.security.pmccode).toBe("0706");
-    expect(audit.event.audit.status).toBe("SUCCESS");
+    expect(audit.event.audit.status).toBe("success");
     expect(audit.event.audit.entities[0]).toEqual({
       entity: "EVENT",
       action: "EDIT_EVENT_PAYLOAD",
@@ -584,7 +584,7 @@ describe("the edit's audit event", () => {
     ).catch(() => {});
 
     const failure = (await auditsFor(doc)).find(
-      (audit) => audit.event.audit.status === "FAILURE",
+      (audit) => audit.event.audit.status === "failure",
     );
 
     expect(failure.event.audit.details.event).toEqual({
@@ -605,7 +605,7 @@ describe("the edit's audit event", () => {
 
     const [failure] = await auditsFor(doc);
 
-    expect(failure.event.audit.status).toBe("FAILURE");
+    expect(failure.event.audit.status).toBe("failure");
     expect(failure.event.audit.details.event.reason).toBe("UNCHANGED");
   });
 });
@@ -697,7 +697,7 @@ describe("POST /actuators/events/outbox/{id}/payload", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    expect((await auditsFor(doc))[0].event.audit.status).toBe("SUCCESS");
+    expect((await auditsFor(doc))[0].event.audit.status).toBe("success");
   });
 
   it("409s with the current status when the row is COMPLETED", async () => {

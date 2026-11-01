@@ -154,7 +154,7 @@ describe("PATCH /admin/users/{userId} (admin only)", () => {
               entityid: testUser.id,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: expect.objectContaining({

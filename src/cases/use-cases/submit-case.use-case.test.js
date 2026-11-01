@@ -64,7 +64,7 @@ describe("submitCaseUseCase", () => {
     const [auditData, auditSession] = writeAuditEvent.mock.calls[0];
     expect(auditData).toMatchObject({
       entities: [{ entity: "CASE", action: "CREATE_CASE", entityid: "1234" }],
-      status: "SUCCESS",
+      status: "success",
     });
     expect(auditData.details.case).toMatchObject({
       caseRef: "1234",

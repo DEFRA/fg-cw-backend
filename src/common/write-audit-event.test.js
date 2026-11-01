@@ -4,7 +4,11 @@ import { BSON } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
-import { auditStatus } from "./audit-constants.js";
+import {
+  AUDIT_APPLICATION,
+  AUDIT_SCHEMA_VERSION,
+  auditStatus,
+} from "./audit-constants.js";
 import { getRequestContext } from "./request-context.js";
 import { logger } from "./logger.js";
 import {
@@ -12,6 +16,7 @@ import {
   buildPayload,
   normaliseIp,
   stripNulls,
+  toAuditEnvironment,
   toAuditIp,
   writeAuditEvent,
 } from "./write-audit-event.js";
@@ -25,7 +30,9 @@ vi.mock("./config.js", () => ({
   config: {
     get: vi.fn((key) => {
       const configMap = {
-        serviceVersion: "1.0.0",
+        // Unlike the audit schema version, so the envelope `version` test proves
+        // it is not the service release version.
+        serviceVersion: "9.9.9",
         serviceName: "fg-cw-backend",
         cdpEnvironment: "test",
         "aws.sns.auditTopicArn": "arn:aws:sns:eu-west-2:123:audit-topic",
@@ -61,6 +68,32 @@ beforeEach(() => {
   insertMany.mockResolvedValue(undefined);
 });
 
+describe("toAuditEnvironment", () => {
+  it.each([
+    ["dev", "cdp-dev"],
+    ["test", "cdp-test"],
+    ["prod", "cdp-prod"],
+    ["ext-test", "cdp-ext-test"],
+  ])("maps the CDP environment %s to %s", (environment, expected) => {
+    expect(toAuditEnvironment(environment)).toBe(expected);
+  });
+
+  it.each([undefined, null, "", "local"])(
+    "names a run with no CDP environment (%s) local",
+    (environment) => {
+      expect(toAuditEnvironment(environment)).toBe("local");
+    },
+  );
+
+  it("leaves an already-prefixed environment alone", () => {
+    expect(toAuditEnvironment("cdp-dev")).toBe("cdp-dev");
+  });
+
+  it("stays within the schema's 20-character environment limit", () => {
+    expect(toAuditEnvironment("perf-test").length).toBeLessThanOrEqual(20);
+  });
+});
+
 describe("buildPayload", () => {
   it("includes service metadata from config", () => {
     const result = buildPayload({
@@ -69,11 +102,36 @@ describe("buildPayload", () => {
     });
 
     expect(result).toMatchObject({
-      version: "1.0.0",
-      application: "Case Working Service",
+      version: AUDIT_SCHEMA_VERSION,
+      application: AUDIT_APPLICATION,
       component: "fg-cw-backend",
-      environment: "test",
+      environment: "cdp-test",
     });
+  });
+
+  it("publishes the event schema version, not the service's release version", () => {
+    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
+
+    expect(result.version).toBe("1.0.0");
+    expect(result.version).not.toBe("9.9.9");
+  });
+
+  it("publishes the GIO application name", () => {
+    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
+
+    expect(result.application).toBe("Grants");
+  });
+
+  it("publishes a successful action as lower-case success", () => {
+    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
+
+    expect(result.audit.status).toBe("success");
+  });
+
+  it("publishes a failed action as lower-case failure", () => {
+    const result = buildPayload({ entities: [], status: auditStatus.FAILURE });
+
+    expect(result.audit.status).toBe("failure");
   });
 
   it("uses correlationid from getTraceId when available", () => {
@@ -136,7 +194,23 @@ describe("buildPayload", () => {
       status: auditStatus.SUCCESS,
     });
 
-    expect(result.user).toBe(OPERATOR_ID);
+    expect(result.user).toBe(`AAD/${OPERATOR_ID}`);
+  });
+
+  it("does not prefix a user that already carries the AAD scheme", () => {
+    getRequestContext.mockReturnValue({ user: `AAD/${OPERATOR_ID}` });
+
+    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
+
+    expect(result.user).toBe(`AAD/${OPERATOR_ID}`);
+  });
+
+  it("keeps the prefixed user within the schema's 50-character limit", () => {
+    getRequestContext.mockReturnValue({ user: OPERATOR_ID });
+
+    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
+
+    expect(result.user.length).toBeLessThanOrEqual(50);
   });
 
   it("leaves user out when no operator was set", () => {
@@ -328,7 +402,7 @@ describe("writeAuditEvent", () => {
     await writeAuditEvent(eventData, {});
 
     expect(Outbox).toHaveBeenCalledWith({
-      event: expect.objectContaining({ application: "Case Working Service" }),
+      event: expect.objectContaining({ application: AUDIT_APPLICATION }),
       target: "arn:aws:sns:eu-west-2:123:audit-topic",
       segregationRef: expect.stringMatching(uuidPattern),
       eventType: "Audit",
