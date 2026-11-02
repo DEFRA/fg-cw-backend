@@ -330,6 +330,14 @@ export const config = convict({
       env: "EVENT_RETENTION_DAYS",
     },
   },
+  metrics: {
+    enabled: {
+      doc: "Send custom metrics to CloudWatch",
+      format: Boolean,
+      default: false,
+      env: "METRICS_ENABLED",
+    },
+  },
 });
 
 config.validate({ allowed: "strict" });

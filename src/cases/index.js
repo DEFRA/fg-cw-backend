@@ -1,7 +1,9 @@
 import { up } from "migrate-mongo";
 import { registerBucket } from "../common/buckets/registry.js";
+import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
+import { DeadLetterGauge } from "../events/dead-letters.js";
 
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";
@@ -16,6 +18,8 @@ import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { findCaseByIdTabIdRoute } from "./routes/find-case-by-id-tab-id.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
+import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
+import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 import { performPageActionRoute } from "./routes/perform-page-action.route.js";
@@ -41,6 +45,13 @@ export const cases = {
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();
+    const deadLetterGauge = new DeadLetterGauge({
+      enabled: config.get("metrics.enabled"),
+      counts: {
+        inbox: countInboxDeadLetters,
+        outbox: countOutboxDeadLetters,
+      },
+    });
 
     server.events.on("start", async () => {
       createNewCaseSubscriber.start();
@@ -48,6 +59,7 @@ export const cases = {
       configVersionUpdatedSubscriber?.start();
       outboxSubscriber.start();
       inboxSubscriber.start();
+      deadLetterGauge.start();
     });
 
     server.events.on("stop", async () => {
@@ -56,6 +68,7 @@ export const cases = {
       configVersionUpdatedSubscriber?.stop();
       outboxSubscriber.stop();
       inboxSubscriber.stop();
+      deadLetterGauge.stop();
     });
 
     server.route([

@@ -5,6 +5,7 @@ import { config } from "../../common/config.js";
 import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
+import { logDeadLettersSwept } from "../../events/dead-letters.js";
 import {
   cleanupStaleLocks,
   freeFifoLock,
@@ -91,7 +92,7 @@ export class OutboxSubscriber {
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated "${results.modifiedCount}" dead outbox events`);
+      logDeadLettersSwept("outbox", results.modifiedCount);
   }
 
   async processResubmittedEvents() {

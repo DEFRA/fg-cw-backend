@@ -6,6 +6,11 @@ import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { withTraceParent } from "../../common/trace-parent.js";
 import {
+  DeadLetterReason,
+  logDeadLetter,
+  logDeadLettersSwept,
+} from "../../events/dead-letters.js";
+import {
   cleanupStaleLocks,
   freeFifoLock,
   getFifoLocks,
@@ -104,7 +109,7 @@ export class InboxSubscriber {
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated "${results?.modifiedCount}" dead inbox events`);
+      logDeadLettersSwept("inbox", results.modifiedCount);
   }
 
   async processResubmittedEvents() {
@@ -134,15 +139,24 @@ export class InboxSubscriber {
         `Inbox event "${inboxEvent.messageId}" moved on before it was marked ${what}`,
       );
 
-      return;
+      return false;
     }
 
     logger.info(`Marked inbox event ${what} "${inboxEvent.messageId}"`);
+    return true;
   }
 
   async markEventFailed(inboxEvent, error) {
     inboxEvent.markAsFailed(error);
-    await this.writeClaimed(inboxEvent, "failed");
+    const written = await this.writeClaimed(inboxEvent, "failed");
+
+    if (written && !inboxEvent.retryable) {
+      logDeadLetter(
+        "inbox",
+        DeadLetterReason.NON_RETRYABLE,
+        inboxEvent.toDocument(),
+      );
+    }
   }
 
   async markEventComplete(inboxEvent) {

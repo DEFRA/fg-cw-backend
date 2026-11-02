@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearBuckets, listBuckets } from "../common/buckets/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
+import { DeadLetterGauge } from "../events/dead-letters.js";
 import { cases } from "./index.js";
+import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
+import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { InboxSubscriber } from "./subscribers/inbox.subscriber.js";
 import { OutboxSubscriber } from "./subscribers/outbox.subscriber.js";
@@ -18,6 +21,7 @@ vi.mock("../common/logger.js", () => ({
   },
 }));
 vi.mock("../common/mongo-client.js");
+vi.mock("../events/dead-letters.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
 vi.mock("./subscribers/update-case-status-agreement.subscriber.js");
 
@@ -104,6 +108,30 @@ describe("cases", () => {
     expect(createUpdateStatusAgreementConsumer.stop).toHaveBeenCalled();
     expect(outboxStop).toHaveBeenCalled();
     expect(inboxStop).toHaveBeenCalled();
+  });
+
+  it("starts and stops the dead letter gauge", async () => {
+    const gaugeStart = vi.fn();
+    const gaugeStop = vi.fn();
+    DeadLetterGauge.prototype.start = gaugeStart;
+    DeadLetterGauge.prototype.stop = gaugeStop;
+
+    await server.register(cases);
+    await server.initialize();
+
+    expect(DeadLetterGauge).toHaveBeenCalledWith({
+      enabled: false,
+      counts: {
+        inbox: countInboxDeadLetters,
+        outbox: countOutboxDeadLetters,
+      },
+    });
+
+    server.events.emit("start");
+    expect(gaugeStart).toHaveBeenCalledOnce();
+
+    server.events.emit("stop");
+    expect(gaugeStop).toHaveBeenCalledOnce();
   });
 
   it("registers routes", async () => {

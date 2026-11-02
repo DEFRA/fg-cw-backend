@@ -145,3 +145,36 @@ describe("config log.redact", () => {
     );
   });
 });
+
+describe("config metrics.enabled", () => {
+  let saved;
+
+  beforeEach(async () => {
+    saved = process.env.METRICS_ENABLED;
+    delete process.env.METRICS_ENABLED;
+    const { vi } = await import("vitest");
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    if (saved === undefined) {
+      delete process.env.METRICS_ENABLED;
+    } else {
+      process.env.METRICS_ENABLED = saved;
+    }
+  });
+
+  it("is off when METRICS_ENABLED is unset", async () => {
+    const cfg = await loadConfig();
+
+    expect(cfg.get("metrics.enabled")).toBe(false);
+  });
+
+  it("is on when METRICS_ENABLED is true", async () => {
+    process.env.METRICS_ENABLED = "true";
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("metrics.enabled")).toBe(true);
+  });
+});
