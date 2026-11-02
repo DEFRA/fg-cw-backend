@@ -85,10 +85,6 @@ describe("toAuditEnvironment", () => {
     },
   );
 
-  it("leaves an already-prefixed environment alone", () => {
-    expect(toAuditEnvironment("cdp-dev")).toBe("cdp-dev");
-  });
-
   it("stays within the schema's 20-character environment limit", () => {
     expect(toAuditEnvironment("perf-test").length).toBeLessThanOrEqual(20);
   });
@@ -193,14 +189,6 @@ describe("buildPayload", () => {
       entities: [],
       status: auditStatus.SUCCESS,
     });
-
-    expect(result.user).toBe(`AAD/${OPERATOR_ID}`);
-  });
-
-  it("does not prefix a user that already carries the AAD scheme", () => {
-    getRequestContext.mockReturnValue({ user: `AAD/${OPERATOR_ID}` });
-
-    const result = buildPayload({ entities: [], status: auditStatus.SUCCESS });
 
     expect(result.user).toBe(`AAD/${OPERATOR_ID}`);
   });
