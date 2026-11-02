@@ -9,7 +9,7 @@ import {
   DeadLetterReason,
   logDeadLetter,
   logDeadLettersSwept,
-} from "../../events/dead-letters.js";
+} from "../use-cases/dead-letter-log.js";
 import {
   cleanupStaleLocks,
   freeFifoLock,
@@ -150,12 +150,8 @@ export class InboxSubscriber {
     inboxEvent.markAsFailed(error);
     const written = await this.writeClaimed(inboxEvent, "failed");
 
-    if (written && !inboxEvent.retryable) {
-      logDeadLetter(
-        "inbox",
-        DeadLetterReason.NON_RETRYABLE,
-        inboxEvent.toDocument(),
-      );
+    if (written && inboxEvent.isDeadLetter()) {
+      logDeadLetter("inbox", DeadLetterReason.NON_RETRYABLE, inboxEvent);
     }
   }
 

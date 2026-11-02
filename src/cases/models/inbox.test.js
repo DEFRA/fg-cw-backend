@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { markPermanentFailure } from "../../events/retryable.js";
 import { Inbox, InboxStatus } from "./inbox.js";
 
 describe("inbox model", () => {
@@ -474,5 +475,32 @@ describe("inbox model stamps", () => {
       eventType: null,
       refs: [],
     });
+  });
+});
+
+describe("inbox model dead letter facts", () => {
+  it("is a dead letter after a failure retrying cannot fix", () => {
+    const inbox = Inbox.createMock();
+
+    inbox.markAsFailed(markPermanentFailure(new Error("bad definition")));
+
+    expect(inbox.isDeadLetter()).toBe(true);
+  });
+
+  it("is not a dead letter after a retryable failure", () => {
+    const inbox = Inbox.createMock();
+
+    inbox.markAsFailed(new Error("mongo is down"));
+
+    expect(inbox.isDeadLetter()).toBe(false);
+  });
+
+  it("exposes the error key the row is stored with", () => {
+    const inbox = Inbox.createMock();
+
+    inbox.markAsFailed(new Error("mongo is down"));
+
+    expect(inbox.errorKey).toEqual(expect.any(String));
+    expect(inbox.errorKey).toBe(inbox.toDocument().errorKey);
   });
 });

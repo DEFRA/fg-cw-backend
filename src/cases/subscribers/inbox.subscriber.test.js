@@ -327,7 +327,7 @@ describe("inbox.subscriber", () => {
           data: mockEventData,
         },
         markAsFailed: vi.fn(),
-        retryable: true,
+        isDeadLetter: () => false,
       };
       const inbox = new InboxSubscriber();
       inbox.handleEvent(mockMessage);
@@ -350,7 +350,7 @@ describe("inbox.subscriber", () => {
           data: mockEventData,
         },
         markAsFailed: vi.fn(),
-        retryable: true,
+        isDeadLetter: () => false,
       };
       const inbox = new InboxSubscriber();
       await inbox.processEvents([mockEvent]);
@@ -393,7 +393,7 @@ describe("InboxSubscriber failure reasons", () => {
       traceparent: "1234-abcd",
       event: { data: {} },
       markAsFailed: vi.fn(),
-      retryable: true,
+      isDeadLetter: () => false,
     };
 
     await new InboxSubscriber().handleEvent(message);
@@ -408,7 +408,7 @@ describe("InboxSubscriber failure reasons", () => {
       source: "GAS",
       event: { data: {} },
       markAsFailed: vi.fn(),
-      retryable: true,
+      isDeadLetter: () => false,
     };
 
     await new InboxSubscriber().handleEvent(message);
@@ -424,7 +424,7 @@ describe("InboxSubscriber failure reasons", () => {
     const message = {
       messageId: "m-1",
       markAsFailed: vi.fn(),
-      retryable: true,
+      isDeadLetter: () => false,
     };
 
     await new InboxSubscriber().markEventFailed(message, failure);
@@ -456,7 +456,7 @@ describe("InboxSubscriber writes only while it holds the claim", () => {
         messageId: "m-1",
         markAsComplete: vi.fn(),
         markAsFailed: vi.fn(),
-        retryable: true,
+        isDeadLetter: () => false,
       };
 
       await claimed(subscriber, () => mark(subscriber, message));

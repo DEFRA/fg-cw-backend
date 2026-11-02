@@ -3,7 +3,7 @@ import { registerBucket } from "../common/buckets/registry.js";
 import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
-import { DeadLetterGauge } from "../events/dead-letters.js";
+import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
 
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";

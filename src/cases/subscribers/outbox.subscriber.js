@@ -5,7 +5,7 @@ import { config } from "../../common/config.js";
 import { getMessageGroupId } from "../../common/get-message-group-id.js";
 import { logger } from "../../common/logger.js";
 import { publish } from "../../common/sns-client.js";
-import { logDeadLettersSwept } from "../../events/dead-letters.js";
+import { logDeadLettersSwept } from "../use-cases/dead-letter-log.js";
 import {
   cleanupStaleLocks,
   freeFifoLock,

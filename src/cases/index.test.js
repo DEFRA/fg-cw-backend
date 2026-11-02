@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearBuckets, listBuckets } from "../common/buckets/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
-import { DeadLetterGauge } from "../events/dead-letters.js";
+import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
 import { cases } from "./index.js";
 import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
 import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
@@ -21,7 +21,7 @@ vi.mock("../common/logger.js", () => ({
   },
 }));
 vi.mock("../common/mongo-client.js");
-vi.mock("../events/dead-letters.js");
+vi.mock("../events/dead-letter-gauge.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
 vi.mock("./subscribers/update-case-status-agreement.subscriber.js");
 
