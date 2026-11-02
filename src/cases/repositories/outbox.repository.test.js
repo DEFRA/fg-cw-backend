@@ -7,6 +7,7 @@ import { STAMPED_FIELDS } from "../../events/stamps.js";
 import { Outbox, OutboxStatus } from "../models/outbox.js";
 import {
   claimEvents,
+  countDeadLetters,
   editPayloadById,
   findDetailById,
   findNextMessage,
@@ -22,6 +23,15 @@ import {
 vi.mock("../../common/mongo-client.js");
 
 describe("outbox.repository", () => {
+  it("should count dead letters by status", async () => {
+    const countDocuments = vi.fn().mockResolvedValue(3);
+    db.collection.mockReturnValue({ countDocuments });
+
+    expect(await countDeadLetters()).toBe(3);
+
+    expect(countDocuments).toHaveBeenCalledWith({ status: "DEAD_LETTER" });
+  });
+
   describe("findNextMessage", () => {
     it("should find next message excluding locked segregationRefs", async () => {
       const lockIds = ["ref-a", "ref-b"];

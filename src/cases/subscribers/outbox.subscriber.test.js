@@ -345,3 +345,25 @@ describe("OutboxSubscriber failure reasons", () => {
     expect(event.markAsFailed).toHaveBeenCalledWith(failure);
   });
 });
+
+describe("OutboxSubscriber dead letter logs", () => {
+  it("warns with the count when the sweep moves rows", async () => {
+    updateDeadEvents.mockResolvedValue({ modifiedCount: 2 });
+    const warn = vi.spyOn(logger, "warn");
+
+    await new OutboxSubscriber().processDeadEvents();
+
+    expect(warn.mock.calls).toEqual([
+      ['"2" events in outbox became dead letters'],
+    ]);
+  });
+
+  it("logs nothing when the sweep moves no rows", async () => {
+    updateDeadEvents.mockResolvedValue({ modifiedCount: 0 });
+    const warn = vi.spyOn(logger, "warn");
+
+    await new OutboxSubscriber().processDeadEvents();
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
