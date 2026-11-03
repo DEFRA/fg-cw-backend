@@ -364,11 +364,9 @@ export const createWorkflow = async (payload = {}, configure) => {
     const doc = new WorkflowDocument(workflow);
     await db
       .collection("workflows")
-      .replaceOne(
-        { code: workflow.code, version: workflow.version },
-        doc,
-        { upsert: true },
-      );
+      .replaceOne({ code: workflow.code, version: workflow.version }, doc, {
+        upsert: true,
+      });
     await seedConfigVersion(db, workflow.code, workflow.version, {
       fetchStatus: FetchStatus.Fetched,
     });
