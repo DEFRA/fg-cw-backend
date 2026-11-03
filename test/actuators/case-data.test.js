@@ -11,7 +11,11 @@ import {
   seedCaseReaderToken,
   viewCaseData,
 } from "../helpers/actuators.js";
-import { CASE_READER_CLIENT, SERVICE_TOKEN } from "../helpers/service-token.js";
+import {
+  CASE_READER_CLIENT,
+  CASE_READER_TOKEN,
+  SERVICE_TOKEN,
+} from "../helpers/service-token.js";
 import {
   OPERATOR_ID,
   OPERATOR_NAME,
@@ -486,7 +490,7 @@ describe("the operator on existing actuator audits", () => {
     await redriveInboxEvent(
       id,
       { by: OPERATOR_NAME },
-      `Bearer ${SERVICE_TOKEN}`,
+      `Bearer ${CASE_READER_TOKEN}`,
       withActorId,
     );
 
@@ -501,7 +505,7 @@ describe("the operator on existing actuator audits", () => {
     await purgeInboxEvent(
       id,
       { by: OPERATOR_NAME, reasonCode: "BROKEN_PAYLOAD" },
-      `Bearer ${SERVICE_TOKEN}`,
+      `Bearer ${CASE_READER_TOKEN}`,
       withActorId,
     );
 
@@ -527,7 +531,7 @@ describe("the operator on existing actuator audits", () => {
         note: "amount was a string",
         revision: 0,
       },
-      `Bearer ${SERVICE_TOKEN}`,
+      `Bearer ${CASE_READER_TOKEN}`,
       withActorId,
     );
 

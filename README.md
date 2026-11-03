@@ -514,6 +514,11 @@ the route is quietly exposed to the BFF surface - every logged-in CW user -
 instead. The actuators module test guards against exactly that by asserting
 every `/actuators/*` route sits on the `public-api` strategy.
 
+Every `/actuators/*` route answers fg-gas-backend alone. The actuators plugin
+applies `requireCaseReader` to all of its routes, so a new actuator needs no
+guard of its own, and any other client gets a 403. The user roles route is the
+only public API endpoint open to any client.
+
 ### Buckets
 
 A bucket is one list the grants admin can show: one collection, with
@@ -556,15 +561,14 @@ and needs no route.
 ### Case actuators
 
 `/actuators/cases/*` serve the grants admin's case pages through
-fg-gas-backend, and only that client: `requireCaseReader` answers any other
-token with a 403. The case read takes the operator in the same two headers and
+fg-gas-backend. The case read takes the operator in the same two headers and
 is audited as `VIEW_CASE_DATA` before any data is returned. The existence
 check releases only yes or no, and is not audited.
 
 ### Workflow version actuators
 
 `/actuators/workflows/{code}/versions[/{version}]` serve the grants admin's
-workflow version pages through fg-gas-backend, behind the same guard. The reads
+workflow version pages through fg-gas-backend. The reads
 take the operator headers and are not audited here: fg-gas-backend audits the
 page view. With `include=document`, a version read also returns the stored
 workflow and the address each endpoint resolves to from `{SERVICE}_URL`
@@ -667,11 +671,13 @@ Check the startup logs, which will show one of:
 | `SERVICE_ACCESS_TOKEN_HASH is not a client:sha256hex pair - nothing seeded` | The value is malformed. Nothing was issued or removed.                                                                   |
 | `Failed to seed access token for <client>`                                  | The database write failed. The service started anyway; retry by redeploying.                                             |
 
-Then call an endpoint with the raw token. A 404 for this unknown event means
-the token was accepted; a 401 means it was not:
+Then call the user roles endpoint, which any client may call, with the raw
+token. A 200 with an empty `appRoles` for this unknown user means the token was
+accepted; a 401 means it was not. The actuators are no test of a token: they
+answer 403 to every client but fg-gas-backend.
 
 ```bash
-curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/actuators/events/inbox/000000000000000000000000
+curl -H "Authorization: Bearer <raw-token>" http://localhost:3101/api/users/00000000-0000-0000-0000-000000000000/roles
 ```
 
 ## Development helpers

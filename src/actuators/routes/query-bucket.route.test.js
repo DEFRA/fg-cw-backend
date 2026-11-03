@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../../common/logger.js";
 import { queryBucketUseCase } from "../use-cases/query-bucket.use-case.js";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import {
-  OPERATOR_ID,
-  OPERATOR_NAME,
-  operatorHeaders,
-} from "../../../test/helpers/operator.js";
+import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
 import { refuse } from "../../common/buckets/refusal.js";
 import { toConfigLink } from "../../events/case-refs.js";
 import { CASE_READER_CLIENT } from "../../common/require-case-reader.js";
@@ -139,16 +135,6 @@ describe("queryBucketRoute", () => {
 
   it("is never stored by a cache", async () => {
     expect((await post({})).headers["cache-control"]).toBe("no-store");
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await post(
-      {},
-      { "x-test-client": "fg-grants-platform-admin", ...operatorHeaders },
-    );
-
-    expect(response.statusCode).toBe(403);
-    expect(queryBucketUseCase).not.toHaveBeenCalled();
   });
 
   it.each([

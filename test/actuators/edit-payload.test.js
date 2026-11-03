@@ -10,7 +10,9 @@ import {
   purgeInboxEvent,
   redriveInboxEvent,
   redriveOutboxEvent,
+  seedCaseReaderToken,
 } from "../helpers/actuators.js";
+import { CASE_READER_CLIENT } from "../helpers/service-token.js";
 
 let client;
 let db;
@@ -156,6 +158,7 @@ beforeAll(async () => {
   db = client.db();
   inbox = db.collection("inbox");
   outbox = db.collection("outbox");
+  await seedCaseReaderToken(db);
 });
 
 afterAll(async () => {
@@ -552,7 +555,7 @@ describe("the edit's audit event", () => {
     expect(audit.event.audit.details.event).toEqual({
       box: "inbox",
       actor: "ada",
-      caller: "test-client",
+      caller: CASE_READER_CLIENT,
       revision: 0,
       changedPaths: ["/data/amount"],
       changedPathsTruncated: false,
@@ -590,7 +593,7 @@ describe("the edit's audit event", () => {
     expect(failure.event.audit.details.event).toEqual({
       box: "inbox",
       actor: "donatas",
-      caller: "test-client",
+      caller: CASE_READER_CLIENT,
       revision: 0,
       reason: "STALE",
     });
