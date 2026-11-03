@@ -282,7 +282,7 @@ describe("GET /cases", () => {
       event: {
         audit: {
           entities: [{ entity: "CASE", action: "VIEW_CASE_LIST" }],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {

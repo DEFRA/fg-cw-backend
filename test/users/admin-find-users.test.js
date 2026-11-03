@@ -32,7 +32,7 @@ describe("GET /admin/users (admin only)", () => {
       event: {
         audit: {
           entities: [{ entity: "USER", action: "VIEW_USER_LIST" }],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: expect.objectContaining({

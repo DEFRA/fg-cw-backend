@@ -140,7 +140,7 @@ describe("replaceCaseUseCase", () => {
       entities: [
         { entity: "CASE", action: "CREATE_CASE", entityid: "TEST-001" },
       ],
-      status: "SUCCESS",
+      status: "success",
     });
     expect(auditData.details.case.caseId).toBe("123333333344455555666666");
   });
@@ -200,7 +200,7 @@ describe("replaceCaseUseCase", () => {
       entities: [
         { entity: "CASE", action: "CREATE_CASE", entityid: "TEST-001" },
       ],
-      status: "FAILURE",
+      status: "failure",
     });
   });
 });

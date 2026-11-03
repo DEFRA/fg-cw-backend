@@ -674,13 +674,13 @@ describe("POST /actuators/buckets/{bucketId}/query, access and audit", () => {
       eventType: "Audit",
     });
     expect(rows[0].event).toMatchObject({
-      user: OPERATOR_ID,
+      user: `AAD/${OPERATOR_ID}`,
       security: { pmccode: "0706" },
       audit: {
         entities: [
           { entity: "BUCKET", action: "QUERY_BUCKET", entityid: "cw.cases" },
         ],
-        status: "SUCCESS",
+        status: "success",
         details: {
           security: { actor: { id: OPERATOR_ID, name: OPERATOR_NAME } },
           caller: CASE_READER_CLIENT,

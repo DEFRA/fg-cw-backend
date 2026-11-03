@@ -118,7 +118,7 @@ describe("redriveInboxEventUseCase transaction", () => {
       expect.objectContaining({ session: SESSION }),
     );
     expect(writeAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "SUCCESS" }),
+      expect.objectContaining({ status: "success" }),
       SESSION,
     );
   });

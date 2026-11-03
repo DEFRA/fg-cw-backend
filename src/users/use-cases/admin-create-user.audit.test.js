@@ -20,9 +20,9 @@ vi.mock("../../common/write-audit-event.js", () => ({
 const toPayload = (auditData, status = auditStatus.SUCCESS) => ({
   correlationid: "correlation-1",
   datetime: new Date().toISOString(),
-  environment: "test",
+  environment: "cdp-test",
   version: "1.0.0",
-  application: "Case Working Service",
+  application: "Grants",
   component: "fg-cw-backend",
   ip: "1.2.3.4",
   security: auditData.security,

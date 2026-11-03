@@ -103,7 +103,7 @@ describe("PUT /roles/{code}", () => {
               entityid: "ROLE_AUDIT_UPDATE",
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: expect.objectContaining({

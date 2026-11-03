@@ -122,7 +122,7 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
       action: "REDRIVE_EVENT",
       entityid: doc._id.toHexString(),
     });
-    expect(audit.event.audit.status).toBe("SUCCESS");
+    expect(audit.event.audit.status).toBe("success");
     expect(audit.event.audit.details.event).toMatchObject({
       box: "inbox",
       actor: "donatas",

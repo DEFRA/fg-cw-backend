@@ -278,7 +278,7 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
               entityid: kase.caseRef,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {

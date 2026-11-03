@@ -314,13 +314,13 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0].event).toMatchObject({
-      user: OPERATOR_ID,
+      user: `AAD/${OPERATOR_ID}`,
       security: { pmccode: "0706" },
       audit: {
         entities: [
           { entity: "CASE", action: "VIEW_CASE_DATA", entityid: "case-1" },
         ],
-        status: "SUCCESS",
+        status: "success",
         details: {
           security: { actor: { id: OPERATOR_ID, name: OPERATOR_NAME } },
           caller: CASE_READER_CLIENT,
@@ -345,8 +345,8 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
     const [row] = await auditRows("admin-view-case");
 
     expect(row.event).toMatchObject({
-      user: OPERATOR_ID,
-      audit: { status: "FAILURE", details: { include: "none" } },
+      user: `AAD/${OPERATOR_ID}`,
+      audit: { status: "failure", details: { include: "none" } },
     });
   });
 
@@ -492,7 +492,7 @@ describe("the operator on existing actuator audits", () => {
 
     const [row] = await auditRows(`redrive-event-${id}`);
 
-    expect(row.event.user).toBe(OPERATOR_ID);
+    expect(row.event.user).toBe(`AAD/${OPERATOR_ID}`);
   });
 
   it("names the operator's id in a purge's audit row", async () => {
@@ -505,7 +505,9 @@ describe("the operator on existing actuator audits", () => {
       withActorId,
     );
 
-    expect((await auditRowFor(id, "PURGE_EVENT")).event.user).toBe(OPERATOR_ID);
+    expect((await auditRowFor(id, "PURGE_EVENT")).event.user).toBe(
+      `AAD/${OPERATOR_ID}`,
+    );
   });
 
   it("names the operator's id in a payload edit's audit row", async () => {
@@ -530,7 +532,7 @@ describe("the operator on existing actuator audits", () => {
     );
 
     expect((await auditRowFor(id, "EDIT_EVENT_PAYLOAD")).event.user).toBe(
-      OPERATOR_ID,
+      `AAD/${OPERATOR_ID}`,
     );
   });
 });

@@ -45,7 +45,7 @@ describe("GET /admin/users/{userId} (admin only)", () => {
               entityid: testUser.id,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               targetUser: expect.objectContaining({

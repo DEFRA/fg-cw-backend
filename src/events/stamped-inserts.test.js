@@ -67,7 +67,7 @@ describe("every insert into the outbox", () => {
   it("stamps an audit event", async () => {
     await writeAuditEvent({
       entities: [{ entity: "CASE", action: "VIEW_CASE", entityid: "ABC-123" }],
-      status: "SUCCESS",
+      status: "success",
     });
 
     expect(insertedOutboxRow(0).toDocument()).toMatchObject({

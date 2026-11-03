@@ -5,11 +5,34 @@ import { isIP, isIPv6 } from "node:net";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
 import { auditStamps } from "../events/stamps.js";
+import {
+  AAD_USER_PREFIX,
+  AUDIT_APPLICATION,
+  AUDIT_SCHEMA_VERSION,
+  CDP_ENVIRONMENT_PREFIX,
+  LOCAL_ENVIRONMENT,
+} from "./audit-constants.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
 
 const getCorrelationId = () => getTraceId() ?? randomUUID();
+
+// Every user this service records is the Entra object id `setAuditActor` took
+// off the request, so the provider prefix is the envelope's to add - not a
+// caller's to remember.
+const toAuditUser = (user) => (user ? `${AAD_USER_PREFIX}${user}` : undefined);
+
+// Applied here rather than to `cdpEnvironment`, which also names the CloudEvent
+// types GAS and Caseworking route on - prefixing that would stop those services
+// recognising each other's events.
+export const toAuditEnvironment = (environment) => {
+  if (!environment || environment === LOCAL_ENVIRONMENT) {
+    return LOCAL_ENVIRONMENT;
+  }
+
+  return `${CDP_ENVIRONMENT_PREFIX}${environment}`;
+};
 
 // System-originated events (e.g. inbox consumers) have no HTTP request context,
 // so default to the unspecified-address sentinel to satisfy the required `ip` field.
@@ -99,12 +122,12 @@ export const buildPayload = ({
   const context = getRequestContext();
 
   return {
-    user: context?.user,
+    user: toAuditUser(context?.user),
     datetime: new Date().toISOString(),
-    version: config.get("serviceVersion"),
-    application: "Case Working Service",
+    version: AUDIT_SCHEMA_VERSION,
+    application: AUDIT_APPLICATION,
     component: config.get("serviceName"),
-    environment: config.get("cdpEnvironment"),
+    environment: toAuditEnvironment(config.get("cdpEnvironment")),
     correlationid: getCorrelationId(),
     ip: toAuditIp(context),
     security,

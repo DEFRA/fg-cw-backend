@@ -50,7 +50,7 @@ describe("POST /admin/users (admin only)", () => {
               entityid: createdUserId,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: expect.objectContaining({

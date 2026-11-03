@@ -350,7 +350,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
               entityid: kase.caseRef,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {
