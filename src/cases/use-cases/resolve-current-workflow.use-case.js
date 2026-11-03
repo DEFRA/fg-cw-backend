@@ -3,10 +3,7 @@ import { logger } from "../../common/logger.js";
 import { parseSemver } from "../../common/semver.js";
 import { updateCurrentConfigVersion } from "../repositories/case.repository.js";
 import { findLatestForMajor } from "../repositories/config-version.repository.js";
-import {
-  findByCode,
-  findByCodeAndVersion,
-} from "../repositories/workflow.repository.js";
+import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 // Process-level cache of immutable workflow definitions keyed by `${code}@${version}`.
@@ -78,12 +75,6 @@ const memoResolve = async (memo, key, produce) => {
   return result;
 };
 
-const legacyResolution = async (workflowCode) => ({
-  workflow: await findByCode(workflowCode),
-  resolvedVersion: null,
-  definitionSource: "mongodb",
-});
-
 // Resolves the latest active workflow within the same major as the pinned version.
 export const resolveCurrentWorkflowUseCase = async (
   workflowCode,
@@ -91,7 +82,9 @@ export const resolveCurrentWorkflowUseCase = async (
   memo,
 ) => {
   if (!pinnedVersion) {
-    return legacyResolution(workflowCode);
+    throw Boom.badRequest(
+      `Case for workflow "${workflowCode}" has no pinned config version`,
+    );
   }
 
   const major = parseMajor(pinnedVersion);
@@ -160,9 +153,6 @@ const verifyOrFallback = async (kase, resolution) => {
 };
 
 const determineResolutionType = (pinned, resolvedVersion, didFallback) => {
-  if (!pinned) {
-    return "legacy";
-  }
   if (didFallback) {
     return "fallback";
   }

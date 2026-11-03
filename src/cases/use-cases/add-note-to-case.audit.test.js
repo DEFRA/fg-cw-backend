@@ -7,14 +7,17 @@ import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { Case } from "../models/case.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { findLatestForMajor } from "../repositories/config-version.repository.js";
 import {
   addNoteToCaseAuditDataBuilder,
   addNoteToCaseUseCase,
 } from "./add-note-to-case.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../repositories/config-version.repository.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({
   writeAuditEvent: vi.fn(),
 }));
@@ -51,9 +54,14 @@ describe("addNoteToCaseUseCase audit", () => {
   });
 
   it("writes an ADD_NOTE_TO_CASE audit event on success", async () => {
-    const mockCase = Case.createMock();
+    const mockCase = Case.createMock({ originalConfigVersion: "1.0.0" });
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue({});
+    findLatestForMajor.mockResolvedValue({ version: "1.0.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: {},
+      resolvedVersion: "1.0.0",
+      definitionSource: "mongodb",
+    });
     update.mockResolvedValue(mockCase);
 
     await addNoteToCaseUseCase({

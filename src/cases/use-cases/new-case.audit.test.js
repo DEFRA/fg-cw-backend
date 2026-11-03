@@ -5,14 +5,14 @@ import { auditStatus } from "../../common/audit-constants.js";
 import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 import {
   newCaseAuditDataBuilder,
   newCaseUseCase,
 } from "./new-case.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-workflow-by-code.use-case.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({
   writeAuditEvent: vi.fn(),
 }));
@@ -41,6 +41,7 @@ const message = {
       payload: {
         createdAt: "2025-01-01T00:00:00.000Z",
         submittedAt: "2025-01-01T00:00:00.000Z",
+        configVersion: "1.0.0",
         identifiers: {},
         answers: {},
       },
@@ -62,7 +63,11 @@ describe("newCaseUseCase audit", () => {
     save.mockResolvedValue({
       insertedId: new ObjectId("888888888888888999999998"),
     });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: "1.0.0",
+      definitionSource: "mongodb",
+    });
 
     await newCaseUseCase(message, session);
 

@@ -13,14 +13,17 @@ import { WorkflowTaskGroup } from "../models/workflow-task-group.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { findLatestForMajor } from "../repositories/config-version.repository.js";
 import {
   updateTaskStatusAuditDataBuilder,
   updateTaskStatusUseCase,
 } from "./update-task-status.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../repositories/config-version.repository.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({
   writeAuditEvent: vi.fn(),
 }));
@@ -56,8 +59,17 @@ describe("updateTaskStatusUseCase audit", () => {
     vi.clearAllMocks();
   });
 
+  const givenWorkflowResolves = (workflow) => {
+    findLatestForMajor.mockResolvedValue({ version: "1.0.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow,
+      resolvedVersion: "1.0.0",
+      definitionSource: "mongodb",
+    });
+  };
+
   const createInputTask = (input) => {
-    const kase = Case.createMock();
+    const kase = Case.createMock({ originalConfigVersion: "1.0.0" });
     const workflow = Workflow.createMock({
       phases: [
         new WorkflowPhase({
@@ -103,7 +115,7 @@ describe("updateTaskStatusUseCase audit", () => {
     kase.setTaskValue = vi.fn();
 
     findById.mockResolvedValue(kase);
-    findByCode.mockResolvedValue(workflow);
+    givenWorkflowResolves(workflow);
     update.mockResolvedValue(kase);
 
     return kase;
@@ -130,11 +142,11 @@ describe("updateTaskStatusUseCase audit", () => {
   });
 
   it("writes an UPDATE_TASK_STATUS audit event on success", async () => {
-    const mockCase = Case.createMock();
+    const mockCase = Case.createMock({ originalConfigVersion: "1.0.0" });
     const mockWorkflow = Workflow.createMock();
     mockCase.setTaskValue = vi.fn();
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    givenWorkflowResolves(mockWorkflow);
     update.mockResolvedValue(mockCase);
 
     await updateTaskStatusUseCase({
@@ -167,7 +179,6 @@ describe("updateTaskStatusUseCase audit", () => {
   });
 
   it("writes a FAILURE audit event when the case is not found", async () => {
-    findByCode.mockResolvedValue(Workflow.createMock());
     findById.mockResolvedValue(null);
 
     await updateTaskStatusUseCase({
