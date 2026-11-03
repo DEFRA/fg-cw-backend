@@ -2,7 +2,11 @@ import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { anAttemptHistory } from "../fixtures/attempt-history.js";
-import { redriveInboxEvent, redriveOutboxEvent } from "../helpers/actuators.js";
+import {
+  redriveInboxEvent,
+  redriveOutboxEvent,
+  seedCaseReaderToken,
+} from "../helpers/actuators.js";
 
 let client;
 let inbox;
@@ -65,6 +69,7 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
   outbox = client.db().collection("outbox");
+  await seedCaseReaderToken(client.db());
 });
 
 afterAll(async () => {

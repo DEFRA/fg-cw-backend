@@ -5,7 +5,8 @@ import { CASE_READER_CLIENT } from "../../src/common/require-case-reader.js";
 import { operatorHeaders } from "./operator.js";
 
 // The real route behind a stand-in for the service token scheme: the client
-// is whatever `x-test-client` says, so the case reader guard runs for real.
+// is whatever `x-test-client` says. The actuators plugin's client guard is not
+// applied here; src/actuators/index.test.js covers it over every route.
 export const serverFor = async (route) => {
   const server = hapi.server();
 

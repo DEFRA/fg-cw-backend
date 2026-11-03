@@ -1,7 +1,6 @@
 import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import { operatorHeaders } from "../../../test/helpers/operator.js";
 import { viewWorkflowVersionsUseCase } from "../use-cases/view-workflow-versions.use-case.js";
 import { viewWorkflowVersionsRoute } from "./view-workflow-versions.route.js";
 
@@ -72,16 +71,6 @@ describe("viewWorkflowVersionsRoute", () => {
     });
 
     expect(response.statusCode).toBe(400);
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await get("/actuators/workflows/woodland/versions", {
-      "x-test-client": "test-client",
-      ...operatorHeaders,
-    });
-
-    expect(response.statusCode).toBe(403);
-    expect(viewWorkflowVersionsUseCase).not.toHaveBeenCalled();
   });
 
   it("passes the WORKFLOW_NOT_FOUND reason through on a 404", async () => {

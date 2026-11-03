@@ -1,7 +1,6 @@
 import Boom from "@hapi/boom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import { operatorHeaders } from "../../../test/helpers/operator.js";
 import { viewWorkflowVersionUseCase } from "../use-cases/view-workflow-version.use-case.js";
 import { viewWorkflowVersionRoute } from "./view-workflow-version.route.js";
 
@@ -92,15 +91,6 @@ describe("viewWorkflowVersionRoute", () => {
     ],
   ])("answers 400 to %s", async (_, url) => {
     expect((await get(url)).statusCode).toBe(400);
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await get("/actuators/workflows/woodland/versions/2.0.0", {
-      "x-test-client": "test-client",
-      ...operatorHeaders,
-    });
-
-    expect(response.statusCode).toBe(403);
   });
 
   it("answers 500 rather than an answer its schema refuses", async () => {

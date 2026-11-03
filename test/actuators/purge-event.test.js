@@ -6,6 +6,7 @@ import {
   purgeInboxEvent,
   purgeOutboxEvent,
   redriveInboxEvent,
+  seedCaseReaderToken,
 } from "../helpers/actuators.js";
 
 let client;
@@ -127,6 +128,7 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
   outbox = client.db().collection("outbox");
+  await seedCaseReaderToken(client.db());
 });
 
 afterAll(async () => {
