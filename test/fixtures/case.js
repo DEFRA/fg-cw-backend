@@ -101,6 +101,8 @@ export const caseData1 = {
   ],
   comments: [],
   assignedUser: null,
+  originalConfigVersion: "1.0.0",
+  currentConfigVersion: "1.0.0",
   requiredRoles: {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
@@ -211,6 +213,8 @@ export const caseData2 = {
   ],
   comments: [],
   assignedUser: null,
+  originalConfigVersion: "1.0.0",
+  currentConfigVersion: "1.0.0",
   requiredRoles: {
     allOf: ["ROLE_1", "ROLE_2"],
     anyOf: ["ROLE_3"],
@@ -221,8 +225,8 @@ export const caseData2 = {
 export const caseData3Document = {
   workflowCode: "frps-private-beta",
   caseRef: "CASE-REF-3",
-  originalConfigVersion: null,
-  currentConfigVersion: null,
+  originalConfigVersion: "1.0.0",
+  currentConfigVersion: "1.0.0",
   currentPhase: "DEFAULT",
   currentStage: "APPLICATION_RECEIPT",
   currentStatus: "AWAITING_REVIEW",

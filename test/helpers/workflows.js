@@ -2,11 +2,12 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { Workflow } from "../../src/cases/models/workflow.js";
 import { WorkflowDocument } from "../../src/cases/repositories/workflow/workflow-document.js";
+import { seedConfigVersion } from "./config-versions.js";
 
 export const createWorkflow = async (payload = {}, configure) => {
   const workflow = new Workflow({
     code: "frps-private-beta",
-    version: "0.0.0",
+    version: "1.0.0",
     pages: {
       cases: {
         details: {
@@ -359,10 +360,9 @@ export const createWorkflow = async (payload = {}, configure) => {
   const client = new MongoClient(env.MONGO_URI);
   try {
     await client.connect();
-    await client
-      .db()
-      .collection("workflows")
-      .insertOne(new WorkflowDocument(workflow));
+    const db = client.db();
+    await db.collection("workflows").insertOne(new WorkflowDocument(workflow));
+    await seedConfigVersion(db, workflow.code, workflow.version);
   } finally {
     await client.close();
   }
