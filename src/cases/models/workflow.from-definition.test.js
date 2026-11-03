@@ -83,6 +83,75 @@ describe("Workflow.fromDefinition", () => {
   const fromDefinition = (published) => () =>
     Workflow.fromDefinition(published, "1.2.3");
 
+  it.each([
+    [
+      "task",
+      { allOf: ["ROLE_TASK"], anyOf: [] },
+      { allOf: ["ROLE_STAGE"], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_TASK",
+    ],
+    [
+      "stage",
+      { allOf: [], anyOf: [] },
+      { allOf: ["ROLE_STAGE"], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_STAGE",
+    ],
+    [
+      "phase",
+      null,
+      { allOf: [], anyOf: [] },
+      { allOf: ["ROLE_PHASE"], anyOf: [] },
+      "ROLE_PHASE",
+    ],
+    ["case", null, null, { allOf: [], anyOf: [] }, "ROLE_SFI_REFORM"],
+  ])(
+    "uses the %s roles when they are the closest non-empty requirement",
+    (_, taskRoles, stageRoles, phaseRoles, expectedRole) => {
+      const published = definition();
+      published.phases[0].requiredRoles = phaseRoles;
+      published.phases[0].stages[0].requiredRoles = stageRoles;
+      const workflow = fromDefinition(published)();
+      const position = workflow.getInitialPosition();
+      expect(
+        workflow.getApplicableRoles(position, { requiredRoles: taskRoles }),
+      ).toEqual({ allOf: [expectedRole], anyOf: [] });
+    },
+  );
+
+  it.each(["phase", "stage"])(
+    "rejects malformed %s role requirements",
+    (level) => {
+      for (const roles of [
+        { allOf: [] },
+        { anyOf: [] },
+        { allOf: ["invalid-role"], anyOf: [] },
+        { allOf: [], anyOf: "ROLE_1" },
+      ]) {
+        const published = definition();
+        const target =
+          level === "phase"
+            ? published.phases[0]
+            : published.phases[0].stages[0];
+        target.requiredRoles = roles;
+        expect(fromDefinition(published)).toThrow(/requiredRoles/);
+      }
+    },
+  );
+
+  it.each([
+    undefined,
+    null,
+    { allOf: [], anyOf: [] },
+    { allOf: ["ROLE_1"], anyOf: [] },
+  ])("accepts optional and valid phase and stage roles: %j", (roles) => {
+    const published = definition();
+    published.phases[0].requiredRoles = roles;
+    published.phases[0].stages[0].requiredRoles = roles;
+    expect(fromDefinition(published)).not.toThrow();
+  });
+
   const withStatuses = (statuses) => {
     const published = definition();
     published.phases[0].stages[0].statuses = statuses;

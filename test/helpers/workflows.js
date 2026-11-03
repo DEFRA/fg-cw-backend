@@ -3,7 +3,7 @@ import { env } from "node:process";
 import { Workflow } from "../../src/cases/models/workflow.js";
 import { WorkflowDocument } from "../../src/cases/repositories/workflow/workflow-document.js";
 
-export const createWorkflow = async (payload = {}) => {
+export const createWorkflow = async (payload = {}, configure) => {
   const workflow = new Workflow({
     code: "frps-private-beta",
     version: "0.0.0",
@@ -353,6 +353,8 @@ export const createWorkflow = async (payload = {}) => {
     endpoints: [],
     ...payload,
   });
+
+  configure?.(workflow);
 
   const client = new MongoClient(env.MONGO_URI);
   try {
