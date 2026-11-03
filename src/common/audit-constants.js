@@ -51,9 +51,22 @@ export const auditActions = {
   FETCH_CONFIG_DEFINITION: "FETCH_CONFIG_DEFINITION",
 };
 
+// The FCP audit event schema version, not the service's release version.
+export const AUDIT_SCHEMA_VERSION = "1.0.0";
+
+// The GIO application code, confirmed by the audit team.
+export const AUDIT_APPLICATION = "Grants";
+
+// Entra object ids are recorded as `AAD/<id>`.
+export const AAD_USER_PREFIX = "AAD/";
+
+// CDP environments are published as `cdp-<env>`; a local run is `local`.
+export const LOCAL_ENVIRONMENT = "local";
+export const CDP_ENVIRONMENT_PREFIX = "cdp-";
+
 export const auditStatus = {
-  SUCCESS: "SUCCESS",
-  FAILURE: "FAILURE",
+  SUCCESS: "success",
+  FAILURE: "failure",
 };
 
 // Defra Protective Monitoring event reference codes (BUJ QRG v2.2), dashes stripped.

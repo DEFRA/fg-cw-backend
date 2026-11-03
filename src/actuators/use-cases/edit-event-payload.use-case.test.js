@@ -228,7 +228,7 @@ describe("editEventPayloadUseCase audit", () => {
 
     expect(withTransaction).toHaveBeenCalledTimes(1);
     expect(writeAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "SUCCESS" }),
+      expect.objectContaining({ status: "success" }),
       SESSION,
     );
   });
@@ -278,7 +278,7 @@ describe("editEventPayloadUseCase audit", () => {
     const [payload, session] = writeAuditEvent.mock.calls[0];
 
     expect(session).toBeNull();
-    expect(payload.status).toBe("FAILURE");
+    expect(payload.status).toBe("failure");
     expect(payload.details.event).toEqual({
       box: "inbox",
       actor: "ada",
@@ -291,7 +291,7 @@ describe("editEventPayloadUseCase audit", () => {
   it("records a 422 refusal as a FAILURE too, with its reason", async () => {
     await refusedWith(aCommand({ payload: STORED }));
 
-    expect(writeAuditEvent.mock.calls[0][0].status).toBe("FAILURE");
+    expect(writeAuditEvent.mock.calls[0][0].status).toBe("failure");
     expect(writeAuditEvent.mock.calls[0][0].details.event.reason).toBe(
       "UNCHANGED",
     );

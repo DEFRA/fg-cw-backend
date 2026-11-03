@@ -155,7 +155,7 @@ describe("POST /users/login", () => {
       event: {
         audit: {
           entities: [{ entity: "USER", action: "LOGIN", entityid: idpId }],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {

@@ -210,13 +210,11 @@ const mapTasks = async (
 export const mapValueOptions = (valueOptions = []) =>
   valueOptions.map((option) => ({
     code: option.code,
-    name: option.name,
+    name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
     commentInputDef: option.comment ?? null,
   }));
-
-const displayName = (option) => option.altName || option.name;
 
 export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
@@ -236,7 +234,7 @@ export const mapSelectedValueOption = (statusCode, valueOptions) => {
   }
 
   return {
-    statusText: displayName(selectedOption),
+    statusText: selectedOption.name,
     statusTheme: selectedOption.theme ?? "NONE",
   };
 };
@@ -401,6 +399,7 @@ const mapStageActions = (kase, workflow, canPerformActions) => {
     return {
       code: a.code,
       name: a.name,
+      hint: a.hint,
       comment: a.comment,
       confirm: a.confirm,
       classes: a.classes,
@@ -451,6 +450,7 @@ const mapStageData = async (
     description: workflowStage.description,
     interactive: currentStatus.interactive,
     hideTaskGroups: currentStatus.hideTaskGroups,
+    cancelHref: currentStatus.cancelHref,
     canPerformActions,
     taskGroups: await mapVisibleTaskGroups(
       currentStatus,

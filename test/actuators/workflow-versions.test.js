@@ -342,7 +342,7 @@ describe("POST /actuators/workflows/{code}/versions/{version}/fetch", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0].event).toMatchObject({
-      user: OPERATOR_ID,
+      user: `AAD/${OPERATOR_ID}`,
       security: { pmccode: "0706" },
       audit: {
         entities: [
@@ -352,7 +352,7 @@ describe("POST /actuators/workflows/{code}/versions/{version}/fetch", () => {
             entityid: code,
           },
         ],
-        status: "SUCCESS",
+        status: "success",
         details: {
           fetch: {
             grantCode: code,

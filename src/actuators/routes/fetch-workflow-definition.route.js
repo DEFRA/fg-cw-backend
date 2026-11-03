@@ -1,4 +1,3 @@
-import { requireCaseReader } from "../../common/require-case-reader.js";
 import {
   safeFailAction,
   safeResponseFailAction,
@@ -19,7 +18,6 @@ export const fetchWorkflowDefinitionRoute = {
     plugins: {
       "hapi-swagger": { security: [{ serviceToken: [] }] },
     },
-    ext: { onPostAuth: { method: requireCaseReader } },
     validate: {
       params: workflowVersionParams,
       query: requiredActorQuery,

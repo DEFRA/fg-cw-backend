@@ -9,6 +9,7 @@ export class StatusDocument {
     this.description = props.description;
     this.interactive = props.interactive;
     this.hideTaskGroups = props.hideTaskGroups || false;
+    this.cancelHref = props.cancelHref || null;
     this.transitions = props.transitions.map((t) => new TransitionDocument(t));
   }
 }

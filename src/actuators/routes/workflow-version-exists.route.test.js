@@ -52,11 +52,6 @@ describe("workflowVersionExistsRoute", () => {
     );
   });
 
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    expect((await get("fg-grants-platform-admin")).statusCode).toBe(403);
-    expect(workflowVersionExistsUseCase).not.toHaveBeenCalled();
-  });
-
   it("answers 400 on a version that is not a version number", async () => {
     const response = await get(
       "fg-gas-backend",

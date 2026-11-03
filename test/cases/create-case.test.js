@@ -110,7 +110,7 @@ describe("On CreateNewCase event", () => {
               entityid: "CASE-REF-3",
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {

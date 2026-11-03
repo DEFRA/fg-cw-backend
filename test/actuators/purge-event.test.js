@@ -6,6 +6,7 @@ import {
   purgeInboxEvent,
   purgeOutboxEvent,
   redriveInboxEvent,
+  seedCaseReaderToken,
 } from "../helpers/actuators.js";
 
 let client;
@@ -127,6 +128,7 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
   outbox = client.db().collection("outbox");
+  await seedCaseReaderToken(client.db());
 });
 
 afterAll(async () => {
@@ -236,7 +238,7 @@ describe("POST /actuators/events/inbox/{id}/purge", () => {
       action: "PURGE_EVENT",
       entityid: doc._id.toHexString(),
     });
-    expect(audit.event.audit.status).toBe("SUCCESS");
+    expect(audit.event.audit.status).toBe("success");
     expect(audit.event.audit.details.event).toMatchObject({
       box: "inbox",
       actor: "donatas",
@@ -281,7 +283,7 @@ describe("POST /actuators/events/inbox/{id}/purge", () => {
     await purgeInboxEvent(doc._id.toHexString(), aReason()).catch(() => {});
 
     expect((await inbox.findOne({ _id: doc._id })).status).toBe("COMPLETED");
-    expect((await auditFor(doc)).event.audit.status).toBe("FAILURE");
+    expect((await auditFor(doc)).event.audit.status).toBe("failure");
   });
 });
 

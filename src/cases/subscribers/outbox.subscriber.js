@@ -91,7 +91,9 @@ export class OutboxSubscriber {
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated "${results.modifiedCount}" dead outbox events`);
+      logger.warn(
+        `"${results.modifiedCount}" events in outbox became dead letters`,
+      );
   }
 
   async processResubmittedEvents() {

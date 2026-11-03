@@ -11,6 +11,7 @@ export class WorkflowStageStatus {
     this.description = props.description;
     this.interactive = props.interactive;
     this.hideTaskGroups = props.hideTaskGroups;
+    this.cancelHref = props.cancelHref;
     this.transitions = props.transitions;
     this.closes = props.closes;
   }

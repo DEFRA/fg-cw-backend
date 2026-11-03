@@ -89,7 +89,7 @@ describe("POST /roles", () => {
               entityid: "ROLE_AUDIT_CREATE",
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: expect.objectContaining({

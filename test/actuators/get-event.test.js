@@ -1,7 +1,11 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { getInboxEvent, getOutboxEvent } from "../helpers/actuators.js";
+import {
+  getInboxEvent,
+  getOutboxEvent,
+  seedCaseReaderToken,
+} from "../helpers/actuators.js";
 import { TestUser, getTokenFor } from "../helpers/users.js";
 
 let client;
@@ -66,6 +70,7 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
   outbox = client.db().collection("outbox");
+  await seedCaseReaderToken(client.db());
 });
 
 afterAll(async () => {
@@ -185,7 +190,7 @@ describe("GET /actuators/events/outbox/{id}", () => {
   it("returns an audit event's own page by id, labelled", async () => {
     const doc = anOutboxDoc({
       target: "arn:aws:sns:eu-west-2:000000000000:cw__sns__audit_topic_arn",
-      event: { audit: { entities: [{ entity: "CASE" }], status: "SUCCESS" } },
+      event: { audit: { entities: [{ entity: "CASE" }], status: "success" } },
     });
     await outbox.insertOne(doc);
 

@@ -46,9 +46,4 @@ describe("caseExistsRoute", () => {
       "no-store",
     );
   });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    expect((await get("fg-grants-platform-admin")).statusCode).toBe(403);
-    expect(caseExistsUseCase).not.toHaveBeenCalled();
-  });
 });

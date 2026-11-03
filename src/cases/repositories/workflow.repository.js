@@ -24,6 +24,7 @@ const toWorkflowAction = (a) =>
   new WorkflowAction({
     code: a.code,
     name: a.name,
+    hint: a.hint,
     checkTasks: a.checkTasks,
     classes: a.classes,
     comment: a.comment
@@ -52,6 +53,7 @@ const toWorkflowStageStatus = (s) =>
     description: s.description,
     interactive: s.interactive,
     hideTaskGroups: s.hideTaskGroups,
+    cancelHref: s.cancelHref,
     transitions: s.transitions.map(toWorkflowTransition),
   });
 

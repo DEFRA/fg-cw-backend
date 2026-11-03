@@ -5,11 +5,30 @@ import { isIP, isIPv6 } from "node:net";
 import { Outbox } from "../cases/models/outbox.js";
 import { insertMany } from "../cases/repositories/outbox.repository.js";
 import { auditStamps } from "../events/stamps.js";
+import {
+  AAD_USER_PREFIX,
+  AUDIT_APPLICATION,
+  AUDIT_SCHEMA_VERSION,
+  CDP_ENVIRONMENT_PREFIX,
+  LOCAL_ENVIRONMENT,
+} from "./audit-constants.js";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { getRequestContext } from "./request-context.js";
 
 const getCorrelationId = () => getTraceId() ?? randomUUID();
+
+// The envelope adds the `AAD/` prefix; callers pass the bare Entra object id.
+const toAuditUser = (user) => (user ? `${AAD_USER_PREFIX}${user}` : undefined);
+
+// Not applied to `cdpEnvironment`, which also builds CloudEvent types.
+export const toAuditEnvironment = (environment) => {
+  if (!environment || environment === LOCAL_ENVIRONMENT) {
+    return LOCAL_ENVIRONMENT;
+  }
+
+  return `${CDP_ENVIRONMENT_PREFIX}${environment}`;
+};
 
 // System-originated events (e.g. inbox consumers) have no HTTP request context,
 // so default to the unspecified-address sentinel to satisfy the required `ip` field.
@@ -99,12 +118,12 @@ export const buildPayload = ({
   const context = getRequestContext();
 
   return {
-    user: context?.user,
+    user: toAuditUser(context?.user),
     datetime: new Date().toISOString(),
-    version: config.get("serviceVersion"),
-    application: "Case Working Service",
+    version: AUDIT_SCHEMA_VERSION,
+    application: AUDIT_APPLICATION,
     component: config.get("serviceName"),
-    environment: config.get("cdpEnvironment"),
+    environment: toAuditEnvironment(config.get("cdpEnvironment")),
     correlationid: getCorrelationId(),
     ip: toAuditIp(context),
     security,

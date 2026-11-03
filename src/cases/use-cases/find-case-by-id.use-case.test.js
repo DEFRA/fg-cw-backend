@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { AppRole } from "../../users/models/app-role.js";
@@ -753,6 +754,66 @@ describe("findCaseByIdUseCase", () => {
     expect(result.stage.taskGroups).toEqual([]);
   });
 
+  it("includes hint in mapped stage actions", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    const action =
+      mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action;
+    action.hint = "Progress to next stage";
+    action.checkTasks = false;
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions[0].hint).toBe("Progress to next stage");
+  });
+
+  it("returns undefined hint when action has no hint", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].statuses[0].transitions[0].action.checkTasks = false;
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.actions[0].hint).toBeUndefined();
+  });
+
+  it("passes cancelHref from the current status", async () => {
+    const mockUser = User.createMock();
+    const mockWorkflow = Workflow.createMock();
+    const kase = Case.createMock({ _id: "test-case-id" });
+
+    mockWorkflow.phases[0].stages[0].statuses[0].cancelHref = "/cases";
+
+    findAll.mockResolvedValue([mockUser]);
+    resolveWorkflowForCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: null,
+    });
+    findById.mockResolvedValue(kase);
+
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+
+    expect(result.stage.cancelHref).toBe("/cases");
+  });
+
   it("sets canComplete to true when task has no required roles", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
@@ -1319,7 +1380,7 @@ describe("findCaseByIdUseCase", () => {
       expect(result.stage.outcome).toBeUndefined();
     });
 
-    it("maps statusText using altName when present and transforms statusOptions", async () => {
+    it("uses status labels for the task list and action labels for radio options", async () => {
       const mockUser = User.createMock();
       const mockWorkflow = Workflow.createMock();
       const mockCase = Case.createMock();
@@ -1358,27 +1419,89 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.value).toBe("STATUS_OPTION_1");
-      expect(task.statusText).toBe("Accept");
+      expect(task.statusText).toBe("Accepted");
       expect(task.statusTheme).toBe("NONE");
 
       // Verify statusOptions are transformed
       expect(task.valueOptions).toEqual([
         {
           code: "STATUS_OPTION_1",
-          name: "Accepted",
+          name: "Accept",
           theme: "NONE",
           completes: true,
           commentInputDef: null,
         },
         {
           code: "STATUS_OPTION_2",
-          name: "Information requested",
+          name: "Request information from customer",
           theme: "NOTICE",
           completes: false,
           commentInputDef: null,
         },
       ]);
     });
+
+    it.each([
+      ["frps", "CHECK_CUSTOMER_DETAILS", "ACCEPTED", "Accepted", "Accept"],
+      [
+        "frps",
+        "CHECK_CUSTOMER_DETAILS",
+        "RFI",
+        "Information requested",
+        "Request information from customer",
+      ],
+      [
+        "frps",
+        "CHECK_CUSTOMER_DETAILS",
+        "INTERNAL_INVESTIGATION",
+        "Internal investigation",
+        "Pause for internal investigation",
+      ],
+      [
+        "woodland",
+        "TASK_AGREEMENT_DELIVERY_TO_APPLICANT",
+        "STATUS_AGREEMENT_SENT_TO_APPLICANT",
+        "Sent",
+        "Sent to customer",
+      ],
+    ])(
+      "keeps %s %s %s task-list and radio labels distinct",
+      async (scheme, taskCode, value, statusText, radioText) => {
+        const definition = JSON.parse(
+          readFileSync(
+            new URL(
+              `../../../test/fixtures/${scheme}-workflow-definition.json`,
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        const sourceTask = definition.phases
+          .flatMap((phase) => phase.stages)
+          .flatMap((stage) => stage.taskGroups)
+          .flatMap((group) => group.tasks)
+          .find((task) => task.code === taskCode);
+        const workflow = Workflow.createMock();
+        workflow.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions =
+          sourceTask.valueOptions;
+        const kase = Case.createMock();
+        kase.phases[0].stages[0].taskGroups[0].tasks[0].value = value;
+        findAll.mockResolvedValue([]);
+        findById.mockResolvedValue(kase);
+        resolveWorkflowForCase.mockResolvedValue({
+          workflow,
+          resolvedVersion: null,
+        });
+
+        const result = await findCaseByIdUseCase(kase._id, mockAuthUser);
+
+        const task = result.stage.taskGroups[0].tasks[0];
+        expect(task.statusText).toBe(statusText);
+        expect(
+          task.valueOptions.find((option) => option.code === value).name,
+        ).toBe(radioText);
+      },
+    );
 
     it("returns Incomplete when task has no selected status", async () => {
       const mockUser = User.createMock();
@@ -1441,7 +1564,7 @@ describe("findCaseByIdUseCase", () => {
 
       const task = result.stage.taskGroups[0].tasks[0];
       expect(task.value).toBe("RFI");
-      expect(task.statusText).toBe("Request information from customer");
+      expect(task.statusText).toBe("Information requested");
       expect(task.statusTheme).toBe("NOTICE");
       expect(task.completed).toBe(false);
     });
@@ -1676,7 +1799,7 @@ describe("findCaseByIdUseCase", () => {
 });
 
 describe("mapSelectedValueOption", () => {
-  it("returns altName as statusText when present", () => {
+  it("returns name as statusText even when altName is present", () => {
     const valueOptions = [
       {
         code: "ACCEPTED",
@@ -1697,7 +1820,7 @@ describe("mapSelectedValueOption", () => {
     const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
-      statusText: "Accept",
+      statusText: "Accepted",
       statusTheme: "NONE",
     });
   });
@@ -1740,7 +1863,7 @@ describe("mapSelectedValueOption", () => {
     });
   });
 
-  it("falls back to name as statusText when altName is not present", () => {
+  it("returns name as statusText when altName is not present", () => {
     const valueOptions = [
       {
         code: "ACCEPTED",
@@ -1771,14 +1894,14 @@ describe("mapSelectedValueOption", () => {
     const result = mapSelectedValueOption("ACCEPTED", valueOptions);
 
     expect(result).toEqual({
-      statusText: "Accept",
+      statusText: "Accepted",
       statusTheme: "NONE",
     });
   });
 });
 
 describe("mapValueOptions", () => {
-  it("returns name without altName transformation", () => {
+  it("uses altName for radio labels when present", () => {
     const valueOptions = [
       {
         code: "ACCEPTED",
@@ -1807,7 +1930,7 @@ describe("mapValueOptions", () => {
     expect(result).toEqual([
       {
         code: "ACCEPTED",
-        name: "Accepted",
+        name: "Accept",
         theme: "NONE",
         completes: true,
         commentInputDef: {
@@ -1818,7 +1941,7 @@ describe("mapValueOptions", () => {
       },
       {
         code: "RFI",
-        name: "Information requested",
+        name: "Request information from customer",
         theme: "NOTICE",
         completes: false,
         commentInputDef: null,
@@ -1849,6 +1972,20 @@ describe("mapValueOptions", () => {
     ]);
   });
 
+  it.each([null, ""])("falls back to name when altName is %s", (altName) => {
+    const result = mapValueOptions([
+      {
+        code: "COMPLETE",
+        name: "Complete",
+        altName,
+        theme: "SUCCESS",
+        completes: true,
+      },
+    ]);
+
+    expect(result[0].name).toBe("Complete");
+  });
+
   it("handles empty array", () => {
     const result = mapValueOptions([]);
     expect(result).toEqual([]);
@@ -1876,7 +2013,7 @@ describe("mapValueOptions", () => {
     expect(result).toEqual([
       {
         code: "ACCEPTED",
-        name: "Accepted",
+        name: "Accept",
         theme: "NONE",
         completes: true,
         commentInputDef: null,

@@ -1,9 +1,5 @@
 import { hashToken } from "../../src/server/plugins/auth/hash-token.js";
-import {
-  CASE_READER_CLIENT,
-  CASE_READER_TOKEN,
-  SERVICE_TOKEN,
-} from "./service-token.js";
+import { CASE_READER_CLIENT, CASE_READER_TOKEN } from "./service-token.js";
 import { wreck } from "./wreck.js";
 import { operatorHeaders } from "./operator.js";
 
@@ -21,16 +17,16 @@ const post = (path, token, payload, headers = {}) =>
 const withActor = (path, by) =>
   by ? `${path}?by=${encodeURIComponent(by)}` : path;
 
-export const getInboxEvent = (id, token = `Bearer ${SERVICE_TOKEN}`) =>
+export const getInboxEvent = (id, token = `Bearer ${CASE_READER_TOKEN}`) =>
   get(`/actuators/events/inbox/${id}`, undefined, token);
 
-export const getOutboxEvent = (id, token = `Bearer ${SERVICE_TOKEN}`) =>
+export const getOutboxEvent = (id, token = `Bearer ${CASE_READER_TOKEN}`) =>
   get(`/actuators/events/outbox/${id}`, undefined, token);
 
 export const redriveInboxEvent = (
   id,
   { by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
   headers = {},
 ) =>
   wreck.post(withActor(`/actuators/events/inbox/${id}/redrive`, by), {
@@ -40,13 +36,13 @@ export const redriveInboxEvent = (
 export const redriveOutboxEvent = (
   id,
   { by } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
 ) => post(withActor(`/actuators/events/outbox/${id}/redrive`, by), token);
 
 export const purgeInboxEvent = (
   id,
   { by, ...payload } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
   headers = {},
 ) =>
   post(
@@ -59,14 +55,14 @@ export const purgeInboxEvent = (
 export const purgeOutboxEvent = (
   id,
   { by, ...payload } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
 ) =>
   post(withActor(`/actuators/events/outbox/${id}/purge`, by), token, payload);
 
 export const editInboxPayload = (
   id,
   { by, ...payload } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
   headers = {},
 ) =>
   post(
@@ -79,7 +75,7 @@ export const editInboxPayload = (
 export const editOutboxPayload = (
   id,
   { by, ...payload } = {},
-  token = `Bearer ${SERVICE_TOKEN}`,
+  token = `Bearer ${CASE_READER_TOKEN}`,
 ) =>
   post(withActor(`/actuators/events/outbox/${id}/payload`, by), token, payload);
 

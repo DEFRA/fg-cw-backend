@@ -335,7 +335,7 @@ describe("POST /cases/{caseId}/page-action", () => {
               entityid: kase.caseRef,
             },
           ],
-          status: "SUCCESS",
+          status: "success",
           details: {
             security: {
               actor: {

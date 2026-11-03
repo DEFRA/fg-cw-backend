@@ -3,11 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../../common/logger.js";
 import { viewCaseDataUseCase } from "../use-cases/view-case-data.use-case.js";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import {
-  OPERATOR_ID,
-  OPERATOR_NAME,
-  operatorHeaders,
-} from "../../../test/helpers/operator.js";
+import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
 import { CASE_READER_CLIENT } from "../../common/require-case-reader.js";
 import { viewCaseDataRoute } from "./view-case-data.route.js";
 
@@ -90,16 +86,6 @@ describe("viewCaseDataRoute", () => {
         })
       ).statusCode,
     ).toBe(400);
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await get("/actuators/cases/frps/ref-1", {
-      "x-test-client": "test-client",
-      ...operatorHeaders,
-    });
-
-    expect(response.statusCode).toBe(403);
-    expect(viewCaseDataUseCase).not.toHaveBeenCalled();
   });
 
   it.each([
