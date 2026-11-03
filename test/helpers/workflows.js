@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { Workflow } from "../../src/cases/models/workflow.js";
 import { WorkflowDocument } from "../../src/cases/repositories/workflow/workflow-document.js";
-import { seedConfigVersion } from "./config-versions.js";
+import { FetchStatus, seedConfigVersion } from "./config-versions.js";
 
 export const createWorkflow = async (payload = {}, configure) => {
   const workflow = new Workflow({
@@ -362,7 +362,9 @@ export const createWorkflow = async (payload = {}, configure) => {
     await client.connect();
     const db = client.db();
     await db.collection("workflows").insertOne(new WorkflowDocument(workflow));
-    await seedConfigVersion(db, workflow.code, workflow.version);
+    await seedConfigVersion(db, workflow.code, workflow.version, {
+      fetchStatus: FetchStatus.Fetched,
+    });
   } finally {
     await client.close();
   }
