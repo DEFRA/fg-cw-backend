@@ -23,7 +23,7 @@ describe("requireCaseReader", () => {
 
   it("answers 403 with no credentials", () => {
     expect(() => requireCaseReader({ auth: {} }, h)).toThrow(
-      "The case actuators are not open to this client",
+      "The actuators are not open to this client",
     );
   });
 });

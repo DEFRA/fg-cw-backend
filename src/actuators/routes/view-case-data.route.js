@@ -1,5 +1,4 @@
 import { operatorOf } from "../../common/actor-header.js";
-import { requireCaseReader } from "../../common/require-case-reader.js";
 import {
   safeFailAction,
   safeResponseFailAction,
@@ -23,7 +22,6 @@ export const viewCaseDataRoute = {
     plugins: {
       "hapi-swagger": { security: [{ serviceToken: [] }] },
     },
-    ext: { onPostAuth: { method: requireCaseReader } },
     cache: { otherwise: "no-store" },
     validate: {
       headers: operatorHeaders,

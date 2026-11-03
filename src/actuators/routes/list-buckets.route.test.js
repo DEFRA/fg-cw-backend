@@ -83,13 +83,6 @@ describe("listBucketsRoute", () => {
     expect(response.result).toEqual({ buckets: [ENTRY] });
   });
 
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await get({ "x-test-client": "fg-grants-platform-admin" });
-
-    expect(response.statusCode).toBe(403);
-    expect(listBucketsUseCase).not.toHaveBeenCalled();
-  });
-
   it("answers a 500 rather than an entry off its schema", async () => {
     listBucketsUseCase.mockResolvedValue({
       buckets: [{ ...ENTRY, facts: "nope" }],

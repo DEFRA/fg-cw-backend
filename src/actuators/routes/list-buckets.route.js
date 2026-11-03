@@ -1,4 +1,3 @@
-import { requireCaseReader } from "../../common/require-case-reader.js";
 import { safeResponseFailAction } from "../../common/validation.js";
 import { bucketCatalogueResponseSchema } from "../schemas/bucket.schema.js";
 import { listBucketsUseCase } from "../use-cases/list-buckets.use-case.js";
@@ -14,7 +13,6 @@ export const listBucketsRoute = {
     plugins: {
       "hapi-swagger": { security: [{ serviceToken: [] }] },
     },
-    ext: { onPostAuth: { method: requireCaseReader } },
     response: {
       schema: bucketCatalogueResponseSchema,
       failAction: safeResponseFailAction,

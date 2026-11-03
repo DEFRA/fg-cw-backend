@@ -1,7 +1,11 @@
 import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { getInboxEvent, redriveInboxEvent } from "../../helpers/actuators.js";
+import {
+  getInboxEvent,
+  redriveInboxEvent,
+  seedCaseReaderToken,
+} from "../../helpers/actuators.js";
 import {
   aGrantCode,
   CONFIG_BUCKET,
@@ -36,6 +40,7 @@ beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   inbox = client.db().collection("inbox");
   configVersions = client.db().collection("config_versions");
+  await seedCaseReaderToken(client.db());
 });
 
 afterAll(async () => {

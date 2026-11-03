@@ -76,6 +76,10 @@ const toWorkflowTaskValueOption = (so) =>
     comment: toWorkflowTaskComment(so.comment),
   });
 
+const toRequiredRoles = (roles) => (roles ? new RequiredAppRoles(roles) : null);
+const toOptionalRequiredRoles = (roles) =>
+  roles === undefined ? undefined : toRequiredRoles(roles);
+
 const toWorkflowTask = (t) =>
   new WorkflowTask({
     conditional: t.conditional,
@@ -83,10 +87,7 @@ const toWorkflowTask = (t) =>
     name: t.name,
     mandatory: t.mandatory,
     description: t.description,
-    requiredRoles: new RequiredAppRoles({
-      allOf: t.requiredRoles?.allOf,
-      anyOf: t.requiredRoles?.anyOf,
-    }),
+    requiredRoles: toRequiredRoles(t.requiredRoles),
     valueOptions: t.valueOptions?.map(toWorkflowTaskValueOption),
     input: t.input,
     comment: toWorkflowTaskComment(t.comment),
@@ -104,6 +105,7 @@ const toWorkflowStage = (s) =>
   new WorkflowStage({
     code: s.code,
     name: s.name,
+    requiredRoles: toOptionalRequiredRoles(s.requiredRoles),
     description: s.description,
     statuses: s.statuses.map(toWorkflowStageStatus),
     taskGroups: s.taskGroups.map(toWorkflowTaskGroup),
@@ -115,6 +117,7 @@ const toWorkflowPhase = (p) =>
   new WorkflowPhase({
     code: p.code,
     name: p.name,
+    requiredRoles: toOptionalRequiredRoles(p.requiredRoles),
     stages: p.stages.map(toWorkflowStage),
   });
 

@@ -1,3 +1,4 @@
+import { requireCaseReader } from "../common/require-case-reader.js";
 import { setAuditActor } from "../common/set-audit-actor.js";
 import { caseExistsRoute } from "./routes/case-exists.route.js";
 import {
@@ -23,6 +24,10 @@ import { workflowVersionExistsRoute } from "./routes/workflow-version-exists.rou
 export const actuators = {
   name: "actuators",
   register(server) {
+    // Every actuator answers fg-gas-backend alone. Added first, so another
+    // client is refused before its `x-actor-id` can name anyone in an audit.
+    server.ext("onPostAuth", requireCaseReader, { sandbox: "plugin" });
+
     // Every audit event an actuator request writes names the operator GAS
     // forwarded, so it is set once here for this plugin's routes alone.
     server.ext("onPostAuth", setAuditActor, { sandbox: "plugin" });

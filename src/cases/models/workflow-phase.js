@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
 import { validateProps } from "../../common/validation.js";
+import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { Position } from "./position.js";
 import { WorkflowActionComment } from "./workflow-action-comment.js";
@@ -14,6 +15,7 @@ export class WorkflowPhase {
   constructor(props) {
     this.code = props.code;
     this.name = props.name;
+    this.requiredRoles = props.requiredRoles;
     this.stages = props.stages;
   }
 
@@ -163,5 +165,6 @@ export class WorkflowPhase {
 }
 
 WorkflowPhase.definitionSchema = Joi.object({
+  requiredRoles: requiredRolesSchema.allow(null),
   stages: uniqueCodes.required(),
 }).unknown();

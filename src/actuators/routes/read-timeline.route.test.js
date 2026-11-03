@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import { operatorHeaders } from "../../../test/helpers/operator.js";
 import { readTimelineUseCase } from "../use-cases/read-timeline.use-case.js";
 import { readTimelineRoute } from "./read-timeline.route.js";
 
@@ -84,16 +83,6 @@ describe("readTimelineRoute", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.result.reason).toBe("INVALID_REQUEST");
-    expect(readTimelineUseCase).not.toHaveBeenCalled();
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await post(
-      { ref: "ref:abc-123" },
-      { "x-test-client": "fg-grants-platform-admin", ...operatorHeaders },
-    );
-
-    expect(response.statusCode).toBe(403);
     expect(readTimelineUseCase).not.toHaveBeenCalled();
   });
 });

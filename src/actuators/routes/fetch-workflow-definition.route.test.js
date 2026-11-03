@@ -49,14 +49,4 @@ describe("fetchWorkflowDefinitionRoute", () => {
     expect((await post(url)).statusCode).toBe(400);
     expect(fetchWorkflowDefinitionUseCase).not.toHaveBeenCalled();
   });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await post(
-      "/actuators/workflows/woodland/versions/2.0.0/fetch?by=Jane",
-      { "x-test-client": "test-client" },
-    );
-
-    expect(response.statusCode).toBe(403);
-    expect(fetchWorkflowDefinitionUseCase).not.toHaveBeenCalled();
-  });
 });

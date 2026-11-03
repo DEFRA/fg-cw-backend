@@ -177,6 +177,11 @@ const mapTasks = async (
           userMap,
         );
 
+        const requiredRoles = root.workflow.getApplicableRoles(
+          root.position,
+          workflowTaskGroupTask,
+        );
+
         return {
           code: caseTaskGroupTask.code,
           name: workflowTaskGroupTask.name,
@@ -193,10 +198,10 @@ const mapTasks = async (
           notesHistory,
           updatedAt: caseTaskGroupTask.updatedAt,
           updatedBy: mapUserIdToName(caseTaskGroupTask.updatedBy, userMap),
-          requiredRoles: workflowTaskGroupTask.requiredRoles,
+          requiredRoles,
           canComplete: AccessControl.canAccess(root.user, {
             idpRoles: [],
-            appRoles: workflowTaskGroupTask.requiredRoles,
+            appRoles: requiredRoles,
           }),
         };
       }),
@@ -205,13 +210,11 @@ const mapTasks = async (
 export const mapValueOptions = (valueOptions = []) =>
   valueOptions.map((option) => ({
     code: option.code,
-    name: option.name,
+    name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
     commentInputDef: option.comment ?? null,
   }));
-
-const displayName = (option) => option.altName || option.name;
 
 export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
@@ -231,7 +234,7 @@ export const mapSelectedValueOption = (statusCode, valueOptions) => {
   }
 
   return {
-    statusText: displayName(selectedOption),
+    statusText: selectedOption.name,
     statusTheme: selectedOption.theme ?? "NONE",
   };
 };
@@ -376,10 +379,10 @@ const mapTaskGroups = async (
   );
 };
 
-const canPerformStageActions = (user, workflow) => {
+const canPerformStageActions = (user, workflow, position) => {
   return AccessControl.canAccess(user, {
     idpRoles: [IdpRoles.ReadWrite],
-    appRoles: workflow.requiredRoles,
+    appRoles: workflow.getApplicableRoles(position),
   });
 };
 
@@ -438,6 +441,7 @@ const mapStageData = async (
   const canPerformActions = canPerformStageActions(
     caseWorkflowContext.user,
     workflow,
+    kase.position,
   );
 
   return {

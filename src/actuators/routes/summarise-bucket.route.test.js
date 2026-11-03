@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asGas, serverFor } from "../../../test/helpers/case-route-server.js";
-import { operatorHeaders } from "../../../test/helpers/operator.js";
 import { refuse } from "../../common/buckets/refusal.js";
 import { summariseBucketUseCase } from "../use-cases/summarise-bucket.use-case.js";
 import { summariseBucketRoute } from "./summarise-bucket.route.js";
@@ -91,16 +90,6 @@ describe("summariseBucketRoute", () => {
     );
 
     expect(response.statusCode).toBe(400);
-    expect(summariseBucketUseCase).not.toHaveBeenCalled();
-  });
-
-  it("answers 403 to any client but fg-gas-backend", async () => {
-    const response = await post(
-      {},
-      { "x-test-client": "fg-grants-platform-admin", ...operatorHeaders },
-    );
-
-    expect(response.statusCode).toBe(403);
     expect(summariseBucketUseCase).not.toHaveBeenCalled();
   });
 });
