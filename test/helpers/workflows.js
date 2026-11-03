@@ -361,7 +361,14 @@ export const createWorkflow = async (payload = {}, configure) => {
   try {
     await client.connect();
     const db = client.db();
-    await db.collection("workflows").insertOne(new WorkflowDocument(workflow));
+    const doc = new WorkflowDocument(workflow);
+    await db
+      .collection("workflows")
+      .replaceOne(
+        { code: workflow.code, version: workflow.version },
+        doc,
+        { upsert: true },
+      );
     await seedConfigVersion(db, workflow.code, workflow.version, {
       fetchStatus: FetchStatus.Fetched,
     });
