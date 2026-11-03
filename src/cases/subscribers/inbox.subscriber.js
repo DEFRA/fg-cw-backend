@@ -104,7 +104,9 @@ export class InboxSubscriber {
   async processDeadEvents() {
     const results = await updateDeadEvents();
     results?.modifiedCount &&
-      logger.info(`Updated "${results?.modifiedCount}" dead inbox events`);
+      logger.warn(
+        `"${results.modifiedCount}" events in inbox became dead letters`,
+      );
   }
 
   async processResubmittedEvents() {
@@ -134,15 +136,22 @@ export class InboxSubscriber {
         `Inbox event "${inboxEvent.messageId}" moved on before it was marked ${what}`,
       );
 
-      return;
+      return false;
     }
 
     logger.info(`Marked inbox event ${what} "${inboxEvent.messageId}"`);
+    return true;
   }
 
   async markEventFailed(inboxEvent, error) {
     inboxEvent.markAsFailed(error);
-    await this.writeClaimed(inboxEvent, "failed");
+    const written = await this.writeClaimed(inboxEvent, "failed");
+
+    if (written && inboxEvent.isDeadLetter()) {
+      logger.warn(
+        `Event "${inboxEvent._id}" in inbox became a dead letter: non-retryable failure`,
+      );
+    }
   }
 
   async markEventComplete(inboxEvent) {

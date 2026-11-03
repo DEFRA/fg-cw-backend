@@ -7,6 +7,7 @@ import { STAMPED_FIELDS } from "../../events/stamps.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 import {
   claimEvents,
+  countDeadLetters,
   editPayloadById,
   findByMessageId,
   findDetailById,
@@ -33,6 +34,15 @@ const createMockInbox = (id, time) => {
 };
 
 describe("inbox.repository", () => {
+  it("should count dead letters by status", async () => {
+    const countDocuments = vi.fn().mockResolvedValue(3);
+    db.collection.mockReturnValue({ countDocuments });
+
+    expect(await countDeadLetters()).toBe(3);
+
+    expect(countDocuments).toHaveBeenCalledWith({ status: "DEAD_LETTER" });
+  });
+
   it("should find next message excluding locked segregationRefs", async () => {
     const lockIds = ["ref-1", "ref-2"];
     const mockDoc = { _id: "1" };
