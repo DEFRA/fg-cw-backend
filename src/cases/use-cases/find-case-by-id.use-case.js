@@ -205,13 +205,11 @@ const mapTasks = async (
 export const mapValueOptions = (valueOptions = []) =>
   valueOptions.map((option) => ({
     code: option.code,
-    name: option.name,
+    name: option.altName || option.name,
     theme: option.theme,
     completes: option.completes,
     commentInputDef: option.comment ?? null,
   }));
-
-const displayName = (option) => option.altName || option.name;
 
 export const mapSelectedValueOption = (statusCode, valueOptions) => {
   if (!statusCode) {
@@ -231,7 +229,7 @@ export const mapSelectedValueOption = (statusCode, valueOptions) => {
   }
 
   return {
-    statusText: displayName(selectedOption),
+    statusText: selectedOption.name,
     statusTheme: selectedOption.theme ?? "NONE",
   };
 };
