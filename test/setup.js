@@ -20,6 +20,8 @@ export const setup = async ({ globalConfig }) => {
       FLOCI_PORT: env.FLOCI_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
       SERVICE_ACCESS_TOKEN_HASH: env.SERVICE_ACCESS_TOKEN_HASH,
+      // Keep ENVIRONMENT=local so cloud event types match test fixtures; disable definition cache instead.
+      WORKFLOW_DEFINITION_CACHE_ENABLED: "false",
     })
     .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
     .withNoRecreate()

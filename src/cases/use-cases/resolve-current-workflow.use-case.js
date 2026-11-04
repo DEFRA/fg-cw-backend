@@ -8,22 +8,24 @@ import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use
 
 // Process-level cache of immutable workflow definitions keyed by `${code}@${version}`.
 // Safe to cache indefinitely: a (code, version) definition never changes.
+// Disabled via WORKFLOW_DEFINITION_CACHE_ENABLED=false for integration tests
+// that mutate workflow documents in MongoDB between test cases.
 const MAX_CACHE_ENTRIES = 100;
-const definitionCache = new Map();
+const definitionCache =
+  process.env.WORKFLOW_DEFINITION_CACHE_ENABLED === "false" ? null : new Map();
 
 const cacheKey = (code, version) => `${code}@${version}`;
 
 const getCachedDefinition = (code, version) =>
-  definitionCache.get(cacheKey(code, version));
+  definitionCache?.get(cacheKey(code, version));
 
+// eslint-disable-next-line complexity
 const setCachedDefinition = (code, version, workflow) => {
-  if (!version || !workflow) {
+  if (!definitionCache || !version || !workflow) {
     return;
   }
-  // Simple bounded FIFO eviction.
   if (definitionCache.size >= MAX_CACHE_ENTRIES) {
-    const oldestKey = definitionCache.keys().next().value;
-    definitionCache.delete(oldestKey);
+    definitionCache.delete(definitionCache.keys().next().value);
   }
   definitionCache.set(cacheKey(code, version), workflow);
 };
