@@ -5,7 +5,7 @@ import { CASE_READER_CLIENT } from "../../src/common/require-case-reader.js";
 import { operatorHeaders } from "./operator.js";
 
 // The real route behind a stand-in for the service token scheme: the client
-// is whatever `x-test-client` says. The actuators plugin's client guard is not
+// is whatever `x-test-client` says, and the token's hash `x-test-token-id`. The actuators plugin's client guard is not
 // applied here; src/actuators/index.test.js covers it over every route.
 export const serverFor = async (route) => {
   const server = hapi.server();
@@ -14,7 +14,10 @@ export const serverFor = async (route) => {
   server.auth.scheme("test-service-token", () => ({
     authenticate: (request, h) =>
       h.authenticated({
-        credentials: { service: request.headers["x-test-client"] },
+        credentials: {
+          service: request.headers["x-test-client"],
+          tokenId: request.headers["x-test-token-id"],
+        },
       }),
   }));
   server.auth.strategy("public-api", "test-service-token");

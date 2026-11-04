@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { HASH_RUN } from "../../clients/models/masked-hash.js";
 import {
   ACTOR_MAX,
   actorIdSchema,
@@ -33,6 +34,22 @@ export const operatorHeaders = Joi.object({
 })
   .unknown(true)
   .label("OperatorHeaders");
+
+const assertNoHashRun = (value, helpers) =>
+  HASH_RUN.test(decodeActor(value)) ? helpers.error("actor.hashLike") : value;
+
+// A token row stores the name, and the list refuses any row holding what
+// reads as a hash, so a name that does is refused before it is stored.
+export const apiClientOperatorHeaders = operatorHeaders
+  .keys({
+    "x-actor": actorHeader
+      .custom(assertNoHashRun)
+      .messages({
+        "actor.hashLike": '"x-actor" must not hold 64 hex characters in a row',
+      })
+      .required(),
+  })
+  .label("ApiClientOperatorHeaders");
 
 export const caseSearchHeaders = operatorHeaders
   .keys({

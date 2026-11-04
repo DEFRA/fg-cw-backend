@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const VARIANT_ENV_KEYS = ["CONFIGURATION_VARIANT", "ENVIRONMENT"];
 
@@ -176,5 +176,24 @@ describe("config metrics.enabled", () => {
     const cfg = await loadConfig();
 
     expect(cfg.get("metrics.enabled")).toBe(true);
+  });
+});
+
+// Tokens are managed only through the grants admin. A secret left set in an
+// environment after the seeder went must not issue anything on boot.
+describe("config service access token seeding", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.SERVICE_ACCESS_TOKEN_HASH = `fg-gas-backend:${"a".repeat(64)}`;
+  });
+
+  afterEach(() => {
+    delete process.env.SERVICE_ACCESS_TOKEN_HASH;
+  });
+
+  it("has no setting to seed a token from", async () => {
+    const { config } = await import("./config.js");
+
+    expect(() => config.get("serviceAccessTokenHash")).toThrow();
   });
 });

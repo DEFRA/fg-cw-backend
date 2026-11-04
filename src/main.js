@@ -5,7 +5,6 @@ import { config } from "./common/config.js";
 import { logConfigurationVariant } from "./common/configuration-variant.js";
 import { logger } from "./common/logger.js";
 import { createServer } from "./server/index.js";
-import { seedAccessToken } from "./server/plugins/auth/seed-access-token.js";
 import { users } from "./users/index.js";
 
 process.on("unhandledRejection", (error) => {
@@ -22,5 +21,3 @@ const server = await createServer();
 await server.register([cases, users, actuators]);
 logConfigurationVariant(config, logger);
 await server.start();
-// after start, so the mongo plugin's start listener has opened the connection
-await seedAccessToken();
