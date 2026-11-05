@@ -20,16 +20,12 @@ describe("resolveCurrentWorkflowUseCase with cache disabled", () => {
   });
 
   it("does not reuse the process cache on repeat resolves", async () => {
-    const { findLatestForMajor } = await import(
-      "../repositories/config-version.repository.js"
-    );
-    const { resolveAndFetchWorkflowUseCase } = await import(
-      "./resolve-and-fetch-workflow.use-case.js"
-    );
-    const {
-      resolveCurrentWorkflowUseCase,
-      __clearDefinitionCache,
-    } = await import("./resolve-current-workflow.use-case.js");
+    const { findLatestForMajor } =
+      await import("../repositories/config-version.repository.js");
+    const { resolveAndFetchWorkflowUseCase } =
+      await import("./resolve-and-fetch-workflow.use-case.js");
+    const { resolveCurrentWorkflowUseCase, __clearDefinitionCache } =
+      await import("./resolve-current-workflow.use-case.js");
 
     const workflow = aWorkflow();
     findLatestForMajor.mockResolvedValue({ version: "1.0.0" });
