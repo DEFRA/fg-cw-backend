@@ -11,7 +11,5 @@ export const findCaseTypesUseCase = async ({ user }) => {
 
   const codes = await findWorkflowCodesUseCase();
 
-  return codes
-    .sort((a, b) => a.localeCompare(b))
-    .map((code) => ({ code }));
+  return codes.sort((a, b) => a.localeCompare(b)).map((code) => ({ code }));
 };
