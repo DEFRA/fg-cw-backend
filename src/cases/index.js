@@ -20,6 +20,7 @@ import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
 import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
+import { findCaseTypesRoute } from "./routes/find-case-types.route.js";
 import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 import { performPageActionRoute } from "./routes/perform-page-action.route.js";
@@ -73,6 +74,7 @@ export const cases = {
 
     server.route([
       findCasesRoute,
+      findCaseTypesRoute,
       reportCasesRoute,
       findCaseByIdRoute,
       updateStageOutcomeRoute,
