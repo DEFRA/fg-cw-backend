@@ -3,30 +3,29 @@ import { logger } from "../../common/logger.js";
 import { parseSemver } from "../../common/semver.js";
 import { updateCurrentConfigVersion } from "../repositories/case.repository.js";
 import { findLatestForMajor } from "../repositories/config-version.repository.js";
-import {
-  findByCode,
-  findByCodeAndVersion,
-} from "../repositories/workflow.repository.js";
+import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 // Process-level cache of immutable workflow definitions keyed by `${code}@${version}`.
 // Safe to cache indefinitely: a (code, version) definition never changes.
+// Disabled via WORKFLOW_DEFINITION_CACHE_ENABLED=false for integration tests
+// that mutate workflow documents in MongoDB between test cases.
 const MAX_CACHE_ENTRIES = 100;
-const definitionCache = new Map();
+const definitionCache =
+  process.env.WORKFLOW_DEFINITION_CACHE_ENABLED === "false" ? null : new Map();
 
 const cacheKey = (code, version) => `${code}@${version}`;
 
 const getCachedDefinition = (code, version) =>
-  definitionCache.get(cacheKey(code, version));
+  definitionCache?.get(cacheKey(code, version));
 
+// eslint-disable-next-line complexity
 const setCachedDefinition = (code, version, workflow) => {
-  if (!version || !workflow) {
+  if (!definitionCache || !version || !workflow) {
     return;
   }
-  // Simple bounded FIFO eviction.
   if (definitionCache.size >= MAX_CACHE_ENTRIES) {
-    const oldestKey = definitionCache.keys().next().value;
-    definitionCache.delete(oldestKey);
+    definitionCache.delete(definitionCache.keys().next().value);
   }
   definitionCache.set(cacheKey(code, version), workflow);
 };
@@ -78,12 +77,6 @@ const memoResolve = async (memo, key, produce) => {
   return result;
 };
 
-const legacyResolution = async (workflowCode) => ({
-  workflow: await findByCode(workflowCode),
-  resolvedVersion: null,
-  definitionSource: "mongodb",
-});
-
 // Resolves the latest active workflow within the same major as the pinned version.
 export const resolveCurrentWorkflowUseCase = async (
   workflowCode,
@@ -91,7 +84,9 @@ export const resolveCurrentWorkflowUseCase = async (
   memo,
 ) => {
   if (!pinnedVersion) {
-    return legacyResolution(workflowCode);
+    throw Boom.badRequest(
+      `Case for workflow "${workflowCode}" has no pinned config version`,
+    );
   }
 
   const major = parseMajor(pinnedVersion);
@@ -160,9 +155,6 @@ const verifyOrFallback = async (kase, resolution) => {
 };
 
 const determineResolutionType = (pinned, resolvedVersion, didFallback) => {
-  if (!pinned) {
-    return "legacy";
-  }
   if (didFallback) {
     return "fallback";
   }
@@ -279,4 +271,4 @@ export const persistResolvedVersion = async (kase, resolvedVersion) => {
 };
 
 // Exposed for tests.
-export const __clearDefinitionCache = () => definitionCache.clear();
+export const __clearDefinitionCache = () => definitionCache?.clear();

@@ -234,23 +234,17 @@ describe("findAll", () => {
 });
 
 describe("findByCode", () => {
-  it("returns the legacy 0.0.0 workflow by default", async () => {
-    const workflowDocument = WorkflowDocument.createMock();
-
-    const findOne = vi.fn().mockResolvedValue(workflowDocument);
+  it("passes the version through to the filter without a default", async () => {
+    const findOne = vi.fn().mockResolvedValue(null);
 
     db.collection = vi.fn().mockReturnValue({
       findOne,
     });
 
-    const code = "123";
-    const result = await findByCode(code);
+    await findByCode("123");
 
     expect(db.collection).toHaveBeenCalledWith("workflows");
-    expect(findOne).toHaveBeenCalledWith({ code, version: "0.0.0" });
-    expect(result._id.toString()).toEqual(workflowDocument._id.toString());
-    expect(result.templates).toEqual(workflowDocument.templates);
-    expect(result.version).toEqual("0.0.0");
+    expect(findOne).toHaveBeenCalledWith({ code: "123", version: undefined });
   });
 
   it("returns the requested version when passed explicitly", async () => {
@@ -280,7 +274,7 @@ describe("findByCode", () => {
       findOne: vi.fn().mockResolvedValue(workflowDocument),
     });
 
-    const result = await findByCode("123");
+    const result = await findByCode("123", "1.0.0");
     const valueOption =
       result.phases[0].stages[0].taskGroups[0].tasks[0].valueOptions[0];
 
@@ -355,7 +349,7 @@ describe("findByCode", () => {
       findOne: vi.fn().mockResolvedValue(null),
     });
 
-    const result = await findByCode("DOESNT_EXIST");
+    const result = await findByCode("DOESNT_EXIST", "1.0.0");
 
     expect(result).toEqual(null);
   });

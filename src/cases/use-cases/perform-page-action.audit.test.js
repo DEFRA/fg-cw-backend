@@ -6,16 +6,19 @@ import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { User } from "../../users/models/user.js";
 import { findById } from "../repositories/case.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
+import { findLatestForMajor } from "../repositories/config-version.repository.js";
 import { externalActionUseCase } from "./external-action.use-case.js";
 import {
   performPageActionAuditDataBuilder,
   performPageActionUseCase,
 } from "./perform-page-action.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../../common/build-view-model.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../repositories/config-version.repository.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 vi.mock("./external-action.use-case.js");
 vi.mock("../../common/write-audit-event.js", () => ({
   writeAuditEvent: vi.fn(),
@@ -54,12 +57,7 @@ describe("performPageActionUseCase audit", () => {
   });
 
   it("writes a PERFORM_PAGE_ACTION audit event on success", async () => {
-    findById.mockResolvedValue({
-      _id: "case-1",
-      caseRef: "CASE-REF-1",
-      workflowCode: "FRPS",
-    });
-    findByCode.mockResolvedValue({
+    const mockWorkflow = {
       requiredRoles: { allOf: [], anyOf: [] },
       findExternalAction: vi.fn().mockReturnValue({
         code: "ACT",
@@ -67,6 +65,18 @@ describe("performPageActionUseCase audit", () => {
         display: false,
         target: null,
       }),
+    };
+    findById.mockResolvedValue({
+      _id: "case-1",
+      caseRef: "CASE-REF-1",
+      workflowCode: "FRPS",
+      originalConfigVersion: "1.0.0",
+    });
+    findLatestForMajor.mockResolvedValue({ version: "1.0.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+      definitionSource: "mongodb",
     });
 
     await performPageActionUseCase({

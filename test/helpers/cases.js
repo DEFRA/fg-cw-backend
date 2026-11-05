@@ -69,6 +69,8 @@ export const createCase = async (cases, payload = {}) => {
       },
     ],
     assignedUser: null,
+    originalConfigVersion: "1.0.0",
+    currentConfigVersion: "1.0.0",
     ...payload,
   };
 
