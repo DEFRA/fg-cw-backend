@@ -85,9 +85,10 @@ const asCaseReader = (headers) => ({
   ...headers,
 });
 
+// By hash: a client may hold several rows, and only this one is the helper's.
 export const seedCaseReaderToken = (db) =>
   db.collection("access_tokens").replaceOne(
-    { client: CASE_READER_CLIENT },
+    { id: hashToken(CASE_READER_TOKEN) },
     {
       id: hashToken(CASE_READER_TOKEN),
       client: CASE_READER_CLIENT,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  apiClientOperatorHeaders,
   caseSearchHeaders,
   operatorHeaders,
 } from "./operator-headers.schema.js";
@@ -41,6 +42,42 @@ describe("operatorHeaders", () => {
         ...valid,
         "x-actor": `UTF-8''${"%C5%81".repeat(129)}`,
       }).error,
+    ).toBeDefined();
+  });
+});
+
+describe("apiClientOperatorHeaders", () => {
+  const HEX_RUN = "0123456789abcdef".repeat(4);
+
+  it("accepts a name with shorter hex runs", () => {
+    expect(
+      apiClientOperatorHeaders.validate({
+        ...valid,
+        "x-actor": `${HEX_RUN.slice(1)} ${HEX_RUN.slice(1)}`,
+      }).error,
+    ).toBeUndefined();
+  });
+
+  it.each([
+    ["64 hex characters", HEX_RUN],
+    ["64 upper-case hex characters in a name", `Jo ${HEX_RUN.toUpperCase()}`],
+    [
+      "64 hex characters once decoded",
+      `UTF-8''${[...HEX_RUN].map((c) => `%${c.charCodeAt(0).toString(16)}`).join("")}`,
+    ],
+  ])("refuses %s, without echoing it", (_name, actor) => {
+    const { error } = apiClientOperatorHeaders.validate({
+      ...valid,
+      "x-actor": actor,
+    });
+
+    expect(error).toBeDefined();
+    expect(error.message).not.toContain(HEX_RUN);
+  });
+
+  it("keeps the other operator header rules", () => {
+    expect(
+      apiClientOperatorHeaders.validate({ ...valid, "x-actor-id": "x" }).error,
     ).toBeDefined();
   });
 });
