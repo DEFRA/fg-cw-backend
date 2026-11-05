@@ -583,6 +583,47 @@ the lazy fetch a case triggers works as before.
 `GET …/{version}/existence` releases only whether the version exists, takes no
 operator headers and is not audited, like the case existence check.
 
+### Client actuators
+
+`/actuators/clients` lets the grants admin list every access token of this
+service, issue a client a token (`POST …/clients/{clientId}/tokens`, creating
+the client with `newClient`) and revoke one
+(`POST …/clients/{clientId}/tokens/{tokenId}/revoke`). They take the operator
+headers. Only a new token's hash and last four characters arrive here: the
+grants admin generates the raw value and shows it once. No response, log or
+audit event carries a hash. The list is audited as `VIEW_API_CLIENT`; issue and
+revoke as `ISSUE_API_TOKEN` and `REVOKE_API_TOKEN`, under PMC `0705`.
+
+- A client may hold any number of active tokens, so a rotation overlaps.
+- A revoke sets `revokedAt` and moves `expiresAt` to now, so auth refuses the
+  token on the next request, on this image or an older one. During a Mongo
+  election auth may briefly read a secondary that has not seen it yet, a
+  trade-off taken so the election does not stall every request.
+- A token may expire at a future date up to 9999-12-31 or never, set on issue
+  or later with `PUT …/tokens/{tokenId}/expiry`, which also revives a revoked
+  token. A token that is at or past its expiry is EXPIRED, and auth refuses it.
+  The `normalise-access-token-dates` migration turns any stored expiry,
+  revocation or creation date that is not null or a date from 1970 to 9999
+  into one, keeping whether the token authenticates.
+- `POST …/tokens/{tokenId}/rotate` issues a replacement with the old token's
+  expiry, in one transaction with ending the old one now or after a 24h or 7d
+  overlap. An overlap runs on to 23:59:59 UK time (GMT or BST) on the day it
+  reaches, so rotating at 23:30 on 25 October with `24h` ends the old token at
+  23:59:59 on 26 October.
+- `DELETE …/tokens/{tokenId}` removes one token that is not active, for good;
+  deleting a client's last token frees its name.
+- Expiry changes, rotations and deletes are audited as
+  `CHANGE_API_TOKEN_EXPIRY`, `ROTATE_API_TOKEN` and `DELETE_API_TOKEN`, under
+  PMC `0705`.
+- A request can never revoke the token it is made with (409
+  `API_TOKEN_IN_USE`), so fg-gas-backend cannot lock itself out. The list marks
+  that token `inUse`.
+- A token whose stored client is missing or fails the name rule (which also
+  refuses exactly 64 hex characters, as a hash reads) is listed with no client
+  and cannot be revoked here. The `name-access-tokens` migration gives every
+  such row a valid name: a bad one normalised, a missing one or one that is
+  still invalid `unnamed-<last 6 of tokenId>`, never `fg-gas-backend`.
+
 Every actuator request that sends `x-actor-id` has it recorded as the audit
 event's `user`, including redrive, purge and edit.
 
@@ -591,88 +632,28 @@ event's `user`, including redrive, purge and edit.
 The public API is for callers with no Entra user behind them, so it uses the
 same credential scheme as fg-gas-backend's own service auth. Tokens are stored
 in `access_tokens` as a SHA-256 hash of the raw value, so a leak of the
-collection yields nothing that authenticates and this service can never mint or
-impersonate a credential it accepts.
+collection yields nothing that authenticates. The grants admin generates each
+token and sends only its hash, so this service never sees a raw token it
+accepts.
 
-Deployed environments give nobody direct database access, so tokens are not
-inserted by hand. The service seeds one itself on boot from
-`SERVICE_ACCESS_TOKEN_HASH`, supplied by the platform's secret store, which makes
-issuing and rotating a credential a secret change plus a redeploy.
+Tokens are issued and revoked only through the grants admin's API clients
+pages, which reach this service through fg-gas-backend and the client
+actuators, one environment at a time - never reuse a token across
+environments, or a dev credential authenticates against prod.
 
-The value is a single `client:sha256hex` pair:
+#### Local development
 
-```
-fg-gas-backend:4bb35ade...
-```
-
-Only the hash reaches this service. The raw token lives solely in the calling
-service's own secrets. Neither value belongs in a repository: this repo is
-public, and callers' repos may be too.
-
-This is an instruction to issue, not a record of who holds a token:
-
-- It affects only the client it names. The secret names one client, and only
-  that client's record is rewritten.
-- Unset it and nothing happens. Clearing the secret revokes nobody, so it can be
-  emptied once a credential has been issued.
-- Onboard services one at a time: point it at the next client and redeploy. The
-  previously issued token stays valid.
-
-Seeding never stops the service starting. A malformed value or a database
-failure is logged and skipped, leaving that client without a working token until
-the next deploy, rather than taking the service down for everyone. Check the logs
-after a deploy - a credential that silently never appeared looks exactly like one
-that was never set.
-
-#### Issue or rotate
-
-Run once **per environment** - never reuse a token across environments, or a dev
-credential authenticates against prod:
+No token is seeded on boot. Locally, insert one into your Mongo, with the
+hash of a raw token you choose:
 
 ```bash
-npm run token:new -- <client-name>
+mongosh mongodb://localhost:27017/fg-cw-backend --eval 'db.access_tokens.insertOne({ id: "<sha256 hex of the raw token>", client: "fg-gas-backend", expiresAt: null })'
 ```
-
-Then in the CDP portal for that environment:
-
-1. `fg-cw-backend` -> Secrets -> `SERVICE_ACCESS_TOKEN_HASH` = the printed
-   `client:hash` pair
-2. Give the raw token to the calling service as its own secret
-3. Redeploy `fg-cw-backend`, then the caller
-
-Setting a new hash for a client that already has one rotates it: a single seeded
-record per client is enforced by a unique index, so the new token replaces the
-previous one on the next boot. Expect 401s between the two redeploys, so deploy
-`fg-cw-backend` first.
-
-Locally, set `SERVICE_ACCESS_TOKEN_HASH` in `.env` instead of the portal.
-
-#### Revoke
-
-There is no revoke-by-omission - clearing the secret deliberately does nothing.
-To cut a client off, rotate it to a freshly generated hash and discard the raw
-token: the old token stops working on the next boot and nobody holds the new one.
-Removing the record outright needs database access. Issuing the new hash and
-revoking the old one is a single atomic step, so confirm the deploy logged
-`Seeded access token for <client>` - a failed seed leaves the old token live.
-
-The client name is the identity, so renaming one issues a _second_ credential
-rather than rotating the first, and the original stays valid indefinitely. Cut the old name off the same
-way - point the secret at `<old-name>:<fresh hash>`, redeploy, and discard that
-token - before switching to the new name.
 
 #### Verify
 
-Check the startup logs, which will show one of:
-
-| Log line                                                                    | Meaning                                                                                                                  |
-| :-------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| `Seeded access token for <client>`                                          | Issued. A `, replacing the previous one` suffix means the hash changed; without it, the credential was already in place. |
-| `SERVICE_ACCESS_TOKEN_HASH is not a client:sha256hex pair - nothing seeded` | The value is malformed. Nothing was issued or removed.                                                                   |
-| `Failed to seed access token for <client>`                                  | The database write failed. The service started anyway; retry by redeploying.                                             |
-
-Then call the user roles endpoint, which any client may call, with the raw
-token. A 200 with an empty `appRoles` for this unknown user means the token was
+Call the user roles endpoint, which any client may call, with the raw token. A
+200 with an empty `appRoles` for this unknown user means the token was
 accepted; a 401 means it was not. The actuators are no test of a token: they
 answer 403 to every client but fg-gas-backend.
 

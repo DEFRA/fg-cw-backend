@@ -5,8 +5,12 @@ import {
   editInboxEventPayloadRoute,
   editOutboxEventPayloadRoute,
 } from "./routes/edit-event-payload.route.js";
+import { changeClientTokenExpiryRoute } from "./routes/change-client-token-expiry.route.js";
+import { deleteClientTokenRoute } from "./routes/delete-client-token.route.js";
 import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
 import { getOutboxEventRoute } from "./routes/get-outbox-event.route.js";
+import { issueClientTokenRoute } from "./routes/issue-client-token.route.js";
+import { listClientsRoute } from "./routes/list-clients.route.js";
 import { listBucketsRoute } from "./routes/list-buckets.route.js";
 import { purgeInboxEventRoute } from "./routes/purge-inbox-event.route.js";
 import { purgeOutboxEventRoute } from "./routes/purge-outbox-event.route.js";
@@ -15,6 +19,8 @@ import { readTimelineRoute } from "./routes/read-timeline.route.js";
 import { summariseBucketRoute } from "./routes/summarise-bucket.route.js";
 import { redriveInboxEventRoute } from "./routes/redrive-inbox-event.route.js";
 import { redriveOutboxEventRoute } from "./routes/redrive-outbox-event.route.js";
+import { revokeClientTokenRoute } from "./routes/revoke-client-token.route.js";
+import { rotateClientTokenRoute } from "./routes/rotate-client-token.route.js";
 import { viewCaseDataRoute } from "./routes/view-case-data.route.js";
 import { fetchWorkflowDefinitionRoute } from "./routes/fetch-workflow-definition.route.js";
 import { viewWorkflowVersionRoute } from "./routes/view-workflow-version.route.js";
@@ -35,7 +41,8 @@ export const actuators = {
     // Nothing here can be confused for anything else: a member of
     // `/actuators/events` sits one segment deeper than its box, and `{id}` is
     // constrained to 24 hex characters (schemas/event-id.schema.js);
-    // index.test.js asserts both.
+    // index.test.js asserts both. A client's token routes all sit below
+    // `/actuators/clients/{clientId}/tokens`, so no name collides with them.
     server.route([
       listBucketsRoute,
       queryBucketRoute,
@@ -55,6 +62,12 @@ export const actuators = {
       viewWorkflowVersionRoute,
       fetchWorkflowDefinitionRoute,
       workflowVersionExistsRoute,
+      listClientsRoute,
+      issueClientTokenRoute,
+      revokeClientTokenRoute,
+      changeClientTokenExpiryRoute,
+      rotateClientTokenRoute,
+      deleteClientTokenRoute,
     ]);
   },
 };

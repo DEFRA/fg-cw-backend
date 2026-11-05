@@ -1,8 +1,27 @@
+import { MongoClient } from "mongodb";
 import * as path from "node:path";
 import { DockerComposeEnvironment, Wait } from "testcontainers";
+import { hashToken } from "../src/server/plugins/auth/hash-token.js";
+import { SERVICE_CLIENT, SERVICE_TOKEN } from "./helpers/service-token.js";
 import { ensureQueues } from "./helpers/sqs.js";
 
 let environment;
+
+// A client other than fg-gas-backend, as any onboarded caller would be.
+const insertServiceToken = async (uri) => {
+  const client = await MongoClient.connect(uri);
+  const id = hashToken(SERVICE_TOKEN);
+
+  await client
+    .db()
+    .collection("access_tokens")
+    .replaceOne(
+      { id },
+      { id, client: SERVICE_CLIENT, expiresAt: null },
+      { upsert: true },
+    );
+  await client.close();
+};
 
 export const setup = async ({ globalConfig }) => {
   const { env } = globalConfig;
@@ -19,11 +38,12 @@ export const setup = async ({ globalConfig }) => {
       MONGO_PORT: env.MONGO_PORT,
       FLOCI_PORT: env.FLOCI_PORT,
       ENTRA_PORT: env.ENTRA_PORT,
-      SERVICE_ACCESS_TOKEN_HASH: env.SERVICE_ACCESS_TOKEN_HASH,
     })
     .withWaitStrategy("fg-cw-backend-1", Wait.forHttp("/health", env.CW_PORT))
     .withNoRecreate()
     .up();
+
+  await insertServiceToken(env.MONGO_URI);
 
   await ensureQueues([
     env.CW__SQS__CREATE_NEW_CASE_URL,
