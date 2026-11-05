@@ -271,4 +271,4 @@ export const persistResolvedVersion = async (kase, resolvedVersion) => {
 };
 
 // Exposed for tests.
-export const __clearDefinitionCache = () => definitionCache.clear();
+export const __clearDefinitionCache = () => definitionCache?.clear();
