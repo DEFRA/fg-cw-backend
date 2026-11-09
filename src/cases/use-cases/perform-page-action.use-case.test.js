@@ -16,6 +16,7 @@ import { performPageActionUseCase } from "./perform-page-action.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../../common/build-view-model.js");
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./external-action.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");

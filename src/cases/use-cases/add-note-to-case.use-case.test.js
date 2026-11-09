@@ -8,6 +8,7 @@ import { findById, update } from "../repositories/case.repository.js";
 import { addNoteToCaseUseCase } from "./add-note-to-case.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./resolve-current-workflow.use-case.js");
 
