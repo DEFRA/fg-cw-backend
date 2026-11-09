@@ -11,10 +11,12 @@ const DECIMAL_PLACES = 4;
 const hectares = `$${FIELD}`;
 const rounded = { $round: [hectares, DECIMAL_PLACES] };
 
-const AFFECTED = {
-  workflowCode: WORKFLOW_CODE,
-  $expr: { $and: [{ $isNumber: hectares }, { $ne: [hectares, rounded] }] },
+// $cond, not $and: $and may evaluate $round on a non-number and fail.
+const needsRounding = {
+  $cond: [{ $isNumber: hectares }, { $ne: [hectares, rounded] }, false],
 };
+
+const AFFECTED = { workflowCode: WORKFLOW_CODE, $expr: needsRounding };
 
 export const up = async (db) => {
   const cases = db.collection("cases");
@@ -30,10 +32,13 @@ export const up = async (db) => {
     { $set: { [FIELD]: rounded } },
   ]);
 
-  const details = affected
-    .map(({ caseRef, from, to }) => `${caseRef} ${from} -> ${to}`)
-    .join("; ");
+  // One line per case, so no original value is lost to a long log line.
+  for (const { caseRef, from, to } of affected) {
+    logger.info(
+      `Rounding totalHectaresForSelectedParcels on case ${caseRef}: ${from} -> ${to}`,
+    );
+  }
   logger.info(
-    `Rounded totalHectaresForSelectedParcels to ${DECIMAL_PLACES} decimal places on ${modifiedCount} ${WORKFLOW_CODE} cases${details ? `: ${details}` : ""}`,
+    `Rounded totalHectaresForSelectedParcels to ${DECIMAL_PLACES} decimal places on ${modifiedCount} ${WORKFLOW_CODE} cases`,
   );
 };

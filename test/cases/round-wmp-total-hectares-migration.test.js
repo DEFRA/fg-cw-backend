@@ -131,7 +131,13 @@ describe("20261109120000-round-wmp-total-hectares", () => {
     expect(await cases().find({}).toArray()).toStrictEqual(once);
     expect(logger.info.mock.calls).toEqual([
       [
-        "Rounded totalHectaresForSelectedParcels to 4 decimal places on 2 woodland cases: wmp-a 4.3024000000000004 -> 4.3024; wmp-c 13.778399999999998 -> 13.7784",
+        "Rounding totalHectaresForSelectedParcels on case wmp-a: 4.3024000000000004 -> 4.3024",
+      ],
+      [
+        "Rounding totalHectaresForSelectedParcels on case wmp-c: 13.778399999999998 -> 13.7784",
+      ],
+      [
+        "Rounded totalHectaresForSelectedParcels to 4 decimal places on 2 woodland cases",
       ],
       [
         "Rounded totalHectaresForSelectedParcels to 4 decimal places on 0 woodland cases",
