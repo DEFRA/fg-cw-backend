@@ -19,7 +19,8 @@ vi.mock("./resolve-current-workflow.use-case.js");
 
 describe("updateStageOutcomeUseCase", () => {
   it("allows a stage action with the stage role even without the case role", async () => {
-    withTransaction.mockImplementation(async (cb) => cb({}));
+    const session = {};
+    withTransaction.mockImplementation(async (cb) => cb(session));
     const kase = Case.createMock();
     const workflow = Workflow.createMock();
     workflow.requiredRoles = { allOf: ["ROLE_OTHER"], anyOf: [] };
@@ -49,7 +50,8 @@ describe("updateStageOutcomeUseCase", () => {
     expect(kase.updateStageOutcome).toHaveBeenCalled();
   });
   it("rejects a stage action when the user lacks the applicable stage role", async () => {
-    withTransaction.mockImplementation(async (cb) => cb({}));
+    const session = {};
+    withTransaction.mockImplementation(async (cb) => cb(session));
     const kase = Case.createMock();
     const workflow = Workflow.createMock();
     workflow.phases[0].stages[0].requiredRoles = {
@@ -209,7 +211,8 @@ describe("updateStageOutcomeUseCase", () => {
     });
 
     it("stamps the status event with the ordering key it stores", async () => {
-      withTransaction.mockImplementation(async (cb) => cb({}));
+      const session = {};
+      withTransaction.mockImplementation(async (cb) => cb(session));
       const mockCase = Case.createMock({ caseRef: "ABC-123" });
       const mockWorkflow = Workflow.createMock();
 
