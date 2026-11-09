@@ -42,7 +42,8 @@ describe("every insert into the outbox", () => {
     workflow.validateStageActionComment = vi.fn();
     workflow.getNextPosition = vi.fn().mockReturnValue(kase.position);
     kase.updateStageOutcome = vi.fn();
-    withTransaction.mockImplementation((callback) => callback({}));
+    const session = {};
+    withTransaction.mockImplementation((callback) => callback(session));
     findById.mockResolvedValue(kase);
     update.mockResolvedValue(kase);
     resolveWorkflowForCase.mockResolvedValue({
