@@ -18,6 +18,7 @@ export const auditActions = {
   CREATE_ROLE: "CREATE_ROLE",
   UPDATE_ROLE: "UPDATE_ROLE",
   VIEW_CASE_LIST: "VIEW_CASE_LIST",
+  VIEW_CASE_TYPE_LIST: "VIEW_CASE_TYPE_LIST",
   VIEW_CASE: "VIEW_CASE",
   VIEW_CASE_TAB: "VIEW_CASE_TAB",
   VIEW_LANDING_PAGE: "VIEW_LANDING_PAGE",
@@ -90,6 +91,7 @@ const pmcCodesByAction = {
   [auditActions.CREATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.UPDATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.VIEW_CASE_LIST]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_CASE_TYPE_LIST]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_TAB]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_LANDING_PAGE]: "0706", // any action an internal/external user or service can execute

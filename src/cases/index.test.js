@@ -144,6 +144,7 @@ describe("cases", () => {
     }));
 
     expect(routes).toEqual([
+      { method: "get", path: "/case-types" },
       { method: "get", path: "/cases" },
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/report" },
