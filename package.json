@@ -60,7 +60,7 @@
     "hapi-pino": "13.0.0",
     "hapi-pulse": "4.0.0",
     "hapi-swagger": "^17.3.2",
-    "joi": "18.2.9",
+    "joi": "18.3.1",
     "jose": "6.2.12",
     "jsonata": "2.2.2",
     "jsonpath-plus": "11.1.1",
