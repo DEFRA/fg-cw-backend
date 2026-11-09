@@ -25,7 +25,6 @@ services:
       CW__SQS__CREATE_NEW_CASE_URL: http://floci:4566/000000000000/cw__sqs__create_new_case_fifo.fifo
       CW__SQS__UPDATE_STATUS_URL: http://floci:4566/000000000000/cw__sqs__update_status_fifo.fifo
       CW__SQS__CONFIG_VERSION_QUEUE_URL: http://floci:4566/000000000000/cw__sqs__config_version_updated
-      SERVICE_ACCESS_TOKEN_HASH: "${SERVICE_ACCESS_TOKEN_HASH:-}"
     networks:
       - cdp-tenant
     develop:

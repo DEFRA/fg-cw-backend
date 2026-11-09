@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
-import { findById } from "./access-token.repository.js";
+import { isActiveRecord } from "../../../clients/models/access-token.js";
+import { findCredentialByHash } from "../../../clients/repositories/access-token.repository.js";
 import { hashToken } from "./hash-token.js";
 
 export const PUBLIC_API_STRATEGY = "public-api";
@@ -14,7 +15,7 @@ export const serviceTokenSecurity = {
     name: "Authorization",
     in: "header",
     description:
-      "A service access token, e.g. 'Bearer token..'. Issued with `npm run token:new`.",
+      "A service access token, e.g. 'Bearer token..'. Issued through the grants admin's API clients pages.",
   },
 };
 
@@ -33,20 +34,20 @@ const getBearerToken = (header) => {
   return token;
 };
 
-const isExpired = (record, now = new Date()) =>
-  Boolean(record?.expiresAt && now > record.expiresAt);
-
 export const serviceTokenScheme = () => ({
   authenticate: async (request, h) => {
     const tokenId = hashToken(getBearerToken(request.headers.authorization));
-    const record = await findById(tokenId);
+    const record = await findCredentialByHash(tokenId);
 
-    if (!record || isExpired(record)) {
+    if (!record || !isActiveRecord(record)) {
       throw Boom.unauthorized("Invalid token", "Bearer");
     }
 
     return h.authenticated({
-      credentials: { service: record.client, tokenId: record.id },
+      credentials: {
+        service: record.client,
+        tokenId: record._id.toHexString(),
+      },
     });
   },
 });

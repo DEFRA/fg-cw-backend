@@ -7,6 +7,8 @@ export const auditEntities = {
   EVENT: "EVENT",
   // One list the grants admin surface can show, as this service declares it.
   BUCKET: "BUCKET",
+  // A caller of this service's public API: the token rows sharing one name.
+  API_CLIENT: "API_CLIENT",
 };
 
 export const auditActions = {
@@ -16,6 +18,7 @@ export const auditActions = {
   CREATE_ROLE: "CREATE_ROLE",
   UPDATE_ROLE: "UPDATE_ROLE",
   VIEW_CASE_LIST: "VIEW_CASE_LIST",
+  VIEW_CASE_TYPE_LIST: "VIEW_CASE_TYPE_LIST",
   VIEW_CASE: "VIEW_CASE",
   VIEW_CASE_TAB: "VIEW_CASE_TAB",
   VIEW_LANDING_PAGE: "VIEW_LANDING_PAGE",
@@ -49,6 +52,17 @@ export const auditActions = {
   // Storing one config version's workflow from S3, leaving the version's
   // record alone. Requested the same way a redrive is.
   FETCH_CONFIG_DEFINITION: "FETCH_CONFIG_DEFINITION",
+  // Reading one API client's tokens, or one of them, for the grants admin.
+  VIEW_API_CLIENT: "VIEW_API_CLIENT",
+  // Issuing an API client a token, creating the client with its first.
+  ISSUE_API_TOKEN: "ISSUE_API_TOKEN",
+  REVOKE_API_TOKEN: "REVOKE_API_TOKEN",
+  // Setting a token's expiry, reviving it if it was revoked.
+  CHANGE_API_TOKEN_EXPIRY: "CHANGE_API_TOKEN_EXPIRY",
+  // Replacing a token with a new one, the old kept for an overlap.
+  ROTATE_API_TOKEN: "ROTATE_API_TOKEN",
+  // Removing one token that is not active, for good.
+  DELETE_API_TOKEN: "DELETE_API_TOKEN",
 };
 
 // The FCP audit event schema version, not the service's release version.
@@ -77,6 +91,7 @@ const pmcCodesByAction = {
   [auditActions.CREATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.UPDATE_ROLE]: "0705", // account permission & privilege management
   [auditActions.VIEW_CASE_LIST]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_CASE_TYPE_LIST]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_TAB]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_LANDING_PAGE]: "0706", // any action an internal/external user or service can execute
@@ -96,6 +111,12 @@ const pmcCodesByAction = {
   [auditActions.VIEW_CASE_DATA]: "0706", // any action an internal/external user or service can execute
   [auditActions.QUERY_BUCKET]: "0706", // any action an internal/external user or service can execute
   [auditActions.FETCH_CONFIG_DEFINITION]: "0706", // any action an internal/external user or service can execute
+  [auditActions.VIEW_API_CLIENT]: "0706", // any action an internal/external user or service can execute
+  [auditActions.ISSUE_API_TOKEN]: "0705", // account permission & privilege management
+  [auditActions.REVOKE_API_TOKEN]: "0705", // account permission & privilege management
+  [auditActions.CHANGE_API_TOKEN_EXPIRY]: "0705", // account permission & privilege management
+  [auditActions.ROTATE_API_TOKEN]: "0705", // account permission & privilege management
+  [auditActions.DELETE_API_TOKEN]: "0705", // account permission & privilege management
 };
 
 export const buildAuditSecurity = (action) => ({
