@@ -278,6 +278,36 @@ describe("config broker events through the inbox", { timeout: 60000 }, () => {
     });
   });
 
+  it("warns and completes a manifest without cw.json without recording a version", async () => {
+    const grantCode = aGrantCode("skip");
+    const warned = vi.spyOn(logger, "warn");
+    faults.inject(
+      "fetch",
+      grantCode,
+      () => new Error("must not fetch a skipped version"),
+    );
+    faults.inject(
+      "upsert",
+      grantCode,
+      () => new Error("must not record a skipped version"),
+    );
+    const received = await deliver({
+      manifest: [`${grantCode}/1.0.0/metadata.json`],
+      grant: grantCode,
+      version: "1.0.0",
+    });
+
+    startWorker();
+    const row = await settlesAs(received.MessageId, "COMPLETED");
+
+    expect(row.completionAttempts).toBe(0);
+    expect(row.attemptHistory).toEqual([]);
+    expect(warned).toHaveBeenCalledWith(
+      expect.stringContaining(`Skipping config version: ${grantCode}@1.0.0`),
+    );
+    await expect(versionsOf(grantCode)).resolves.toEqual([]);
+  });
+
   describe("failures retrying cannot fix go to DEAD_LETTER after one attempt", () => {
     const definitionWith = (grantCode, change) => {
       const definition = workflowDefinition(grantCode);
@@ -286,13 +316,6 @@ describe("config broker events through the inbox", { timeout: 60000 }, () => {
     };
 
     it.each([
-      {
-        kind: "a manifest without cw.json",
-        arrange: async (grantCode) => ({
-          manifest: [`${grantCode}/1.0.0/metadata.json`],
-        }),
-        reason: "Manifest does not contain a cw config file",
-      },
       {
         kind: "a cw.json missing from S3",
         arrange: async () => ({}),

@@ -143,6 +143,30 @@ describe("processConfigVersionUseCase", () => {
     });
   });
 
+  it.each([
+    ["metadata only", "", ["woodland/1.2.3/metadata.json"]],
+    ["GAS only", "", ["woodland/1.2.3/gas/gas.json"]],
+    ["another variant only", "", ["woodland/1.2.3/cw/cw.next.json"]],
+    [
+      "missing configured variant and default",
+      "next",
+      ["woodland/1.2.3/metadata.json"],
+    ],
+  ])("warns and skips a manifest with %s", async (_, variant, manifest) => {
+    mockConfigGet._overrides["configBroker.variant"] = variant;
+
+    await expect(
+      processConfigVersionUseCase(messageFor({ manifest })),
+    ).resolves.toBeUndefined();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Skipping config version: woodland@1.2.3"),
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(fetchConfigFile).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   describe("failures retrying cannot fix", () => {
     it.each([
       ["no grant", { grantCode: undefined }, "missing required fields"],
@@ -152,11 +176,6 @@ describe("processConfigVersionUseCase", () => {
       ["no manifest", { manifest: undefined }, "manifest"],
       ["an empty manifest", { manifest: [] }, "manifest"],
       ["a version that is not semver", { version: "1.2" }, "Invalid semver"],
-      [
-        "a manifest without cw.json",
-        { manifest: ["woodland/1.2.3/metadata.json"] },
-        "does not contain a cw config file",
-      ],
     ])("dead-letters a message with %s", async (_, data, reason) => {
       const error = await failureOf(data);
 
@@ -311,6 +330,15 @@ describe("processConfigVersionUseCase", () => {
       );
 
       expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
+    });
+
+    it("falls back to cw.json when the configured variant is absent", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+
+      await processConfigVersionUseCase(messageFor());
+
+      expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     it("ignores the variant in prod", async () => {

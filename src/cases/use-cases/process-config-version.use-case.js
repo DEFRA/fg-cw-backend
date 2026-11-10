@@ -87,7 +87,15 @@ const applyConfigVersion = async (eventData) => {
   logger.info(`Processing config version: ${grantCode}@${version} (${status})`);
 
   const variant = getConfigurationVariant(config);
-  const s3Key = findS3KeyInManifest(manifest, "cw", variant);
+  const s3Key = findS3KeyInManifest(manifest, "cw", variant, {
+    required: false,
+  });
+  if (!s3Key) {
+    logger.warn(
+      `Skipping config version: ${grantCode}@${version} (manifest has no matching Caseworking definition)`,
+    );
+    return;
+  }
 
   // Checked before the version is recorded, so a definition no case can use
   // never becomes one a case resolves to.

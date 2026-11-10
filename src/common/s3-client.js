@@ -40,8 +40,13 @@ export class S3FetchError extends Error {
 
 // When a variant is configured, tries the variant filename first
 // (e.g. cw.next.json) then falls back to the unsuffixed file (cw.json).
-// eslint-disable-next-line complexity
-export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
+/* eslint-disable complexity */
+export const findS3KeyInManifest = (
+  manifest,
+  serviceKey,
+  variant = "",
+  { required = true } = {},
+) => {
   if (variant) {
     const variantFile = variantFileName(`${serviceKey}.json`, variant);
     const variantSuffix = `/${serviceKey}/${variantFile}`;
@@ -55,12 +60,16 @@ export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
   const match = manifest.find((path) => path.endsWith(suffix));
   // A published manifest never changes, so retrying cannot find the file.
   if (!match) {
+    if (!required) {
+      return null;
+    }
     throw Boom.badRequest(
       `Manifest does not contain a ${serviceKey} config file (expected path ending with ${suffix})`,
     );
   }
   return match;
 };
+/* eslint-enable complexity */
 
 // eslint-disable-next-line complexity
 const classifyS3Error = (err, key, bucket) => {
