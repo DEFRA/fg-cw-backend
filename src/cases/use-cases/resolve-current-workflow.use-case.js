@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { config } from "../../common/config.js";
 import { logger } from "../../common/logger.js";
 import { parseSemver } from "../../common/semver.js";
 import { updateCurrentConfigVersion } from "../repositories/case.repository.js";
@@ -6,13 +7,14 @@ import { findLatestForMajor } from "../repositories/config-version.repository.js
 import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
-// Process-level cache of immutable workflow definitions keyed by `${code}@${version}`.
+// Process-level cache of immutable workflow definitions, keyed by `${code}@${version}`.
 // Safe to cache indefinitely: a (code, version) definition never changes.
-// Disabled via WORKFLOW_DEFINITION_CACHE_ENABLED=false for integration tests
+// Disabled via config.workflowDefinitionCacheEnabled for integration tests
 // that mutate workflow documents in MongoDB between test cases.
 const MAX_CACHE_ENTRIES = 100;
-const definitionCache =
-  process.env.WORKFLOW_DEFINITION_CACHE_ENABLED === "false" ? null : new Map();
+const definitionCache = config.get("workflowDefinitionCacheEnabled")
+  ? new Map()
+  : null;
 
 const cacheKey = (code, version) => `${code}@${version}`;
 
@@ -84,7 +86,7 @@ export const resolveCurrentWorkflowUseCase = async (
   memo,
 ) => {
   if (!pinnedVersion) {
-    throw Boom.badRequest(
+    throw Boom.badImplementation(
       `Case for workflow "${workflowCode}" has no pinned config version`,
     );
   }

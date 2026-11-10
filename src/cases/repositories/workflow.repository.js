@@ -204,14 +204,6 @@ export const findAllCodes = async (query) => {
   return [...new Set(documents.map((doc) => doc.code))];
 };
 
-export const findByCode = async (code, version) => {
-  const workflowDocument = await db
-    .collection(collection)
-    .findOne({ code, version });
-
-  return workflowDocument && toWorkflow(workflowDocument);
-};
-
 export const findByCodeAndVersion = async (code, version) => {
   const doc = await db.collection(collection).findOne({ code, version });
   return doc && toWorkflow(doc);

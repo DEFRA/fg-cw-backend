@@ -29,12 +29,12 @@ describe("resolveCurrentWorkflowUseCase", () => {
     __clearDefinitionCache();
   });
 
-  it("throws badRequest when there is no pinned version", async () => {
+  it("throws badImplementation when there is no pinned version", async () => {
     await expect(
       resolveCurrentWorkflowUseCase("pigs-might-fly", null),
     ).rejects.toThrow(
       expect.objectContaining({
-        output: expect.objectContaining({ statusCode: 400 }),
+        output: expect.objectContaining({ statusCode: 500 }),
         message: expect.stringContaining("has no pinned config version"),
       }),
     );
@@ -421,7 +421,7 @@ describe("resolveWorkflowForCase structured logging", () => {
     expect(message).toContain("definitionSource=mongodb");
   });
 
-  it("throws badRequest and logs error when case has no pinned config version", async () => {
+  it("throws badImplementation and logs error when case has no pinned config version", async () => {
     const kase = aCase({
       originalConfigVersion: null,
       currentConfigVersion: null,
@@ -429,7 +429,7 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     await expect(resolveWorkflowForCase(kase)).rejects.toThrow(
       expect.objectContaining({
-        output: expect.objectContaining({ statusCode: 400 }),
+        output: expect.objectContaining({ statusCode: 500 }),
         message: expect.stringContaining("has no pinned config version"),
       }),
     );
@@ -499,7 +499,7 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     await expect(resolveWorkflowForCase(kase)).rejects.toThrow(
       expect.objectContaining({
-        output: expect.objectContaining({ statusCode: 400 }),
+        output: expect.objectContaining({ statusCode: 500 }),
       }),
     );
 
