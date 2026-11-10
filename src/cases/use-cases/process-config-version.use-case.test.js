@@ -332,13 +332,33 @@ describe("processConfigVersionUseCase", () => {
       expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
     });
 
-    it("falls back to cw.json when the configured variant is absent", async () => {
+    it("skips an unsuffixed definition when the configured variant is absent", async () => {
       mockConfigGet._overrides["configBroker.variant"] = "next";
 
       await processConfigVersionUseCase(messageFor());
 
-      expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
-      expect(logger.warn).not.toHaveBeenCalled();
+      expect(upsert).not.toHaveBeenCalled();
+      expect(fetchConfigFile).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Skipping config version: woodland@1.2.3"),
+      );
+    });
+
+    it("keeps a declared variant failure instead of trying cw.json", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+      fetchConfigFile.mockRejectedValueOnce(
+        new S3FetchError("variant missing from S3", {
+          statusCode: 404,
+          code: "NoSuchKey",
+        }),
+      );
+      const error = await failureOf({ manifest: variantManifest });
+      expect(isRetryableFailure(error)).toBe(false);
+      expect(fetchConfigFile).toHaveBeenCalledExactlyOnceWith(
+        BUCKET,
+        "woodland/1.2.3/cw/cw.next.json",
+      );
+      expect(upsert).not.toHaveBeenCalled();
     });
 
     it("ignores the variant in prod", async () => {

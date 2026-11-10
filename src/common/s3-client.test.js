@@ -111,14 +111,22 @@ describe("s3-client", () => {
       );
     });
 
-    it("should fall back to unsuffixed when variant file is missing", () => {
+    it("should reject an unsuffixed file when the required variant is missing", () => {
       const manifest = [
         "woodland/1.2.3/cw/cw.json",
         "woodland/1.2.3/metadata.json",
       ];
-      expect(findS3KeyInManifest(manifest, "cw", "next")).toBe(
-        "woodland/1.2.3/cw/cw.json",
+      expect(() => findS3KeyInManifest(manifest, "cw", "next")).toThrow(
+        "/cw/cw.next.json",
       );
+    });
+
+    it("returns null instead of an unsuffixed file when the optional variant is missing", () => {
+      expect(
+        findS3KeyInManifest(["woodland/1.2.3/cw/cw.json"], "cw", "next", {
+          required: false,
+        }),
+      ).toBeNull();
     });
 
     it("should throw when neither variant nor unsuffixed file exists", () => {

@@ -38,8 +38,7 @@ export class S3FetchError extends Error {
   }
 }
 
-// When a variant is configured, tries the variant filename first
-// (e.g. cw.next.json) then falls back to the unsuffixed file (cw.json).
+// A configured variant selects exactly one filename; never fall back to cw.json.
 /* eslint-disable complexity */
 export const findS3KeyInManifest = (
   manifest,
@@ -47,16 +46,8 @@ export const findS3KeyInManifest = (
   variant = "",
   { required = true } = {},
 ) => {
-  if (variant) {
-    const variantFile = variantFileName(`${serviceKey}.json`, variant);
-    const variantSuffix = `/${serviceKey}/${variantFile}`;
-    const variantMatch = manifest.find((path) => path.endsWith(variantSuffix));
-    if (variantMatch) {
-      return variantMatch;
-    }
-  }
-
-  const suffix = `/${serviceKey}/${serviceKey}.json`;
+  const target = variantFileName(`${serviceKey}.json`, variant);
+  const suffix = `/${serviceKey}/${target}`;
   const match = manifest.find((path) => path.endsWith(suffix));
   // A published manifest never changes, so retrying cannot find the file.
   if (!match) {
