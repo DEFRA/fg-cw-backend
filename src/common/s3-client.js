@@ -38,11 +38,9 @@ export class S3FetchError extends Error {
 }
 
 // A configured variant selects exactly one filename; never fall back to the unsuffixed file.
-export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
-  const target = variantFileName(`${serviceKey}.json`, variant);
-  return (
-    manifest.find((path) => path.endsWith(`/${serviceKey}/${target}`)) ?? null
-  );
+export const findWorkflowKey = (manifest, variant = "") => {
+  const target = variantFileName("cw.json", variant);
+  return manifest.find((path) => path.endsWith(`/cw/${target}`)) ?? null;
 };
 
 // eslint-disable-next-line complexity

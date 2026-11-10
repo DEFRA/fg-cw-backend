@@ -1,10 +1,6 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  S3FetchError,
-  fetchConfigFile,
-  findS3KeyInManifest,
-} from "./s3-client.js";
+import { S3FetchError, fetchConfigFile, findWorkflowKey } from "./s3-client.js";
 
 const { mockSend } = vi.hoisted(() => {
   const mockSend = vi.fn();
@@ -46,7 +42,7 @@ describe("s3-client", () => {
     vi.clearAllMocks();
   });
 
-  describe("findS3KeyInManifest", () => {
+  describe("findWorkflowKey", () => {
     const defaultKey = "woodland/1.2.3/cw/cw.json";
     const variantKey = "woodland/1.2.3/cw/cw.next.json";
 
@@ -82,7 +78,7 @@ describe("s3-client", () => {
         null,
       ],
     ])("%s", (_, variant, manifest, expected) => {
-      expect(findS3KeyInManifest(manifest, "cw", variant)).toBe(expected);
+      expect(findWorkflowKey(manifest, variant)).toBe(expected);
     });
   });
 
