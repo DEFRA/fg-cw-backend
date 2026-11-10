@@ -47,93 +47,42 @@ describe("s3-client", () => {
   });
 
   describe("findS3KeyInManifest", () => {
-    it("should return the matching path from the manifest", () => {
-      const manifest = [
-        "woodland/1.2.3/grants-ui/allowlist.yaml",
-        "woodland/1.2.3/cw/cw.json",
-        "woodland/1.2.3/metadata.json",
-      ];
-      expect(findS3KeyInManifest(manifest, "cw")).toBe(
-        "woodland/1.2.3/cw/cw.json",
-      );
-    });
+    const defaultKey = "woodland/1.2.3/cw/cw.json";
+    const variantKey = "woodland/1.2.3/cw/cw.next.json";
 
-    it("should handle manifests with many entries", () => {
-      const manifest = [
-        "pigs-might-fly/2.0.0/cw/cw.json",
-        "pigs-might-fly/2.0.0/gas/gas.json",
-        "pigs-might-fly/2.0.0/grants-ui/allowlist.yaml",
-        "pigs-might-fly/2.0.0/metadata.json",
-      ];
-      expect(findS3KeyInManifest(manifest, "cw")).toBe(
-        "pigs-might-fly/2.0.0/cw/cw.json",
-      );
-    });
-
-    it("should throw when the manifest does not contain a matching path", () => {
-      const manifest = [
-        "woodland/1.2.3/gas/gas.json",
-        "woodland/1.2.3/metadata.json",
-      ];
-      expect(() => findS3KeyInManifest(manifest, "cw")).toThrow(
-        "Manifest does not contain a cw config file",
-      );
-    });
-
-    it("should throw a Boom bad request, so the caller knows retrying will not help", () => {
-      expect(() =>
-        findS3KeyInManifest(["woodland/1.2.3/metadata.json"], "cw"),
-      ).toThrow(
-        expect.objectContaining({
-          isBoom: true,
-          output: expect.objectContaining({ statusCode: 400 }),
-        }),
-      );
-    });
-
-    it("should match the unsuffixed file when variant is empty", () => {
-      const manifest = [
-        "woodland/1.2.3/cw/cw.json",
-        "woodland/1.2.3/cw/cw.next.json",
-      ];
-      expect(findS3KeyInManifest(manifest, "cw", "")).toBe(
-        "woodland/1.2.3/cw/cw.json",
-      );
-    });
-
-    it('should match the variant file when variant is "next"', () => {
-      const manifest = [
-        "woodland/1.2.3/cw/cw.json",
-        "woodland/1.2.3/cw/cw.next.json",
-      ];
-      expect(findS3KeyInManifest(manifest, "cw", "next")).toBe(
-        "woodland/1.2.3/cw/cw.next.json",
-      );
-    });
-
-    it("should reject an unsuffixed file when the required variant is missing", () => {
-      const manifest = [
-        "woodland/1.2.3/cw/cw.json",
-        "woodland/1.2.3/metadata.json",
-      ];
-      expect(() => findS3KeyInManifest(manifest, "cw", "next")).toThrow(
-        "/cw/cw.next.json",
-      );
-    });
-
-    it("returns null instead of an unsuffixed file when the optional variant is missing", () => {
-      expect(
-        findS3KeyInManifest(["woodland/1.2.3/cw/cw.json"], "cw", "next", {
-          required: false,
-        }),
-      ).toBeNull();
-    });
-
-    it("should throw when neither variant nor unsuffixed file exists", () => {
-      const manifest = ["woodland/1.2.3/metadata.json"];
-      expect(() => findS3KeyInManifest(manifest, "cw", "next")).toThrow(
-        "Manifest does not contain a cw config file",
-      );
+    it.each([
+      [
+        "selects the unsuffixed file without a variant",
+        "",
+        [variantKey, defaultKey],
+        defaultKey,
+      ],
+      [
+        "selects the configured variant when both files exist",
+        "next",
+        [defaultKey, variantKey],
+        variantKey,
+      ],
+      [
+        "does not fall back when the configured variant is absent",
+        "next",
+        [defaultKey],
+        null,
+      ],
+      [
+        "returns null when no file matches",
+        "",
+        ["woodland/1.2.3/metadata.json"],
+        null,
+      ],
+      [
+        "ignores a matching filename in another directory",
+        "",
+        ["woodland/1.2.3/gas/cw.json"],
+        null,
+      ],
+    ])("%s", (_, variant, manifest, expected) => {
+      expect(findS3KeyInManifest(manifest, "cw", variant)).toBe(expected);
     });
   });
 

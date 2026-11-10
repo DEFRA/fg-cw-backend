@@ -148,9 +148,9 @@ describe("processConfigVersionUseCase", () => {
     ["GAS only", "", ["woodland/1.2.3/gas/gas.json"]],
     ["another variant only", "", ["woodland/1.2.3/cw/cw.next.json"]],
     [
-      "missing configured variant and default",
+      "only an unsuffixed definition under a variant",
       "next",
-      ["woodland/1.2.3/metadata.json"],
+      ["woodland/1.2.3/cw/cw.json"],
     ],
   ])("warns and skips a manifest with %s", async (_, variant, manifest) => {
     mockConfigGet._overrides["configBroker.variant"] = variant;
@@ -330,18 +330,6 @@ describe("processConfigVersionUseCase", () => {
       );
 
       expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
-    });
-
-    it("skips an unsuffixed definition when the configured variant is absent", async () => {
-      mockConfigGet._overrides["configBroker.variant"] = "next";
-
-      await processConfigVersionUseCase(messageFor());
-
-      expect(upsert).not.toHaveBeenCalled();
-      expect(fetchConfigFile).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Skipping config version: woodland@1.2.3"),
-      );
     });
 
     it("keeps a declared variant failure instead of trying cw.json", async () => {
