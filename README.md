@@ -264,9 +264,16 @@ awslocal sns publish \
 
 The body is the release manifest and the rest travels as message attributes,
 as the Config Broker sends it. `path` is the bucket the files are in: CW reads
-`cw.json` from that bucket and nowhere else, so a message without it is
-dead-lettered. The event lands in the inbox as `config-version.updated` and the
-version is only recorded once its `cw.json` has been fetched and checked.
+its selected definition from that bucket and nowhere else. A message without
+the bucket attribute is dead-lettered. The event lands in the inbox as
+`config-version.updated` and the version is only recorded once its selected
+definition has been fetched and checked.
+
+In non-production environments, `CONFIGURATION_VARIANT=next` selects only
+`cw/cw.next.json`, with no fallback to `cw/cw.json`. Production always selects
+`cw/cw.json`. If the manifest has no selected definition, CW logs a warning and
+completes the inbox message without fetching or recording a version. Errors
+loading or validating a declared definition retain their existing handling.
 
 ```
 awslocal sns publish \
