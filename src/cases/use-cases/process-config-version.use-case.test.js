@@ -143,6 +143,30 @@ describe("processConfigVersionUseCase", () => {
     });
   });
 
+  it.each([
+    ["metadata only", "", ["woodland/1.2.3/metadata.json"]],
+    ["GAS only", "", ["woodland/1.2.3/gas/gas.json"]],
+    ["another variant only", "", ["woodland/1.2.3/cw/cw.next.json"]],
+    [
+      "only an unsuffixed definition under a variant",
+      "next",
+      ["woodland/1.2.3/cw/cw.json"],
+    ],
+  ])("warns and skips a manifest with %s", async (_, variant, manifest) => {
+    mockConfigGet._overrides["configBroker.variant"] = variant;
+
+    await expect(
+      processConfigVersionUseCase(messageFor({ manifest })),
+    ).resolves.toBeUndefined();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("Skipping config version: woodland@1.2.3"),
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(fetchConfigFile).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   describe("failures retrying cannot fix", () => {
     it.each([
       ["no grant", { grantCode: undefined }, "missing required fields"],
@@ -152,11 +176,6 @@ describe("processConfigVersionUseCase", () => {
       ["no manifest", { manifest: undefined }, "manifest"],
       ["an empty manifest", { manifest: [] }, "manifest"],
       ["a version that is not semver", { version: "1.2" }, "Invalid semver"],
-      [
-        "a manifest without cw.json",
-        { manifest: ["woodland/1.2.3/metadata.json"] },
-        "does not contain a cw config file",
-      ],
     ])("dead-letters a message with %s", async (_, data, reason) => {
       const error = await failureOf(data);
 
@@ -311,6 +330,23 @@ describe("processConfigVersionUseCase", () => {
       );
 
       expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
+    });
+
+    it("keeps a declared variant failure instead of trying cw.json", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+      fetchConfigFile.mockRejectedValueOnce(
+        new S3FetchError("variant missing from S3", {
+          statusCode: 404,
+          code: "NoSuchKey",
+        }),
+      );
+      const error = await failureOf({ manifest: variantManifest });
+      expect(isRetryableFailure(error)).toBe(false);
+      expect(fetchConfigFile).toHaveBeenCalledExactlyOnceWith(
+        BUCKET,
+        "woodland/1.2.3/cw/cw.next.json",
+      );
+      expect(upsert).not.toHaveBeenCalled();
     });
 
     it("ignores the variant in prod", async () => {

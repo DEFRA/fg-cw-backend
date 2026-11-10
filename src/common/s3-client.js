@@ -1,5 +1,4 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import Boom from "@hapi/boom";
 import { config } from "./config.js";
 import { variantFileName } from "./configuration-variant.js";
 import { logger } from "./logger.js";
@@ -38,28 +37,10 @@ export class S3FetchError extends Error {
   }
 }
 
-// When a variant is configured, tries the variant filename first
-// (e.g. cw.next.json) then falls back to the unsuffixed file (cw.json).
-// eslint-disable-next-line complexity
-export const findS3KeyInManifest = (manifest, serviceKey, variant = "") => {
-  if (variant) {
-    const variantFile = variantFileName(`${serviceKey}.json`, variant);
-    const variantSuffix = `/${serviceKey}/${variantFile}`;
-    const variantMatch = manifest.find((path) => path.endsWith(variantSuffix));
-    if (variantMatch) {
-      return variantMatch;
-    }
-  }
-
-  const suffix = `/${serviceKey}/${serviceKey}.json`;
-  const match = manifest.find((path) => path.endsWith(suffix));
-  // A published manifest never changes, so retrying cannot find the file.
-  if (!match) {
-    throw Boom.badRequest(
-      `Manifest does not contain a ${serviceKey} config file (expected path ending with ${suffix})`,
-    );
-  }
-  return match;
+// A configured variant selects exactly one filename; never fall back to the unsuffixed file.
+export const findWorkflowKey = (manifest, variant = "") => {
+  const target = variantFileName("cw.json", variant);
+  return manifest.find((path) => path.endsWith(`/cw/${target}`)) ?? null;
 };
 
 // eslint-disable-next-line complexity
