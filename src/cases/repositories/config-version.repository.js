@@ -1,35 +1,47 @@
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { FetchStatus } from "../../common/fetch-status.js";
 import { db } from "../../common/mongo-client.js";
+import { recordConfigChange } from "../../common/search/current-searches.js";
+import { withTransaction } from "../../common/with-transaction.js";
 import { ConfigVersion } from "../models/config-version.js";
 
 const collection = "config_versions";
 
+// A version arriving or changing is counted with it, which orders a
+// workflow's search declarations.
 export const upsert = async (configVersion) => {
   const doc = configVersion.toDocument();
 
-  return db.collection(collection).updateOne(
-    { grantCode: doc.grantCode, version: doc.version },
-    {
-      $set: {
-        major: doc.major,
-        minor: doc.minor,
-        patch: doc.patch,
-        status: doc.status,
-        s3Key: doc.s3Key,
-        s3Bucket: doc.s3Bucket,
-        fetchStatus: doc.fetchStatus,
-        fetchError: doc.fetchError,
-        fetchAttempts: doc.fetchAttempts,
-        lastFetchAttemptAt: doc.lastFetchAttemptAt,
+  return withTransaction(async (session) => {
+    const result = await db.collection(collection).updateOne(
+      { grantCode: doc.grantCode, version: doc.version },
+      {
+        $set: {
+          major: doc.major,
+          minor: doc.minor,
+          patch: doc.patch,
+          status: doc.status,
+          s3Key: doc.s3Key,
+          s3Bucket: doc.s3Bucket,
+          fetchStatus: doc.fetchStatus,
+          fetchError: doc.fetchError,
+          fetchAttempts: doc.fetchAttempts,
+          lastFetchAttemptAt: doc.lastFetchAttemptAt,
+        },
+        $setOnInsert: {
+          receivedAt: doc.receivedAt,
+          fetchedAt: doc.fetchedAt,
+        },
       },
-      $setOnInsert: {
-        receivedAt: doc.receivedAt,
-        fetchedAt: doc.fetchedAt,
-      },
-    },
-    { upsert: true },
-  );
+      { upsert: true, session },
+    );
+
+    if (result.upsertedCount + result.modifiedCount > 0) {
+      await recordConfigChange(db, doc.grantCode, session);
+    }
+
+    return result;
+  });
 };
 
 // Resolves the highest active version within the same major (any minor/patch).

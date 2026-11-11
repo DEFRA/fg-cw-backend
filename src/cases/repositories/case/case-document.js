@@ -8,11 +8,16 @@ import { TaskDocument } from "./task-document.js";
 import { TaskGroupDocument } from "./task-group-document.js";
 import { TimelineEventDocument } from "./timeline-event-document.js";
 
-export const caseRefs = ({ caseRef, payload }) =>
-  toRefs([
+export const caseRefs = ({ caseRef, payload }) => {
+  const { sbi, frn, crn } = { ...payload?.identifiers };
+
+  return toRefs([
     ["ref", caseRef],
-    ["sbi", payload?.identifiers?.sbi],
+    ["sbi", sbi],
+    ["frn", frn],
+    ["crn", crn],
   ]);
+};
 
 export const seriesRefs = (members) =>
   toRefs(members.map((caseRef) => ["ref", caseRef]));

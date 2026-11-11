@@ -4,6 +4,9 @@ import { EndpointDocument } from "./endpoint-document.js";
 import { PhaseDocument } from "./phase-document.js";
 import { RequiredRolesDocument } from "./required-roles-document.js";
 
+// Stored only when the definition declares one.
+const searchOf = ({ search }) => ({ ...(search && { search }) });
+
 export class WorkflowDocument {
   constructor(props) {
     this._id = props._id
@@ -24,6 +27,8 @@ export class WorkflowDocument {
     if (props.externalActions !== null && props.externalActions !== undefined) {
       this.externalActions = props.externalActions;
     }
+
+    Object.assign(this, searchOf(props));
   }
 
   static createMock(props) {

@@ -11,7 +11,9 @@ beforeEach(async () => {
 
   await Promise.all([
     db.collection("cases").deleteMany({}),
+    db.collection("case_search").deleteMany({}),
     db.collection("workflows").deleteMany({}),
+    db.collection("config_changes").deleteMany({}),
     db.collection("users").deleteMany({}),
     db.collection("roles").deleteMany({}),
     db.collection("fifo_locks").deleteMany({}),

@@ -8,12 +8,15 @@ import {
   paginate,
   stringCodec,
 } from "../../common/paginate.js";
+import { logger } from "../../common/logger.js";
+import { indexRecord, searchProjectionOf } from "../../common/search/store.js";
 import { CasePhase } from "../models/case-phase.js";
 import { CaseStage } from "../models/case-stage.js";
 import { CaseTaskGroup } from "../models/case-task-group.js";
 import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
+import { caseSearch } from "../search/case-search.js";
 import {
   seriesMembersCursor,
   storedCasePipeline,
@@ -102,6 +105,8 @@ export const save = async (kase, session) => {
     );
   }
 
+  await indexRecord(caseSearch, caseDocument, session);
+
   return result;
 };
 
@@ -125,13 +130,8 @@ const caseWriteFilter = (kase) => ({
   ),
 });
 
-const assertCaseUpdated = async (kase, result) => {
-  if (!result.acknowledged) {
-    throw Boom.internal(
-      `Case with caseRef "${kase.caseRef}" could not be updated, the operation was not acknowledged`,
-    );
-  }
-  if (result.matchedCount !== 0) {
+const assertCaseUpdated = async (kase, written) => {
+  if (written !== null) {
     return;
   }
   const exists = await db
@@ -146,12 +146,33 @@ const assertCaseUpdated = async (kase, result) => {
   );
 };
 
+// The case as written, holding what its search document is built from, so
+// a node another writer changed meanwhile is indexed as it now is.
+const writeCase = (kase, changes) =>
+  db.collection(collection).findOneAndUpdate(caseWriteFilter(kase), changes, {
+    projection: searchProjectionOf(caseSearch),
+    returnDocument: "after",
+  });
+
+// The case is written by now, so a search document that cannot follow is
+// left to the sweep rather than fail a change already made.
+const indexWritten = async (written) => {
+  try {
+    await indexRecord(caseSearch, written);
+  } catch (error) {
+    logger.warn(
+      `Search ${caseSearch.collection}: case ${written._id} left to the sweep (${error.codeName ?? error.name})`,
+    );
+  }
+};
+
 // Compare the original node values so a late writer cannot erase newer data.
 export const updateSupplementaryData = async (kase) => {
-  const result = await db
-    .collection(collection)
-    .updateOne(caseWriteFilter(kase), { $set: supplementaryDataFields(kase) });
-  await assertCaseUpdated(kase, result);
+  const written = await writeCase(kase, {
+    $set: supplementaryDataFields(kase),
+  });
+  await assertCaseUpdated(kase, written);
+  await indexWritten(written);
   kase.clearSupplementaryDataUpdates();
 };
 
@@ -160,13 +181,12 @@ export const update = async (kase) => {
     kase,
   );
 
-  const result = await db
-    .collection(collection)
-    .updateOne(caseWriteFilter(kase), {
-      $set: { ...caseDocument, ...supplementaryDataFields(kase) },
-      $addToSet: { refs: { $each: refs } },
-    });
-  await assertCaseUpdated(kase, result);
+  const written = await writeCase(kase, {
+    $set: { ...caseDocument, ...supplementaryDataFields(kase) },
+    $addToSet: { refs: { $each: refs } },
+  });
+  await assertCaseUpdated(kase, written);
+  await indexWritten(written);
   kase.clearSupplementaryDataUpdates();
   return kase;
 };

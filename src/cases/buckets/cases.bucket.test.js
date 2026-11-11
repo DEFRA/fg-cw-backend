@@ -43,7 +43,19 @@ describe("cw.cases", () => {
   });
 
   it("declares its ref kinds", () => {
-    expect(bucket.refs).toEqual({ ref: "Reference", sbi: "SBI" });
+    expect(bucket.refs).toEqual({
+      ref: "Reference",
+      sbi: "SBI",
+      frn: "FRN",
+      crn: "CRN",
+    });
+  });
+
+  it("is searched by the fields each workflow declares", () => {
+    expect(bucket.search).toEqual({
+      collection: "case_search",
+      lead: "workflowCode",
+    });
   });
 
   it("declares the index keys of its lines", () => {

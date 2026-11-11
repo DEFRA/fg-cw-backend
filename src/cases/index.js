@@ -3,12 +3,16 @@ import { registerBucket } from "../common/buckets/registry.js";
 import { config } from "../common/config.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
+import { SearchReindexer } from "../common/search/reindexer.js";
+import { SearchSweeper } from "../common/search/sweeper.js";
+import { registerSearchSource } from "../common/search/source.js";
 import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
 
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";
 import { outboxBucket } from "./buckets/outbox.bucket.js";
 import { workflowsBucket } from "./buckets/workflows.bucket.js";
+import { caseSearch } from "./search/case-search.js";
 import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
@@ -38,6 +42,7 @@ export const cases = {
     migrated.forEach((fileName) => logger.info(`Migrated: "${fileName}"`));
     logger.info("Finished running migrations");
 
+    registerSearchSource(caseSearch);
     registerBucket(outboxBucket());
     registerBucket(inboxBucket());
     registerBucket(casesBucket());
@@ -52,6 +57,15 @@ export const cases = {
         outbox: countOutboxDeadLetters,
       },
     });
+    const searchReindexer = new SearchReindexer({
+      source: caseSearch,
+      intervalMs: config.get("search.reindexIntervalMs"),
+    });
+    const searchSweeper = new SearchSweeper({
+      source: caseSearch,
+      batchSize: config.get("search.sweepBatch"),
+      intervalMs: config.get("search.sweepIntervalMs"),
+    });
 
     server.events.on("start", async () => {
       createNewCaseSubscriber.start();
@@ -60,6 +74,8 @@ export const cases = {
       outboxSubscriber.start();
       inboxSubscriber.start();
       deadLetterGauge.start();
+      searchReindexer.start();
+      searchSweeper.start();
     });
 
     server.events.on("stop", async () => {
@@ -69,6 +85,8 @@ export const cases = {
       outboxSubscriber.stop();
       inboxSubscriber.stop();
       deadLetterGauge.stop();
+      searchReindexer.stop();
+      searchSweeper.stop();
     });
 
     server.route([

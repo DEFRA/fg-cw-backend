@@ -12,6 +12,17 @@ describe("caseRefs", () => {
     ).toEqual(["ref:abc-123", "sbi:900000001"]);
   });
 
+  it("refs the FRN and CRN the case was submitted with", () => {
+    expect(
+      caseRefs({
+        caseRef: "abc-123",
+        payload: {
+          identifiers: { sbi: "900000001", frn: "1100000001", crn: "CRN01" },
+        },
+      }),
+    ).toEqual(["ref:abc-123", "sbi:900000001", "frn:1100000001", "crn:crn01"]);
+  });
+
   it.each([
     ["no payload", {}],
     ["no identifiers", { payload: {} }],

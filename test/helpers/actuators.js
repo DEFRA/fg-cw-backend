@@ -97,8 +97,8 @@ export const seedCaseReaderToken = (db) =>
     { upsert: true },
   );
 
-export const listBuckets = (headers = {}) =>
-  wreck.get("/actuators/buckets", { headers: asCaseReader(headers) });
+export const listBuckets = (headers = {}, query = "") =>
+  wreck.get(`/actuators/buckets${query}`, { headers: asCaseReader(headers) });
 
 export const queryBucket = (bucketId, payload, headers = {}) =>
   wreck.post(`/actuators/buckets/${bucketId}/query`, {

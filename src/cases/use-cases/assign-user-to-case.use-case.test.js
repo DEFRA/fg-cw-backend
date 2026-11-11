@@ -16,7 +16,10 @@ vi.mock("../../common/write-audit-event.js", () => ({
 vi.mock("../../users/use-cases/find-user-by-id.use-case.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./resolve-current-workflow.use-case.js");
-vi.mock("node:crypto");
+vi.mock("node:crypto", async (importOriginal) => ({
+  ...(await importOriginal()),
+  randomUUID: vi.fn(),
+}));
 
 describe("assignUserToCaseUseCase", () => {
   beforeEach(() => {

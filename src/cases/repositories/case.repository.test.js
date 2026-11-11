@@ -1,10 +1,13 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
+import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
 import { paginate } from "../../common/paginate.js";
+import { indexRecord } from "../../common/search/store.js";
 import { Case } from "../models/case.js";
 import { TimelineEvent } from "../models/timeline-event.js";
+import { caseSearch } from "../search/case-search.js";
 import {
   caseExists,
   countByPosition,
@@ -27,6 +30,13 @@ import {
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("../../common/logger.js", () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+vi.mock("../../common/search/store.js", async (original) => ({
+  ...(await original()),
+  indexRecord: vi.fn(),
+}));
 // Only `paginate` is mocked. The cursor codecs beside it are the real ones on
 // purpose: they are what a tampered cursor is refused by, so a test asserting
 // their behaviour against an auto-mocked stub would assert nothing.
@@ -52,6 +62,26 @@ describe("save", () => {
     expect(db.collection).toHaveBeenCalledWith("cases");
 
     expect(insertOne.mock.calls[0][0]).toEqual(new CaseDocument(caseMock));
+  });
+
+  it("writes the case's search document after it, in its session", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne });
+    const session = {};
+
+    await save(Case.createMock(), session);
+
+    expect(indexRecord).toHaveBeenCalledExactlyOnceWith(
+      caseSearch,
+      insertOne.mock.calls[0][0],
+      session,
+    );
+    expect(indexRecord.mock.calls[0][1]).toMatchObject({
+      workflowCode: "workflow-code",
+      createdAt: expect.any(Date),
+      payload: expect.any(Object),
+      supplementaryData: expect.any(Object),
+    });
   });
 
   it("gives a new case its refs", async () => {
@@ -86,6 +116,7 @@ describe("save", () => {
         `Case with caseRef "${caseMock.caseRef}" and workflowCode "${caseMock.workflowCode}" already exists`,
       ),
     );
+    expect(indexRecord).not.toHaveBeenCalled();
   });
 
   it("throws when an error occurs", async () => {
@@ -118,20 +149,20 @@ describe("save", () => {
         'Case with caseRef "case-ref" and workflowCode "workflow-code" could not be created, the operation was not acknowledged',
       ),
     );
+    expect(indexRecord).not.toHaveBeenCalled();
   });
 });
 
 describe("update", () => {
-  it("updates a case and returns it", async () => {
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 1,
-    });
+  const written = (kase) => ({
+    _id: kase.objectId,
+    workflowCode: kase.workflowCode,
+    createdAt: new Date(kase.createdAt),
+    payload: { answers: { committed: true } },
+    supplementaryData: { agreements: [{ agreementRef: "written" }] },
+  });
 
-    db.collection.mockReturnValue({
-      updateOne,
-    });
-
+  it("updates a case and returns it, indexing it as written", async () => {
     const caseMock = Case.createMock({
       closed: true,
       closedAt: new Date(),
@@ -139,6 +170,11 @@ describe("update", () => {
         agreements: [{ agreementRef: "updated" }],
         other: [{ id: "unchanged" }],
       },
+    });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(written(caseMock));
+
+    db.collection.mockReturnValue({
+      findOneAndUpdate,
     });
 
     caseMock.updateSupplementaryData({
@@ -155,7 +191,7 @@ describe("update", () => {
 
     expect(db.collection).toHaveBeenCalledWith("cases");
 
-    expect(updateOne).toHaveBeenCalledWith(
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
       {
         _id: caseMock.objectId,
         "supplementaryData.agreements": {
@@ -170,34 +206,40 @@ describe("update", () => {
         },
         $addToSet: { refs: { $each: refs } },
       },
+      {
+        projection: {
+          workflowCode: 1,
+          createdAt: 1,
+          payload: 1,
+          supplementaryData: 1,
+        },
+        returnDocument: "after",
+      },
     );
 
     expect(result).toBe(caseMock);
+    expect(indexRecord).toHaveBeenCalledExactlyOnceWith(
+      caseSearch,
+      written(caseMock),
+    );
   });
 
   it("sends no whole refs array, so series refs survive", async () => {
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 1,
-    });
-    db.collection.mockReturnValue({ updateOne });
+    const caseMock = Case.createMock();
+    const findOneAndUpdate = vi.fn().mockResolvedValue(written(caseMock));
+    db.collection.mockReturnValue({ findOneAndUpdate });
 
-    await update(Case.createMock());
+    await update(caseMock);
 
-    const [, { $set: document }] = updateOne.mock.calls[0];
+    const [, { $set: document }] = findOneAndUpdate.mock.calls[0];
 
     expect(document).not.toHaveProperty("refs");
     expect(document).not.toHaveProperty("_id");
   });
 
   it("throws bad request when case is not found", async () => {
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 0,
-    });
-
     db.collection.mockReturnValue({
-      updateOne,
+      findOneAndUpdate: vi.fn().mockResolvedValue(null),
       findOne: vi.fn().mockResolvedValue(null),
     });
 
@@ -206,23 +248,25 @@ describe("update", () => {
     await expect(update(caseMock)).rejects.toThrow(
       `Case with id "${caseMock._id}" not found`,
     );
+    expect(indexRecord).not.toHaveBeenCalled();
   });
 
-  it("throws bad request when write is unacknowledged", async () => {
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: false,
-      matchedCount: 1,
-    });
-
-    db.collection.mockReturnValue({
-      updateOne,
-    });
-
+  it("succeeds when the case is written but its search document is not, leaving it to the sweep", async () => {
     const caseMock = Case.createMock();
-
-    await expect(update(caseMock)).rejects.toThrow(
-      `Case with caseRef "${caseMock.caseRef}" could not be updated, the operation was not acknowledged`,
+    db.collection.mockReturnValue({
+      findOneAndUpdate: vi.fn().mockResolvedValue(written(caseMock)),
+    });
+    indexRecord.mockRejectedValueOnce(
+      Object.assign(new Error("not primary: hilltop"), {
+        codeName: "NotWritablePrimary",
+      }),
     );
+
+    await expect(update(caseMock)).resolves.toBe(caseMock);
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Search case_search: case ${caseMock.objectId} left to the sweep (NotWritablePrimary)`,
+    );
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain("hilltop");
   });
 });
 
@@ -724,7 +768,7 @@ describe("countByPosition", () => {
 });
 
 describe("updateSupplementaryData", () => {
-  it("sets only changed supplementary nodes, preserving unrelated case edits", async () => {
+  it("sets only changed supplementary nodes, preserving unrelated case edits, and indexes the case as written", async () => {
     const kase = Case.createMock();
     kase.updateSupplementaryData({
       targetNode: "results",
@@ -732,29 +776,47 @@ describe("updateSupplementaryData", () => {
       key: "id",
       data: { id: "id-1" },
     });
-    const updateOne = vi
-      .fn()
-      .mockResolvedValue({ acknowledged: true, matchedCount: 1 });
-    db.collection.mockReturnValue({ updateOne });
+    const written = {
+      _id: kase.objectId,
+      workflowCode: kase.workflowCode,
+      supplementaryData: {
+        results: [{ id: "id-1" }],
+        agreements: [{ agreementRef: "written-meanwhile" }],
+      },
+    };
+    const findOneAndUpdate = vi.fn().mockResolvedValue(written);
+    db.collection.mockReturnValue({ findOneAndUpdate });
     await updateSupplementaryData(kase);
-    expect(updateOne).toHaveBeenCalledWith(
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
       { _id: kase.objectId, "supplementaryData.results": { $exists: false } },
       {
         $set: {
           "supplementaryData.results": kase.supplementaryData.toJSON().results,
         },
       },
+      expect.objectContaining({ returnDocument: "after" }),
     );
+    expect(indexRecord).toHaveBeenCalledExactlyOnceWith(caseSearch, written);
   });
-  it.each([
-    { acknowledged: true, matchedCount: 0 },
-    { acknowledged: false, matchedCount: 1 },
-  ])("rejects failed write %j", async (result) => {
+  it("rejects a write that matched no case", async () => {
     db.collection.mockReturnValue({
-      updateOne: vi.fn().mockResolvedValue(result),
+      findOneAndUpdate: vi.fn().mockResolvedValue(null),
       findOne: vi.fn().mockResolvedValue(null),
     });
     await expect(updateSupplementaryData(Case.createMock())).rejects.toThrow();
+    expect(indexRecord).not.toHaveBeenCalled();
+  });
+  it("succeeds when the case is written but its search document is not", async () => {
+    const kase = Case.createMock();
+    db.collection.mockReturnValue({
+      findOneAndUpdate: vi.fn().mockResolvedValue({ _id: kase.objectId }),
+    });
+    indexRecord.mockRejectedValueOnce(new Error("cache load failed"));
+
+    await expect(updateSupplementaryData(kase)).resolves.toBeUndefined();
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Search case_search: case ${kase.objectId} left to the sweep (Error)`,
+    );
   });
 });
 
