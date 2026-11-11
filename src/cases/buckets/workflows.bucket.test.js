@@ -67,7 +67,6 @@ describe("cw.workflows", () => {
         label: "Workflow",
         param: "workflow",
         values: STORED,
-        toggle: null,
         within: null,
       },
       status: {
@@ -87,14 +86,12 @@ describe("cw.workflows", () => {
             hint: "Not yet published as active.",
           },
         ],
-        toggle: null,
         within: null,
       },
       fetchStatus: {
         label: "Definition",
         param: "definition",
         values: DEFINITION_VALUES,
-        toggle: null,
         within: null,
       },
     });

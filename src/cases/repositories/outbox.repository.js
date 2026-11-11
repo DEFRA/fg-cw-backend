@@ -3,6 +3,7 @@ import { config } from "../../common/config.js";
 import {
   claimExpiredAttempt,
   claimExpiredError,
+  deadLetterErrorKey,
   withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
@@ -166,14 +167,17 @@ export const updateDeadEvents = async () => {
         ],
       },
     },
-    {
-      $set: {
-        status: OutboxStatus.DEAD_LETTER,
-        claimedAt: null,
-        claimExpiresAt: null,
-        claimedBy: null,
+    [
+      {
+        $set: {
+          status: OutboxStatus.DEAD_LETTER,
+          errorKey: deadLetterErrorKey,
+          claimedAt: null,
+          claimExpiresAt: null,
+          claimedBy: null,
+        },
       },
-    },
+    ],
   );
   return results;
 };

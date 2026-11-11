@@ -184,14 +184,17 @@ describe("inbox.repository", () => {
           ],
         },
       },
-      {
-        $set: {
-          status: InboxStatus.DEAD_LETTER,
-          claimedAt: null,
-          claimExpiresAt: null,
-          claimedBy: null,
+      [
+        {
+          $set: {
+            status: InboxStatus.DEAD_LETTER,
+            errorKey: { $ifNull: ["$errorKey", "No error recorded"] },
+            claimedAt: null,
+            claimExpiresAt: null,
+            claimedBy: null,
+          },
         },
-      },
+      ],
     );
   });
 
