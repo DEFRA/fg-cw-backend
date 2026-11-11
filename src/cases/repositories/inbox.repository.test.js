@@ -184,14 +184,17 @@ describe("inbox.repository", () => {
           ],
         },
       },
-      {
-        $set: {
-          status: InboxStatus.DEAD_LETTER,
-          claimedAt: null,
-          claimExpiresAt: null,
-          claimedBy: null,
+      [
+        {
+          $set: {
+            status: InboxStatus.DEAD_LETTER,
+            errorKey: { $ifNull: ["$errorKey", "No error recorded"] },
+            claimedAt: null,
+            claimExpiresAt: null,
+            claimedBy: null,
+          },
         },
-      },
+      ],
     );
   });
 
@@ -405,7 +408,7 @@ describe("inbox.repository actuator wiring", () => {
     db.collection.mockReturnValue({ updateOne });
 
     expect(await redriveById(ID)).toBe(true);
-    expect(updateOne.mock.calls[0][1].$set.status).toBe(
+    expect(updateOne.mock.calls[0][1][0].$set.status).toBe(
       InboxStatus.RESUBMITTED,
     );
   });

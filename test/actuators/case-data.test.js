@@ -82,6 +82,26 @@ const aSeries = (workflowCode, caseRefs) => ({
   updatedAt: CREATED_AT.toISOString(),
 });
 
+const aWorkflowVersion = (version, stageName) => ({
+  code: "frps",
+  version,
+  phases: [
+    {
+      code: "PRE_AWARD",
+      name: "Before the award",
+      stages: [
+        {
+          code: "REVIEW",
+          name: stageName,
+          statuses: [{ code: "NEW", name: "New", transitions: [] }],
+          taskGroups: [],
+        },
+      ],
+    },
+    { code: "POST_AWARD", name: "After the award", stages: [] },
+  ],
+});
+
 const bsonSizeOf = async (caseRef) => {
   const [{ size }] = await cases
     .aggregate([
@@ -136,6 +156,7 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
         createdAt: "2026-06-16T10:00:00.000Z",
         originalConfigVersion: "1.0.0",
         currentConfigVersion: "1.2.0",
+        names: null,
         series: {
           latestRef: "case-1",
           refs: ["case-0", "case-1"],
@@ -156,6 +177,27 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
         },
       },
       storedBytes: await bsonSizeOf("case-1"),
+    });
+  });
+
+  it("names the position from the stored version the case is on now", async () => {
+    await cases.insertOne(aCase());
+    await db
+      .collection("workflows")
+      .insertMany([
+        aWorkflowVersion("1.2.0", "Review"),
+        aWorkflowVersion("1.0.0", "Old review"),
+      ]);
+
+    const { names } = (await viewCaseData("frps", "case-1")).payload.case;
+
+    expect(names).toEqual({
+      phases: [
+        { code: "PRE_AWARD", name: "Before the award" },
+        { code: "POST_AWARD", name: "After the award" },
+      ],
+      stage: "Review",
+      status: "New",
     });
   });
 

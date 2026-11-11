@@ -420,11 +420,10 @@ only public API endpoint open to any client.
 A bucket is one list the grants admin can show: one collection, with
 the facts a filter or grouping may name, the
 ref kinds a search may name, a time field and its index lines. A fact may lead
-every index key (`lead`), and a value of a fact may stay out of the list until
-a switch shows it (`hidden`, `toggle`): `cw.outbox` leads with its event type
-and hides the `Audit` type that way, because that type is declared
-`hiddenByDefault`. A bucket may also read by `links`, ref kinds no search
-offers: the inbox and outbox read a case's Events tab by
+every index key (`lead`). The event boxes keep one index line per filter shape
+(none, status, type, type and status), so each list reads exactly on its own
+index; audit rows are listed with the rest. A bucket may also read by `links`,
+ref kinds no search offers: the inbox and outbox read a case's Events tab by
 `case:<workflowCode>:<caseRef>`, since two workflows may hold the same case
 reference, and the inbox reads a workflow's config version events by
 `config:<grantCode>@<version>`, one link per version, kept apart from a code or
@@ -454,12 +453,32 @@ object id); a read of an `audited` bucket is audited as `QUERY_BUCKET` before
 any data is returned. A new list is a new declaration and an index migration,
 and needs no route.
 
+A dead letter always holds an `errorKey`: its last error's key, or
+`No error recorded` when it died without one, so Top errors and the Error
+filter can ask for exactly those rows. A redrive drops `No error recorded`
+and keeps any other key, with the `lastError` it came from.
+
+`GET /actuators/dead-letters?from=&to=` counts the dead letters of every bucket
+that declares `bins` of them (`cw.outbox`, `cw.inbox`) in two-hour bins from
+`from`, by when each event was created, with the list each count opens. A
+bucket's `bins` must be read exactly by one of its index lines, or it does not
+start. Each bucket is one aggregation on its `status` index line, audit events counted as the list
+counts them. The aggregation reads every match in the window; the cap
+limits only the count each bin shows, which says when it is over (`capped`).
+Bounding the read itself would take one capped count per bin, twelve reads
+instead of one, so the read is bounded by the actuator's time limit instead.
+A window may be up to a week long; one of no length is one bin. It takes the same operator
+headers and is not audited: it releases counts only. fg-gas-backend reads it for
+the admin's Overview.
+
 ### Case actuators
 
 `/actuators/cases/*` serve the grants admin's case pages through
 fg-gas-backend. The case read takes the operator in the same two headers and
-is audited as `VIEW_CASE_DATA` before any data is returned. The existence
-check releases only yes or no, and is not audited.
+is audited as `VIEW_CASE_DATA` before any data is returned. It also names the
+case's position from the workflow version it is on now (`case.names`: every
+phase, and its stage and status), or answers `null` when that version is not
+stored. The existence check releases only yes or no, and is not audited.
 
 ### Workflow version actuators
 
@@ -483,14 +502,19 @@ operator headers and is not audited, like the case existence check.
 
 `/actuators/clients` lets the grants admin list every access token of this
 service, issue a client a token (`POST …/clients/{clientId}/tokens`, creating
-the client with `newClient`) and revoke one
+the client when it has no tokens, and answering `newClient` to say so) and
+revoke one
 (`POST …/clients/{clientId}/tokens/{tokenId}/revoke`). They take the operator
 headers. Only a new token's hash and last four characters arrive here: the
 grants admin generates the raw value and shows it once. No response, log or
 audit event carries a hash. The list is audited as `VIEW_API_CLIENT`; issue and
 revoke as `ISSUE_API_TOKEN` and `REVOKE_API_TOKEN`, under PMC `0705`.
 
-- A client may hold any number of active tokens, so a rotation overlaps.
+- A client may hold any number of active tokens, so a rotation overlaps. An
+  issue sent with `confirmed: false` is refused with 409 `HAS_ACTIVE`, and the
+  number in `active`, when the client has an active token; without
+  `confirmed` it is issued. A caller that sends `newClient` is held to it
+  instead: `true` must create the client, `false` must find it.
 - A revoke sets `revokedAt` and moves `expiresAt` to now, so auth refuses the
   token on the next request, on this image or an older one. During a Mongo
   election auth may briefly read a secondary that has not seen it yet, a

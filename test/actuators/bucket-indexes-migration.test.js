@@ -14,22 +14,19 @@ const keysOf = async (collection) =>
 
 const KEYS = {
   outbox: [
+    { publicationDate: -1, _id: -1 },
+    { status: 1, publicationDate: -1, _id: -1 },
     { eventType: 1, publicationDate: -1, _id: -1 },
     { eventType: 1, status: 1, publicationDate: -1, _id: -1 },
-    {
-      eventType: 1,
-      status: 1,
-      "lastError.name": 1,
-      publicationDate: -1,
-      _id: -1,
-    },
-    { eventType: 1, status: 1, errorKey: 1, publicationDate: -1, _id: -1 },
-    { eventType: 1, refs: 1, publicationDate: -1, _id: -1 },
+    { status: 1, "lastError.name": 1, publicationDate: -1, _id: -1 },
+    { status: 1, errorKey: 1, eventType: 1, publicationDate: -1, _id: -1 },
+    { refs: 1, publicationDate: -1, _id: -1 },
   ],
   inbox: [
     { publicationDate: -1, _id: -1 },
     { status: 1, publicationDate: -1, _id: -1 },
-    { status: 1, eventType: 1, publicationDate: -1, _id: -1 },
+    { eventType: 1, publicationDate: -1, _id: -1 },
+    { eventType: 1, status: 1, publicationDate: -1, _id: -1 },
     { status: 1, "lastError.name": 1, publicationDate: -1, _id: -1 },
     {
       status: 1,

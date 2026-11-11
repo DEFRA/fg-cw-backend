@@ -50,6 +50,12 @@ const issue = (clientId, { hash, hint }, newClient = false, expiresAt) =>
     payload: { tokenHash: hash, tokenHint: hint, newClient, expiresAt },
   });
 
+// As a caller that leaves whether the client is new to this service.
+const issueDeciding = (clientId, { hash, hint }, confirmed) =>
+  call("post", `/actuators/clients/${clientId}/tokens`, {
+    payload: { tokenHash: hash, tokenHint: hint, confirmed },
+  });
+
 const revoke = (clientId, tokenId, token) =>
   call("post", `/actuators/clients/${clientId}/tokens/${tokenId}/revoke`, {
     token,
@@ -335,6 +341,39 @@ describe("POST /actuators/clients/{clientId}/tokens", () => {
 
     expect(refused.statusCode).toBe(400);
     expect(refused.body.errorCode).toBe("API_TOKEN_INVALID_HINT");
+  });
+
+  it("creates a client with no rows when not told whether it is new", async () => {
+    const clientId = aName();
+
+    const created = await issueDeciding(clientId, newToken(), false);
+
+    expect(created.statusCode).toBe(201);
+    expect(created.body.newClient).toBe(true);
+
+    const [audit] = await auditsOf(clientId, "ISSUE_API_TOKEN");
+
+    expect(audit.event.audit.details.client.newClient).toBe(true);
+  });
+
+  it("refuses an unconfirmed issue beside an active token, issuing nothing", async () => {
+    const created = await createClient();
+
+    const refused = await issueDeciding(created.clientId, newToken(), false);
+
+    expect(refused.statusCode).toBe(409);
+    expect(refused.body).toMatchObject({ errorCode: "HAS_ACTIVE", active: 1 });
+    expect(await rowsOf(created.clientId)).toHaveLength(1);
+  });
+
+  it("issues unconfirmed to a client whose tokens are all revoked", async () => {
+    const created = await createClient();
+    await revoke(created.clientId, created.tokenId);
+
+    const issued = await issueDeciding(created.clientId, newToken(), false);
+
+    expect(issued.statusCode).toBe(201);
+    expect(issued.body.newClient).toBe(false);
   });
 
   it("cannot be issued to under its invalid name", async () => {

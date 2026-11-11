@@ -39,6 +39,7 @@ const QUERY = {
 };
 const RESULT = {
   bucket: "cw.cases",
+  plan: { kind: "exact" },
   rows: [{ id: "1" }, { id: "2" }],
 };
 
@@ -155,6 +156,15 @@ describe("queryBucketAuditBuilder", () => {
 
     expect(written).not.toContain("example-workflow");
     expect(written).not.toContain("abc-123");
+  });
+
+  it("records the plan the read settled on, not the one it set out with", () => {
+    const { details } = queryBucketAuditBuilder(
+      { ...args, query: { ...QUERY, plan: { kind: "bounded" } } },
+      RESULT,
+    );
+
+    expect(details.plan).toBe("exact");
   });
 
   it("names a later page, and carries the plan of a read that failed", () => {

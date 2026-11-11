@@ -7,6 +7,7 @@ import {
   redriveOutboxEvent,
   seedCaseReaderToken,
 } from "../helpers/actuators.js";
+import { keepPostImages, writtenBy } from "../helpers/written-by.js";
 
 let client;
 let inbox;
@@ -70,6 +71,7 @@ beforeAll(async () => {
   inbox = client.db().collection("inbox");
   outbox = client.db().collection("outbox");
   await seedCaseReaderToken(client.db());
+  await keepPostImages(client.db(), "inbox", "outbox");
 });
 
 afterAll(async () => {
@@ -99,20 +101,23 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
 
-    const { res, payload } = await redriveInboxEvent(doc._id.toHexString());
+    let response;
+    const stored = await writtenBy(inbox, doc._id, async () => {
+      response = await redriveInboxEvent(doc._id.toHexString());
+    });
 
-    expect(res.statusCode).toBe(204);
-    expect(payload).toHaveLength(0);
-    expect((await inbox.findOne({ _id: doc._id })).status).toBe("RESUBMITTED");
+    expect(response.res.statusCode).toBe(204);
+    expect(response.payload).toHaveLength(0);
+    expect(stored.status).toBe("RESUBMITTED");
   });
 
   it("writes its own audit event alongside the redriven row", async () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
 
-    await redriveInboxEvent(doc._id.toHexString(), { by: "donatas" });
-
-    const stored = await inbox.findOne({ _id: doc._id });
+    const stored = await writtenBy(inbox, doc._id, () =>
+      redriveInboxEvent(doc._id.toHexString(), { by: "donatas" }),
+    );
 
     expect(stored.status).toBe("RESUBMITTED");
 
@@ -154,9 +159,9 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     const doc = aDeadInboxDoc({ claimedBy: "stale", claimedAt: new Date() });
     await inbox.insertOne(doc);
 
-    await redriveInboxEvent(doc._id.toHexString());
-
-    const stored = await inbox.findOne({ _id: doc._id });
+    const stored = await writtenBy(inbox, doc._id, () =>
+      redriveInboxEvent(doc._id.toHexString()),
+    );
 
     expect(stored.completionAttempts).toBe(0);
     expect(stored.claimedBy).toBeNull();
@@ -168,9 +173,9 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     const doc = aDeadInboxDoc({ attemptHistory: aHistory() });
     await inbox.insertOne(doc);
 
-    await redriveInboxEvent(doc._id.toHexString());
-
-    const stored = await inbox.findOne({ _id: doc._id });
+    const stored = await writtenBy(inbox, doc._id, () =>
+      redriveInboxEvent(doc._id.toHexString()),
+    );
 
     expect(stored.completionAttempts).toBe(0);
     expect(stored.attemptHistory).toEqual([]);
@@ -181,12 +186,27 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     const doc = aDeadInboxDoc();
     await inbox.insertOne(doc);
 
-    await redriveInboxEvent(doc._id.toHexString());
-
-    const stored = await inbox.findOne({ _id: doc._id });
+    const stored = await writtenBy(inbox, doc._id, () =>
+      redriveInboxEvent(doc._id.toHexString()),
+    );
 
     expect(stored.lastError.name).toBe("TypeError");
     expect(stored.lastResubmissionDate).toBe("2026-06-16T10:05:00.000Z");
+  });
+
+  it("keeps the error key of the error it recorded, and counts an edit revision", async () => {
+    const doc = aDeadInboxDoc({
+      errorKey: "TypeError: boom",
+      payloadRevision: 2,
+    });
+    await inbox.insertOne(doc);
+
+    const stored = await writtenBy(inbox, doc._id, () =>
+      redriveInboxEvent(doc._id.toHexString()),
+    );
+
+    expect(stored.errorKey).toBe("TypeError: boom");
+    expect(stored.payloadRevision).toBe(3);
   });
 
   it("409s with the current status when the row is not DEAD_LETTER", async () => {
@@ -245,22 +265,36 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
     const doc = aDeadOutboxDoc();
     await outbox.insertOne(doc);
 
-    const { res, payload } = await redriveOutboxEvent(doc._id.toHexString());
-    const stored = await outbox.findOne({ _id: doc._id });
+    let response;
+    const stored = await writtenBy(outbox, doc._id, async () => {
+      response = await redriveOutboxEvent(doc._id.toHexString());
+    });
 
-    expect(res.statusCode).toBe(204);
-    expect(payload).toHaveLength(0);
+    expect(response.res.statusCode).toBe(204);
+    expect(response.payload).toHaveLength(0);
     expect(stored.status).toBe("RESUBMITTED");
     expect(stored.completionAttempts).toBe(0);
+  });
+
+  it("drops the key of a death with no error recorded", async () => {
+    const doc = aDeadOutboxDoc({ errorKey: "No error recorded" });
+    await outbox.insertOne(doc);
+
+    const stored = await writtenBy(outbox, doc._id, () =>
+      redriveOutboxEvent(doc._id.toHexString()),
+    );
+
+    expect(stored.errorKey).toBeNull();
+    expect(stored.payloadRevision).toBe(1);
   });
 
   it("clears the attempt history with the counter in the database", async () => {
     const doc = aDeadOutboxDoc({ attemptHistory: aHistory() });
     await outbox.insertOne(doc);
 
-    await redriveOutboxEvent(doc._id.toHexString());
-
-    const stored = await outbox.findOne({ _id: doc._id });
+    const stored = await writtenBy(outbox, doc._id, () =>
+      redriveOutboxEvent(doc._id.toHexString()),
+    );
 
     expect(stored.completionAttempts).toBe(0);
     expect(stored.attemptHistory).toEqual([]);

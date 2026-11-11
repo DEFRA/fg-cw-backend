@@ -11,10 +11,14 @@ import {
   findByCodeAndVersion,
   findStoredVersions,
   findStoredWorkflowRow,
+  findWorkflowNames,
   save,
   saveFromDefinition,
 } from "./workflow.repository.js";
-import { storedWorkflowPipeline } from "./workflow/admin-workflow-query.js";
+import {
+  storedWorkflowPipeline,
+  WORKFLOW_NAMES_PROJECTION,
+} from "./workflow/admin-workflow-query.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -391,6 +395,23 @@ describe("findStoredVersions", () => {
     expect(find).toHaveBeenCalledWith(
       { code: "woodland", version: { $in: ["2.0.0", "1.2.0"] } },
       { projection: { _id: 0, version: 1 }, maxTimeMS: expect.any(Number) },
+    );
+  });
+});
+
+describe("findWorkflowNames", () => {
+  it("reads only the names of one version", async () => {
+    const doc = { phases: [] };
+    const findOne = vi.fn().mockResolvedValue(doc);
+    db.collection.mockReturnValue({ findOne });
+
+    expect(
+      await findWorkflowNames({ code: "woodland", version: "1.2.0" }),
+    ).toBe(doc);
+    expect(db.collection).toHaveBeenCalledWith("workflows");
+    expect(findOne).toHaveBeenCalledWith(
+      { code: "woodland", version: "1.2.0" },
+      { projection: WORKFLOW_NAMES_PROJECTION, maxTimeMS: expect.any(Number) },
     );
   });
 });

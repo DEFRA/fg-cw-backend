@@ -106,6 +106,12 @@ export const queryBucket = (bucketId, payload, headers = {}) =>
     payload,
   });
 
+export const summariseBucket = (bucketId, summaryId, payload, headers = {}) =>
+  wreck.post(`/actuators/buckets/${bucketId}/summaries/${summaryId}`, {
+    headers: asCaseReader(headers),
+    payload,
+  });
+
 export const readTimeline = (ref, headers = {}) =>
   wreck.post("/actuators/timeline", {
     headers: asCaseReader(headers),

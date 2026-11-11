@@ -70,20 +70,31 @@ describe("actuatorBoxQueries redriveById", () => {
     expect(await queriesFor().redriveById(ID, { by: "ada" })).toBe(true);
     expect(updateOne).toHaveBeenCalledWith(
       { _id, status: { $in: ["DEAD_LETTER", "PURGED"] } },
-      {
-        $set: {
-          status: "AGAIN",
-          retryable: true,
-          completionAttempts: 0,
-          attemptHistory: [],
-          lastRedrive: { at: expect.any(String), by: "ada" },
-          expireAt: null,
-          claimedBy: null,
-          claimedAt: null,
-          claimExpiresAt: null,
+      [
+        {
+          $set: {
+            status: "AGAIN",
+            retryable: true,
+            completionAttempts: 0,
+            attemptHistory: [],
+            lastRedrive: { $literal: { at: expect.any(String), by: "ada" } },
+            expireAt: null,
+            claimedBy: null,
+            claimedAt: null,
+            claimExpiresAt: null,
+            errorKey: {
+              $cond: [
+                { $eq: ["$errorKey", "No error recorded"] },
+                null,
+                "$errorKey",
+              ],
+            },
+            payloadRevision: {
+              $add: [{ $ifNull: ["$payloadRevision", 0] }, 1],
+            },
+          },
         },
-        $inc: { payloadRevision: 1 },
-      },
+      ],
       { session: undefined },
     );
   });
@@ -116,7 +127,7 @@ describe("actuatorBoxQueries redriveById", () => {
 
     const [, update] = updateOne.mock.calls.at(-1);
 
-    expect(update.$set).not.toHaveProperty("lastPurge");
+    expect(update[0].$set).not.toHaveProperty("lastPurge");
     expect(JSON.stringify(update)).not.toContain("lastPurge");
   });
 });

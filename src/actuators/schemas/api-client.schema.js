@@ -57,9 +57,14 @@ export const issueTokenPayloadSchema = Joi.object({
   tokenHash,
   tokenHint,
   expiresAt: expiresAt.default(null),
-  newClient: Joi.boolean()
-    .default(false)
-    .description("create the client, which must not exist yet"),
+  newClient: Joi.boolean().description(
+    "true: create the client, which must not exist yet; false: the client must exist. Absent: created when it has no tokens",
+  ),
+  confirmed: Joi.boolean()
+    .default(true)
+    .description(
+      "false: refuse with HAS_ACTIVE when the client has active tokens. Not checked with newClient",
+    ),
 }).label("IssueApiTokenRequest");
 
 export const changeExpiryPayloadSchema = Joi.object({
@@ -178,6 +183,9 @@ export const tokenListResponseSchema = Joi.object({
 
 export const issuedTokenResponseSchema = Joi.object({
   token: tokenRow.required(),
+  newClient: Joi.boolean()
+    .required()
+    .description("whether this issue created the client"),
 }).label("IssuedApiTokenResponse");
 
 // What the change was, so a caller can record it from this answer alone.

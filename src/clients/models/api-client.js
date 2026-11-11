@@ -29,9 +29,20 @@ const assertName = (clientId) => {
   }
 };
 
-// A view over the token rows that share a name, never stored. The exists check
-// reads sibling rows, so two concurrent creates of one name can both pass it:
-// both rows are listed and revocable, so that is harmless.
+const hasActive = (clientId, active) => {
+  const error = withErrorCode(
+    Boom.conflict(`API client "${clientId}" has ${active} active tokens`),
+    apiClientErrors.HAS_ACTIVE,
+  );
+
+  error.output.payload.active = active;
+
+  return error;
+};
+
+// A view over the token rows that share a name, never stored. The exists and
+// active checks read sibling rows, so two concurrent issues can both pass
+// them: both rows are listed and revocable, so that is harmless.
 export class ApiClient {
   constructor({ clientId, tokens }) {
     this.clientId = clientId;
@@ -61,8 +72,18 @@ export class ApiClient {
   }
 
   // Only the hash arrives, never the raw token. It is no part of the token, so
-  // it is answered beside it, checked, for the store alone.
-  issueToken({ tokenHash, tokenHint, expiresAt = null, newClient, by, now }) {
+  // it is answered beside it, checked, for the store alone. A caller that says
+  // whether the client is new is held to it; otherwise this decides, and
+  // answers which it was.
+  issueToken({
+    tokenHash,
+    tokenHint,
+    expiresAt = null,
+    newClient,
+    confirmed = true,
+    by,
+    now,
+  }) {
     assertName(this.clientId);
     assertMatches(
       tokenHash,
@@ -77,9 +98,15 @@ export class ApiClient {
       apiClientErrors.INVALID_HINT,
     );
     assertExpiry(expiresAt, now);
-    this.#assertNew(newClient);
+
+    if (newClient === undefined) {
+      this.#assertNoneActive(confirmed, now);
+    } else {
+      this.#assertNew(newClient);
+    }
 
     return {
+      newClient: !this.exists(),
       token: AccessToken.issue({
         clientId: this.clientId,
         tokenHint,
@@ -89,6 +116,15 @@ export class ApiClient {
       }),
       tokenHash,
     };
+  }
+
+  // Issuing beside a working token is a choice the operator confirms.
+  #assertNoneActive(confirmed, now) {
+    const active = this.tokens.filter((token) => token.isActive(now)).length;
+
+    if (active > 0 && !confirmed) {
+      throw hasActive(this.clientId, active);
+    }
   }
 
   #assertNew(newClient) {

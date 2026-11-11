@@ -11,6 +11,9 @@ import { refuse } from "../../common/buckets/refusal.js";
 import { findBucket } from "../../common/buckets/registry.js";
 import { logger } from "../../common/logger.js";
 
+// As read: a ref search's plan is settled only once its rows are probed.
+const planRead = (query, result) => result?.plan.kind ?? query.plan.kind;
+
 // What was asked and how it was read, never a filter value or the ref searched
 // for. Absent values are dropped from the audit event, so they need no default.
 export const queryBucketAuditBuilder = (
@@ -32,7 +35,7 @@ export const queryBucketAuditBuilder = (
     from: query.from,
     to: query.to,
     page: query.cursor ? "next" : "first",
-    plan: query.plan.kind,
+    plan: planRead(query, result),
     resultCount: result?.rows.length,
     repeat,
   },

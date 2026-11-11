@@ -35,7 +35,7 @@ const post = async (payload, name = "grants-ui", headers = asGas()) =>
   });
 
 beforeEach(() => {
-  issueApiTokenUseCase.mockResolvedValue({ token: TOKEN });
+  issueApiTokenUseCase.mockResolvedValue({ token: TOKEN, newClient: true });
 });
 
 describe("issueClientTokenRoute", () => {
@@ -55,7 +55,7 @@ describe("issueClientTokenRoute", () => {
     });
 
     expect(response.statusCode).toBe(201);
-    expect(response.result).toEqual({ token: TOKEN });
+    expect(response.result).toEqual({ token: TOKEN, newClient: true });
     expect(response.payload).not.toContain(HASH);
     expect(issueApiTokenUseCase).toHaveBeenCalledWith({
       clientId: "grants-ui",
@@ -63,15 +63,26 @@ describe("issueClientTokenRoute", () => {
       tokenHint: "x9Q_",
       expiresAt: null,
       newClient: true,
+      confirmed: true,
       operator: { id: OPERATOR_ID, name: OPERATOR_NAME },
       caller: CASE_READER_CLIENT,
     });
   });
 
-  it("issues for an existing client unless told to create one", async () => {
+  // The current GAS sends newClient and never confirmed.
+  it("leaves newness to the use case and reads no confirmed as confirmed", async () => {
     await post({ tokenHash: HASH, tokenHint: "x9Q_" });
 
-    expect(issueApiTokenUseCase.mock.calls[0][0].newClient).toBe(false);
+    expect(issueApiTokenUseCase.mock.calls[0][0]).toMatchObject({
+      newClient: undefined,
+      confirmed: true,
+    });
+  });
+
+  it("passes an unconfirmed issue on to be checked", async () => {
+    await post({ tokenHash: HASH, tokenHint: "x9Q_", confirmed: false });
+
+    expect(issueApiTokenUseCase.mock.calls[0][0].confirmed).toBe(false);
   });
 
   // The model refuses them inside the use case, where the refusal is audited.
