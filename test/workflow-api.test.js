@@ -37,19 +37,4 @@ describe("Workflows", () => {
       ]);
     });
   });
-
-  describe("GET /workflows/{code}", () => {
-    it("finds a workflow by code", async () => {
-      await workflows.insertMany([{ ...workflowData1 }, { ...workflowData2 }]);
-
-      const response = await wreck.get("/workflows/frps-private-beta");
-
-      expect(response.res.statusCode).toBe(200);
-
-      expect(response.payload).toEqual({
-        ...workflowData1,
-        _id: expect.any(String),
-      });
-    });
-  });
 });

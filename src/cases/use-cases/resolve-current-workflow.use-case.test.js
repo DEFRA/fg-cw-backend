@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../../common/logger.js";
 import { findLatestForMajor } from "../repositories/config-version.repository.js";
-import {
-  findByCode,
-  findByCodeAndVersion,
-} from "../repositories/workflow.repository.js";
+import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 import {
   __clearDefinitionCache,
@@ -32,18 +29,15 @@ describe("resolveCurrentWorkflowUseCase", () => {
     __clearDefinitionCache();
   });
 
-  it("uses legacy findByCode when there is no pinned version", async () => {
-    const workflow = aWorkflow();
-    findByCode.mockResolvedValue(workflow);
-
-    const result = await resolveCurrentWorkflowUseCase("pigs-might-fly", null);
-
-    expect(result).toEqual({
-      workflow,
-      resolvedVersion: null,
-      definitionSource: "mongodb",
-    });
-    expect(findByCode).toHaveBeenCalledWith("pigs-might-fly");
+  it("throws badImplementation when there is no pinned version", async () => {
+    await expect(
+      resolveCurrentWorkflowUseCase("pigs-might-fly", null),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: 500 }),
+        message: expect.stringContaining("has no pinned config version"),
+      }),
+    );
     expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
   });
 
@@ -427,30 +421,30 @@ describe("resolveWorkflowForCase structured logging", () => {
     expect(message).toContain("definitionSource=mongodb");
   });
 
-  it("logs legacy with info when there is no stored config version", async () => {
-    const workflow = aWorkflow();
-    findByCode.mockResolvedValue(workflow);
-
+  it("throws badImplementation and logs error when case has no pinned config version", async () => {
     const kase = aCase({
       originalConfigVersion: null,
       currentConfigVersion: null,
     });
-    await resolveWorkflowForCase(kase);
 
-    expect(logger.info).toHaveBeenCalledWith(
+    await expect(resolveWorkflowForCase(kase)).rejects.toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: 500 }),
+        message: expect.stringContaining("has no pinned config version"),
+      }),
+    );
+
+    expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         event: expect.objectContaining({
           action: "case-workflow-resolved",
-          outcome: "success",
-          reason: "legacy",
+          outcome: "failure",
         }),
       }),
-      expect.stringContaining("resolvedConfigVersion=none"),
+      expect.stringContaining(
+        "Failed to resolve workflow configuration for case",
+      ),
     );
-
-    const message = logger.info.mock.calls[0][1];
-    expect(message).toContain("resolutionType=legacy");
-    expect(message).toContain("definitionSource=mongodb");
   });
 
   it("logs failure with error when resolution throws", async () => {
@@ -497,9 +491,7 @@ describe("resolveWorkflowForCase structured logging", () => {
     expect(message).toContain("requestedVersion=1.3.1");
   });
 
-  it("emits error log (not success) when legacy workflow is not found", async () => {
-    findByCode.mockResolvedValue(null);
-
+  it("emits error log (not success) when case has no pinned version", async () => {
     const kase = aCase({
       originalConfigVersion: null,
       currentConfigVersion: null,
@@ -507,7 +499,7 @@ describe("resolveWorkflowForCase structured logging", () => {
 
     await expect(resolveWorkflowForCase(kase)).rejects.toThrow(
       expect.objectContaining({
-        output: expect.objectContaining({ statusCode: 404 }),
+        output: expect.objectContaining({ statusCode: 500 }),
       }),
     );
 

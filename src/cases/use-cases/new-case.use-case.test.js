@@ -4,12 +4,10 @@ import { Case } from "../models/case.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { Workflow } from "../models/workflow.js";
 import { save } from "../repositories/case.repository.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { newCaseUseCase } from "./new-case.use-case.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
-vi.mock("./find-workflow-by-code.use-case.js");
 vi.mock("./resolve-and-fetch-workflow.use-case.js");
 
 describe("newCaseUseCase", () => {
@@ -26,7 +24,10 @@ describe("newCaseUseCase", () => {
     save.mockResolvedValue({
       insertedId: new ObjectId("888888888888888999999998"),
     });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -35,6 +36,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-001",
             payload: {
+              configVersion: "1.0.0",
               createdAt: "2025-01-01T00:00:00.000Z",
               submittedAt: "2025-01-01T00:00:00.000Z",
               identifiers: {},
@@ -58,7 +60,10 @@ describe("newCaseUseCase", () => {
     save.mockResolvedValue({
       insertedId: new ObjectId("888888888888888999999998"),
     });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: Workflow.createMock(),
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -67,6 +72,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-001A",
             payload: {
+              configVersion: "1.0.0",
               answers: {
                 rulesCalculations: {
                   caveats: [
@@ -126,7 +132,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -135,6 +144,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-002",
             payload: {
+              configVersion: "1.0.0",
               answers: { whitePigsCount: 2 },
             },
           },
@@ -176,7 +186,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -185,6 +198,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-003",
             payload: {
+              configVersion: "1.0.0",
               answers: { whitePigsCount: 5 },
             },
           },
@@ -226,7 +240,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -235,6 +252,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-004",
             payload: {
+              configVersion: "1.0.0",
               answers: { whitePigsCount: 3 },
             },
           },
@@ -276,7 +294,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -285,6 +306,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-005",
             payload: {
+              configVersion: "1.0.0",
               answers: { whitePigsCount: 4 },
             },
           },
@@ -326,7 +348,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -335,6 +360,7 @@ describe("newCaseUseCase", () => {
             workflowCode: "workflow-code",
             caseRef: "TEST-006",
             payload: {
+              configVersion: "1.0.0",
               answers: { otherField: "value" },
             },
           },
@@ -376,7 +402,10 @@ describe("newCaseUseCase", () => {
       }),
     );
 
-    findWorkflowByCodeUseCase.mockResolvedValue(mockWorkflow);
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+    });
 
     await newCaseUseCase(
       {
@@ -384,7 +413,9 @@ describe("newCaseUseCase", () => {
           data: {
             workflowCode: "workflow-code",
             caseRef: "TEST-007",
-            payload: {},
+            payload: {
+              configVersion: "1.0.0",
+            },
           },
         },
       },
@@ -427,38 +458,34 @@ describe("newCaseUseCase", () => {
       "pigs-might-fly",
       "1.0.0",
     );
-    expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
 
     const savedCase = save.mock.calls[0][0];
     expect(savedCase.originalConfigVersion).toBe("1.0.3");
     expect(savedCase.currentConfigVersion).toBe("1.0.3");
   });
 
-  it("falls back to findWorkflowByCodeUseCase when configVersion is absent", async () => {
-    save.mockResolvedValue({
-      insertedId: new ObjectId("888888888888888999999998"),
-    });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
-
-    await newCaseUseCase(
-      {
-        event: {
-          data: {
-            workflowCode: "workflow-code",
-            caseRef: "TEST-FALLBACK-001",
-            payload: {},
+  it("throws badRequest when configVersion is absent", async () => {
+    await expect(
+      newCaseUseCase(
+        {
+          event: {
+            data: {
+              workflowCode: "workflow-code",
+              caseRef: "TEST-FALLBACK-001",
+              payload: {},
+            },
           },
         },
-      },
-      {},
+        {},
+      ),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: 400 }),
+        message: expect.stringContaining("requires a config version"),
+      }),
     );
 
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("workflow-code");
     expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
-
-    const savedCase = save.mock.calls[0][0];
-    expect(savedCase.originalConfigVersion).toBeNull();
-    expect(savedCase.currentConfigVersion).toBeNull();
   });
 
   it("prefers payload.originalConfigVersion over payload.configVersion", async () => {
@@ -490,59 +517,56 @@ describe("newCaseUseCase", () => {
       "pigs-might-fly",
       "1.0.1",
     );
-    expect(findWorkflowByCodeUseCase).not.toHaveBeenCalled();
   });
 
-  it("falls back to findWorkflowByCodeUseCase when payload is null", async () => {
-    save.mockResolvedValue({
-      insertedId: new ObjectId("888888888888888999999998"),
-    });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
-
-    await newCaseUseCase(
-      {
-        event: {
-          data: {
-            workflowCode: "workflow-code",
-            caseRef: "TEST-FALLBACK-002",
-            payload: null,
-          },
-        },
-      },
-      {},
-    );
-
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("workflow-code");
-    expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
-
-    const savedCase = save.mock.calls[0][0];
-    expect(savedCase.originalConfigVersion).toBeNull();
-    expect(savedCase.currentConfigVersion).toBeNull();
-  });
-
-  it("uses an empty payload.originalConfigVersion rather than payload.configVersion", async () => {
-    save.mockResolvedValue({
-      insertedId: new ObjectId("888888888888888999999998"),
-    });
-    findWorkflowByCodeUseCase.mockResolvedValue(Workflow.createMock());
-
-    await newCaseUseCase(
-      {
-        event: {
-          data: {
-            workflowCode: "workflow-code",
-            caseRef: "TEST-FALLBACK-003",
-            payload: {
-              originalConfigVersion: "",
-              configVersion: "1.0.0",
+  it("throws badRequest when payload is null", async () => {
+    await expect(
+      newCaseUseCase(
+        {
+          event: {
+            data: {
+              workflowCode: "workflow-code",
+              caseRef: "TEST-FALLBACK-002",
+              payload: null,
             },
           },
         },
-      },
-      {},
+        {},
+      ),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: 400 }),
+        message: expect.stringContaining("requires a config version"),
+      }),
     );
 
-    expect(findWorkflowByCodeUseCase).toHaveBeenCalledWith("workflow-code");
+    expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
+  });
+
+  it("throws badRequest when payload.originalConfigVersion is empty string", async () => {
+    await expect(
+      newCaseUseCase(
+        {
+          event: {
+            data: {
+              workflowCode: "workflow-code",
+              caseRef: "TEST-FALLBACK-003",
+              payload: {
+                originalConfigVersion: "",
+                configVersion: "1.0.0",
+              },
+            },
+          },
+        },
+        {},
+      ),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({ statusCode: 400 }),
+        message: expect.stringContaining("requires a config version"),
+      }),
+    );
+
     expect(resolveAndFetchWorkflowUseCase).not.toHaveBeenCalled();
   });
 });

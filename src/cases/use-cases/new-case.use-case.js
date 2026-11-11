@@ -1,3 +1,4 @@
+import Boom from "@hapi/boom";
 import {
   auditActions,
   auditEntities,
@@ -9,7 +10,6 @@ import { CasePhase } from "../models/case-phase.js";
 import { Case } from "../models/case.js";
 import { save } from "../repositories/case.repository.js";
 import { createCaseStage } from "./ensure-case-position.use-case.js";
-import { findWorkflowByCodeUseCase } from "./find-workflow-by-code.use-case.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 const temporaryCaveatSourceMap = {
@@ -46,15 +46,12 @@ const extractConfigVersion = (payload) => {
   return originalConfigVersion ?? configVersion ?? null;
 };
 
-const resolveLegacyWorkflow = async (workflowCode) => ({
-  workflow: await findWorkflowByCodeUseCase(workflowCode),
-  resolvedVersion: null,
-});
-
 const resolveWorkflow = (workflowCode, payload) => {
   const configVersion = extractConfigVersion(payload);
   if (!configVersion) {
-    return resolveLegacyWorkflow(workflowCode);
+    throw Boom.badRequest(
+      `case.create for workflow "${workflowCode}" requires a config version`,
+    );
   }
   logger.info(
     `Resolving workflow via config broker: ${workflowCode}@${configVersion}`,

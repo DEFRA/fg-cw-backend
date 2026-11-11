@@ -21,7 +21,6 @@ import { findCasesRoute } from "./routes/find-cases.route.js";
 import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
 import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
 import { findCaseTypesRoute } from "./routes/find-case-types.route.js";
-import { findWorkflowByCodeRoute } from "./routes/find-workflow-by-code.route.js";
 import { findWorkflowsRoute } from "./routes/find-workflows.route.js";
 import { performPageActionRoute } from "./routes/perform-page-action.route.js";
 import { reportCasesRoute } from "./routes/report-cases.route.js";
@@ -81,7 +80,6 @@ export const cases = {
       assignUserToCaseRoute,
       addNoteToCaseRoute,
       findWorkflowsRoute,
-      findWorkflowByCodeRoute,
       updateTaskStatusRoute,
       performPageActionRoute,
       findCaseByIdTabIdRoute,
