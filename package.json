@@ -84,7 +84,12 @@
     "prettier-plugin-organize-imports": "4.3.0",
     "testcontainers": "^12.2.1",
     "typescript": "7.0.2",
-    "vite": "7.3.6",
+    "vite": "7.3.8",
     "vitest": "5.1.0"
+  },
+  "overrides": {
+    "hapi-pulse": {
+      "joi": "^18.3.2"
+    }
   }
 }
