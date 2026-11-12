@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { caseListSchema } from "./dedupe-page.schema.js";
 import { requiredRolesSchema } from "./requiredRoles.schema.js";
 import { Phase } from "./task.schema.js";
 
@@ -87,6 +88,7 @@ const WorkflowData = Joi.object({
     .optional()
     .label("version"),
   pages: Joi.object({
+    "case-list": caseListSchema,
     cases: Joi.object({
       details: caseSchema.required(),
     }),

@@ -34,6 +34,7 @@ export class Case {
     this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
+    this.labels = props.labels ?? [];
     this.supplementaryData = new SupplementaryData(
       props.supplementaryData || {},
     );
@@ -47,6 +48,34 @@ export class Case {
 
   get objectId() {
     return ObjectId.createFromHexString(this._id);
+  }
+
+  // eslint-disable-next-line complexity
+  setLabel({ namespace, label, createdBy }) {
+    const oldLabel =
+      this.labels.find((item) => item.namespace === namespace) ?? null;
+    const now = new Date().toISOString();
+    const newLabel =
+      label === null
+        ? null
+        : {
+            namespace,
+            code: label.code,
+            data: label.data ?? null,
+            setBy: createdBy,
+            setAt: now,
+            version: (oldLabel?.version ?? 0) + 1,
+          };
+    this.labels = this.labels.filter((item) => item.namespace !== namespace);
+    if (newLabel) this.labels.push(newLabel);
+    const event = new TimelineEvent({
+      eventType: EventEnums.eventTypes.CASE_LABEL_CHANGED,
+      createdBy,
+      createdAt: now,
+      data: { namespace, oldLabel, newLabel },
+    });
+    this.timeline.unshift(event);
+    return event;
   }
 
   unassignUser({ text, createdBy }) {

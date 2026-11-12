@@ -6,6 +6,8 @@ import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Position } from "./position.js";
+import { compileDedupe } from "./dedupe-page.js";
+import { caseListSchema } from "../schemas/dedupe-page.schema.js";
 import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowEndpoint } from "./workflow-endpoint.js";
 import { WorkflowExternalAction } from "./workflow-external-action.js";
@@ -54,8 +56,35 @@ export class Workflow {
     workflow.#assertInitialPosition();
     workflow.#assertTransitionTargetsExist();
     workflow.#assertTabActionsExist();
+    workflow.validateCaseListPages();
 
     return workflow;
+  }
+
+  // eslint-disable-next-line complexity
+  validateCaseListPages() {
+    const list = this.pages?.["case-list"];
+    if (!list) return;
+    validateProps(list, caseListSchema, "Case list pages");
+    for (const tab of Object.values(list.tabs)) {
+      const config = compileDedupe(tab["page-type"].configuration);
+      const phase = this.phases.find(
+        (item) => item.code === config.scope.phase,
+      );
+      const stage = phase?.stages.find(
+        (item) => item.code === config.scope.stage,
+      );
+      if (!stage)
+        throw Boom.badRequest("Dedupe scope does not exist in this workflow");
+      if (
+        config.scope.excludeStatuses.some(
+          (code) => !stage.statuses.some((status) => status.code === code),
+        )
+      )
+        throw Boom.badRequest(
+          "Dedupe excluded status does not exist in this stage",
+        );
+    }
   }
 
   #invalid(message) {

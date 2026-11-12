@@ -1,0 +1,56 @@
+{
+  "title": "Clean the list",
+  "page-type": {
+    "type": "dedupe",
+    "configuration": {
+      "scope": {
+        "phase": "PRE_AWARD",
+        "stage": "REVIEW_APPLICATION",
+        "excludeStatuses": ["APPLICATION_REJECTED", "APPLICATION_WITHDRAWN"]
+      },
+      "groupBy": [{ "value": "$case.payload.identifiers.sbi" }],
+      "sort": [{ "value": "@.details.sbi", "order": "descending" }],
+      "labels": {
+        "namespace": "duplicates",
+        "options": [
+          { "code": "NOT_DUPLICATE", "text": "Not duplicate" },
+          {
+            "code": "DUPLICATE",
+            "text": "Duplicate with @.data.duplicateOf",
+            "data": {
+              "duplicateOf": { "required": true, "oneOf": "activeGroupCases" }
+            }
+          }
+        ]
+      },
+      "data": {
+        "details": {
+          "sbi": "@.key.sbi",
+          "businessName": "function:first(@.cases, '$case.payload.answers.applicant.business.name')",
+          "applicationsCount": "function:count(@.cases)",
+          "excludedCount": "function:count(@.excludedCases)",
+          "notSet": "function:unlabelledCount(@.activeCases)",
+          "notDuplicate": "function:labelCount(@.activeCases, 'NOT_DUPLICATE')",
+          "duplicate": "function:labelCount(@.activeCases, 'DUPLICATE')"
+        },
+        "assignee": { "name": "$group.assignee.name" },
+        "status": { "tag": "function:groupStatus(@.activeCases)" }
+      },
+      "columns": {
+        "details": [
+          {
+            "component": "url",
+            "text": "SBI @.sbi: @.businessName",
+            "href": "/types/@.caseType/pages/@.pageKey/groups/@.keyHash"
+          },
+          {
+            "component": "hint",
+            "text": "@.applicationsCount applications: @.notSet Not set, @.notDuplicate Not duplicate, @.duplicate Duplicate; @.excludedCount excluded"
+          }
+        ],
+        "assignee": [{ "text": "@.name" }],
+        "status": [{ "text": "@.tag" }]
+      }
+    }
+  }
+}
