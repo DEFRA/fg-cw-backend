@@ -31,6 +31,19 @@ const eventFor = (eventType, props = {}) =>
     ...props,
   });
 
+const recordProgressionEvent = (eventType, command) => {
+  switch (eventType) {
+    case STAGE_COMPLETED:
+      return TimelineEvent.createStageCompleted(command);
+    case PHASE_COMPLETED:
+      return TimelineEvent.createPhaseCompleted(command);
+    case CASE_STATUS_CHANGED:
+      return TimelineEvent.createCaseStatusChanged(command);
+    default:
+      throw new Error(`Unsupported test event: ${eventType}`);
+  }
+};
+
 const recordEvent = (eventType, workflow, props = {}) => {
   const command = {
     data: { ...data },
@@ -38,16 +51,13 @@ const recordEvent = (eventType, workflow, props = {}) => {
     workflow,
     ...props,
   };
-  const factories = {
-    [TASK_COMPLETED]: () =>
-      TimelineEvent.createTaskChanged({ ...command, completed: true }),
-    [TASK_UPDATED]: () =>
-      TimelineEvent.createTaskChanged({ ...command, completed: false }),
-    [STAGE_COMPLETED]: () => TimelineEvent.createStageCompleted(command),
-    [PHASE_COMPLETED]: () => TimelineEvent.createPhaseCompleted(command),
-    [CASE_STATUS_CHANGED]: () => TimelineEvent.createCaseStatusChanged(command),
-  };
-  return factories[eventType]();
+  if ([TASK_COMPLETED, TASK_UPDATED].includes(eventType)) {
+    return TimelineEvent.createTaskChanged({
+      ...command,
+      completed: eventType === TASK_COMPLETED,
+    });
+  }
+  return recordProgressionEvent(eventType, command);
 };
 
 describe("historical timeline descriptions", () => {
@@ -94,19 +104,6 @@ describe("historical timeline descriptions", () => {
       expect(document).toEqual(new TimelineEventDocument(event));
     },
   );
-
-  it("keeps historical context immutable after construction and reload", () => {
-    const event = recordEvent(TASK_COMPLETED, Workflow.createMock());
-    const restored = toTimelineEvent(new TimelineEventDocument(event), []);
-    for (const recorded of [event, restored]) {
-      expect(() => {
-        recorded.recordedContext.taskName = "Changed";
-      }).toThrow(TypeError);
-      expect(() => {
-        recorded.recordedContext = { taskName: "Changed", isInput: true };
-      }).toThrow(TypeError);
-    }
-  });
 
   it("loads incomplete stored context and falls back safely", () => {
     const workflow = Workflow.createMock();

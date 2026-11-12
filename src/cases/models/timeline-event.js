@@ -15,8 +15,6 @@ import {
   resolveLegacyTimelineContext,
 } from "./timeline-event-context.js";
 
-const freezeContext = (context) => context && Object.freeze(context);
-
 export class TimelineEvent {
   static validationSchema = Joi.object({
     eventType: timelineEventTypeSchema.required(),
@@ -47,10 +45,7 @@ export class TimelineEvent {
     this.description =
       value.description || EventEnums.eventDescriptions[value.eventType];
     this.data = value.data;
-    Object.defineProperty(this, "recordedContext", {
-      value: freezeContext(value.recordedContext),
-      enumerable: true,
-    });
+    this.recordedContext = value.recordedContext;
   }
 
   contextFor(workflow) {
