@@ -53,22 +53,33 @@ export const cases = {
       },
     });
 
+    const logStopped = (name) => (error) =>
+      logger.error(error, `${name} stopped unexpectedly`);
+
     server.events.on("start", async () => {
-      createNewCaseSubscriber.start();
-      createUpdateStatusAgreementConsumer.start();
-      configVersionUpdatedSubscriber?.start();
-      outboxSubscriber.start();
+      createNewCaseSubscriber
+        .start()
+        .catch(logStopped("Create new case subscriber"));
+      createUpdateStatusAgreementConsumer
+        .start()
+        .catch(logStopped("Update case status agreement subscriber"));
+      configVersionUpdatedSubscriber
+        ?.start()
+        .catch(logStopped("Config version updated subscriber"));
+      outboxSubscriber.start().catch(logStopped("Outbox subscriber"));
       inboxSubscriber.start();
       deadLetterGauge.start();
     });
 
     server.events.on("stop", async () => {
-      createNewCaseSubscriber.stop();
-      createUpdateStatusAgreementConsumer.stop();
-      configVersionUpdatedSubscriber?.stop();
       outboxSubscriber.stop();
       inboxSubscriber.stop();
       deadLetterGauge.stop();
+      await Promise.all([
+        createNewCaseSubscriber.stop(),
+        createUpdateStatusAgreementConsumer.stop(),
+        configVersionUpdatedSubscriber?.stop(),
+      ]);
     });
 
     server.route([
