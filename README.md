@@ -106,95 +106,10 @@ robustness via Node JS type stripping. See /docs/ADR/0002_use_js_with_node_type_
 
 ## AWS
 
-#### Get a topics attributes (fg-gas-backend DEV)
-
-Note that the SQS url http://sqs.eu-west-2.127.0.0.1:4566 will also work in the terminal
-
-```bash
-aws sns get-topic-attributes --topic-arn arn:aws:sns:eu-west-2:332499610595:grant_application_created
-```
-
-#### Get a queue attributes
-
-```
-aws sqs get-queue-attributes \
-  --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case --attribute-names All
-```
-
-```
-aws sqs get-queue-attributes \
-  --queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter --attribute-names All
-```
-
-#### Send message to the grant_application_created topic
-
-```
-aws sns publish \
-  --topic-arn "arn:aws:sns:eu-west-2:332499610595:grant_application_created" \
-  --message '{"clientRef": "APPLICATION-REF-1", "code": "frps-private-beta", "createdAt": "2025-03-27T10:34:52.000Z", "submittedAt": "2025-03-28T11:30:52.000Z", "identifiers": { "sbi": "SBI001", "frn": "FIRM0001", "crn": "CUST0001", "defraId": "DEFRA0001" }, "answers": { "scheme": "SFI", "year": 2025, "hasCheckedLandIsUpToDate": true, "actionApplications": [ { "parcelId": "0118", "sheetId": "AA0109", "code": "CSAM1", "appliedFor": {"unit": "ha","quantity": 20.23 }}]}}'
-```
-
-#### Check the message has arrived in the queue
-
-```
-aws sqs receive-message \
---queue-url "https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case"
-```
-
-```
-aws sqs receive-message \
---queue-url "https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter"
-```
-
-#### Delete a message from the queue
-
-```
-aws sqs delete-message \
---queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case --receipt-handle <receipt-handle>
-```
-
-#### Purge the queue
-
-```
-aws sqs purge-queue \
---queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case
-```
-
-```
-aws sqs purge-queue \
---queue-url https://sqs.eu-west-2.amazonaws.com/332499610595/create_new_case-deadletter
-```
-
-#### Test the dead letter queue
-
-Send a message in and try to receive the message four times like so
-
-```
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-awslocal sqs receive-message --visibility-timeout 0 --queue-url http://sqs.eu-west-2.127.0.0.1:4566/000000000000/create_new_case
-```
-
-## Docker
-
-Launch CW and dependencies via Docker Compose:
-
-```
-docker compose up --watch --build
-```
-
-Check the container status in our system and see the container id's
-
-```
-docker ps -a
-```
-
-Run an interactive shell on a container
-
-```
-docker exec -it <container id> sh
-```
+The SNS and SQS commands are listed under [Local stack](#local-stack). They also
+work against AWS DEV: use `aws` instead of `awslocal`, account `332499610595`
+instead of `000000000000`, and queue URLs of the form
+`https://sqs.eu-west-2.amazonaws.com/332499610595/<queue>`.
 
 ## Local stack
 
@@ -342,32 +257,6 @@ awslocal sqs start-message-move-task \
   --source-arn arn:aws:sqs:eu-west-2:000000000000:create_new_case-deadletter \
   --destination-arn arn:aws:sqs:eu-west-2:000000000000:create_new_case-recovery
 ```
-
-Core delivery platform Node.js Backend Template.
-
-- [Requirements](#requirements)
-  - [Node.js](#nodejs)
-- [Local development](#local-development)
-  - [Setup](#setup)
-  - [Development](#development)
-  - [Testing](#testing)
-  - [Production](#production)
-  - [Npm scripts](#npm-scripts)
-  - [Update dependencies](#update-dependencies)
-  - [Formatting](#formatting)
-    - [Windows prettier issue](#windows-prettier-issue)
-- [API endpoints](#api-endpoints)
-- [Development helpers](#development-helpers)
-  - [MongoDB Locks](#mongodb-locks)
-  - [Proxy](#proxy)
-- [Docker](#docker)
-  - [Development image](#development-image)
-  - [Production image](#production-image)
-  - [Docker Compose](#docker-compose)
-  - [Dependabot](#dependabot)
-  - [SonarCloud](#sonarcloud)
-- [Licence](#licence)
-  - [About the licence](#about-the-licence)
 
 ## Requirements
 
@@ -826,6 +715,20 @@ A local environment with:
 
 ```bash
 docker compose up --build -d
+```
+
+Use `docker compose up --watch --build` to rebuild on file changes.
+
+Check the container status and get the container ids:
+
+```bash
+docker ps -a
+```
+
+Run an interactive shell on a container:
+
+```bash
+docker exec -it <container id> sh
 ```
 
 ### Dependabot
