@@ -68,14 +68,15 @@ export const captureTimelineContext = (eventType, data, workflow) => {
   return value;
 };
 
+const readableContext = ({ value, error }) => (error ? null : value);
+
 // Decode only for display. The original stored value remains on the event so
 // an unrelated case save cannot erase historical facts from another schema.
 export const readRecordedTimelineContext = (eventType, context) => {
-  const { value = null, error } =
-    contexts[eventType]?.schema.validate(context, {
-      allowUnknown: true,
-    }) ?? {};
-  return error ? null : value;
+  const result = contexts[eventType]?.schema.validate(context, {
+    allowUnknown: true,
+  });
+  return result ? readableContext(result) : null;
 };
 
 export const resolveLegacyTimelineContext = (eventType, data, workflow) => {
