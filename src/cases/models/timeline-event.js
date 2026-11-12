@@ -7,7 +7,10 @@ import { systemSchema } from "../schemas/system.schema.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
-  captureTimelineContext,
+  captureTaskContext,
+  captureStageContext,
+  capturePhaseContext,
+  captureStatusContext,
   readRecordedTimelineContext,
   resolveLegacyTimelineContext,
 } from "./timeline-event-context.js";
@@ -133,18 +136,14 @@ export class TimelineEvent {
       data,
       text,
       createdBy,
-      recordedContext: captureTimelineContext(eventType, data, workflow),
+      recordedContext: captureTaskContext(data, workflow),
     });
   }
 
   static createPhaseCompleted({ data, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.PHASE_COMPLETED,
-      recordedContext: captureTimelineContext(
-        EventEnums.eventTypes.PHASE_COMPLETED,
-        data,
-        workflow,
-      ),
+      recordedContext: capturePhaseContext(data, workflow),
       data,
       createdBy,
     });
@@ -153,11 +152,7 @@ export class TimelineEvent {
   static createStageCompleted({ data, text, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
-      recordedContext: captureTimelineContext(
-        EventEnums.eventTypes.STAGE_COMPLETED,
-        data,
-        workflow,
-      ),
+      recordedContext: captureStageContext(data, workflow),
       data,
       text,
       createdBy,
@@ -167,11 +162,7 @@ export class TimelineEvent {
   static createCaseStatusChanged({ data, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.CASE_STATUS_CHANGED,
-      recordedContext: captureTimelineContext(
-        EventEnums.eventTypes.CASE_STATUS_CHANGED,
-        data,
-        workflow,
-      ),
+      recordedContext: captureStatusContext(data, workflow),
       data,
       createdBy,
     });
