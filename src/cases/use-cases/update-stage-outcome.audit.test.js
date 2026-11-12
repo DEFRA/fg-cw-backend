@@ -8,15 +8,18 @@ import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
 import { Workflow } from "../models/workflow.js";
 import { findById, update } from "../repositories/case.repository.js";
+import { findLatestForMajor } from "../repositories/config-version.repository.js";
 import { insertMany } from "../repositories/outbox.repository.js";
-import { findByCode } from "../repositories/workflow.repository.js";
 import {
   updateStageOutcomeAuditDataBuilder,
   updateStageOutcomeUseCase,
 } from "./update-stage-outcome.use-case.js";
+import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
 vi.mock("../repositories/workflow.repository.js");
+vi.mock("../repositories/config-version.repository.js");
+vi.mock("./resolve-and-fetch-workflow.use-case.js");
 vi.mock("../repositories/outbox.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("./ensure-case-position.use-case.js");
@@ -55,7 +58,7 @@ describe("updateStageOutcomeUseCase audit", () => {
   });
 
   it("writes an UPDATE_STAGE_OUTCOME audit event on success", async () => {
-    const mockCase = Case.createMock();
+    const mockCase = Case.createMock({ originalConfigVersion: "1.0.0" });
     const mockWorkflow = Workflow.createMock();
     mockWorkflow.validateStageActionComment = vi.fn();
     mockWorkflow.getNextPosition = vi.fn().mockReturnValue(
@@ -67,7 +70,12 @@ describe("updateStageOutcomeUseCase audit", () => {
     );
     mockCase.updateStageOutcome = vi.fn();
     findById.mockResolvedValue(mockCase);
-    findByCode.mockResolvedValue(mockWorkflow);
+    findLatestForMajor.mockResolvedValue({ version: "1.0.0" });
+    resolveAndFetchWorkflowUseCase.mockResolvedValue({
+      workflow: mockWorkflow,
+      resolvedVersion: "1.0.0",
+      definitionSource: "mongodb",
+    });
     update.mockResolvedValue(mockCase);
 
     await updateStageOutcomeUseCase({

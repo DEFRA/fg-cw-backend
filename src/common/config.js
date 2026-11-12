@@ -332,6 +332,12 @@ export const config = convict({
       env: "METRICS_ENABLED",
     },
   },
+  workflowDefinitionCacheEnabled: {
+    doc: "Enable the process-level workflow definition cache. Disabled for integration tests.",
+    format: Boolean,
+    default: true,
+    env: "WORKFLOW_DEFINITION_CACHE_ENABLED",
+  },
 });
 
 config.validate({ allowed: "strict" });

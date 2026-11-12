@@ -119,6 +119,7 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
               currentStatus: "DEFAULT:CONTRACT:AWAITING_AGREEMENT",
               previousStatus: "DEFAULT:APPLICATION_RECEIPT:AWAITING_REVIEW",
               workflowCode: "frps-private-beta",
+              currentConfigVersion: "1.0.0",
             },
           },
         ]);

@@ -15,6 +15,7 @@ services:
     env_file:
       - ".env"
     environment:
+      WORKFLOW_DEFINITION_CACHE_ENABLED: "${WORKFLOW_DEFINITION_CACHE_ENABLED:-true}"
       MONGO_URI: mongodb://mongodb:27017/?replicaSet=mongoRepl
       OIDC_JWKS_URI: http://entra:3010/jwks
       AWS_ENDPOINT_URL: http://floci:4566
