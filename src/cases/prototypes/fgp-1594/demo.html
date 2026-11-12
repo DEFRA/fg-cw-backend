@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>FGP-1594 throwaway dedupe spike</title>
+  <style>
+    body {
+      font:
+        18px/1.5 system-ui,
+        sans-serif;
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 24px;
+      color: #172b31;
+      background: #fafbf9;
+    }
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+    }
+    h1 {
+      font-size: 36px;
+    }
+    section,
+    details {
+      background: white;
+      border: 1px solid #bbc9c4;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    button,
+    select,
+    textarea {
+      font: inherit;
+      padding: 7px;
+      margin: 4px;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid #145e48;
+      background: #eaf4ef;
+      color: #123f31;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    button[aria-selected="true"] {
+      background: #145e48;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th,
+    td {
+      text-align: left;
+      border-bottom: 1px solid #d9e0dd;
+      padding: 12px 8px;
+    }
+    small,
+    .hint {
+      color: #50655e;
+    }
+    #message {
+      border-left: 5px solid #145e48;
+      padding: 10px;
+      background: #eaf4ef;
+      min-height: 28px;
+    }
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      height: 400px;
+      font: 14px monospace;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+    .tag {
+      font-weight: 650;
+    }
+    a {
+      color: #145e48;
+    }
+    label {
+      display: inline-block;
+    }
+    #walkthrough button {
+      display: inline-block;
+    }
+    .warning {
+      font-weight: 650;
+      color: #784509;
+    }
+  </style>
+  <h1>Clean the list · throwaway spike</h1>
+  <p>
+    Can live, configurable groups support assignment and duplicate labels while
+    cases arrive or leave? Explore what changes, what stays saved, and which
+    actions should be refused.
+  </p>
+  <p class="warning">
+    FGP-1594 · synthetic data · all changes stay in memory and disappear on
+    reload. This is a behaviour demo, not the final interface.
+  </p>
+  <div id="message" role="status" aria-live="polite">
+    Select a group or start a walkthrough.
+  </div>
+  <section>
+    <h2>Explore</h2>
+    <button id="reset">Reset all cases</button
+    ><button id="add">Add a matching application</button
+    ><button id="exclude">Withdraw a case</button>
+    <p class="hint">
+      Arrival and withdrawal simulate changes made elsewhere. They are not
+      dedupe actions in the final feature.
+    </p>
+  </section>
+  <section>
+    <h2>Guided walkthroughs</h2>
+    <div id="tabs" role="tablist" aria-label="Walkthroughs"></div>
+    <div id="walkthrough"></div>
+  </section>
+  <section>
+    <h2 id="heading"></h2>
+    <div id="summary"></div>
+  </section>
+  <section>
+    <h2>Group detail</h2>
+    <div id="detail"></div>
+  </section>
+  <section>
+    <h2>Saved state</h2>
+    <p id="stored"></p>
+    <div id="history"></div>
+    <details>
+      <summary>Full state for technical inspection</summary>
+      <pre id="state"></pre>
+    </details>
+  </section>
+  <details>
+    <summary>Edit the page configuration</summary>
+    <p>
+      Change the stage to REVIEW_OFFER to see scope change, or add a grouping
+      entry such as {"name":"status","value":"$case.currentStatus"}. Changing
+      key names also requires updating data paths.
+    </p>
+    <textarea id="configuration" aria-label="Page configuration"></textarea
+    ><button id="apply">Apply configuration</button>
+  </details>
+  <script type="module">
+    /* eslint-disable complexity -- Keep the throwaway experiment direct, without production abstractions. */
+    /* THROWAWAY FGP-1594. Portable logic shared by the offline demo and Mongo probe.
+     * Deliberately separate from production models, routes and expression resolution.
+     */
+    const read = (object, path) =>
+      path.split(".").reduce((value, key) => value?.[key], object);
+    const fail = (message) => {
+      throw new Error(message);
+    };
+    const paths =
+      /(?:\$case\.|\$group\.|@\.)[A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)*/g;
+    const casePaths = [
+      "caseRef",
+      "workflowCode",
+      "currentPhase",
+      "currentStage",
+      "currentStatus",
+      "createdAt",
+      "payload.identifiers.sbi",
+      "payload.answers.applicant.business.name",
+    ];
+    const keyName = (entry) => entry.name ?? entry.value.split(".").at(-1);
+    const canonical = (value) => {
+      if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+      if (value && typeof value === "object")
+        return `{${Object.keys(value)
+          .sort()
+          .map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`)
+          .join(",")}}`;
+      return JSON.stringify(value);
+    };
+    const keyHash = async (config, key) => {
+      const bytes = new TextEncoder().encode(
+        JSON.stringify([config.caseType, config.pageKey, canonical(key)]),
+      );
+      const hash = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(hash), (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
+    };
+    const labelFor = (kase, config) =>
+      kase.labels?.find(
+        (label) => label.namespace === config.labels.namespace,
+      ) ?? null;
+    const functions = {
+      count: (cases) => cases.length,
+      labelCount: (cases, code, config) =>
+        cases.filter((kase) => labelFor(kase, config)?.code === code).length,
+      unlabelledCount: (cases, config) =>
+        cases.filter((kase) => !labelFor(kase, config)).length,
+      first: (cases, path) => read(cases[0], path.replace("$case.", "")),
+      groupStatus: (cases, config) => {
+        const count = functions.unlabelledCount(cases, config);
+        return count === cases.length
+          ? "NOT_STARTED"
+          : count === 0
+            ? "COMPLETED"
+            : "IN_PROGRESS";
+      },
+    };
+    const arity = {
+      count: 1,
+      labelCount: 2,
+      unlabelledCount: 1,
+      first: 2,
+      groupStatus: 1,
+    };
+    const parseFunction = (value) => {
+      const match = /^function:(\w+)\((.*)\)$/.exec(value);
+      if (!match || !Object.hasOwn(arity, match[1]))
+        fail(`Unknown function: ${value}`);
+      const args = match[2].split(",").map((arg) => arg.trim());
+      if (args.length !== arity[match[1]])
+        fail(`Wrong function arguments: ${value}`);
+      return { name: match[1], args };
+    };
+    const resolve = (path, context) => {
+      const prefix = path.startsWith("@.") ? "@" : path.split(".")[0];
+      return read(context[prefix], path.slice(prefix.length + 1));
+    };
+    const evaluate = (value, context, config) => {
+      if (Array.isArray(value))
+        return value.map((item) => evaluate(item, context, config));
+      if (value && typeof value === "object")
+        return Object.fromEntries(
+          Object.entries(value).map(([key, item]) => [
+            key,
+            evaluate(item, context, config),
+          ]),
+        );
+      if (typeof value !== "string") return value;
+      if (value.startsWith("function:")) {
+        const { name, args } = parseFunction(value);
+        return functions[name](
+          ...args.map((arg) =>
+            arg.startsWith("'") ? arg.slice(1, -1) : resolve(arg, context),
+          ),
+          config,
+        );
+      }
+      if (/^(?:\$case\.|\$group\.|@\.)[\w.]+$/.test(value))
+        return resolve(value, context) ?? null;
+      return value.replace(paths, (path) =>
+        String(resolve(path, context) ?? ""),
+      );
+    };
+    const validateExpressions = (node, allowed) => {
+      if (typeof node === "object" && node !== null)
+        return Object.values(node).forEach((value) =>
+          validateExpressions(value, allowed),
+        );
+      if (typeof node !== "string") return;
+      for (const path of node.match(paths) ?? [])
+        if (!allowed.has(path)) fail(`Unknown path: ${path}`);
+      if (node.startsWith("function:")) {
+        const { name, args } = parseFunction(node);
+        if (!/^@\.(cases|activeCases|excludedCases)$/.test(args[0]))
+          fail(`Expected a case collection: ${node}`);
+        if (args[1] && !/^'[^']*'$/.test(args[1]))
+          fail(`Expected a quoted argument: ${node}`);
+        if (
+          name === "first" &&
+          !casePaths.includes(args[1].slice(1, -1).replace("$case.", ""))
+        )
+          fail(`Unknown case path: ${node}`);
+      }
+    };
+    const compileConfig = (input) => {
+      const config = structuredClone(input);
+      if (
+        !config.caseType ||
+        !config.pageKey ||
+        !config.scope?.phase ||
+        !config.scope.stage ||
+        !Array.isArray(config.scope.excludeStatuses)
+      )
+        fail("Missing page identity or scope");
+      if (
+        !config.groupBy?.length ||
+        new Set(config.groupBy.map(keyName)).size !== config.groupBy.length
+      )
+        fail("Group key names must be unique");
+      for (const entry of config.groupBy) {
+        if (
+          !casePaths.includes(entry.value?.replace("$case.", "")) ||
+          !entry.value.startsWith("$case.")
+        )
+          fail(`Unsupported group path: ${entry.value}`);
+        if (entry.match || entry.normalise)
+          fail("Only exact matching is supported by this spike");
+        if (["__proto__", "constructor", "prototype"].includes(keyName(entry)))
+          fail("Invalid group key name");
+      }
+      if (!config.labels?.namespace || !config.labels.options?.length)
+        fail("Missing label configuration");
+      const codes = config.labels.options.map((option) => option.code);
+      if (
+        codes.some((code) => !/^[A-Z_]+$/.test(code)) ||
+        new Set(codes).size !== codes.length
+      )
+        fail("Invalid label codes");
+      for (const option of config.labels.options) {
+        for (const [name, rule] of Object.entries(option.data ?? {}))
+          if (
+            name !== "duplicateOf" ||
+            rule.required !== true ||
+            rule.oneOf !== "activeGroupCases"
+          )
+            fail("Unsupported label data rule");
+        validateExpressions(option.text, new Set(["@.data.duplicateOf"]));
+      }
+      const allowed = new Set([
+        ...casePaths.map((path) => `$case.${path}`),
+        "$group.assignee.name",
+        "@.cases",
+        "@.activeCases",
+        "@.excludedCases",
+        ...config.groupBy.map((entry) => `@.key.${keyName(entry)}`),
+      ]);
+      validateExpressions(config.data, allowed);
+      const rowPaths = new Set(["@.caseType", "@.keyHash"]);
+      for (const [column, fields] of Object.entries(config.data)) {
+        for (const field of Object.keys(fields))
+          rowPaths.add(`@.${column}.${field}`);
+        validateExpressions(
+          config.columns[column],
+          new Set([
+            ...rowPaths,
+            ...Object.keys(fields).map((field) => `@.${field}`),
+          ]),
+        );
+      }
+      for (const sort of config.sort ?? []) {
+        if (
+          !rowPaths.has(sort.value) ||
+          !["ascending", "descending"].includes(sort.order)
+        )
+          fail("Unsupported sort");
+      }
+      return config;
+    };
+    const validKey = (value) =>
+      ["string", "number"].includes(typeof value) &&
+      value !== "" &&
+      (typeof value !== "number" || Number.isFinite(value));
+    const groupCases = (cases, config) => {
+      const groups = new Map();
+      for (const kase of cases) {
+        if (
+          kase.workflowCode !== config.caseType ||
+          kase.currentPhase !== config.scope.phase ||
+          kase.currentStage !== config.scope.stage
+        )
+          continue;
+        const key = Object.fromEntries(
+          config.groupBy.map((entry) => [
+            keyName(entry),
+            read(kase, entry.value.replace("$case.", "")),
+          ]),
+        );
+        if (!Object.values(key).every(validKey)) continue; // Never group unrelated missing SBIs.
+        const id = canonical(key);
+        if (!groups.has(id)) groups.set(id, { key, cases: [] });
+        groups.get(id).cases.push(kase);
+      }
+      return [...groups.values()];
+    };
+    const buildRows = async (
+      groups,
+      aggregates,
+      config,
+      visibleOnly = true,
+    ) => {
+      const rows = await Promise.all(
+        groups.map(async (group) => {
+          const cases = [...group.cases].sort(
+            (a, b) =>
+              new Date(a.createdAt) - new Date(b.createdAt) ||
+              a.caseRef.localeCompare(b.caseRef),
+          );
+          const activeCases = cases.filter(
+            (kase) =>
+              !config.scope.excludeStatuses.includes(kase.currentStatus),
+          );
+          const excludedCases = cases.filter((kase) =>
+            config.scope.excludeStatuses.includes(kase.currentStatus),
+          );
+          const hash = await keyHash(config, group.key);
+          const aggregate = aggregates.find(
+            (item) =>
+              item.caseType === config.caseType &&
+              item.pageKey === config.pageKey &&
+              item.keyHash === hash,
+          );
+          const row = {
+            ...group,
+            caseType: config.caseType,
+            keyHash: hash,
+            cases,
+            activeCases,
+            excludedCases,
+          };
+          const data = evaluate(
+            config.data,
+            { "@": row, $group: aggregate },
+            config,
+          );
+          const columns = Object.fromEntries(
+            Object.entries(config.columns).map(([name, column]) => [
+              name,
+              evaluate(column, { "@": { ...row, ...data[name] } }, config),
+            ]),
+          );
+          return {
+            ...row,
+            ...data,
+            columns,
+            owner: aggregate?.assignee ?? null,
+          };
+        }),
+      );
+      const visible = rows.filter(
+        (row) => !visibleOnly || row.activeCases.length >= 2,
+      );
+      return visible.sort((a, b) => {
+        for (const sort of config.sort ?? []) {
+          const left = resolve(sort.value, { "@": a });
+          const right = resolve(sort.value, { "@": b });
+          const order = left < right ? -1 : left > right ? 1 : 0;
+          if (order) return order * (sort.order === "descending" ? -1 : 1);
+        }
+        return a.keyHash.localeCompare(b.keyHash);
+      });
+    };
+    const labelOptions = (row, kase, config) => [
+      { value: "", text: "Not set", label: null },
+      ...config.labels.options.flatMap((option) => {
+        const choices = option.data
+          ? row.activeCases
+              .filter((other) => other.caseRef !== kase.caseRef)
+              .map((other) => ({ duplicateOf: other.caseRef }))
+          : [undefined];
+        return choices.map((data) => ({
+          value: JSON.stringify({ code: option.code, ...(data && { data }) }),
+          text: evaluate(option.text, { "@": { data } }, config),
+          label: { code: option.code, ...(data && { data }) },
+        }));
+      }),
+    ];
+    const labelValue = (label) =>
+      label ? { code: label.code, data: label.data ?? {} } : null;
+    // Validate the entire submission BEFORE making a write. New arrivals may be omitted.
+    const planSave = (
+      row,
+      command,
+      users,
+      config,
+      actor,
+      now = new Date().toISOString(),
+    ) => {
+      if (
+        !Object.hasOwn(command, "assignee") ||
+        !command.labels ||
+        typeof command.labels !== "object" ||
+        Array.isArray(command.labels)
+      )
+        fail("Owner and labels must be submitted together");
+      const owner =
+        command.assignee === null
+          ? null
+          : users.find((user) => user.id === command.assignee);
+      if (command.assignee !== null && !owner)
+        fail("Assignee is not in the assignment list");
+      const changes = [];
+      for (const [caseRef, label] of Object.entries(command.labels)) {
+        const kase = row.cases.find((item) => item.caseRef === caseRef);
+        if (!kase || !row.activeCases.some((item) => item.caseRef === caseRef))
+          fail("Labels require an active case in this group");
+        const oldLabel = labelFor(kase, config);
+        // Existing historical targets remain valid when another case is excluded.
+        if (
+          canonical(labelValue(oldLabel) ?? {}) ===
+          canonical(labelValue(label) ?? {})
+        )
+          continue;
+        if (label !== null) {
+          const option = config.labels.options.find(
+            (item) => item.code === label?.code,
+          );
+          if (!option) fail("Unknown label code");
+          const data = label.data ?? {};
+          if (
+            Object.keys(data).some(
+              (key) => !Object.hasOwn(option.data ?? {}, key),
+            )
+          )
+            fail("Unexpected label data");
+          if (
+            option.data &&
+            !row.activeCases.some(
+              (other) =>
+                other.caseRef === data.duplicateOf && other.caseRef !== caseRef,
+            )
+          )
+            fail("Duplicate target must be another active case in this group");
+        }
+        const nextLabel =
+          label === null
+            ? null
+            : {
+                ...labelValue(label),
+                namespace: config.labels.namespace,
+                setBy: actor,
+                setAt: now,
+                version: (oldLabel?.version ?? 0) + 1,
+              };
+        changes.push({
+          kase,
+          nextLabel,
+          event: {
+            eventType: "CASE_LABEL_CHANGED",
+            createdAt: now,
+            createdBy: actor,
+            description: "Dedupe label changed",
+            data: {
+              namespace: config.labels.namespace,
+              oldLabel,
+              newLabel: nextLabel,
+            },
+          },
+        });
+      }
+      return {
+        changes,
+        owner,
+        ownerChanged: (row.owner?.id ?? null) !== (owner?.id ?? null),
+        now,
+      };
+    };
+    const applyMemorySave = (
+      state,
+      row,
+      command,
+      config,
+      users,
+      actor = "spike-user",
+    ) => {
+      const next = structuredClone(state);
+      const plan = planSave(row, command, users, config, actor);
+      for (const { kase, nextLabel, event } of plan.changes) {
+        const target = next.cases.find(
+          (item) =>
+            item.workflowCode === config.caseType &&
+            item.caseRef === kase.caseRef,
+        );
+        target.labels = (target.labels ?? []).filter(
+          (label) => label.namespace !== config.labels.namespace,
+        );
+        if (nextLabel) target.labels.push(nextLabel);
+        target.timeline.unshift(event);
+      }
+      if (plan.ownerChanged) {
+        let aggregate = next.aggregates.find(
+          (item) => item.keyHash === row.keyHash,
+        );
+        if (!aggregate) {
+          aggregate = {
+            caseType: config.caseType,
+            pageKey: config.pageKey,
+            key: row.key,
+            keyHash: row.keyHash,
+            createdAt: plan.now,
+          };
+          next.aggregates.push(aggregate);
+        }
+        Object.assign(aggregate, {
+          assignee: plan.owner,
+          updatedAt: plan.now,
+          version: (aggregate.version ?? 0) + 1,
+        });
+      }
+      return next;
+    };
+
+    // THROWAWAY: synthetic documents using the repository's stored case shape.
+    const users = [{ id: "spike-user", name: "Alex Caseworker" }];
+
+    const makeCase = (caseRef, sbi, overrides = {}) => ({
+      caseRef,
+      workflowCode: "frps-private-beta",
+      currentPhase: "PRE_AWARD",
+      currentStage: "REVIEW_APPLICATION",
+      currentStatus: "APPLICATION_IN_REVIEW",
+      createdAt: new Date(
+        `2026-11-${String((Number(caseRef.slice(-2)) % 9) + 1).padStart(2, "0")}T10:00:00Z`,
+      ),
+      payload: {
+        identifiers: { sbi },
+        answers: { applicant: { business: { name: `Farm ${sbi}` } } },
+      },
+      labels: [],
+      timeline: [],
+      ...overrides,
+    });
+
+    const seed = () => [
+      makeCase("300241", "244666513"),
+      makeCase("300242", "244666513"),
+      makeCase("300243", "244666513", {
+        currentStatus: "APPLICATION_REJECTED",
+      }),
+      makeCase("300244", "244666514"),
+      makeCase("300245", "244666514"),
+      makeCase("300246", "244666515"),
+      makeCase("300247", "244666515"),
+      makeCase("300248", "244666516"),
+      makeCase("300249", "244666513", { currentStage: "REVIEW_OFFER" }),
+      makeCase("300250", "244666513", { workflowCode: "another-scheme" }),
+      makeCase("300251", null),
+      makeCase("300252", null),
+    ];
+
+    const initialConfig = {
+      caseType: "frps-private-beta",
+      pageKey: "duplicates",
+      scope: {
+        phase: "PRE_AWARD",
+        stage: "REVIEW_APPLICATION",
+        excludeStatuses: ["APPLICATION_REJECTED", "APPLICATION_WITHDRAWN"],
+      },
+      groupBy: [{ value: "$case.payload.identifiers.sbi" }],
+      sort: [{ value: "@.details.sbi", order: "descending" }],
+      labels: {
+        namespace: "duplicates",
+        options: [
+          { code: "NOT_DUPLICATE", text: "Not duplicate" },
+          {
+            code: "DUPLICATE",
+            text: "Duplicate with @.data.duplicateOf",
+            data: {
+              duplicateOf: { required: true, oneOf: "activeGroupCases" },
+            },
+          },
+        ],
+      },
+      data: {
+        details: {
+          sbi: "@.key.sbi",
+          businessName:
+            "function:first(@.cases, '$case.payload.answers.applicant.business.name')",
+          applicationsCount: "function:count(@.cases)",
+          excludedCount: "function:count(@.excludedCases)",
+          notSet: "function:unlabelledCount(@.activeCases)",
+          notDuplicate: "function:labelCount(@.activeCases, 'NOT_DUPLICATE')",
+          duplicate: "function:labelCount(@.activeCases, 'DUPLICATE')",
+        },
+        assignee: { name: "$group.assignee.name" },
+        status: { tag: "function:groupStatus(@.activeCases)" },
+      },
+      columns: {
+        details: [
+          {
+            component: "url",
+            text: "SBI @.sbi: @.businessName",
+            href: "/types/@.caseType/duplicates/@.keyHash",
+          },
+          {
+            component: "hint",
+            text: "@.applicationsCount applications: @.notSet Not set, @.notDuplicate Not duplicate, @.duplicate Duplicate; @.excludedCount excluded",
+          },
+        ],
+        assignee: [{ label: "Who", text: "@.name" }],
+        status: [{ component: "tag", text: "@.tag" }],
+      },
+    };
+    let config = compileConfig(initialConfig);
+    let state = { cases: seed(), aggregates: [] };
+    let selectedHash;
+    let scenario = 0;
+    let step = 0;
+    const $ = (id) => document.getElementById(id);
+    const escape = (value) =>
+      String(value ?? "").replace(
+        /[&<>"']/g,
+        (char) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[char],
+      );
+    const message = (text) => {
+      $("message").textContent = text;
+    };
+    const allRows = () =>
+      buildRows(
+        groupCases(state.cases, config),
+        state.aggregates,
+        config,
+        false,
+      );
+    const selected = async () => {
+      const rows = await allRows();
+      return (
+        rows.find((row) => row.keyHash === selectedHash) ??
+        rows.find((row) => row.key.sbi === "244666513") ??
+        rows[0]
+      );
+    };
+    const reset = () => {
+      state = { cases: seed(), aggregates: [] };
+      config = compileConfig(initialConfig);
+      selectedHash = undefined;
+      $("configuration").value = JSON.stringify(config, null, 2);
+    };
+    const save = async (labels, assignee = "spike-user") => {
+      state = applyMemorySave(
+        state,
+        await selected(),
+        { assignee, labels },
+        config,
+        users,
+      );
+    };
+    const complete = () =>
+      save({
+        300241: { code: "NOT_DUPLICATE" },
+        300242: { code: "DUPLICATE", data: { duplicateOf: "300241" } },
+      });
+    const arrive = () => {
+      state.cases.push(
+        makeCase(String(300260 + state.cases.length), "244666513"),
+      );
+    };
+    const withdraw = () => {
+      const kase = state.cases.find((item) => item.caseRef === "300241");
+      kase.currentStatus = "APPLICATION_WITHDRAWN";
+    };
+    const scenarios = [
+      {
+        name: "Completion and arrival",
+        intro:
+          "Start with two active applications and one rejected. Assign the issue, label both applications, then see a new arrival reopen it.",
+        steps: [
+          [
+            "Label the first case",
+            () => save({ 300241: { code: "NOT_DUPLICATE" } }),
+          ],
+          ["Label the second case", complete],
+          ["Add a matching application", arrive],
+        ],
+      },
+      {
+        name: "Historical duplicate target",
+        intro:
+          "Complete the group, then withdraw the case the duplicate label refers to. The label stays as history, but the group leaves the summary. Its detail is still open.",
+        steps: [
+          ["Complete this group", complete],
+          ["Withdraw the original application", withdraw],
+          [
+            "Save the historical label unchanged",
+            () =>
+              save({
+                300242: { code: "DUPLICATE", data: { duplicateOf: "300241" } },
+              }),
+          ],
+        ],
+      },
+      {
+        name: "Invalid save",
+        intro:
+          "Try assigning an owner while marking a case as a duplicate of itself. The whole save must fail, leaving no owner or label saved.",
+        steps: [
+          [
+            "Try a duplicate pointing to itself",
+            () =>
+              save({
+                300241: { code: "DUPLICATE", data: { duplicateOf: "300241" } },
+              }),
+          ],
+        ],
+      },
+    ];
+    const run = async (action, success = "State updated.") => {
+      try {
+        await action();
+        message(success);
+      } catch (error) {
+        message("Save refused: " + error.message);
+      }
+      await render();
+    };
+    const render = async () => {
+      const rows = await allRows();
+      const visible = rows.filter((row) => row.activeCases.length >= 2);
+      $("heading").textContent =
+        visible.filter((row) => row.status.tag === "COMPLETED").length +
+        " of " +
+        visible.length +
+        " issues completed";
+      $("summary").innerHTML =
+        "<table><thead><tr><th>Issue</th><th>Who</th><th>Status</th></tr></thead><tbody>" +
+        visible
+          .map(
+            (row) =>
+              '<tr><td><button data-group="' +
+              row.keyHash +
+              '">' +
+              escape(row.columns.details[0].text) +
+              "</button><br><small>" +
+              escape(row.columns.details[1].text) +
+              "</small></td><td>" +
+              escape(row.owner?.name ?? "Not set") +
+              '</td><td class="tag">' +
+              escape(row.status.tag.replaceAll("_", " ")) +
+              "</td></tr>",
+          )
+          .join("") +
+        "</tbody></table>";
+      document.querySelectorAll("[data-group]").forEach(
+        (button) =>
+          (button.onclick = () =>
+            run(() => {
+              selectedHash = button.dataset.group;
+            }, "Group opened.")),
+      );
+      const row = await selected();
+      if (row) {
+        selectedHash = row.keyHash;
+        $("detail").innerHTML =
+          "<h3>" +
+          escape(row.columns.details[0].text) +
+          "</h3><p>" +
+          row.cases.length +
+          " applications; " +
+          row.activeCases.length +
+          " active. " +
+          (row.activeCases.length < 2
+            ? "This group is hidden from the summary."
+            : "") +
+          '</p><label>Issue owner <select id="owner"><option value="">Not set</option>' +
+          users
+            .map(
+              (user) =>
+                '<option value="' +
+                user.id +
+                '" ' +
+                (row.owner?.id === user.id ? "selected" : "") +
+                ">" +
+                escape(user.name) +
+                "</option>",
+            )
+            .join("") +
+          "</select></label><table><thead><tr><th>Case ID</th><th>Status</th><th>Label</th></tr></thead><tbody>" +
+          row.cases
+            .map((kase) => {
+              const excluded = !row.activeCases.includes(kase);
+              const label = labelFor(kase, config);
+              const options = labelOptions(row, kase, config);
+              const current = label
+                ? JSON.stringify({
+                    code: label.code,
+                    ...(Object.keys(label.data ?? {}).length
+                      ? { data: label.data }
+                      : {}),
+                  })
+                : "";
+              if (label && !options.some((option) => option.value === current))
+                options.push({
+                  value: current,
+                  text:
+                    label.code +
+                    " with " +
+                    (label.data?.duplicateOf ?? "") +
+                    " (historical target)",
+                });
+              return (
+                "<tr><td>" +
+                escape(kase.caseRef) +
+                "</td><td>" +
+                escape(kase.currentStatus) +
+                (excluded ? " (excluded)" : "") +
+                '</td><td><select aria-label="Label for ' +
+                kase.caseRef +
+                '" data-case="' +
+                kase.caseRef +
+                '" ' +
+                (excluded ? "disabled" : "") +
+                ">" +
+                options
+                  .map(
+                    (option) =>
+                      '<option value="' +
+                      escape(option.value) +
+                      '" ' +
+                      (option.value === current ? "selected" : "") +
+                      ">" +
+                      escape(option.text) +
+                      "</option>",
+                  )
+                  .join("") +
+                "</select></td></tr>"
+              );
+            })
+            .join("") +
+          '</tbody></table><button id="save">Save and continue</button>';
+        $("save").onclick = () =>
+          run(async () => {
+            const labels = Object.fromEntries(
+              [...document.querySelectorAll("[data-case]:not(:disabled)")].map(
+                (input) => [
+                  input.dataset.case,
+                  input.value ? JSON.parse(input.value) : null,
+                ],
+              ),
+            );
+            state = applyMemorySave(
+              state,
+              row,
+              { assignee: $("owner").value || null, labels },
+              config,
+              users,
+            );
+          }, "Owner and changed labels saved together.");
+      } else {
+        $("detail").textContent = "No groups in this scope.";
+      }
+      $("stored").textContent =
+        state.aggregates.length +
+        " saved group assignments; " +
+        state.cases.reduce((sum, kase) => sum + kase.labels.length, 0) +
+        " saved labels. Membership and status are calculated live.";
+      $("history").innerHTML =
+        "<ul>" +
+        state.cases
+          .flatMap((kase) =>
+            kase.timeline.map(
+              (event) =>
+                "<li>Case " +
+                escape(kase.caseRef) +
+                ": " +
+                escape(event.data.oldLabel?.code ?? "Not set") +
+                " → " +
+                escape(event.data.newLabel?.code ?? "Not set") +
+                "; " +
+                escape(event.createdBy) +
+                " at " +
+                escape(event.createdAt) +
+                "</li>",
+            ),
+          )
+          .join("") +
+        "</ul>";
+      $("state").textContent = JSON.stringify(state, null, 2);
+      $("tabs").innerHTML = scenarios
+        .map(
+          (item, index) =>
+            '<button role="tab" aria-selected="' +
+            (scenario === index) +
+            '" data-scenario="' +
+            index +
+            '">' +
+            item.name +
+            "</button>",
+        )
+        .join("");
+      document.querySelectorAll("[data-scenario]").forEach(
+        (button) =>
+          (button.onclick = () =>
+            run(() => {
+              scenario = Number(button.dataset.scenario);
+              step = 0;
+              reset();
+            }, "Walkthrough reset.")),
+      );
+      $("walkthrough").innerHTML =
+        "<p>" +
+        scenarios[scenario].intro +
+        "</p>" +
+        scenarios[scenario].steps
+          .map(
+            ([title], index) =>
+              '<button data-step="' +
+              index +
+              '" ' +
+              (index !== step ? "disabled" : "") +
+              ">" +
+              (index + 1) +
+              ". " +
+              title +
+              "</button>",
+          )
+          .join("");
+      document.querySelectorAll("[data-step]").forEach(
+        (button) =>
+          (button.onclick = () =>
+            run(async () => {
+              const action = scenarios[scenario].steps[step++][1];
+              await action();
+            })),
+      );
+    };
+    $("reset").onclick = () =>
+      run(() => {
+        reset();
+        step = 0;
+      }, "All synthetic cases reset.");
+    $("add").onclick = () => run(arrive, "A matching application arrived.");
+    $("exclude").onclick = () =>
+      run(withdraw, "The original application was withdrawn elsewhere.");
+    $("apply").onclick = () =>
+      run(() => {
+        config = compileConfig(JSON.parse($("configuration").value));
+        selectedHash = undefined;
+      }, "Configuration applied. Groups recalculated.");
+    reset();
+    await render();
+  </script>
+</html>
