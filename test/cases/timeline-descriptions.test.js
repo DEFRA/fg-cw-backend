@@ -40,6 +40,20 @@ const createCaseWithSeries = async () => {
   return kase;
 };
 
+const verifyContextSurvivesSave = async (caseId, recordedContext) => {
+  if (recordedContext === undefined) {
+    return;
+  }
+  await wreck.post(`/cases/${caseId}/notes`, {
+    payload: { text: "Save another case change" },
+  });
+  const saved = await cases.findOne({ _id: caseId });
+  expect(
+    saved.timeline.find((event) => event.eventType === "TASK_COMPLETED")
+      .recordedContext,
+  ).toEqual(recordedContext);
+};
+
 describe("case timeline descriptions", () => {
   it.each([
     ["Stored historic wording", undefined],
@@ -83,6 +97,7 @@ describe("case timeline descriptions", () => {
       );
       const after = await cases.findOne({ _id: kase._id });
       expect(after.timeline).toEqual(before.timeline);
+      await verifyContextSurvivesSave(kase._id, recordedContext);
     },
   );
 

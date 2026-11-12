@@ -8,7 +8,7 @@ import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
   captureTimelineContext,
-  recordedContextSchema,
+  readRecordedTimelineContext,
   resolveLegacyTimelineContext,
 } from "./timeline-event-context.js";
 
@@ -22,7 +22,7 @@ export class TimelineEvent {
     comment: Comment.validationSchema.allow(null).optional(),
     createdAt: Joi.string().isoDate(),
     description: Joi.string(),
-    recordedContext: recordedContextSchema.optional(),
+    recordedContext: Joi.any().optional(),
   }).label("TimelineValidationSchema");
 
   constructor(props) {
@@ -51,10 +51,10 @@ export class TimelineEvent {
   }
 
   contextFor(workflow) {
-    return (
-      this.recordedContext ??
-      resolveLegacyTimelineContext(this.eventType, this.data, workflow)
-    );
+    if (this.recordedContext !== undefined) {
+      return readRecordedTimelineContext(this.eventType, this.recordedContext);
+    }
+    return resolveLegacyTimelineContext(this.eventType, this.data, workflow);
   }
 
   getUserIds() {

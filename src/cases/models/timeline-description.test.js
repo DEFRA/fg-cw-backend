@@ -110,14 +110,16 @@ describe("historical timeline descriptions", () => {
 
   it("loads incomplete stored context and falls back safely", () => {
     const workflow = Workflow.createMock();
-    workflow.phases[0].stages[0].taskGroups = [];
+    vi.spyOn(workflow, "hasTask").mockImplementation(() => {
+      throw new Error("Historical context must not use today's workflow");
+    });
     const stored = {
       ...eventFor(TASK_COMPLETED),
       recordedContext: { taskName: "Task" },
     };
     const kase = Case.createMock({ timeline: [stored] });
     const restored = kase.timeline[0];
-    expect(restored.recordedContext).toBeUndefined();
+    expect(restored.recordedContext).toEqual({ taskName: "Task" });
     expect(formatTimelineItemDescription(restored, workflow)).toBe(
       "Task completed",
     );

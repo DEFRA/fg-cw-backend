@@ -68,13 +68,15 @@ export const captureTimelineContext = (eventType, data, workflow) => {
   return value;
 };
 
-export const recordedContextSchema = Joi.any().custom((context, helpers) => {
-  const { value, error } =
-    contexts[helpers.state.ancestors[0].eventType]?.schema.validate(context, {
+// Decode only for display. The original stored value remains on the event so
+// an unrelated case save cannot erase historical facts from another schema.
+export const readRecordedTimelineContext = (eventType, context) => {
+  const { value = null, error } =
+    contexts[eventType]?.schema.validate(context, {
       allowUnknown: true,
     }) ?? {};
-  return error ? undefined : value;
-});
+  return error ? null : value;
+};
 
 export const resolveLegacyTimelineContext = (eventType, data, workflow) => {
   const definition = contexts[eventType];

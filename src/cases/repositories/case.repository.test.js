@@ -122,6 +122,42 @@ describe("save", () => {
 });
 
 describe("update", () => {
+  it("preserves incompatible historical context after loading and saving another change", async () => {
+    const historicalContext = {
+      taskName: "Original historical name",
+      futureField: "Keep me",
+    };
+    const document = CaseDocument.createMock();
+    document.timeline.push({
+      eventType: "TASK_COMPLETED",
+      createdBy: "System",
+      createdAt: "2025-01-01T00:00:00.000Z",
+      description: "Task completed",
+      data: {
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        taskGroupCode: "REMOVED",
+        taskCode: "OLD_TASK",
+      },
+      recordedContext: historicalContext,
+    });
+    const updateOne = vi
+      .fn()
+      .mockResolvedValue({ acknowledged: true, matchedCount: 1 });
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(document),
+      updateOne,
+    });
+    const kase = await findById(document._id.toHexString());
+    kase.addNote({ text: "Another change", createdBy: "System" });
+    await update(kase);
+    const savedTimeline = updateOne.mock.calls[0][1].$set.timeline;
+    expect(
+      savedTimeline.find((event) => event.eventType === "TASK_COMPLETED")
+        .recordedContext,
+    ).toEqual(historicalContext);
+  });
+
   it("updates a case and returns it", async () => {
     const updateOne = vi.fn().mockResolvedValue({
       acknowledged: true,
