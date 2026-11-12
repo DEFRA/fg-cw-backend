@@ -5,6 +5,7 @@ import { User } from "../models/user.js";
 import { findByCode, update } from "../repositories/role.repository.js";
 import { updateRoleUseCase } from "./update-role.use-case.js";
 
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/role.repository.js");
 
 describe("updateRoleUseCase", () => {
