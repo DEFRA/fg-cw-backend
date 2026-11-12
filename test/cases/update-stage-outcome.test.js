@@ -87,10 +87,11 @@ describe("PATCH /cases/{caseId}/stage/outcome", () => {
 
     const timelineEntry = updatedCase.timeline[0];
     expect(timelineEntry.eventType).toBe("STAGE_COMPLETED");
-    expect(timelineEntry.description).toBe(
-      "Stage 'Application Receipt' outcome (Approve)",
-    );
-    expect(timelineEntry.descriptionVersion).toBe(1);
+    expect(timelineEntry.description).toBe("Stage completed");
+    expect(timelineEntry.recordedContext).toEqual({
+      stageName: "Application Receipt",
+      actionName: "Approve",
+    });
     expect(timelineEntry.comment).toBeNull();
     expect(timelineEntry.createdBy).toBe(user.id);
     expect(timelineEntry.createdAt).toEqual(expect.any(String));

@@ -72,7 +72,7 @@ export class Workflow {
     }
   }
 
-  #hasPosition(position) {
+  hasPosition(position) {
     return this.phases.some(
       (phase) =>
         phase.code === position.phaseCode &&
@@ -105,7 +105,7 @@ export class Workflow {
 
   #assertTransitionTargetsExist() {
     const missing = this.#transitions()
-      .filter(({ to }) => !this.#hasPosition(to))
+      .filter(({ to }) => !this.hasPosition(to))
       .map(({ from, to }) => `${from} -> ${to}`);
 
     if (missing.length > 0) {
@@ -169,6 +169,17 @@ export class Workflow {
     });
 
     return true;
+  }
+
+  hasPhase(phaseCode) {
+    return this.phases.some((phase) => phase.code === phaseCode);
+  }
+
+  hasTask({ phaseCode, stageCode, taskGroupCode, taskCode }) {
+    const phase = this.phases.find((p) => p.code === phaseCode);
+    const stage = phase?.stages.find((s) => s.code === stageCode);
+    const group = stage?.taskGroups.find((g) => g.code === taskGroupCode);
+    return Boolean(group?.hasTask(taskCode));
   }
 
   findPhase(phaseCode) {

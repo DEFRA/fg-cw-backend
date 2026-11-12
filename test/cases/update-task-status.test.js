@@ -62,8 +62,8 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
     expect(task.updatedAt).toBeDefined();
     expect(updatedCase.timeline[0]).toMatchObject({
       eventType: "TASK_COMPLETED",
-      description: "Task 'Simple Review' completed",
-      descriptionVersion: 1,
+      description: "Task completed",
+      recordedContext: { taskName: "Simple Review", isInput: false },
     });
   });
 

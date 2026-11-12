@@ -44,9 +44,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "Task 'Task 1' completed",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("Task 'Task 1' completed");
   });
 
   it("formats task updated", () => {
@@ -64,9 +64,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "Task 'Task 1' updated",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("Task 'Task 1' updated");
   });
 
   it.each([
@@ -96,9 +96,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "Task 'Task 1'",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("Task 'Task 1'");
   });
 
   it("formats stage completed", () => {
@@ -116,9 +116,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "Stage 'Stage 1' outcome (Action 1)",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("Stage 'Stage 1' outcome (Action 1)");
   });
 
   it("returns description if set", () => {
@@ -131,9 +131,9 @@ describe("formatTimelineItemDescription", () => {
       data: {},
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "description was set",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("description was set");
   });
 
   it("builds description if not set", () => {
@@ -145,9 +145,9 @@ describe("formatTimelineItemDescription", () => {
       data: {},
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      EventEnums.eventDescriptions[EventEnums.eventTypes.CASE_ASSIGNED],
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe(EventEnums.eventDescriptions[EventEnums.eventTypes.CASE_ASSIGNED]);
   });
 
   it.each([
@@ -170,9 +170,9 @@ describe("formatTimelineItemDescription", () => {
         },
       };
 
-      expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-        "SitiAgri FC Reference",
-      );
+      expect(
+        formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+      ).toBe("SitiAgri FC Reference");
     },
   );
 
@@ -190,9 +190,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      EventEnums.eventDescriptions[EventEnums.eventTypes.TASK_COMPLETED],
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe(EventEnums.eventDescriptions[EventEnums.eventTypes.TASK_COMPLETED]);
   });
 
   it("uses the stored description when the stage is missing", () => {
@@ -210,9 +210,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "SitiAgri FC Reference",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("SitiAgri FC Reference");
   });
 
   it("uses the stored description when the task group is missing", () => {
@@ -230,9 +230,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "SitiAgri FC Reference",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("SitiAgri FC Reference");
   });
 
   it("uses the stored description when the phase is missing", () => {
@@ -250,9 +250,9 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
-      "SitiAgri FC Reference",
-    );
+    expect(
+      formatTimelineItemDescription(new TimelineEvent(timelineItem), wf),
+    ).toBe("SitiAgri FC Reference");
   });
 });
 

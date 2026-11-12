@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EventEnums } from "./event-enums.js";
+import { Workflow } from "./workflow.js";
 import { assertIsTimelineEvent, TimelineEvent } from "./timeline-event.js";
 
 const createdBy = "9ce498ee43bb4bfe8ed31eae";
@@ -296,20 +297,25 @@ describe("TimelineEvent", () => {
     it("creates a stage complete event", () => {
       const props = {
         data: {
-          stageCode: "64c88faac1f56f71e1b99999",
-          actionCode: "APPROVE",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
+          actionCode: "ACTION_1",
         },
         text: "Stage complete",
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createStageCompleted(props);
+      const timelineEvent = TimelineEvent.createStageCompleted({
+        ...props,
+        workflow: Workflow.createMock(),
+      });
       expect(timelineEvent.eventType).toBe(
         EventEnums.eventTypes.STAGE_COMPLETED,
       );
       expect(timelineEvent.comment.text).toBe("Stage complete");
-      expect(timelineEvent.data.stageCode).toBe("64c88faac1f56f71e1b99999");
-      expect(timelineEvent.data.actionCode).toBe("APPROVE");
+      expect(timelineEvent.data.stageCode).toBe("STAGE_1");
+      expect(timelineEvent.data.actionCode).toBe("ACTION_1");
     });
   });
 
@@ -317,23 +323,26 @@ describe("TimelineEvent", () => {
     it("creates a status changed event", () => {
       const props = {
         data: {
-          phaseCode: "PC",
-          stageCode: "STC",
-          statusCode: "SC",
+          phaseCode: "PHASE_1",
+          stageCode: "STAGE_1",
+          statusCode: "STATUS_1",
         },
         createdBy: "64c88faac1f56f71e1b89a33",
       };
 
-      const timelineEvent = TimelineEvent.createCaseStatusChanged(props);
+      const timelineEvent = TimelineEvent.createCaseStatusChanged({
+        ...props,
+        workflow: Workflow.createMock(),
+      });
 
       expect(timelineEvent.eventType).toBe(
         EventEnums.eventTypes.CASE_STATUS_CHANGED,
       );
       expect(timelineEvent.createdBy).toBe("64c88faac1f56f71e1b89a33");
       expect(timelineEvent.data).toEqual({
-        phaseCode: "PC",
-        stageCode: "STC",
-        statusCode: "SC",
+        phaseCode: "PHASE_1",
+        stageCode: "STAGE_1",
+        statusCode: "STATUS_1",
       });
       expect(timelineEvent.comment).toBeNull();
     });

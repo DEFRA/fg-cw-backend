@@ -5,7 +5,7 @@ import { CasePhase } from "./case-phase.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
-import { assertIsComment, Comment, toComments } from "./comment.js";
+import { assertIsComment, toComments } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
 import { SupplementaryData } from "./supplementary-data.js";
@@ -96,18 +96,8 @@ export class Case {
       .findTaskGroup(taskGroupCode)
       .findTask(taskCode);
 
-    const eventType = completed
-      ? EventEnums.eventTypes.TASK_COMPLETED
-      : EventEnums.eventTypes.TASK_UPDATED;
-
-    const optionalComment = Comment.createOptionalComment({
-      type: eventType,
-      text: comment,
-      createdBy: updatedBy,
-    });
-
-    const timelineEvent = new TimelineEvent({
-      eventType,
+    const timelineEvent = TimelineEvent.createTaskChanged({
+      completed,
       data: {
         caseId: this._id,
         phaseCode: this.position.phaseCode,
@@ -115,17 +105,16 @@ export class Case {
         taskGroupCode,
         taskCode: task.code,
       },
-      comment: optionalComment,
+      text: comment,
       createdBy: updatedBy,
+      workflow,
     });
-
-    timelineEvent.snapshotDescription(workflow);
 
     task.updateValue({
       value,
       completed,
       updatedBy,
-      comment: optionalComment,
+      comment: timelineEvent.comment,
     });
 
     this.#addTimelineEvent(timelineEvent);
@@ -238,6 +227,7 @@ export class Case {
     }
 
     const timelineEvent = TimelineEvent.createStageCompleted({
+      workflow,
       data: {
         actionCode,
         phaseCode: this.position.phaseCode,
@@ -247,8 +237,6 @@ export class Case {
       text: comment,
       createdBy,
     });
-
-    timelineEvent.snapshotDescription(workflow);
 
     const currentStage = this.getStage();
 
@@ -306,20 +294,22 @@ export class Case {
   }
 
   #addProgressEvents(position, createdBy, workflow) {
+    const events = [];
     if (!this.position.isSamePhase(position)) {
-      this.#addTimelineEvent(
+      events.push(
         TimelineEvent.createPhaseCompleted({
+          workflow,
           data: {
             phaseCode: this.position.phaseCode,
           },
           createdBy,
         }),
-        workflow,
       );
     }
 
     if (!this.position.isSameStage(position)) {
       const timelineEvent = TimelineEvent.createStageCompleted({
+        workflow,
         data: {
           actionCode: null,
           phaseCode: this.position.phaseCode,
@@ -330,11 +320,12 @@ export class Case {
         createdBy,
       });
 
-      this.#addTimelineEvent(timelineEvent, workflow);
+      events.push(timelineEvent);
     }
 
-    this.#addTimelineEvent(
+    events.push(
       TimelineEvent.createCaseStatusChanged({
+        workflow,
         data: {
           phaseCode: position.phaseCode,
           stageCode: position.stageCode,
@@ -342,8 +333,10 @@ export class Case {
         },
         createdBy,
       }),
-      workflow,
     );
+    for (const event of events) {
+      this.#addTimelineEvent(event);
+    }
   }
 
   #attemptClose(workflow, position) {
@@ -414,11 +407,8 @@ export class Case {
     this.assignedUser = userId ? { id: userId } : null;
   }
 
-  #addTimelineEvent(timelineEvent, workflow) {
+  #addTimelineEvent(timelineEvent) {
     assertIsTimelineEvent(timelineEvent);
-    if (workflow) {
-      timelineEvent.snapshotDescription(workflow);
-    }
     this.timeline.unshift(timelineEvent);
 
     if (timelineEvent.comment) {

@@ -421,9 +421,9 @@ const mapCommentsWithUsers = (comments, userMap) => {
 
 const mapTimelineWithUsers = (timeline, workflow, userMap) => {
   return timeline.map((tl) => {
-    const { descriptionVersion, ...event } = tl;
     return {
-      ...event,
+      eventType: tl.eventType,
+      createdAt: tl.createdAt,
       createdBy: mapUserIdToUser(tl.createdBy, userMap),
       data: tl.data?.assignedTo
         ? {

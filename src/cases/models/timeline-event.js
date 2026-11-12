@@ -7,9 +7,12 @@ import { systemSchema } from "../schemas/system.schema.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
 import {
-  describeWorkflowEvent,
-  SNAPSHOT_DESCRIPTION_VERSION,
-} from "./timeline-description.js";
+  captureTimelineContext,
+  recordedContextSchema,
+  resolveLegacyTimelineContext,
+} from "./timeline-event-context.js";
+
+const freezeContext = (context) => context && Object.freeze(context);
 
 export class TimelineEvent {
   static validationSchema = Joi.object({
@@ -19,9 +22,7 @@ export class TimelineEvent {
     comment: Comment.validationSchema.allow(null).optional(),
     createdAt: Joi.string().isoDate(),
     description: Joi.string(),
-    descriptionVersion: Joi.number()
-      .integer()
-      .valid(SNAPSHOT_DESCRIPTION_VERSION),
+    recordedContext: recordedContextSchema.optional(),
   }).label("TimelineValidationSchema");
 
   constructor(props) {
@@ -43,12 +44,17 @@ export class TimelineEvent {
     this.description =
       value.description || EventEnums.eventDescriptions[value.eventType];
     this.data = value.data;
-    this.descriptionVersion = value.descriptionVersion;
+    Object.defineProperty(this, "recordedContext", {
+      value: freezeContext(value.recordedContext),
+      enumerable: true,
+    });
   }
 
-  snapshotDescription(workflow) {
-    this.description = describeWorkflowEvent(this, workflow);
-    this.descriptionVersion = SNAPSHOT_DESCRIPTION_VERSION;
+  contextFor(workflow) {
+    return (
+      this.recordedContext ??
+      resolveLegacyTimelineContext(this.eventType, this.data, workflow)
+    );
   }
 
   getUserIds() {
@@ -77,7 +83,14 @@ export class TimelineEvent {
     });
   }
 
-  static create({ eventType, data = null, text, description, createdBy }) {
+  static create({
+    eventType,
+    data = null,
+    text,
+    description,
+    createdBy,
+    recordedContext,
+  }) {
     const comment = Comment.createOptionalComment({
       type: eventType,
       text,
@@ -90,6 +103,7 @@ export class TimelineEvent {
       data,
       description,
       createdBy,
+      recordedContext,
     });
   }
 
@@ -110,26 +124,54 @@ export class TimelineEvent {
     });
   }
 
-  static createPhaseCompleted({ data, createdBy }) {
+  static createTaskChanged({ completed, data, text, createdBy, workflow }) {
+    const eventType = completed
+      ? EventEnums.eventTypes.TASK_COMPLETED
+      : EventEnums.eventTypes.TASK_UPDATED;
+    return TimelineEvent.create({
+      eventType,
+      data,
+      text,
+      createdBy,
+      recordedContext: captureTimelineContext(eventType, data, workflow),
+    });
+  }
+
+  static createPhaseCompleted({ data, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.PHASE_COMPLETED,
+      recordedContext: captureTimelineContext(
+        EventEnums.eventTypes.PHASE_COMPLETED,
+        data,
+        workflow,
+      ),
       data,
       createdBy,
     });
   }
 
-  static createStageCompleted({ data, text, createdBy }) {
+  static createStageCompleted({ data, text, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.STAGE_COMPLETED,
+      recordedContext: captureTimelineContext(
+        EventEnums.eventTypes.STAGE_COMPLETED,
+        data,
+        workflow,
+      ),
       data,
       text,
       createdBy,
     });
   }
 
-  static createCaseStatusChanged({ data, createdBy }) {
+  static createCaseStatusChanged({ data, createdBy, workflow }) {
     return TimelineEvent.create({
       eventType: EventEnums.eventTypes.CASE_STATUS_CHANGED,
+      recordedContext: captureTimelineContext(
+        EventEnums.eventTypes.CASE_STATUS_CHANGED,
+        data,
+        workflow,
+      ),
       data,
       createdBy,
     });

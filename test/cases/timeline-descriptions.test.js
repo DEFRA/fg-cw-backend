@@ -79,7 +79,7 @@ describe("case timeline descriptions", () => {
     },
   );
 
-  it("renders a persisted snapshot without exposing its internal version marker", async () => {
+  it("renders a persisted historical name without exposing the recorded context", async () => {
     const kase = await createCaseWithSeries();
     await completeTask({
       caseId: kase._id,
@@ -88,16 +88,21 @@ describe("case timeline descriptions", () => {
     });
     const stored = await cases.findOne({ _id: kase._id });
     expect(stored.timeline[0]).toMatchObject({
-      descriptionVersion: 1,
-      description: "Task 'Simple Review' completed",
+      recordedContext: { taskName: "Simple Review", isInput: false },
+      description: "Task completed",
+    });
+    await createWorkflow({ version: "1.0.1" }, (workflow) => {
+      workflow.phases[0].stages[0].taskGroups[0].tasks[0].name =
+        "Renamed review";
     });
     const response = await wreck.get(`/cases/${kase._id}`);
     expect(response.res.statusCode).toBe(200);
+    expect(response.payload.data.currentConfigVersion).toBe("1.0.1");
     expect(response.payload.data.timeline[0].description).toBe(
       "Task 'Simple Review' completed",
     );
     expect(response.payload.data.timeline[0]).not.toHaveProperty(
-      "descriptionVersion",
+      "recordedContext",
     );
   });
 });
