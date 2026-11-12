@@ -198,7 +198,7 @@ const resolveTableSection = async ({ path, root, row }) => {
   const dataRows = await resolveDataRef({ root, path: rowsRef, row });
 
   const tableRows = [];
-  for await (const rowItem of dataRows) {
+  for (const rowItem of dataRows) {
     tableRows.push(await resolveJSONPath({ root, path: rows, row: rowItem }));
   }
 
@@ -217,7 +217,7 @@ const resolveAccordionSection = async ({ path, root, row }) => {
   const dataItems = await resolveDataRef({ root, path: itemsRef, row });
 
   const accordionItems = [];
-  for await (const itemData of dataItems) {
+  for (const itemData of dataItems) {
     accordionItems.push(
       await resolveJSONPath({ root, path: items, row: itemData }),
     );
@@ -250,7 +250,7 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
     path: beforeContent,
     row,
   });
-  for await (const itemData of dataItems) {
+  for (const itemData of dataItems) {
     const resolved = await resolveJSONPath({
       root,
       path: items,
@@ -324,7 +324,7 @@ const resolveComponentContainer = async ({ path, root, row }) => {
   const dataItems = content[0] || [];
 
   const resolvedItems = [];
-  for await (const item of dataItems) {
+  for (const item of dataItems) {
     const resolved = await resolveJSONPath({ root, path: item, row });
     resolvedItems.push(resolved);
   }
