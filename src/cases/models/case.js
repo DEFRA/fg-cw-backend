@@ -84,6 +84,7 @@ export class Case {
   }
 
   setTaskValue({
+    workflow,
     taskGroupCode,
     taskCode,
     value,
@@ -117,6 +118,8 @@ export class Case {
       comment: optionalComment,
       createdBy: updatedBy,
     });
+
+    timelineEvent.snapshotDescription(workflow);
 
     task.updateValue({
       value,
@@ -245,6 +248,8 @@ export class Case {
       createdBy,
     });
 
+    timelineEvent.snapshotDescription(workflow);
+
     const currentStage = this.getStage();
 
     currentStage.outcome = {
@@ -274,7 +279,7 @@ export class Case {
 
     this.#assertCanTransitionTo(workflow, position);
 
-    this.#addProgressEvents(position, createdBy);
+    this.#addProgressEvents(position, createdBy, workflow);
 
     this.#attemptClose(workflow, position);
 
@@ -300,7 +305,7 @@ export class Case {
     }
   }
 
-  #addProgressEvents(position, createdBy) {
+  #addProgressEvents(position, createdBy, workflow) {
     if (!this.position.isSamePhase(position)) {
       this.#addTimelineEvent(
         TimelineEvent.createPhaseCompleted({
@@ -309,6 +314,7 @@ export class Case {
           },
           createdBy,
         }),
+        workflow,
       );
     }
 
@@ -324,7 +330,7 @@ export class Case {
         createdBy,
       });
 
-      this.#addTimelineEvent(timelineEvent);
+      this.#addTimelineEvent(timelineEvent, workflow);
     }
 
     this.#addTimelineEvent(
@@ -336,6 +342,7 @@ export class Case {
         },
         createdBy,
       }),
+      workflow,
     );
   }
 
@@ -407,8 +414,11 @@ export class Case {
     this.assignedUser = userId ? { id: userId } : null;
   }
 
-  #addTimelineEvent(timelineEvent) {
+  #addTimelineEvent(timelineEvent, workflow) {
     assertIsTimelineEvent(timelineEvent);
+    if (workflow) {
+      timelineEvent.snapshotDescription(workflow);
+    }
     this.timeline.unshift(timelineEvent);
 
     if (timelineEvent.comment) {

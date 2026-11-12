@@ -412,6 +412,7 @@ describe("Case", () => {
       expect(task.commentRefs).toEqual([]);
 
       kase.setTaskValue({
+        workflow: Workflow.createMock(),
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
@@ -433,6 +434,7 @@ describe("Case", () => {
       const initialTimelineLength = kase.timeline.length;
 
       kase.setTaskValue({
+        workflow: Workflow.createMock(),
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
@@ -461,6 +463,7 @@ describe("Case", () => {
       const initialTimelineLength = kase.timeline.length;
 
       kase.setTaskValue({
+        workflow: Workflow.createMock(),
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",
@@ -489,6 +492,7 @@ describe("Case", () => {
       const initialTimelineLength = kase.timeline.length;
 
       kase.setTaskValue({
+        workflow: Workflow.createMock(),
         phaseCode: "PHASE_1",
         stageCode: "STAGE_1",
         taskGroupCode: "TASK_GROUP_1",

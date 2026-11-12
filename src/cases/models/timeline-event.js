@@ -6,6 +6,10 @@ import { idSchema } from "../schemas/id.schema.js";
 import { systemSchema } from "../schemas/system.schema.js";
 import { Comment } from "./comment.js";
 import { EventEnums } from "./event-enums.js";
+import {
+  describeWorkflowEvent,
+  SNAPSHOT_DESCRIPTION_VERSION,
+} from "./timeline-description.js";
 
 export class TimelineEvent {
   static validationSchema = Joi.object({
@@ -15,6 +19,9 @@ export class TimelineEvent {
     comment: Comment.validationSchema.allow(null).optional(),
     createdAt: Joi.string().isoDate(),
     description: Joi.string(),
+    descriptionVersion: Joi.number()
+      .integer()
+      .valid(SNAPSHOT_DESCRIPTION_VERSION),
   }).label("TimelineValidationSchema");
 
   constructor(props) {
@@ -36,6 +43,12 @@ export class TimelineEvent {
     this.description =
       value.description || EventEnums.eventDescriptions[value.eventType];
     this.data = value.data;
+    this.descriptionVersion = value.descriptionVersion;
+  }
+
+  snapshotDescription(workflow) {
+    this.description = describeWorkflowEvent(this, workflow);
+    this.descriptionVersion = SNAPSHOT_DESCRIPTION_VERSION;
   }
 
   getUserIds() {

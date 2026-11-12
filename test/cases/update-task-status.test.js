@@ -60,6 +60,11 @@ describe("PATCH /cases/{caseId}/task-groups/{taskGroupCode}/tasks/{taskCode}/val
     expect(task.value).toBe("COMPLETE");
     expect(task.completed).toBe(true);
     expect(task.updatedAt).toBeDefined();
+    expect(updatedCase.timeline[0]).toMatchObject({
+      eventType: "TASK_COMPLETED",
+      description: "Task 'Simple Review' completed",
+      descriptionVersion: 1,
+    });
   });
 
   it("updates task status with optional comment", async () => {

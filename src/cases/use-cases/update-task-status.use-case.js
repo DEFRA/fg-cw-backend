@@ -58,6 +58,7 @@ const updateTaskStatus = async (command) => {
   const taskCompleted = mapCompleted({ task, value: taskValue, completed });
 
   kase.setTaskValue({
+    workflow,
     taskGroupCode,
     taskCode,
     value: taskValue,

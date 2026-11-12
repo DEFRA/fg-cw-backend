@@ -11,12 +11,12 @@ import { Comment } from "../models/comment.js";
 import { EventEnums } from "../models/event-enums.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { TimelineEvent } from "../models/timeline-event.js";
+import { formatTimelineItemDescription } from "../models/timeline-description.js";
 import { Workflow } from "../models/workflow.js";
 import { WorkflowTask } from "../models/workflow-task.js";
 import { findById } from "../repositories/case.repository.js";
 import {
   findCaseByIdUseCase,
-  formatTimelineItemDescription,
   mapDescription,
   mapSelectedValueOption,
   mapValueOptions,
@@ -195,7 +195,7 @@ describe("formatTimelineItemDescription", () => {
     );
   });
 
-  it("propagates the error when the stage is missing", () => {
+  it("uses the stored description when the stage is missing", () => {
     const wf = Workflow.createMock();
     const timelineItem = {
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
@@ -210,12 +210,12 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
-      'Stage with code "STAGE_MISSING" not found',
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "SitiAgri FC Reference",
     );
   });
 
-  it("propagates the error when the task group is missing", () => {
+  it("uses the stored description when the task group is missing", () => {
     const wf = Workflow.createMock();
     const timelineItem = {
       eventType: EventEnums.eventTypes.TASK_COMPLETED,
@@ -230,12 +230,12 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
-      'TaskGroup with code "TASK_GROUP_MISSING" not found',
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "SitiAgri FC Reference",
     );
   });
 
-  it("propagates the error when the phase is missing", () => {
+  it("uses the stored description when the phase is missing", () => {
     const wf = Workflow.createMock();
     const timelineItem = {
       eventType: EventEnums.eventTypes.TASK_UPDATED,
@@ -250,8 +250,8 @@ describe("formatTimelineItemDescription", () => {
       },
     };
 
-    expect(() => formatTimelineItemDescription(timelineItem, wf)).toThrow(
-      'Phase with code "PHASE_MISSING" not found',
+    expect(formatTimelineItemDescription(timelineItem, wf)).toBe(
+      "SitiAgri FC Reference",
     );
   });
 });
@@ -702,7 +702,7 @@ describe("findCaseByIdUseCase", () => {
     });
   });
 
-  it("propagates errors unrelated to a missing workflow task", async () => {
+  it("loads a case whose timeline refers to a removed task group", async () => {
     const mockUser = User.createMock();
     const mockWorkflow = Workflow.createMock();
     const kase = Case.createMock({ _id: "test-case-id" });
@@ -729,9 +729,9 @@ describe("findCaseByIdUseCase", () => {
     });
     findById.mockResolvedValue(kase);
 
-    await expect(
-      findCaseByIdUseCase("test-case-id", mockAuthUser),
-    ).rejects.toThrow('TaskGroup with code "TASK_GROUP_MISSING" not found');
+    const result = await findCaseByIdUseCase("test-case-id", mockAuthUser);
+    expect(result.timeline[1].description).toBe("Task Completed");
+    expect(kase.timeline[1].createdBy).toBe("System");
   });
 
   it("omits task groups when the current status hides them", async () => {
