@@ -108,10 +108,46 @@ describe("historical timeline descriptions", () => {
     }
   });
 
-  it("rejects incomplete recorded facts when reloading an event", () => {
-    expect(() =>
-      eventFor(TASK_COMPLETED, { recordedContext: { taskName: "Task" } }),
-    ).toThrow("Invalid TimelineEvent");
+  it("loads incomplete stored context and falls back safely", () => {
+    const workflow = Workflow.createMock();
+    workflow.phases[0].stages[0].taskGroups = [];
+    const stored = {
+      ...eventFor(TASK_COMPLETED),
+      recordedContext: { taskName: "Task" },
+    };
+    const kase = Case.createMock({ timeline: [stored] });
+    const restored = kase.timeline[0];
+    expect(restored.recordedContext).toBeUndefined();
+    expect(formatTimelineItemDescription(restored, workflow)).toBe(
+      "Task completed",
+    );
+  });
+
+  it("accepts extra stored context fields without losing the known historical names", () => {
+    const restored = toTimelineEvent(
+      {
+        ...eventFor(TASK_COMPLETED),
+        recordedContext: {
+          taskName: "Original task",
+          isInput: false,
+          futureField: "Added later",
+        },
+      },
+      [],
+    );
+    expect(formatTimelineItemDescription(restored, undefined)).toBe(
+      "Task 'Original task' completed",
+    );
+  });
+
+  it("uses stored wording when an event has context but no registered formatter", () => {
+    const event = TimelineEvent.createMock({ description: "Stored wording" });
+    vi.spyOn(event, "contextFor").mockReturnValue({
+      futureField: "Added later",
+    });
+    expect(formatTimelineItemDescription(event, undefined)).toBe(
+      "Stored wording",
+    );
   });
 
   it.each([
@@ -308,6 +344,24 @@ describe("recording historical facts through case actions", () => {
     expect(JSON.stringify(kase)).toBe(before);
   });
 
+  it("validates recorded facts strictly when creating a new event", () => {
+    const workflow = Workflow.createMock();
+    workflow.findTask(data).name = undefined;
+    const kase = Case.createMock();
+    const before = JSON.stringify(kase);
+    expect(() =>
+      kase.setTaskValue({
+        workflow,
+        taskGroupCode: "TASK_GROUP_1",
+        taskCode: "TASK_1",
+        value: "COMPLETE",
+        completed: true,
+        updatedBy: "System",
+      }),
+    ).toThrow("Invalid recorded timeline context");
+    expect(JSON.stringify(kase)).toBe(before);
+  });
+
   it("keeps current task validation strict and leaves state untouched on failure", () => {
     const kase = Case.createMock();
     const workflow = Workflow.createMock();
@@ -325,4 +379,76 @@ describe("recording historical facts through case actions", () => {
     ).toThrow('TaskGroup with code "TASK_GROUP_1" not found');
     expect(JSON.stringify(kase)).toBe(before);
   });
+});
+
+const workflowWithUnnamedNodes = (name) => {
+  const stage = (targetPosition) => ({
+    code: "STAGE_1",
+    name,
+    taskGroups: [],
+    statuses: [
+      {
+        code: "STATUS_1",
+        name,
+        transitions: targetPosition
+          ? [
+              {
+                targetPosition,
+                checkTasks: false,
+                action: { code: "ACTION_1", name, checkTasks: false },
+              },
+            ]
+          : [],
+      },
+    ],
+  });
+  return Workflow.fromDefinition(
+    {
+      code: "workflow-code",
+      requiredRoles: { allOf: [], anyOf: [] },
+      phases: [
+        { code: "PHASE_1", name, stages: [stage("PHASE_2:STAGE_1:STATUS_1")] },
+        { code: "PHASE_2", name, stages: [stage()] },
+      ],
+    },
+    "1.0.0",
+  );
+};
+
+describe("valid workflows without display names", () => {
+  it.each([undefined, "", "   "])(
+    "can progress without a display name (%s)",
+    (name) => {
+      const workflow = workflowWithUnnamedNodes(name);
+      const kase = Case.createMock();
+      kase.progressTo({
+        workflow,
+        position: Position.from("PHASE_2:STAGE_1:STATUS_1"),
+        createdBy: "System",
+      });
+      expect(kase.position.phaseCode).toBe("PHASE_2");
+      expect(
+        kase.timeline
+          .slice(0, 3)
+          .map((event) => formatTimelineItemDescription(event, undefined)),
+      ).toEqual(["Case status changed", "Stage completed", "Phase completed"]);
+    },
+  );
+
+  it.each([undefined, "", "   "])(
+    "can complete an action without a display name (%s)",
+    (name) => {
+      const workflow = workflowWithUnnamedNodes(name);
+      const kase = Case.createMock();
+      kase.updateStageOutcome({
+        workflow,
+        actionCode: "ACTION_1",
+        createdBy: "System",
+      });
+      expect(kase.position.phaseCode).toBe("PHASE_2");
+      expect(formatTimelineItemDescription(kase.timeline[0], undefined)).toBe(
+        "Stage completed",
+      );
+    },
+  );
 });

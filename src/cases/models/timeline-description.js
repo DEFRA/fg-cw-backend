@@ -9,6 +9,9 @@ const taskDescription = (context, suffix) =>
     : `Task '${context.taskName}' ${suffix}`;
 
 const stageDescription = (context) => {
+  if (!context.stageName) {
+    return null;
+  }
   const outcome = context.actionName
     ? `outcome (${context.actionName})`
     : "completed";
@@ -22,9 +25,9 @@ const descriptions = {
     taskDescription(context, "updated"),
   [EventEnums.eventTypes.STAGE_COMPLETED]: stageDescription,
   [EventEnums.eventTypes.PHASE_COMPLETED]: (context) =>
-    `Phase '${context.phaseName}' completed`,
+    context.phaseName && `Phase '${context.phaseName}' completed`,
   [EventEnums.eventTypes.CASE_STATUS_CHANGED]: (context) =>
-    `Status changed to '${context.statusName}'`,
+    context.statusName && `Status changed to '${context.statusName}'`,
 };
 
 // Wording belongs to presentation; recorded events retain facts, not sentences.
@@ -33,5 +36,6 @@ export const formatTimelineItemDescription = (event, workflow) => {
   if (!context) {
     return storedDescription(event);
   }
-  return descriptions[event.eventType](context);
+  const describe = descriptions[event.eventType];
+  return describe?.(context) || storedDescription(event);
 };

@@ -41,9 +41,13 @@ const createCaseWithSeries = async () => {
 };
 
 describe("case timeline descriptions", () => {
-  it.each(["Stored historic wording", undefined])(
-    "opens a case with a removed historical task group (description=%s)",
-    async (description) => {
+  it.each([
+    ["Stored historic wording", undefined],
+    [undefined, undefined],
+    ["Stored historic wording", { taskName: "Incomplete older context" }],
+  ])(
+    "opens a case with a removed historical task group (description=%s, context=%j)",
+    async (description, recordedContext) => {
       const kase = await createCaseWithSeries();
       const history = {
         eventType: "TASK_COMPLETED",
@@ -60,6 +64,9 @@ describe("case timeline descriptions", () => {
       // the field to exercise a legacy event with no stored description.
       if (description !== undefined) {
         history.description = description;
+      }
+      if (recordedContext !== undefined) {
+        history.recordedContext = recordedContext;
       }
       await cases.updateOne(
         { _id: kase._id },

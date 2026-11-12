@@ -1,6 +1,10 @@
+import Boom from "@hapi/boom";
 import Joi from "joi";
 import { EventEnums } from "./event-enums.js";
 import { Position } from "./position.js";
+
+const displayName = (name) =>
+  typeof name === "string" && name.trim() ? name : null;
 
 const taskContext = {
   schema: Joi.object({
@@ -20,7 +24,7 @@ const contexts = {
   [EventEnums.eventTypes.TASK_UPDATED]: taskContext,
   [EventEnums.eventTypes.STAGE_COMPLETED]: {
     schema: Joi.object({
-      stageName: Joi.string().required(),
+      stageName: Joi.string().allow(null).required(),
       actionName: Joi.string().allow(null).required(),
     }),
     exists: (data, workflow) => workflow.hasPosition(data),
@@ -28,39 +32,49 @@ const contexts = {
       const position = new Position(data);
       const stage = workflow.getStage(position);
       const action = stage.getActionByCode(position, data.actionCode);
-      return { stageName: stage.name, actionName: action?.name ?? null };
+      return {
+        stageName: displayName(stage.name),
+        actionName: displayName(action?.name),
+      };
     },
   },
   [EventEnums.eventTypes.PHASE_COMPLETED]: {
-    schema: Joi.object({ phaseName: Joi.string().required() }),
+    schema: Joi.object({ phaseName: Joi.string().allow(null).required() }),
     exists: (data, workflow) => workflow.hasPhase(data.phaseCode),
     capture: (data, workflow) => ({
-      phaseName: workflow.findPhase(data.phaseCode).name,
+      phaseName: displayName(workflow.findPhase(data.phaseCode).name),
     }),
   },
   [EventEnums.eventTypes.CASE_STATUS_CHANGED]: {
-    schema: Joi.object({ statusName: Joi.string().required() }),
+    schema: Joi.object({ statusName: Joi.string().allow(null).required() }),
     exists: (data, workflow) => workflow.hasPosition(data),
     capture: (data, workflow) => ({
-      statusName: workflow.getStatus(new Position(data)).name,
+      statusName: displayName(workflow.getStatus(new Position(data)).name),
     }),
   },
 };
 
-export const recordedContextSchema = Joi.object().custom((context, helpers) => {
-  const definition = contexts[helpers.state.ancestors[0].eventType];
-  if (!definition) {
-    return helpers.error("any.invalid");
+// Creation validates strictly; historical data may outlive its original schema.
+export const captureTimelineContext = (eventType, data, workflow) => {
+  const definition = contexts[eventType];
+  const { value, error } = definition.schema.validate(
+    definition.capture(data, workflow),
+  );
+  if (error) {
+    throw Boom.badRequest(
+      `Invalid recorded timeline context: ${error.message}`,
+    );
   }
-  const result = definition.schema.validate(context);
-  if (result.error) {
-    return helpers.error("any.invalid");
-  }
-  return result.value;
-});
+  return value;
+};
 
-export const captureTimelineContext = (eventType, data, workflow) =>
-  contexts[eventType].capture(data, workflow);
+export const recordedContextSchema = Joi.any().custom((context, helpers) => {
+  const { value, error } =
+    contexts[helpers.state.ancestors[0].eventType]?.schema.validate(context, {
+      allowUnknown: true,
+    }) ?? {};
+  return error ? undefined : value;
+});
 
 export const resolveLegacyTimelineContext = (eventType, data, workflow) => {
   const definition = contexts[eventType];
