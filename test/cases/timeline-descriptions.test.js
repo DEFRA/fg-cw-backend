@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { randomUUID } from "node:crypto";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { IdpRoles } from "../../src/users/models/idp-roles.js";
@@ -6,6 +7,8 @@ import { completeTask, createCase } from "../helpers/cases.js";
 import { createAdminUser } from "../helpers/users.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
+
+const renamedWorkflowCode = `timeline-${randomUUID()}`;
 
 let client;
 let cases;
@@ -16,7 +19,14 @@ beforeAll(async () => {
   caseSeries = client.db().collection("case_series");
 });
 afterAll(async () => {
-  await client.close(true);
+  try {
+    await client
+      .db()
+      .collection("config_versions")
+      .deleteMany({ grantCode: renamedWorkflowCode });
+  } finally {
+    await client.close(true);
+  }
 });
 
 beforeEach(async () => {
@@ -26,8 +36,8 @@ beforeEach(async () => {
   await createWorkflow();
 });
 
-const createCaseWithSeries = async () => {
-  const kase = await createCase(cases);
+const createCaseWithSeries = async (overrides = {}) => {
+  const kase = await createCase(cases, overrides);
   const now = new Date().toISOString();
   await caseSeries.insertOne({
     caseRefs: [kase.caseRef],
@@ -102,7 +112,10 @@ describe("case timeline descriptions", () => {
   );
 
   it("renders a persisted historical name without exposing the recorded context", async () => {
-    const kase = await createCaseWithSeries();
+    await createWorkflow({ code: renamedWorkflowCode });
+    const kase = await createCaseWithSeries({
+      workflowCode: renamedWorkflowCode,
+    });
     await completeTask({
       caseId: kase._id,
       taskGroupCode: "APPLICATION_RECEIPT_TASKS",
@@ -113,10 +126,13 @@ describe("case timeline descriptions", () => {
       recordedContext: { taskName: "Simple Review", isInput: false },
       description: "Task completed",
     });
-    await createWorkflow({ version: "1.0.1" }, (workflow) => {
-      workflow.phases[0].stages[0].taskGroups[0].tasks[0].name =
-        "Renamed review";
-    });
+    await createWorkflow(
+      { code: renamedWorkflowCode, version: "1.0.1" },
+      (workflow) => {
+        workflow.phases[0].stages[0].taskGroups[0].tasks[0].name =
+          "Renamed review";
+      },
+    );
     const response = await wreck.get(`/cases/${kase._id}`);
     expect(response.res.statusCode).toBe(200);
     expect(response.payload.data.currentConfigVersion).toBe("1.0.1");
