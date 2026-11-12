@@ -92,6 +92,22 @@ describe("outbox.subscriber", () => {
     expect(subscriber.running).toBeTruthy();
   });
 
+  it("logs when polling stops unexpectedly", async () => {
+    const error = new Error("Polling failed");
+    vi.spyOn(logger, "error");
+    const subscriber = new OutboxSubscriber();
+    vi.spyOn(subscriber, "poll").mockRejectedValue(error);
+
+    subscriber.start();
+
+    await vi.waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        error,
+        "Outbox subscriber stopped unexpectedly",
+      ),
+    );
+  });
+
   it("should stop polling after stop()", async () => {
     claimEvents.mockResolvedValue([
       new Outbox({

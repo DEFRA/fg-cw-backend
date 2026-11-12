@@ -197,10 +197,11 @@ const resolveTableSection = async ({ path, root, row }) => {
   const { rowsRef, rows, ...resolvable } = path;
   const dataRows = await resolveDataRef({ root, path: rowsRef, row });
 
-  const tableRows = [];
-  for (const rowItem of dataRows) {
-    tableRows.push(await resolveJSONPath({ root, path: rows, row: rowItem }));
-  }
+  const tableRows = await Promise.all(
+    dataRows.map((rowItem) =>
+      resolveJSONPath({ root, path: rows, row: rowItem }),
+    ),
+  );
 
   const resolvedSection = await resolveJSONPath({
     root,
@@ -216,12 +217,11 @@ const resolveAccordionSection = async ({ path, root, row }) => {
   const { itemsRef, items, ...resolvable } = path;
   const dataItems = await resolveDataRef({ root, path: itemsRef, row });
 
-  const accordionItems = [];
-  for (const itemData of dataItems) {
-    accordionItems.push(
-      await resolveJSONPath({ root, path: items, row: itemData }),
-    );
-  }
+  const accordionItems = await Promise.all(
+    dataItems.map((itemData) =>
+      resolveJSONPath({ root, path: items, row: itemData }),
+    ),
+  );
 
   const resolvedSection = await resolveJSONPath({
     root,
@@ -250,12 +250,12 @@ const resolveRepeatComponent = async ({ path, root, row }) => {
     path: beforeContent,
     row,
   });
-  for (const itemData of dataItems) {
-    const resolved = await resolveJSONPath({
-      root,
-      path: items,
-      row: itemData,
-    });
+  const resolvedItems = await Promise.all(
+    dataItems.map((itemData) =>
+      resolveJSONPath({ root, path: items, row: itemData }),
+    ),
+  );
+  for (const resolved of resolvedItems) {
     if (Array.isArray(resolved)) {
       repeatedItems.push(...resolved);
     } else {
@@ -323,13 +323,9 @@ const resolveComponentContainer = async ({ path, root, row }) => {
   const content = JSONPath({ json: root, path: contentRef });
   const dataItems = content[0] || [];
 
-  const resolvedItems = [];
-  for (const item of dataItems) {
-    const resolved = await resolveJSONPath({ root, path: item, row });
-    resolvedItems.push(resolved);
-  }
-
-  return resolvedItems;
+  return Promise.all(
+    dataItems.map((item) => resolveJSONPath({ root, path: item, row })),
+  );
 };
 
 const evaluateConditionalWithRow = async ({ condition, root, row }) => {
