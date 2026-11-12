@@ -20,6 +20,7 @@ export default defineConfig({
       INBOX_EXPIRES_MS: 5000,
       INBOX_POLL_MS: 250,
       FIFO_LOCK_TTL_MS: 5000,
+      MONGO_URI: "mongodb://127.0.0.1:1/?serverSelectionTimeoutMS=500",
     },
     coverage: {
       reporter: ["text", "lcov", "html"],
