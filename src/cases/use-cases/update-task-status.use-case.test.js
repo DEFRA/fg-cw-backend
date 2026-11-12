@@ -17,6 +17,7 @@ import {
   validatePayloadComment,
 } from "./update-task-status.use-case.js";
 
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/case.repository.js");
 vi.mock("./find-case-by-id.use-case.js");
 vi.mock("./resolve-current-workflow.use-case.js");

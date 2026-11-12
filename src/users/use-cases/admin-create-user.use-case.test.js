@@ -5,6 +5,7 @@ import { User } from "../models/user.js";
 import { findByEmail, save } from "../repositories/user.repository.js";
 import { adminCreateUserUseCase } from "./admin-create-user.use-case.js";
 
+vi.mock("../../common/write-audit-event.js");
 vi.mock("../repositories/user.repository.js");
 
 describe("adminCreateUserUseCase", () => {
