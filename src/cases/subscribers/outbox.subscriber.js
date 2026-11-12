@@ -161,7 +161,9 @@ export class OutboxSubscriber {
   async start() {
     logger.info("Starting outbox subscriber");
     this.running = true;
-    this.poll();
+    this.poll().catch((error) =>
+      logger.error(error, "Outbox subscriber stopped unexpectedly"),
+    );
   }
 
   stop() {

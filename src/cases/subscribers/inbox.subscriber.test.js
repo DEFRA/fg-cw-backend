@@ -91,6 +91,24 @@ describe("inbox.subscriber", () => {
     expect(setFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
     expect(freeFifoLock).toHaveBeenCalledWith("INBOX", "ref_1");
     expect(subscriber.running).toBeTruthy();
+
+    subscriber.stop();
+  });
+
+  it("logs when polling stops unexpectedly", async () => {
+    const error = new Error("Polling failed");
+    vi.spyOn(logger, "error");
+    const subscriber = new InboxSubscriber();
+    vi.spyOn(subscriber, "poll").mockRejectedValue(error);
+
+    subscriber.start();
+
+    await vi.waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        error,
+        "Inbox subscriber stopped unexpectedly",
+      ),
+    );
   });
 
   it("should continue polling and process events after an error", async () => {

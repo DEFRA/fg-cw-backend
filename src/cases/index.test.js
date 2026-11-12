@@ -18,6 +18,7 @@ vi.mock("../common/logger.js", () => ({
   logger: {
     info: vi.fn(),
     trace: vi.fn(),
+    error: vi.fn(),
   },
 }));
 vi.mock("../common/mongo-client.js");
@@ -32,6 +33,10 @@ describe("cases", () => {
     server = hapi.server();
     up.mockResolvedValue([]);
     clearBuckets();
+    createNewCaseSubscriber.start.mockResolvedValue();
+    createUpdateStatusAgreementConsumer.start.mockResolvedValue();
+    OutboxSubscriber.prototype.start = vi.fn().mockResolvedValue();
+    InboxSubscriber.prototype.start = vi.fn();
   });
 
   it("runs migrations on startup", async () => {
@@ -78,7 +83,7 @@ describe("cases", () => {
   });
 
   it("starts subscribers on startup", async () => {
-    const outboxStart = vi.fn();
+    const outboxStart = vi.fn().mockResolvedValue();
     OutboxSubscriber.prototype.start = outboxStart;
     const inboxStart = vi.fn();
     InboxSubscriber.prototype.start = inboxStart;
@@ -92,6 +97,23 @@ describe("cases", () => {
     expect(createUpdateStatusAgreementConsumer.start).toHaveBeenCalled();
     expect(outboxStart).toHaveBeenCalled();
     expect(inboxStart).toHaveBeenCalled();
+  });
+
+  it("logs a subscriber that stops unexpectedly", async () => {
+    const error = new Error("Polling failed");
+    createNewCaseSubscriber.start.mockRejectedValue(error);
+
+    await server.register(cases);
+    await server.initialize();
+
+    server.events.emit("start");
+
+    await vi.waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        error,
+        "Create new case subscriber stopped unexpectedly",
+      ),
+    );
   });
 
   it("stops subscribers on shutdown", async () => {
