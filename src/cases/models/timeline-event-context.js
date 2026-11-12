@@ -81,7 +81,7 @@ export const readRecordedTimelineContext = (eventType, context) => {
 
 export const resolveLegacyTimelineContext = (eventType, data, workflow) => {
   const definition = contexts[eventType];
-  if (!definition || !definition.exists(data, workflow)) {
+  if (!definition?.exists(data, workflow)) {
     return null;
   }
   return definition.capture(data, workflow);
