@@ -1,6 +1,10 @@
 import Boom from "@hapi/boom";
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
 import { db } from "../../common/mongo-client.js";
+import {
+  findCurrentSearches as findCurrentSearchesIn,
+  recordConfigChange,
+} from "../../common/search/current-searches.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
 import { WorkflowActionComment } from "../models/workflow-action-comment.js";
@@ -139,6 +143,7 @@ const toWorkflow = (doc) =>
     templates: doc.templates,
     externalActions: doc.externalActions,
     endpoints: doc.endpoints?.map(toWorkflowEndpoint) || [],
+    search: doc.search,
   });
 
 export const save = async (workflow) => {
@@ -162,6 +167,9 @@ export const save = async (workflow) => {
       `Workflow with code "${workflow.code}" could not be created, the operation was not acknowledged`,
     );
   }
+
+  // A stored definition can make its version the one search declares from.
+  await recordConfigChange(db, workflow.code);
 };
 
 // eslint-disable-next-line complexity
@@ -234,6 +242,9 @@ export const findStoredVersions = async (code, versions) => {
 
   return new Set(docs.map(({ version }) => version));
 };
+
+// Every code with the `search` of its current version, once that is stored.
+export const findCurrentSearches = () => findCurrentSearchesIn(db, collection);
 
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });

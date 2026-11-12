@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createHmac } from "node:crypto";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { auditedRead } from "../../common/audited-read.js";
-import { parseQuery, runQuery } from "../../common/buckets/engine.js";
+import { prepareQuery, runQuery } from "../../common/buckets/engine.js";
 import { refuse } from "../../common/buckets/refusal.js";
 import { findBucket } from "../../common/buckets/registry.js";
+import { config } from "../../common/config.js";
 import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
 import {
   queryBucketAuditBuilder,
@@ -32,6 +34,7 @@ const QUERY = {
   asked: ["workflowCode"],
   ref: "ref:abc-123",
   refKind: "ref",
+  field: null,
   from: "2026-10-08T12:00:00.000Z",
   to: "2026-10-09T12:00:00.000Z",
   cursor: null,
@@ -62,7 +65,7 @@ const ask = (bucketId, overrides) =>
 describe("queryBucketUseCase", () => {
   beforeEach(() => {
     audit.reads = 0;
-    parseQuery.mockReturnValue(QUERY);
+    prepareQuery.mockResolvedValue(QUERY);
     runQuery.mockResolvedValue(RESULT);
   });
 
@@ -77,7 +80,7 @@ describe("queryBucketUseCase", () => {
 
     expect(await ask("cw.outbox")).toBe(RESULT);
     expect(findBucket).toHaveBeenCalledWith("cw.outbox");
-    expect(parseQuery).toHaveBeenCalledWith(bucket, BODY);
+    expect(prepareQuery).toHaveBeenCalledWith(bucket, BODY);
     expect(runQuery).toHaveBeenCalledWith(bucket, QUERY);
     expect(audit.reads).toBe(0);
   });
@@ -93,9 +96,7 @@ describe("queryBucketUseCase", () => {
 
   it("refuses before the read, so a refused request writes no audit", async () => {
     findBucket.mockReturnValue({ id: "cw.cases", audited: true });
-    parseQuery.mockImplementation(() => {
-      throw refuse("UNKNOWN_FACT");
-    });
+    prepareQuery.mockRejectedValue(refuse("UNKNOWN_FACT"));
 
     await expect(ask("cw.cases")).rejects.toThrow(reasonOf("UNKNOWN_FACT"));
     expect(audit.reads).toBe(0);
@@ -106,7 +107,7 @@ describe("queryBucketUseCase", () => {
     findBucket.mockReturnValue(undefined);
 
     await expect(ask("cw.nothing")).rejects.toThrow(reasonOf("UNKNOWN_BUCKET"));
-    expect(parseQuery).not.toHaveBeenCalled();
+    expect(prepareQuery).not.toHaveBeenCalled();
   });
 
   it.each(["CW.Cases", "cases", "cw.cases/query", "constructor"])(
@@ -128,6 +129,15 @@ describe("queryBucketAuditBuilder", () => {
     repeat: false,
   };
 
+  const digest = (text) =>
+    createHmac("sha256", "an-invented-search-audit-key-0001")
+      .update(text)
+      .digest("hex");
+
+  afterEach(() => {
+    config.set("search.auditKey", null);
+  });
+
   it("records what was asked, for whom, and how it was read", () => {
     expect(queryBucketAuditBuilder(args, RESULT)).toEqual({
       entities: [
@@ -136,8 +146,12 @@ describe("queryBucketAuditBuilder", () => {
       details: {
         security: { actor: OPERATOR },
         caller: "fg-gas-backend",
+        actor: OPERATOR_NAME,
+        actorId: OPERATOR_ID,
         facts: ["workflowCode"],
         refKind: "ref",
+        field: null,
+        match: null,
         from: "2026-10-08T12:00:00.000Z",
         to: "2026-10-09T12:00:00.000Z",
         page: "first",
@@ -155,6 +169,48 @@ describe("queryBucketAuditBuilder", () => {
 
     expect(written).not.toContain("example-workflow");
     expect(written).not.toContain("abc-123");
+  });
+
+  it("records a field search's key and match, and a keyed digest of its value", () => {
+    config.set("search.auditKey", "an-invented-search-audit-key-0001");
+    const query = {
+      ...QUERY,
+      ref: null,
+      refKind: null,
+      field: { key: "businessName", match: "prefix", value: "hilltop" },
+    };
+
+    const event = queryBucketAuditBuilder({ ...args, query }, RESULT);
+
+    expect(event.details).toMatchObject({
+      refKind: null,
+      field: "businessName",
+      match: "prefix",
+      valueDigest: digest("businessName:hilltop"),
+    });
+    expect(JSON.stringify(event)).not.toContain("hilltop");
+  });
+
+  it("digests a searched ref as kind:value", () => {
+    config.set("search.auditKey", "an-invented-search-audit-key-0001");
+
+    expect(queryBucketAuditBuilder(args, RESULT).details.valueDigest).toBe(
+      digest("ref:abc-123"),
+    );
+  });
+
+  it("writes no digest without a key, or with nothing searched", () => {
+    expect(queryBucketAuditBuilder(args, RESULT).details).not.toHaveProperty(
+      "valueDigest",
+    );
+
+    config.set("search.auditKey", "an-invented-search-audit-key-0001");
+    const { details } = queryBucketAuditBuilder(
+      { ...args, query: { ...QUERY, ref: null, refKind: null } },
+      RESULT,
+    );
+
+    expect(details).not.toHaveProperty("valueDigest");
   });
 
   it("names a later page, and carries the plan of a read that failed", () => {

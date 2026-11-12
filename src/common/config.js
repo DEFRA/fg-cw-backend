@@ -33,6 +33,28 @@ convict.addFormat({
   coerce: Number,
 });
 
+const POSITIVE_INT = "positive-int";
+
+convict.addFormat({
+  name: POSITIVE_INT,
+  validate: function validatePositiveInt(value) {
+    Joi.assert(value, Joi.number().integer().min(1).strict());
+  },
+  coerce: Number,
+});
+
+const MIN_SEARCH_AUDIT_KEY_LENGTH = 32;
+
+convict.addFormat({
+  name: "search-audit-key",
+  validate: function validateSearchAuditKey(value) {
+    Joi.assert(
+      value,
+      Joi.string().min(MIN_SEARCH_AUDIT_KEY_LENGTH).allow(null),
+    );
+  },
+});
+
 convict.addFormats(convictFormatWithValidator);
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -337,6 +359,34 @@ export const config = convict({
     format: Boolean,
     default: true,
     env: "WORKFLOW_DEFINITION_CACHE_ENABLED",
+  },
+  search: {
+    auditKey: {
+      doc: "Keys the digest of a searched value in the query audit, at least 32 characters; none is written without it",
+      format: "search-audit-key",
+      nullable: true,
+      default: null,
+      sensitive: true,
+      env: "SEARCH_AUDIT_KEY",
+    },
+    reindexIntervalMs: {
+      doc: "How often the search reindexer looks for documents a declaration change left behind",
+      format: POSITIVE_INT,
+      default: 30_000,
+      env: "SEARCH_REINDEX_INTERVAL_MS",
+    },
+    sweepBatch: {
+      doc: "How many records the search sweeper checks against their documents per wake",
+      format: POSITIVE_INT,
+      default: 200,
+      env: "SEARCH_SWEEP_BATCH",
+    },
+    sweepIntervalMs: {
+      doc: "How often the search sweeper wakes to check its next batch",
+      format: POSITIVE_INT,
+      default: 30_000,
+      env: "SEARCH_SWEEP_INTERVAL_MS",
+    },
   },
 });
 

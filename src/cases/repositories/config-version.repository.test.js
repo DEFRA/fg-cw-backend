@@ -21,10 +21,17 @@ const mockCollection = {
   find: vi.fn(() => mockCursor),
 };
 
+const mockChanges = { updateOne: vi.fn() };
+
 vi.mock("../../common/mongo-client.js", () => ({
   db: {
-    collection: () => mockCollection,
+    collection: (name) =>
+      name === "config_changes" ? mockChanges : mockCollection,
   },
+}));
+
+vi.mock("../../common/with-transaction.js", () => ({
+  withTransaction: (run) => run("session"),
 }));
 
 describe("config-version.repository", () => {
@@ -49,8 +56,33 @@ describe("config-version.repository", () => {
             fetchStatus: FetchStatus.Pending,
           }),
         }),
-        { upsert: true },
+        { upsert: true, session: "session" },
       );
+    });
+
+    it("counts a config change for the code, in the same transaction, when the version arrives or changes", async () => {
+      mockCollection.updateOne
+        .mockResolvedValueOnce({ upsertedCount: 1, modifiedCount: 0 })
+        .mockResolvedValueOnce({ upsertedCount: 0, modifiedCount: 1 })
+        .mockResolvedValueOnce({ upsertedCount: 0, modifiedCount: 0 });
+      const cv = ConfigVersion.createMock();
+
+      await upsert(cv);
+      await upsert(cv);
+      await upsert(cv);
+
+      expect(mockChanges.updateOne.mock.calls).toEqual([
+        [
+          { _id: "pigs-might-fly" },
+          { $inc: { change: 1 } },
+          { upsert: true, session: "session" },
+        ],
+        [
+          { _id: "pigs-might-fly" },
+          { $inc: { change: 1 } },
+          { upsert: true, session: "session" },
+        ],
+      ]);
     });
   });
 

@@ -1,5 +1,6 @@
 import { STORED, defineBucket } from "../../common/buckets/bucket.js";
 import { toPosition } from "../repositories/case/admin-case-row.js";
+import { CASE_SEARCH } from "../search/case-search.js";
 
 const orNull = (value) => value ?? null;
 
@@ -28,8 +29,9 @@ export const casesBucket = () =>
         within: "workflowCode",
       },
     },
-    refs: { ref: "Reference", sbi: "SBI" },
+    refs: { ref: "Reference", sbi: "SBI", frn: "FRN", crn: "CRN" },
     indexes: [["workflowCode"], ["workflowCode", "currentConfigVersion"]],
+    search: { collection: CASE_SEARCH, lead: "workflowCode" },
     audited: true,
     timeline: false,
     title: { label: "Reference", format: "mono" },

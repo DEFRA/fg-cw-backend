@@ -168,6 +168,32 @@ describe("GET /actuators/buckets", () => {
     expect(indexes).toContainEqual(["workflowCode", "currentConfigVersion"]);
   });
 
+  it("answers no fields unless asked, so a GAS before field searches reads the catalogue", async () => {
+    const { payload } = await listBuckets();
+
+    expect(
+      payload.buckets.filter((entry) => Object.hasOwn(entry, "fields")),
+    ).toEqual([]);
+  });
+
+  it("answers each bucket's fields when asked, null for one searched by none", async () => {
+    const { payload } = await listBuckets({}, "?include=fields");
+    const fieldsOf = (bucketId) =>
+      payload.buckets.find(({ id }) => id === bucketId).fields;
+
+    expect(fieldsOf("cw.cases")).toEqual({
+      fact: "workflowCode",
+      byValue: expect.any(Object),
+    });
+    expect(fieldsOf("cw.outbox")).toBeNull();
+  });
+
+  it("answers 400 to an include it does not know", async () => {
+    await expect(listBuckets({}, "?include=everything")).rejects.toThrow(
+      "Response Error: 400 Bad Request",
+    );
+  });
+
   it("answers 403 to a client other than fg-gas-backend", async () => {
     await expect(
       listBuckets({ authorization: `Bearer ${SERVICE_TOKEN}` }),
@@ -615,6 +641,58 @@ describe("POST /actuators/buckets/{bucketId}/query, refusals", () => {
     });
   });
 
+  it.each([
+    [
+      "a field on a bucket with no search",
+      "cw.outbox",
+      { where: { status: "COMPLETED" }, field: "name:x" },
+      "UNKNOWN_FIELD",
+    ],
+    [
+      "a field without a workflow",
+      "cw.cases",
+      { field: "businessName:hilltop" },
+      "FIELD_NEEDS_LEAD",
+    ],
+    [
+      "a field beside a ref",
+      "cw.cases",
+      {
+        where: { workflowCode: "example-workflow" },
+        ref: "sbi:900000001",
+        field: "businessName:hilltop",
+      },
+      "FIELD_WITH_FILTER",
+    ],
+    [
+      "a field value with no letters or digits",
+      "cw.cases",
+      {
+        where: { workflowCode: "example-workflow" },
+        field: "businessName: -' ",
+      },
+      "INVALID_FIELD_VALUE",
+    ],
+    [
+      "a field the workflow does not declare",
+      "cw.cases",
+      {
+        where: { workflowCode: "no-such-workflow" },
+        field: "businessName:hilltop",
+      },
+      "UNKNOWN_FIELD",
+    ],
+  ])(
+    "refuses %s with 400 and its reason",
+    async (_, bucketId, body, reason) => {
+      expect(await refusalOf(queryBucket(bucketId, body))).toMatchObject({
+        statusCode: 400,
+        reason,
+      });
+      expect(await auditRows()).toEqual([]);
+    },
+  );
+
   it.each(["cw.nothing", "gas.applications", "CW.Cases"])(
     "answers 404 UNKNOWN_BUCKET for %s",
     async (bucketId) => {
@@ -684,6 +762,8 @@ describe("POST /actuators/buckets/{bucketId}/query, access and audit", () => {
         details: {
           security: { actor: { id: OPERATOR_ID, name: OPERATOR_NAME } },
           caller: CASE_READER_CLIENT,
+          actor: OPERATOR_NAME,
+          actorId: OPERATOR_ID,
           facts: ["workflowCode"],
           refKind: "ref",
           page: "first",

@@ -107,6 +107,24 @@ describe("queryBucketRoute", () => {
     );
   });
 
+  it("passes a field search on in the body", async () => {
+    const response = await post({
+      where: { workflowCode: "example-workflow" },
+      field: "businessName:Hilltop Farm",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(queryBucketUseCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: {
+          ...EMPTY_QUERY,
+          where: { workflowCode: "example-workflow" },
+          field: "businessName:Hilltop Farm",
+        },
+      }),
+    );
+  });
+
   it("takes no body as the empty query", async () => {
     await post(undefined);
 
@@ -181,6 +199,18 @@ describe("queryBucketRoute", () => {
       message: "No such bucket",
       reason: "UNKNOWN_BUCKET",
     });
+  });
+
+  it("answers a search too slow to read as 504 TIMED_OUT", async () => {
+    queryBucketUseCase.mockRejectedValue(refuse("TIMED_OUT"));
+
+    const response = await post({
+      where: { workflowCode: "example-workflow" },
+      field: "businessName:hil",
+    });
+
+    expect(response.statusCode).toBe(504);
+    expect(response.result).toMatchObject({ reason: "TIMED_OUT" });
   });
 
   it("logs a rejected value's path and rule, never the value", async () => {

@@ -197,3 +197,75 @@ describe("config service access token seeding", () => {
     expect(() => config.get("serviceAccessTokenHash")).toThrow();
   });
 });
+
+describe("config search", () => {
+  const INVENTED_KEY = "an-invented-search-audit-key-0001";
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("writes no digest key, reindexes every 30 seconds and sweeps 200 records every 30 seconds by default", async () => {
+    vi.stubEnv("SEARCH_AUDIT_KEY", undefined);
+    vi.stubEnv("SEARCH_REINDEX_INTERVAL_MS", undefined);
+    vi.stubEnv("SEARCH_SWEEP_BATCH", undefined);
+    vi.stubEnv("SEARCH_SWEEP_INTERVAL_MS", undefined);
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("search")).toEqual({
+      auditKey: null,
+      reindexIntervalMs: 30_000,
+      sweepBatch: 200,
+      sweepIntervalMs: 30_000,
+    });
+  });
+
+  it("reads the digest key, the intervals and the sweep batch", async () => {
+    vi.stubEnv("SEARCH_AUDIT_KEY", INVENTED_KEY);
+    vi.stubEnv("SEARCH_REINDEX_INTERVAL_MS", "5000");
+    vi.stubEnv("SEARCH_SWEEP_BATCH", "50");
+    vi.stubEnv("SEARCH_SWEEP_INTERVAL_MS", "7000");
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("search")).toEqual({
+      auditKey: INVENTED_KEY,
+      reindexIntervalMs: 5000,
+      sweepBatch: 50,
+      sweepIntervalMs: 7000,
+    });
+  });
+
+  it("keeps the digest key out of the printed config", async () => {
+    vi.stubEnv("SEARCH_AUDIT_KEY", INVENTED_KEY);
+
+    const cfg = await loadConfig();
+
+    expect(cfg.toString()).not.toContain(INVENTED_KEY);
+  });
+
+  it.each(
+    [
+      "SEARCH_REINDEX_INTERVAL_MS",
+      "SEARCH_SWEEP_BATCH",
+      "SEARCH_SWEEP_INTERVAL_MS",
+    ].flatMap((name) =>
+      ["0", "-1", "abc", "1.5"].map((value) => [name, value]),
+    ),
+  )("refuses to start on %s=%s", async (name, value) => {
+    vi.stubEnv(name, value);
+
+    await expect(loadConfig()).rejects.toThrow();
+  });
+
+  it("refuses a digest key shorter than 32 characters", async () => {
+    vi.stubEnv("SEARCH_AUDIT_KEY", "a".repeat(31));
+
+    await expect(loadConfig()).rejects.toThrow(/search\.auditKey/);
+  });
+});

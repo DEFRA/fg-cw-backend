@@ -344,6 +344,51 @@ describe("Workflow.fromDefinition", () => {
     );
   });
 
+  it("keeps the fields a definition declares to search its cases by", () => {
+    const search = {
+      fields: [
+        {
+          key: "businessName",
+          label: "Business name",
+          path: "$.payload.answers.applicant.business.name",
+          match: "prefix",
+        },
+        {
+          key: "agreementRef",
+          label: "Agreement reference",
+          path: "$.supplementaryData.agreements[*].agreementRef",
+        },
+      ],
+    };
+
+    expect(fromDefinition(definition({ search }))().search).toEqual(search);
+    expect(fromDefinition(definition())().search).toBeUndefined();
+  });
+
+  it.each([
+    ["no fields", { fields: [] }],
+    [
+      "a path outside the payload and supplementary data",
+      { fields: [{ key: "caseRef", label: "Case", path: "$.caseRef" }] },
+    ],
+    [
+      "a path under an application's answers",
+      { fields: [{ key: "name", label: "Name", path: "$.answers.name" }] },
+    ],
+    [
+      "a reserved key",
+      {
+        fields: [
+          { key: "crn", label: "CRN", path: "$.payload.identifiers.crn" },
+        ],
+      },
+    ],
+  ])("rejects a search declaring %s", (_, search) => {
+    expect(fromDefinition(definition({ search }))).toThrow(
+      /Invalid Workflow "frps-private-beta"/,
+    );
+  });
+
   it("fails with a Boom, so the failure is known to be permanent", () => {
     let error;
     try {

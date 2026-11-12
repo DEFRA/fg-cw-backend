@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearBuckets, listBuckets } from "../common/buckets/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
+import { SearchReindexer } from "../common/search/reindexer.js";
+import { SearchSweeper } from "../common/search/sweeper.js";
+import {
+  clearSearchSources,
+  findSearchSource,
+} from "../common/search/source.js";
 import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
 import { cases } from "./index.js";
 import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
@@ -22,7 +28,11 @@ vi.mock("../common/logger.js", () => ({
 }));
 vi.mock("../common/mongo-client.js");
 vi.mock("../events/dead-letter-gauge.js");
+vi.mock("../common/search/reindexer.js");
+vi.mock("../common/search/sweeper.js");
 vi.mock("./subscribers/create-new-case.subscriber.js");
+vi.mock("./subscribers/inbox.subscriber.js");
+vi.mock("./subscribers/outbox.subscriber.js");
 vi.mock("./subscribers/update-case-status-agreement.subscriber.js");
 
 describe("cases", () => {
@@ -32,6 +42,35 @@ describe("cases", () => {
     server = hapi.server();
     up.mockResolvedValue([]);
     clearBuckets();
+    clearSearchSources();
+  });
+
+  it("registers the case search and reindexes and sweeps it while running", async () => {
+    await server.register(cases);
+    await server.initialize();
+
+    expect(findSearchSource("case_search")).toMatchObject({
+      records: "cases",
+      lead: "workflowCode",
+    });
+    expect(SearchReindexer).toHaveBeenCalledWith({
+      source: findSearchSource("case_search"),
+      intervalMs: 30_000,
+    });
+    expect(SearchSweeper).toHaveBeenCalledWith({
+      source: findSearchSource("case_search"),
+      batchSize: 200,
+      intervalMs: 30_000,
+    });
+
+    const [reindexer] = SearchReindexer.mock.instances;
+    const [sweeper] = SearchSweeper.mock.instances;
+    server.events.emit("start");
+    expect(reindexer.start).toHaveBeenCalled();
+    expect(sweeper.start).toHaveBeenCalled();
+    server.events.emit("stop");
+    expect(reindexer.stop).toHaveBeenCalled();
+    expect(sweeper.stop).toHaveBeenCalled();
   });
 
   it("runs migrations on startup", async () => {

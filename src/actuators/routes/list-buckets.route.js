@@ -1,3 +1,4 @@
+import Joi from "joi";
 import { safeResponseFailAction } from "../../common/validation.js";
 import { bucketCatalogueResponseSchema } from "../schemas/bucket.schema.js";
 import { listBucketsUseCase } from "../use-cases/list-buckets.use-case.js";
@@ -13,12 +14,19 @@ export const listBucketsRoute = {
     plugins: {
       "hapi-swagger": { security: [{ serviceToken: [] }] },
     },
+    // `fields` only when asked for, since a GAS before field searches refuses
+    // an entry that carries it.
+    validate: {
+      query: Joi.object({ include: Joi.string().valid("fields") }),
+    },
     response: {
       schema: bucketCatalogueResponseSchema,
       failAction: safeResponseFailAction,
     },
   },
-  handler() {
-    return listBucketsUseCase();
+  handler(request) {
+    return listBucketsUseCase({
+      withFields: request.query.include === "fields",
+    });
   },
 };

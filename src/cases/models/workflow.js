@@ -3,6 +3,7 @@ import Joi from "joi";
 import { ObjectId } from "mongodb";
 import { validateProps } from "../../common/validation.js";
 import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
+import { search } from "../schemas/search.schema.js";
 import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Position } from "./position.js";
@@ -26,6 +27,7 @@ export class Workflow {
     this.templates = props.templates;
     this.externalActions = props.externalActions;
     this.endpoints = props.endpoints;
+    this.search = props.search;
   }
 
   // Only a published definition is held to these rules: a stored workflow has
@@ -321,4 +323,5 @@ Workflow.definitionSchema = Joi.object({
   phases: uniqueCodes.required(),
   endpoints: uniqueCodes.optional(),
   externalActions: uniqueCodes.allow(null).optional(),
+  search: search.optional(),
 }).unknown();

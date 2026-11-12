@@ -76,11 +76,29 @@ describe("listBucketsRoute", () => {
     expect(listBucketsRoute.options.tags).toEqual(["api", "public-api"]);
   });
 
-  it("answers this service's entries, with no operator named", async () => {
+  it("answers this service's entries, with no operator named, and no fields unless asked", async () => {
     const response = await get();
 
     expect(response.statusCode).toBe(200);
     expect(response.result).toEqual({ buckets: [ENTRY] });
+    expect(listBucketsUseCase).toHaveBeenCalledWith({ withFields: false });
+  });
+
+  it("describes the fields when asked to include them", async () => {
+    const fields = { fact: "workflowCode", byValue: {} };
+    listBucketsUseCase.mockResolvedValue({ buckets: [{ ...ENTRY, fields }] });
+
+    const response = await (
+      await serverFor(listBucketsRoute)
+    ).inject({
+      method: "GET",
+      url: "/actuators/buckets?include=fields",
+      headers: { "x-test-client": CASE_READER_CLIENT },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.result.buckets[0].fields).toEqual(fields);
+    expect(listBucketsUseCase).toHaveBeenCalledWith({ withFields: true });
   });
 
   it("answers a 500 rather than an entry off its schema", async () => {

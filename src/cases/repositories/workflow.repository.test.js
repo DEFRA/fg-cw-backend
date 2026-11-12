@@ -9,6 +9,7 @@ import {
   findAll,
   findAllCodes,
   findByCodeAndVersion,
+  findCurrentSearches,
   findStoredVersions,
   findStoredWorkflowRow,
   save,
@@ -27,6 +28,7 @@ describe("save", () => {
 
     db.collection.mockReturnValue({
       insertOne,
+      updateOne: vi.fn(),
     });
 
     const workflow = Workflow.createMock();
@@ -40,7 +42,7 @@ describe("save", () => {
 
   it("stores only the endpoint fields the workflow knows about", async () => {
     const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
-    db.collection.mockReturnValue({ insertOne });
+    db.collection.mockReturnValue({ insertOne, updateOne: vi.fn() });
     const endpoint = WorkflowEndpoint.createMock();
 
     await save(
@@ -79,6 +81,24 @@ describe("save", () => {
     const workflow = Workflow.createMock();
 
     await expect(save(workflow)).rejects.toThrow(error);
+  });
+
+  it("counts a config change for its code once stored", async () => {
+    const collections = {
+      workflows: {
+        insertOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+      },
+      config_changes: { updateOne: vi.fn() },
+    };
+    db.collection.mockImplementation((name) => collections[name]);
+
+    await save(Workflow.createMock({ code: "workflow-a" }));
+
+    expect(collections.config_changes.updateOne).toHaveBeenCalledWith(
+      { _id: "workflow-a" },
+      { $inc: { change: 1 } },
+      { upsert: true, session: undefined },
+    );
   });
 
   it("throws when write is unacknowledged", async () => {
@@ -275,7 +295,7 @@ describe("saveFromDefinition", () => {
   it("creates a workflow from definition with version", async () => {
     const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
 
-    db.collection.mockReturnValue({ insertOne });
+    db.collection.mockReturnValue({ insertOne, updateOne: vi.fn() });
 
     const workflowDefinition = {
       code: "pigs-might-fly",
@@ -291,6 +311,98 @@ describe("saveFromDefinition", () => {
     expect(insertOne).toHaveBeenCalled();
     expect(result.code).toBe("pigs-might-fly");
     expect(result.version).toBe("1.0.2");
+  });
+});
+
+describe("search", () => {
+  const search = {
+    fields: [
+      {
+        key: "businessName",
+        label: "Business name",
+        path: "$.payload.answers.business.name",
+        match: "prefix",
+      },
+    ],
+  };
+
+  it("persists and rehydrates the search declaration", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne, updateOne: vi.fn() });
+
+    await save(Workflow.createMock({ search }));
+
+    expect(insertOne.mock.calls[0][0].search).toEqual(search);
+
+    db.collection.mockReturnValue({
+      findOne: vi
+        .fn()
+        .mockResolvedValue(WorkflowDocument.createMock({ search })),
+    });
+
+    expect(
+      (await findByCodeAndVersion("frps-private-beta", "1.0.0")).search,
+    ).toEqual(search);
+  });
+
+  it("stores and reads a workflow without a search as declaring none", async () => {
+    const insertOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    db.collection.mockReturnValue({ insertOne, updateOne: vi.fn() });
+
+    await save(Workflow.createMock());
+
+    expect(insertOne.mock.calls[0][0]).not.toHaveProperty("search");
+
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue(WorkflowDocument.createMock()),
+    });
+
+    expect(
+      (await findByCodeAndVersion("frps-private-beta", "1.0.0")).search,
+    ).toBeUndefined();
+  });
+});
+
+describe("findCurrentSearches", () => {
+  it("answers each code with its current version's search, read from the stored workflow", async () => {
+    const search = {
+      fields: [{ key: "name", label: "Name", path: "$.payload.name" }],
+    };
+    const collections = {
+      config_changes: {
+        find: () => ({
+          toArray: async () => [{ _id: "workflow-a", change: 5 }],
+        }),
+      },
+      config_versions: {
+        aggregate: () => ({
+          toArray: async () => [
+            { _id: "workflow-a", versions: ["1.11.0", "1.10.0"] },
+          ],
+        }),
+      },
+      workflows: {
+        find: vi.fn(() => ({
+          toArray: async () => [
+            { code: "workflow-a", version: "1.10.0", search },
+          ],
+        })),
+      },
+    };
+    db.collection.mockImplementation((name) => collections[name]);
+
+    expect(await findCurrentSearches()).toEqual([
+      { value: "workflow-a", search, change: 5 },
+    ]);
+    expect(collections.workflows.find).toHaveBeenCalledWith(
+      {
+        $or: [{ code: "workflow-a", version: { $in: ["1.11.0", "1.10.0"] } }],
+      },
+      {
+        readPreference: "primary",
+        projection: { _id: 0, code: 1, version: 1, search: 1 },
+      },
+    );
   });
 });
 

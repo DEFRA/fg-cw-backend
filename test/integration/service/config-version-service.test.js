@@ -19,10 +19,12 @@ import { FetchStatus } from "../../../src/common/fetch-status.js";
 
 let client;
 let configVersions;
+let configChanges;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
   configVersions = client.db().collection("config_versions");
+  configChanges = client.db().collection("config_changes");
 });
 
 beforeEach(async () => {
@@ -89,6 +91,32 @@ describe("config-version repository integration", () => {
       });
       expect(doc.status).toBe("active");
       expect(doc.fetchStatus).toBe(FetchStatus.Pending);
+    });
+
+    it("counts a config change when a version arrives or changes status, not when it is resent", async () => {
+      const version = (status) =>
+        ConfigVersion.createMock({
+          grantCode: "pigs-might-fly",
+          version: "1.0.0",
+          major: 1,
+          minor: 0,
+          patch: 0,
+          status,
+        });
+      const changes = async () =>
+        (await configChanges.findOne({ _id: "pigs-might-fly" }))?.change ?? 0;
+      const counted = [await changes()];
+
+      await upsert(version("active"));
+      counted.push(await changes());
+      await upsert(version("active"));
+      counted.push(await changes());
+      await upsert(version("draft"));
+      counted.push(await changes());
+
+      expect(counted.slice(1).map((change) => change - counted[0])).toEqual([
+        1, 1, 2,
+      ]);
     });
   });
 
