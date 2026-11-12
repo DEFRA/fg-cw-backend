@@ -79,7 +79,9 @@ const historicalReferenceChecks = {
 // Historical references can disappear without weakening current validation.
 const hasHistoricalReferences = (event, workflow) => {
   const check = historicalReferenceChecks[event.eventType];
-  if (!check) return true;
+  if (!check) {
+    return true;
+  }
   const phase = workflow.phases.find((p) => p.code === event.data.phaseCode);
   return check(event, phase);
 };
