@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { logger } from "./logger.js";
 import {
   bucketFailAction,
+  exploreFailAction,
   safeFailAction,
   safeResponseFailAction,
 } from "./validation.js";
@@ -79,5 +80,24 @@ describe("safeResponseFailAction", () => {
       "Response failed validation: ref:string.pattern.base",
     );
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain(SECRET);
+  });
+});
+
+describe("exploreFailAction", () => {
+  it("refuses EXPLORE_QUERY_INVALID, leaving the one line it is logged as to the answer", () => {
+    let thrown;
+
+    try {
+      exploreFailAction({}, {}, failureOf({ ref: SECRET }));
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown.output.payload).toEqual({
+      statusCode: 400,
+      reason: "EXPLORE_QUERY_INVALID",
+    });
+    expect(thrown.data).toEqual({ logLevel: "info" });
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });

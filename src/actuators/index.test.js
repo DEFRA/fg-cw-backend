@@ -69,6 +69,8 @@ describe("actuators", () => {
       "/actuators/events/outbox/{id}/payload",
       "/actuators/events/outbox/{id}/purge",
       "/actuators/events/outbox/{id}/redrive",
+      "/actuators/explore/query",
+      "/actuators/explore/sources",
       "/actuators/timeline",
       "/actuators/workflows/{code}/versions",
       "/actuators/workflows/{code}/versions/{version}",

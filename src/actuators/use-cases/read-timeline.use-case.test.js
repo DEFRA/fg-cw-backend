@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { readTimeline } from "../../common/buckets/engine.js";
+import { readTimeline } from "../../common/buckets/timeline.js";
 import { logger } from "../../common/logger.js";
 import { readTimelineUseCase } from "./read-timeline.use-case.js";
 
-vi.mock("../../common/buckets/engine.js");
+vi.mock("../../common/buckets/timeline.js");
 vi.mock("../../common/logger.js", () => ({ logger: { info: vi.fn() } }));
 
 describe("readTimelineUseCase", () => {

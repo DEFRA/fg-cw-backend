@@ -1,14 +1,18 @@
 import { up } from "migrate-mongo";
 import { registerBucket } from "../common/buckets/registry.js";
 import { config } from "../common/config.js";
+import { registerExploreSource } from "../common/explore-sources/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
+import { eventsSource } from "../events/explore/events.source.js";
 
 import { casesBucket } from "./buckets/cases.bucket.js";
 import { inboxBucket } from "./buckets/inbox.bucket.js";
 import { outboxBucket } from "./buckets/outbox.bucket.js";
 import { workflowsBucket } from "./buckets/workflows.bucket.js";
+import { casesSource } from "./explore/cases.source.js";
+import { workflowsSource } from "./explore/workflows.source.js";
 import { configVersionUpdatedSubscriber } from "./subscribers/config-version-updated.subscriber.js";
 import { createNewCaseSubscriber } from "./subscribers/create-new-case.subscriber.js";
 import { createUpdateStatusAgreementConsumer } from "./subscribers/update-case-status-agreement.subscriber.js";
@@ -43,6 +47,10 @@ export const cases = {
     registerBucket(inboxBucket());
     registerBucket(casesBucket());
     registerBucket(workflowsBucket());
+
+    registerExploreSource(casesSource);
+    registerExploreSource(workflowsSource);
+    registerExploreSource(eventsSource);
 
     const outboxSubscriber = new OutboxSubscriber();
     const inboxSubscriber = new InboxSubscriber();

@@ -123,6 +123,36 @@ describe("config events.retentionDays", () => {
   );
 });
 
+describe("config searchAuditKey", () => {
+  beforeEach(async () => {
+    const { vi } = await import("vitest");
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    delete process.env.SEARCH_AUDIT_KEY;
+  });
+
+  it("is optional", async () => {
+    expect((await loadConfig()).get("searchAuditKey")).toBeNull();
+  });
+
+  it("takes a key of at least 32 characters, and never shows it", async () => {
+    process.env.SEARCH_AUDIT_KEY = "k".repeat(32);
+
+    const cfg = await loadConfig();
+
+    expect(cfg.get("searchAuditKey")).toBe("k".repeat(32));
+    expect(cfg.toString()).not.toContain("k".repeat(32));
+  });
+
+  it("refuses to start on a shorter key", async () => {
+    process.env.SEARCH_AUDIT_KEY = "short";
+
+    await expect(loadConfig()).rejects.toThrow();
+  });
+});
+
 describe("config log.redact", () => {
   const saved = process.env.NODE_ENV;
 

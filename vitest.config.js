@@ -30,6 +30,8 @@ export default defineConfig({
         "**/src/main.js",
         "**/test/**",
         "**/scripts/**",
+        // Tested in fg-gas-backend, and pinned to it by SHARED.sha256.
+        "**/src/common/explore/**",
       ],
     },
     mockReset: true,

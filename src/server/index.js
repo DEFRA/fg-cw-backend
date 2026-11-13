@@ -10,6 +10,15 @@ import { shutdown } from "./plugins/shutdown.js";
 import { swagger } from "./plugins/swagger.js";
 import { tracing } from "./plugins/tracing.js";
 
+const ASKED_LEVELS = new Set(["info"]);
+
+// An answer to a person's own mistake, such as a refused query, names only
+// its reason, at the level its use case gives it.
+const askedLevelOf = (response) =>
+  response.isBoom && ASKED_LEVELS.has(response.data?.logLevel)
+    ? response.data.logLevel
+    : null;
+
 export const createServer = async () => {
   const server = hapi.server({
     host: config.get("host"),
@@ -57,9 +66,7 @@ export const createServer = async () => {
     internalServerError: 500,
   };
 
-  server.ext("onPreResponse", (request, h) => {
-    const response = request.response;
-
+  const logClientError = (response) => {
     if (
       response.isBoom &&
       response.output.statusCode >= statusCodes.badRequest &&
@@ -72,6 +79,19 @@ export const createServer = async () => {
       error.stack_trace = response.stack;
 
       logger.error(error);
+    }
+  };
+
+  server.ext("onPreResponse", (request, h) => {
+    const response = request.response;
+    const level = askedLevelOf(response);
+
+    if (level) {
+      logger[level](
+        `${response.output.statusCode} ${request.route.path}: ${response.message}`,
+      );
+    } else {
+      logClientError(response);
     }
 
     return h.continue;

@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { refuse } from "./buckets/refusal.js";
+import { queryInvalid } from "./explore-answers.js";
 import { logger } from "./logger.js";
 
 /**
@@ -36,6 +37,11 @@ export const bucketFailAction = (_request, _h, error) => {
   logger.warn(`Query bucket request refused: ${describeDetails(error)}`);
 
   throw refuse("INVALID_REQUEST");
+};
+
+// Logged once, as it is answered.
+export const exploreFailAction = () => {
+  throw queryInvalid();
 };
 
 export const safeResponseFailAction = (_request, _h, error) => {

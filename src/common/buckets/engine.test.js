@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../logger.js";
 import { db } from "../mongo-client.js";
+import { keyOf } from "./bucket.js";
 import { describeBucket } from "./catalogue.js";
 import { encodeCursor } from "./cursor.js";
 import {
@@ -9,20 +10,17 @@ import {
   MAX_VALUES,
   SUMMARY_COUNT_CAP,
   parseQuery,
-  readBucketTimeline,
-  readTimeline,
+  readValueCounts,
   runQuery,
 } from "./engine.js";
 import { dropIndex, ensureIndexes } from "./indexes.js";
 import { SCAN_BUDGET } from "./plan.js";
-import { clearBuckets, registerBucket } from "./registry.js";
 import {
   catalogueEntrySchema,
   queryRequestSchema,
   queryResponseSchema,
   summaryRequestSchema,
   summaryResponseSchema,
-  timelineResponseSchema,
 } from "./schema.js";
 import { parseSummary, runSummary } from "./summary.js";
 import { ledBucket, testBucket } from "./test-bucket.js";
@@ -1345,189 +1343,46 @@ describe("runQuery", () => {
   });
 });
 
-describe("readTimeline", () => {
-  const timelineBucket = (id, label, order) =>
-    testBucket({ id, label, order, timeline: true });
-
-  beforeEach(() => {
-    clearBuckets();
-    registerBucket(timelineBucket("test.inbox", "Test inbox", 20));
-    registerBucket(timelineBucket("test.outbox", "Test outbox", 10));
-    registerBucket(testBucket({ id: "test.records", order: 30 }));
-  });
-
-  afterEach(() => {
-    clearBuckets();
-  });
-
-  it("searches the ref in every timeline bucket registered, 50 from each, and no other", async () => {
-    const collection = makeCollection({ finds: [[doc(2), doc(1)], []] });
-
-    const { buckets } = await readTimeline("ref:ABC-123");
-
-    expect(collection.find).toHaveBeenCalledTimes(2);
-    expect(collection.find.mock.calls[0]).toEqual([
-      { $and: [{ refs: "ref:abc-123" }] },
-      expect.objectContaining({
-        hint: { refs: 1, publicationDate: -1, _id: -1 },
-        limit: 51,
-      }),
-    ]);
-    expect(buckets).toEqual([
-      {
-        id: "test.outbox",
-        label: "Test outbox",
-        rows: [
-          expect.objectContaining({ id: String(id(2)) }),
-          expect.objectContaining({ id: String(id(1)) }),
-        ],
-        more: false,
-      },
-      { id: "test.inbox", label: "Test inbox", rows: [], more: false },
-    ]);
-    expect(timelineResponseSchema.validate({ buckets }).error).toBeUndefined();
-  });
-
-  it("reads by a link longer than a searched ref may be", async () => {
-    clearBuckets();
-    registerBucket(
-      testBucket({
-        id: "test.outbox",
-        label: "Test outbox",
-        timeline: true,
-        links: ["case"],
-      }),
+describe("readValueCounts", () => {
+  it("counts each value through the index its fact leads, capped", async () => {
+    const countDocuments = vi.fn(async ({ status }) =>
+      status === "FAILED" ? 3 : 0,
     );
-    const collection = makeCollection({ finds: [[doc(1)]] });
-    const link = `case:w:${"~41.".repeat(70)}`;
+    db.collection.mockReturnValue({ countDocuments });
 
-    const { buckets } = await readTimeline(link);
+    const counts = await readValueCounts(
+      bucket,
+      "status",
+      ["FAILED", "PUBLISHED"],
+      900,
+    );
 
-    expect(collection.find.mock.calls[0][0]).toEqual({
-      $and: [{ refs: link }],
-    });
-    expect(buckets[0].rows).toHaveLength(1);
+    expect(counts).toEqual(
+      new Map([
+        ["FAILED", 3],
+        ["PUBLISHED", 0],
+      ]),
+    );
+    expect(db.collection).toHaveBeenCalledWith(bucket.collection);
+    expect(countDocuments).toHaveBeenCalledWith(
+      { status: "FAILED" },
+      { hint: keyOf(bucket, ["status"]), limit: COUNT_CAP, maxTimeMS: 900 },
+    );
   });
 
-  it("says a bucket has more when its page has a next", async () => {
-    makeCollection({
-      finds: [Array.from({ length: 51 }, (_, n) => doc(60 - n)), []],
+  it("is null for a fact no index leads, reading nothing", async () => {
+    expect(await readValueCounts(bucket, "eventType", ["x"], 900)).toBeNull();
+    expect(db.collection).not.toHaveBeenCalled();
+  });
+
+  it("refuses TIMED_OUT when Mongo runs out of time", async () => {
+    db.collection.mockReturnValue({
+      countDocuments: vi.fn().mockRejectedValue(timedOut()),
     });
 
-    const { buckets } = await readTimeline("ref:abc-123");
-
-    expect(buckets.map(({ rows, more }) => [rows.length, more])).toEqual([
-      [50, true],
-      [0, false],
-    ]);
-  });
-
-  it("answers null rows for a bucket that fails, keeps the rest, and logs no value", async () => {
-    const collection = makeCollection();
-
-    collection.find
-      .mockImplementationOnce(() => ({
-        toArray: vi.fn(async () => {
-          throw new Error("SECRET ref:abc-123");
-        }),
-      }))
-      .mockImplementationOnce(() => ({ toArray: vi.fn(async () => [doc(1)]) }));
-
-    const { buckets } = await readTimeline("ref:abc-123");
-
-    expect(
-      buckets.map(({ id: bucketId, rows }) => [bucketId, rows?.length]),
-    ).toEqual([
-      ["test.outbox", undefined],
-      ["test.inbox", 1],
-    ]);
-    expect(buckets[0].rows).toBeNull();
-    expect(logger.error).toHaveBeenCalledWith(
-      "Timeline: test.outbox could not be read (Error)",
-    );
-  });
-
-  it("answers null rows for a bucket that does not declare the ref's kind", async () => {
-    makeCollection();
-
-    const { buckets } = await readTimeline("sbi:900000005");
-
-    expect(buckets.map(({ rows }) => rows)).toEqual([null, null]);
-  });
-});
-
-describe("readBucketTimeline", () => {
-  beforeEach(() => {
-    clearBuckets();
-    registerBucket(
-      testBucket({
-        id: "test.inbox",
-        label: "Test inbox",
-        timeline: true,
-        links: ["config"],
-      }),
-    );
-    registerBucket(
-      testBucket({ id: "test.outbox", label: "Test outbox", timeline: true }),
-    );
-  });
-
-  afterEach(() => {
-    clearBuckets();
-  });
-
-  it("reads the link in that bucket alone, 50 at most", async () => {
-    const collection = makeCollection({ finds: [[doc(2), doc(1)]] });
-
-    const { buckets } = await readBucketTimeline(
-      "test.inbox",
-      "config:woodland-creation",
-    );
-
-    expect(collection.find).toHaveBeenCalledExactlyOnceWith(
-      { $and: [{ refs: "config:woodland-creation" }] },
-      expect.objectContaining({ limit: 51 }),
-    );
-    expect(buckets).toEqual([
-      {
-        id: "test.inbox",
-        label: "Test inbox",
-        rows: [
-          expect.objectContaining({ id: String(id(2)) }),
-          expect.objectContaining({ id: String(id(1)) }),
-        ],
-        more: false,
-      },
-    ]);
-    expect(timelineResponseSchema.validate({ buckets }).error).toBeUndefined();
-  });
-
-  it("says the bucket has more when its page has a next", async () => {
-    makeCollection({
-      finds: [Array.from({ length: 51 }, (_, n) => doc(60 - n))],
-    });
-
-    const { buckets } = await readBucketTimeline("test.inbox", "config:abc");
-
-    expect(buckets.map(({ rows, more }) => [rows.length, more])).toEqual([
-      [50, true],
-    ]);
-  });
-
-  it("answers null rows when the bucket fails", async () => {
-    const collection = makeCollection();
-
-    collection.find.mockImplementationOnce(() => ({
-      toArray: vi.fn(async () => {
-        throw new Error("connection closed");
-      }),
-    }));
-
-    const { buckets } = await readBucketTimeline("test.inbox", "config:abc");
-
-    expect(buckets).toEqual([
-      { id: "test.inbox", label: "Test inbox", rows: null, more: false },
-    ]);
+    await expect(
+      readValueCounts(bucket, "status", ["FAILED"], 900),
+    ).rejects.toMatchObject(reasonOf("TIMED_OUT"));
   });
 });
 

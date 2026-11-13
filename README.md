@@ -93,6 +93,14 @@ nothing else.** A domain module that reached into a context would tie every
 other context to that one, which is the coupling moving it out of `common` was
 meant to end. Every module may enter it; it enters no module.
 
+`explore/` in a module - what Explore may read of that module's records:
+`src/cases/explore/` declares the `cases` and `workflows` sources and
+`src/events/explore/` the `events` source. Each imports its own module and
+`src/common/` and nothing else, and is registered at startup like a bucket.
+The actuators' Explore support (`src/actuators/explore/`: the answer list,
+the limits, and the sources as registered) reads them only through that
+registry. See [Explore](#explore).
+
 `src/cases/events/` - the per-context folder holding published event shapes -
 is a different thing that shares a word: one context's outbound vocabulary,
 rather than the shared meaning of the stores themselves.
@@ -470,6 +478,52 @@ instead of one, so the read is bounded by the actuator's time limit instead.
 A window may be up to a week long; one of no length is one bin. It takes the same operator
 headers and is not audited: it releases counts only. fg-gas-backend reads it for
 the admin's Overview.
+
+### Explore
+
+fg-gas-backend's Explore answers support queries across both services, and
+asks this service for its part of a query on its sources (`cases`,
+`workflows` and `events`, the inbox and outbox). Each is declared by the
+module that owns its records, in that module's `explore/` folder
+(`src/cases/explore/`, `src/events/explore/`), and registered at startup
+by the cases plugin with `registerExploreSource`
+(`src/common/explore-sources/registry.js`), as it registers its buckets.
+The actuators read them only through that registry: `src/actuators/explore/`
+resolves each source's buckets and holds the answer list and the limits.
+`src/actuators/explore/sources.test.js` lists every source's roots and
+paths, so a change to what may be read shows there.
+`src/common/explore/` is the same code as fg-gas-backend's: the Query
+rules, the path grammar and deny list, the planner, the reader and the
+audit. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file
+to that copy, and each `src/common/buckets/` file it imports, directly or
+through another; this service's read timeout comes from
+`src/common/read-timeout.js`. Two routes serve
+fg-gas-backend, and only that client:
+
+- `GET /actuators/explore/sources` - the Query versions this service reads
+  and its sources: each one's roots, its paths with their types, indexes and
+  known values, and for cases and events the answer paths a Query may read
+  (at most 2,000; a longer list is cut, and the cut logged).
+- `POST /actuators/explore/query` - this service's part of one Query: rows
+  per box, or the groups it counted. A cell shows an object, other than a
+  name, inline as text: every field of it that may be read, with denied names
+  and answers off the answer list left out. It takes the operator headers and
+  `x-explore-time-left-ms` (at most 10,000), and reads for no longer from
+  when it arrived. A Query that fails its rules is refused
+  `400 EXPLORE_QUERY_INVALID`, one that reads a path off the source's lists
+  `400 EXPLORE_QUERY_REFUSED` (`PATH_NOT_ALLOWED`), and a second one of the
+  same operator while the first runs `429`. Each part
+  is audited as `EXPLORE_QUERY` with its shape, the columns asked for (the
+  deny list fixes what may be read below a column, so the column says what an
+  object could show) and every value only as an HMAC digest keyed by
+  `SEARCH_AUDIT_KEY`; without the key every query is
+  refused `503 EXPLORE_QUERY_UNAUDITABLE` before anything is read. A refusal
+  is logged as one info line naming its reason, with no stack.
+
+A case's answers, and the inbox's copy of an application's answers in an
+event (`event.data.payload.answers`), are read only on the answer list: the
+paths a case's support questions read, and those the newest 20 versions of
+each stored workflow reference, kept 5 minutes.
 
 ### Case actuators
 

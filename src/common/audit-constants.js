@@ -7,6 +7,8 @@ export const auditEntities = {
   EVENT: "EVENT",
   // One list the grants admin surface can show, as this service declares it.
   BUCKET: "BUCKET",
+  // One source Explore reads, as the query named it.
+  EXPLORE_SOURCE: "EXPLORE_SOURCE",
   // A caller of this service's public API: the token rows sharing one name.
   API_CLIENT: "API_CLIENT",
 };
@@ -50,6 +52,8 @@ export const auditActions = {
   VIEW_CASE_DATA: "VIEW_CASE_DATA",
   // One page of one audited bucket, for the same operator.
   QUERY_BUCKET: "QUERY_BUCKET",
+  // Caseworking's part of one Explore query, for the same operator.
+  EXPLORE_QUERY: "EXPLORE_QUERY",
   // Storing one config version's workflow from S3, leaving the version's
   // record alone. Requested the same way a redrive is.
   FETCH_CONFIG_DEFINITION: "FETCH_CONFIG_DEFINITION",
@@ -112,6 +116,7 @@ const pmcCodesByAction = {
   [auditActions.FIND_CASES]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_CASE_DATA]: "0706", // any action an internal/external user or service can execute
   [auditActions.QUERY_BUCKET]: "0706", // any action an internal/external user or service can execute
+  [auditActions.EXPLORE_QUERY]: "0706", // any action an internal/external user or service can execute
   [auditActions.FETCH_CONFIG_DEFINITION]: "0706", // any action an internal/external user or service can execute
   [auditActions.VIEW_API_CLIENT]: "0706", // any action an internal/external user or service can execute
   [auditActions.ISSUE_API_TOKEN]: "0705", // account permission & privilege management

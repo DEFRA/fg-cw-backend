@@ -1,6 +1,6 @@
-import { actuatorReadMaxTimeMs } from "../actuator-read.js";
 import { logger } from "../logger.js";
 import { db } from "../mongo-client.js";
+import { readTimeoutMs } from "../read-timeout.js";
 import { STORED, keyOf, toIso, toStoredTime } from "./bucket.js";
 import { decodeCursor, encodeCursor } from "./cursor.js";
 import {
@@ -15,8 +15,6 @@ import {
 } from "./plan.js";
 import { toRef } from "./refs.js";
 import { refuse } from "./refusal.js";
-import { findBucket, listBuckets } from "./registry.js";
-import { TIMELINE_LIMIT, queryRequestSchema } from "./schema.js";
 
 export const COUNT_CAP = 10_000;
 
@@ -25,9 +23,12 @@ export const COUNT_CAP = 10_000;
 export const SUMMARY_COUNT_CAP = 100_000;
 export const MAX_VALUES = 100;
 
-const MAX_TIME_MS_EXPIRED = 50;
+export const MAX_TIME_MS_EXPIRED = 50;
 
-export const readTimeoutMs = () => actuatorReadMaxTimeMs();
+// Lists and Explore read from a secondary where there is one.
+export const SECONDARY = "secondaryPreferred";
+
+export { readTimeoutMs };
 
 const offersValues = (fact) =>
   Array.isArray(fact.values) || fact.values === STORED;
@@ -252,7 +253,8 @@ const filledPart = (read, unset) =>
     read.plan.filled.map((fact) => [fact, fillOfFact(read, fact, unset)]),
   );
 
-const refPart = ({ query }) => (query.ref ? { refs: query.ref } : {});
+// One ref, or several, which the index reads as one scan each.
+const refPart = ({ query }) => (query.ref ? { refs: matchOf(query.ref) } : {});
 
 const bounds = (bucket, entries) =>
   Object.fromEntries(
@@ -276,7 +278,7 @@ export const residualPart = (read) =>
     read.plan.residual.map((fact) => [fact, matchAsked(read, fact)]),
   );
 
-const keysetParts = ({ bucket, query: { cursor } }) =>
+export const keysetParts = ({ bucket, query: { cursor } }) =>
   cursor
     ? [
         { [bucket.time.field]: { $lte: cursor.t } },
@@ -289,7 +291,7 @@ const olderThanCursor = ({ bucket, query: { cursor } }) =>
 
 const positionOf = (bucket, doc) => ({ t: doc[bucket.time.field], i: doc._id });
 
-const withinEdge = ({ bucket }, edge) => {
+export const withinEdge = ({ bucket }, edge) => {
   if (!edge) {
     return [];
   }
@@ -319,14 +321,14 @@ export const readOn = (bucket, { where, from, to }, plan) => ({
   deadline: Date.now() + readTimeoutMs(),
 });
 
-const timeLeft = ({ deadline }) => Math.max(1, deadline - Date.now());
+export const timeLeft = ({ deadline }) => Math.max(1, deadline - Date.now());
 
 export const readOptions = (read) => ({
   hint: keyOf(read.bucket, read.plan.line),
   maxTimeMS: timeLeft(read),
 });
 
-const findOptions = (read) => ({
+export const findOptions = (read) => ({
   ...readOptions(read),
   sort: { [read.bucket.time.field]: -1, _id: -1 },
 });
@@ -433,6 +435,30 @@ export const readCount = async (read, cap = COUNT_CAP) => {
 
 const leadLine = (bucket, fact) =>
   bucket.indexes.find((line) => line[0] === fact);
+
+// How many records hold each value of a fact, capped, each counted through
+// the index the fact leads: null where no index leads with it.
+export const readValueCounts = async (bucket, fact, values, maxTimeMS) => {
+  const line = leadLine(bucket, fact);
+
+  if (!line) {
+    return null;
+  }
+
+  const counts = await Promise.all(
+    values.map((value) =>
+      db
+        .collection(bucket.collection)
+        .countDocuments(
+          { [fact]: value },
+          { hint: keyOf(bucket, line), limit: COUNT_CAP, maxTimeMS },
+        )
+        .catch(refuseTimedOut),
+    ),
+  );
+
+  return new Map(values.map((value, n) => [value, counts[n]]));
+};
 
 export const readStoredValues = async (bucket, fact, maxTimeMS) => {
   const groups = await db
@@ -575,12 +601,16 @@ const settleRef = async (read) => {
   return (await wholeRefFits(read)) ? exact : settleTail(read, exact);
 };
 
-export const runQuery = async (bucket, query) => {
+export const runQuery = async (
+  bucket,
+  query,
+  deadline = Date.now() + readTimeoutMs(),
+) => {
   const read = await settleRef({
     bucket,
     query,
     plan: query.plan,
-    deadline: Date.now() + readTimeoutMs(),
+    deadline,
   });
 
   logBounded(read);
@@ -601,36 +631,3 @@ export const runQuery = async (bucket, query) => {
     ...(query.count && { total }),
   };
 };
-
-const readTimelineOf = (ref) => async (bucket) => {
-  const { id, label } = bucket;
-
-  try {
-    const { value } = queryRequestSchema.validate({
-      ref,
-      limit: TIMELINE_LIMIT,
-    });
-    const { rows, page } = await runQuery(bucket, parseQuery(bucket, value));
-
-    return { id, label, rows, more: page.next !== null };
-  } catch (error) {
-    logger.error(`Timeline: ${id} could not be read (${error.name})`);
-
-    return { id, label, rows: null, more: false };
-  }
-};
-
-// A record's events: its ref searched in every timeline bucket this service
-// registers, each answered apart so one that fails takes none with it.
-export const readTimeline = async (ref) => ({
-  buckets: await Promise.all(
-    listBuckets()
-      .filter(({ timeline }) => timeline)
-      .map(readTimelineOf(ref)),
-  ),
-});
-
-// One bucket's rows for a link only it declares, read as a timeline bucket is.
-export const readBucketTimeline = async (id, ref) => ({
-  buckets: [await readTimelineOf(ref)(findBucket(id))],
-});

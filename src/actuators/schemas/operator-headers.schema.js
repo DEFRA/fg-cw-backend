@@ -5,6 +5,7 @@ import {
   actorIdSchema,
   decodeActor,
 } from "../../common/actor-header.js";
+import { MAX_TIME_MS } from "../explore/limits.js";
 
 // Room for that name percent-encoded: up to four UTF-8 bytes of `%XX` each.
 const ENCODED_CHARS_PER_CHARACTER = 12;
@@ -58,3 +59,16 @@ export const caseSearchHeaders = operatorHeaders
       .description("the caller re-ran a stored first page"),
   })
   .label("CaseSearchHeaders");
+
+// An Explore query's part also says how long GAS has left, so Caseworking
+// stops in time.
+export const exploreHeaders = operatorHeaders
+  .keys({
+    "x-explore-time-left-ms": Joi.number()
+      .integer()
+      .min(1)
+      .max(MAX_TIME_MS)
+      .required()
+      .description("milliseconds GAS has left for this part"),
+  })
+  .label("ExploreHeaders");

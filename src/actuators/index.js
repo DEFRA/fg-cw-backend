@@ -6,6 +6,8 @@ import {
   editOutboxEventPayloadRoute,
 } from "./routes/edit-event-payload.route.js";
 import { countDeadLettersRoute } from "./routes/count-dead-letters.route.js";
+import { exploreQueryRoute } from "./routes/explore-query.route.js";
+import { exploreSourcesRoute } from "./routes/explore-sources.route.js";
 import { changeClientTokenExpiryRoute } from "./routes/change-client-token-expiry.route.js";
 import { deleteClientTokenRoute } from "./routes/delete-client-token.route.js";
 import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
@@ -50,6 +52,8 @@ export const actuators = {
       readTimelineRoute,
       summariseBucketRoute,
       countDeadLettersRoute,
+      exploreSourcesRoute,
+      exploreQueryRoute,
       getInboxEventRoute,
       getOutboxEventRoute,
       redriveInboxEventRoute,

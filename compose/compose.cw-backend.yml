@@ -17,6 +17,7 @@ services:
     environment:
       WORKFLOW_DEFINITION_CACHE_ENABLED: "${WORKFLOW_DEFINITION_CACHE_ENABLED:-true}"
       MONGO_URI: mongodb://mongodb:27017/?replicaSet=mongoRepl
+      SEARCH_AUDIT_KEY: "${SEARCH_AUDIT_KEY:-local-explore-search-audit-key-00000000}"
       OIDC_JWKS_URI: http://entra:3010/jwks
       AWS_ENDPOINT_URL: http://floci:4566
       # Container URLs, the same as the rest of the stack uses. The SDK sends
