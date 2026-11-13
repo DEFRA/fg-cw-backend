@@ -2,44 +2,14 @@ import { logger } from "../../common/logger.js";
 import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
-import { findWorkflowCodesUseCase } from "./find-workflow-codes.use-case.js";
+import { buildCaseFilter } from "./build-case-filter.js";
+import { createRoleFilter } from "./create-role-filter.js";
 import {
   persistResolvedVersion,
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
 
-export const createRoleFilter = (roles) => {
-  // Checks if all roles are in userRoles. Allows the workflow roles to be empty.
-  const allOf = {
-    $or: [
-      { $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []] }, // allow empty roles on workflow
-      { $setIsSubset: ["$requiredRoles.allOf", roles] },
-    ],
-  };
-
-  // Checks any (more than one) are in userRoles. Allows the workflow roles to be empty though.
-  const anyOf = {
-    $or: [
-      {
-        $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []], // allow empty roles on workflow
-      },
-      {
-        $gt: [
-          {
-            $size: { $setIntersection: ["$requiredRoles.anyOf", roles] },
-          },
-          0,
-        ],
-      },
-    ],
-  };
-
-  return {
-    $expr: {
-      $and: [allOf, anyOf],
-    },
-  };
-};
+export { createRoleFilter };
 
 const findAssignedUser = (assignedUsers, kase) =>
   assignedUsers.find((u) => u.id === kase.assignedUserId) ?? null;
@@ -94,8 +64,10 @@ const buildDegradedCase = (kase, assignedUsers) => ({
 });
 
 export const findCasesUseCase = async ({ user, query }) => {
-  const roleFilter = createRoleFilter(user.getRoles());
-  const workflowCodes = await findWorkflowCodesUseCase(roleFilter);
+  const { workflowCodes } = await buildCaseFilter({
+    user,
+    caseType: query.caseType,
+  });
 
   const results = await findAll({
     workflowCodes,
