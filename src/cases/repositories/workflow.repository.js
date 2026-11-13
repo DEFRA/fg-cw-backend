@@ -237,6 +237,7 @@ export const findStoredVersions = async (code, versions) => {
 
 export const saveFromDefinition = async (workflowDefinition, version) => {
   const workflow = new Workflow({ ...workflowDefinition, version });
+  workflow.validateCaseListPages();
   await save(workflow);
   return workflow;
 };

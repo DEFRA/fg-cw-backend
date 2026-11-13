@@ -166,14 +166,24 @@ describe("cases", () => {
     }));
 
     expect(routes).toEqual([
+      { method: "get", path: "/case-list-pages" },
       { method: "get", path: "/case-types" },
       { method: "get", path: "/cases" },
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/report" },
       { method: "get", path: "/cases/{caseId}" },
+      { method: "get", path: "/case-types/{caseType}/pages/{pageKey}" },
       {
         method: "get",
         path: "/cases/{caseId}/tabs/{tabId}",
+      },
+      {
+        method: "get",
+        path: "/case-types/{caseType}/pages/{pageKey}/groups/{keyHash}",
+      },
+      {
+        method: "put",
+        path: "/case-types/{caseType}/pages/{pageKey}/groups/{keyHash}",
       },
       { method: "patch", path: "/cases/{caseId}/assigned-user" },
       {

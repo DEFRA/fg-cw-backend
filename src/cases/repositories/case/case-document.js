@@ -24,6 +24,7 @@ export class CaseDocument {
       ? ObjectId.createFromHexString(props._id)
       : new ObjectId();
     this.caseRef = props.caseRef;
+    this.labels = props.labels ?? [];
     this.workflowCode = props.workflowCode;
     this.currentPhase = props.position.phaseCode;
     this.currentStage = props.position.stageCode;

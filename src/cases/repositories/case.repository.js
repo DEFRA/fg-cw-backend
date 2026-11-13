@@ -58,6 +58,7 @@ const toCase = (doc) => {
   return new Case({
     _id: doc._id.toHexString(),
     caseRef: doc.caseRef,
+    labels: doc.labels,
     workflowCode: doc.workflowCode,
     payload: doc.payload,
     closed: doc.closed,

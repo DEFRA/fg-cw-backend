@@ -1,6 +1,7 @@
 export const EventEnums = {
   eventTypes: {
     CASE_CREATED: "CASE_CREATED",
+    CASE_LABEL_CHANGED: "CASE_LABEL_CHANGED",
     CASE_ASSIGNED: "CASE_ASSIGNED",
     CASE_UNASSIGNED: "CASE_UNASSIGNED",
     TASK_COMPLETED: "TASK_COMPLETED",
@@ -13,6 +14,7 @@ export const EventEnums = {
   },
   eventDescriptions: {
     CASE_CREATED: "Case received",
+    CASE_LABEL_CHANGED: "Case label changed",
     CASE_ASSIGNED: "Case assigned",
     CASE_UNASSIGNED: "Case unassigned",
     TASK_COMPLETED: "Task completed",
