@@ -297,14 +297,17 @@ describe("outbox.repository", () => {
             ],
           },
         },
-        {
-          $set: {
-            status: OutboxStatus.DEAD_LETTER,
-            claimedAt: null,
-            claimExpiresAt: null,
-            claimedBy: null,
+        [
+          {
+            $set: {
+              status: OutboxStatus.DEAD_LETTER,
+              errorKey: { $ifNull: ["$errorKey", "No error recorded"] },
+              claimedAt: null,
+              claimExpiresAt: null,
+              claimedBy: null,
+            },
           },
-        },
+        ],
       );
     });
   });

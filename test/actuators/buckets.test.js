@@ -440,7 +440,7 @@ describe("POST /actuators/buckets/{bucketId}/query, cw.workflows", () => {
 });
 
 describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
-  it("lists audit rows with the messages only when they are asked for", async () => {
+  it("lists audit rows with the messages, on the date-only index", async () => {
     await outbox.insertMany([
       anOutboxRow(),
       anOutboxRow({
@@ -449,12 +449,16 @@ describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
       }),
     ]);
 
-    const hiding = await queryBucket("cw.outbox", {});
-    const showing = await queryBucket("cw.outbox", {
-      show: ["eventType"],
-    });
+    const all = await queryBucket("cw.outbox", {});
 
-    expect(hiding.payload.rows).toEqual([
+    expect(all.payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["publicationDate", "_id"],
+      filled: [],
+      scans: 1,
+    });
+    expect(titlesOf(all).toSorted()).toEqual(["Audit", "CaseStatusUpdated"]);
+    expect(all.payload.rows).toContainEqual(
       expect.objectContaining({
         title: "CaseStatusUpdated",
         subtitle: "0b7c1d1e-0000-4000-8000-000000000001",
@@ -464,25 +468,10 @@ describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
           box: "outbox",
         }),
       }),
-    ]);
-    expect(hiding.payload.plan).toMatchObject({
-      kind: "exact",
-      index: ["eventType", "publicationDate", "_id"],
-      filled: ["eventType"],
-      scans: 3,
-    });
-    expect(showing.payload.plan).toMatchObject({
-      kind: "exact",
-      filled: ["eventType"],
-      scans: 4,
-    });
-    expect(titlesOf(showing).toSorted()).toEqual([
-      "Audit",
-      "CaseStatusUpdated",
-    ]);
+    );
   });
 
-  it("reads one event type on one scan of the key it leads", async () => {
+  it("reads one event type on one scan of its own index", async () => {
     await outbox.insertOne(anOutboxRow());
 
     const { payload } = await queryBucket("cw.outbox", {

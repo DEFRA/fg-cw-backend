@@ -45,14 +45,17 @@ describe("cw.inbox", () => {
     ]);
   });
 
-  it("hides no type, and declares no toggle", () => {
-    expect(bucket.facts.eventType.toggle).toBeNull();
-    expect(bucket.facts.eventType.values.some(({ hidden }) => hidden)).toBe(
-      false,
-    );
-    expect(choosePlan(bucket, [], false)).toMatchObject({
+  it.each([
+    ["nothing", [], []],
+    ["a status", ["status"], ["status"]],
+    ["a type", ["eventType"], ["eventType"]],
+    ["a type and a status", ["eventType", "status"], ["eventType", "status"]],
+  ])("reads %s exactly on its own index", (_, asked, line) => {
+    expect(choosePlan(bucket, asked, false)).toEqual({
       kind: "exact",
-      line: [],
+      line,
+      filled: [],
+      residual: [],
     });
   });
 
@@ -73,7 +76,8 @@ describe("cw.inbox", () => {
     expect(indexKeysOf(bucket).map(Object.keys)).toEqual([
       ["publicationDate", "_id"],
       ["status", "publicationDate", "_id"],
-      ["status", "eventType", "publicationDate", "_id"],
+      ["eventType", "publicationDate", "_id"],
+      ["eventType", "status", "publicationDate", "_id"],
       ["status", "lastError.name", "publicationDate", "_id"],
       ["status", "errorKey", "eventType", "publicationDate", "_id"],
       ["refs", "publicationDate", "_id"],

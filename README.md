@@ -292,6 +292,10 @@ To run the application in `development` mode run:
 docker compose up --watch --build
 ```
 
+### Migrations
+
+migrate-mongo runs the files in `migrations/` at startup. A file in `migrations/next/` is not run: it belongs to the next release, which moves it up into `migrations/` (its imports lose one `../`). They are kept back so that instances of the release before keep working while this one rolls out.
+
 ### Testing
 
 To test the application run:
@@ -420,11 +424,10 @@ only public API endpoint open to any client.
 A bucket is one list the grants admin can show: one collection, with
 the facts a filter or grouping may name, the
 ref kinds a search may name, a time field and its index lines. A fact may lead
-every index key (`lead`), and a value of a fact may stay out of the list until
-a switch shows it (`hidden`, `toggle`): `cw.outbox` leads with its event type
-and hides the `Audit` type that way, because that type is declared
-`hiddenByDefault`. A bucket may also read by `links`, ref kinds no search
-offers: the inbox and outbox read a case's Events tab by
+every index key (`lead`). The event boxes keep one index line per filter shape
+(none, status, type, type and status), so each list reads exactly on its own
+index; audit rows are listed with the rest. A bucket may also read by `links`,
+ref kinds no search offers: the inbox and outbox read a case's Events tab by
 `case:<workflowCode>:<caseRef>`, since two workflows may hold the same case
 reference, and the inbox reads a workflow's config version events by
 `config:<grantCode>@<version>`, one link per version, kept apart from a code or
@@ -453,6 +456,22 @@ operator in two headers, `x-actor` (display name) and `x-actor-id` (Entra
 object id); a read of an `audited` bucket is audited as `QUERY_BUCKET` before
 any data is returned. A new list is a new declaration and an index migration,
 and needs no route.
+
+A dead letter always holds an `errorKey`: its last error's key, or
+`No error recorded` when it died without one, so Top errors and the Error
+filter can ask for exactly those rows.
+
+`GET /actuators/dead-letters?from=&to=` counts the dead letters of every bucket
+that holds them (`cw.outbox`, `cw.inbox`) in two-hour bins from `from`, by when
+each event was created, with the list each count opens. Each bucket is one
+aggregation on its `status` index line, audit events counted as the list
+counts them. The aggregation reads every match in the window; the cap
+limits only the count each bin shows, which says when it is over (`capped`).
+Bounding the read itself would take one capped count per bin, twelve reads
+instead of one, so the read is bounded by the actuator's time limit instead.
+A window may be up to a week long. It takes the same operator
+headers and is not audited: it releases counts only. fg-gas-backend reads it for
+the admin's Overview.
 
 ### Case actuators
 
