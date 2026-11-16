@@ -1,8 +1,8 @@
 import {
-  presentConfiguredData,
-  presentConfiguredColumns,
+  buildConfiguredData,
+  buildConfiguredColumns,
   sortConfiguredRows,
-} from "./dedupe-presentation.js";
+} from "./build-dedupe-row.js";
 import { DedupeError, labelFor } from "../models/dedupe-label.js";
 import { keyName } from "../models/dedupe-group-key.js";
 
@@ -48,7 +48,7 @@ const heading = (group, config) =>
         `${entry.label ?? keyName(entry)} ${group.key.values[keyName(entry)]}`,
     )
     .join(" · ");
-export const presentSummary = (command, title, rows, config) => {
+export const buildDedupeSummaryViewModel = (command, title, rows, config) => {
   const completed = rows.filter(
     ({ group }) => group.status === "COMPLETED",
   ).length;
@@ -63,13 +63,13 @@ export const presentSummary = (command, title, rows, config) => {
     emptyText: "No issues to review.",
     rows: sortConfiguredRows(
       rows.map(({ group, assignment }) => {
-        const data = presentConfiguredData(group, assignment, config.plan);
+        const data = buildConfiguredData(group, assignment, config.plan);
         const href = groupHref(command, group);
         return {
           ...data,
           keyHash: group.key.hash,
           href,
-          columns: presentConfiguredColumns(data, href, config.plan),
+          columns: buildConfiguredColumns(data, href, config.plan),
         };
       }),
       config.plan,
@@ -113,7 +113,7 @@ const labelField = (group, kase, canEdit, submitted) => {
     disabled,
   };
 };
-export const presentGroup = ({
+export const buildDedupeGroupViewModel = ({
   command,
   group,
   assignment,
@@ -127,7 +127,7 @@ export const presentGroup = ({
   pageType: "dedupe",
   title: heading(group, config),
   heading: heading(group, config),
-  intro: `${presentConfiguredData(group, assignment, config.plan).details.businessName ?? ""} · ${group.counts.total} applications`,
+  intro: `${buildConfiguredData(group, assignment, config.plan).details.businessName ?? ""} · ${group.counts.total} applications`,
   backLink: { href: summaryHref(command), text: "Back to issues" },
   form: { id: "dedupe-review", action: groupHref(command, group) },
   ownerField: {
@@ -159,5 +159,5 @@ export const presentGroup = ({
       ]
     : [],
 });
-export const presentDedupeTimeline = (event) =>
+export const formatDedupeTimeline = (event) =>
   `${choiceText(event.data.oldLabel)} → ${choiceText(event.data.newLabel)}`;

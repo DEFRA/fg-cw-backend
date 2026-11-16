@@ -28,10 +28,10 @@ import {
 import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
 import {
   decodeDedupeForm,
-  presentGroup,
-  presentSummary,
+  buildDedupeGroupViewModel,
+  buildDedupeSummaryViewModel,
   summaryHref,
-} from "./dedupe-page.presenter.js";
+} from "./build-dedupe-view-model.js";
 import { createRoleFilter } from "./find-cases.use-case.js";
 import { findWorkflowCodesUseCase } from "./find-workflow-codes.use-case.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
@@ -156,7 +156,7 @@ const summary = async (command) => {
   });
   return createPageResponse({
     user: command.user,
-    data: presentSummary(command, title, rows, config),
+    data: buildDedupeSummaryViewModel(command, title, rows, config),
   });
 };
 export const viewDedupeSummaryUseCase = withAudit(
@@ -168,7 +168,7 @@ const detail = async (command, form, error) => {
   const { group, assignment } = await groupFor(command, config);
   return createPageResponse({
     user: command.user,
-    data: presentGroup({
+    data: buildDedupeGroupViewModel({
       command,
       group,
       assignment,

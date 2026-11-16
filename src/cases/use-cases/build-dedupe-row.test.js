@@ -5,10 +5,10 @@ import { DedupeGroupKey } from "../models/dedupe-group-key.js";
 import { Workflow } from "../models/workflow.js";
 import { compileDedupe } from "../schemas/dedupe-definition.js";
 import {
-  presentConfiguredColumns,
-  presentConfiguredData,
+  buildConfiguredColumns,
+  buildConfiguredData,
   sortConfiguredRows,
-} from "./dedupe-presentation.js";
+} from "./build-dedupe-row.js";
 
 const tab = JSON.parse(
   await readFile(
@@ -57,13 +57,13 @@ const group = () =>
     ["REJECTED"],
   );
 
-describe("configured dedupe presentation", () => {
+describe("configured dedupe view model", () => {
   it("uses all five ticket functions and supports explicit all/active/excluded collections", () => {
     const config = fixture();
     config.data.details.allDuplicates =
       "function:labelCount(@.cases, 'DUPLICATE')";
     const { plan } = compileDedupe(config);
-    const data = presentConfiguredData(group(), { assignee: null }, plan);
+    const data = buildConfiguredData(group(), { assignee: null }, plan);
     expect(data.details).toEqual({
       sbi: "123",
       businessName: "Oldest farm",
@@ -76,7 +76,7 @@ describe("configured dedupe presentation", () => {
     });
     expect(data.status.tag).toBe("IN_PROGRESS");
     expect(data.assignee.name).toBe("Not set");
-    const columns = presentConfiguredColumns(data, "/groups/safe-key", plan);
+    const columns = buildConfiguredColumns(data, "/groups/safe-key", plan);
     expect(columns.details[0]).toEqual({
       component: "url",
       text: "SBI 123: Oldest farm",
@@ -97,12 +97,12 @@ describe("configured dedupe presentation", () => {
     const review = group();
     review.cases[0].source = {};
     expect(
-      presentConfiguredData(review, { assignee: null }, plan).details
+      buildConfiguredData(review, { assignee: null }, plan).details
         .businessName,
     ).toBeNull();
     expect(
-      presentConfiguredColumns(
-        presentConfiguredData(review, { assignee: null }, plan),
+      buildConfiguredColumns(
+        buildConfiguredData(review, { assignee: null }, plan),
         "/group",
         plan,
       ).details[0].text,
@@ -110,14 +110,14 @@ describe("configured dedupe presentation", () => {
     for (const member of review.activeCases)
       member.labels = [{ namespace: "duplicates", code: "NOT_DUPLICATE" }];
     expect(
-      presentConfiguredData(review, { assignee: { name: "Alex" } }, plan).status
+      buildConfiguredData(review, { assignee: { name: "Alex" } }, plan).status
         .tag,
     ).toBe(review.status);
     expect(review.status).toBe("COMPLETED");
     review.cases[0].source.s0 = { unexpected: "object" };
-    expect(() =>
-      presentConfiguredData(review, { assignee: null }, plan),
-    ).toThrow(/scalar/);
+    expect(() => buildConfiguredData(review, { assignee: null }, plan)).toThrow(
+      /scalar/,
+    );
   });
   it("sorts typed values with null last in either direction and deterministic ties", () => {
     const rows = [

@@ -36,7 +36,7 @@ const evaluateFields = (fields, context, scalars = false) =>
       scalars ? scalar(evaluate(node, context)) : evaluate(node, context),
     ]),
   );
-export const presentConfiguredData = (group, assignment, plan) => {
+export const buildConfiguredData = (group, assignment, plan) => {
   const context = {
     "@": {
       key: group.key.values,
@@ -53,7 +53,7 @@ export const presentConfiguredData = (group, assignment, plan) => {
     ]),
   );
 };
-export const presentConfiguredColumns = (data, href, plan) =>
+export const buildConfiguredColumns = (data, href, plan) =>
   Object.fromEntries(
     Object.entries(plan.columns).map(([column, components]) => [
       column,

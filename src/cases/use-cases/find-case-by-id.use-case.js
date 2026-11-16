@@ -1,5 +1,5 @@
 import Boom from "@hapi/boom";
-import { presentDedupeTimeline } from "./dedupe-page.presenter.js";
+import { formatDedupeTimeline } from "./build-dedupe-view-model.js";
 import { AccessControl } from "../../common/access-control.js";
 import {
   buildBanner,
@@ -487,7 +487,7 @@ const mapTimelineWithUsers = (timeline, workflow, userMap) => {
     tl.comment = null;
     tl.description = formatTimelineItemDescription(tl, workflow);
     if (tl.eventType === EventEnums.eventTypes.CASE_LABEL_CHANGED)
-      tl.displayText = presentDedupeTimeline(tl);
+      tl.displayText = formatDedupeTimeline(tl);
     return tl;
   });
 };
