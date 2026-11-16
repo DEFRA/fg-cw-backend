@@ -9,6 +9,7 @@ import { wreck } from "../helpers/wreck.js";
 let client;
 let cases;
 let caseSeries;
+let admin;
 
 beforeAll(async () => {
   client = await MongoClient.connect(env.MONGO_URI);
@@ -20,9 +21,9 @@ afterAll(async () => {
   await client.close(true);
 });
 
-describe("GET /cases?caseType={code}", () => {
+describe("GET /types/{caseType}/cases", () => {
   beforeEach(async () => {
-    await createAdminUser();
+    admin = await createAdminUser();
   });
 
   it("returns only cases for the requested case type", async () => {
@@ -65,16 +66,17 @@ describe("GET /cases?caseType={code}", () => {
       },
     ]);
 
-    const response = await wreck.get("/cases?caseType=WF-A");
+    const response = await wreck.get("/types/WF-A/cases");
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload.data.cases).toHaveLength(1);
     expect(response.payload.data.cases[0].caseRef).toBe("CASE-A-1");
     expect(response.payload.data.cases[0].workflowCode).toBe("WF-A");
+    expect(response.payload.data.pagination.totalCount).toBe(1);
   });
 
   it("returns 404 when the case type does not exist", async () => {
-    await expect(wreck.get("/cases?caseType=DOES-NOT-EXIST")).rejects.toThrow(
+    await expect(wreck.get("/types/DOES-NOT-EXIST/cases")).rejects.toThrow(
       "Response Error: 404 Not Found",
     );
   });
@@ -88,10 +90,9 @@ describe("GET /cases?caseType={code}", () => {
       },
     });
 
-    const admin = await createAdminUser();
     await changeUserAppRoles(admin, {});
 
-    await expect(wreck.get("/cases?caseType=WF-RESTRICTED")).rejects.toThrow(
+    await expect(wreck.get("/types/WF-RESTRICTED/cases")).rejects.toThrow(
       "Response Error: 403 Forbidden",
     );
   });
@@ -99,7 +100,7 @@ describe("GET /cases?caseType={code}", () => {
   it("returns empty list when case type exists but has no cases", async () => {
     await createWorkflow({ code: "WF-EMPTY" });
 
-    const response = await wreck.get("/cases?caseType=WF-EMPTY");
+    const response = await wreck.get("/types/WF-EMPTY/cases");
 
     expect(response.res.statusCode).toBe(200);
     expect(response.payload.data.cases).toHaveLength(0);

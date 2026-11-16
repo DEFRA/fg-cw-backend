@@ -15,7 +15,6 @@ export const findCasesRoute = {
         caseRef: Joi.string().valid("asc", "desc"),
         workflowCode: Joi.string().valid("asc", "desc"),
         createdAt: Joi.string().valid("asc", "desc"),
-        caseType: Joi.string(),
       }),
     },
   },

@@ -5,7 +5,7 @@ import { Workflow } from "../models/workflow.js";
 import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
 import { buildCaseFilter } from "./build-case-filter.js";
-import { createRoleFilter, findCasesUseCase } from "./find-cases.use-case.js";
+import { findCasesUseCase } from "./find-cases.use-case.js";
 import { resolveWorkflowForCase } from "./resolve-current-workflow.use-case.js";
 
 vi.mock("../repositories/case.repository.js");
@@ -25,47 +25,6 @@ const mockFindAllResult = (data) => ({
     hasPreviousPage: false,
     totalCount: data.length,
   },
-});
-
-describe("createRoleFilter", () => {
-  const userRoles = ["ROLE_1", "ROLE_3", "ROLE_APP_1"];
-
-  it("creates a filter for user roles", () => {
-    const expectedFilters = {
-      $expr: {
-        $and: [
-          {
-            $or: [
-              {
-                $eq: [{ $ifNull: ["$requiredRoles.allOf", []] }, []],
-              },
-              {
-                $setIsSubset: ["$requiredRoles.allOf", userRoles],
-              },
-            ],
-          },
-          {
-            $or: [
-              {
-                $eq: [{ $ifNull: ["$requiredRoles.anyOf", []] }, []],
-              },
-              {
-                $gt: [
-                  {
-                    $size: {
-                      $setIntersection: ["$requiredRoles.anyOf", userRoles],
-                    },
-                  },
-                  0,
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    };
-    expect(createRoleFilter(userRoles)).toEqual(expectedFilters);
-  });
 });
 
 describe("findCasesUseCase", () => {

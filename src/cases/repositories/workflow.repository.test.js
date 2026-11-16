@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
 import { WorkflowEndpoint } from "../models/workflow-endpoint.js";
 import { Workflow } from "../models/workflow.js";
-import { createRoleFilter } from "../use-cases/find-cases.use-case.js";
+import { createRoleFilter } from "../use-cases/create-role-filter.js";
 import {
   findAll,
   findAllCodes,

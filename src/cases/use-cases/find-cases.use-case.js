@@ -3,13 +3,10 @@ import { findUsersUseCase } from "../../users/use-cases/find-users.use-case.js";
 import { findInCaseRefsAndWorkflowCode } from "../repositories/case-series.repository.js";
 import { findAll } from "../repositories/case.repository.js";
 import { buildCaseFilter } from "./build-case-filter.js";
-import { createRoleFilter } from "./create-role-filter.js";
 import {
   persistResolvedVersion,
   resolveWorkflowForCase,
 } from "./resolve-current-workflow.use-case.js";
-
-export { createRoleFilter };
 
 const findAssignedUser = (assignedUsers, kase) =>
   assignedUsers.find((u) => u.id === kase.assignedUserId) ?? null;
@@ -64,13 +61,13 @@ const buildDegradedCase = (kase, assignedUsers) => ({
 });
 
 export const findCasesUseCase = async ({ user, query }) => {
-  const { workflowCodes } = await buildCaseFilter({
+  const criteria = await buildCaseFilter({
     user,
     caseType: query.caseType,
   });
 
   const results = await findAll({
-    workflowCodes,
+    ...criteria,
     search: query.search,
     cursor: query.cursor,
     direction: query.direction,

@@ -165,7 +165,7 @@ describe("findCasesRoute", () => {
     expect(statusCode).toEqual(200);
   });
 
-  it("accepts caseType query parameter", async () => {
+  it("rejects caseType as a query parameter", async () => {
     const user = User.createMock({
       idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
     });
@@ -183,10 +183,6 @@ describe("findCasesRoute", () => {
       },
     });
 
-    expect(findCasesUseCase).toHaveBeenCalledWith({
-      user,
-      query: { direction: "forward", caseType: "woodland" },
-    });
-    expect(statusCode).toEqual(200);
+    expect(statusCode).toEqual(400);
   });
 });

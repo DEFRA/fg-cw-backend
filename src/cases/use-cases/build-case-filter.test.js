@@ -42,7 +42,12 @@ describe("buildCaseFilter", () => {
     const result = await buildCaseFilter({ user, caseType: "WF-A" });
 
     expect(result).toEqual({ workflowCodes: ["WF-A"] });
-    expect(findWorkflowCodesUseCase).toHaveBeenCalledWith({ codes: ["WF-A"] });
+  });
+
+  it("skips the existence lookup when caseType is already in permitted codes", async () => {
+    await buildCaseFilter({ user, caseType: "WF-A" });
+
+    expect(findWorkflowCodesUseCase).toHaveBeenCalledTimes(1);
   });
 
   it("throws 404 when caseType does not exist", async () => {

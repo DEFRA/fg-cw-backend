@@ -10,17 +10,17 @@ export const buildCaseFilter = async ({ user, caseType }) => {
     return { workflowCodes: permittedCodes };
   }
 
+  if (permittedCodes.includes(caseType)) {
+    return { workflowCodes: [caseType] };
+  }
+
   const matchingCodes = await findWorkflowCodesUseCase({ codes: [caseType] });
 
   if (!matchingCodes.includes(caseType)) {
     throw Boom.notFound(`Case type "${caseType}" not found`);
   }
 
-  if (!permittedCodes.includes(caseType)) {
-    throw Boom.forbidden(
-      `User does not have the required roles for case type "${caseType}"`,
-    );
-  }
-
-  return { workflowCodes: [caseType] };
+  throw Boom.forbidden(
+    `User does not have the required roles for case type "${caseType}"`,
+  );
 };
