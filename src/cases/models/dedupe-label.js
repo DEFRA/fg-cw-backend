@@ -28,3 +28,13 @@ export const normaliseDedupeLabel = (label, caseRef) => {
 // eslint-disable-next-line complexity
 export const sameLabel = (a, b) =>
   a?.code === b?.code && a?.data?.duplicateOf === b?.data?.duplicateOf;
+
+export const labelCount = (cases, code) =>
+  cases.filter((kase) => labelFor(kase)?.code === code).length;
+export const unlabelledCount = (cases) =>
+  cases.filter((kase) => !labelFor(kase)).length;
+export const assessmentStatus = (activeCases) => {
+  const remaining = unlabelledCount(activeCases);
+  if (remaining === activeCases.length) return "NOT_STARTED";
+  return remaining === 0 ? "COMPLETED" : "IN_PROGRESS";
+};

@@ -1,3 +1,8 @@
+import {
+  presentConfiguredData,
+  presentConfiguredColumns,
+  sortConfiguredRows,
+} from "./dedupe-presentation.js";
 import { DedupeError, labelFor } from "../models/dedupe-label.js";
 import { keyName } from "../models/dedupe-group-key.js";
 
@@ -43,11 +48,6 @@ const heading = (group, config) =>
         `${entry.label ?? keyName(entry)} ${group.key.values[keyName(entry)]}`,
     )
     .join(" · ");
-const statusDisplay = {
-  NOT_STARTED: { text: "Not started", classes: "govuk-tag--blue" },
-  IN_PROGRESS: { text: "In progress", classes: "govuk-tag--light-blue" },
-  COMPLETED: { text: "Completed", classes: "govuk-tag--green" },
-};
 export const presentSummary = (command, title, rows, config) => {
   const completed = rows.filter(
     ({ group }) => group.status === "COMPLETED",
@@ -61,27 +61,19 @@ export const presentSummary = (command, title, rows, config) => {
     backLink: { href: "/cases", text: "All cases" },
     caption: "Issues with two or more active applications",
     emptyText: "No issues to review.",
-    // eslint-disable-next-line complexity -- Declarative summary presentation with optional values.
-    rows: rows.map(({ group, assignment }) => ({
-      keyHash: group.key.hash,
-      href: groupHref(command, group),
-      details: { ...group.key.values },
-      assignee: { name: assignment.assignee?.name ?? "Not set" },
-      status: statusDisplay[group.status],
-      columns: {
-        details: [
-          {
-            component: "url",
-            text: `${heading(group, config)}: ${group.cases[0]?.businessName ?? ""}`,
-            href: groupHref(command, group),
-          },
-          {
-            component: "hint",
-            text: `${group.counts.total} applications: ${group.counts.notSet} Not set, ${group.counts.notDuplicate} Not duplicate, ${group.counts.duplicate} Duplicate; ${group.counts.excluded} excluded`,
-          },
-        ],
-      },
-    })),
+    rows: sortConfiguredRows(
+      rows.map(({ group, assignment }) => {
+        const data = presentConfiguredData(group, assignment, config.plan);
+        const href = groupHref(command, group);
+        return {
+          ...data,
+          keyHash: group.key.hash,
+          href,
+          columns: presentConfiguredColumns(data, href, config.plan),
+        };
+      }),
+      config.plan,
+    ),
   };
 };
 const selectItems = (items, stored, submitted) => {
@@ -135,7 +127,7 @@ export const presentGroup = ({
   pageType: "dedupe",
   title: heading(group, config),
   heading: heading(group, config),
-  intro: `${group.cases[0]?.businessName ?? ""} · ${group.counts.total} applications`,
+  intro: `${presentConfiguredData(group, assignment, config.plan).details.businessName ?? ""} · ${group.counts.total} applications`,
   backLink: { href: summaryHref(command), text: "Back to issues" },
   form: { id: "dedupe-review", action: groupHref(command, group) },
   ownerField: {

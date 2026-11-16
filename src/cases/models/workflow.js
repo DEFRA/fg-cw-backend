@@ -66,8 +66,10 @@ export class Workflow {
     const list = this.pages?.["case-list"];
     if (!list) return;
     validateProps(list, caseListSchema, "Case list pages");
-    for (const tab of Object.values(list.tabs)) {
+    const compiled = {};
+    for (const [pageKey, tab] of Object.entries(list.tabs)) {
       const config = compileDedupe(tab["page-type"].configuration);
+      compiled[pageKey] = config;
       const phase = this.phases.find(
         (item) => item.code === config.scope.phase,
       );
@@ -85,6 +87,7 @@ export class Workflow {
           "Dedupe excluded status does not exist in this stage",
         );
     }
+    return compiled;
   }
 
   #invalid(message) {

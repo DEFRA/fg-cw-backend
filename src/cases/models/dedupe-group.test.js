@@ -12,7 +12,7 @@ const tab = JSON.parse(
     new URL("../../../test/fixtures/dedupe-page.json", import.meta.url),
   ),
 );
-const config = compileDedupe(tab["page-type"].configuration);
+const config = tab["page-type"].configuration;
 const kase = (ref, label = null, currentStatus = "IN_REVIEW") => ({
   caseRef: ref,
   currentStatus,

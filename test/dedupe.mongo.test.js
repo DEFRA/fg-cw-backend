@@ -1,4 +1,5 @@
 import Hapi from "@hapi/hapi";
+import { DedupeGroupKey } from "../src/cases/models/dedupe-group-key.js";
 import {
   afterAll,
   beforeAll,
@@ -284,6 +285,32 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
     );
     expect((await summary()).total).toBe(0);
   });
+  it("handles absent optional sources and literal display config without projecting payload", async () => {
+    const config = structuredClone(dedupeTab["page-type"].configuration);
+    config.data.details.businessName =
+      "function:first(@.cases, '$case.payload.answers.applicant.business.optionalName')";
+    const replace = () =>
+      db
+        .collection("workflows")
+        .updateOne(
+          { code: "frps-private-beta", version: "1.0.0" },
+          {
+            $set: {
+              "pages.case-list.tabs.duplicates.page-type.configuration": config,
+            },
+          },
+        );
+    await replace();
+    expect((await summary()).rows[0].details.businessName).toBeNull();
+    config.data.details.businessName = "Configured farm";
+    await replace();
+    expect((await summary()).rows[0].details.businessName).toBe(
+      "Configured farm",
+    );
+    expect((await detail(await groupUrl())).intro).toBe(
+      "Configured farm · 3 applications",
+    );
+  });
   it("enforces workflow permissions and supplies disabled fields to read-only users", async () => {
     const url = await groupUrl();
     actor = User.createMock({ idpRoles: [IdpRoles.Read], appRoles: {} });
@@ -334,6 +361,14 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
     const page = await detail(await groupUrl());
     expect(page.rows).toHaveLength(3);
     expect(JSON.stringify(page)).not.toContain("unrelatedData");
+    const compiled = seed.workflow.validateCaseListPages().duplicates;
+    const members = await repository.findDedupeMembers(
+      new DedupeGroupKey("frps-private-beta", { sbi: "244666513" }),
+      compiled,
+    );
+    expect(members).toHaveLength(3);
+    expect(members[0]).not.toHaveProperty("payload");
+    expect(members[0].source).toEqual({ s0: "Farm 244666513" });
     process.stdout.write(
       `Sparse-dedupe evidence: 5,010 cases; 3 visible groups; summary ${elapsed.toFixed(0)} ms (local observation, not an SLA).\n`,
     );

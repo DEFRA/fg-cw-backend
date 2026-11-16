@@ -55,13 +55,13 @@ const authorise = (user, workflow, write) =>
 const loadPage = async ({ caseType, pageKey, user }, write = false) => {
   const workflow = await loadListWorkflow(caseType);
   authorise(user, workflow, write);
-  workflow.validateCaseListPages();
+  const compiled = workflow.validateCaseListPages();
   const tab = workflow.pages?.["case-list"]?.tabs?.[pageKey];
   if (!tab) throw Boom.notFound("Case list page not found");
   return {
     workflow,
     title: tab.title,
-    config: tab["page-type"].configuration,
+    config: compiled[pageKey],
   };
 };
 const usersFor = (workflow) =>
@@ -147,15 +147,13 @@ const summary = async (command) => {
   const { title, config } = await loadPage(command);
   const stored = await findDedupeGroups(command.caseType, config, true);
   const owners = await findGroupOwners(command.caseType, stored);
-  const rows = stored
-    .map((item) => {
-      const key = new DedupeGroupKey(command.caseType, item.key);
-      return {
-        group: new DedupeGroup(key, item.cases, config.scope.excludeStatuses),
-        assignment: assignmentFor(key, owners),
-      };
-    })
-    .sort((a, b) => b.group.key.canonical.localeCompare(a.group.key.canonical));
+  const rows = stored.map((item) => {
+    const key = new DedupeGroupKey(command.caseType, item.key);
+    return {
+      group: new DedupeGroup(key, item.cases, config.scope.excludeStatuses),
+      assignment: assignmentFor(key, owners),
+    };
+  });
   return createPageResponse({
     user: command.user,
     data: presentSummary(command, title, rows, config),

@@ -14,7 +14,13 @@ const projection = (config) => ({
   currentStatus: 1,
   createdAt: 1,
   labels: 1,
-  businessName: "$" + storedPath(config.display.businessName),
+  ...(config.plan.sourcePaths.length
+    ? {
+        source: Object.fromEntries(
+          config.plan.sourcePaths.map(({ slot, path }) => [slot, "$" + path]),
+        ),
+      }
+    : {}),
 });
 const validKey = (entry) => {
   const value = "$" + storedPath(entry.value);

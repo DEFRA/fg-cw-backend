@@ -157,6 +157,54 @@ try {
   process.stdout.write(
     "PASS existing case list tab -> configured summary -> group form -> frontend POST -> backend HTTP -> Mongo labels, timelines and owner -> reloaded HTML and actual case timeline\n",
   );
+  // Change only stored workflow configuration: the submitted cases stay immutable.
+  const config = structuredClone(
+    seed.workflow.pages["case-list"].tabs.duplicates["page-type"].configuration,
+  );
+  config.data.details.businessName =
+    "function:first(@.cases, '$case.payload.answers.applicant.business.tradingName')";
+  config.columns.details.reverse();
+  config.columns.details[0].text = "Configured count: @.applicationsCount";
+  config.columns.assignee[0].text = "Owner: @.name";
+  config.columns.status[0].labelsMap.NOT_STARTED = "Awaiting configured review";
+  config.columns.status[0].labelsMap.COMPLETED = "Configured complete";
+  config.sort[0].order = "ascending";
+  await db.collection("workflows").updateOne(
+    { code: "frps-private-beta", version: "1.0.0" },
+    {
+      $set: {
+        "pages.case-list.tabs.duplicates.page-type.configuration": config,
+      },
+    },
+  );
+  const configured = load((await request("GET", summaryHref)).payload);
+  const firstRow = configured("tbody tr").first();
+  assert.ok(
+    firstRow.find("a").text().includes("SBI 244666513: Trading farm 244666513"),
+  );
+  assert.ok(
+    firstRow.find("td").first().children().first().hasClass("govuk-hint"),
+  );
+  assert.ok(firstRow.text().includes("Configured count: 3"));
+  assert.ok(configured("tbody").text().includes("Owner: Test ReaderWriter"));
+  assert.ok(configured(".govuk-tag").text().includes("Configured complete"));
+  assert.ok(
+    configured(".govuk-tag").text().includes("Awaiting configured review"),
+  );
+  assert.ok(
+    !configured(".govuk-tag")
+      .toArray()
+      .some((element) => configured(element).hasClass("govuk-tag--grey")),
+  );
+  const configuredHref = firstRow.find("a").attr("href");
+  const configuredGroup = load((await request("GET", configuredHref)).payload);
+  assert.ok(
+    configuredGroup.text().includes("Trading farm 244666513 · 3 applications"),
+  );
+  assert.ok(!configuredGroup.text().includes("unrelatedData"));
+  process.stdout.write(
+    "PASS config-only source, component order/copy, owner/status display and sort changes -> changed real HTML, including group heading; application data unchanged\n",
+  );
   process.stdout.write(
     "Authentication is a test substitute; Entra login is not exercised. Scratch database removed at exit.\n",
   );

@@ -1,5 +1,8 @@
 import {
   DedupeError,
+  assessmentStatus,
+  labelCount,
+  unlabelledCount,
   labelFor,
   normaliseDedupeLabel,
   sameLabel,
@@ -21,6 +24,10 @@ export class DedupeGroup {
     return this.cases.filter((kase) => !this.isExcluded(kase));
   }
 
+  get excludedCases() {
+    return this.cases.filter((kase) => this.isExcluded(kase));
+  }
+
   get visible() {
     return this.activeCases.length >= 2;
   }
@@ -30,19 +37,14 @@ export class DedupeGroup {
     return {
       total: this.cases.length,
       excluded: this.cases.length - active.length,
-      notSet: active.filter((kase) => !labelFor(kase)).length,
-      notDuplicate: active.filter(
-        (kase) => labelFor(kase)?.code === "NOT_DUPLICATE",
-      ).length,
-      duplicate: active.filter((kase) => labelFor(kase)?.code === "DUPLICATE")
-        .length,
+      notSet: unlabelledCount(active),
+      notDuplicate: labelCount(active, "NOT_DUPLICATE"),
+      duplicate: labelCount(active, "DUPLICATE"),
     };
   }
 
   get status() {
-    const remaining = this.counts.notSet;
-    if (remaining === this.activeCases.length) return "NOT_STARTED";
-    return remaining === 0 ? "COMPLETED" : "IN_PROGRESS";
+    return assessmentStatus(this.activeCases);
   }
 
   duplicateTargets(caseRef) {

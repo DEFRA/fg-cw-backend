@@ -52,7 +52,12 @@ export const seedDedupe = async () => {
       });
     const payload = {
       identifiers: { sbi },
-      answers: { applicant: { business: { name: `Farm ${sbi}` } } },
+      answers: {
+        applicant: {
+          business: { name: `Farm ${sbi}`, tradingName: `Trading farm ${sbi}` },
+        },
+      },
+      unrelatedData: "x".repeat(2000),
     };
     const stage = await createCaseStage(workflow.getStage(position), {
       payload,
