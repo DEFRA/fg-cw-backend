@@ -157,11 +157,11 @@ describe("cases", () => {
       },
       {
         method: "get",
-        path: "/case-types/{caseType}/pages/{pageKey}/groups/{keyHash}",
+        path: "/case-types/{caseType}/pages/{pageKey}/groups/{groupKey}",
       },
       {
         method: "put",
-        path: "/case-types/{caseType}/pages/{pageKey}/groups/{keyHash}",
+        path: "/case-types/{caseType}/pages/{pageKey}/groups/{groupKey}",
       },
       { method: "patch", path: "/cases/{caseId}/assigned-user" },
       {

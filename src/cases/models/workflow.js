@@ -6,7 +6,7 @@ import { requiredRolesSchema } from "../schemas/requiredRoles.schema.js";
 import { uniqueCodes } from "../schemas/unique-codes.schema.js";
 import { createPagesMock } from "./create-pages-mock.js";
 import { Position } from "./position.js";
-import { compileDedupe } from "./dedupe-page.js";
+import { compileDedupe } from "../schemas/dedupe-definition.js";
 import { caseListSchema } from "../schemas/dedupe-page.schema.js";
 import { RequiredAppRoles } from "./required-app-roles.js";
 import { WorkflowEndpoint } from "./workflow-endpoint.js";

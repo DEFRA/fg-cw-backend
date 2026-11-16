@@ -2,6 +2,12 @@ import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { logger } from "../../common/logger.js";
 import { CasePhase } from "./case-phase.js";
+import {
+  DEDUPE_NAMESPACE,
+  labelFor,
+  normaliseDedupeLabel,
+  sameLabel,
+} from "./dedupe-label.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
@@ -82,6 +88,16 @@ export class Case {
     this.assignUser({
       assignedUserId: null,
       text,
+      createdBy,
+    });
+  }
+
+  recordDedupeLabel({ label, createdBy }) {
+    const decision = normaliseDedupeLabel(label, this.caseRef);
+    if (sameLabel(labelFor(this), decision)) return null;
+    return this.setLabel({
+      namespace: DEDUPE_NAMESPACE,
+      label: decision,
       createdBy,
     });
   }

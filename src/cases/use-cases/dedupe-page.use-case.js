@@ -11,25 +11,27 @@ import { withAudit } from "../../common/with-audit.js";
 import { withTransaction } from "../../common/with-transaction.js";
 import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAssigneesUseCase } from "../../users/use-cases/find-assignees.use-case.js";
-import {
-  buildGroupRow,
-  caseLabelOptions,
-  compileDedupe,
-  groupHash,
-  labelFor,
-  sameLabel,
-  sortGroupRows,
-  validateLabels,
-} from "../models/dedupe-page.js";
+import { DedupeGroup } from "../models/dedupe-group.js";
+import { DedupeGroupKey, keyName } from "../models/dedupe-group-key.js";
+import { DedupeError } from "../models/dedupe-label.js";
+import { GroupAssignment } from "../models/group-assignment.js";
 import { findByCaseRefAndWorkflowCode } from "../repositories/case.repository.js";
 import { findCurrent } from "../repositories/config-version.repository.js";
 import {
   findDedupeGroups,
+  findDedupeMembers,
+  findDedupeReferences,
   findGroupOwners,
   saveCaseLabel,
   saveGroupOwner,
 } from "../repositories/dedupe.repository.js";
 import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
+import {
+  decodeDedupeForm,
+  presentGroup,
+  presentSummary,
+  summaryHref,
+} from "./dedupe-page.presenter.js";
 import { createRoleFilter } from "./find-cases.use-case.js";
 import { findWorkflowCodesUseCase } from "./find-workflow-codes.use-case.js";
 import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use-case.js";
@@ -37,10 +39,10 @@ import { resolveAndFetchWorkflowUseCase } from "./resolve-and-fetch-workflow.use
 const loadListWorkflow = async (caseType) => {
   const current = await findCurrent(caseType);
   if (!current) throw Boom.notFound("No active workflow for this case type");
-  const stored = await findByCodeAndVersion(caseType, current.version);
-  if (stored) return stored;
-  return (await resolveAndFetchWorkflowUseCase(caseType, current.version))
-    .workflow;
+  return (
+    (await findByCodeAndVersion(caseType, current.version)) ??
+    (await resolveAndFetchWorkflowUseCase(caseType, current.version)).workflow
+  );
 };
 const authorise = (user, workflow, write) =>
   AccessControl.authorise(user, {
@@ -49,7 +51,7 @@ const authorise = (user, workflow, write) =>
       : [IdpRoles.Read, IdpRoles.ReadWrite],
     appRoles: workflow.requiredRoles,
   });
-// eslint-disable-next-line complexity
+// eslint-disable-next-line complexity -- Check optional workflow page configuration before use.
 const loadPage = async ({ caseType, pageKey, user }, write = false) => {
   const workflow = await loadListWorkflow(caseType);
   authorise(user, workflow, write);
@@ -59,52 +61,42 @@ const loadPage = async ({ caseType, pageKey, user }, write = false) => {
   return {
     workflow,
     title: tab.title,
-    config: compileDedupe(tab["page-type"].configuration),
+    config: tab["page-type"].configuration,
   };
-};
-const rowsFor = async (command, config, visibleOnly, session) => {
-  const groups = await findDedupeGroups(
-    command.caseType,
-    config,
-    visibleOnly,
-    session,
-  );
-  const owners = await findGroupOwners(
-    command.caseType,
-    command.pageKey,
-    groups,
-    session,
-  );
-  return sortGroupRows(
-    groups.map((group) => {
-      const owner = owners.find(
-        (item) =>
-          item.keyHash ===
-          groupHash(command.caseType, command.pageKey, group.key),
-      );
-      return buildGroupRow(
-        group,
-        owner?.assignee ?? null,
-        config,
-        command.caseType,
-        command.pageKey,
-      );
-    }),
-    config,
-  );
-};
-const groupFor = async (command, config, session) => {
-  const row = (await rowsFor(command, config, false, session)).find(
-    (item) => item.keyHash === command.keyHash,
-  );
-  if (!row) throw Boom.notFound("Case group not found");
-  return row;
 };
 const usersFor = (workflow) =>
   findAssigneesUseCase({
     allAppRoles: workflow.requiredRoles.allOf,
     anyAppRoles: workflow.requiredRoles.anyOf,
   });
+const assignmentFor = (key, owners) =>
+  new GroupAssignment(
+    key,
+    owners.find((owner) => owner.keyHash === key.hash)?.assignee ?? null,
+  );
+const groupFor = async (command, config, session) => {
+  let key;
+  try {
+    key = DedupeGroupKey.fromRoute(
+      command.caseType,
+      command.groupKey,
+      config.groupBy.map(keyName),
+    );
+  } catch (error) {
+    throw Boom.badRequest(error.message);
+  }
+  const members = await findDedupeMembers(key, config, session);
+  if (!members.length) throw Boom.notFound("Case group not found");
+  const owners = await findGroupOwners(
+    command.caseType,
+    [{ key: key.values }],
+    session,
+  );
+  return {
+    group: new DedupeGroup(key, members, config.scope.excludeStatuses),
+    assignment: assignmentFor(key, owners),
+  };
+};
 const auditFor =
   (action) =>
   ([command]) => ({
@@ -112,7 +104,7 @@ const auditFor =
       {
         entity: auditEntities.CASE,
         action,
-        entityid: command.keyHash ?? command.caseType,
+        entityid: command.groupKey ?? command.caseType,
       },
     ],
     details: {
@@ -131,8 +123,7 @@ const listPages = async ({ user }) => {
   );
   const pages = [];
   for (const caseType of codes) {
-    const current = await findCurrent(caseType);
-    if (!current) continue;
+    if (!(await findCurrent(caseType))) continue;
     const workflow = await loadListWorkflow(caseType);
     authorise(user, workflow, false);
     for (const [pageKey, tab] of Object.entries(
@@ -143,7 +134,7 @@ const listPages = async ({ user }) => {
         pageKey,
         title: tab.title,
         type: tab["page-type"].type,
-        href: `/types/${caseType}/pages/${pageKey}`,
+        href: summaryHref({ caseType, pageKey }),
       });
   }
   return createPageResponse({ user, data: { pages } });
@@ -154,95 +145,84 @@ export const listCasePagesUseCase = withAudit(
 );
 const summary = async (command) => {
   const { title, config } = await loadPage(command);
-  const rows = await rowsFor(command, config, true);
-  const completed = rows.filter((row) => row.status.tag === "COMPLETED").length;
+  const stored = await findDedupeGroups(command.caseType, config, true);
+  const owners = await findGroupOwners(command.caseType, stored);
+  const rows = stored
+    .map((item) => {
+      const key = new DedupeGroupKey(command.caseType, item.key);
+      return {
+        group: new DedupeGroup(key, item.cases, config.scope.excludeStatuses),
+        assignment: assignmentFor(key, owners),
+      };
+    })
+    .sort((a, b) => b.group.key.canonical.localeCompare(a.group.key.canonical));
   return createPageResponse({
     user: command.user,
-    data: {
-      pageType: "dedupe",
-      title,
-      completed,
-      total: rows.length,
-      heading: `${completed} of ${rows.length} issues completed`,
-      rows: rows.map(({ keyHash, details, assignee, status, columns }) => ({
-        keyHash,
-        details,
-        assignee,
-        status,
-        columns,
-      })),
-    },
+    data: presentSummary(command, title, rows, config),
   });
 };
 export const viewDedupeSummaryUseCase = withAudit(
   summary,
   auditFor(auditActions.VIEW_CASE_LIST),
 );
-const detail = async (command) => {
+const detail = async (command, form, error) => {
   const { config, workflow } = await loadPage(command);
-  const row = await groupFor(command, config);
-  const cases = row.cases.map((kase) => ({
-    id: kase._id.toHexString(),
-    caseRef: kase.caseRef,
-    excluded: !row.activeCases.includes(kase),
-    status: kase.currentStatus,
-    label: labelFor(kase, config.labels.namespace),
-    options: caseLabelOptions(row, kase, config),
-  }));
+  const { group, assignment } = await groupFor(command, config);
   return createPageResponse({
     user: command.user,
-    data: {
-      pageType: "dedupe",
-      details: row.details,
-      key: row.key,
-      owner: row.owner,
+    data: presentGroup({
+      command,
+      group,
+      assignment,
+      config,
       users: await usersFor(workflow),
       canEdit: command.user.hasIdpRole(IdpRoles.ReadWrite),
-      cases,
-    },
+      form,
+      error,
+    }),
   });
 };
 export const viewDedupeGroupUseCase = withAudit(
   detail,
   auditFor(auditActions.VIEW_CASE),
 );
-// eslint-disable-next-line complexity
 const save = async (command, session) => {
   const { config, workflow } = await loadPage(command, true);
-  const row = await groupFor(command, config, session);
-  const assignee =
-    command.payload.assignee === null
-      ? null
-      : (await usersFor(workflow)).find(
-          (user) => user.id === command.payload.assignee,
-        );
-  if (command.payload.assignee !== null && !assignee)
-    throw Boom.badRequest("Choose an eligible issue owner");
-  validateLabels(row, command.payload.labels, config);
-  let changedLabels = 0;
-  for (const [caseRef, label] of Object.entries(command.payload.labels)) {
+  const { group, assignment } = await groupFor(command, config, session);
+  const decoded = decodeDedupeForm(command.payload.form);
+  const ownerChanged = assignment.assign(
+    decoded.assignee,
+    await usersFor(workflow),
+  );
+  const changes = group.validateLabels(
+    decoded.labels,
+    await findDedupeReferences(command.caseType, session),
+  );
+  for (const [caseRef, label] of Object.entries(changes)) {
     const kase = await findByCaseRefAndWorkflowCode(
       caseRef,
       command.caseType,
       session,
     );
-    if (sameLabel(labelFor(kase, config.labels.namespace), label)) continue;
-    const event = kase.setLabel({
-      namespace: config.labels.namespace,
-      label,
-      createdBy: command.user.id,
-    });
-    await saveCaseLabel(kase, event, session);
-    changedLabels++;
+    const event = kase.recordDedupeLabel({ label, createdBy: command.user.id });
+    if (event) await saveCaseLabel(kase, event, session);
   }
-  if ((row.owner?.id ?? null) !== (assignee?.id ?? null))
-    await saveGroupOwner(
-      { ...row, caseType: command.caseType, pageKey: command.pageKey },
-      assignee,
-      session,
-    );
-  return { changedLabels };
+  if (ownerChanged) await saveGroupOwner(assignment, session);
+  return {
+    changedLabels: Object.keys(changes).length,
+    redirectHref: summaryHref(command),
+  };
 };
 const auditedSave = withAudit(save, auditFor(auditActions.SAVE_CASE_GROUP));
-export const saveDedupeGroupUseCase = (command) =>
-  withTransaction((session) => auditedSave(command, session));
+export const saveDedupeGroupUseCase = async (command) => {
+  try {
+    return await withTransaction((session) => auditedSave(command, session));
+  } catch (error) {
+    if (!(error instanceof DedupeError)) throw error;
+    return {
+      validationError: true,
+      message: error.message,
+      page: await detail(command, command.payload.form, error),
+    };
+  }
+};

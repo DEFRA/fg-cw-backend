@@ -16,19 +16,18 @@ const identity = {
 };
 const groupIdentity = Joi.object({
   ...identity,
-  keyHash: Joi.string().hex().length(64).required(),
+  groupKey: Joi.string()
+    .pattern(/^[\w-]+$/)
+    .max(2048)
+    .required(),
 });
-const label = Joi.object({
-  code: Joi.string().required(),
-  data: Joi.object({ duplicateOf: Joi.string() }).allow(null),
-}).allow(null);
 const base = "/case-types/{caseType}/pages/{pageKey}";
-const handler = (useCase) => (request) =>
-  useCase({
-    ...request.params,
-    user: request.auth.credentials.user,
-    payload: request.payload,
-  });
+const command = (request) => ({
+  ...request.params,
+  user: request.auth.credentials.user,
+  payload: request.payload,
+});
+const handler = (useCase) => (request) => useCase(command(request));
 export const dedupePageRoutes = [
   {
     method: "GET",
@@ -48,7 +47,7 @@ export const dedupePageRoutes = [
   },
   {
     method: "GET",
-    path: `${base}/groups/{keyHash}`,
+    path: `${base}/groups/{groupKey}`,
     handler: handler(viewDedupeGroupUseCase),
     options: {
       tags: ["api"],
@@ -58,17 +57,19 @@ export const dedupePageRoutes = [
   },
   {
     method: "PUT",
-    path: `${base}/groups/{keyHash}`,
-    handler: handler(saveDedupeGroupUseCase),
+    path: `${base}/groups/{groupKey}`,
+    async handler(request, h) {
+      const result = await saveDedupeGroupUseCase(command(request));
+      return result.validationError ? h.response(result).code(400) : result;
+    },
     options: {
       tags: ["api"],
-      description: "Save group owner and case labels",
+      description: "Save group owner and fixed case labels",
       validate: {
         params: groupIdentity,
         payload: Joi.object({
-          assignee: Joi.string().hex().length(24).allow(null).required(),
-          labels: Joi.object()
-            .pattern(/^[\w-]+$/, label)
+          form: Joi.object({ assignee: Joi.string().allow("").required() })
+            .pattern(/^label-[\w-]+$/, Joi.string().allow(""))
             .required(),
         }),
       },

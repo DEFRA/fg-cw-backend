@@ -12,5 +12,6 @@ export const timelineSchema = Joi.object({
   createdBy: TimelineUser.required(),
   createdAt: Joi.string().isoDate().required(),
   description: Joi.string().required(),
+  displayText: Joi.string().optional(),
   data: Joi.object().optional(),
 }).label("TimelineSchema");

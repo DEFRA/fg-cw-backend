@@ -153,7 +153,7 @@ try {
       .payload,
   );
   assert.ok(timeline.text().includes("Case label changed"));
-  assert.ok(timeline.text().includes("NOT_DUPLICATE"));
+  assert.ok(timeline.text().includes("Not duplicate"));
   process.stdout.write(
     "PASS existing case list tab -> configured summary -> group form -> frontend POST -> backend HTTP -> Mongo labels, timelines and owner -> reloaded HTML and actual case timeline\n",
   );

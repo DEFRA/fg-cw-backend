@@ -1,20 +1,13 @@
 import Joi from "joi";
 
-const path = Joi.string().pattern(
-  /^\$case\.(payload\.[\w.]+|caseRef|currentStatus)$/,
-);
-const option = Joi.object({
-  code: Joi.string()
-    .pattern(/^[A-Z_]+$/)
-    .required(),
-  text: Joi.string().required(),
-  data: Joi.object({
-    duplicateOf: Joi.object({
-      required: Joi.boolean().valid(true).required(),
-      oneOf: Joi.string().valid("activeGroupCases").required(),
-    }).required(),
-  }),
-});
+// Only immutable submitted values form group identity. No executable expression DSL.
+const path = Joi.string()
+  .pattern(/^\$case\.(payload\.[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)*|caseRef)$/)
+  .custom((value, helpers) =>
+    /(^|\.)(__proto__|constructor|prototype)(\.|$)/.test(value)
+      ? helpers.error("any.invalid")
+      : value,
+  );
 export const dedupeConfigurationSchema = Joi.object({
   scope: Joi.object({
     phase: Joi.string().required(),
@@ -24,28 +17,16 @@ export const dedupeConfigurationSchema = Joi.object({
   groupBy: Joi.array()
     .items(
       Joi.object({
-        name: Joi.string().pattern(/^[a-zA-Z][\w]*$/),
+        name: Joi.string()
+          .pattern(/^[a-zA-Z][\w]*$/)
+          .invalid("constructor", "prototype", "__proto__"),
+        label: Joi.string(),
         value: path.required(),
       }),
     )
     .min(1)
     .required(),
-  sort: Joi.array()
-    .items(
-      Joi.object({
-        value: Joi.string().required(),
-        order: Joi.string().valid("ascending", "descending").required(),
-      }),
-    )
-    .default([]),
-  labels: Joi.object({
-    namespace: Joi.string()
-      .pattern(/^[a-zA-Z][\w-]*$/)
-      .required(),
-    options: Joi.array().items(option).min(1).unique("code").required(),
-  }).required(),
-  data: Joi.object().required(),
-  columns: Joi.object().required(),
+  display: Joi.object({ businessName: path.required() }).required(),
 });
 export const caseListSchema = Joi.object({
   tabs: Joi.object()
