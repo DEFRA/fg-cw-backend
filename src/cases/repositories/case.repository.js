@@ -199,7 +199,7 @@ const ascDescToFlags = (sort) =>
       .map(([k, v]) => [k, toDir(v)]),
   );
 
-const buildCaseListFilter = ({ workflowCodes, search, assignedUserId }) => {
+const toMongoFilter = ({ workflowCodes, search, assignedUserId }) => {
   const filter = {
     workflowCode: { $in: workflowCodes },
   };
@@ -231,7 +231,7 @@ export const findAll = ({
   const cases = db.collection(collection);
 
   return paginate(cases, {
-    filter: buildCaseListFilter({ workflowCodes, search, assignedUserId }),
+    filter: toMongoFilter({ workflowCodes, search, assignedUserId }),
     cursor,
     direction,
     sort: ascDescToFlags(sort),
