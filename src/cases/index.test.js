@@ -171,6 +171,7 @@ describe("cases", () => {
       { method: "get", path: "/workflows" },
       { method: "get", path: "/cases/report" },
       { method: "get", path: "/cases/{caseId}" },
+      { method: "get", path: "/types/{caseType}/cases" },
       {
         method: "get",
         path: "/cases/{caseId}/tabs/{tabId}",

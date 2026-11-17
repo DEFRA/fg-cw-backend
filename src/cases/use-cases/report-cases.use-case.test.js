@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "../../users/models/user.js";
 import { Workflow } from "../models/workflow.js";
 import { countByPosition } from "../repositories/case.repository.js";
-import { createRoleFilter } from "./find-cases.use-case.js";
+import { createRoleFilter } from "./create-role-filter.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 import { buildReport, reportCasesUseCase } from "./report-cases.use-case.js";
 

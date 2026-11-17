@@ -1,6 +1,6 @@
 import { logger } from "../../common/logger.js";
 import { countByPosition } from "../repositories/case.repository.js";
-import { createRoleFilter } from "./find-cases.use-case.js";
+import { createRoleFilter } from "./create-role-filter.js";
 import { findWorkflowsUseCase } from "./find-workflows.use-case.js";
 
 const positionKey = (phaseCode, stageCode, statusCode) =>

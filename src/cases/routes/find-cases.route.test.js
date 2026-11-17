@@ -164,4 +164,25 @@ describe("findCasesRoute", () => {
     });
     expect(statusCode).toEqual(200);
   });
+
+  it("rejects caseType as a query parameter", async () => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findCasesUseCase.mockResolvedValue([]);
+
+    const { statusCode } = await server.inject({
+      method: "GET",
+      url: "/cases?caseType=woodland",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user,
+        },
+      },
+    });
+
+    expect(statusCode).toEqual(400);
+  });
 });

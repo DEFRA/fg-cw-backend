@@ -17,6 +17,7 @@ import { addNoteToCaseRoute } from "./routes/add-note-to-case.route.js";
 import { assignUserToCaseRoute } from "./routes/assign-user-to-case.route.js";
 import { findCaseByIdTabIdRoute } from "./routes/find-case-by-id-tab-id.route.js";
 import { findCaseByIdRoute } from "./routes/find-case-by-id.route.js";
+import { findCasesByTypeRoute } from "./routes/find-cases-by-type.route.js";
 import { findCasesRoute } from "./routes/find-cases.route.js";
 import { countDeadLetters as countInboxDeadLetters } from "./repositories/inbox.repository.js";
 import { countDeadLetters as countOutboxDeadLetters } from "./repositories/outbox.repository.js";
@@ -84,6 +85,7 @@ export const cases = {
 
     server.route([
       findCasesRoute,
+      findCasesByTypeRoute,
       findCaseTypesRoute,
       reportCasesRoute,
       findCaseByIdRoute,
