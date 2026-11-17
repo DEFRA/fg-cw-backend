@@ -510,6 +510,64 @@ describe("findAll", () => {
     expect(filter.$or).toBeUndefined();
   });
 
+  it("filters by assignedUserId when provided", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+      assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+    });
+  });
+
+  it("combines assignedUserId with search", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      search: "12345",
+      assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).toEqual({
+      workflowCode: { $in: ["WF"] },
+      assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      $or: [{ caseRef: "12345" }, { "payload.identifiers.sbi": "12345" }],
+    });
+  });
+
+  it("does not filter by assignedUserId when not provided", async () => {
+    db.collection.mockReturnValue({});
+    paginate.mockResolvedValue({ data: [], pagination: {} });
+
+    await findAll({
+      workflowCodes: ["WF"],
+      cursor: undefined,
+      direction: "forward",
+      sort: { createdAt: "desc" },
+      pageSize: 10,
+    });
+
+    const { filter } = paginate.mock.calls[0][1];
+    expect(filter).not.toHaveProperty("assignedUserId");
+  });
+
   it("does not add $or filter when search is empty string", async () => {
     db.collection.mockReturnValue({});
     paginate.mockResolvedValue({ data: [], pagination: {} });

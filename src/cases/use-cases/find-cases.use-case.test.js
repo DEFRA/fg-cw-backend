@@ -535,6 +535,34 @@ describe("findCasesUseCase", () => {
     });
   });
 
+  it("passes assignedUserId to findAll", async () => {
+    findUsersUseCase.mockResolvedValue([]);
+    findWorkflowCodesUseCase.mockResolvedValue(["workflow-code"]);
+
+    await findCasesUseCase({
+      user,
+      query: {
+        direction: "forward",
+        createdAt: "desc",
+        assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      },
+    });
+
+    expect(findAll).toHaveBeenCalledWith({
+      workflowCodes: ["workflow-code"],
+      search: undefined,
+      cursor: undefined,
+      assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      direction: "forward",
+      sort: {
+        workflowCode: undefined,
+        caseRef: undefined,
+        createdAt: "desc",
+      },
+      pageSize: 20,
+    });
+  });
+
   it("passes undefined search when not provided", async () => {
     findUsersUseCase.mockResolvedValue([]);
     findWorkflowCodesUseCase.mockResolvedValue(["workflow-code"]);

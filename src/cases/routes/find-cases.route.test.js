@@ -164,4 +164,59 @@ describe("findCasesRoute", () => {
     });
     expect(statusCode).toEqual(200);
   });
+
+  it("accepts assignedUserId query parameter", async () => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findCasesUseCase.mockResolvedValue([]);
+
+    const { statusCode } = await server.inject({
+      method: "GET",
+      url: "/cases?assignedUserId=60c72b2f9b1e8d001c8e4f5a",
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user,
+        },
+      },
+    });
+
+    expect(findCasesUseCase).toHaveBeenCalledWith({
+      user,
+      query: {
+        direction: "forward",
+        assignedUserId: "60c72b2f9b1e8d001c8e4f5a",
+      },
+    });
+    expect(statusCode).toEqual(200);
+  });
+
+  it.each([
+    ["not hex", "zzzzzzzzzzzzzzzzzzzzzzzz"],
+    ["too short", "60c72b2f9b1e8d001c8e4f5"],
+    ["too long", "60c72b2f9b1e8d001c8e4f5a0"],
+    ["empty", ""],
+  ])("rejects assignedUserId that is %s", async (_, assignedUserId) => {
+    const user = User.createMock({
+      idpRoles: ["FCP.Casework.Admin", "FCP.Casework.ReadWrite"],
+    });
+
+    findCasesUseCase.mockClear();
+
+    const { statusCode } = await server.inject({
+      method: "GET",
+      url: `/cases?assignedUserId=${assignedUserId}`,
+      auth: {
+        strategy: "entra",
+        credentials: {
+          user,
+        },
+      },
+    });
+
+    expect(statusCode).toEqual(400);
+    expect(findCasesUseCase).not.toHaveBeenCalled();
+  });
 });

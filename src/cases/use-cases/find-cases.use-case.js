@@ -101,6 +101,7 @@ export const findCasesUseCase = async ({ user, query }) => {
     workflowCodes,
     search: query.search,
     cursor: query.cursor,
+    assignedUserId: query.assignedUserId,
     direction: query.direction,
     sort: {
       workflowCode: query.workflowCode,

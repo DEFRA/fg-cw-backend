@@ -199,10 +199,14 @@ const ascDescToFlags = (sort) =>
       .map(([k, v]) => [k, toDir(v)]),
   );
 
-const buildSearchFilter = (workflowCodes, search) => {
+const buildCaseListFilter = ({ workflowCodes, search, assignedUserId }) => {
   const filter = {
     workflowCode: { $in: workflowCodes },
   };
+
+  if (assignedUserId) {
+    filter.assignedUserId = assignedUserId;
+  }
 
   if (search && typeof search === "string") {
     const searchValue = search.trim().toLowerCase();
@@ -218,6 +222,7 @@ const buildSearchFilter = (workflowCodes, search) => {
 export const findAll = ({
   workflowCodes,
   search,
+  assignedUserId,
   cursor,
   direction,
   sort,
@@ -226,7 +231,7 @@ export const findAll = ({
   const cases = db.collection(collection);
 
   return paginate(cases, {
-    filter: buildSearchFilter(workflowCodes, search),
+    filter: buildCaseListFilter({ workflowCodes, search, assignedUserId }),
     cursor,
     direction,
     sort: ascDescToFlags(sort),
