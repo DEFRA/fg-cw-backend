@@ -138,30 +138,30 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
       (await detail(url)).ownerField.items.find((item) => item.selected).value,
     ).toBe(seed.user.id);
   });
-  it("supplies historical selections and read-only state even after hiding a group", async () => {
-    const url = await groupUrl();
-    await save(url, { 300242: "DUPLICATE:300241" });
-    await db
-      .collection("cases")
-      .updateOne(
-        { caseRef: "300241" },
-        { $set: { currentStatus: "APPLICATION_WITHDRAWN" } },
+  it.each(["APPLICATION_WITHDRAWN", "WITHDRAWAL_REQUESTED"])(
+    "supplies historical selections and read-only state after %s hides a group",
+    async (status) => {
+      const url = await groupUrl();
+      await save(url, { 300242: "DUPLICATE:300241" });
+      await db
+        .collection("cases")
+        .updateOne({ caseRef: "300241" }, { $set: { currentStatus: status } });
+      expect((await summary()).total).toBe(2);
+      const page = await detail(url);
+      expect(page.rows[0].labelField.disabled).toBe(true);
+      const field = page.rows.find(
+        (row) => row.caseLink.text === "300242",
+      ).labelField;
+      expect(field.items.find((item) => item.selected).text).toBe(
+        "Duplicate with 300241 (historical target)",
       );
-    expect((await summary()).total).toBe(2);
-    const page = await detail(url);
-    expect(page.rows[0].labelField.disabled).toBe(true);
-    const field = page.rows.find(
-      (row) => row.caseLink.text === "300242",
-    ).labelField;
-    expect(field.items.find((item) => item.selected).text).toBe(
-      "Duplicate with 300241 (historical target)",
-    );
-    expect(
-      (await save(url, { 300242: "DUPLICATE:300241" }, seed.user.id))
-        .changedLabels,
-    ).toBe(0);
-    await save(url, { 300241: "NOT_DUPLICATE" }, "", 400);
-  });
+      expect(
+        (await save(url, { 300242: "DUPLICATE:300241" }, seed.user.id))
+          .changedLabels,
+      ).toBe(0);
+      await save(url, { 300241: "NOT_DUPLICATE" }, "", 400);
+    },
+  );
   it("rejects invalid input before writes and returns a complete BFF error page", async () => {
     const url = await groupUrl();
     for (const labels of [
@@ -290,16 +290,14 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
     config.data.details.businessName =
       "function:first(@.cases, '$case.payload.answers.applicant.business.optionalName')";
     const replace = () =>
-      db
-        .collection("workflows")
-        .updateOne(
-          { code: "frps-private-beta", version: "1.0.0" },
-          {
-            $set: {
-              "pages.case-list.tabs.duplicates.page-type.configuration": config,
-            },
+      db.collection("workflows").updateOne(
+        { code: "frps-private-beta", version: "1.0.0" },
+        {
+          $set: {
+            "pages.case-list.tabs.duplicates.page-type.configuration": config,
           },
-        );
+        },
+      );
     await replace();
     expect((await summary()).rows[0].details.businessName).toBeNull();
     config.data.details.businessName = "Configured farm";

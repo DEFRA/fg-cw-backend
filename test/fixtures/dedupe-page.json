@@ -6,7 +6,11 @@
       "scope": {
         "phase": "PRE_AWARD",
         "stage": "REVIEW_APPLICATION",
-        "excludeStatuses": ["APPLICATION_REJECTED", "APPLICATION_WITHDRAWN"]
+        "excludeStatuses": [
+          "APPLICATION_REJECTED",
+          "APPLICATION_WITHDRAWN",
+          "WITHDRAWAL_REQUESTED"
+        ]
       },
       "groupBy": [
         {
