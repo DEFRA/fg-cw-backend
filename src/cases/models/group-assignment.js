@@ -1,4 +1,4 @@
-import { DedupeError } from "./dedupe-label.js";
+import { DedupeError } from "./dedupe-assessment.js";
 
 export class GroupAssignment {
   constructor(key, assignee = null) {

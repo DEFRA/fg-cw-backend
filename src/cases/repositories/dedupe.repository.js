@@ -1,6 +1,5 @@
 import { db } from "../../common/mongo-client.js";
 import { DedupeGroupKey, keyName } from "../models/dedupe-group-key.js";
-import { DEDUPE_NAMESPACE } from "../models/dedupe-label.js";
 
 const storedPath = (value) => value.replace("$case.", "");
 const scope = (caseType, config) => ({
@@ -13,7 +12,7 @@ const projection = (config) => ({
   caseRef: 1,
   currentStatus: 1,
   createdAt: 1,
-  labels: 1,
+  dedupeAssessment: 1,
   ...(config.plan.sourcePaths.length
     ? {
         source: Object.fromEntries(
@@ -125,11 +124,9 @@ export const findDedupeReferences = (caseType, session) =>
     .find(
       {
         workflowCode: caseType,
-        labels: {
-          $elemMatch: { namespace: DEDUPE_NAMESPACE, code: "DUPLICATE" },
-        },
+        "dedupeAssessment.code": "DUPLICATE",
       },
-      { projection: { _id: 0, caseRef: 1, labels: 1 }, session },
+      { projection: { _id: 0, caseRef: 1, dedupeAssessment: 1 }, session },
     )
     .toArray();
 
@@ -150,11 +147,11 @@ export const saveGroupOwner = (assignment, session) =>
     { upsert: true, session },
   );
 
-export const saveCaseLabel = (kase, event, session) =>
+export const saveDedupeAssessment = (kase, event, session) =>
   db.collection("cases").updateOne(
     { _id: kase.objectId },
     {
-      $set: { labels: kase.labels },
+      $set: { dedupeAssessment: kase.dedupeAssessment },
       $push: { timeline: { $each: [event], $position: 0 } },
     },
     { session },

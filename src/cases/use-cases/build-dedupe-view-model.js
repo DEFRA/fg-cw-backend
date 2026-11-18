@@ -3,7 +3,7 @@ import {
   buildConfiguredColumns,
   sortConfiguredRows,
 } from "./build-dedupe-row.js";
-import { DedupeError, labelFor } from "../models/dedupe-label.js";
+import { DedupeError, assessmentFor } from "../models/dedupe-assessment.js";
 import { keyName } from "../models/dedupe-group-key.js";
 
 export const summaryHref = ({ caseType, pageKey }) =>
@@ -13,13 +13,13 @@ const groupHref = (command, group) =>
 const choiceValue = (label) =>
   label
     ? label.code === "DUPLICATE"
-      ? `DUPLICATE:${label.data.duplicateOf}`
+      ? `DUPLICATE:${label.duplicateOf}`
       : "NOT_DUPLICATE"
     : "";
 const choiceText = (label) =>
   label
     ? label.code === "DUPLICATE"
-      ? `Duplicate with ${label.data.duplicateOf}`
+      ? `Duplicate with ${label.duplicateOf}`
       : "Not duplicate"
     : "Not set";
 
@@ -35,7 +35,7 @@ export const decodeDedupeForm = (form) => {
     else if (/^DUPLICATE:[\w-]+$/.test(value))
       labels[ref] = {
         code: "DUPLICATE",
-        data: { duplicateOf: value.slice(10) },
+        duplicateOf: value.slice(10),
       };
     else throw new DedupeError("Choose a valid case label", ref);
   }
@@ -85,7 +85,7 @@ const selectItems = (items, stored, submitted) => {
 };
 // eslint-disable-next-line complexity -- Keep historical and editable select presentation together.
 const labelField = (group, kase, canEdit, submitted) => {
-  const current = labelFor(kase);
+  const current = assessmentFor(kase);
   const stored = choiceValue(current);
   const items = [
     { value: "", text: "Not set" },
@@ -160,4 +160,4 @@ export const buildDedupeGroupViewModel = ({
     : [],
 });
 export const formatDedupeTimeline = (event) =>
-  `${choiceText(event.data.oldLabel)} → ${choiceText(event.data.newLabel)}`;
+  `${choiceText(event.data.oldAssessment)} → ${choiceText(event.data.newAssessment)}`;

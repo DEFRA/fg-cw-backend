@@ -130,7 +130,9 @@ try {
     .collection("cases")
     .find({ caseRef: { $in: refs } })
     .toArray();
-  assert.ok(stored.every((kase) => kase.labels[0].code === "NOT_DUPLICATE"));
+  assert.ok(
+    stored.every((kase) => kase.dedupeAssessment.code === "NOT_DUPLICATE"),
+  );
   assert.ok(
     stored.every((kase) => kase.timeline[0].eventType === "CASE_LABEL_CHANGED"),
   );

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { DedupeError } from "./dedupe-label.js";
+import { DedupeError } from "./dedupe-assessment.js";
 
 const scalar = (value) =>
   (typeof value === "string" && value.trim().length > 0) ||

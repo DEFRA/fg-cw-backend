@@ -30,9 +30,9 @@
           "businessName": "function:first(@.cases, '$case.payload.answers.applicant.business.name')",
           "applicationsCount": "function:count(@.cases)",
           "excludedCount": "function:count(@.excludedCases)",
-          "notSet": "function:unlabelledCount(@.activeCases)",
-          "notDuplicate": "function:labelCount(@.activeCases, 'NOT_DUPLICATE')",
-          "duplicate": "function:labelCount(@.activeCases, 'DUPLICATE')"
+          "notSet": "function:count(@.unassessedCases)",
+          "notDuplicate": "function:count(@.notDuplicateCases)",
+          "duplicate": "function:count(@.duplicateCases)"
         },
         "assignee": {
           "name": "$group.assignee.name"

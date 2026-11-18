@@ -3,11 +3,9 @@ import { ObjectId } from "mongodb";
 import { logger } from "../../common/logger.js";
 import { CasePhase } from "./case-phase.js";
 import {
-  DEDUPE_NAMESPACE,
-  labelFor,
-  normaliseDedupeLabel,
-  sameLabel,
-} from "./dedupe-label.js";
+  normaliseDedupeAssessment,
+  sameAssessment,
+} from "./dedupe-assessment.js";
 import { CaseStage } from "./case-stage.js";
 import { CaseTaskGroup } from "./case-task-group.js";
 import { CaseTask } from "./case-task.js";
@@ -40,7 +38,7 @@ export class Case {
     this.phases = props.phases;
     this.comments = comments;
     this.timeline = timeline;
-    this.labels = props.labels ?? [];
+    this.dedupeAssessment = props.dedupeAssessment ?? null;
     this.supplementaryData = new SupplementaryData(
       props.supplementaryData || {},
     );
@@ -56,34 +54,6 @@ export class Case {
     return ObjectId.createFromHexString(this._id);
   }
 
-  // eslint-disable-next-line complexity
-  setLabel({ namespace, label, createdBy }) {
-    const oldLabel =
-      this.labels.find((item) => item.namespace === namespace) ?? null;
-    const now = new Date().toISOString();
-    const newLabel =
-      label === null
-        ? null
-        : {
-            namespace,
-            code: label.code,
-            data: label.data ?? null,
-            setBy: createdBy,
-            setAt: now,
-            version: (oldLabel?.version ?? 0) + 1,
-          };
-    this.labels = this.labels.filter((item) => item.namespace !== namespace);
-    if (newLabel) this.labels.push(newLabel);
-    const event = new TimelineEvent({
-      eventType: EventEnums.eventTypes.CASE_LABEL_CHANGED,
-      createdBy,
-      createdAt: now,
-      data: { namespace, oldLabel, newLabel },
-    });
-    this.timeline.unshift(event);
-    return event;
-  }
-
   unassignUser({ text, createdBy }) {
     this.assignUser({
       assignedUserId: null,
@@ -92,14 +62,29 @@ export class Case {
     });
   }
 
-  recordDedupeLabel({ label, createdBy }) {
-    const decision = normaliseDedupeLabel(label, this.caseRef);
-    if (sameLabel(labelFor(this), decision)) return null;
-    return this.setLabel({
-      namespace: DEDUPE_NAMESPACE,
-      label: decision,
+  // eslint-disable-next-line complexity -- Record a nullable assessment and its audit metadata together.
+  recordDedupeAssessment({ assessment, createdBy }) {
+    const decision = normaliseDedupeAssessment(assessment, this.caseRef);
+    if (sameAssessment(this.dedupeAssessment, decision)) return null;
+    const oldAssessment = this.dedupeAssessment;
+    const now = new Date().toISOString();
+    this.dedupeAssessment =
+      decision === null
+        ? null
+        : {
+            ...decision,
+            setBy: createdBy,
+            setAt: now,
+            version: (oldAssessment?.version ?? 0) + 1,
+          };
+    const event = new TimelineEvent({
+      eventType: EventEnums.eventTypes.CASE_LABEL_CHANGED,
       createdBy,
+      createdAt: now,
+      data: { oldAssessment, newAssessment: this.dedupeAssessment },
     });
+    this.timeline.unshift(event);
+    return event;
   }
 
   hasPhase(phaseCode) {

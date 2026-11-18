@@ -1,12 +1,11 @@
+import { count } from "../../common/collections.js";
 import {
   DedupeError,
   assessmentStatus,
-  labelCount,
-  unlabelledCount,
-  labelFor,
-  normaliseDedupeLabel,
-  sameLabel,
-} from "./dedupe-label.js";
+  assessmentFor,
+  normaliseDedupeAssessment,
+  sameAssessment,
+} from "./dedupe-assessment.js";
 
 // A calculated domain read model, not an aggregate owning the member Cases.
 export class DedupeGroup {
@@ -32,14 +31,29 @@ export class DedupeGroup {
     return this.activeCases.length >= 2;
   }
 
+  get duplicateCases() {
+    return this.activeCases.filter(
+      (kase) => assessmentFor(kase)?.code === "DUPLICATE",
+    );
+  }
+
+  get notDuplicateCases() {
+    return this.activeCases.filter(
+      (kase) => assessmentFor(kase)?.code === "NOT_DUPLICATE",
+    );
+  }
+
+  get unassessedCases() {
+    return this.activeCases.filter((kase) => !assessmentFor(kase));
+  }
+
   get counts() {
-    const active = this.activeCases;
     return {
-      total: this.cases.length,
-      excluded: this.cases.length - active.length,
-      notSet: unlabelledCount(active),
-      notDuplicate: labelCount(active, "NOT_DUPLICATE"),
-      duplicate: labelCount(active, "DUPLICATE"),
+      total: count(this.cases),
+      excluded: count(this.excludedCases),
+      notSet: count(this.unassessedCases),
+      notDuplicate: count(this.notDuplicateCases),
+      duplicate: count(this.duplicateCases),
     };
   }
 
@@ -59,14 +73,14 @@ export class DedupeGroup {
       const kase = this.cases.find((item) => item.caseRef === caseRef);
       if (!kase)
         throw new DedupeError("Case no longer belongs to this group", caseRef);
-      const label = normaliseDedupeLabel(input, caseRef);
-      if (sameLabel(labelFor(kase), label)) continue;
+      const label = normaliseDedupeAssessment(input, caseRef);
+      if (sameAssessment(assessmentFor(kase), label)) continue;
       if (this.isExcluded(kase))
         throw new DedupeError("Excluded cases cannot be labelled", caseRef);
       if (
         label?.code === "DUPLICATE" &&
         !this.duplicateTargets(caseRef).some(
-          (other) => other.caseRef === label.data.duplicateOf,
+          (other) => other.caseRef === label.duplicateOf,
         )
       )
         throw new DedupeError(
@@ -85,11 +99,11 @@ export class DedupeGroup {
     const edges = new Map(
       [...referencedCases, ...this.cases].map((kase) => [
         kase.caseRef,
-        labelFor(kase)?.data?.duplicateOf,
+        assessmentFor(kase)?.duplicateOf,
       ]),
     );
     for (const [ref, label] of Object.entries(changes))
-      edges.set(ref, label?.data?.duplicateOf);
+      edges.set(ref, label?.duplicateOf);
     for (const kase of this.cases) {
       const visited = new Set();
       let ref = kase.caseRef;

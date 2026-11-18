@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Case } from "./case.js";
 import { DedupeGroup } from "./dedupe-group.js";
 import { DedupeGroupKey } from "./dedupe-group-key.js";
-import { DedupeError, labelFor } from "./dedupe-label.js";
+import { DedupeError, assessmentFor } from "./dedupe-assessment.js";
 import { GroupAssignment } from "./group-assignment.js";
 import { compileDedupe } from "../schemas/dedupe-definition.js";
 
@@ -16,26 +16,25 @@ const config = tab["page-type"].configuration;
 const kase = (ref, label = null, currentStatus = "IN_REVIEW") => ({
   caseRef: ref,
   currentStatus,
-  labels: label ? [{ namespace: "duplicates", ...label }] : [],
+  dedupeAssessment: label,
 });
 const group = (cases) =>
   new DedupeGroup(new DedupeGroupKey("type", { sbi: "123" }), cases, [
     "REJECTED",
   ]);
 const notDuplicate = { code: "NOT_DUPLICATE" };
-const duplicate = (ref) => ({ code: "DUPLICATE", data: { duplicateOf: ref } });
+const duplicate = (ref) => ({ code: "DUPLICATE", duplicateOf: ref });
 
 describe("dedupe domain", () => {
-  it("derives status and counts, ignoring exclusions and other label namespaces", () => {
+  it("derives status and counts, ignoring excluded cases", () => {
     const a = kase("a");
     const b = kase("b");
-    a.labels.push({ namespace: "other", code: "REVIEWED" });
     expect(group([a, b, kase("x", notDuplicate, "REJECTED")]).status).toBe(
       "NOT_STARTED",
     );
-    a.labels.push({ namespace: "duplicates", ...notDuplicate });
+    a.dedupeAssessment = notDuplicate;
     expect(group([a, b]).status).toBe("IN_PROGRESS");
-    b.labels.push({ namespace: "duplicates", ...duplicate("a") });
+    b.dedupeAssessment = duplicate("a");
     const completed = group([a, b]);
     expect(completed.status).toBe("COMPLETED");
     expect(completed.counts).toMatchObject({
@@ -91,22 +90,25 @@ describe("dedupe domain", () => {
   it("lets Case own changed-only label mutation and the timeline event", () => {
     const instance = Case.createMock();
     expect(() =>
-      instance.recordDedupeLabel({
-        label: duplicate(instance.caseRef),
+      instance.recordDedupeAssessment({
+        assessment: duplicate(instance.caseRef),
         createdBy: "System",
       }),
     ).toThrow();
-    const event = instance.recordDedupeLabel({
-      label: notDuplicate,
+    const event = instance.recordDedupeAssessment({
+      assessment: notDuplicate,
       createdBy: "System",
     });
-    expect(labelFor(instance).code).toBe("NOT_DUPLICATE");
+    expect(assessmentFor(instance).code).toBe("NOT_DUPLICATE");
     expect(event.eventType).toBe("CASE_LABEL_CHANGED");
     expect(
-      instance.recordDedupeLabel({ label: notDuplicate, createdBy: "System" }),
+      instance.recordDedupeAssessment({
+        assessment: notDuplicate,
+        createdBy: "System",
+      }),
     ).toBeNull();
-    instance.recordDedupeLabel({ label: null, createdBy: "System" });
-    expect(labelFor(instance)).toBeNull();
+    instance.recordDedupeAssessment({ assessment: null, createdBy: "System" });
+    expect(assessmentFor(instance)).toBeNull();
   });
   it("models assignment independently from calculated group membership", () => {
     const assignment = new GroupAssignment(

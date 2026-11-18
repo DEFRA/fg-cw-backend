@@ -13,7 +13,7 @@ import { IdpRoles } from "../../users/models/idp-roles.js";
 import { findAssigneesUseCase } from "../../users/use-cases/find-assignees.use-case.js";
 import { DedupeGroup } from "../models/dedupe-group.js";
 import { DedupeGroupKey, keyName } from "../models/dedupe-group-key.js";
-import { DedupeError } from "../models/dedupe-label.js";
+import { DedupeError } from "../models/dedupe-assessment.js";
 import { GroupAssignment } from "../models/group-assignment.js";
 import { findByCaseRefAndWorkflowCode } from "../repositories/case.repository.js";
 import { findCurrent } from "../repositories/config-version.repository.js";
@@ -22,7 +22,7 @@ import {
   findDedupeMembers,
   findDedupeReferences,
   findGroupOwners,
-  saveCaseLabel,
+  saveDedupeAssessment,
   saveGroupOwner,
 } from "../repositories/dedupe.repository.js";
 import { findByCodeAndVersion } from "../repositories/workflow.repository.js";
@@ -202,8 +202,11 @@ const save = async (command, session) => {
       command.caseType,
       session,
     );
-    const event = kase.recordDedupeLabel({ label, createdBy: command.user.id });
-    if (event) await saveCaseLabel(kase, event, session);
+    const event = kase.recordDedupeAssessment({
+      assessment: label,
+      createdBy: command.user.id,
+    });
+    if (event) await saveDedupeAssessment(kase, event, session);
   }
   if (ownerChanged) await saveGroupOwner(assignment, session);
   return {

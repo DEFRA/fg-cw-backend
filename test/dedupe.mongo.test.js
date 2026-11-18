@@ -120,15 +120,23 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
       "300242",
       "frps-private-beta",
     );
-    expect(kase.labels[0].data.duplicateOf).toBe("300241");
+    expect(kase.dedupeAssessment.duplicateOf).toBe("300241");
+    expect(kase).not.toHaveProperty("labels");
+    expect(kase.dedupeAssessment).not.toHaveProperty("namespace");
+    const assessmentChange = kase.timeline.find(
+      (event) => event.eventType === "CASE_LABEL_CHANGED",
+    );
+    expect(assessmentChange.data).not.toHaveProperty("namespace");
+    expect(assessmentChange.data.oldAssessment).toBeNull();
+    expect(assessmentChange.data.newAssessment.duplicateOf).toBe("300241");
     expect(
       kase.timeline.filter((event) => event.eventType === "CASE_LABEL_CHANGED"),
     ).toHaveLength(1);
     await update(kase);
     expect(
-      (await db.collection("cases").findOne({ caseRef: "300242" })).labels[0]
-        .namespace,
-    ).toBe("duplicates");
+      (await db.collection("cases").findOne({ caseRef: "300242" }))
+        .dedupeAssessment.code,
+    ).toBe("DUPLICATE");
     const assignment = await db.collection("case_groups").findOne({});
     expect(assignment).not.toHaveProperty("pageKey");
     expect(await db.collection("outbox").countDocuments()).toBeGreaterThan(0);
@@ -177,8 +185,9 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
     await save(url, {}, "000000000000000000000000", 400);
     expect(await db.collection("case_groups").countDocuments()).toBe(0);
     expect(
-      (await db.collection("cases").findOne({ caseRef: "300241" })).labels,
-    ).toEqual([]);
+      (await db.collection("cases").findOne({ caseRef: "300241" }))
+        .dedupeAssessment,
+    ).toBeNull();
   });
   it("rejects cycles in the final submission and through historical out-of-scope references", async () => {
     const url = await groupUrl();
@@ -204,13 +213,7 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
       {
         $set: {
           currentStage: "REVIEW_OFFER",
-          labels: [
-            {
-              namespace: "duplicates",
-              code: "DUPLICATE",
-              data: { duplicateOf: "300241" },
-            },
-          ],
+          dedupeAssessment: { code: "DUPLICATE", duplicateOf: "300241" },
         },
       },
     );
@@ -218,31 +221,27 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
       { caseRef: "300242" },
       {
         $set: {
-          labels: [
-            {
-              namespace: "duplicates",
-              code: "DUPLICATE",
-              data: { duplicateOf: "300260" },
-            },
-          ],
+          dedupeAssessment: { code: "DUPLICATE", duplicateOf: "300260" },
         },
       },
     );
     await save(url, { 300241: "DUPLICATE:300242" }, "", 400);
   });
-  it("clears labels independently and creates no group record for label-only saves", async () => {
+  it("clears the assessment without changing unrelated case data or creating an owner", async () => {
     const url = await groupUrl();
     await db
       .collection("cases")
       .updateOne(
         { caseRef: "300241" },
-        { $set: { labels: [{ namespace: "other", code: "REVIEWED" }] } },
+        { $set: { "payload.answers.otherReview": "REVIEWED" } },
       );
     await save(url, { 300241: "NOT_DUPLICATE" });
     await save(url, { 300241: "" });
     expect((await save(url, { 300241: "" })).changedLabels).toBe(0);
     const kase = await db.collection("cases").findOne({ caseRef: "300241" });
-    expect(kase.labels).toEqual([{ namespace: "other", code: "REVIEWED" }]);
+    expect(kase.dedupeAssessment).toBeNull();
+    expect(kase.payload.answers.otherReview).toBe("REVIEWED");
+    expect(kase).not.toHaveProperty("labels");
     expect(
       kase.timeline.filter((event) => event.eventType === "CASE_LABEL_CHANGED"),
     ).toHaveLength(2);
@@ -255,7 +254,7 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
     );
     await save(url, { 300241: "NOT_DUPLICATE" }, seed.user.id, 500);
     const kase = await db.collection("cases").findOne({ caseRef: "300241" });
-    expect(kase.labels).toEqual([]);
+    expect(kase.dedupeAssessment).toBeNull();
     expect(
       kase.timeline.some((event) => event.eventType === "CASE_LABEL_CHANGED"),
     ).toBe(false);
@@ -333,7 +332,7 @@ describe("configured dedupe routes, BFF and real MongoDB", () => {
       currentStage: "REVIEW_APPLICATION",
       currentStatus: "IN_REVIEW",
       createdAt: new Date(),
-      labels: [],
+      dedupeAssessment: null,
       payload: {
         identifiers: { sbi: "unique-" + i },
         answers: { applicant: { business: { name: "Unique farm " + i } } },

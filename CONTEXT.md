@@ -21,3 +21,8 @@
 
 **Platform Client**
 : The API client the grants admin reaches this service through, `fg-gas-backend`. It is managed like any other, except that a request can never revoke the token it is made with.
+
+## De-duplication
+
+**Dedupe Assessment**
+: The decision for one application: Not set, Not duplicate, or Duplicate with another application. This is a fixed process-specific decision, rather than one of several independent kinds of label.

@@ -6,12 +6,17 @@ import {
 } from "./dedupe-page.schema.js";
 
 const reference = /(?:@|\$group)\.[A-Za-z]\w*(?:\.[A-Za-z_]\w*)*/g;
-const collections = new Set(["cases", "activeCases", "excludedCases"]);
+const collections = new Set([
+  "cases",
+  "activeCases",
+  "excludedCases",
+  "duplicateCases",
+  "notDuplicateCases",
+  "unassessedCases",
+]);
 const arities = {
   first: 2,
   count: 1,
-  labelCount: 2,
-  unlabelledCount: 1,
   groupStatus: 1,
 };
 const reserved = new Set([
@@ -54,11 +59,6 @@ const compileFunction = (value, sourcePaths, location) => {
     invalid(location, "Invalid function arity");
   if (name === "groupStatus" && collection !== "activeCases")
     invalid(location, "groupStatus requires activeCases");
-  if (
-    name === "labelCount" &&
-    !["NOT_DUPLICATE", "DUPLICATE"].includes(argument)
-  )
-    invalid(location, "Unknown fixed label code");
   return {
     kind: "call",
     name,

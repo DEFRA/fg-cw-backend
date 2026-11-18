@@ -1,9 +1,6 @@
 import Boom from "@hapi/boom";
-import {
-  assessmentStatus,
-  labelCount,
-  unlabelledCount,
-} from "../models/dedupe-label.js";
+import { count, first } from "../../common/collections.js";
+import { assessmentStatus } from "../models/dedupe-assessment.js";
 
 const read = (object, path) =>
   path.split(".").reduce((value, name) => value?.[name], object);
@@ -16,11 +13,9 @@ const scalar = (value) => {
   return value;
 };
 const functions = {
-  count: (cases) => cases.length,
-  labelCount: (cases, node) => labelCount(cases, node.argument),
-  unlabelledCount,
+  count,
   groupStatus: assessmentStatus,
-  first: (cases, node) => cases[0]?.source?.[node.slot] ?? null,
+  first: (cases, node) => first(cases)?.source?.[node.slot] ?? null,
 };
 const evaluate = (node, context) => {
   if (node.kind === "literal") return node.value;
@@ -43,6 +38,9 @@ export const buildConfiguredData = (group, assignment, plan) => {
       cases: group.cases,
       activeCases: group.activeCases,
       excludedCases: group.excludedCases,
+      duplicateCases: group.duplicateCases,
+      notDuplicateCases: group.notDuplicateCases,
+      unassessedCases: group.unassessedCases,
     },
     $group: { assignee: { name: assignment.assignee?.name ?? "Not set" } },
   };

@@ -29,25 +29,19 @@ const cases = [
     caseRef: "a",
     currentStatus: "ACTIVE",
     source: { s0: "Oldest farm" },
-    labels: [{ namespace: "duplicates", code: "NOT_DUPLICATE" }],
+    dedupeAssessment: { code: "NOT_DUPLICATE" },
   },
   {
     caseRef: "b",
     currentStatus: "ACTIVE",
     source: { s0: "Newer farm" },
-    labels: [],
+    dedupeAssessment: null,
   },
   {
     caseRef: "x",
     currentStatus: "REJECTED",
     source: { s0: "Excluded farm" },
-    labels: [
-      {
-        namespace: "duplicates",
-        code: "DUPLICATE",
-        data: { duplicateOf: "a" },
-      },
-    ],
+    dedupeAssessment: { code: "DUPLICATE", duplicateOf: "a" },
   },
 ];
 const group = () =>
@@ -58,10 +52,8 @@ const group = () =>
   );
 
 describe("configured dedupe view model", () => {
-  it("uses all five ticket functions and supports explicit all/active/excluded collections", () => {
+  it("counts domain-selected collections using generic functions", () => {
     const config = fixture();
-    config.data.details.allDuplicates =
-      "function:labelCount(@.cases, 'DUPLICATE')";
     const { plan } = compileDedupe(config);
     const data = buildConfiguredData(group(), { assignee: null }, plan);
     expect(data.details).toEqual({
@@ -72,7 +64,6 @@ describe("configured dedupe view model", () => {
       notSet: 1,
       notDuplicate: 1,
       duplicate: 0,
-      allDuplicates: 1,
     });
     expect(data.status.tag).toBe("IN_PROGRESS");
     expect(data.assignee.name).toBe("Not set");
@@ -108,7 +99,7 @@ describe("configured dedupe view model", () => {
       ).details[0].text,
     ).toBe("SBI 123: ");
     for (const member of review.activeCases)
-      member.labels = [{ namespace: "duplicates", code: "NOT_DUPLICATE" }];
+      member.dedupeAssessment = { code: "NOT_DUPLICATE" };
     expect(
       buildConfiguredData(review, { assignee: { name: "Alex" } }, plan).status
         .tag,
@@ -163,7 +154,7 @@ describe("configured dedupe view model", () => {
     [
       "collection",
       (c) => {
-        c.data.details.notSet = "function:unlabelledCount(@.everyone)";
+        c.data.details.notSet = "function:count(@.everyone)";
       },
       "data.details.notSet",
     ],
@@ -175,7 +166,7 @@ describe("configured dedupe view model", () => {
       "data.status.tag",
     ],
     [
-      "label policy",
+      "removed label-specific function",
       (c) => {
         c.data.details.duplicate = "function:labelCount(@.cases, 'CUSTOM')";
       },
