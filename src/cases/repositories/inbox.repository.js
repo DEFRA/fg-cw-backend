@@ -4,6 +4,7 @@ import { db } from "../../common/mongo-client.js";
 import {
   claimExpiredAttempt,
   claimExpiredError,
+  deadLetterErrorKey,
   withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
@@ -108,14 +109,17 @@ export const updateDeadEvents = async () => {
         ],
       },
     },
-    {
-      $set: {
-        status: InboxStatus.DEAD_LETTER,
-        claimedAt: null,
-        claimExpiresAt: null,
-        claimedBy: null,
+    [
+      {
+        $set: {
+          status: InboxStatus.DEAD_LETTER,
+          errorKey: deadLetterErrorKey,
+          claimedAt: null,
+          claimExpiresAt: null,
+          claimedBy: null,
+        },
       },
-    },
+    ],
   );
   return results;
 };

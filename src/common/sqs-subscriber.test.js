@@ -12,17 +12,23 @@ vi.mock("./logger.js", () => ({
   },
 }));
 
+// Each test's queue listens on a port of its own, so a delete a finished
+// test still sends never reaches the next test's queue.
+const sqs = vi.hoisted(() => ({ endpoint: null }));
+
 vi.mock("./config.js", () => ({
   config: {
     get: vi.fn(
       (key) =>
         ({
-          "aws.endpointUrl": "http://localhost:3366",
+          "aws.endpointUrl": sqs.endpoint,
           "aws.region": "eu-west-2",
         })[key],
     ),
   },
 }));
+
+const queueUrl = () => `${sqs.endpoint}/000000000000/test-queue`;
 
 const createMd5 = (str) => createHash("md5").update(str).digest("hex");
 
@@ -112,27 +118,30 @@ const mockSqs = () => {
     });
   });
 
-  server.listen(3366);
-
-  return server;
+  return new Promise((resolve) => {
+    server.listen(0, "localhost", () => {
+      sqs.endpoint = `http://localhost:${server.address().port}`;
+      resolve(server);
+    });
+  });
 };
 
 describe("SqsSubscriber", () => {
-  let sqs;
+  let server;
 
-  beforeEach(() => {
-    sqs = mockSqs();
+  beforeEach(async () => {
+    server = await mockSqs();
   });
 
   afterEach(() => {
-    sqs.close();
+    server.close();
   });
 
   it("polls and processes messages", async () => {
     const messages = [];
 
     const subscriber = new SqsSubscriber({
-      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      queueUrl: queueUrl(),
       async onMessage(msg) {
         messages.push(msg);
       },
@@ -162,7 +171,7 @@ describe("SqsSubscriber", () => {
     const calls = [];
 
     const subscriber = new SqsSubscriber({
-      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      queueUrl: queueUrl(),
       async onMessage(body, attributes, metadata) {
         calls.push({ attributes, metadata, traceparent: getTraceParent() });
       },
@@ -187,7 +196,7 @@ describe("SqsSubscriber", () => {
 
   it("logs errors and continues polling", async () => {
     const subscriber = new SqsSubscriber({
-      queueUrl: "http://localhost:3366/000000000000/test-queue",
+      queueUrl: queueUrl(),
       async onMessage() {
         throw new Error("Processing error");
       },

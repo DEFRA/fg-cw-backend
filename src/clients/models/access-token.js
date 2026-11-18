@@ -22,6 +22,7 @@ export const apiClientErrors = {
   TOKEN_IN_USE: "API_TOKEN_IN_USE",
   TOKEN_ACTIVE: "API_TOKEN_ACTIVE",
   TOKEN_DUPLICATE: "API_TOKEN_DUPLICATE",
+  HAS_ACTIVE: "HAS_ACTIVE",
 };
 
 export const tokenNotFound = (tokenId) =>

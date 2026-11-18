@@ -86,6 +86,7 @@ describe("issueApiTokenUseCase", () => {
         revokedBy: null,
         inUse: false,
       },
+      newClient: false,
     });
     expect(JSON.stringify(result)).not.toContain(HASH);
   });
@@ -128,6 +129,35 @@ describe("issueApiTokenUseCase", () => {
       },
       security: { pmccode: "0705" },
     });
+  });
+
+  it("audits and answers that it created a client it was not told was new", async () => {
+    findByClient.mockResolvedValue([]);
+
+    const result = await issue({ newClient: undefined, clientId: "new-one" });
+
+    expect(result.newClient).toBe(true);
+    expect(auditWritten()[0].details.client.newClient).toBe(true);
+  });
+
+  it("refuses an unconfirmed issue beside active tokens, audited with the code", async () => {
+    findByClient.mockResolvedValue([
+      AccessToken.createMock(),
+      AccessToken.createMock({ revokedAt: new Date("2026-01-01T00:00:00Z") }),
+    ]);
+
+    const refusal = await issue({
+      newClient: undefined,
+      confirmed: false,
+    }).catch((error) => error);
+
+    expect(refusal.output.statusCode).toBe(409);
+    expect(refusal.output.payload).toMatchObject({
+      errorCode: "HAS_ACTIVE",
+      active: 1,
+    });
+    expect(insertToken).not.toHaveBeenCalled();
+    expect(auditWritten()[0].details.client.errorCode).toBe("HAS_ACTIVE");
   });
 
   it("logs its start and finish, never the hash", async () => {

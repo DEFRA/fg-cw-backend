@@ -28,6 +28,24 @@ const caseSeriesMemberSchema = Joi.object({
   closedAt: nullableIso,
 }).label("CaseSeriesMember");
 
+const positionNamesSchema = Joi.object({
+  phases: Joi.array()
+    .items(
+      Joi.object({ code: nullableString, name: nullableString }).label(
+        "PhaseName",
+      ),
+    )
+    .required()
+    .description("every phase of the version, in its order"),
+  stage: nullableString.required(),
+  status: nullableString.required(),
+})
+  .allow(null)
+  .description(
+    "the names of the case's version for its position; null when the case has no current version or it is not stored",
+  )
+  .label("PositionNames");
+
 export const caseSummarySchema = Joi.object({
   ...caseRow,
   originalConfigVersion: nullableString,
@@ -40,6 +58,7 @@ export const caseSummarySchema = Joi.object({
   })
     .allow(null)
     .label("CaseSeries"),
+  names: positionNamesSchema,
 }).label("CaseSummary");
 
 export const caseDataResponseSchema = Joi.object({

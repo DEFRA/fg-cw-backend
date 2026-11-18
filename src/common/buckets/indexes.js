@@ -2,6 +2,7 @@ import { logger } from "../logger.js";
 import { indexKeysOf } from "./bucket.js";
 
 const NAMESPACE_NOT_FOUND = 26;
+const INDEX_NOT_FOUND = 27;
 const NOT_PLAIN = ["partialFilterExpression", "sparse", "hidden", "collation"];
 
 const isSameKey = (key) => (index) =>
@@ -51,4 +52,18 @@ export const ensureIndexes = async (database, bucket) => {
 
     return index ? keepIndex(collection, index) : buildIndex(collection, key);
   }, Promise.resolve());
+};
+
+// An index already gone is dropped.
+export const dropIndex = async (collection, key) => {
+  try {
+    await collection.dropIndex(key);
+    logger.info(
+      `Dropped index ${JSON.stringify(key)} on ${collection.collectionName}`,
+    );
+  } catch (error) {
+    if (error.code !== INDEX_NOT_FOUND) {
+      throw error;
+    }
+  }
 };

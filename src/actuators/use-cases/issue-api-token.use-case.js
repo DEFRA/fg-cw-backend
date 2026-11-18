@@ -11,7 +11,7 @@ import { buildApiClientAudit } from "./api-client-audit.js";
 import { toApiTokenView } from "./list-api-clients.use-case.js";
 
 const issueApiToken = (
-  { clientId, tokenHash, tokenHint, expiresAt, newClient, operator },
+  { clientId, tokenHash, tokenHint, expiresAt, newClient, confirmed, operator },
   session,
 ) =>
   loggedAction(
@@ -27,6 +27,7 @@ const issueApiToken = (
         tokenHint,
         expiresAt,
         newClient,
+        confirmed,
         by: operator.name,
         now,
       });
@@ -38,6 +39,7 @@ const issueApiToken = (
 
       return {
         token: toApiTokenView(issued.token, { callerTokenId: null, now }),
+        newClient: issued.newClient,
       };
     },
   );
@@ -52,7 +54,7 @@ export const issueApiTokenAuditBuilder = (
       action: auditActions.ISSUE_API_TOKEN,
       clientId,
       tokenId: result?.token.tokenId,
-      newClient,
+      newClient: result?.newClient ?? newClient,
       operator,
       caller,
     },

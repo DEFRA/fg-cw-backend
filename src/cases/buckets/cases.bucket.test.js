@@ -28,16 +28,16 @@ describe("cw.cases", () => {
       workflowCode: {
         label: "Workflow",
         values: STORED,
-        toggle: null,
         within: null,
         param: "workflow",
+        nullAs: null,
       },
       currentConfigVersion: {
         label: "Version",
         values: null,
-        toggle: null,
         within: "workflowCode",
         param: "version",
+        nullAs: null,
       },
     });
   });

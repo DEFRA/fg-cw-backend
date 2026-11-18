@@ -6,6 +6,7 @@ import {
   queryBucket,
   readTimeline,
   seedCaseReaderToken,
+  summariseBucket,
 } from "../helpers/actuators.js";
 import { toRefs } from "../../src/common/buckets/refs.js";
 import { configRefsOf, toConfigLink } from "../../src/events/case-refs.js";
@@ -440,7 +441,7 @@ describe("POST /actuators/buckets/{bucketId}/query, cw.workflows", () => {
 });
 
 describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
-  it("lists audit rows with the messages only when they are asked for", async () => {
+  it("lists audit rows with the messages, on the date-only index", async () => {
     await outbox.insertMany([
       anOutboxRow(),
       anOutboxRow({
@@ -449,12 +450,16 @@ describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
       }),
     ]);
 
-    const hiding = await queryBucket("cw.outbox", {});
-    const showing = await queryBucket("cw.outbox", {
-      show: ["eventType"],
-    });
+    const all = await queryBucket("cw.outbox", {});
 
-    expect(hiding.payload.rows).toEqual([
+    expect(all.payload.plan).toMatchObject({
+      kind: "exact",
+      index: ["publicationDate", "_id"],
+      filled: [],
+      scans: 1,
+    });
+    expect(titlesOf(all).toSorted()).toEqual(["Audit", "CaseStatusUpdated"]);
+    expect(all.payload.rows).toContainEqual(
       expect.objectContaining({
         title: "CaseStatusUpdated",
         subtitle: "0b7c1d1e-0000-4000-8000-000000000001",
@@ -464,25 +469,10 @@ describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
           box: "outbox",
         }),
       }),
-    ]);
-    expect(hiding.payload.plan).toMatchObject({
-      kind: "exact",
-      index: ["eventType", "publicationDate", "_id"],
-      filled: ["eventType"],
-      scans: 3,
-    });
-    expect(showing.payload.plan).toMatchObject({
-      kind: "exact",
-      filled: ["eventType"],
-      scans: 4,
-    });
-    expect(titlesOf(showing).toSorted()).toEqual([
-      "Audit",
-      "CaseStatusUpdated",
-    ]);
+    );
   });
 
-  it("reads one event type on one scan of the key it leads", async () => {
+  it("reads one event type on one scan of its own index", async () => {
     await outbox.insertOne(anOutboxRow());
 
     const { payload } = await queryBucket("cw.outbox", {
@@ -496,6 +486,173 @@ describe("POST /actuators/buckets/{bucketId}/query, the outbox buckets", () => {
       scans: 1,
     });
     expect(payload.rows).toHaveLength(1);
+  });
+});
+
+describe("a dead letter an earlier release wrote with no error key", () => {
+  const NONE = "No error recorded";
+  const deadLetters = () => {
+    const { errorKey, ...unkeyed } = anOutboxRow({ status: "DEAD_LETTER" });
+
+    return [
+      anOutboxRow({ status: "DEAD_LETTER", errorKey: NONE }),
+      anOutboxRow({ status: "DEAD_LETTER", errorKey: null }),
+      unkeyed,
+      anOutboxRow({ status: "PURGED", errorKey: null }),
+      anOutboxRow({ status: "COMPLETED", errorKey: null }),
+      anOutboxRow({ status: "RESUBMITTED", errorKey: NONE }),
+    ];
+  };
+
+  it("is counted in Top errors under No error recorded, in one entry", async () => {
+    await outbox.insertMany(deadLetters());
+
+    const { payload } = await summariseBucket("cw.outbox", "errors", {});
+
+    expect(payload.entries).toEqual([
+      expect.objectContaining({
+        values: { errorKey: NONE, eventType: "CaseStatusUpdated" },
+        count: 3,
+      }),
+    ]);
+  });
+
+  it("is seen first and last in Top errors as it is counted", async () => {
+    const { errorKey, ...missing } = anOutboxRow({
+      status: "DEAD_LETTER",
+      publicationDate: minutesAgo(50),
+    });
+    await outbox.insertMany([
+      missing,
+      anOutboxRow({
+        status: "DEAD_LETTER",
+        errorKey: NONE,
+        publicationDate: minutesAgo(30),
+      }),
+      anOutboxRow({
+        status: "DEAD_LETTER",
+        errorKey: null,
+        publicationDate: minutesAgo(10),
+      }),
+    ]);
+
+    const { payload } = await summariseBucket("cw.outbox", "errors", {});
+
+    expect(payload.entries).toEqual([
+      expect.objectContaining({
+        count: 3,
+        firstAt: minutesAgo(50).toISOString(),
+        lastAt: minutesAgo(10).toISOString(),
+      }),
+    ]);
+  });
+
+  it("is seen in Top errors when no dead letter holds the key", async () => {
+    await outbox.insertMany(
+      [40, 20].map((minutes) =>
+        anOutboxRow({
+          status: "DEAD_LETTER",
+          errorKey: null,
+          publicationDate: minutesAgo(minutes),
+        }),
+      ),
+    );
+
+    const { payload } = await summariseBucket("cw.outbox", "errors", {});
+
+    expect(payload.entries).toEqual([
+      expect.objectContaining({
+        values: { errorKey: NONE, eventType: "CaseStatusUpdated" },
+        count: 2,
+        firstAt: minutesAgo(40).toISOString(),
+        lastAt: minutesAgo(20).toISOString(),
+      }),
+    ]);
+  });
+
+  it("is listed by the Error filter for No error recorded, exactly", async () => {
+    await outbox.insertMany(deadLetters());
+
+    const [dead, died, completed] = await Promise.all(
+      [["DEAD_LETTER"], ["DEAD_LETTER", "PURGED"], ["COMPLETED"]].map(
+        (status) =>
+          queryBucket("cw.outbox", {
+            where: { status, errorKey: NONE },
+            count: true,
+          }),
+      ),
+    );
+
+    expect(dead.payload.total).toEqual({ count: 3, capped: false });
+    expect(dead.payload.plan).toMatchObject({
+      kind: "exact",
+      bound: ["status", "errorKey"],
+    });
+    expect(died.payload.total).toEqual({ count: 4, capped: false });
+    expect(completed.payload.total).toEqual({ count: 0, capped: false });
+  });
+
+  it.each([
+    ["with no status asked", {}],
+    ["with a status asked", { status: ["DEAD_LETTER"] }],
+  ])(
+    "is counted the same in the list, All and its tile, %s",
+    async (_, status) => {
+      await outbox.insertMany(deadLetters());
+
+      const [{ payload }, { payload: all }] = await Promise.all(
+        [{ groupBy: ["status"], ...status }, {}].map(
+          ({ groupBy = [], ...where }) =>
+            queryBucket("cw.outbox", {
+              where: { ...where, errorKey: NONE },
+              groupBy,
+              count: true,
+            }),
+        ),
+      );
+      const [group] = payload.groups;
+      const tile = (value) =>
+        group.values.find((each) => each.value === value).count;
+
+      expect(tile("DEAD_LETTER")).toBe(3);
+      expect(tile("PURGED")).toBe(1);
+      expect(tile("RESUBMITTED")).toBe(1);
+      expect(tile("COMPLETED")).toBe(0);
+      expect(group.total).toEqual({ count: 5, capped: false });
+      expect(all.total).toEqual(group.total);
+      expect(all.rows).toHaveLength(5);
+    },
+  );
+
+  it("reads every branch of the Error filter on the error index", async () => {
+    await outbox.insertMany(deadLetters());
+    await db.command({ profile: 2 });
+
+    try {
+      await queryBucket("cw.outbox", {
+        where: { errorKey: NONE },
+        groupBy: ["status"],
+        count: true,
+      });
+    } finally {
+      await db.command({ profile: 0 });
+    }
+
+    const reads = (
+      await db
+        .collection("system.profile")
+        .find({ ns: outbox.namespace, planSummary: { $exists: true } })
+        .toArray()
+    ).filter(({ command }) => JSON.stringify(command).includes(NONE));
+    await db.collection("system.profile").drop();
+
+    expect(reads.length).toBeGreaterThan(0);
+    for (const { planSummary } of reads) {
+      expect(planSummary).not.toMatch(/COLLSCAN/);
+      expect(planSummary).toMatch(
+        /IXSCAN \{ status: 1, errorKey: 1, eventType: 1/,
+      );
+    }
   });
 });
 
@@ -687,7 +844,7 @@ describe("POST /actuators/buckets/{bucketId}/query, access and audit", () => {
           facts: ["workflowCode"],
           refKind: "ref",
           page: "first",
-          plan: "bounded",
+          plan: "exact",
           resultCount: 1,
           repeat: true,
         },

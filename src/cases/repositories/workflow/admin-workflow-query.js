@@ -16,3 +16,14 @@ export const storedWorkflowPipeline = ({ code, version }, include) => [
     ? []
     : [{ $project: WORKFLOW_SUMMARY_PROJECTION }]),
 ];
+
+// The names a case's position is shown by, and nothing else of the version.
+export const WORKFLOW_NAMES_PROJECTION = {
+  _id: 0,
+  "phases.code": 1,
+  "phases.name": 1,
+  "phases.stages.code": 1,
+  "phases.stages.name": 1,
+  "phases.stages.statuses.code": 1,
+  "phases.stages.statuses.name": 1,
+};

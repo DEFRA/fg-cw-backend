@@ -130,6 +130,14 @@ describe("ApiClient.issueToken", () => {
     ]);
   });
 
+  it("answers whether it created the client when told", () => {
+    expect(issue(ApiClient.createMock()).newClient).toBe(false);
+    expect(
+      issue(ApiClient.createMock({ tokens: [] }), { newClient: true })
+        .newClient,
+    ).toBe(true);
+  });
+
   it("refuses to issue for a client with no rows unless creating it", () => {
     const client = ApiClient.createMock({ tokens: [] });
 
@@ -137,5 +145,64 @@ describe("ApiClient.issueToken", () => {
       404,
       apiClientErrors.CLIENT_NOT_FOUND,
     ]);
+  });
+});
+
+describe("ApiClient.issueToken, deciding whether the client is new", () => {
+  const decide = (client, overrides = {}) =>
+    issue(client, { newClient: undefined, ...overrides });
+
+  it("creates a client that has no rows", () => {
+    expect(decide(ApiClient.createMock({ tokens: [] }))).toMatchObject({
+      newClient: true,
+      token: { clientId: "grants-ui" },
+    });
+  });
+
+  it("issues to a client whose rows are all inactive, unconfirmed", () => {
+    const client = ApiClient.createMock({ tokens: [revoked()] });
+
+    expect(decide(client, { confirmed: false }).newClient).toBe(false);
+  });
+
+  it("refuses an unconfirmed issue beside active tokens, counting them", () => {
+    const client = ApiClient.createMock({
+      tokens: [AccessToken.createMock(), AccessToken.createMock(), revoked()],
+    });
+
+    let refusal;
+    try {
+      decide(client, { confirmed: false });
+    } catch (error) {
+      refusal = error;
+    }
+
+    expect(refusal.output.statusCode).toBe(409);
+    expect(refusal.output.payload).toMatchObject({
+      errorCode: apiClientErrors.HAS_ACTIVE,
+      active: 2,
+    });
+  });
+
+  it("counts a token that has expired by now as inactive", () => {
+    const client = ApiClient.createMock({
+      tokens: [AccessToken.createMock({ expiresAt: EARLIER })],
+    });
+
+    expect(() => decide(client, { confirmed: false })).not.toThrow();
+  });
+
+  // The current GAS confirms by asking, and sends no confirmed.
+  it.each([
+    ["confirmed", { confirmed: true }],
+    ["not saying", {}],
+  ])("issues beside active tokens when %s", (_, overrides) => {
+    expect(decide(ApiClient.createMock(), overrides).newClient).toBe(false);
+  });
+
+  it("holds a caller that says whether the client is new to it, unchecked", () => {
+    expect(() =>
+      issue(ApiClient.createMock(), { newClient: false, confirmed: false }),
+    ).not.toThrow();
   });
 });

@@ -125,6 +125,24 @@ describe("queryRequestSchema", () => {
     });
   });
 
+  it("accepts several values of a fact", () => {
+    const body = { where: { status: ["DEAD_LETTER", "FAILED"] } };
+
+    const { error, value } = queryRequestSchema.validate(body);
+
+    expect(error).toBeUndefined();
+    expect(value.where).toEqual(body.where);
+  });
+
+  it.each([
+    ["no values", []],
+    ["more than 20 values", Array.from({ length: 21 }, (_, n) => `S${n}`)],
+  ])("refuses a fact with %s", (_why, values) => {
+    expect(
+      queryRequestSchema.validate({ where: { status: values } }).error,
+    ).toBeDefined();
+  });
+
   it("accepts every key", () => {
     const body = {
       where: { status: "DEAD_LETTER", source: "AS" },
@@ -135,6 +153,7 @@ describe("queryRequestSchema", () => {
       cursor: "eyJ0IjoiMjAyNi0xMC0wOVQwOTowMDowMC4wMDBaIn0",
       limit: 50,
       groupBy: ["status", "eventType"],
+      count: true,
     };
 
     expect(queryRequestSchema.validate(body)).toEqual({ value: body });
@@ -160,7 +179,7 @@ describe("queryRequestSchema", () => {
     ["an empty filter value", { where: { status: "" } }],
     ["a numeric filter value", { where: { status: 1 } }],
     ["a boolean filter value", { where: { status: true } }],
-    ["a list as a filter value", { where: { status: ["A", "B"] } }],
+    ["a list of numbers as a filter value", { where: { status: [1, 2] } }],
     ["a filter value over 200 characters", { where: { a: "x".repeat(201) } }],
     [
       "more than 8 filters",
@@ -266,25 +285,6 @@ describe("catalogueEntrySchema", () => {
   });
 
   it.each([
-    ["a toggle", { label: "Show hidden", param: "hidden" }, false],
-    ["a toggle with no label", { param: "hidden" }, true],
-    ["a toggle with no URL key", { label: "Show hidden" }, true],
-    [
-      "a toggle with a key it does not know",
-      { label: "Show", param: "hidden", off: 1 },
-      true,
-    ],
-  ])("%s on a fact: refused is %s", (_, toggle, refused) => {
-    const [status, source, ...facts] = entry().facts;
-    const toggled = {
-      ...entry(),
-      facts: [status, { ...source, toggle }, ...facts],
-    };
-
-    expect(Boolean(catalogueEntrySchema.validate(toggled).error)).toBe(refused);
-  });
-
-  it.each([
     ["grantCode", false],
     [null, false],
     [1, true],
@@ -303,23 +303,6 @@ describe("catalogueEntrySchema", () => {
       catalogueEntrySchema.validate({ ...entry(), facts: [older, ...facts] })
         .error,
     ).toBeUndefined();
-  });
-
-  it("accepts a value marked hidden", () => {
-    const [status, ...facts] = entry().facts;
-    const hiding = {
-      ...entry(),
-      facts: [
-        {
-          ...status,
-          values: [{ value: "A", label: "A", hidden: true }],
-          toggle: { label: "Show A", param: "a" },
-        },
-        ...facts,
-      ],
-    };
-
-    expect(catalogueEntrySchema.validate(hiding).error).toBeUndefined();
   });
 
   it.each([

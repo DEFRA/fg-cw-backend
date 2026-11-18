@@ -15,6 +15,8 @@ import {
   buildAuditSecurity,
 } from "../../common/audit-constants.js";
 import { buildOperatorSecurityContext } from "../../common/audit-security-context.js";
+import { findWorkflowNames } from "../../cases/repositories/workflow.repository.js";
+import { toPositionNames } from "../../cases/repositories/workflow/admin-workflow-row.js";
 import { auditedRead } from "../../common/audited-read.js";
 import { logger } from "../../common/logger.js";
 import { notFoundWithReason } from "../../common/not-found-with-reason.js";
@@ -32,6 +34,24 @@ const findSeriesOf = async ({ workflowCode, caseRef }) => {
   return { series, memberDocs };
 };
 
+// From the version the case is on now; null when it has none or it is not
+// stored.
+const findNamesOf = async (
+  workflowCode,
+  { currentConfigVersion, position },
+) => {
+  if (!currentConfigVersion) {
+    return null;
+  }
+
+  const workflow = await findWorkflowNames({
+    code: workflowCode,
+    version: currentConfigVersion,
+  });
+
+  return workflow && toPositionNames(workflow, position);
+};
+
 const viewCaseData = async ({ workflowCode, caseRef, include }) => {
   const [doc, { series, memberDocs }] = await Promise.all([
     findStoredCase({ workflowCode, caseRef }, include),
@@ -44,8 +64,10 @@ const viewCaseData = async ({ workflowCode, caseRef, include }) => {
 
   logger.info(`Read case document: ${doc.storedBytes} bytes`);
 
+  const summary = toCaseSummary(doc, series, memberDocs);
+
   return {
-    case: toCaseSummary(doc, series, memberDocs),
+    case: { ...summary, names: await findNamesOf(workflowCode, summary) },
     storedBytes: doc.storedBytes,
     ...(include === DOCUMENT_INCLUDE
       ? { document: toStoredDocument(doc) }

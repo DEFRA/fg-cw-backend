@@ -73,8 +73,47 @@ const applyInc = (doc, increments) => {
   return result;
 };
 
+const EXPRESSIONS = {
+  $literal: (_, value) => value,
+  $eq: (doc, [a, b]) => evaluate(doc, a) === evaluate(doc, b),
+  $cond: (doc, [test, then, otherwise]) =>
+    evaluate(doc, evaluate(doc, test) ? then : otherwise),
+  $ifNull: (doc, [value, fallback]) =>
+    evaluate(doc, value) ?? evaluate(doc, fallback),
+  $add: (doc, values) =>
+    values.reduce((sum, value) => sum + evaluate(doc, value), 0),
+};
+
+const isFieldPath = (expression) =>
+  typeof expression === "string" && expression.startsWith("$");
+
+const operatorOf = (expression) =>
+  Object.keys(expression ?? {}).find((key) => key in EXPRESSIONS);
+
+// The few aggregation expressions an update pipeline here uses.
+const evaluate = (doc, expression) => {
+  if (isFieldPath(expression)) {
+    return doc[expression.slice(1)];
+  }
+
+  const operator = operatorOf(expression);
+
+  return operator
+    ? EXPRESSIONS[operator](doc, expression[operator])
+    : expression;
+};
+
+const applyStage = (doc, { $set }) => ({
+  ...doc,
+  ...Object.fromEntries(
+    Object.entries($set).map(([key, value]) => [key, evaluate(doc, value)]),
+  ),
+});
+
 const applyUpdate = (doc, update) =>
-  applyInc({ ...doc, ...(update.$set ?? {}) }, update.$inc);
+  Array.isArray(update)
+    ? update.reduce(applyStage, doc)
+    : applyInc({ ...doc, ...(update.$set ?? {}) }, update.$inc);
 
 const capture = async (method, run, resolved = null) => {
   const spy = vi.fn().mockResolvedValue(resolved);
@@ -212,7 +251,7 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
       redriveDoc,
     );
 
-    expect(redriveDoc.$set).not.toHaveProperty("lastPurge");
+    expect(redriveDoc[0].$set).not.toHaveProperty("lastPurge");
     expect(redriven.lastPurge).toEqual(lastPurge);
   });
 
@@ -246,7 +285,7 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
       redriveDoc,
     );
 
-    expect(redriveDoc.$set.expireAt).toBeNull();
+    expect(redriveDoc[0].$set.expireAt).toBeNull();
     expect(redriven.expireAt).toBeNull();
   });
 
@@ -299,9 +338,9 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
   });
 
   it("would be unclaimable if the redrive left completionAttempts alone", () => {
-    const withoutReset = {
-      $set: { ...redriveDoc.$set, completionAttempts: MAX_RETRIES },
-    };
+    const withoutReset = [
+      { $set: { ...redriveDoc[0].$set, completionAttempts: MAX_RETRIES } },
+    ];
     const redriven = applyUpdate(aDeadLetter(), withoutReset);
     const published = applyUpdate(redriven, resubmittedUpdate);
 
@@ -368,12 +407,12 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
 
   it("would carry the old history past the counter if the redrive kept it", () => {
     const withoutClear = Object.fromEntries(
-      Object.entries(redriveDoc.$set).filter(
+      Object.entries(redriveDoc[0].$set).filter(
         ([key]) => key !== "attemptHistory",
       ),
     );
     const redriven = applyUpdate(
-      applyUpdate(aDeadLetterWithHistory(), { $set: withoutClear }),
+      applyUpdate(aDeadLetterWithHistory(), [{ $set: withoutClear }]),
       resubmittedUpdate,
     );
 

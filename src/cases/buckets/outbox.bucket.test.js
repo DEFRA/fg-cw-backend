@@ -28,7 +28,7 @@ describe("cw.outbox", () => {
       order: 30,
       noun: { one: "event", many: "events" },
       collection: "outbox",
-      lead: ["eventType"],
+      lead: [],
       time: { field: "publicationDate", type: "date", label: "Created" },
       audited: false,
       timeline: true,
@@ -46,11 +46,10 @@ describe("cw.outbox", () => {
     expect(bucket.facts.eventType).toMatchObject({
       label: "Event",
       values: [
-        { value: "Audit", label: "Audit", hidden: true },
+        { value: "Audit", label: "Audit" },
         { value: "case.status.updated", label: "case.status.updated" },
         { value: "Unrecognised", label: "Unrecognised" },
       ],
-      toggle: { label: "Show audit events" },
     });
   });
 
@@ -66,68 +65,50 @@ describe("cw.outbox", () => {
     expect(bucket.links).toEqual(["case"]);
   });
 
-  it("leads every index key with the event type", () => {
-    expect(bucket.lead).toEqual(["eventType"]);
+  it("keeps one index per filter shape, then its error lines and its refs", () => {
     expect(indexKeysOf(bucket).map(Object.keys)).toEqual([
+      ["publicationDate", "_id"],
+      ["status", "publicationDate", "_id"],
       ["eventType", "publicationDate", "_id"],
       ["eventType", "status", "publicationDate", "_id"],
-      ["eventType", "status", "lastError.name", "publicationDate", "_id"],
-      ["eventType", "status", "errorKey", "publicationDate", "_id"],
-      ["eventType", "refs", "publicationDate", "_id"],
+      ["status", "lastError.name", "publicationDate", "_id"],
+      ["status", "errorKey", "eventType", "publicationDate", "_id"],
+      ["refs", "publicationDate", "_id"],
     ]);
   });
 
-  it("reads every list exactly while audit rows are hidden, by filling the visible types", () => {
-    expect(choosePlan(bucket, [], false)).toEqual({
+  it.each([
+    ["nothing", [], []],
+    ["a status", ["status"], ["status"]],
+    ["a type", ["eventType"], ["eventType"]],
+    ["a type and a status", ["eventType", "status"], ["eventType", "status"]],
+  ])("reads %s exactly on its own index, in one scan", (_, asked, line) => {
+    expect(choosePlan(bucket, asked, false)).toEqual({
       kind: "exact",
-      line: [],
-      filled: ["eventType"],
+      line,
+      filled: [],
       residual: [],
     });
-    expect(choosePlan(bucket, ["status"], false)).toEqual({
-      kind: "exact",
-      line: ["status"],
-      filled: ["eventType"],
-      residual: [],
-    });
-    expect(choosePlan(bucket, ["eventType"], false)).toMatchObject({
-      kind: "exact",
-      line: [],
-      filled: [],
-    });
-    expect(choosePlan(bucket, ["status", "eventType"], false)).toMatchObject({
-      kind: "exact",
-      filled: [],
-    });
-    expect(choosePlan(bucket, [], true)).toMatchObject({
+    expect(scansOf(bucket, line, asked)).toBe(1);
+  });
+
+  it("reads a ref on its own index, filling nothing", () => {
+    expect(choosePlan(bucket, [], true)).toEqual({
       kind: "exact",
       line: "refs",
-      filled: ["eventType"],
+      filled: [],
+      residual: [],
     });
-    expect(scansOf(bucket, ["status"], ["status"])).toBe(3);
   });
 
-  it("reads them exactly with audit rows shown, by filling every type", () => {
-    const shown = ["eventType"];
-
-    expect(choosePlan(bucket, [], false, shown).kind).toBe("exact");
-    expect(choosePlan(bucket, ["status"], false, shown).kind).toBe("exact");
-    expect(choosePlan(bucket, [], true, shown).kind).toBe("exact");
-    expect(scansOf(bucket, ["status"], ["status"], shown)).toBe(4);
-  });
-
-  it("declares the short keys its filters and its switch take in URLs", () => {
+  it("declares the short keys its filters take in URLs", () => {
     expect(
-      Object.entries(bucket.facts).map(([name, { param, toggle }]) => [
-        name,
-        param,
-        toggle?.param ?? null,
-      ]),
+      Object.entries(bucket.facts).map(([name, { param }]) => [name, param]),
     ).toEqual([
-      ["status", "status", null],
-      ["eventType", "event", "audit"],
-      ["lastError.name", "errorname", null],
-      ["errorKey", "error", null],
+      ["status", "status"],
+      ["eventType", "event"],
+      ["lastError.name", "errorname"],
+      ["errorKey", "error"],
     ]);
   });
 
@@ -138,6 +119,26 @@ describe("cw.outbox", () => {
       shortLabel: "Events",
     });
     expect(bucket.tab).toBe("Outbox");
+  });
+
+  it("declares bins of its dead letters, read exactly on the status line", () => {
+    expect(bucket.bins).toEqual({ among: { status: "DEAD_LETTER" } });
+    expect(choosePlan(bucket, ["status"], false)).toMatchObject({
+      kind: "exact",
+      line: ["status"],
+    });
+  });
+
+  it("reads an error name exactly, with or without a status, never filling the types", () => {
+    expect(choosePlan(bucket, ["status", "lastError.name"], false)).toEqual({
+      kind: "exact",
+      line: ["status", "lastError.name"],
+      filled: [],
+      residual: [],
+    });
+    expect(
+      scansOf(bucket, ["status", "lastError.name"], ["lastError.name"]),
+    ).toBe(8);
   });
 
   it("declares its dead letters counted by error key and event type as Top errors, each entry an exact read", () => {
@@ -151,9 +152,17 @@ describe("cw.outbox", () => {
         none: "No error recorded",
       },
     ]);
-    expect(
-      choosePlan(bucket, ["status", "errorKey"], false, ["eventType"]),
-    ).toMatchObject({ kind: "exact", residual: [] });
+    expect(choosePlan(bucket, ["status", "errorKey"], false)).toMatchObject({
+      kind: "exact",
+      residual: [],
+    });
+  });
+
+  it("reads a dead or purged row an earlier release wrote with no error key as No error recorded", () => {
+    expect(bucket.facts.errorKey.nullAs).toEqual({
+      value: "No error recorded",
+      among: { status: ["DEAD_LETTER", "PURGED"] },
+    });
   });
 
   it("groups by status, and draws the status as a badge", () => {

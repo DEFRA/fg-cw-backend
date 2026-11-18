@@ -5,6 +5,7 @@ import {
   findStoredCase,
 } from "../../cases/repositories/case.repository.js";
 import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
+import { findWorkflowNames } from "../../cases/repositories/workflow.repository.js";
 import { auditStatus } from "../../common/audit-constants.js";
 import { logger } from "../../common/logger.js";
 import { withTransaction } from "../../common/with-transaction.js";
@@ -18,6 +19,7 @@ import { CASE_READER_CLIENT } from "../../common/require-case-reader.js";
 
 vi.mock("../../cases/repositories/case.repository.js");
 vi.mock("../../cases/repositories/case-series.repository.js");
+vi.mock("../../cases/repositories/workflow.repository.js");
 vi.mock("../../common/with-transaction.js");
 vi.mock("../../common/write-audit-event.js");
 vi.mock("../../common/logger.js", () => ({
@@ -51,6 +53,11 @@ const SUMMARY = {
   createdAt: "2026-06-16T10:00:00.000Z",
   originalConfigVersion: "1.0.0",
   currentConfigVersion: "1.2.0",
+  names: {
+    phases: [{ code: "PRE_AWARD", name: "Pre-award" }],
+    stage: "Review",
+    status: "New",
+  },
   series: {
     latestRef: "ref-2",
     refs: ["ref-1", "ref-2"],
@@ -80,7 +87,24 @@ const run = (include) =>
     caller: CASE_READER_CLIENT,
   });
 
+const WORKFLOW_NAMES = {
+  phases: [
+    {
+      code: "PRE_AWARD",
+      name: "Pre-award",
+      stages: [
+        {
+          code: "REVIEW",
+          name: "Review",
+          statuses: [{ code: "NEW", name: "New" }],
+        },
+      ],
+    },
+  ],
+};
+
 beforeEach(() => {
+  findWorkflowNames.mockResolvedValue(WORKFLOW_NAMES);
   withTransaction.mockImplementation((write) => write("the-session"));
   writeAuditEvent.mockResolvedValue(undefined);
   findStoredCase.mockResolvedValue(aStoredCase());
@@ -119,6 +143,30 @@ describe("viewCaseDataUseCase", () => {
       workflowCode: "frps",
       caseRefs: ["ref-1", "ref-2"],
     });
+  });
+
+  it("names the position from the version the case is on now", async () => {
+    await run();
+
+    expect(findWorkflowNames).toHaveBeenCalledWith({
+      code: "frps",
+      version: "1.2.0",
+    });
+  });
+
+  it("answers null names when the case's version is not stored", async () => {
+    findWorkflowNames.mockResolvedValue(null);
+
+    expect((await run()).case.names).toBeNull();
+  });
+
+  it("answers null names, reading none, for a case with no version", async () => {
+    findStoredCase.mockResolvedValue(
+      aStoredCase({ originalConfigVersion: null, currentConfigVersion: null }),
+    );
+
+    expect((await run()).case.names).toBeNull();
+    expect(findWorkflowNames).not.toHaveBeenCalled();
   });
 
   it("keeps a member whose case is missing in its place, with null facts", async () => {

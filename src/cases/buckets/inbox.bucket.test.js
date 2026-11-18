@@ -45,17 +45,6 @@ describe("cw.inbox", () => {
     ]);
   });
 
-  it("hides no type, and declares no toggle", () => {
-    expect(bucket.facts.eventType.toggle).toBeNull();
-    expect(bucket.facts.eventType.values.some(({ hidden }) => hidden)).toBe(
-      false,
-    );
-    expect(choosePlan(bucket, [], false)).toMatchObject({
-      kind: "exact",
-      line: [],
-    });
-  });
-
   it("declares its ref kinds: the reference, the trace and the event id", () => {
     expect(bucket.refs).toEqual({
       ref: "Reference",
@@ -73,7 +62,8 @@ describe("cw.inbox", () => {
     expect(indexKeysOf(bucket).map(Object.keys)).toEqual([
       ["publicationDate", "_id"],
       ["status", "publicationDate", "_id"],
-      ["status", "eventType", "publicationDate", "_id"],
+      ["eventType", "publicationDate", "_id"],
+      ["eventType", "status", "publicationDate", "_id"],
       ["status", "lastError.name", "publicationDate", "_id"],
       ["status", "errorKey", "eventType", "publicationDate", "_id"],
       ["refs", "publicationDate", "_id"],

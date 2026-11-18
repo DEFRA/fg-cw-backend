@@ -15,7 +15,10 @@ import { WorkflowTaskValueOption } from "../models/workflow-task-value-option.js
 import { WorkflowTask } from "../models/workflow-task.js";
 import { WorkflowTransition } from "../models/workflow-transition.js";
 import { Workflow } from "../models/workflow.js";
-import { storedWorkflowPipeline } from "./workflow/admin-workflow-query.js";
+import {
+  storedWorkflowPipeline,
+  WORKFLOW_NAMES_PROJECTION,
+} from "./workflow/admin-workflow-query.js";
 import { WorkflowDocument } from "./workflow/workflow-document.js";
 
 const collection = "workflows";
@@ -219,6 +222,15 @@ export const findStoredWorkflowRow = async (key, include) => {
 
   return doc ?? null;
 };
+
+export const findWorkflowNames = ({ code, version }) =>
+  db.collection(collection).findOne(
+    { code, version },
+    {
+      projection: WORKFLOW_NAMES_PROJECTION,
+      maxTimeMS: actuatorReadMaxTimeMs(),
+    },
+  );
 
 export const findStoredVersions = async (code, versions) => {
   const docs = await db
