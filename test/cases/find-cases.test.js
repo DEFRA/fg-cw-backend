@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caseData1, caseData2 } from "../fixtures/case.js";
-import { createAdminUser, TestUser } from "../helpers/users.js";
+import { createAdminUser, createUser, TestUser } from "../helpers/users.js";
 import { waitForDocuments } from "../helpers/wait-for-documents.js";
 import { createWorkflow } from "../helpers/workflows.js";
 import { wreck } from "../helpers/wreck.js";
@@ -267,6 +267,97 @@ describe("GET /cases", () => {
     expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
     expect(response.payload.data.cases[1].caseRef).toBe("UNRESTRCITED-CASE");
     expect(response.payload.data.cases[1].workflowCode).toBe("WF-1");
+  });
+
+  describe("filtered by assignedUserId", () => {
+    const seedCase = (caseRef, workflowCode, assignedUserId, minute) => ({
+      ...caseData1,
+      caseRef,
+      workflowCode,
+      assignedUserId,
+      createdAt: new Date(Date.UTC(2025, 0, 1, 0, minute)),
+    });
+
+    let me;
+    let otherUser;
+
+    beforeEach(async () => {
+      me = await createAdminUser();
+      otherUser = await createUser({
+        idpId: "11111111-2222-3333-4444-555555555555",
+        name: "Other Caseworker",
+        email: "other.caseworker@example.com",
+      });
+
+      await createWorkflow({
+        code: "woodland",
+        requiredRoles: { allOf: [], anyOf: [] },
+      });
+      await createWorkflow({
+        code: "pigs-might-fly",
+        requiredRoles: { allOf: [], anyOf: [] },
+      });
+      await createWorkflow({
+        code: "restricted",
+        requiredRoles: { allOf: ["ROLE_USER_DOES_NOT_HAVE"], anyOf: [] },
+      });
+    });
+
+    it("returns only cases assigned to that user, across case types", async () => {
+      await cases.insertMany([
+        seedCase("MINE-WOODLAND", "woodland", me.id, 1),
+        seedCase("MINE-PIGS", "pigs-might-fly", me.id, 2),
+        seedCase("OTHER-USERS", "woodland", otherUser.id, 3),
+        seedCase("UNASSIGNED", "pigs-might-fly", null, 4),
+        seedCase("MINE-RESTRICTED", "restricted", me.id, 5),
+      ]);
+
+      const response = await wreck.get(`/cases?assignedUserId=${me.id}`);
+
+      expect(response.res.statusCode).toBe(200);
+      expect(
+        response.payload.data.cases.map(
+          ({ caseRef, workflowCode, assignedUser }) => ({
+            caseRef,
+            workflowCode,
+            assignedUser,
+          }),
+        ),
+      ).toEqual([
+        {
+          caseRef: "MINE-PIGS",
+          workflowCode: "pigs-might-fly",
+          assignedUser: { id: me.id, name: me.name },
+        },
+        {
+          caseRef: "MINE-WOODLAND",
+          workflowCode: "woodland",
+          assignedUser: { id: me.id, name: me.name },
+        },
+      ]);
+    });
+
+    it("returns an empty list when the user has no assigned cases", async () => {
+      await cases.insertMany([
+        seedCase("OTHER-USERS", "woodland", otherUser.id, 1),
+        seedCase("UNASSIGNED", "pigs-might-fly", null, 2),
+      ]);
+
+      const response = await wreck.get(`/cases?assignedUserId=${me.id}`);
+
+      expect(response.res.statusCode).toBe(200);
+      expect(response.payload.data.cases).toEqual([]);
+      expect(response.payload.data.pagination).toMatchObject({
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    });
+
+    it("rejects a malformed assignedUserId", async () => {
+      await expect(
+        wreck.get("/cases?assignedUserId=not-an-id"),
+      ).rejects.toMatchObject({ output: { statusCode: 400 } });
+    });
   });
 
   it("writes a VIEW_CASE_LIST audit event to the outbox with the actor's security context", async () => {

@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { idSchema } from "../../common/schemas/user/id.schema.js";
 import { viewCaseListUseCase } from "../use-cases/view-case-list.use-case.js";
 
 export const findCasesRoute = {
@@ -9,6 +10,7 @@ export const findCasesRoute = {
     tags: ["api"],
     validate: {
       query: Joi.object({
+        assignedUserId: idSchema,
         search: Joi.string().allow(""),
         cursor: Joi.string(),
         direction: Joi.string().valid("forward", "backward").default("forward"),
