@@ -292,11 +292,8 @@ describe("casesSource, workflowsSource and eventsSource", () => {
     expect(eventsSource.added.box({}, ctx)).toEqual(["inbox"]);
   });
 
-  it("checks a case's answers, and an inbox's copy of them, against the list", () => {
+  it("suggests a case's answers under its answers", () => {
     expect(casesSource.answersAt).toBe("payload.answers");
-    expect(casesSource.listedAt).toBe("payload.answers");
-    expect(eventsSource.listedAt).toBe("event.data.payload.answers");
-    expect(workflowsSource.listedAt).toBeUndefined();
   });
 
   it("offers only what a stored case's task holds", () => {

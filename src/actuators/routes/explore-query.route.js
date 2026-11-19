@@ -36,7 +36,6 @@ export const exploreQueryRoute = {
     return exploreQueryUseCase({
       query: request.payload,
       operator: operatorOf(request),
-      caller: request.auth.credentials.service,
       timeLeftMs: request.headers["x-explore-time-left-ms"],
       signal: clientGoneSignal(request),
     });

@@ -3,7 +3,6 @@ import { refusalOf } from "./explore/refusal.js";
 
 const BAD_REQUEST = 400;
 const TOO_MANY_REQUESTS = 429;
-const SERVICE_UNAVAILABLE = 503;
 
 // An answer to what was asked, logged as one, never as a failure.
 const answerWith = (statusCode, payload) => {
@@ -19,10 +18,6 @@ const answerWith = (statusCode, payload) => {
 
 export const queryInvalid = () =>
   answerWith(BAD_REQUEST, { reason: "EXPLORE_QUERY_INVALID" });
-
-// Every value a query asks for is audited only as a digest with this key.
-export const queryUnauditable = () =>
-  answerWith(SERVICE_UNAVAILABLE, { reason: "EXPLORE_QUERY_UNAUDITABLE" });
 
 const ANSWERS = {
   INVALID: queryInvalid,

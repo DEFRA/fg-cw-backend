@@ -3,7 +3,6 @@ export const workflowsSource = {
   label: "Workflow versions, in Caseworking",
   service: "CW",
   size: "small",
-  requires: null,
   bucket: "cw.workflows",
   time: "receivedAt",
   noun: { one: "workflow version", many: "workflow versions" },

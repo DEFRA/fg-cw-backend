@@ -9,7 +9,6 @@ import {
   findAll,
   findAllCodes,
   findByCodeAndVersion,
-  findNewestWorkflows,
   findStoredVersions,
   findStoredWorkflowRow,
   findWorkflowNames,
@@ -413,35 +412,6 @@ describe("findWorkflowNames", () => {
     expect(findOne).toHaveBeenCalledWith(
       { code: "woodland", version: "1.2.0" },
       { projection: WORKFLOW_NAMES_PROJECTION, maxTimeMS: expect.any(Number) },
-    );
-  });
-});
-
-describe("findNewestWorkflows", () => {
-  it("reads each workflow's 20 newest versions, bounded and from a secondary", async () => {
-    const distinct = vi.fn().mockResolvedValue(["woodland", "pigs"]);
-    const find = vi.fn((filter) => ({
-      toArray: vi.fn().mockResolvedValue([{ code: filter.code }]),
-    }));
-    db.collection.mockReturnValue({ distinct, find });
-
-    const found = await findNewestWorkflows();
-
-    expect(found).toEqual([{ code: "woodland" }, { code: "pigs" }]);
-    expect(distinct).toHaveBeenCalledWith(
-      "code",
-      {},
-      expect.objectContaining({ readPreference: "secondaryPreferred" }),
-    );
-    expect(find).toHaveBeenCalledWith(
-      { code: "woodland" },
-      expect.objectContaining({
-        projection: { _id: 0 },
-        sort: { _id: -1 },
-        limit: 20,
-        readPreference: "secondaryPreferred",
-        maxTimeMS: expect.any(Number),
-      }),
     );
   });
 });

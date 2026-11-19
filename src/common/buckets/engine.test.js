@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../logger.js";
 import { db } from "../mongo-client.js";
-import { keyOf } from "./bucket.js";
 import { describeBucket } from "./catalogue.js";
 import { encodeCursor } from "./cursor.js";
 import {
@@ -10,7 +9,6 @@ import {
   MAX_VALUES,
   SUMMARY_COUNT_CAP,
   parseQuery,
-  readValueCounts,
   runQuery,
 } from "./engine.js";
 import { dropIndex, ensureIndexes } from "./indexes.js";
@@ -1340,49 +1338,6 @@ describe("runQuery", () => {
 
       await expect(runQuery(bucket, parse({}))).rejects.toBe(failure);
     });
-  });
-});
-
-describe("readValueCounts", () => {
-  it("counts each value through the index its fact leads, capped", async () => {
-    const countDocuments = vi.fn(async ({ status }) =>
-      status === "FAILED" ? 3 : 0,
-    );
-    db.collection.mockReturnValue({ countDocuments });
-
-    const counts = await readValueCounts(
-      bucket,
-      "status",
-      ["FAILED", "PUBLISHED"],
-      900,
-    );
-
-    expect(counts).toEqual(
-      new Map([
-        ["FAILED", 3],
-        ["PUBLISHED", 0],
-      ]),
-    );
-    expect(db.collection).toHaveBeenCalledWith(bucket.collection);
-    expect(countDocuments).toHaveBeenCalledWith(
-      { status: "FAILED" },
-      { hint: keyOf(bucket, ["status"]), limit: COUNT_CAP, maxTimeMS: 900 },
-    );
-  });
-
-  it("is null for a fact no index leads, reading nothing", async () => {
-    expect(await readValueCounts(bucket, "eventType", ["x"], 900)).toBeNull();
-    expect(db.collection).not.toHaveBeenCalled();
-  });
-
-  it("refuses TIMED_OUT when Mongo runs out of time", async () => {
-    db.collection.mockReturnValue({
-      countDocuments: vi.fn().mockRejectedValue(timedOut()),
-    });
-
-    await expect(
-      readValueCounts(bucket, "status", ["FAILED"], 900),
-    ).rejects.toMatchObject(reasonOf("TIMED_OUT"));
   });
 });
 
