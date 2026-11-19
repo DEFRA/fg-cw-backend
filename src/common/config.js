@@ -33,18 +33,6 @@ convict.addFormat({
   coerce: Number,
 });
 
-const MIN_SEARCH_AUDIT_KEY_LENGTH = 32;
-
-convict.addFormat({
-  name: "search-audit-key",
-  validate: function validateSearchAuditKey(value) {
-    Joi.assert(
-      value,
-      Joi.string().min(MIN_SEARCH_AUDIT_KEY_LENGTH).allow(null),
-    );
-  },
-});
-
 convict.addFormats(convictFormatWithValidator);
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -343,14 +331,6 @@ export const config = convict({
       default: false,
       env: "METRICS_ENABLED",
     },
-  },
-  searchAuditKey: {
-    doc: "Keys the digest of each value an Explore query asks for, in its audit; without it every Explore query is refused. The same key as GAS's.",
-    format: "search-audit-key",
-    nullable: true,
-    default: null,
-    sensitive: true,
-    env: "SEARCH_AUDIT_KEY",
   },
   workflowDefinitionCacheEnabled: {
     doc: "Enable the process-level workflow definition cache. Disabled for integration tests.",

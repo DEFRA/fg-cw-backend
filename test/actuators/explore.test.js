@@ -112,8 +112,9 @@ describe("GET /actuators/explore/sources", () => {
       time: "createdAt",
       star: ["caseRef", "workflowCode", "currentStatus", "createdAt"],
       answersAt: "payload.answers",
-      listedAt: "payload.answers",
     });
+    expect(cases).not.toHaveProperty("answerPaths");
+    expect(cases).not.toHaveProperty("listedAt");
     expect(cases.roots).not.toContain("comments");
     expect(cases.paths).toContainEqual(
       expect.objectContaining({ path: "caseRef", index: "ref" }),
@@ -138,21 +139,6 @@ describe("GET /actuators/explore/sources", () => {
     expect(events.roots).toEqual(expect.arrayContaining(["service", "box"]));
     expect(events.roots).not.toContain("event");
     expect(JSON.stringify(payload)).not.toContain('"fields"');
-  });
-
-  it("names the answer paths a Query may read where it checks them", async () => {
-    const { payload } = await listExploreSources();
-    const [cases, workflows, events] = payload.sources;
-
-    expect(cases.answerPaths).toEqual(
-      expect.arrayContaining([
-        "applicant.business.name",
-        "application.parcel.parcelId",
-      ]),
-    );
-    expect(workflows.answerPaths).toBeUndefined();
-    expect(events.listedAt).toBe("event.data.payload.answers");
-    expect(events.answerPaths).toEqual(cases.answerPaths);
   });
 
   it("gives closed paths their known values, stored ones read from the index", async () => {
@@ -187,7 +173,7 @@ describe("GET /actuators/explore/sources", () => {
 });
 
 describe("POST /actuators/explore/query", () => {
-  it("reads cases exactly, answers too, rows per box, and audits the shape", async () => {
+  it("reads cases exactly, answers too, rows per box, and audits only that it was queried", async () => {
     await db.collection("cases").insertMany([1, 2, 3].map((n) => aCase(n)));
 
     const { payload } = await queryExplore(query());
@@ -227,14 +213,11 @@ describe("POST /actuators/explore/query", () => {
       ],
       details: {
         source: "cases",
-        read: "exact",
-        shape: `db.cases.find({ workflowCode: ? }, { caseRef: 1, '${BUSINESS}': 1 }).limit(?)`,
-        conditions: [{ path: "workflowCode", op: "eq" }],
-        window: "first",
         resultCount: 3,
         outcome: "ANSWERED",
       },
     });
+    expect(audit.event.audit.details).not.toHaveProperty("shape");
   });
 
   it("reads a case by its reference exactly, as stored, through the refs index", async () => {
@@ -636,12 +619,6 @@ describe("POST /actuators/explore/query", () => {
   });
 
   it.each([
-    [
-      "an answer off its own list",
-      query({
-        columns: [{ path: "payload.answers.anyOtherAnswer.secretish" }],
-      }),
-    ],
     ["a case's comments", query({ columns: [{ path: "comments.text" }] })],
     ["a case's timeline", query({ columns: [{ path: "timeline" }] })],
     [
@@ -658,18 +635,6 @@ describe("POST /actuators/explore/query", () => {
         source: "events",
         columns: [{ path: "event.audit.details.security.actor.email" }],
         where: null,
-      }),
-    ],
-    [
-      "an inbox's answer off the list",
-      query({
-        source: "events",
-        columns: [{ path: "eventType" }],
-        where: {
-          path: "event.data.payload.answers.anyOtherAnswer.secretish",
-          op: "filled",
-          values: [],
-        },
       }),
     ],
   ])("refuses %s, reading and auditing nothing", async (_, payload) => {

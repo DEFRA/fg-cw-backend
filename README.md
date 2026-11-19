@@ -97,9 +97,8 @@ meant to end. Every module may enter it; it enters no module.
 `src/cases/explore/` declares the `cases` and `workflows` sources and
 `src/events/explore/` the `events` source. Each imports its own module and
 `src/common/` and nothing else, and is registered at startup like a bucket.
-The actuators' Explore support (`src/actuators/explore/`: the answer list,
-the limits, and the sources as registered) reads them only through that
-registry. See [Explore](#explore).
+The actuators' Explore support (`src/actuators/explore/`: the limits and
+the sources as registered) reads them only through that registry. See [Explore](#explore).
 
 `src/cases/events/` - the per-context folder holding published event shapes -
 is a different thing that shares a word: one context's outbound vocabulary,
@@ -489,41 +488,31 @@ module that owns its records, in that module's `explore/` folder
 by the cases plugin with `registerExploreSource`
 (`src/common/explore-sources/registry.js`), as it registers its buckets.
 The actuators read them only through that registry: `src/actuators/explore/`
-resolves each source's buckets and holds the answer list and the limits.
+resolves each source's buckets and holds the limits.
 `src/actuators/explore/sources.test.js` lists every source's roots and
 paths, so a change to what may be read shows there.
 `src/common/explore/` is the same code as fg-gas-backend's: the Query
-rules, the path grammar and deny list, the planner, the reader and the
-audit. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file
+rules, the path grammar and deny list, the planner and the reader. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file
 to that copy, and each `src/common/buckets/` file it imports, directly or
 through another; this service's read timeout comes from
 `src/common/read-timeout.js`. Two routes serve
 fg-gas-backend, and only that client:
 
 - `GET /actuators/explore/sources` - the Query versions this service reads
-  and its sources: each one's roots, its paths with their types, indexes and
-  known values, and for cases and events the answer paths a Query may read
-  (at most 2,000; a longer list is cut, and the cut logged).
+  and its sources: each one's roots, and its paths with their types, indexes
+  and known values.
 - `POST /actuators/explore/query` - this service's part of one Query: rows
   per box, or the groups it counted. A cell shows an object, other than a
   name, inline as text: every field of it that may be read, with denied names
-  and answers off the answer list left out. It takes the operator headers and
+  left out. It takes the operator headers and
   `x-explore-time-left-ms` (at most 10,000), and reads for no longer from
   when it arrived. A Query that fails its rules is refused
-  `400 EXPLORE_QUERY_INVALID`, one that reads a path off the source's lists
-  `400 EXPLORE_QUERY_REFUSED` (`PATH_NOT_ALLOWED`), and a second one of the
-  same operator while the first runs `429`. Each part
-  is audited as `EXPLORE_QUERY` with its shape, the columns asked for (the
-  deny list fixes what may be read below a column, so the column says what an
-  object could show) and every value only as an HMAC digest keyed by
-  `SEARCH_AUDIT_KEY`; without the key every query is
-  refused `503 EXPLORE_QUERY_UNAUDITABLE` before anything is read. A refusal
-  is logged as one info line naming its reason, with no stack.
-
-A case's answers, and the inbox's copy of an application's answers in an
-event (`event.data.payload.answers`), are read only on the answer list: the
-paths a case's support questions read, and those the newest 20 versions of
-each stored workflow reference, kept 5 minutes.
+  `400 EXPLORE_QUERY_INVALID`, one that reads a path off the source's roots
+  or a denied one `400 EXPLORE_QUERY_REFUSED` (`PATH_NOT_ALLOWED`), and a
+  second one of the same operator while the first runs `429`. Each part is
+  audited as `EXPLORE_QUERY` with the operator, the source, the outcome and
+  the rows found, never what was asked. A refusal is logged as one info line
+  naming its reason, with no stack.
 
 ### Case actuators
 

@@ -1,6 +1,5 @@
 import Boom from "@hapi/boom";
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
-import { SECONDARY } from "../../common/buckets/engine.js";
 import { db } from "../../common/mongo-client.js";
 import { Position } from "../models/position.js";
 import { RequiredAppRoles } from "../models/required-app-roles.js";
@@ -246,36 +245,6 @@ export const findStoredVersions = async (code, versions) => {
     .toArray();
 
   return new Set(docs.map(({ version }) => version));
-};
-
-const ANSWER_VERSIONS = 20;
-
-// Each workflow's newest stored versions as stored, never made Workflows: a
-// read model for Explore, which lists the answers their text references.
-export const findNewestWorkflows = async () => {
-  const maxTimeMS = actuatorReadMaxTimeMs();
-  const codes = await db
-    .collection(collection)
-    .distinct("code", {}, { maxTimeMS, readPreference: SECONDARY });
-  const versions = await Promise.all(
-    codes.map((code) =>
-      db
-        .collection(collection)
-        .find(
-          { code },
-          {
-            projection: { _id: 0 },
-            sort: { _id: -1 },
-            limit: ANSWER_VERSIONS,
-            maxTimeMS,
-            readPreference: SECONDARY,
-          },
-        )
-        .toArray(),
-    ),
-  );
-
-  return versions.flat();
 };
 
 export const saveFromDefinition = async (workflowDefinition, version) => {

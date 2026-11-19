@@ -1,35 +1,28 @@
-import { setTimeout } from "node:timers/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
 import { casesSource } from "../../cases/explore/cases.source.js";
 import { workflowsSource } from "../../cases/explore/workflows.source.js";
-import { findNewestWorkflows } from "../../cases/repositories/workflow.repository.js";
-import { config } from "../../common/config.js";
 import {
   clearExploreSources,
   registerExploreSource,
 } from "../../common/explore-sources/registry.js";
-import { valueDigest } from "../../common/explore/digest.js";
 import { refuseQuery } from "../../common/explore/refusal.js";
 import { runPart } from "../../common/explore/run.js";
 import { logger } from "../../common/logger.js";
 import { writeAuditEvent } from "../../common/write-audit-event.js";
 import { eventsSource } from "../../events/explore/events.source.js";
-import { forgetAnswerList } from "./load-answer-list.use-case.js";
 import { exploreQueryUseCase } from "./explore-query.use-case.js";
 
 vi.mock("../../common/logger.js", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("../../common/explore/run.js");
-vi.mock("../../cases/repositories/workflow.repository.js");
 vi.mock("../../common/write-audit-event.js");
 vi.mock("../../common/with-transaction.js", () => ({
   withTransaction: (work) => work({ session: true }),
 }));
 
 const SENTINEL = "Sentinel Farm 4417";
-const KEY = "k".repeat(32);
 const OPERATOR = { id: OPERATOR_ID, name: OPERATOR_NAME };
 
 const BUSINESS = "payload.answers.applicant.business.name";
@@ -67,7 +60,6 @@ const ask = (asked = query(), timeLeftMs = 5000) =>
   exploreQueryUseCase({
     query: asked,
     operator: OPERATOR,
-    caller: "fg-gas-backend",
     timeLeftMs,
   });
 
@@ -75,24 +67,14 @@ const failure = (promise) => promise.catch((error) => error);
 
 const audits = () => writeAuditEvent.mock.calls.map(([event]) => event);
 
-const WORKFLOW = {
-  code: "woodland",
-  pages: { title: { text: "$.payload.answers.woodlandName" } },
-};
-
 beforeEach(() => {
   clearExploreSources();
   [casesSource, workflowsSource, eventsSource].forEach(registerExploreSource);
-  forgetAnswerList();
-  findNewestWorkflows.mockResolvedValue([WORKFLOW]);
-  vi.spyOn(config, "get").mockImplementation((key) =>
-    key === "searchAuditKey" ? KEY : undefined,
-  );
   writeAuditEvent.mockResolvedValue();
 });
 
 describe("exploreQueryUseCase", () => {
-  it("audits a part that skipped a record too large to search as partial, with the count", async () => {
+  it("audits a part that skipped a record too large to search as partial", async () => {
     runPart.mockResolvedValue({
       ...PART,
       boxes: [
@@ -112,11 +94,11 @@ describe("exploreQueryUseCase", () => {
 
     expect(audits()[0].details).toMatchObject({
       outcome: "PARTIAL",
-      skipped: 1,
+      resultCount: 0,
     });
   });
 
-  it("reads its source and audits its part, each value only as a digest", async () => {
+  it("reads its source and audits only that it was queried", async () => {
     runPart.mockResolvedValue(PART);
 
     expect(await ask()).toEqual(PART);
@@ -133,30 +115,15 @@ describe("exploreQueryUseCase", () => {
           entityid: "cases",
         },
       ],
-      details: {
-        caller: "fg-gas-backend",
-        source: "cases",
-        read: "windowed",
-        shape:
-          "db.cases.find({ $and: [{ workflowCode: ? }, { 'payload.answers.applicant.business.name': /?/ }] }, { caseRef: 1, 'payload.answers.applicant.business.name': 1 }).limit(?)",
-        conditions: [
-          {
-            path: "workflowCode",
-            op: "eq",
-            digests: [valueDigest(KEY, 'workflowCode:"w"')],
-          },
-          {
-            path: BUSINESS,
-            op: "regex",
-            digests: [valueDigest(KEY, `${BUSINESS}:/${SENTINEL}/i`)],
-          },
-        ],
-        window: "first",
-        resultCount: 2,
-        outcome: "ANSWERED",
-      },
       security: { pmccode: "0706" },
     });
+    expect(event.details).toEqual({
+      security: expect.any(Object),
+      source: "cases",
+      resultCount: 2,
+      outcome: "ANSWERED",
+    });
+    expect(JSON.stringify(event)).not.toContain("payload");
     expect(JSON.stringify(event)).not.toContain("entinel");
     expect(JSON.stringify(logger.info.mock.calls)).not.toContain("entinel");
   });
@@ -240,7 +207,6 @@ describe("exploreQueryUseCase", () => {
       exploreQueryUseCase({
         query: query(),
         operator: OPERATOR,
-        caller: "fg-gas-backend",
         timeLeftMs: 5000,
         signal: stopped.signal,
       }),
@@ -293,7 +259,6 @@ describe("exploreQueryUseCase", () => {
       exploreQueryUseCase({
         query: query(),
         operator: { ...OPERATOR, id: `${n}${OPERATOR_ID.slice(1)}` },
-        caller: "fg-gas-backend",
         timeLeftMs: 5000,
       }),
     );
@@ -307,25 +272,6 @@ describe("exploreQueryUseCase", () => {
     await vi.waitFor(() => expect(finishes).toHaveLength(2));
     finishes.forEach((finish) => finish(PART));
     await Promise.all(held);
-  });
-
-  it("refuses with 503 before any read, writing no audit, without its audit key", async () => {
-    config.get.mockReturnValue(null);
-    runPart.mockResolvedValue(PART);
-
-    const error = await failure(ask());
-
-    expect(error.output.statusCode).toBe(503);
-    expect(error.output.payload).toEqual({
-      statusCode: 503,
-      reason: "EXPLORE_QUERY_UNAUDITABLE",
-    });
-    expect(findNewestWorkflows).not.toHaveBeenCalled();
-    expect(runPart).not.toHaveBeenCalled();
-    expect(writeAuditEvent).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
-      "Explore can't audit queries: SEARCH_AUDIT_KEY isn't set",
-    );
   });
 
   it("logs its entry and its finish as one action, naming the source", async () => {
@@ -346,8 +292,7 @@ describe("exploreQueryUseCase", () => {
   });
 });
 
-const ALLOWED = "payload.answers.woodlandName";
-const FORGED = "payload.answers.anyOtherAnswer.secretish";
+const ANSWER = "payload.answers.anyOtherAnswer";
 
 const PATH_AT = {
   filter: (path) =>
@@ -425,18 +370,18 @@ const refusedFor = async (asked) => {
 
 describe("exploreQueryUseCase's paths", () => {
   it.each(Object.keys(PATH_AT))(
-    "reads an answer on its list, named in the %s",
+    "reads any answer below its roots, named in the %s",
     async (place) => {
       runPart.mockResolvedValue(PART);
 
-      expect(await ask(PATH_AT[place](ALLOWED))).toEqual(PART);
+      expect(await ask(PATH_AT[place](ANSWER))).toEqual(PART);
     },
   );
 
   it.each(Object.keys(PATH_AT))(
-    "refuses an answer off its list, named in the %s, reading, auditing and logging nothing of it",
+    "refuses a denied answer, named in the %s, reading, auditing and logging nothing of it",
     async (place) => {
-      await refusedFor(PATH_AT[place](FORGED));
+      await refusedFor(PATH_AT[place]("payload.answers.bank.secretish"));
     },
   );
 
@@ -445,8 +390,6 @@ describe("exploreQueryUseCase's paths", () => {
     ["the timeline", "timeline.secretish"],
     ["a denied name", "payload.bank.secretish"],
     ["an internal name", "payload._secretish"],
-    ["a list's parent", "payload.answers.applicant.business"],
-    ["the answers themselves", "payload.answers"],
   ])("refuses %s on cases", async (_, path) => {
     await refusedFor(PATH_AT.projection(path));
   });
@@ -456,19 +399,6 @@ describe("exploreQueryUseCase's paths", () => {
     ["a denied name", "payload.bank"],
   ])("refuses to unwind %s on cases", async (_, path) => {
     await refusedFor(PATH_AT.unwind(path));
-  });
-
-  it("passes the answer list it checked to the read", async () => {
-    runPart.mockResolvedValue(PART);
-
-    await ask(PATH_AT.unwind(ALLOWED));
-
-    expect(runPart).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({ at: "payload.answers" }),
-    );
   });
 
   it.each([
@@ -489,11 +419,6 @@ describe("exploreQueryUseCase's paths", () => {
     ],
     ["events", "event.ip", { columns: [{ path: "eventType" }] }],
     ["events", "claimedBy", { columns: [{ path: "eventType" }] }],
-    [
-      "events",
-      "event.data.payload.answers.anyOtherAnswer.secretish",
-      { columns: [{ path: "eventType" }] },
-    ],
   ])("refuses %s %s", async (source, path, rest) => {
     await refusedFor(
       query({
@@ -504,10 +429,13 @@ describe("exploreQueryUseCase's paths", () => {
     );
   });
 
-  it("refuses every path off its lists alike, naming none", async () => {
+  it("refuses every path off its roots or denied alike, naming none", async () => {
     await refusedFor(
       query({
-        columns: [{ path: "comments.secretish" }, { path: FORGED }],
+        columns: [
+          { path: "comments.secretish" },
+          { path: "payload.bank.secretish" },
+        ],
         where: null,
       }),
     );
@@ -515,6 +443,7 @@ describe("exploreQueryUseCase's paths", () => {
 
   it.each([
     ["events", { path: "event.data.payload.answers.woodlandName" }],
+    ["events", { path: "event.data.payload.answers.anyOtherAnswer" }],
     ["events", { path: "service" }],
     ["events", { path: "event.data.caseRef" }],
     ["workflows", { path: "definition.phases.stages.code" }],
@@ -526,114 +455,5 @@ describe("exploreQueryUseCase's paths", () => {
     await ask(query({ source, columns: [column], where: null }));
 
     expect(runPart).toHaveBeenCalled();
-  });
-
-  it("shows in its audit only the words its paths and answers are made of", async () => {
-    runPart.mockResolvedValue(PART);
-
-    await ask(
-      query({
-        columns: [
-          { path: "payload.answers.woodlandName" },
-          { path: "phases.stages.Jane-Smith" },
-        ],
-        where: {
-          path: "supplementaryData.JaneSmith",
-          op: "filled",
-          values: [],
-        },
-      }),
-    );
-
-    expect(audits()[0].details.shape).toBe(
-      "db.cases.find({ 'supplementaryData.?': { $exists: true } }, { 'payload.answers.woodlandName': 1, 'phases.stages.?': 1 }).limit(?)",
-    );
-    expect(audits()[0].details.conditions).toEqual([
-      { path: "supplementaryData.?", op: "filled" },
-    ]);
-  });
-
-  it("digests each value with its type", async () => {
-    runPart.mockResolvedValue(PART);
-
-    await ask(
-      query({
-        columns: [{ path: "caseRef" }],
-        where: {
-          path: "closed",
-          op: "in",
-          values: [true, "true", 1, null, { date: "2026-11-01" }],
-        },
-      }),
-    );
-
-    expect(audits()[0].details.conditions[0].digests).toEqual(
-      [
-        "closed:true",
-        'closed:"true"',
-        "closed:1",
-        "closed:null",
-        "closed:ISODate(2026-11-01T00:00:00.000Z)",
-      ].map((text) => valueDigest(KEY, text)),
-    );
-  });
-
-  it("counts GAS's time from arrival, loading its answer list included", async () => {
-    findNewestWorkflows.mockImplementation(async () => {
-      await setTimeout(200);
-
-      return [WORKFLOW];
-    });
-    runPart.mockResolvedValue(PART);
-
-    const started = Date.now();
-
-    await ask(PATH_AT.projection(ALLOWED), 2000);
-
-    const [[, , meter]] = runPart.mock.calls;
-
-    expect(meter.deadline - started).toBeLessThan(2100);
-  });
-
-  it("stops at its first check when GAS gave up while it loaded its answer list", async () => {
-    const stopped = new AbortController();
-
-    findNewestWorkflows.mockImplementation(async () => {
-      stopped.abort();
-
-      return [WORKFLOW];
-    });
-    runPart.mockImplementation(async (_, __, meter) =>
-      meter.deadline === 0 ? Promise.reject(refuseQuery("TOO_SLOW")) : PART,
-    );
-
-    const error = await failure(
-      exploreQueryUseCase({
-        query: PATH_AT.projection(ALLOWED),
-        operator: OPERATOR,
-        caller: "fg-gas-backend",
-        timeLeftMs: 5000,
-        signal: stopped.signal,
-      }),
-    );
-
-    expect(error.output.payload).toMatchObject({ refusal: "TOO_SLOW" });
-  });
-
-  it("never reads its workflows for a query without answers", async () => {
-    runPart.mockResolvedValue(PART);
-
-    await ask(query({ columns: [{ path: "caseRef" }], where: null }));
-
-    expect(findNewestWorkflows).not.toHaveBeenCalled();
-  });
-
-  it("fails, never refusing nor reading, when its workflows can't be read", async () => {
-    findNewestWorkflows.mockRejectedValueOnce(new Error("Mongo down"));
-
-    const error = await failure(ask(PATH_AT.projection(ALLOWED)));
-
-    expect(error.message).toBe("Mongo down");
-    expect(runPart).not.toHaveBeenCalled();
   });
 });

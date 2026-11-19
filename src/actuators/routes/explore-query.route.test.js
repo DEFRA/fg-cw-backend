@@ -65,7 +65,7 @@ beforeEach(() => {
 });
 
 describe("exploreQueryRoute", () => {
-  it("passes the Query, the operator and the caller, and answers its part never to be stored", async () => {
+  it("passes the Query and the operator, and answers its part never to be stored", async () => {
     const response = await post(QUERY);
 
     expect(response.statusCode).toBe(200);
@@ -74,7 +74,6 @@ describe("exploreQueryRoute", () => {
     expect(exploreQueryUseCase).toHaveBeenCalledWith({
       query: QUERY,
       operator: { id: OPERATOR_ID, name: OPERATOR_NAME },
-      caller: CASE_READER_CLIENT,
       timeLeftMs: 4500,
       signal: expect.any(AbortSignal),
     });
