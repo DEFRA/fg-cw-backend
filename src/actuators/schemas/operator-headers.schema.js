@@ -60,6 +60,16 @@ export const caseSearchHeaders = operatorHeaders
   })
   .label("CaseSearchHeaders");
 
+export const bucketQueryHeaders = caseSearchHeaders
+  .keys({
+    "x-read-time-left-ms": Joi.number()
+      .integer()
+      .min(1)
+      .max(MAX_TIME_MS)
+      .description("milliseconds the caller has left for this read"),
+  })
+  .label("BucketQueryHeaders");
+
 // An Explore query's part also says how long GAS has left, so Caseworking
 // stops in time.
 export const exploreHeaders = operatorHeaders

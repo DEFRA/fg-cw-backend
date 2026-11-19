@@ -1,9 +1,12 @@
 import process from "node:process";
 import { actuators } from "./actuators/index.js";
 import { cases } from "./cases/index.js";
+import { checkDeclaredIndexes } from "./common/buckets/indexes.js";
+import { listBuckets } from "./common/buckets/registry.js";
 import { config } from "./common/config.js";
 import { logConfigurationVariant } from "./common/configuration-variant.js";
 import { logger } from "./common/logger.js";
+import { db } from "./common/mongo-client.js";
 import { createServer } from "./server/index.js";
 import { users } from "./users/index.js";
 
@@ -21,3 +24,9 @@ const server = await createServer();
 await server.register([cases, users, actuators]);
 logConfigurationVariant(config, logger);
 await server.start();
+
+try {
+  await checkDeclaredIndexes(db, listBuckets());
+} catch (error) {
+  logger.error(error, "Declared index check failed");
+}

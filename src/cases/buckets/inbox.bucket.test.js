@@ -70,13 +70,9 @@ describe("cw.inbox", () => {
     ]);
   });
 
-  it("is the Inbox tab of its service's Events page", () => {
-    expect(bucket.page).toEqual({
-      id: "events",
-      label: "CW events",
-      shortLabel: "Events",
-    });
-    expect(bucket.tab).toBe("Inbox");
+  it("is a list of its own, on no page and under no tab", () => {
+    expect(bucket.page).toBeNull();
+    expect(bucket.tab).toBeNull();
   });
 
   it("declares its dead letters counted by error key and event type as Top errors, each entry an exact read", () => {

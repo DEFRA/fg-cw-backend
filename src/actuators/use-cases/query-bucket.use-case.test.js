@@ -1,6 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { auditedRead } from "../../common/audited-read.js";
-import { parseQuery, runQuery } from "../../common/buckets/engine.js";
+import {
+  parseQuery,
+  readTimeoutMs,
+  runQuery,
+} from "../../common/buckets/engine.js";
 import { refuse } from "../../common/buckets/refusal.js";
 import { findBucket } from "../../common/buckets/registry.js";
 import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
@@ -37,6 +41,8 @@ const QUERY = {
   cursor: null,
   plan: { kind: "exact" },
 };
+const NOW = Date.parse("2026-11-19T12:00:00.000Z");
+const CAP = 3000;
 const RESULT = {
   bucket: "cw.cases",
   plan: { kind: "exact" },
@@ -63,8 +69,14 @@ const ask = (bucketId, overrides) =>
 describe("queryBucketUseCase", () => {
   beforeEach(() => {
     audit.reads = 0;
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+    readTimeoutMs.mockReturnValue(CAP);
     parseQuery.mockReturnValue(QUERY);
     runQuery.mockResolvedValue(RESULT);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("is audited as a read that releases data", () => {
@@ -79,8 +91,26 @@ describe("queryBucketUseCase", () => {
     expect(await ask("cw.outbox")).toBe(RESULT);
     expect(findBucket).toHaveBeenCalledWith("cw.outbox");
     expect(parseQuery).toHaveBeenCalledWith(bucket, BODY);
-    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY);
+    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY, NOW + CAP);
     expect(audit.reads).toBe(0);
+  });
+
+  it("reads no longer than the caller has left", async () => {
+    const bucket = { id: "cw.inbox", audited: false };
+    findBucket.mockReturnValue(bucket);
+
+    await ask("cw.inbox", { timeLeftMs: 1200 });
+
+    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY, NOW + 1200);
+  });
+
+  it("reads no longer than its own cap, whatever the caller has left", async () => {
+    const bucket = { id: "cw.inbox", audited: false };
+    findBucket.mockReturnValue(bucket);
+
+    await ask("cw.inbox", { timeLeftMs: CAP + 1 });
+
+    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY, NOW + CAP);
   });
 
   it("reads an audited bucket through the audited read", async () => {
@@ -88,7 +118,17 @@ describe("queryBucketUseCase", () => {
     findBucket.mockReturnValue(bucket);
 
     expect(await ask("cw.cases")).toBe(RESULT);
-    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY);
+    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY, NOW + CAP);
+    expect(audit.reads).toBe(1);
+  });
+
+  it("reads an audited bucket no longer than the caller has left", async () => {
+    const bucket = { id: "cw.cases", audited: true };
+    findBucket.mockReturnValue(bucket);
+
+    await ask("cw.cases", { timeLeftMs: 1200 });
+
+    expect(runQuery).toHaveBeenCalledWith(bucket, QUERY, NOW + 1200);
     expect(audit.reads).toBe(1);
   });
 

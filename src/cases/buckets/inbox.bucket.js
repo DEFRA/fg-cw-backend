@@ -41,8 +41,6 @@ export const inboxBucket = () =>
     service: "CW",
     shortLabel: "Inbox",
     icon: "activity",
-    page: { id: "events", label: "CW events", shortLabel: "Events" },
-    tab: "Inbox",
     order: 40,
     noun: { one: "event", many: "events" },
     collection: "inbox",

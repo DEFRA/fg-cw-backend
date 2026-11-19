@@ -6,7 +6,11 @@ import {
 import { buildOperatorSecurityContext } from "../../common/audit-security-context.js";
 import { auditedRead } from "../../common/audited-read.js";
 import { BUCKET_ID } from "../../common/buckets/bucket.js";
-import { parseQuery, runQuery } from "../../common/buckets/engine.js";
+import {
+  parseQuery,
+  readTimeoutMs,
+  runQuery,
+} from "../../common/buckets/engine.js";
 import { refuse } from "../../common/buckets/refusal.js";
 import { findBucket } from "../../common/buckets/registry.js";
 import { logger } from "../../common/logger.js";
@@ -44,7 +48,7 @@ export const queryBucketAuditBuilder = (
 });
 
 const auditedQuery = auditedRead(
-  ({ bucket, query }) => runQuery(bucket, query),
+  ({ bucket, query, deadline }) => runQuery(bucket, query, deadline),
   queryBucketAuditBuilder,
 );
 
@@ -58,6 +62,13 @@ const bucketOf = (bucketId) => {
   return bucket;
 };
 
+// The caller's time counts from the read, and never past the cap.
+const deadlineOf = (timeLeftMs) => {
+  const cap = readTimeoutMs();
+
+  return Date.now() + Math.min(timeLeftMs ?? cap, cap);
+};
+
 // Parsed before the read, so a refused request writes no audit.
 export const queryBucketUseCase = async ({
   bucketId,
@@ -65,15 +76,18 @@ export const queryBucketUseCase = async ({
   operator,
   caller,
   repeat,
+  timeLeftMs,
 }) => {
   const bucket = bucketOf(bucketId);
   const query = parseQuery(bucket, body);
 
+  const deadline = deadlineOf(timeLeftMs);
+
   logger.info(`Query bucket ${bucket.id}`);
 
   const result = bucket.audited
-    ? await auditedQuery({ bucket, query, operator, caller, repeat })
-    : await runQuery(bucket, query);
+    ? await auditedQuery({ bucket, query, operator, caller, repeat, deadline })
+    : await runQuery(bucket, query, deadline);
 
   logger.info(`Finished: Query bucket (${result.rows.length} rows)`);
 
