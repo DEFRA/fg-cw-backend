@@ -2,6 +2,10 @@ import hapi from "@hapi/hapi";
 import { up } from "migrate-mongo";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearBuckets, listBuckets } from "../common/buckets/registry.js";
+import {
+  clearExploreSources,
+  listExploreSources,
+} from "../common/explore-sources/registry.js";
 import { logger } from "../common/logger.js";
 import { db, mongoClient } from "../common/mongo-client.js";
 import { DeadLetterGauge } from "../events/dead-letter-gauge.js";
@@ -33,6 +37,7 @@ describe("cases", () => {
     server = hapi.server();
     up.mockResolvedValue([]);
     clearBuckets();
+    clearExploreSources();
     createNewCaseSubscriber.start.mockResolvedValue();
     createUpdateStatusAgreementConsumer.start.mockResolvedValue();
     OutboxSubscriber.prototype.start = vi.fn().mockResolvedValue();
@@ -79,6 +84,25 @@ describe("cases", () => {
       "cw.inbox",
       "cw.cases",
       "cw.workflows",
+    ]);
+  });
+
+  it("registers its Explore sources once the migrations have run", async () => {
+    const registeredDuringMigrations = [];
+    up.mockImplementation(async () => {
+      registeredDuringMigrations.push(...listExploreSources());
+
+      return [];
+    });
+
+    await server.register(cases);
+    await server.initialize();
+
+    expect(registeredDuringMigrations).toEqual([]);
+    expect(listExploreSources().map(({ name }) => name)).toEqual([
+      "cases",
+      "workflows",
+      "events",
     ]);
   });
 

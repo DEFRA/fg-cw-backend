@@ -1,0 +1,24 @@
+import { sourcesSchema } from "../../common/explore/query-schema.js";
+import { safeResponseFailAction } from "../../common/validation.js";
+import { exploreSourcesUseCase } from "../use-cases/explore-sources.use-case.js";
+
+export const exploreSourcesRoute = {
+  method: "GET",
+  path: "/actuators/explore/sources",
+  options: {
+    description:
+      "The Explore Query versions this service reads, and its sources: each one's roots, its paths with their types, indexes and known values, and the answer paths a Query may read.",
+    auth: "public-api",
+    tags: ["api", "public-api"],
+    plugins: {
+      "hapi-swagger": { security: [{ serviceToken: [] }] },
+    },
+    response: {
+      schema: sourcesSchema,
+      failAction: safeResponseFailAction,
+    },
+  },
+  handler() {
+    return exploreSourcesUseCase();
+  },
+};

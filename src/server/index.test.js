@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import Boom from "@hapi/boom";
+import { describe, expect, it, vi } from "vitest";
+import { logger } from "../common/logger.js";
 import { createServer } from "./index.js";
 
 describe("server", () => {
@@ -89,5 +91,34 @@ describe("server", () => {
     });
 
     expect(response.statusCode).toBe(401);
+  });
+
+  it("logs an answer to a person's own mistake at its level, with no stack", async () => {
+    const info = vi.spyOn(logger, "info");
+    const error = vi.spyOn(logger, "error");
+    const server = await createServer();
+
+    server.route({
+      method: "POST",
+      path: "/asked",
+      options: { auth: false },
+      handler: () => {
+        throw new Boom.Boom("EXPLORE_QUERY_REFUSED", {
+          statusCode: 400,
+          data: { logLevel: "info" },
+        });
+      },
+    });
+
+    await server.initialize();
+
+    const { statusCode } = await server.inject({
+      method: "POST",
+      url: "/asked",
+    });
+
+    expect(statusCode).toBe(400);
+    expect(info).toHaveBeenCalledWith("400 /asked: EXPLORE_QUERY_REFUSED");
+    expect(error).not.toHaveBeenCalled();
   });
 });

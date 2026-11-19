@@ -79,9 +79,10 @@ export default [
                 "**/publishers/**",
                 "**/use-cases/**",
                 "**/events/**",
+                "**/actuators/explore/**",
               ],
               message:
-                "Use cases should only import common, events, repositories, models, publishers and other use cases",
+                "Use cases should only import common, events, repositories, models, publishers, the actuators' Explore support and other use cases",
             },
             {
               target: "**/publishers/**/!(*.test).js",
@@ -106,6 +107,45 @@ export default [
               message:
                 "The events domain may only import common infrastructure. " +
                 "See the System architecture section in README.md.",
+            },
+            {
+              // A module declares what Explore may read of its records,
+              // from what it and common infrastructure hold.
+              target: "src/cases/explore/**/!(*.test).js",
+              from: ["src/**/**"],
+              except: ["**/src/cases/**", "**/src/common/**"],
+              message:
+                "A module's Explore sources may only import that module and common infrastructure. " +
+                "See the Explore section in README.md.",
+            },
+            {
+              target: "src/events/explore/**/!(*.test).js",
+              from: ["src/**/**"],
+              except: ["**/src/events/**", "**/src/common/**"],
+              message:
+                "A module's Explore sources may only import that module and common infrastructure. " +
+                "See the Explore section in README.md.",
+            },
+            {
+              // The actuators read sources only as their modules registered
+              // them, through the Explore source registry.
+              target: "src/actuators/**/!(*.test).js",
+              from: ["src/*/explore/**"],
+              except: [
+                "**/src/actuators/explore/**",
+                "**/src/common/explore/**",
+              ],
+              message:
+                "The actuators read Explore sources only through the Explore source registry. " +
+                "See the Explore section in README.md.",
+            },
+            {
+              target: "src/common/**/!(*.test).js",
+              from: ["src/*/explore/**"],
+              except: ["**/src/common/explore/**"],
+              message:
+                "Common infrastructure may not import a module's Explore sources or the actuators' Explore support. " +
+                "See the Explore section in README.md.",
             },
           ],
         },

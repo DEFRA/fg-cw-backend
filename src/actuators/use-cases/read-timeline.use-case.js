@@ -1,4 +1,4 @@
-import { readTimeline } from "../../common/buckets/engine.js";
+import { readTimeline } from "../../common/buckets/timeline.js";
 import { logger } from "../../common/logger.js";
 
 // Not audited here: the caller's record page audits the operator's view.

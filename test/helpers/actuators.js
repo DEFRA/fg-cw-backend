@@ -150,3 +150,12 @@ export const fetchWorkflowDefinition = (code, version, { by }, headers = {}) =>
     withActor(`/actuators/workflows/${code}/versions/${version}/fetch`, by),
     { headers: asCaseReader(headers) },
   );
+
+export const listExploreSources = (headers = {}) =>
+  wreck.get("/actuators/explore/sources", { headers: asCaseReader(headers) });
+
+export const queryExplore = (payload, headers = {}) =>
+  wreck.post("/actuators/explore/query", {
+    headers: asCaseReader({ "x-explore-time-left-ms": "9500", ...headers }),
+    payload,
+  });
