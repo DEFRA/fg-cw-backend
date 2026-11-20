@@ -525,16 +525,29 @@ client:
 - `GET /actuators/explore/sources` - its sources: each one's paths with
   their types, indexes and known values (`_id` among them, an ObjectId read
   through the `_id` index on cases and events).
-- `POST /actuators/explore/query` - this service's part of one Query: rows
-  per box, or the groups it counted. A cell shows an object, other than a
-  name, inline as text, every field of it. It takes the operator headers and
-  `x-explore-time-left-ms` (at most 10,000), and reads for no longer from
-  when it arrived. A Query that fails its rules, a malformed path or a
-  projected `$` key among them, is refused `400 EXPLORE_QUERY_INVALID`, and
-  a second one of the same operator while the first runs `429`. Each part is
-  audited as `EXPLORE_QUERY` with the operator, the source, the outcome and
-  the rows found, never what was asked. A refusal is logged as one info line
-  naming its reason, with no stack.
+- `POST /actuators/explore/query` - this service's part of one Query: rows per
+  box, or the groups it counted. A cell shows an object, other than a name,
+  inline as text, every field of it; with documents asked for, a row also
+  carries its record's typed `_id`, unwind positions and BSON size. In the
+  `documents` mode it answers each row fg-gas-backend asks for (no
+  more than its limit, at most 5,000), by box and `_id`, in order: its
+  document exactly as stored (raw BSON in base64), or that it is gone, too
+  large to make, or unread past the bytes it is told it may send. Asked for
+  starts, it answers the rows in order up to the first it ran out of time or
+  work before, and says which in `ended`. An event's
+  comes with its service and box, and a workflow version's with its
+  definition, as stored or as projected, when the query names a path in it;
+  the bytes allowed count both. A fetch whose rows name another source's box,
+  an id that isn't `{ _id }` or positions that don't fit its unwind is refused
+  before any read. It takes the operator headers and `x-explore-time-left-ms`
+  (at most 10,000), and reads for no longer from when it arrived. A Query that
+  fails its rules, a malformed path or a projected `$` key among them, is
+  refused `400 EXPLORE_QUERY_INVALID`, and a second one of the same operator
+  while the first runs `429`. Each part is audited as `EXPLORE_QUERY` with the
+  operator, the source, the outcome and the rows found (for a `documents`
+  fetch, the documents sent), never what was asked; a fetch logs only the
+  bytes of the documents and joined records it sent. A refusal is logged as
+  one info line naming its reason, with no stack.
 
 ### Case actuators
 

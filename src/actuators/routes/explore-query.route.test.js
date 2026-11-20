@@ -1,3 +1,4 @@
+import { BSON, ObjectId } from "mongodb";
 import http from "node:http";
 import {
   afterAll,
@@ -27,7 +28,7 @@ vi.mock("../../common/logger.js", () => ({
 const SENTINEL = "Sentinel Farm 4417";
 
 const QUERY = {
-  v: 3,
+  v: 4,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }],
@@ -82,6 +83,7 @@ describe("exploreQueryRoute", () => {
   it.each([
     ["an unknown version", { ...QUERY, v: 1 }],
     ["a v2 Query", { ...QUERY, v: 2 }],
+    ["a v3 Query", { ...QUERY, v: 3 }],
     ["v1's field names", { ...QUERY, columns: [{ field: "ref" }] }],
     ["v1's answers", { ...QUERY, answers: {} }],
     ["an operator as a key", { ...QUERY, where: { $where: SENTINEL } }],
@@ -212,6 +214,161 @@ describe("exploreQueryRoute", () => {
     const response = await post(QUERY, { "x-test-client": CASE_READER_CLIENT });
 
     expect(response.statusCode).toBe(400);
+  });
+});
+
+const idOf = (hex) =>
+  BSON.serialize({ _id: ObjectId.createFromHexString(hex) }).toString("base64");
+
+const ID = idOf("6741a0c2e4b0f1a2b3c4d5e6");
+const OTHER = idOf("6741a0c2e4b0f1a2b3c4d5e7");
+
+const DOCUMENTS = {
+  ...QUERY,
+  mode: "documents",
+  documents: { whole: true, id: true, bytes: 80 },
+  rows: [{ box: "cw.cases", id: ID, at: [] }],
+};
+
+const docOf = (text) => BSON.serialize({ a: text }).toString("base64");
+
+const fetched = (doc, id = ID) => ({ box: "cw.cases", id, at: [], doc });
+
+describe("exploreQueryRoute's documents fetch", () => {
+  it("passes a fetch of 5,000 rows of the longest ids", async () => {
+    const rows = Array.from({ length: 5000 }, () => ({
+      box: `cw.${"a".repeat(61)}`,
+      id: "A".repeat(1400),
+      at: [2 ** 31, 2 ** 31, 2 ** 31, 2 ** 31],
+    }));
+
+    exploreQueryUseCase.mockResolvedValue({
+      documents: rows.map((row, n) => ({
+        ...row,
+        ...(n === 0 ? { gone: true } : { unread: true }),
+      })),
+    });
+
+    const response = await post({ ...DOCUMENTS, rows, limit: 5000 });
+
+    expect(response.statusCode).toBe(200);
+    expect(exploreQueryUseCase.mock.calls[0][0].query.rows).toHaveLength(5000);
+  });
+
+  it.each([
+    [
+      "with no allowance",
+      { ...DOCUMENTS, documents: { whole: true, id: true } },
+    ],
+    ["with no rows", { ...DOCUMENTS, rows: undefined }],
+    [
+      "of more rows than an answer holds",
+      {
+        ...DOCUMENTS,
+        rows: Array.from({ length: 5001 }, () => DOCUMENTS.rows[0]),
+        limit: 5000,
+      },
+    ],
+    [
+      "of more rows than its limit",
+      { ...DOCUMENTS, rows: [DOCUMENTS.rows[0], DOCUMENTS.rows[0]], limit: 1 },
+    ],
+    [
+      "from a box id over 64 characters",
+      {
+        ...DOCUMENTS,
+        rows: [{ ...DOCUMENTS.rows[0], box: `cw.${"a".repeat(62)}` }],
+      },
+    ],
+    ["rows outside a fetch", { ...QUERY, rows: DOCUMENTS.rows }],
+  ])("refuses a Query asking for documents %s", async (_, payload) => {
+    const response = await post(payload);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.result.reason).toBe("EXPLORE_QUERY_INVALID");
+    expect(exploreQueryUseCase).not.toHaveBeenCalled();
+  });
+
+  it("answers the documents it was asked for, within the bytes it may send", async () => {
+    const answer = { documents: [fetched(docOf("x".repeat(20)))] };
+
+    exploreQueryUseCase.mockResolvedValue(answer);
+
+    const response = await post(DOCUMENTS);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.result).toEqual(answer);
+  });
+
+  it("answers a first document larger than the bytes it may send, held whole", async () => {
+    const answer = { documents: [fetched(docOf("x".repeat(200)))] };
+
+    exploreQueryUseCase.mockResolvedValue(answer);
+
+    const response = await post({
+      ...DOCUMENTS,
+      documents: { ...DOCUMENTS.documents, bytes: 1 },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.result).toEqual(answer);
+  });
+
+  const TWO = {
+    ...DOCUMENTS,
+    rows: [DOCUMENTS.rows[0], { box: "cw.cases", id: OTHER, at: [] }],
+  };
+  const small = fetched(docOf("x".repeat(20)));
+  const other = fetched(docOf("z".repeat(20)), OTHER);
+  const unread = { ...fetched(undefined, OTHER), unread: true };
+
+  it("answers a row let go unread past the bytes it may send", async () => {
+    const answer = { documents: [small, unread] };
+
+    exploreQueryUseCase.mockResolvedValue(answer);
+
+    expect((await post(TWO)).result).toEqual(answer);
+  });
+
+  it("answers a row too large to make", async () => {
+    const answer = {
+      documents: [small, { ...fetched(undefined, OTHER), tooLarge: true }],
+    };
+
+    exploreQueryUseCase.mockResolvedValue(answer);
+
+    expect((await post(TWO)).result).toEqual(answer);
+  });
+
+  it.each([
+    [
+      "more bytes than it may send",
+      [small, fetched(docOf("y".repeat(40)), OTHER)],
+    ],
+    ["fewer entries than rows asked", [small]],
+    ["more entries than rows asked", [small, other, other]],
+    ["an entry for another row", [small, { ...other, at: [0] }]],
+    ["the rows in another order", [other, small]],
+    ["a later note", [small, { ...fetched(undefined, OTHER), later: 10 }]],
+    [
+      "the first row asked unread",
+      [{ ...fetched(undefined), unread: true }, other],
+    ],
+    ["a document with a note", [small, { ...other, gone: true }]],
+    ["a too large row with a document", [small, { ...other, tooLarge: true }]],
+    ["a document that isn't BSON", [small, fetched("bm90IGJzb24=", OTHER)]],
+  ])("never answers %s", async (_, documents) => {
+    exploreQueryUseCase.mockResolvedValue({ documents });
+
+    expect((await post(TWO)).statusCode).toBe(500);
+  });
+
+  it("answers one entry for each row asked, in its order", async () => {
+    const answer = { documents: [small, other] };
+
+    exploreQueryUseCase.mockResolvedValue(answer);
+
+    expect((await post(TWO)).result).toEqual(answer);
   });
 });
 
