@@ -8,7 +8,7 @@ vi.mock("../../common/logger.js", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-const SOURCES = { versions: [2], sources: [] };
+const SOURCES = { sources: [] };
 
 const get = async () =>
   (await serverFor(exploreSourcesRoute)).inject({
@@ -28,7 +28,7 @@ describe("exploreSourcesRoute", () => {
     expect(exploreSourcesRoute.options.auth).toBe("public-api");
   });
 
-  it("answers the versions it reads and its sources", async () => {
+  it("answers its sources", async () => {
     const response = await get();
 
     expect(response.statusCode).toBe(200);
@@ -36,7 +36,7 @@ describe("exploreSourcesRoute", () => {
   });
 
   it("answers 500 rather than a sources answer off its schema", async () => {
-    exploreSourcesUseCase.mockResolvedValue({ versions: [2] });
+    exploreSourcesUseCase.mockResolvedValue({});
 
     expect((await get()).statusCode).toBe(500);
   });

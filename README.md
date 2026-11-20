@@ -498,27 +498,40 @@ by the cases plugin with `registerExploreSource`
 (`src/common/explore-sources/registry.js`), as it registers its buckets.
 The actuators read them only through that registry: `src/actuators/explore/`
 resolves each source's buckets and holds the limits.
-`src/actuators/explore/sources.test.js` lists every source's roots and
-paths, so a change to what may be read shows there.
-`src/common/explore/` is the same code as fg-gas-backend's: the Query
-rules, the path grammar and deny list, the planner and the reader. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file
+`src/actuators/explore/sources.test.js` lists the paths every source
+suggests, so a change to them shows there. Every stored field of every
+record in these sources may be read. Explore only ever reads: its code is
+handed a collection only through `src/common/explore/read-only.js`, which
+has only a collection's reads, takes only their read options and refuses a
+pipeline with `$out` or `$merge`. `src/actuators/explore/read-only.test.js`
+checks the view's methods and scans the code statically: every file under
+`src` whose path names explore, and the shared `src/common/buckets/` files.
+It fails on a driver write method named as a property, a string or a
+destructured name, and on a write stage. Outside the view and the buckets
+files it also fails on `db.collection`, a dynamic import, an import of
+`mongo-client.js`, of `mongodb` beyond its BSON types or of the buckets
+engine beyond its pure helpers, and `readStoredValues` called without the
+view; and on an Explore file importing a module that reaches Mongo, the
+audit aside.
+fg-gas-backend's tests check the shared reader's reads as they run.
+`src/common/explore/` is the same code
+as fg-gas-backend's: the Query rules, the path grammar, the planner and the
+reader. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file
 to that copy, and each `src/common/buckets/` file it imports, directly or
 through another; this service's read timeout comes from
-`src/common/read-timeout.js`. Two routes serve
-fg-gas-backend, and only that client:
+`src/common/read-timeout.js`. Two routes serve fg-gas-backend, and only that
+client:
 
-- `GET /actuators/explore/sources` - the Query versions this service reads
-  and its sources: each one's roots, and its paths with their types, indexes
-  and known values.
+- `GET /actuators/explore/sources` - its sources: each one's paths with
+  their types, indexes and known values (`_id` among them, an ObjectId read
+  through the `_id` index on cases and events).
 - `POST /actuators/explore/query` - this service's part of one Query: rows
   per box, or the groups it counted. A cell shows an object, other than a
-  name, inline as text: every field of it that may be read, with denied names
-  left out. It takes the operator headers and
+  name, inline as text, every field of it. It takes the operator headers and
   `x-explore-time-left-ms` (at most 10,000), and reads for no longer from
-  when it arrived. A Query that fails its rules is refused
-  `400 EXPLORE_QUERY_INVALID`, one that reads a path off the source's roots
-  or a denied one `400 EXPLORE_QUERY_REFUSED` (`PATH_NOT_ALLOWED`), and a
-  second one of the same operator while the first runs `429`. Each part is
+  when it arrived. A Query that fails its rules, a malformed path or a
+  projected `$` key among them, is refused `400 EXPLORE_QUERY_INVALID`, and
+  a second one of the same operator while the first runs `429`. Each part is
   audited as `EXPLORE_QUERY` with the operator, the source, the outcome and
   the rows found, never what was asked. A refusal is logged as one info line
   naming its reason, with no stack.

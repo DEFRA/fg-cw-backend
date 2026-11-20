@@ -2,7 +2,6 @@ import {
   describeSource,
   knownValuesOf,
 } from "../../common/explore/describe.js";
-import { QUERY_VERSIONS } from "../../common/explore/query-schema.js";
 import { ownSources } from "../explore/sources.js";
 
 const withValues = async (source) => {
@@ -19,10 +18,9 @@ const withValues = async (source) => {
   };
 };
 
-// The Query versions Caseworking reads, and its sources as GAS checks queries
-// against them: what each may read, and each closed path with the values it
-// is known to hold.
+// Caseworking's sources as GAS checks queries against them: each one's known
+// paths, how each is indexed, and the values each closed path is known to
+// hold.
 export const exploreSourcesUseCase = async () => ({
-  versions: QUERY_VERSIONS,
   sources: await Promise.all(ownSources().map(withValues)),
 });

@@ -11,7 +11,6 @@ import {
   clearExploreSources,
   registerExploreSource,
 } from "../../common/explore-sources/registry.js";
-import { rootsOf } from "../../common/explore/describe.js";
 import { pathProblem } from "../../common/explore/paths.js";
 import { eventsSource } from "../../events/explore/events.source.js";
 import { findOwnSource, ownSources } from "./sources.js";
@@ -32,35 +31,18 @@ beforeEach(() => {
   [eventsSource, workflowsSource, casesSource].forEach(registerExploreSource);
 });
 
-const readableOf = (source) => ({
+const suggestedOf = (source) => ({
   name: source.name,
-  roots: rootsOf(source),
   paths: source.paths.map(({ path }) => path),
 });
 
 describe("ownSources", () => {
-  it("reads exactly these roots and paths of each source", () => {
-    expect(ownSources().map(readableOf)).toEqual([
+  it("suggests exactly these paths of each source", () => {
+    expect(ownSources().map(suggestedOf)).toEqual([
       {
         name: "cases",
-        roots: [
-          "caseRef",
-          "workflowCode",
-          "currentConfigVersion",
-          "originalConfigVersion",
-          "currentPhase",
-          "currentStage",
-          "currentStatus",
-          "createdAt",
-          "closed",
-          "closedAt",
-          "assignedUserId",
-          "payload",
-          "phases",
-          "supplementaryData",
-          "refs",
-        ],
         paths: [
+          "_id",
           "caseRef",
           "workflowCode",
           "currentConfigVersion",
@@ -85,25 +67,8 @@ describe("ownSources", () => {
       },
       {
         name: "workflows",
-        roots: [
-          "grantCode",
-          "version",
-          "major",
-          "minor",
-          "patch",
-          "status",
-          "fetchStatus",
-          "fetchAttempts",
-          "fetchedAt",
-          "receivedAt",
-          "definition.code",
-          "definition.version",
-          "definition.phases",
-          "definition.pages",
-          "definition.requiredRoles",
-          "definition.templates",
-        ],
         paths: [
+          "_id",
           "grantCode",
           "version",
           "status",
@@ -119,32 +84,8 @@ describe("ownSources", () => {
       },
       {
         name: "events",
-        roots: [
-          "eventType",
-          "status",
-          "publicationDate",
-          "eventTime",
-          "target",
-          "type",
-          "source",
-          "messageId",
-          "event.id",
-          "event.type",
-          "event.source",
-          "event.time",
-          "event.specversion",
-          "event.datacontenttype",
-          "event.data",
-          "completionAttempts",
-          "completionDate",
-          "lastResubmissionDate",
-          "lastError",
-          "errorKey",
-          "refs",
-          "service",
-          "box",
-        ],
         paths: [
+          "_id",
           "publicationDate",
           "service",
           "box",
@@ -171,6 +112,20 @@ describe("ownSources", () => {
         ],
       },
     ]);
+    expect(ownSources().filter((source) => "roots" in source)).toEqual([]);
+  });
+
+  it("declare _id as stored, read through the _id index on a big source", () => {
+    const idOf = (name) =>
+      findOwnSource(name).paths.find(({ path }) => path === "_id");
+
+    expect(idOf("cases")).toEqual({
+      path: "_id",
+      type: "objectId",
+      index: { id: true },
+    });
+    expect(idOf("events")).toEqual(idOf("cases"));
+    expect(idOf("workflows")).toEqual({ path: "_id", type: "objectId" });
   });
 
   it("reads each source's buckets from the bucket registry", () => {
@@ -188,7 +143,7 @@ describe("ownSources", () => {
   });
 
   it("lists a source it has no place for after the others", () => {
-    registerExploreSource({ name: "later", roots: [], paths: [] });
+    registerExploreSource({ name: "later", paths: [] });
 
     expect(ownSources().map(({ name }) => name)).toEqual([
       "cases",
@@ -228,9 +183,6 @@ const bucketsOf = (source) =>
 const declaresRef = (bucket, kind) =>
   Object.hasOwn(bucket.refs, kind) || bucket.links.includes(kind);
 
-const readable = (source) => (path) =>
-  pathProblem(path, { roots: rootsOf(source) });
-
 describe("casesSource, workflowsSource and eventsSource", () => {
   it.each(SOURCES)(
     "$name reads only facts, ref kinds and times its buckets declare",
@@ -252,12 +204,12 @@ describe("casesSource, workflowsSource and eventsSource", () => {
   );
 
   it.each(SOURCES)(
-    "$name lists each path once, may read every path it knows and shows, and opens a record",
+    "$name lists each path once, every one and its star paths well formed, and opens a record",
     (source) => {
       const paths = source.paths.map(({ path }) => path);
 
       expect(new Set(paths).size).toBe(paths.length);
-      expect([...paths, ...source.star].filter(readable(source))).toEqual([]);
+      expect([...paths, ...source.star].filter(pathProblem)).toEqual([]);
       expect(source.star).toContain(source.time);
       expect(typeof source.open).toBe("function");
     },
@@ -267,22 +219,6 @@ describe("casesSource, workflowsSource and eventsSource", () => {
     bucketsOf(source).forEach((bucket) =>
       expect(bucket.time.field).toBe(source.time),
     );
-  });
-
-  it.each([
-    [casesSource, "comments.text"],
-    [casesSource, "timeline.createdBy"],
-    [casesSource, "_id"],
-    [workflowsSource, "definition.endpoints.url"],
-    [workflowsSource, "definition.externalActions"],
-    [workflowsSource, "definition.definitions.agreementsService"],
-    [workflowsSource, "s3Key"],
-    [eventsSource, "event.audit.details.security.actor.email"],
-    [eventsSource, "event.ip"],
-    [eventsSource, "claimedBy"],
-    [eventsSource, "segregationRef"],
-  ])("%o can't read %s", (source, path) => {
-    expect(readable(source)(path)).not.toBeNull();
   });
 
   it("reads what the union adds to each event: its service and box", () => {

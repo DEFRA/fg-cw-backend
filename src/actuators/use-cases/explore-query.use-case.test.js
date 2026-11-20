@@ -28,7 +28,7 @@ const OPERATOR = { id: OPERATOR_ID, name: OPERATOR_NAME };
 const BUSINESS = "payload.answers.applicant.business.name";
 
 const query = (overrides = {}) => ({
-  v: 2,
+  v: 3,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }, { path: BUSINESS }],
@@ -370,7 +370,7 @@ const refusedFor = async (asked) => {
 
 describe("exploreQueryUseCase's paths", () => {
   it.each(Object.keys(PATH_AT))(
-    "reads any answer below its roots, named in the %s",
+    "reads any answer, named in the %s",
     async (place) => {
       runPart.mockResolvedValue(PART);
 
@@ -379,64 +379,54 @@ describe("exploreQueryUseCase's paths", () => {
   );
 
   it.each(Object.keys(PATH_AT))(
-    "refuses a denied answer, named in the %s, reading, auditing and logging nothing of it",
+    "refuses a malformed path, named in the %s, reading, auditing and logging nothing of it",
     async (place) => {
-      await refusedFor(PATH_AT[place]("payload.answers.bank.secretish"));
+      await refusedFor(PATH_AT[place]("payload.__proto__.secretish"));
     },
   );
 
   it.each([
-    ["a root it doesn't read", "comments.secretish"],
-    ["the timeline", "timeline.secretish"],
-    ["a denied name", "payload.bank.secretish"],
-    ["an internal name", "payload._secretish"],
-  ])("refuses %s on cases", async (_, path) => {
-    await refusedFor(PATH_AT.projection(path));
-  });
-
-  it.each([
-    ["a root it doesn't read", "comments"],
-    ["a denied name", "payload.bank"],
-  ])("refuses to unwind %s on cases", async (_, path) => {
-    await refusedFor(PATH_AT.unwind(path));
-  });
-
-  it.each([
+    ["cases", "comments.text", { columns: [{ path: "caseRef" }] }],
+    ["cases", "timeline.createdBy", { columns: [{ path: "caseRef" }] }],
+    ["cases", "payload.bank.secretish", { columns: [{ path: "caseRef" }] }],
+    ["cases", "payload._secretish", { columns: [{ path: "caseRef" }] }],
+    ["cases", "_id", { columns: [{ path: "caseRef" }] }],
+    ["cases", "payload.answers.$schema", { columns: [{ path: "caseRef" }] }],
     [
       "workflows",
-      "definition.endpoints.secretish",
+      "definition.endpoints.url",
       { columns: [{ path: "grantCode" }] },
     ],
     [
       "workflows",
-      "definition.externalActions.secretish",
+      "definition.externalActions.code",
       { columns: [{ path: "grantCode" }] },
     ],
     [
       "events",
-      "event.audit.details.secretish",
+      "event.audit.details.security",
       { columns: [{ path: "eventType" }] },
     ],
     ["events", "event.ip", { columns: [{ path: "eventType" }] }],
     ["events", "claimedBy", { columns: [{ path: "eventType" }] }],
-  ])("refuses %s %s", async (source, path, rest) => {
-    await refusedFor(
-      query({
-        source,
-        ...rest,
-        where: { path, op: "filled", values: [] },
-      }),
-    );
-  });
+  ])(
+    "reads %s %s, as nothing stored is withheld",
+    async (source, path, rest) => {
+      runPart.mockResolvedValue(PART);
 
-  it("refuses every path off its roots or denied alike, naming none", async () => {
+      expect(
+        await ask(
+          query({ source, ...rest, where: { path, op: "filled", values: [] } }),
+        ),
+      ).toEqual(PART);
+    },
+  );
+
+  it("refuses a Query with any malformed path, naming none", async () => {
     await refusedFor(
       query({
-        columns: [
-          { path: "comments.secretish" },
-          { path: "payload.bank.secretish" },
-        ],
-        where: null,
+        columns: [{ path: "comments.text" }, { path: "payload..secretish" }],
+        where: { path: "payload.$schema", op: "filled", values: [] },
       }),
     );
   });

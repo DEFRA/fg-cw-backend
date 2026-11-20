@@ -6,7 +6,6 @@ import {
 import { buildOperatorSecurityContext } from "../../common/audit-security-context.js";
 import { auditedRead } from "../../common/audited-read.js";
 import { oneAtATime } from "../../common/explore/busy.js";
-import { rootsOf } from "../../common/explore/describe.js";
 import { meterFor } from "../../common/explore/meter.js";
 import {
   keepsRules,
@@ -89,11 +88,10 @@ const meterOf = (deadline, signal) => {
   return meter;
 };
 
-// Every path the Query reads is checked against Caseworking's own roots and
-// deny list, and one off them refuses the whole Query: none is dropped to
-// read the rest.
-const checkPaths = (source, query) => {
-  if (refusedPathsOf(query, { roots: rootsOf(source) }) > 0) {
+// A Query reading a malformed path is refused here, before the audit, so it
+// writes none; the read's own check of it would be audited as a failure.
+const checkPaths = (query) => {
+  if (refusedPathsOf(query) > 0) {
     throw refuseQuery("PATH_NOT_ALLOWED");
   }
 };
@@ -102,7 +100,7 @@ const readPart = async ({ query, operator, timeLeftMs, signal }) => {
   const deadline = deadlineOf(timeLeftMs);
   const source = checkedSource(query);
 
-  checkPaths(source, query);
+  checkPaths(query);
 
   logger.info(`Explore query on ${source.name}`);
 

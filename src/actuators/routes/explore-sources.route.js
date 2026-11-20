@@ -7,7 +7,7 @@ export const exploreSourcesRoute = {
   path: "/actuators/explore/sources",
   options: {
     description:
-      "The Explore Query versions this service reads, and its sources: each one's roots, and its paths with their types, indexes and known values.",
+      "The Explore sources: each one's paths, with their types, indexes and known values.",
     auth: "public-api",
     tags: ["api", "public-api"],
     plugins: {

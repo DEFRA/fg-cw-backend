@@ -27,7 +27,7 @@ vi.mock("../../common/logger.js", () => ({
 const SENTINEL = "Sentinel Farm 4417";
 
 const QUERY = {
-  v: 2,
+  v: 3,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }],
@@ -81,15 +81,27 @@ describe("exploreQueryRoute", () => {
 
   it.each([
     ["an unknown version", { ...QUERY, v: 1 }],
+    ["a v2 Query", { ...QUERY, v: 2 }],
     ["v1's field names", { ...QUERY, columns: [{ field: "ref" }] }],
     ["v1's answers", { ...QUERY, answers: {} }],
     ["an operator as a key", { ...QUERY, where: { $where: SENTINEL } }],
-    ["an operator in a path", testOn("payload.$where")],
+    ["an operator as a path", testOn("$where")],
+    ["a lone $ in a path", testOn("payload.$")],
+    ["an all-positional path", testOn("phases.$[].code")],
     ["a positional path", testOn("phases.$.code")],
     ["a malformed path", testOn("payload..Sentinel Farm")],
     ["a prototype key in a path", testOn("payload.__proto__.x")],
-    ["a denied path", testOn("payload.bank.SentinelFarm")],
-    ["an internal path", testOn("_id")],
+    [
+      "an ObjectId not in lower case hex",
+      {
+        ...QUERY,
+        where: {
+          path: "_id",
+          op: "eq",
+          values: [{ oid: "6741A0C2E4B0F1A2B3C4D5E6" }],
+        },
+      },
+    ],
     [
       "a pattern over 64 characters",
       {
@@ -138,6 +150,48 @@ describe("exploreQueryRoute", () => {
     });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it.each([
+    ["_id in the filter", testOn("_id")],
+    ["_id as a column", { ...QUERY, columns: [{ path: "_id" }] }],
+    [
+      "_id as the sort",
+      { ...QUERY, orderBy: { path: "_id", fn: null, desc: true } },
+    ],
+    [
+      "an ObjectId as a value",
+      {
+        ...QUERY,
+        where: {
+          path: "_id",
+          op: "in",
+          values: [
+            { oid: "6741a0c2e4b0f1a2b3c4d5e6" },
+            { oid: "6741a0c2e4b0f1a2b3c4d5e7" },
+          ],
+        },
+      },
+    ],
+    [
+      "an ObjectId as a range's bound",
+      {
+        ...QUERY,
+        where: {
+          path: "_id",
+          op: "gte",
+          values: [{ oid: "6741a0c2e4b0f1a2b3c4d5e6" }],
+        },
+      },
+    ],
+    ["a $ key after the first segment", testOn("payload.answers.$schema")],
+    ["a path once denied", testOn("payload.bank.SentinelFarm")],
+    ["the timeline", testOn("timeline.createdBy")],
+  ])("passes a Query with %s", async (_, payload) => {
+    const response = await post(payload);
+
+    expect(response.statusCode).toBe(200);
+    expect(exploreQueryUseCase.mock.calls[0][0].query).toEqual(payload);
   });
 
   it.each([
