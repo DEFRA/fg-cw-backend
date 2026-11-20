@@ -456,9 +456,18 @@ catalogue), `POST /actuators/buckets/{bucketId}/query` and
 `POST /actuators/buckets/{bucketId}/summaries/{summaryId}` (a ranked count a
 bucket declares, such as an event list's top errors). A query takes the
 operator in two headers, `x-actor` (display name) and `x-actor-id` (Entra
-object id); a read of an `audited` bucket is audited as `QUERY_BUCKET` before
-any data is returned. A new list is a new declaration and an index migration,
-and needs no route.
+object id). A query may also say in `x-read-time-left-ms` (at most 10,000)
+how long its caller has left, and then reads for no longer than that, nor than
+the actuator's own time limit. A read of an `audited` bucket is audited as
+`QUERY_BUCKET` before any data is returned. A new list is a new declaration and
+an index migration, and needs no route.
+
+Once the server has started, every registered bucket is checked against the
+database: each index line it declares must exist as a plain index, and a
+closed fact that leads a line may hold only the values it declares, of the
+declared type. Each gap is logged as an error; none stops the service. A closed
+fact that leads no usable index is logged as not checked rather than read,
+since that read would scan the whole collection.
 
 A dead letter always holds an `errorKey`: its last error's key, or
 `No error recorded` when it died without one, so Top errors and the Error

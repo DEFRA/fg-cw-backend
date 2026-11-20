@@ -112,13 +112,9 @@ describe("cw.outbox", () => {
     ]);
   });
 
-  it("is the Outbox tab of its service's Events page", () => {
-    expect(bucket.page).toEqual({
-      id: "events",
-      label: "CW events",
-      shortLabel: "Events",
-    });
-    expect(bucket.tab).toBe("Outbox");
+  it("is a list of its own, on no page and under no tab", () => {
+    expect(bucket.page).toBeNull();
+    expect(bucket.tab).toBeNull();
   });
 
   it("declares bins of its dead letters, read exactly on the status line", () => {

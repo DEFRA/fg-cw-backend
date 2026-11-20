@@ -90,7 +90,16 @@ describe("queryBucketRoute", () => {
       operator: { id: OPERATOR_ID, name: OPERATOR_NAME },
       caller: CASE_READER_CLIENT,
       repeat: true,
+      timeLeftMs: undefined,
     });
+  });
+
+  it("passes on the time the caller has left", async () => {
+    await post({}, asGas({ "x-read-time-left-ms": "1200" }));
+
+    expect(queryBucketUseCase).toHaveBeenCalledWith(
+      expect.objectContaining({ timeLeftMs: 1200 }),
+    );
   });
 
   it("passes on the config link of a 64-character workflow code", async () => {
@@ -142,6 +151,12 @@ describe("queryBucketRoute", () => {
     ["no x-actor-id", { "x-actor-id": undefined }],
     ["an x-actor-id that is not a GUID", { "x-actor-id": "jane" }],
     ["an x-search-repeat other than 1", { "x-search-repeat": "yes" }],
+    ["no time left", { "x-read-time-left-ms": "0" }],
+    ["more time left than any read takes", { "x-read-time-left-ms": "10001" }],
+    [
+      "a time left that is not a whole number",
+      { "x-read-time-left-ms": "1.5" },
+    ],
   ])("refuses INVALID_REQUEST for %s", async (_name, headers) => {
     const response = await post({}, JSON.parse(JSON.stringify(asGas(headers))));
 

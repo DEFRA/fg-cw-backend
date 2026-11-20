@@ -41,8 +41,6 @@ export const outboxBucket = () =>
     service: "CW",
     shortLabel: "Outbox",
     icon: "activity",
-    page: { id: "events", label: "CW events", shortLabel: "Events" },
-    tab: "Outbox",
     order: 30,
     noun: { one: "event", many: "events" },
     collection: "outbox",

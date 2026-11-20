@@ -7,7 +7,7 @@ import {
   bucketQueryRequestSchema,
   bucketQueryResponseSchema,
 } from "../schemas/bucket.schema.js";
-import { caseSearchHeaders } from "../schemas/operator-headers.schema.js";
+import { bucketQueryHeaders } from "../schemas/operator-headers.schema.js";
 import { queryBucketUseCase } from "../use-cases/query-bucket.use-case.js";
 
 // A POST, so a searched ref travels in the body and never in a logged URL.
@@ -24,7 +24,7 @@ export const queryBucketRoute = {
     },
     cache: { otherwise: "no-store" },
     validate: {
-      headers: caseSearchHeaders,
+      headers: bucketQueryHeaders,
       payload: bucketQueryRequestSchema,
       failAction: bucketFailAction,
     },
@@ -40,6 +40,7 @@ export const queryBucketRoute = {
       operator: operatorOf(request),
       caller: request.auth.credentials.service,
       repeat: request.headers["x-search-repeat"] === "1",
+      timeLeftMs: request.headers["x-read-time-left-ms"],
     });
   },
 };
