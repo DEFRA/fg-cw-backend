@@ -67,26 +67,4 @@ describe("AccessTokenDocument", () => {
       ),
     ).toEqual(token);
   });
-
-  it("writes a stored row as relaxed Extended JSON, every field kept", () => {
-    const _id = new ObjectId();
-
-    expect(
-      AccessTokenDocument.toStored({
-        _id,
-        id: "aaa••••••aaa",
-        client: "grants-ui",
-        expiresAt: NOW,
-        revokedAt: null,
-        legacy: 1,
-      }),
-    ).toEqual({
-      _id: { $oid: _id.toHexString() },
-      id: "aaa••••••aaa",
-      client: "grants-ui",
-      expiresAt: { $date: "2026-11-04T12:00:00Z" },
-      revokedAt: null,
-      legacy: 1,
-    });
-  });
 });

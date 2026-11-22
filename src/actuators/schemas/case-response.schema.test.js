@@ -1,3 +1,4 @@
+import { BSON } from "mongodb";
 import { describe, expect, it } from "vitest";
 import { caseDataResponseSchema } from "./case-response.schema.js";
 
@@ -39,14 +40,30 @@ describe("caseDataResponseSchema", () => {
     ).toBeUndefined();
   });
 
-  it("accepts a document of any shape", () => {
+  it.each([
+    ["base64 of the document", BSON.serialize({ odd: 1 }).toString("base64")],
+    ["null, for a document past the cap", null],
+  ])("accepts as the document %s", (_, document) => {
     expect(
       caseDataResponseSchema.validate({
         case: { ...SUMMARY, series: null },
         storedBytes: 3600,
-        document: { payload: { x: [1, { y: null }] }, odd: 1 },
+        document,
       }).error,
     ).toBeUndefined();
+  });
+
+  it.each([
+    ["a decoded document", { payload: { x: 1 } }],
+    ["text that isn't base64", "not base64!"],
+  ])("refuses as the document %s", (_, document) => {
+    expect(
+      caseDataResponseSchema.validate({
+        case: { ...SUMMARY, series: null },
+        storedBytes: 3600,
+        document,
+      }).error,
+    ).toBeDefined();
   });
 
   it("accepts a member with every fact null", () => {

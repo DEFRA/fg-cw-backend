@@ -1,6 +1,10 @@
 import Boom from "@hapi/boom";
 import { ObjectId } from "mongodb";
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
+import {
+  RAW_CAP_BYTES,
+  readStoredDocuments,
+} from "../../common/explore/stored-document.js";
 import { db } from "../../common/mongo-client.js";
 import {
   dateCodec,
@@ -15,6 +19,7 @@ import { CaseTask } from "../models/case-task.js";
 import { Case } from "../models/case.js";
 import { Position } from "../models/position.js";
 import {
+  CASE_RAW_UNSET,
   seriesMembersCursor,
   storedCasePipeline,
 } from "./case/admin-case-query.js";
@@ -375,15 +380,35 @@ export const findSeriesMembers = (key) =>
     maxTimeMS: actuatorReadMaxTimeMs(),
   }).toArray();
 
-export const findStoredCase = async (key, include) => {
+export const findStoredCase = async (key) => {
   const [doc] = await db
     .collection(collection)
-    .aggregate(storedCasePipeline(key, include), {
+    .aggregate(storedCasePipeline(key), {
       maxTimeMS: actuatorReadMaxTimeMs(),
     })
     .toArray();
 
   return doc ?? null;
+};
+
+// The case's stored size and its document as stored, as base64 of its own
+// bytes, or null when it is stored in more than RAW_CAP_BYTES; null for no
+// such case.
+export const findStoredCaseDocument = async ({ workflowCode, caseRef }) => {
+  const [stored] = await readStoredDocuments(collection, {
+    match: { workflowCode, caseRef },
+    unset: CASE_RAW_UNSET,
+    maxBytes: RAW_CAP_BYTES,
+    limit: 1,
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  });
+
+  return stored
+    ? {
+        storedBytes: stored.storedBytes,
+        document: stored.document?.toString("base64") ?? null,
+      }
+    : null;
 };
 
 export const caseExists = async ({ workflowCode, caseRef }) =>

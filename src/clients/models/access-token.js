@@ -64,8 +64,8 @@ const inUse = (message) =>
 
 const isFuture = (expiresAt, now) => expiresAt === null || expiresAt > now;
 
-// The last date relaxed Extended JSON writes as an ISO string, the only form
-// the list's stored row accepts.
+// The last a token may have: normalise-access-token-dates keeps every stored
+// token date from 1970 to 9999.
 export const LAST_EXPIRY = new Date("9999-12-31T23:59:59.999Z");
 
 const isExpiry = (expiresAt) =>

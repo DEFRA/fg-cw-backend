@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   CASE_ROW_PROJECTION,
+  CASE_RAW_UNSET,
   CASE_SUMMARY_PROJECTION,
-  DOCUMENT_INCLUDE,
   seriesFilter,
   seriesMembersCursor,
   storedCasePipeline,
@@ -50,13 +50,11 @@ describe("storedCasePipeline", () => {
       { $project: { ...CASE_SUMMARY_PROJECTION, storedBytes: 1 } },
     ]);
   });
+});
 
-  it("removes only the caseworker notes for the document", () => {
-    expect(storedCasePipeline(key, DOCUMENT_INCLUDE)).toEqual([
-      { $match: key },
-      { $set: { storedBytes: { $bsonSize: "$$ROOT" } } },
-      { $unset: "comments" },
-    ]);
+describe("CASE_RAW_UNSET", () => {
+  it("leaves nothing out of the stored document", () => {
+    expect(CASE_RAW_UNSET).toEqual([]);
   });
 });
 
@@ -69,10 +67,6 @@ describe("opacity", () => {
     [
       "the summary pipeline",
       storedCasePipeline({ workflowCode: "w", caseRef: "r" }),
-    ],
-    [
-      "the document pipeline",
-      storedCasePipeline({ workflowCode: "w", caseRef: "r" }, DOCUMENT_INCLUDE),
     ],
   ])("%s names no payload or supplementary data", (_name, query) => {
     expect(JSON.stringify(query)).not.toMatch(/payload|supplementaryData/);

@@ -28,9 +28,9 @@ const listApiClients = async ({ callerTokenId }) => {
   const now = new Date();
 
   return {
-    tokens: tokens.map(({ token, stored }) => ({
+    tokens: tokens.map(({ token, document }) => ({
       ...toApiTokenView(token, { callerTokenId, now }),
-      stored,
+      document,
     })),
   };
 };

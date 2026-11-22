@@ -1,6 +1,10 @@
 import Boom from "@hapi/boom";
 import { MongoServerError, ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
+import {
+  RAW_CAP_BYTES,
+  readStoredDocuments,
+} from "../../common/explore/stored-document.js";
 import { db } from "../../common/mongo-client.js";
 import { paginate } from "../../common/paginate.js";
 import { Case } from "../models/case.js";
@@ -11,6 +15,7 @@ import {
   findAll,
   findSeriesMembers,
   findStoredCase,
+  findStoredCaseDocument,
   linkSeries,
   findByCaseRefAndWorkflowCode,
   findById,
@@ -27,6 +32,10 @@ import {
 import { CaseDocument } from "./case/case-document.js";
 
 vi.mock("../../common/mongo-client.js");
+vi.mock("../../common/explore/stored-document.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  readStoredDocuments: vi.fn(),
+}));
 // Only `paginate` is mocked. The cursor codecs beside it are the real ones on
 // purpose: they are what a tampered cursor is refused by, so a test asserting
 // their behaviour against an auto-mocked stub would assert nothing.
@@ -879,7 +888,7 @@ describe("admin read model", () => {
     );
   });
 
-  it("reads a stored case through its pipeline", async () => {
+  it("reads a stored case's summary through its pipeline", async () => {
     const doc = { caseRef: "ref-1", storedBytes: 9 };
     const aggregate = vi
       .fn()
@@ -887,11 +896,48 @@ describe("admin read model", () => {
     db.collection.mockReturnValue({ aggregate });
     const key = { workflowCode: "frps", caseRef: "ref-1" };
 
-    expect(await findStoredCase(key, "document")).toBe(doc);
-    expect(aggregate).toHaveBeenCalledWith(
-      storedCasePipeline(key, "document"),
-      { maxTimeMS: MAX_TIME_MS },
-    );
+    expect(await findStoredCase(key)).toBe(doc);
+    expect(aggregate).toHaveBeenCalledWith(storedCasePipeline(key), {
+      maxTimeMS: MAX_TIME_MS,
+    });
+  });
+
+  it("reads a case's document as stored, whole, within the cap, as base64", async () => {
+    const bytes = Buffer.from("bytes");
+    readStoredDocuments.mockResolvedValue([
+      { storedBytes: 9, document: bytes },
+    ]);
+    const key = { workflowCode: "frps", caseRef: "ref-1" };
+
+    expect(await findStoredCaseDocument(key)).toEqual({
+      storedBytes: 9,
+      document: bytes.toString("base64"),
+    });
+    expect(readStoredDocuments).toHaveBeenCalledWith("cases", {
+      match: key,
+      unset: [],
+      maxBytes: RAW_CAP_BYTES,
+      limit: 1,
+      maxTimeMS: MAX_TIME_MS,
+    });
+  });
+
+  it("answers a null document for a case past the cap", async () => {
+    readStoredDocuments.mockResolvedValue([
+      { storedBytes: RAW_CAP_BYTES + 1, document: null },
+    ]);
+
+    expect(
+      await findStoredCaseDocument({ workflowCode: "frps", caseRef: "ref-1" }),
+    ).toEqual({ storedBytes: RAW_CAP_BYTES + 1, document: null });
+  });
+
+  it("answers null for a case document that is not there", async () => {
+    readStoredDocuments.mockResolvedValue([]);
+
+    expect(
+      await findStoredCaseDocument({ workflowCode: "frps", caseRef: "ref-1" }),
+    ).toBeNull();
   });
 
   it("answers null for a stored case that is not there", async () => {

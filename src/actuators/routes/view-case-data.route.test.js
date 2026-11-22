@@ -1,4 +1,5 @@
 import Boom from "@hapi/boom";
+import { BSON } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "../../common/logger.js";
 import { viewCaseDataUseCase } from "../use-cases/view-case-data.use-case.js";
@@ -52,8 +53,10 @@ describe("viewCaseDataRoute", () => {
     });
   });
 
-  it("returns the document whole, whatever its shape", async () => {
-    const document = { payload: { anything: [1, { deep: true }] } };
+  it("returns the document as base64 of its own BSON", async () => {
+    const document = BSON.serialize({
+      payload: { anything: [1, { deep: true }] },
+    }).toString("base64");
     viewCaseDataUseCase.mockResolvedValue({
       case: SUMMARY,
       storedBytes: 42,

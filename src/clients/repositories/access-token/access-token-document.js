@@ -1,4 +1,4 @@
-import { BSON, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { AccessToken } from "../../models/access-token.js";
 
 // The stored row: `id` is the hash, the only lookup key auth has, and
@@ -26,11 +26,5 @@ export class AccessTokenDocument {
       revokedAt: doc.revokedAt,
       revokedBy: doc.revokedBy,
     });
-  }
-
-  // Relaxed Extended JSON, as mongosh prints it: an ObjectId is `{ $oid }` and
-  // a date `{ $date }`. Every field is kept, so `id` must already be masked.
-  static toStored(doc) {
-    return BSON.EJSON.serialize(doc, { relaxed: true });
   }
 }

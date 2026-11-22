@@ -64,8 +64,13 @@ export const caseSummarySchema = Joi.object({
 export const caseDataResponseSchema = Joi.object({
   case: caseSummarySchema.required(),
   storedBytes: Joi.number().integer().min(0).required(),
-  // Returned whole and never validated inside: its shape is the workflow's.
-  document: Joi.any(),
+  // Never validated inside: its shape is the workflow's.
+  document: Joi.string()
+    .base64()
+    .allow(null)
+    .description(
+      "with include=document, the case as stored: base64 of its own BSON, null when it is stored in more than 1 MiB",
+    ),
 }).label("CaseDataResponse");
 
 export const caseExistenceResponseSchema = Joi.object({

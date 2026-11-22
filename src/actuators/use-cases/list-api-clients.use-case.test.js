@@ -21,7 +21,7 @@ const CREATED = new Date("2026-11-02T10:00:00.000Z");
 
 const listed = (token) => ({
   token,
-  stored: { _id: { $oid: token.tokenId }, id: "abc••••••def" },
+  document: `row of ${token.tokenId}`,
 });
 
 const list = (callerTokenId = CALLER_ID) =>
@@ -85,7 +85,7 @@ describe("listApiClientsUseCase", () => {
       revokedAt: null,
       revokedBy: null,
       inUse: true,
-      stored: { _id: { $oid: CALLER_ID }, id: "abc••••••def" },
+      document: `row of ${CALLER_ID}`,
     });
     expect(tokens[1]).toMatchObject({
       status: "REVOKED",
