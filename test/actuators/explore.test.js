@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { mergeExact } from "../../src/common/explore/merge.js";
 import {
   listExploreSources,
   queryExplore,
@@ -53,7 +54,7 @@ const BUSINESS = "payload.answers.applicant.business.name";
 const PARCEL = "payload.answers.application.parcel.parcelId";
 
 const query = (overrides = {}) => ({
-  v: 2,
+  v: 3,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }, { path: BUSINESS }],
@@ -65,6 +66,42 @@ const query = (overrides = {}) => ({
   positions: null,
   ...overrides,
 });
+
+const idsOf = (filter) =>
+  [filter, ...(filter.$and ?? [])]
+    .flatMap((part) => part._id?.$in ?? [])
+    .map(String)
+    .toSorted();
+
+// The finds Mongo ran on the collections while `work` ran: each one's hint and
+// the ids it asked for.
+const profiled = async (collections, work) => {
+  await db.command({ profile: 2 });
+
+  try {
+    const result = await work();
+    const finds = await db
+      .collection("system.profile")
+      .find({
+        ns: {
+          $in: [collections].flat().map((name) => `${db.databaseName}.${name}`),
+        },
+        op: "query",
+      })
+      .toArray();
+
+    return {
+      ...result,
+      finds: finds.map(({ command }) => ({
+        hint: command.hint,
+        ids: idsOf(command.filter),
+      })),
+    };
+  } finally {
+    await db.command({ profile: 0 });
+    await db.collection("system.profile").drop();
+  }
+};
 
 const bodyOf = (error) => {
   const payload = error.data?.payload;
@@ -92,10 +129,9 @@ afterAll(async () => {
 });
 
 describe("GET /actuators/explore/sources", () => {
-  it("lists the Query versions it reads, and what each source may read", async () => {
+  it("lists the paths each source suggests", async () => {
     const { payload } = await listExploreSources();
 
-    expect(payload.versions).toEqual([2]);
     expect(payload.sources.map(({ name }) => name)).toEqual([
       "cases",
       "workflows",
@@ -115,7 +151,6 @@ describe("GET /actuators/explore/sources", () => {
     });
     expect(cases).not.toHaveProperty("answerPaths");
     expect(cases).not.toHaveProperty("listedAt");
-    expect(cases.roots).not.toContain("comments");
     expect(cases.paths).toContainEqual(
       expect.objectContaining({ path: "caseRef", index: "ref" }),
     );
@@ -135,9 +170,22 @@ describe("GET /actuators/explore/sources", () => {
       closed: false,
       within: "workflowCode",
     });
-    expect(workflows.roots).not.toContain("definition.endpoints");
-    expect(events.roots).toEqual(expect.arrayContaining(["service", "box"]));
-    expect(events.roots).not.toContain("event");
+    expect(cases.paths[0]).toEqual({
+      path: "_id",
+      type: "objectId",
+      index: "id",
+      closed: false,
+      within: null,
+    });
+    expect(events.paths[0]).toEqual(cases.paths[0]);
+    expect(workflows.paths[0]).toEqual({
+      path: "_id",
+      type: "objectId",
+      index: null,
+      closed: false,
+      within: null,
+    });
+    expect(payload.sources.filter((source) => "roots" in source)).toEqual([]);
     expect(JSON.stringify(payload)).not.toContain('"fields"');
   });
 
@@ -569,11 +617,27 @@ describe("POST /actuators/explore/query", () => {
     ["an operator as a path", query({ columns: [{ path: "$where" }] })],
     ["a positional path", query({ columns: [{ path: "phases.$.code" }] })],
     [
+      "a column on a $ key",
+      query({ columns: [{ path: "payload.answers.$schema" }] }),
+    ],
+    [
+      "an unwind of a $ key",
+      query({ unwind: [{ path: "payload.answers.$defs", preserve: true }] }),
+    ],
+    [
       "__proto__ in a path",
       query({ where: { path: "payload.__proto__", op: "filled", values: [] } }),
     ],
-    ["a denied path", query({ columns: [{ path: "payload.answers.bank" }] })],
-    ["_id", query({ columns: [{ path: "_id" }] })],
+    [
+      "an ObjectId in upper case",
+      query({
+        where: {
+          path: "_id",
+          op: "eq",
+          values: [{ oid: "6741A0C2E4B0F1A2B3C4D5E6" }],
+        },
+      }),
+    ],
     [
       "a pattern the matcher won't take",
       query({
@@ -610,7 +674,7 @@ describe("POST /actuators/explore/query", () => {
       "an operator as a value",
       query({ where: { path: "caseRef", op: "eq", values: [{ $gt: "" }] } }),
     ],
-  ])("refuses %s, reading and auditing nothing", async (_, payload) => {
+  ])("refuses %s, auditing nothing", async (_, payload) => {
     expect(await refusalOf(queryExplore(payload))).toEqual({
       status: 400,
       body: { statusCode: 400, reason: "EXPLORE_QUERY_INVALID" },
@@ -618,37 +682,130 @@ describe("POST /actuators/explore/query", () => {
     expect(await audits()).toEqual([]);
   });
 
-  it.each([
-    ["a case's comments", query({ columns: [{ path: "comments.text" }] })],
-    ["a case's timeline", query({ columns: [{ path: "timeline" }] })],
-    [
-      "a workflow's endpoints",
-      query({
-        source: "workflows",
-        columns: [{ path: "definition.endpoints.code" }],
-        where: null,
-      }),
-    ],
-    [
-      "an audit event's actor",
-      query({
-        source: "events",
-        columns: [{ path: "event.audit.details.security.actor.email" }],
-        where: null,
-      }),
-    ],
-  ])("refuses %s, reading and auditing nothing", async (_, payload) => {
-    await db.collection("cases").insertMany([1, 2].map((n) => aCase(n)));
+  it("reads cases by their ids through the _id index, exactly, testing the rest", async () => {
+    const cases = [1, 2, 3, 4].map((n) => aCase(n));
 
-    expect(await refusalOf(queryExplore(payload))).toEqual({
-      status: 400,
-      body: {
-        statusCode: 400,
-        reason: "EXPLORE_QUERY_REFUSED",
-        refusal: "PATH_NOT_ALLOWED",
+    await db.collection("cases").insertMany(cases);
+
+    const oidOf = (n) => ({ oid: cases[n - 1]._id.toHexString() });
+    const { payload, finds } = await profiled("cases", () =>
+      queryExplore(
+        query({
+          columns: [{ path: "_id" }, { path: "caseRef" }],
+          where: {
+            all: [
+              {
+                path: "_id",
+                op: "in",
+                values: [oidOf(1), oidOf(2), oidOf(3)],
+              },
+              { path: "currentStatus", op: "eq", values: ["IN_REVIEW"] },
+            ],
+          },
+          window: true,
+          positions: { "cw.cases": null },
+        }),
+      ),
+    );
+
+    expect(payload.read).toBe("exact");
+    expect(payload.boxes[0].count).toEqual({ n: 2, capped: false });
+    expect(
+      payload.boxes[0].rows.map(({ key, cells }) => [key.i, cells]),
+    ).toEqual(
+      [1, 3].map((n) => [oidOf(n).oid, { c0: oidOf(n).oid, c1: `case-${n}` }]),
+    );
+    expect(finds).toEqual([
+      {
+        hint: { _id: 1 },
+        ids: [1, 2, 3].map((n) => oidOf(n).oid).toSorted(),
       },
+    ]);
+  });
+
+  it("reads events by their ids in both boxes, exactly", async () => {
+    const outboxEvents = [1, 3].map((n) => anEvent(n, minutesAgo(n)));
+    const inboxEvents = [2, 4].map((n) =>
+      anEvent(n, minutesAgo(n).toISOString()),
+    );
+
+    await db.collection("outbox").insertMany(outboxEvents);
+    await db.collection("inbox").insertMany(inboxEvents);
+
+    const oidOf = ({ _id }) => ({ oid: _id.toHexString() });
+    const asked = [outboxEvents[0], inboxEvents[1]].map(oidOf);
+    const { payload, finds } = await profiled(["outbox", "inbox"], () =>
+      queryExplore(
+        query({
+          source: "events",
+          columns: [{ path: "_id" }, { path: "box" }],
+          where: { path: "_id", op: "in", values: asked },
+        }),
+      ),
+    );
+
+    expect(payload.read).toBe("exact");
+    expect(
+      payload.boxes.map(({ id, rows, count }) => [
+        id,
+        rows.map(({ cells }) => cells),
+        count.n,
+      ]),
+    ).toEqual([
+      ["cw.outbox", [{ c0: oidOf(outboxEvents[0]).oid, c1: "outbox" }], 1],
+      ["cw.inbox", [{ c0: oidOf(inboxEvents[1]).oid, c1: "inbox" }], 1],
+    ]);
+    expect(finds).toEqual(
+      ["outbox", "inbox"].map(() => ({
+        hint: { _id: 1 },
+        ids: asked.map(({ oid }) => oid).toSorted(),
+      })),
+    );
+  });
+
+  it("reads a case's _id as its column, typed for GAS to merge in _id order", async () => {
+    const cases = [1, 2, 3].map((n) => aCase(n));
+
+    await db.collection("cases").insertMany(cases);
+
+    const asked = query({
+      columns: [{ path: "_id" }],
+      orderBy: { path: "_id", fn: null, desc: true },
     });
-    expect(await audits()).toEqual([]);
+    const { payload } = await queryExplore(asked);
+
+    const hexes = cases.map(({ _id }) => _id.toHexString());
+
+    expect(
+      mergeExact(payload.boxes, asked).rows.map(({ cells, order }) => [
+        cells.c0,
+        order,
+      ]),
+    ).toEqual(hexes.toReversed().map((hex) => [hex, { o: hex }]));
+  });
+
+  it.each([
+    ["a case's comments", "comments.text", "Spoke to the farmer"],
+    ["a case's timeline", "timeline.createdBy", "caseworker-1"],
+  ])("reads %s, as nothing stored is withheld", async (_, path, value) => {
+    await db.collection("cases").insertMany([
+      aCase(1, {
+        comments: [{ type: "NOTE", text: "Spoke to the farmer" }],
+        timeline: [{ eventType: "CASE_CREATED", createdBy: "caseworker-1" }],
+      }),
+      aCase(2),
+    ]);
+
+    const { payload } = await queryExplore(
+      query({
+        columns: [{ path: "caseRef" }, { path }],
+        where: { path, op: "eq", values: [value] },
+      }),
+    );
+
+    expect(payload.boxes[0].rows.map(({ cells }) => cells)).toEqual([
+      { c0: "case-1", c1: [value] },
+    ]);
   });
 
   it("refuses $group on a windowed read by its code, for GAS to word", async () => {

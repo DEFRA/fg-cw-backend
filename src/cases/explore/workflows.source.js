@@ -7,26 +7,6 @@ export const workflowsSource = {
   time: "receivedAt",
   noun: { one: "workflow version", many: "workflow versions" },
   star: ["grantCode", "version", "status", "fetchStatus", "receivedAt"],
-  // A definition's endpoints, external actions and definitions are service
-  // addresses and their settings, and aren't read.
-  roots: [
-    "grantCode",
-    "version",
-    "major",
-    "minor",
-    "patch",
-    "status",
-    "fetchStatus",
-    "fetchAttempts",
-    "fetchedAt",
-    "receivedAt",
-    "definition.code",
-    "definition.version",
-    "definition.phases",
-    "definition.pages",
-    "definition.requiredRoles",
-    "definition.templates",
-  ],
   answersAt: null,
   attach: [
     {
@@ -46,6 +26,7 @@ export const workflowsSource = {
   }),
   openPaths: ["grantCode", "version"],
   paths: [
+    { path: "_id", type: "objectId" },
     { path: "grantCode", type: "text", index: { fact: "grantCode" } },
     { path: "version", type: "text" },
     { path: "status", type: "text", index: { fact: "status" } },

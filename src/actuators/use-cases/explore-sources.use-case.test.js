@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 
 describe("exploreSourcesUseCase", () => {
-  it("answers within its schema, each source's roots and paths and no answer list", async () => {
+  it("answers within its schema, each source's paths and no answer list", async () => {
     const answer = await exploreSourcesUseCase();
 
     expect(sourcesSchema.validate(answer).error).toBeUndefined();
