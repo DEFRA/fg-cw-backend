@@ -13,5 +13,5 @@ export const caseKeyParams = Joi.object({
 export const caseDataQuery = Joi.object({
   include: Joi.string()
     .valid(DOCUMENT_INCLUDE)
-    .description("the stored document, without caseworker notes"),
+    .description("the whole stored document"),
 }).label("CaseDataQuery");

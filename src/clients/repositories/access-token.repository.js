@@ -1,10 +1,16 @@
 import Boom from "@hapi/boom";
-import { ObjectId } from "mongodb";
+import { BSON, ObjectId } from "mongodb";
 import { actuatorReadMaxTimeMs } from "../../common/actuator-read.js";
+import { readStoredDocuments } from "../../common/explore/stored-document.js";
 import { db } from "../../common/mongo-client.js";
 import { withErrorCode } from "../../common/with-error-code.js";
 import { apiClientErrors } from "../models/access-token.js";
-import { HASH_EDGE, HASH_LENGTH, HASH_MASK } from "../models/masked-hash.js";
+import {
+  HASH_EDGE,
+  HASH_LENGTH,
+  HASH_MASK,
+  MAX_ROW_BYTES,
+} from "../models/masked-hash.js";
 import { AccessTokenDocument } from "./access-token/access-token-document.js";
 
 const collection = "access_tokens";
@@ -36,19 +42,21 @@ const maskedHash = {
   ],
 };
 
-// Each token with its row as stored, the hash masked. Every row: the
-// collection is small, and a row left out could not be managed.
+// Each token with its row as stored, the hash masked, as base64 of its own
+// BSON, so every type is kept. Every row: the collection is small, and a row
+// left out could not be managed.
 export const findAll = async () => {
-  const docs = await tokens()
-    .aggregate([{ $set: { id: maskedHash } }], {
-      readPreference: "primary",
-      maxTimeMS: actuatorReadMaxTimeMs(),
-    })
-    .toArray();
+  const rows = await readStoredDocuments(collection, {
+    match: {},
+    set: { id: maskedHash },
+    maxBytes: MAX_ROW_BYTES,
+    readPreference: "primary",
+    maxTimeMS: actuatorReadMaxTimeMs(),
+  });
 
-  return docs.map((doc) => ({
-    token: AccessTokenDocument.toAccessToken(doc),
-    stored: AccessTokenDocument.toStored(doc),
+  return rows.map(({ document }) => ({
+    token: AccessTokenDocument.toAccessToken(BSON.deserialize(document)),
+    document: document.toString("base64"),
   }));
 };
 

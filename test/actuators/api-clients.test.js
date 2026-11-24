@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { BSON, Binary, MongoClient, ObjectId } from "mongodb";
 import { randomBytes } from "node:crypto";
 import { env } from "node:process";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -6,6 +6,12 @@ import { endOfUkDay } from "../../src/common/date-helpers.js";
 import { hashToken } from "../../src/server/plugins/auth/hash-token.js";
 import { seedCaseReaderToken } from "../helpers/actuators.js";
 import { OPERATOR_NAME, operatorHeaders } from "../helpers/operator.js";
+import {
+  documentOf,
+  objectIdElement,
+  rawInsert,
+  stringElement,
+} from "../helpers/raw-bson.js";
 import {
   CASE_READER_CLIENT,
   CASE_READER_TOKEN,
@@ -88,6 +94,12 @@ const userRoles = (raw) =>
 const stored = (tokenId) =>
   accessTokens.findOne({ _id: new ObjectId(tokenId) });
 
+const HEX_RUN = /[0-9a-f]{64}/i;
+
+const bytesOf = (row) => Buffer.from(row.document, "base64");
+
+const storedRowOf = (row) => BSON.deserialize(bytesOf(row));
+
 const auditsOf = (entityid, action) =>
   outbox
     .find({
@@ -163,21 +175,18 @@ describe("GET /actuators/clients", () => {
       revokedAt: expect.any(String),
       revokedBy: OPERATOR_NAME,
       inUse: false,
-      stored: {
-        _id: { $oid: created.tokenId },
-        id: `${doc.id.slice(0, 3)}••••••${doc.id.slice(-3)}`,
-        client: created.clientId,
-        tokenHint: created.hint,
-        expiresAt: { $date: expect.any(String) },
-        createdAt: { $date: expect.any(String) },
-        createdBy: OPERATOR_NAME,
-        revokedAt: { $date: expect.any(String) },
-        revokedBy: OPERATOR_NAME,
-      },
+      document: expect.any(String),
     });
-    expect(Date.parse(row.stored.revokedAt.$date)).toBe(
-      Date.parse(row.revokedAt),
+
+    const masked = `${doc.id.slice(0, 3)}••••••${doc.id.slice(-3)}`;
+    const bytes = bytesOf(row);
+
+    expect(Object.entries(storedRowOf(row))).toEqual(
+      Object.entries({ ...doc, id: masked }),
     );
+    expect(bytes.includes(Buffer.from(masked))).toBe(true);
+    expect(bytes.includes(Buffer.from(doc.id))).toBe(false);
+    expect(storedRowOf(row).revokedAt.toISOString()).toBe(row.revokedAt);
 
     expect(doc).not.toHaveProperty("updatedAt");
     expect(doc).not.toHaveProperty("seeded");
@@ -218,7 +227,7 @@ describe("GET /actuators/clients", () => {
     );
 
     expect(rows.map(({ clientId }) => clientId)).toEqual([null, null, null]);
-    expect(rows.map(({ stored }) => stored.client)).toEqual([
+    expect(rows.map((row) => storedRowOf(row).client)).toEqual([
       "  ",
       undefined,
       "Grants_UI",
@@ -233,10 +242,64 @@ describe("GET /actuators/clients", () => {
     expect(JSON.stringify(body)).not.toContain(CALLER_HASH);
     expect(JSON.stringify(body)).not.toMatch(/[0-9a-f]{64}/);
     expect(
-      body.tokens.every(({ stored }) =>
-        /^[0-9a-f]{3}•{6}[0-9a-f]{3}$/.test(stored.id),
+      body.tokens.every((row) =>
+        /^[0-9a-f]{3}•{6}[0-9a-f]{3}$/.test(storedRowOf(row).id),
       ),
     ).toBe(true);
+    expect(
+      body.tokens.every(
+        (row) => !HEX_RUN.test(bytesOf(row).toString("latin1")),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    [
+      "a second id, the whole hash",
+      async (hash) => {
+        const _id = new ObjectId();
+        await rawInsert(
+          env.MONGO_URI,
+          client.db().databaseName,
+          "access_tokens",
+          [
+            documentOf([
+              objectIdElement("_id", _id),
+              stringElement("id", newToken().hash),
+              stringElement("id", hash),
+            ]),
+          ],
+        );
+        namelessIds.push(_id);
+      },
+    ],
+    [
+      "the hash as a Binary(32)",
+      (hash) => insertNameless({ id2: new Binary(Buffer.from(hash, "hex")) }),
+    ],
+    ["the hash nested", (hash) => insertNameless({ at: { hash } })],
+    ["the hash in a list", (hash) => insertNameless({ at: [hash] })],
+    ["the hash as a name", (hash) => insertNameless({ [hash]: 1 })],
+    [
+      "no id",
+      async () => {
+        const tokenId = await insertNameless({});
+        await accessTokens.updateOne(
+          { _id: new ObjectId(tokenId) },
+          { $unset: { id: "" } },
+        );
+      },
+    ],
+    ["an id not a string", () => insertNameless({ id: 7 })],
+  ])("answers no list rather than a row holding %s", async (_, insert) => {
+    const hash = newToken().hash;
+    await insert(hash);
+
+    const { statusCode, body } = await list();
+
+    expect(statusCode).toBe(500);
+    expect(JSON.stringify(body)).not.toContain(hash);
+    expect(JSON.stringify(body)).not.toContain(CALLER_HASH);
   });
 });
 

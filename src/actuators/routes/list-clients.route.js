@@ -12,7 +12,7 @@ export const listClientsRoute = {
   path: "/actuators/clients",
   options: {
     description:
-      "Every access token of this service, revoked and expired ones included, each with its client (null when the row has no valid name), marked inUse when it is the token this request is made with, and with the row as stored. Never a whole hash: the stored id shows only its first and last 3 characters. Audited as VIEW_API_CLIENT.",
+      "Every access token of this service, revoked and expired ones included, each with its client (null when the row has no valid name), marked inUse when it is the token this request is made with, and with the row as stored, base64 of its own BSON. Never a whole hash: the stored id shows only its first and last 3 characters. Audited as VIEW_API_CLIENT.",
     auth: "public-api",
     tags: ["api", "public-api"],
     plugins: {

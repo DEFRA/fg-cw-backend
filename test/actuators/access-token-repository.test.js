@@ -1,8 +1,9 @@
-import { ObjectId } from "mongodb";
+import { BSON, Double, Int32, Long, ObjectId } from "mongodb";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { AccessToken } from "../../src/clients/models/access-token.js";
 import {
   deleteInactiveToken,
+  findAll,
   findTokenOfClient,
   saveTokenChanges,
 } from "../../src/clients/repositories/access-token.repository.js";
@@ -124,5 +125,38 @@ describe("the access token store's conditional writes", () => {
     ).toBe(true);
     expect(await read(active)).toBeInstanceOf(AccessToken);
     expect(await read(revoked)).toBeNull();
+  });
+});
+
+describe("the access token list", () => {
+  const HASH = "0123456789abcdef".repeat(4);
+
+  it("reads each row as its own bytes, every type kept, its hash masked by Mongo", async () => {
+    const tokenId = await insert({
+      id: HASH,
+      count: new Int32(1),
+      total: Long.fromNumber(2),
+      ratio: new Double(3),
+      createdAt: PAST,
+    });
+
+    const listed = (await findAll()).find(
+      ({ token }) => token.tokenId === tokenId,
+    );
+    const bytes = Buffer.from(listed.document, "base64");
+    const [stored] = await tokens
+      .find({ _id: new ObjectId(tokenId) }, { raw: true })
+      .toArray();
+
+    const asStored = BSON.deserialize(Buffer.from(stored), {
+      promoteValues: false,
+    });
+
+    expect(listed.token.clientId).toBe(CLIENT);
+    expect(
+      bytes.equals(BSON.serialize({ ...asStored, id: "012••••••def" })),
+    ).toBe(true);
+    expect(bytes.includes(Buffer.from("012••••••def"))).toBe(true);
+    expect(bytes.includes(Buffer.from(HASH))).toBe(false);
   });
 });

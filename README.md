@@ -514,6 +514,14 @@ engine beyond its pure helpers, and `readStoredValues` called without the
 view; and on an Explore file importing a module that reaches Mongo, the
 audit aside.
 fg-gas-backend's tests check the shared reader's reads as they run.
+`src/common/explore/stored-document.js` is the one part of it read outside
+Explore: it reads a record as stored, its own bytes and its stored size,
+through the same read-only view. The cases repository reads a case's whole
+document for `include=document` with it, and the clients' access-token
+repository each token's row, its hash masked by Mongo.
+`src/clients/models/masked-hash.js` checks a row's bytes with
+`src/common/explore/bson-bytes.js`, so no whole hash leaves this service; the
+mask and that check stay the clients module's.
 `src/common/explore/` is the same code
 as fg-gas-backend's: the Query rules, the path grammar, the planner and the
 reader. Its tests run in fg-gas-backend, and `SHARED.sha256` pins each file

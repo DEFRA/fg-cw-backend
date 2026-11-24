@@ -1,7 +1,9 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { BSON, MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { caseDataResponseSchema } from "../../src/actuators/schemas/case-response.schema.js";
 import { seriesMembersCursor } from "../../src/cases/repositories/case/admin-case-query.js";
+import { RAW_CAP_BYTES } from "../../src/common/explore/stored-document.js";
 import {
   caseExistence,
   editInboxPayload,
@@ -21,6 +23,7 @@ import {
   OPERATOR_NAME,
   operatorHeaders,
 } from "../helpers/operator.js";
+import { ODD_ELEMENTS, rawInsert, withElements } from "../helpers/raw-bson.js";
 
 let client;
 let db;
@@ -302,25 +305,55 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
     expect(executionStats.totalDocsExamined).toBe(executionStats.nReturned);
   });
 
-  it("adds the stored document without the caseworker notes", async () => {
+  const storedOf = async (caseRef) => {
+    const [buf] = await cases.find({ caseRef }, { raw: true }).toArray();
+
+    return Buffer.from(buf);
+  };
+
+  const bytesOf = (payload) => Buffer.from(payload.document, "base64");
+
+  it("adds the whole stored document as its own bytes, every type and key kept", async () => {
+    const doc = withElements(
+      BSON.serialize(aCase({ storedBytes: "its own" })),
+      ODD_ELEMENTS,
+    );
+    await rawInsert(env.MONGO_URI, db.databaseName, "cases", [doc]);
+
+    const { payload } = await viewCaseData("frps", "case-1", {
+      include: "document",
+    });
+
+    expect(caseDataResponseSchema.validate(payload).error).toBeUndefined();
+    expect(bytesOf(payload).equals(await storedOf("case-1"))).toBe(true);
+    expect(bytesOf(payload).equals(doc)).toBe(true);
+    expect(payload.storedBytes).toBe(doc.length);
+    expect(payload.case.ref).toEqual({
+      caseRef: "case-1",
+      workflowCode: "frps",
+    });
+  });
+
+  it("adds the document with its caseworker notes and timeline", async () => {
     const stored = aCase({ payload: WMP_PAYLOAD });
     await cases.insertOne(stored);
 
     const { payload } = await viewCaseData("frps", "case-1", {
       include: "document",
     });
+    const document = BSON.deserialize(bytesOf(payload));
 
-    expect(payload.document).not.toHaveProperty("comments");
-    expect(payload.document).not.toHaveProperty("storedBytes");
-    expect(payload.document).toMatchObject({
-      _id: stored._id.toHexString(),
+    expect(document.comments).toEqual(stored.comments);
+    expect(document.timeline).toEqual(stored.timeline);
+    expect(document).toMatchObject({
+      _id: stored._id,
       payload: WMP_PAYLOAD,
       supplementaryData: stored.supplementaryData,
       assignedUserId: "user-1",
-      createdAt: "2026-06-16T10:00:00.000Z",
+      createdAt: CREATED_AT,
     });
+    expect(document).not.toHaveProperty("storedBytes");
     expect(payload.storedBytes).toBe(await bsonSizeOf("case-1"));
-    expect(JSON.stringify(payload)).not.toContain("caseworker note");
   });
 
   it("reads a legacy document with no notes, timeline or config versions", async () => {
@@ -335,8 +368,63 @@ describe("GET /actuators/cases/{workflowCode}/{caseRef}", () => {
       currentConfigVersion: "0.0.0",
       series: null,
     });
-    expect(payload.document).not.toHaveProperty("comments");
+    expect(bytesOf(payload).equals(await storedOf("case-1"))).toBe(true);
   });
+
+  const ofSize = (bytes) => {
+    const doc = aCase({ pad: "" });
+
+    return { ...doc, pad: "x".repeat(bytes - BSON.calculateObjectSize(doc)) };
+  };
+
+  it("adds a document of 900 KiB whole", async () => {
+    await cases.insertOne(ofSize(900 * 1024));
+
+    const { payload } = await viewCaseData("frps", "case-1", {
+      include: "document",
+    });
+
+    expect(bytesOf(payload)).toHaveLength(900 * 1024);
+    expect(bytesOf(payload).equals(await storedOf("case-1"))).toBe(true);
+    expect(payload.storedBytes).toBe(900 * 1024);
+  });
+
+  it("adds a document of exactly 1 MiB, the cap, whole", async () => {
+    await cases.insertOne(ofSize(RAW_CAP_BYTES));
+
+    const { payload } = await viewCaseData("frps", "case-1", {
+      include: "document",
+    });
+
+    expect(bytesOf(payload).equals(await storedOf("case-1"))).toBe(true);
+    expect(payload.storedBytes).toBe(RAW_CAP_BYTES);
+  });
+
+  it.each([
+    ["1 MiB and 1 byte", RAW_CAP_BYTES + 1],
+    ["2 MiB", 2 * 1024 * 1024],
+  ])(
+    "answers a document of %s as null, with its size and summary",
+    async (_, bytes) => {
+      await cases.insertOne(ofSize(bytes));
+
+      const { payload } = await viewCaseData("frps", "case-1", {
+        include: "document",
+      });
+
+      expect(caseDataResponseSchema.validate(payload).error).toBeUndefined();
+      expect(payload.document).toBeNull();
+      expect(payload.storedBytes).toBe(bytes);
+      expect(payload.case).toMatchObject({
+        ref: { caseRef: "case-1", workflowCode: "frps" },
+        position: { phase: "PRE_AWARD", stage: "REVIEW", status: "NEW" },
+        closed: true,
+        createdAt: CREATED_AT.toISOString(),
+        originalConfigVersion: "1.0.0",
+        currentConfigVersion: "1.2.0",
+      });
+    },
+  );
 
   it.each([
     ["a current case", aCase],

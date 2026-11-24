@@ -1,13 +1,13 @@
 import {
   findSeriesMembers,
   findStoredCase,
+  findStoredCaseDocument,
 } from "../../cases/repositories/case.repository.js";
 import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
 import { DOCUMENT_INCLUDE } from "../../cases/repositories/case/admin-case-query.js";
 import {
   hasMembers,
   toCaseSummary,
-  toStoredDocument,
 } from "../../cases/repositories/case/admin-case-row.js";
 import {
   auditActions,
@@ -52,26 +52,40 @@ const findNamesOf = async (
   return workflow && toPositionNames(workflow, position);
 };
 
+const NOT_ASKED = undefined;
+
+// The document read's answer: NOT_ASKED without include=document, null when
+// the case has gone, or its size and document, null past RAW_CAP_BYTES.
+const findDocumentOf = (key, include) =>
+  include === DOCUMENT_INCLUDE ? findStoredCaseDocument(key) : NOT_ASKED;
+
+// Without the document, the summary's size alone.
+const sizeAndDocumentOf = (doc, stored) =>
+  stored === NOT_ASKED ? { storedBytes: doc.storedBytes } : stored;
+
+// The summary is read whatever is included; the document is a second read,
+// of its own bytes.
 const viewCaseData = async ({ workflowCode, caseRef, include }) => {
-  const [doc, { series, memberDocs }] = await Promise.all([
-    findStoredCase({ workflowCode, caseRef }, include),
-    findSeriesOf({ workflowCode, caseRef }),
+  const key = { workflowCode, caseRef };
+  const [doc, stored, { series, memberDocs }] = await Promise.all([
+    findStoredCase(key),
+    findDocumentOf(key, include),
+    findSeriesOf(key),
   ]);
 
-  if (!doc) {
+  if (!doc || stored === null) {
     throw caseNotFound();
   }
 
-  logger.info(`Read case document: ${doc.storedBytes} bytes`);
+  const answer = sizeAndDocumentOf(doc, stored);
+
+  logger.info(`Read case document: ${answer.storedBytes} bytes`);
 
   const summary = toCaseSummary(doc, series, memberDocs);
 
   return {
     case: { ...summary, names: await findNamesOf(workflowCode, summary) },
-    storedBytes: doc.storedBytes,
-    ...(include === DOCUMENT_INCLUDE
-      ? { document: toStoredDocument(doc) }
-      : {}),
+    ...answer,
   };
 };
 

@@ -1,8 +1,9 @@
-import { ObjectId } from "mongodb";
+import { BSON, ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   findSeriesMembers,
   findStoredCase,
+  findStoredCaseDocument,
 } from "../../cases/repositories/case.repository.js";
 import { findByCaseRef } from "../../cases/repositories/case-series.repository.js";
 import { findWorkflowNames } from "../../cases/repositories/workflow.repository.js";
@@ -131,10 +132,11 @@ beforeEach(() => {
 describe("viewCaseDataUseCase", () => {
   it("answers the summary and stored size with no include", async () => {
     expect(await run()).toEqual({ case: SUMMARY, storedBytes: 3600 });
-    expect(findStoredCase).toHaveBeenCalledWith(
-      { workflowCode: "frps", caseRef: "ref-2" },
-      undefined,
-    );
+    expect(findStoredCase).toHaveBeenCalledWith({
+      workflowCode: "frps",
+      caseRef: "ref-2",
+    });
+    expect(findStoredCaseDocument).not.toHaveBeenCalled();
     expect(findByCaseRef).toHaveBeenCalledWith({
       ref: "ref-2",
       workflowCode: "frps",
@@ -206,19 +208,46 @@ describe("viewCaseDataUseCase", () => {
     expect(findSeriesMembers).not.toHaveBeenCalled();
   });
 
-  it("adds the stored document, with no computed field in it", async () => {
-    const payload = { answers: { anything: [1, { deep: "x" }] } };
-    findStoredCase.mockResolvedValue(aStoredCase({ payload }));
+  it("adds the stored document as base64 of its bytes, sized by that read", async () => {
+    const bytes = BSON.serialize({ _id: ID, caseRef: "ref-2" });
+    findStoredCaseDocument.mockResolvedValue({
+      storedBytes: 3700,
+      document: bytes.toString("base64"),
+    });
 
     const result = await run("document");
 
-    expect(findStoredCase).toHaveBeenCalledWith(
-      { workflowCode: "frps", caseRef: "ref-2" },
-      "document",
-    );
-    expect(result.document).not.toHaveProperty("storedBytes");
-    expect(result.document.payload).toEqual(payload);
-    expect(result.storedBytes).toBe(3600);
+    expect(findStoredCaseDocument).toHaveBeenCalledWith({
+      workflowCode: "frps",
+      caseRef: "ref-2",
+    });
+    expect(result).toEqual({
+      case: SUMMARY,
+      storedBytes: 3700,
+      document: bytes.toString("base64"),
+    });
+    expect(logger.info).toHaveBeenCalledWith("Read case document: 3700 bytes");
+  });
+
+  it("answers a null document, and the summary, past the cap", async () => {
+    findStoredCaseDocument.mockResolvedValue({
+      storedBytes: 2 * 1024 * 1024,
+      document: null,
+    });
+
+    expect(await run("document")).toEqual({
+      case: SUMMARY,
+      storedBytes: 2 * 1024 * 1024,
+      document: null,
+    });
+  });
+
+  it("answers 404 when the document read finds no case", async () => {
+    findStoredCaseDocument.mockResolvedValue(null);
+
+    await expect(run("document")).rejects.toMatchObject({
+      output: { statusCode: 404, payload: { reason: "CASE_NOT_FOUND" } },
+    });
   });
 
   it("answers a null series when the case is in none", async () => {
@@ -255,6 +284,11 @@ describe("viewCaseDataUseCase", () => {
   });
 
   it("commits one VIEW_CASE_DATA row before answering", async () => {
+    findStoredCaseDocument.mockResolvedValue({
+      storedBytes: 3600,
+      document: null,
+    });
+
     await run("document");
 
     expect(writeAuditEvent).toHaveBeenCalledTimes(1);

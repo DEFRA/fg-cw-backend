@@ -16,7 +16,7 @@ export const viewCaseDataRoute = {
   path: "/actuators/cases/{workflowCode}/{caseRef}",
   options: {
     description:
-      "One case's summary and stored size, with its position named from the workflow version it is on now (names, null when that version is not stored); with include=document, also the stored document without caseworker notes. 404 with reason CASE_NOT_FOUND when there is no such case.",
+      "One case's summary and stored size, with its position named from the workflow version it is on now (names, null when that version is not stored); with include=document, also the whole document as stored, base64 of its own BSON, or null past 1 MiB. 404 with reason CASE_NOT_FOUND when there is no such case.",
     auth: "public-api",
     tags: ["api", "public-api"],
     plugins: {

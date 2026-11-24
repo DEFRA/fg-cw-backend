@@ -51,11 +51,12 @@ export const seriesMembersCursor = (
     { projection: CASE_ROW_PROJECTION, hint: CASE_KEY_INDEX, maxTimeMS },
   );
 
-// `storedBytes` measures the whole stored document before anything is removed.
-export const storedCasePipeline = ({ workflowCode, caseRef }, include) => [
+// Raw shows the stored document whole, as Explore does.
+export const CASE_RAW_UNSET = [];
+
+// `storedBytes` measures the whole stored document.
+export const storedCasePipeline = ({ workflowCode, caseRef }) => [
   { $match: { workflowCode, caseRef } },
   { $set: { storedBytes: { $bsonSize: "$$ROOT" } } },
-  include === DOCUMENT_INCLUDE
-    ? { $unset: "comments" }
-    : { $project: { ...CASE_SUMMARY_PROJECTION, storedBytes: 1 } },
+  { $project: { ...CASE_SUMMARY_PROJECTION, storedBytes: 1 } },
 ];

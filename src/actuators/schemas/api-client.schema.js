@@ -4,7 +4,7 @@ import {
   KEEP_OLD,
   tokenStatus,
 } from "../../clients/models/access-token.js";
-import { HASH_RUN, MASKED_HASH } from "../../clients/models/masked-hash.js";
+import { isMaskedTokenRow } from "../../clients/models/masked-hash.js";
 import { safeFailAction } from "../../common/validation.js";
 import { withErrorCode } from "../../common/with-error-code.js";
 
@@ -134,49 +134,28 @@ const tokenRow = Joi.object({
     .description("whether this is the token the request is made with"),
 }).label("ApiToken");
 
-const objectId = Joi.object({
-  $oid: Joi.string().pattern(OBJECT_ID).required(),
-});
+const isMaskedRowText = (text) => {
+  const buf = Buffer.from(text, "base64");
 
-// No key or value but `id` holds a hash, and `id` holds only a masked one, so
-// a stored row that would carry a whole hash fails with a 500 instead.
-const storedValue = Joi.alternatives().try(
-  Joi.string().allow("").pattern(HASH_RUN, { invert: true }),
-  Joi.number(),
-  Joi.boolean(),
-  Joi.valid(null),
-  objectId,
-  Joi.object({ $date: Joi.string().isoDate().required() }),
-);
+  return buf.toString("base64") === text && isMaskedTokenRow(buf);
+};
 
-const isStoredField = ([key, value]) =>
-  !HASH_RUN.test(key) && !storedValue.validate(value).error;
-
-// Its other fields are checked as a whole, so a refusal's path never names
-// one: a key could be the hash.
-const storedRow = Joi.object({
-  _id: objectId.required(),
-  id: Joi.string()
-    .pattern(MASKED_HASH)
-    .required()
-    .example("a1b••••••f2c")
-    .description("the hash's first and last 3 characters, never the rest"),
-})
-  .unknown(true)
-  .custom((row, helpers) =>
-    Object.entries(row).every(isStoredField)
-      ? row
-      : helpers.error("any.invalid"),
+// Passed only as isMaskedTokenRow allows, so a stored row that would carry a
+// whole hash fails with a 500 instead, and its refusal never names a field:
+// a key could be the hash.
+const storedRow = Joi.string()
+  .custom((text, helpers) =>
+    isMaskedRowText(text) ? text : helpers.error("any.invalid"),
   )
   .description(
-    "the row as stored, every field, in relaxed Extended JSON: an ObjectId is { $oid }, a date { $date }",
+    "the row as stored, base64 of its own BSON: flat, `id` the hash's first and last 3 characters, never the rest",
   )
   .label("StoredApiToken");
 
 export const tokenListResponseSchema = Joi.object({
   tokens: Joi.array()
     .items(
-      tokenRow.keys({ stored: storedRow.required() }).label("ListedApiToken"),
+      tokenRow.keys({ document: storedRow.required() }).label("ListedApiToken"),
     )
     .required(),
 }).label("ApiTokenListResponse");
