@@ -1,3 +1,4 @@
+import { BSON, ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OPERATOR_ID, OPERATOR_NAME } from "../../../test/helpers/operator.js";
 import { casesSource } from "../../cases/explore/cases.source.js";
@@ -28,7 +29,7 @@ const OPERATOR = { id: OPERATOR_ID, name: OPERATOR_NAME };
 const BUSINESS = "payload.answers.applicant.business.name";
 
 const query = (overrides = {}) => ({
-  v: 3,
+  v: 4,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }, { path: BUSINESS }],
@@ -284,6 +285,167 @@ describe("exploreQueryUseCase", () => {
       "Finished: Explore query on cases",
     ]);
   });
+
+  const ID = BSON.serialize({ _id: new ObjectId() }).toString("base64");
+
+  const fetchQuery = (overrides = {}) =>
+    query({
+      mode: "documents",
+      documents: { whole: true, id: true, bytes: 1024 },
+      rows: [{ box: "cw.cases", id: ID, at: [] }],
+      ...overrides,
+    });
+
+  it("audits a starts fetch for the starts it sends, logging only their bytes", async () => {
+    const start = BSON.serialize({ grantCode: SENTINEL });
+    const entry = (rest) => ({ box: "cw.cases", id: ID, at: [], ...rest });
+    const fetched = {
+      documents: [
+        entry({
+          start: { doc: start.toString("base64"), cut: true },
+          printed: { bytes: 9000, values: 4 },
+        }),
+        entry({ gone: true }),
+      ],
+    };
+
+    runPart.mockResolvedValue(fetched);
+
+    expect(
+      await ask(
+        fetchQuery({
+          documents: { whole: true, id: true, mode: "starts" },
+          rows: fetched.documents.map(({ box, id, at }) => ({ box, id, at })),
+        }),
+      ),
+    ).toEqual(fetched);
+    expect(audits()[0].details).toMatchObject({
+      resultCount: 1,
+      outcome: "ANSWERED",
+    });
+    expect(logger.info.mock.calls.at(-1)[0]).toBe(
+      `Finished: Explore query on cases, documents.bytes ${start.length}`,
+    );
+    expect(JSON.stringify(logger.info.mock.calls)).not.toContain(SENTINEL);
+  });
+
+  it("audits a starts fetch that answers fewer rows than asked as partial", async () => {
+    const start = BSON.serialize({ grantCode: SENTINEL }).toString("base64");
+    const row = (n) => ({
+      box: "cw.cases",
+      id: BSON.serialize({ _id: n }).toString("base64"),
+      at: [],
+    });
+    const fetched = {
+      documents: [
+        {
+          ...row(1),
+          start: { doc: start, cut: true },
+          printed: { bytes: 9000, values: 4 },
+        },
+      ],
+      ended: "work",
+    };
+
+    runPart.mockResolvedValue(fetched);
+
+    expect(
+      await ask(
+        fetchQuery({
+          documents: { whole: true, id: true, mode: "starts" },
+          rows: [row(1), row(2)],
+        }),
+      ),
+    ).toEqual(fetched);
+    expect(audits()[0].details).toMatchObject({
+      resultCount: 1,
+      outcome: "PARTIAL",
+    });
+  });
+
+  it("audits a documents fetch for the documents it sends, logging only their bytes, joined records included", async () => {
+    const doc = BSON.serialize({ grantCode: SENTINEL });
+    const definition = BSON.serialize({ code: SENTINEL, phases: [] });
+    const entry = (rest) => ({ box: "cw.workflows", id: ID, at: [], ...rest });
+    const fetched = {
+      documents: [
+        entry({
+          doc: doc.toString("base64"),
+          context: { definition: definition.toString("base64") },
+        }),
+        entry({ gone: true, context: null }),
+        entry({ unread: true, context: null }),
+      ],
+    };
+
+    runPart.mockResolvedValue(fetched);
+
+    expect(
+      await ask(
+        fetchQuery({
+          source: "workflows",
+          columns: [{ path: "grantCode" }, { path: "definition.phases" }],
+          where: null,
+          rows: fetched.documents.map(({ box, id, at }) => ({ box, id, at })),
+        }),
+      ),
+    ).toEqual(fetched);
+
+    const [event] = audits();
+
+    expect(event.details).toEqual({
+      security: expect.any(Object),
+      source: "workflows",
+      resultCount: 1,
+      outcome: "ANSWERED",
+    });
+    expect(logger.info.mock.calls.map(([line]) => line)).toEqual([
+      "Explore query on workflows",
+      `Finished: Explore query on workflows, documents.bytes ${doc.length + definition.length}`,
+    ]);
+
+    const recorded = JSON.stringify([event, logger.info.mock.calls]);
+
+    expect(recorded).not.toContain(doc.toString("base64"));
+    expect(recorded).not.toContain(definition.toString("base64"));
+    expect(recorded).not.toContain(ID);
+    expect(recorded).not.toContain("entinel");
+  });
+
+  it.each([
+    [
+      "a row of another source's box",
+      fetchQuery({ rows: [{ box: "cw.outbox", id: ID, at: [] }] }),
+    ],
+    [
+      "an id that isn't the BSON of { _id }",
+      fetchQuery({
+        rows: [
+          {
+            box: "cw.cases",
+            id: BSON.serialize({ x: 1 }).toString("base64"),
+            at: [],
+          },
+        ],
+      }),
+    ],
+    [
+      "positions that don't fit the unwind",
+      fetchQuery({ rows: [{ box: "cw.cases", id: ID, at: [0] }] }),
+    ],
+  ])(
+    "refuses a fetch of %s before reading, writing no audit",
+    async (_, asked) => {
+      const error = await failure(ask(asked));
+
+      expect(error.output.payload).toEqual({
+        statusCode: 400,
+        reason: "EXPLORE_QUERY_INVALID",
+      });
+      expect(runPart).not.toHaveBeenCalled();
+      expect(writeAuditEvent).not.toHaveBeenCalled();
+    },
+  );
 
   it("passes on any other failure", async () => {
     runPart.mockRejectedValue(new Error("Explore read failed"));

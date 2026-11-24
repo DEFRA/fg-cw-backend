@@ -1,7 +1,10 @@
 import { operatorOf } from "../../common/actor-header.js";
 import { clientGoneSignal } from "../../common/client-gone.js";
 import { checkPart } from "../../common/explore/large-answers.js";
-import { querySchema } from "../../common/explore/query-schema.js";
+import {
+  MAX_QUERY_BYTES,
+  querySchema,
+} from "../../common/explore/query-schema.js";
 import {
   exploreFailAction,
   safeResponseFailAction,
@@ -15,20 +18,23 @@ export const exploreQueryRoute = {
   path: "/actuators/explore/query",
   options: {
     description:
-      "This service's part of one Explore query: rows per box, or the groups it counted.",
+      "This service's part of one Explore query: rows per box, the groups it counted, or the documents of the rows asked for.",
     auth: "public-api",
     tags: ["api", "public-api"],
     plugins: {
       "hapi-swagger": { security: [{ serviceToken: [] }] },
     },
     cache: { otherwise: "no-store" },
+    // Every mode takes a fetch's bound: hapi reads the body before its mode.
+    payload: { maxBytes: MAX_QUERY_BYTES },
     validate: {
       headers: exploreHeaders,
       payload: querySchema,
       failAction: exploreFailAction,
     },
     response: {
-      schema: (part) => checkPart(part),
+      schema: (part, { context }) =>
+        checkPart(part, { query: context.payload }),
       failAction: safeResponseFailAction,
     },
   },

@@ -1,6 +1,9 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { BSON, Decimal128, Int32, Long, MongoClient, ObjectId } from "mongodb";
 import { env } from "node:process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { valuesOf } from "../../src/common/explore/bson-bytes.js";
+import { startOf } from "../../src/common/explore/document-start.js";
+import { SIZE_ERROR } from "../../src/common/explore/evaluate.js";
 import { mergeExact } from "../../src/common/explore/merge.js";
 import {
   listExploreSources,
@@ -54,7 +57,7 @@ const BUSINESS = "payload.answers.applicant.business.name";
 const PARCEL = "payload.answers.application.parcel.parcelId";
 
 const query = (overrides = {}) => ({
-  v: 3,
+  v: 4,
   source: "cases",
   mode: "rows",
   columns: [{ path: "caseRef" }, { path: BUSINESS }],
@@ -73,8 +76,9 @@ const idsOf = (filter) =>
     .map(String)
     .toSorted();
 
-// The finds Mongo ran on the collections while `work` ran: each one's hint and
-// the ids it asked for.
+// The finds `work` ran on the collections, each one's hint and the ids it
+// asked for. Only Explore's carry a time limit, so the inbox and outbox
+// pollers' finds are left out.
 const profiled = async (collections, work) => {
   await db.command({ profile: 2 });
 
@@ -87,6 +91,7 @@ const profiled = async (collections, work) => {
           $in: [collections].flat().map((name) => `${db.databaseName}.${name}`),
         },
         op: "query",
+        "command.maxTimeMS": { $exists: true },
       })
       .toArray();
 
@@ -435,7 +440,13 @@ describe("POST /actuators/explore/query", () => {
         value: "CaseStatusUpdated",
         n: 3,
         aggs: {
-          "sum(completionAttempts)": [0.9, -2.7755575615628914e-17, 0.9],
+          "sum(completionAttempts)": [
+            0.9,
+            -2.7755575615628914e-17,
+            0.9,
+            "f",
+            null,
+          ],
           "min(publicationDate)": { d: minutesAgo(5).toISOString() },
           "max(publicationDate)": { d: minutesAgo(1).toISOString() },
         },
@@ -593,9 +604,11 @@ describe("POST /actuators/explore/query", () => {
                 c0: "explore-workflow",
                 c1: "active",
                 c2: 1,
-                c3: {
-                  text: "{ code: 'P', stages: [ { code: 'S', taskGroups: [ { code: 'G', tasks: [ { code: 'CHECK_PLAN' } ] } ] } ] }",
-                },
+                c3: [
+                  {
+                    text: "{ code: 'P', stages: [ { code: 'S', taskGroups: [ { code: 'G', tasks: [ { code: 'CHECK_PLAN' } ] } ] } ] }",
+                  },
+                ],
               },
             },
           ],
@@ -852,5 +865,542 @@ describe("POST /actuators/explore/query", () => {
     await expect(
       queryExplore(query(), { authorization: `Bearer ${SERVICE_TOKEN}` }),
     ).rejects.toThrow("Response Error: 403 Forbidden");
+  });
+});
+
+const idOf = ({ _id }) => BSON.serialize({ _id }).toString("base64");
+
+const stored = async (collection, _id) =>
+  Buffer.from(await db.collection(collection).findOne({ _id }, { raw: true }));
+
+const WHOLE = { whole: true, id: true };
+
+const withDocuments = (overrides = {}) =>
+  query({ documents: WHOLE, ...overrides });
+
+const fetchOf = (rows, overrides = {}) =>
+  withDocuments({
+    mode: "documents",
+    documents: { ...WHOLE, bytes: 8 * 1024 * 1024 },
+    rows,
+    ...overrides,
+  });
+
+const docOf = (entry) => Buffer.from(entry.doc, "base64");
+
+describe("POST /actuators/explore/query, with starts", () => {
+  const STARTS = { whole: true, id: true, mode: "starts" };
+  const startsOf = (rows, overrides = {}) =>
+    withDocuments({ mode: "documents", documents: STARTS, rows, ...overrides });
+  const rowOf = (found, box = "cw.cases") => ({
+    box,
+    id: idOf(found),
+    at: [],
+  });
+
+  it("sends each record's start as the shared code cuts it, with what it printed whole", async () => {
+    const long = aCase(1, { note: "n".repeat(100_000) });
+    const short = aCase(2);
+    const gone = aCase(3);
+
+    await db.collection("cases").insertMany([long, short]);
+
+    const { payload } = await queryExplore(
+      startsOf([rowOf(long), rowOf(short), rowOf(gone)]),
+    );
+    const [first, second, third] = payload.documents;
+
+    for (const [entry, found] of [
+      [first, long],
+      [second, short],
+    ]) {
+      const bytes = await stored("cases", found._id);
+      const start = startOf(bytes);
+
+      expect(entry).toEqual({
+        ...rowOf(found),
+        start: { doc: start.doc.toString("base64"), cut: start.cut },
+        printed: { bytes: bytes.length, values: valuesOf(bytes) },
+      });
+    }
+
+    expect(first.start.cut).toBe(true);
+    expect(third).toEqual({ ...rowOf(gone), gone: true });
+
+    const fetchAudit = (await audits()).at(-1);
+
+    expect(fetchAudit.event.audit.details).toMatchObject({
+      resultCount: 2,
+      outcome: "ANSWERED",
+    });
+  });
+
+  it("sends an event's start beside no context", async () => {
+    const sent = anEvent(1, minutesAgo(1));
+
+    await db.collection("outbox").insertOne(sent);
+
+    const { payload } = await queryExplore(
+      startsOf([rowOf(sent, "cw.outbox")], {
+        source: "events",
+        columns: [{ path: "eventType" }],
+        where: null,
+      }),
+    );
+
+    expect(Object.keys(payload.documents[0]).sort()).toEqual(
+      ["at", "box", "id", "printed", "start"].sort(),
+    );
+  });
+
+  it("answers the starts it read in time, in the order asked, and none with no time left, saying time ended them", async () => {
+    const cases = Array.from({ length: 30 }, (_, n) =>
+      aCase(n, { note: "n".repeat(4 * 1024 * 1024) }),
+    );
+
+    for (const found of cases) {
+      await db.collection("cases").insertOne(found);
+    }
+
+    const asked = cases.map((found) => rowOf(found));
+    const short = await queryExplore(startsOf(asked), {
+      "x-explore-time-left-ms": "1100",
+    });
+    const none = await queryExplore(startsOf(asked), {
+      "x-explore-time-left-ms": "1000",
+    });
+    const read = short.payload.documents;
+
+    expect(read.length).toBeLessThan(asked.length);
+    expect(read.map(({ id }) => id)).toEqual(
+      asked.slice(0, read.length).map(({ id }) => id),
+    );
+    expect(read.every(({ start }) => start)).toBe(true);
+    expect(short.payload.ended).toBe("time");
+    expect(none.payload).toEqual({ documents: [], ended: "time" });
+  }, 60_000);
+
+  it.each([
+    ["with bytes to hold", { documents: { ...STARTS, bytes: 1024 } }],
+    ["in another mode", { documents: { ...STARTS, mode: "whole" } }],
+  ])("refuses a starts fetch %s, auditing nothing", async (_, overrides) => {
+    expect(await refusalOf(queryExplore(startsOf([], overrides)))).toEqual({
+      status: 400,
+      body: { statusCode: 400, reason: "EXPLORE_QUERY_INVALID" },
+    });
+    expect(await audits()).toEqual([]);
+  });
+});
+
+describe("POST /actuators/explore/query, with documents", () => {
+  const kept = () =>
+    aCase(1, {
+      count: new Int32(7),
+      total: Long.fromString("9007199254740993"),
+      grant: Decimal128.fromString("1234.50"),
+      comments: [{ type: "NOTE", text: "Spoke to the farmer" }],
+      timeline: [{ eventType: "CASE_CREATED", createdBy: "caseworker-1" }],
+    });
+
+  it("reads cases by their ids with each record's typed _id and size, then sends each document as stored", async () => {
+    const cases = [kept(), aCase(2), aCase(3)];
+
+    await db.collection("cases").insertMany(cases);
+
+    const [first, second] = cases;
+    const { payload } = await queryExplore(
+      withDocuments({
+        columns: [{ path: "caseRef" }],
+        where: {
+          path: "_id",
+          op: "in",
+          values: [first, second].map(({ _id }) => ({
+            oid: _id.toHexString(),
+          })),
+        },
+      }),
+    );
+
+    expect(payload.read).toBe("exact");
+
+    const bytes = await stored("cases", first._id);
+    const rows = payload.boxes[0].rows.map(({ id, at, size }) => ({
+      id,
+      at,
+      size,
+    }));
+
+    expect(rows).toEqual([
+      { id: idOf(first), at: [], size: bytes.length },
+      {
+        id: idOf(second),
+        at: [],
+        size: (await stored("cases", second._id)).length,
+      },
+    ]);
+
+    const fetched = await queryExplore(
+      fetchOf(rows.map(({ id, at }) => ({ box: "cw.cases", id, at }))),
+    );
+    const [doc, other] = fetched.payload.documents;
+
+    expect(fetched.payload.documents).toHaveLength(2);
+    expect(doc).toEqual({
+      box: "cw.cases",
+      id: idOf(first),
+      at: [],
+      doc: expect.any(String),
+      context: null,
+    });
+    expect(docOf(doc).equals(bytes)).toBe(true);
+    expect(docOf(other).equals(await stored("cases", second._id))).toBe(true);
+
+    const fetchAudit = (await audits()).at(-1);
+
+    expect(fetchAudit.event.audit.status).toBe("success");
+    expect(fetchAudit.event.audit.details).toEqual({
+      security: expect.any(Object),
+      source: "cases",
+      resultCount: 2,
+      outcome: "ANSWERED",
+    });
+
+    const recorded = JSON.stringify(await audits());
+
+    [doc.doc, other.doc, idOf(first), idOf(second), "farmer"].forEach((value) =>
+      expect(recorded).not.toContain(value),
+    );
+  });
+
+  it("lets the rows asked last go unread past the bytes it may send, the first always held", async () => {
+    const cases = [1, 2, 3].map((n) => aCase(n));
+
+    await db.collection("cases").insertMany(cases);
+
+    const asked = cases.map((found) => ({
+      box: "cw.cases",
+      id: idOf(found),
+      at: [],
+    }));
+    const sizes = await Promise.all(
+      cases.map(async ({ _id }) => (await stored("cases", _id)).length),
+    );
+    const fetchedWith = async (bytes) =>
+      (await queryExplore(fetchOf(asked, { documents: { ...WHOLE, bytes } })))
+        .payload.documents;
+
+    const one = await fetchedWith(1);
+
+    expect(one.map(({ box, id, at }) => ({ box, id, at }))).toEqual(asked);
+    expect(one.map(({ doc, unread }) => [Boolean(doc), unread])).toEqual([
+      [true, undefined],
+      [false, true],
+      [false, true],
+    ]);
+    expect(docOf(one[0]).equals(await stored("cases", cases[0]._id))).toBe(
+      true,
+    );
+
+    const two = await fetchedWith(sizes[0] + sizes[1]);
+
+    expect(two.map(({ unread }) => Boolean(unread))).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(JSON.stringify(two)).not.toContain("later");
+  });
+
+  it("says a record gone since it was found is gone", async () => {
+    const gone = aCase(1);
+
+    const { payload } = await queryExplore(
+      fetchOf([{ box: "cw.cases", id: idOf(gone), at: [] }]),
+    );
+
+    expect(payload.documents).toEqual([
+      {
+        box: "cw.cases",
+        id: idOf(gone),
+        at: [],
+        gone: true,
+        context: null,
+      },
+    ]);
+  });
+
+  it("sends each event's document with the service and box it was read from", async () => {
+    const sent = anEvent(1, minutesAgo(1));
+    const received = anEvent(2, minutesAgo(2).toISOString());
+
+    await db.collection("outbox").insertOne(sent);
+    await db.collection("inbox").insertOne(received);
+
+    const { payload } = await queryExplore(
+      fetchOf(
+        [
+          { box: "cw.inbox", id: idOf(received), at: [] },
+          { box: "cw.outbox", id: idOf(sent), at: [] },
+        ],
+        { source: "events", columns: [{ path: "eventType" }] },
+      ),
+    );
+
+    expect(payload.documents.map(({ box, context }) => [box, context])).toEqual(
+      [
+        ["cw.inbox", { service: "CW", box: "inbox" }],
+        ["cw.outbox", { service: "CW", box: "outbox" }],
+      ],
+    );
+    expect(
+      docOf(payload.documents[0]).equals(await stored("inbox", received._id)),
+    ).toBe(true);
+    expect(
+      docOf(payload.documents[1]).equals(await stored("outbox", sent._id)),
+    ).toBe(true);
+  });
+
+  it.each([
+    ["with no rows", { ...fetchOf([]), rows: undefined }],
+    ["with no allowance", fetchOf([], { documents: WHOLE })],
+  ])("refuses a documents fetch %s, auditing nothing", async (_, payload) => {
+    expect(await refusalOf(queryExplore(payload))).toEqual({
+      status: 400,
+      body: { statusCode: 400, reason: "EXPLORE_QUERY_INVALID" },
+    });
+    expect(await audits()).toEqual([]);
+  });
+
+  it.each([
+    ["a row of another source's box", () => ({ box: "cw.outbox" })],
+    [
+      "an id that isn't the BSON of { _id }",
+      () => ({ id: BSON.serialize({ x: 1 }).toString("base64") }),
+    ],
+    ["positions that don't fit the unwind", () => ({ at: [0] })],
+  ])(
+    "refuses a fetch of %s before reading, auditing nothing",
+    async (_, change) => {
+      const found = aCase(1);
+
+      await db.collection("cases").insertOne(found);
+
+      const row = { box: "cw.cases", id: idOf(found), at: [], ...change() };
+
+      expect(await refusalOf(queryExplore(fetchOf([row])))).toEqual({
+        status: 400,
+        body: { statusCode: 400, reason: "EXPLORE_QUERY_INVALID" },
+      });
+      expect(await audits()).toEqual([]);
+    },
+  );
+
+  it("sends a workflow version's document with its definition, each as stored", async () => {
+    const version = {
+      _id: new ObjectId(),
+      grantCode: "explore-fetch",
+      version: "1.0.0",
+      status: "active",
+      receivedAt: minutesAgo(1).toISOString(),
+    };
+    const definition = {
+      _id: new ObjectId(),
+      code: "explore-fetch",
+      version: "1.0.0",
+      endpoints: [{ code: "X", url: "https://internal.example" }],
+      phases: [{ code: "P", stages: [] }],
+    };
+
+    await db.collection("config_versions").insertOne(version);
+    await db.collection("workflows").insertOne(definition);
+
+    const { payload } = await queryExplore(
+      fetchOf([{ box: "cw.workflows", id: idOf(version), at: [] }], {
+        source: "workflows",
+        columns: [{ path: "grantCode" }, { path: "definition" }],
+        where: null,
+      }),
+    );
+    const [entry] = payload.documents;
+
+    expect(Object.keys(entry.context)).toEqual(["definition"]);
+    expect(
+      docOf(entry).equals(await stored("config_versions", version._id)),
+    ).toBe(true);
+    expect(
+      Buffer.from(entry.context.definition, "base64").equals(
+        await stored("workflows", definition._id),
+      ),
+    ).toBe(true);
+
+    await db.collection("config_versions").deleteOne({ _id: version._id });
+    await db.collection("workflows").deleteOne({ _id: definition._id });
+  });
+
+  it.each([
+    [
+      "a case",
+      "cases",
+      () => aCase(1),
+      (found) => ({
+        all: [
+          {
+            path: BUSINESS,
+            op: "regex",
+            values: [{ pattern: "business", flags: "i" }],
+          },
+          { path: "_id", op: "eq", values: [{ oid: found._id.toHexString() }] },
+        ],
+      }),
+    ],
+    [
+      "an event in its box",
+      "inbox",
+      () => anEvent(1, minutesAgo(1).toISOString()),
+      (found) => ({
+        all: [
+          { path: "event.data.caseRef", op: "filled", values: [] },
+          { path: "_id", op: "eq", values: [{ oid: found._id.toHexString() }] },
+          { path: "service", op: "eq", values: ["CW"] },
+          { path: "box", op: "eq", values: ["inbox"] },
+        ],
+      }),
+    ],
+  ])(
+    "reads %s by its _id exactly, through the _id index, as Show it asks",
+    async (_, collection, make, where) => {
+      const found = make();
+
+      await db.collection(collection).insertOne(found);
+
+      const { payload, finds } = await profiled(collection, () =>
+        queryExplore(
+          withDocuments({
+            source: collection === "cases" ? "cases" : "events",
+            columns: [{ path: "_id" }],
+            where: where(found),
+          }),
+        ),
+      );
+      const rows = payload.boxes.flatMap((box) => box.rows);
+
+      expect(payload.read).toBe("exact");
+      expect(rows.map(({ id }) => id)).toEqual([idOf(found)]);
+      expect(finds).toEqual([
+        { hint: { _id: 1 }, ids: [found._id.toHexString()] },
+      ]);
+    },
+  );
+
+  it.each([
+    ["a row's cells", query()],
+    ["a document", fetchOf([])],
+  ])(
+    "fails $size of anything but a list in %s as mongod does, naming the type and column",
+    async (place, asked) => {
+      const found = aCase(1);
+
+      await db.collection("cases").insertOne(found);
+
+      const columns = [
+        { path: "caseRef" },
+        { fn: "count", path: "refs", as: "refs" },
+        { fn: "count", path: "caseRef", as: "n" },
+      ];
+      const rows =
+        place === "a document"
+          ? [{ box: "cw.cases", id: idOf(found), at: [] }]
+          : undefined;
+      const payload = {
+        ...asked,
+        columns,
+        ...(rows && {
+          rows,
+          documents: { whole: false, id: true, bytes: 1024 },
+        }),
+      };
+
+      expect(await refusalOf(queryExplore(payload))).toEqual({
+        status: 400,
+        body: {
+          statusCode: 400,
+          reason: "EXPLORE_QUERY_REFUSED",
+          refusal: SIZE_ERROR,
+          detail: { fn: "count", type: "string", column: 2 },
+        },
+      });
+    },
+  );
+
+  it("lists a record too large to search by what it opens and its _id", async () => {
+    const LONG = "a".repeat(100_000);
+    const large = aCase(1, {
+      payload: { answers: { applicant: { business: { name: LONG } } } },
+    });
+
+    await db.collection("cases").insertOne(large);
+
+    const { payload } = await queryExplore(
+      query({
+        where: {
+          path: BUSINESS,
+          op: "regex",
+          values: [{ pattern: "(?:(?:a|.){20}){4}z", flags: "" }],
+        },
+      }),
+    );
+
+    expect(payload.boxes[0]).toMatchObject({
+      partial: true,
+      rows: [],
+      skipped: [
+        {
+          open: { kind: "case", code: "example-workflow", ref: "case-1" },
+          id: idOf(large),
+        },
+      ],
+    });
+  });
+
+  it("ends a download's exact read at its last whole row within the cells allowance, saying where it stands", async () => {
+    await db.collection("cases").insertMany([1, 2, 3].map((n) => aCase(n)));
+
+    const asked = async (cellBytes) =>
+      (await queryExplore(query({ cellBytes }))).payload;
+
+    const whole = await asked(4096);
+
+    expect(whole.boxes[0].rows).toHaveLength(3);
+    expect(whole).not.toHaveProperty("cutAfter");
+
+    const cut = await asked(64);
+    const [kept] = whole.boxes[0].rows;
+
+    expect(cut.read).toBe("exact");
+    expect(cut.boxes[0].rows).toEqual([kept]);
+    expect(cut.cutAfter).toEqual({
+      key: { ...kept.key, box: cut.boxes[0].id },
+      order: kept.order,
+    });
+  });
+
+  it("ends a windowed read early within the cells allowance, at a whole row", async () => {
+    await db.collection("cases").insertMany([1, 2, 3].map((n) => aCase(n)));
+
+    const { payload } = await queryExplore(
+      query({
+        cellBytes: 64,
+        where: {
+          path: BUSINESS,
+          op: "regex",
+          values: [{ pattern: "business", flags: "i" }],
+        },
+      }),
+    );
+
+    expect(payload.read).toBe("windowed");
+    expect(payload.boxes[0]).toMatchObject({ end: false, cut: true });
+    expect(payload.boxes[0].rows).toHaveLength(1);
+    expect(payload.boxes[0].to).toEqual(payload.boxes[0].rows[0].key);
   });
 });
