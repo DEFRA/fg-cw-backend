@@ -81,7 +81,8 @@ Shared modules, referenced by any layer
   (`event-edit.js`, with `payload-changes.js` saying where an edit landed and
   `plain-json.js` whether a payload survives a JSON round trip), how long a
   terminal one is kept (`event-retention.js`), how a failure is recorded
-  (`last-error.js`), and whether retrying it could ever work (`retryable.js`)
+  (`last-error.js`), what else happened to one (`event-history.js`), and
+  whether retrying it could ever work (`retryable.js`)
 
 `src/events/` lived in `src/common/` and did not belong there: `common` is
 infrastructure, and these files are nothing but opinion about one part of the

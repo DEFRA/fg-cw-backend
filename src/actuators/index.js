@@ -10,7 +10,9 @@ import { exploreQueryRoute } from "./routes/explore-query.route.js";
 import { exploreSourcesRoute } from "./routes/explore-sources.route.js";
 import { changeClientTokenExpiryRoute } from "./routes/change-client-token-expiry.route.js";
 import { deleteClientTokenRoute } from "./routes/delete-client-token.route.js";
+import { getInboxEventStatusRoute } from "./routes/get-inbox-event-status.route.js";
 import { getInboxEventRoute } from "./routes/get-inbox-event.route.js";
+import { getOutboxEventStatusRoute } from "./routes/get-outbox-event-status.route.js";
 import { getOutboxEventRoute } from "./routes/get-outbox-event.route.js";
 import { issueClientTokenRoute } from "./routes/issue-client-token.route.js";
 import { listClientsRoute } from "./routes/list-clients.route.js";
@@ -56,6 +58,8 @@ export const actuators = {
       exploreQueryRoute,
       getInboxEventRoute,
       getOutboxEventRoute,
+      getInboxEventStatusRoute,
+      getOutboxEventStatusRoute,
       redriveInboxEventRoute,
       redriveOutboxEventRoute,
       purgeInboxEventRoute,

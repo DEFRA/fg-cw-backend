@@ -23,6 +23,16 @@ export const getInboxEvent = (id, token = `Bearer ${CASE_READER_TOKEN}`) =>
 export const getOutboxEvent = (id, token = `Bearer ${CASE_READER_TOKEN}`) =>
   get(`/actuators/events/outbox/${id}`, undefined, token);
 
+export const getInboxEventStatus = (
+  id,
+  token = `Bearer ${CASE_READER_TOKEN}`,
+) => get(`/actuators/events/inbox/${id}/status`, undefined, token);
+
+export const getOutboxEventStatus = (
+  id,
+  token = `Bearer ${CASE_READER_TOKEN}`,
+) => get(`/actuators/events/outbox/${id}/status`, undefined, token);
+
 export const redriveInboxEvent = (
   id,
   { by } = {},

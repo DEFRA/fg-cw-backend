@@ -158,7 +158,7 @@ describe("inbox.repository", () => {
                 stack: null,
               },
             ],
-            $slice: -10,
+            $slice: -25,
           },
         },
       },
@@ -189,6 +189,16 @@ describe("inbox.repository", () => {
           $set: {
             status: InboxStatus.DEAD_LETTER,
             errorKey: { $ifNull: ["$errorKey", "No error recorded"] },
+            history: {
+              $concatArrays: [
+                { $ifNull: ["$history", []] },
+                [
+                  {
+                    $literal: { kind: "dead-lettered", at: expect.any(String) },
+                  },
+                ],
+              ],
+            },
             claimedAt: null,
             claimExpiresAt: null,
             claimedBy: null,
@@ -346,6 +356,40 @@ describe("inbox.repository update and an edited row", () => {
     expect($set).not.toHaveProperty("payloadRevision");
   });
 
+  it("appends a dead-letter entry beside the $set, and never sets the history", async () => {
+    const updateOne = vi.fn();
+    db.collection.mockReturnValue({ updateOne });
+    const inbox = Inbox.createMock({ _id: new ObjectId() });
+    const permanent = new Error("bad");
+    permanent.retryable = false;
+
+    inbox.markAsFailed(permanent);
+    await update(inbox, "claim");
+
+    const [, change] = updateOne.mock.calls.at(-1);
+
+    expect(change.$set).not.toHaveProperty("history");
+    expect(change.$push).toEqual({
+      history: {
+        $each: [{ kind: "dead-lettered", at: inbox.lastResubmissionDate }],
+      },
+    });
+  });
+
+  it("sends no $push when the model added no entry, so a completion leaves the history alone", async () => {
+    const updateOne = vi.fn();
+    db.collection.mockReturnValue({ updateOne });
+    const inbox = Inbox.createMock({ _id: new ObjectId() });
+
+    inbox.markAsComplete();
+    await update(inbox, "claim");
+
+    const [, change] = updateOne.mock.calls.at(-1);
+
+    expect(Object.keys(change)).toEqual(["$set"]);
+    expect(change.$set).not.toHaveProperty("history");
+  });
+
   it("sends no stamped field", async () => {
     const updateOne = vi.fn();
     db.collection.mockReturnValue({ updateOne });
@@ -428,10 +472,10 @@ describe("inbox.repository editPayloadById", () => {
       revision: 1,
     });
 
-    const [, { $set }] = updateOne.mock.calls.at(-1);
+    const [, [{ $set }]] = updateOne.mock.calls.at(-1);
 
-    expect($set.type).toBe("t.new");
-    expect($set.eventTime).toBe("2026-06-17T09:00:00.000Z");
+    expect($set.type).toEqual({ $literal: "t.new" });
+    expect($set.eventTime).toEqual({ $literal: "2026-06-17T09:00:00.000Z" });
   });
 
   it("clears them when the new envelope has none", async () => {
@@ -443,8 +487,11 @@ describe("inbox.repository editPayloadById", () => {
       revision: 1,
     });
 
-    const [, { $set }] = updateOne.mock.calls.at(-1);
+    const [, [{ $set }]] = updateOne.mock.calls.at(-1);
 
-    expect($set).toMatchObject({ type: null, eventTime: null });
+    expect($set).toMatchObject({
+      type: { $literal: null },
+      eventTime: { $literal: null },
+    });
   });
 });

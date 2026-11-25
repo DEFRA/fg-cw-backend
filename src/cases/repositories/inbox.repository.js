@@ -8,6 +8,11 @@ import {
   withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
+import {
+  appendHistory,
+  deadLetteredEntry,
+  pushHistory,
+} from "../../events/event-history.js";
 import { withoutStamps } from "../../events/stamps.js";
 import { Inbox, InboxStatus } from "../models/inbox.js";
 
@@ -114,6 +119,7 @@ export const updateDeadEvents = async () => {
         $set: {
           status: InboxStatus.DEAD_LETTER,
           errorKey: deadLetterErrorKey,
+          history: appendHistory(deadLetteredEntry(new Date().toISOString())),
           claimedAt: null,
           claimExpiresAt: null,
           claimedBy: null,
@@ -174,6 +180,9 @@ export const insertOne = async (inbox, session) => {
   return db.collection(collection).insertOne(inbox.toDocument(), { session });
 };
 
+const historyUpdate = (entries) =>
+  entries.length > 0 ? { $push: pushHistory(entries) } : {};
+
 // Matching on `claimedBy` stops a handler that outlived its claim from
 // overwriting the expiry sweep's attempt count and history.
 export const update = async (inbox, claimedBy) => {
@@ -181,12 +190,16 @@ export const update = async (inbox, claimedBy) => {
 
   return db
     .collection(collection)
-    .updateOne({ _id, claimedBy }, { $set: updateDoc });
+    .updateOne(
+      { _id, claimedBy },
+      { $set: updateDoc, ...historyUpdate(inbox.newHistory) },
+    );
 };
 
 export const {
   findDetailById,
   findStatusById,
+  findAttemptStatusById,
   redriveById,
   purgeById,
   findEditableById,

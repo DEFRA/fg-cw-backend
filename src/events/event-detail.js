@@ -6,6 +6,7 @@ import {
 import { config } from "../common/config.js";
 import { toIsoOrNull } from "../common/date-helpers.js";
 import { DEAD_LETTER } from "./event-redrive.js";
+import { toStoredHistory } from "./event-history.js";
 import { expiryFrom } from "./event-retention.js";
 import { normaliseAttemptHistory, toStoredLastError } from "./last-error.js";
 import { isPlainJson, withJsonNumbers } from "./plain-json.js";
@@ -94,6 +95,7 @@ export const toDetailDocument = (doc, maxAttempts, box) => {
   // A row never edited has no counter; the editor posts this back as its fence.
   detail.payloadRevision = doc.payloadRevision ?? 0;
   detail.lastEdit = toEditRecord(doc.lastEdit);
+  detail.history = toStoredHistory(doc.history);
   // From the stored document, whose BSON types the wire would erase.
   detail.payloadIsPlainJson = isPlainJson(doc.event);
 

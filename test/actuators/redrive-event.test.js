@@ -169,17 +169,21 @@ describe("POST /actuators/events/inbox/{id}/redrive", () => {
     expect(stored.claimExpiresAt).toBeNull();
   });
 
-  it("clears the attempt history with the counter in the database", async () => {
+  it("resets the counter but keeps the attempts, and records the redrive", async () => {
     const doc = aDeadInboxDoc({ attemptHistory: aHistory() });
     await inbox.insertOne(doc);
 
     const stored = await writtenBy(inbox, doc._id, () =>
-      redriveInboxEvent(doc._id.toHexString()),
+      redriveInboxEvent(doc._id.toHexString(), { by: "donatas" }),
     );
 
     expect(stored.completionAttempts).toBe(0);
-    expect(stored.attemptHistory).toEqual([]);
+    expect(stored.attemptHistory).toEqual(doc.attemptHistory);
     expect(stored.lastError.message).toBe("boom");
+    expect(stored.history).toEqual([
+      { kind: "dead-lettered", at: doc.lastResubmissionDate },
+      { kind: "redriven", at: stored.lastRedrive.at, by: "donatas" },
+    ]);
   });
 
   it("keeps lastError and lastResubmissionDate", async () => {
@@ -288,7 +292,7 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
     expect(stored.payloadRevision).toBe(1);
   });
 
-  it("clears the attempt history with the counter in the database", async () => {
+  it("resets the counter but keeps the attempts, and records the redrive", async () => {
     const doc = aDeadOutboxDoc({ attemptHistory: aHistory() });
     await outbox.insertOne(doc);
 
@@ -297,7 +301,11 @@ describe("POST /actuators/events/outbox/{id}/redrive", () => {
     );
 
     expect(stored.completionAttempts).toBe(0);
-    expect(stored.attemptHistory).toEqual([]);
+    expect(stored.attemptHistory).toEqual(doc.attemptHistory);
+    expect(stored.history).toEqual([
+      { kind: "dead-lettered", at: doc.lastResubmissionDate },
+      { kind: "redriven", at: stored.lastRedrive.at, by: null },
+    ]);
   });
 
   it("409s with the current status when the row is not DEAD_LETTER", async () => {

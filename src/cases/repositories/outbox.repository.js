@@ -7,6 +7,10 @@ import {
   withErrorKey,
   pushAttemptUpdate,
 } from "../../events/last-error.js";
+import {
+  appendHistory,
+  deadLetteredEntry,
+} from "../../events/event-history.js";
 import { withoutStamps } from "../../events/stamps.js";
 import { logger } from "../../common/logger.js";
 import { db } from "../../common/mongo-client.js";
@@ -172,6 +176,7 @@ export const updateDeadEvents = async () => {
         $set: {
           status: OutboxStatus.DEAD_LETTER,
           errorKey: deadLetterErrorKey,
+          history: appendHistory(deadLetteredEntry(new Date().toISOString())),
           claimedAt: null,
           claimExpiresAt: null,
           claimedBy: null,
@@ -185,6 +190,7 @@ export const updateDeadEvents = async () => {
 export const {
   findDetailById,
   findStatusById,
+  findAttemptStatusById,
   redriveById,
   purgeById,
   findEditableById,

@@ -17,6 +17,7 @@ const aDetail = (overrides = {}) => ({
   completionDate: null,
   publicationDate: "2026-06-16T10:00:00.000Z",
   attemptHistory: [],
+  history: [],
   payloadRevision: 0,
   payloadIsPlainJson: true,
   ...overrides,
@@ -173,6 +174,59 @@ describe("detail attemptHistory", () => {
         anInbox({ attemptHistory: [{ ...anEntry, message: "" }] }),
       ).error,
     ).toBeUndefined();
+  });
+});
+
+describe("detail history", () => {
+  const ENTRIES = [
+    { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z" },
+    { kind: "redriven", at: "2026-06-16T11:00:00.000Z", by: "ada" },
+    {
+      kind: "purged",
+      at: "2026-06-16T12:00:00.000Z",
+      by: "ada",
+      reasonCode: "OTHER",
+      note: null,
+    },
+    {
+      kind: "payload-edited",
+      at: "2026-06-16T13:00:00.000Z",
+      by: "ada",
+      note: "fixed",
+      before: { data: { amount: "12" } },
+    },
+    {
+      kind: "payload-edited",
+      at: "2026-06-16T14:00:00.000Z",
+      by: null,
+      note: "past the kept before-images",
+    },
+  ];
+
+  it.each([
+    ["inbox", inboxDetailResponseSchema, anInbox],
+    ["outbox", outboxDetailResponseSchema, anOutbox],
+  ])("accepts every kind of entry on a %s detail", (_box, schema, detail) => {
+    expect(schema.validate(detail({ history: ENTRIES })).error).toBeUndefined();
+  });
+
+  it("requires the key, so a mapping gap fails a test rather than a render", () => {
+    const { history, ...without } = anInbox();
+
+    expect(inboxDetailResponseSchema.validate(without).error).toBeDefined();
+  });
+
+  it("rejects an entry with no kind or a time that is not ISO", () => {
+    expect(
+      inboxDetailResponseSchema.validate(
+        anInbox({ history: [{ at: "2026-06-16T10:05:00.000Z" }] }),
+      ).error,
+    ).toBeDefined();
+    expect(
+      inboxDetailResponseSchema.validate(
+        anInbox({ history: [{ kind: "redriven", at: "yesterday" }] }),
+      ).error,
+    ).toBeDefined();
   });
 });
 

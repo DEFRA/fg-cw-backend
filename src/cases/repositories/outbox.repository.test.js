@@ -219,7 +219,7 @@ describe("outbox.repository", () => {
                   stack: null,
                 },
               ],
-              $slice: -10,
+              $slice: -25,
             },
           },
         },
@@ -302,6 +302,19 @@ describe("outbox.repository", () => {
             $set: {
               status: OutboxStatus.DEAD_LETTER,
               errorKey: { $ifNull: ["$errorKey", "No error recorded"] },
+              history: {
+                $concatArrays: [
+                  { $ifNull: ["$history", []] },
+                  [
+                    {
+                      $literal: {
+                        kind: "dead-lettered",
+                        at: mockDate.toISOString(),
+                      },
+                    },
+                  ],
+                ],
+              },
               claimedAt: null,
               claimExpiresAt: null,
               claimedBy: null,
@@ -424,10 +437,11 @@ describe("outbox.repository editPayloadById", () => {
       revision: 1,
     });
 
-    const [, { $set }] = updateOne.mock.calls.at(-1);
+    const [, [{ $set }]] = updateOne.mock.calls.at(-1);
 
     expect(Object.keys($set).sort()).toEqual([
       "event",
+      "history",
       "lastEdit",
       "payloadRevision",
     ]);

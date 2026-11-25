@@ -73,6 +73,7 @@ const editEventPayloadFor = (boxEdit) => {
         note,
         revision,
         original: stored.lastEdit ? undefined : stored.event,
+        before: stored.event,
         session,
       })
     ) {

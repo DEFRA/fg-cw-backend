@@ -85,12 +85,13 @@ export class Outbox {
   markAsFailed(error) {
     this.status = OutboxStatus.FAILED;
     this.lastResubmissionDate = new Date().toISOString();
-    this.lastError = toLastError(error) ?? this.lastError;
+    this.lastError =
+      toLastError(error, this.lastResubmissionDate) ?? this.lastError;
     // `markAsComplete` deliberately leaves the history in place, so a row
     // that eventually succeeded still shows what it took.
     this.attemptHistory = appendAttempt(
       this.attemptHistory,
-      toAttemptEntry(error),
+      toAttemptEntry(error, this.lastResubmissionDate),
     );
     this.completionAttempts += 1;
     this.expireAt = null;

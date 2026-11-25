@@ -175,8 +175,8 @@ describe("toAttemptEntry", () => {
     });
   });
 
-  // Ten of these live on every document, so the attempt cap is half the
-  // `lastError` one: 4KB apiece puts a worst-case history at 40KB.
+  // 25 of these live on every document, so the attempt cap is half the
+  // `lastError` one: 4KB apiece puts a worst-case history at 100KB.
   it("caps the stack harder than lastError does", () => {
     const error = new Error("boom");
     error.stack = "x".repeat(20000);
@@ -227,13 +227,13 @@ describe("normaliseAttemptHistory", () => {
   });
 
   it("trims a stored history that is already over the cap", () => {
-    const stored = Array.from({ length: 14 }, (_, i) => ({ message: `${i}` }));
+    const stored = Array.from({ length: 30 }, (_, i) => ({ message: `${i}` }));
 
     const history = normaliseAttemptHistory(stored);
 
     expect(history).toHaveLength(MAX_ATTEMPT_HISTORY);
-    expect(history.at(0).message).toBe("4");
-    expect(history.at(-1).message).toBe("13");
+    expect(history.at(0).message).toBe("5");
+    expect(history.at(-1).message).toBe("29");
   });
 });
 
@@ -248,26 +248,17 @@ describe("appendAttempt", () => {
     ]);
   });
 
-  it("keeps only the ten most recent entries", () => {
+  it("keeps only the 25 most recent entries", () => {
     let history = [];
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 30; i++) {
       history = appendAttempt(history, toAttemptEntry(new Error(`${i}`)));
     }
 
-    expect(history).toHaveLength(MAX_ATTEMPT_HISTORY);
-    expect(history.map((entry) => entry.message)).toEqual([
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20",
-      "21",
-      "22",
-      "23",
-      "24",
-    ]);
+    expect(history).toHaveLength(25);
+    expect(history.map((entry) => entry.message)).toEqual(
+      Array.from({ length: 25 }, (_, i) => `${i + 5}`),
+    );
   });
 
   it("appends nothing when there is no entry", () => {
@@ -295,8 +286,8 @@ describe("pushAttemptUpdate", () => {
     });
   });
 
-  it("slices to exactly ten", () => {
-    expect(pushAttemptUpdate({}).attemptHistory.$slice).toBe(-10);
+  it("slices to exactly 25", () => {
+    expect(pushAttemptUpdate({}).attemptHistory.$slice).toBe(-25);
   });
 });
 

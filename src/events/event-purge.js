@@ -1,5 +1,6 @@
 import Boom from "@hapi/boom";
 import { config } from "../common/config.js";
+import { appendAction, purgedEntry } from "./event-history.js";
 import { DEAD_LETTER } from "./event-redrive.js";
 import { expiryFrom } from "./event-retention.js";
 
@@ -29,17 +30,21 @@ const purgeRecord = ({ by, reasonCode, note }, at) => ({
 
 export const purgeUpdate = ({ by, reasonCode, note, at } = {}) => {
   const now = at ?? new Date();
+  const record = purgeRecord({ by, reasonCode, note }, now);
 
-  return {
-    $set: {
-      status: PURGED,
-      lastPurge: purgeRecord({ by, reasonCode, note }, now),
-      // A BSON Date: a TTL index silently ignores any other type.
-      expireAt: expiryFrom(now, RETENTION_DAYS),
+  return [
+    {
+      $set: {
+        status: PURGED,
+        lastPurge: { $literal: record },
+        // A BSON Date: a TTL index silently ignores any other type.
+        expireAt: { $literal: expiryFrom(now, RETENTION_DAYS) },
+        // An editor opened before the purge must not save onto the purged row.
+        payloadRevision: { $add: [{ $ifNull: ["$payloadRevision", 0] }, 1] },
+        history: appendAction(purgedEntry(record)),
+      },
     },
-    // An editor opened before the purge must not save onto the purged row.
-    $inc: { payloadRevision: 1 },
-  };
+  ];
 };
 
 // The same body shape as `redriveConflict` - GAS maps both onto one outcome.

@@ -17,6 +17,7 @@ import {
   isStaleEdit,
   staleEdit,
 } from "./event-edit.js";
+import { appendAction, keepNewestBeforeImages } from "./event-history.js";
 import { payloadHash } from "./payload-changes.js";
 
 const AT = new Date("2026-06-16T10:00:00.000Z");
@@ -244,53 +245,82 @@ describe("isStaleEdit", () => {
 });
 
 describe("editUpdate", () => {
+  const setOf = (edit) => editUpdate(edit)[0].$set;
+
   it("replaces the payload, bumps the counter and records the edit", () => {
-    expect(editUpdate(anEdit({ revision: 2, original: undefined }))).toEqual({
-      $set: {
-        event: EDITED,
-        payloadRevision: 3,
-        lastEdit: {
+    expect(
+      setOf(anEdit({ revision: 2, original: undefined, before: STORED })),
+    ).toEqual({
+      event: { $literal: EDITED },
+      payloadRevision: 3,
+      lastEdit: {
+        $literal: {
           at: "2026-06-16T10:00:00.000Z",
           by: "ada",
           note: "amount was a string",
         },
       },
+      history: appendAction({
+        kind: "payload-edited",
+        at: "2026-06-16T10:00:00.000Z",
+        by: "ada",
+        note: "amount was a string",
+        before: STORED,
+      }),
     });
   });
 
+  it("then trims the older before-images in the same write", () => {
+    expect(editUpdate(anEdit())[1]).toBe(keepNewestBeforeImages);
+  });
+
   it("keeps the original on the first edit", () => {
-    expect(editUpdate(anEdit({ revision: 0 })).$set).toMatchObject({
+    expect(setOf(anEdit({ revision: 0 }))).toMatchObject({
       payloadRevision: 1,
-      originalPayload: STORED,
+      originalPayload: { $literal: STORED },
     });
   });
 
   it("leaves the first edit's original alone on any later one", () => {
     expect(
-      editUpdate(anEdit({ revision: 1, original: undefined })).$set,
+      setOf(anEdit({ revision: 1, original: undefined })),
     ).not.toHaveProperty("originalPayload");
   });
 
   // A purge or a redrive moves the revision on without an edit.
   it("keeps an original given past revision 0", () => {
-    expect(editUpdate(anEdit({ revision: 1 })).$set).toMatchObject({
+    expect(setOf(anEdit({ revision: 1 }))).toMatchObject({
       payloadRevision: 2,
-      originalPayload: STORED,
+      originalPayload: { $literal: STORED },
     });
   });
 
   it("sets the inbox columns derived from the new envelope", () => {
     expect(
-      editUpdate(
+      setOf(
         anEdit({
           inboxColumns: { type: "new.type", eventTime: "2026-06-17T00:00:00Z" },
         }),
-      ).$set,
-    ).toMatchObject({ type: "new.type", eventTime: "2026-06-17T00:00:00Z" });
+      ),
+    ).toMatchObject({
+      type: { $literal: "new.type" },
+      eventTime: { $literal: "2026-06-17T00:00:00Z" },
+    });
+  });
+
+  // A pipeline reads a bare `$` string as a field path.
+  it("stores a `$` string in the payload or the note as written", () => {
+    const update = setOf(
+      anEdit({ event: { ref: "$event" }, note: "$status", before: STORED }),
+    );
+
+    expect(update.event).toEqual({ $literal: { ref: "$event" } });
+    expect(update.lastEdit.$literal.note).toBe("$status");
+    expect(update.history.$concatArrays[1][0].$literal.note).toBe("$status");
   });
 
   it("never touches the status, so the row stays where it is", () => {
-    expect(editUpdate(anEdit()).$set).not.toHaveProperty("status");
+    expect(setOf(anEdit())).not.toHaveProperty("status");
   });
 });
 

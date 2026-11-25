@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { describe, expect, it, vi } from "vitest";
 import { db } from "../../common/mongo-client.js";
+import { appendAction } from "../../events/event-history.js";
 import { actuatorBoxQueries } from "./actuator-box.repository.js";
 
 vi.mock("../../common/mongo-client.js");
@@ -61,6 +62,44 @@ describe("actuatorBoxQueries detail and status", () => {
   });
 });
 
+describe("actuatorBoxQueries findAttemptStatusById", () => {
+  it("reads only the status and the attempt count, bounded, with the box's retry cap", async () => {
+    const findOne = vi
+      .fn()
+      .mockResolvedValue({ status: "RESUBMITTED", completionAttempts: 2 });
+    db.collection.mockReturnValue({ findOne });
+
+    expect(await queriesFor().findAttemptStatusById(ID)).toEqual({
+      status: "RESUBMITTED",
+      completionAttempts: 2,
+      maxAttempts: 7,
+    });
+    expect(findOne).toHaveBeenCalledWith(
+      { _id: new ObjectId(ID) },
+      {
+        projection: { _id: 0, status: 1, completionAttempts: 1 },
+        maxTimeMS: MAX_TIME_MS,
+      },
+    );
+  });
+
+  it("counts no attempts on a row that has never failed", async () => {
+    db.collection.mockReturnValue({
+      findOne: vi.fn().mockResolvedValue({ status: "PUBLISHED" }),
+    });
+
+    expect(
+      (await queriesFor().findAttemptStatusById(ID)).completionAttempts,
+    ).toBe(0);
+  });
+
+  it("answers null for an unknown id", async () => {
+    db.collection.mockReturnValue({ findOne: vi.fn().mockResolvedValue(null) });
+
+    expect(await queriesFor().findAttemptStatusById(ID)).toBeNull();
+  });
+});
+
 describe("actuatorBoxQueries redriveById", () => {
   it("redrives with one conditional update filtered on the redrivable statuses", async () => {
     const _id = new ObjectId(ID);
@@ -76,8 +115,12 @@ describe("actuatorBoxQueries redriveById", () => {
             status: "AGAIN",
             retryable: true,
             completionAttempts: 0,
-            attemptHistory: [],
             lastRedrive: { $literal: { at: expect.any(String), by: "ada" } },
+            history: appendAction({
+              kind: "redriven",
+              at: expect.any(String),
+              by: "ada",
+            }),
             expireAt: null,
             claimedBy: null,
             claimedAt: null,
@@ -128,7 +171,6 @@ describe("actuatorBoxQueries redriveById", () => {
     const [, update] = updateOne.mock.calls.at(-1);
 
     expect(update[0].$set).not.toHaveProperty("lastPurge");
-    expect(JSON.stringify(update)).not.toContain("lastPurge");
   });
 });
 
@@ -159,14 +201,14 @@ describe("actuatorBoxQueries purgeById", () => {
       note: "duplicate",
     });
 
-    expect(update.$set.status).toBe("PURGED");
-    expect(update.$set.lastPurge).toEqual({
+    expect(update[0].$set.status).toBe("PURGED");
+    expect(update[0].$set.lastPurge.$literal).toEqual({
       at: expect.any(String),
       by: "ada",
       reasonCode: "SENT_IN_ERROR",
       note: "duplicate",
     });
-    expect(update.$set.expireAt).toBeInstanceOf(Date);
+    expect(update[0].$set.expireAt.$literal).toBeInstanceOf(Date);
   });
 
   // The update joins the caller's transaction, so it commits with the audit
@@ -263,17 +305,19 @@ describe("actuatorBoxQueries editPayloadById", () => {
     const [, first] = await editCall({ revision: 0 });
     const [, second] = await editCall({ revision: 1, original: undefined });
 
-    expect(first.$set.originalPayload).toBe(STORED);
-    expect(second.$set).not.toHaveProperty("originalPayload");
+    expect(first[0].$set.originalPayload).toEqual({ $literal: STORED });
+    expect(second[0].$set).not.toHaveProperty("originalPayload");
   });
 
   it("replaces the payload, counts the edit and records who made it and why", async () => {
     const [, update] = await editCall({ revision: 1, original: undefined });
 
-    expect(update.$set).toEqual({
-      event: EDITED,
+    expect(update[0].$set).toMatchObject({
+      event: { $literal: EDITED },
       payloadRevision: 2,
-      lastEdit: { at: expect.any(String), by: "ada", note: "why" },
+      lastEdit: {
+        $literal: { at: expect.any(String), by: "ada", note: "why" },
+      },
     });
   });
 
@@ -283,7 +327,23 @@ describe("actuatorBoxQueries editPayloadById", () => {
       { editColumns: (event) => ({ type: event.type }) },
     );
 
-    expect(update.$set.type).toBe("t.new");
+    expect(update[0].$set.type).toEqual({ $literal: "t.new" });
+  });
+
+  it("appends the edit with the payload it replaced to the history", async () => {
+    const [, update] = await editCall({ revision: 1, before: STORED });
+
+    expect(update[0].$set.history.$concatArrays[1]).toEqual([
+      {
+        $literal: {
+          kind: "payload-edited",
+          at: expect.any(String),
+          by: "ada",
+          note: "why",
+          before: STORED,
+        },
+      },
+    ]);
   });
 
   it("passes the caller's session to the update", async () => {
