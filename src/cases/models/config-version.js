@@ -18,7 +18,6 @@ export class ConfigVersion {
     s3Bucket: Joi.string().allow(null).required(),
   });
 
-  // eslint-disable-next-line complexity
   constructor(props) {
     const { error } = ConfigVersion.validationSchema.validate(props, {
       stripUnknown: true,

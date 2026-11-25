@@ -33,7 +33,6 @@ export class Outbox {
     segregationRef: Joi.string().required(),
   });
 
-  // eslint-disable-next-line complexity
   constructor(props) {
     const { error } = Outbox.validationSchema.validate(props, {
       stripUnknown: true,

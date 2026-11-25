@@ -18,7 +18,6 @@ export const seriesRefs = (members) =>
   toRefs(members.map((caseRef) => ["ref", caseRef]));
 
 export class CaseDocument {
-  // eslint-disable-next-line complexity
   constructor(props) {
     this._id = props._id
       ? ObjectId.createFromHexString(props._id)

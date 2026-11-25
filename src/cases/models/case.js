@@ -19,7 +19,6 @@ export class Case {
   #updatedSupplementaryNodes = new Set();
   #originalSupplementaryNodes = new Map();
 
-  // eslint-disable-next-line complexity
   constructor(props) {
     const comments = toComments(props.comments);
     const timeline = toTimelineEvents(props.timeline, comments);

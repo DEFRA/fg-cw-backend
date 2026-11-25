@@ -43,7 +43,6 @@ export const findWorkflowKey = (manifest, variant = "") => {
   return manifest.find((path) => path.endsWith(`/cw/${target}`)) ?? null;
 };
 
-// eslint-disable-next-line complexity
 const classifyS3Error = (err, key, bucket) => {
   const statusCode = err.$metadata?.httpStatusCode;
 

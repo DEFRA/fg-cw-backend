@@ -22,7 +22,6 @@ const getToken = async () => {
   return tokenResponse.payload.access_token;
 };
 
-// eslint-disable-next-line complexity
 const createOptions = async (options = {}) => {
   const _options = structuredClone({
     headers: {},

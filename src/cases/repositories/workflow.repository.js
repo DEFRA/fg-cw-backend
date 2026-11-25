@@ -167,7 +167,6 @@ export const save = async (workflow) => {
   }
 };
 
-// eslint-disable-next-line complexity
 export const createWorkflowFilter = (query = {}) => {
   const { codes, $expr } = query;
   const filter = {};

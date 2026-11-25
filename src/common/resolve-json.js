@@ -4,7 +4,6 @@ import { config } from "./config.js";
 import { applyFormat } from "./format.js";
 import { logger } from "./logger.js";
 
-// eslint-disable-next-line complexity
 export const resolveJSONPath = async ({ root, path, row }) => {
   if (path === null) {
     return path;
@@ -21,7 +20,6 @@ export const resolveJSONPath = async ({ root, path, row }) => {
   return path;
 };
 
-// eslint-disable-next-line complexity
 const resolveJSONString = async ({ path, root, row }) => {
   if (isLiteralRef(path)) {
     return path.slice(1);
@@ -39,7 +37,6 @@ const resolveJSONString = async ({ path, root, row }) => {
   return path;
 };
 
-// eslint-disable-next-line complexity
 const shouldSpreadArray = (item, resolved) => {
   if (!Array.isArray(resolved)) {
     return false;
@@ -91,7 +88,6 @@ const resolveJSONObject = async ({ path, root, row }) => {
   return applyFormatsRecursively(resolved);
 };
 
-// eslint-disable-next-line complexity
 const handleSpecialCases = async ({ path, root, row }) => {
   if (isConditional(path)) {
     return resolveConditionalComponent({ path, root, row });
@@ -143,7 +139,6 @@ const isConditional = (path) =>
   path.condition &&
   hasConditionalBranch(path);
 
-// eslint-disable-next-line complexity
 const resolveGenericObject = async ({ path, root, row }) => {
   const resolved = {};
   for (const [key, val] of Object.entries(path)) {
@@ -438,7 +433,6 @@ export const jp = ({ root, path, row }) => {
   return out.length ? out[0] : "";
 };
 
-// eslint-disable-next-line complexity
 const evalPath = ({ root, path, row }) => {
   if (typeof path !== "string") {
     return [];
