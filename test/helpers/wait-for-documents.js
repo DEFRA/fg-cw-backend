@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { setTimeout } from "timers/promises";
 
 const INTERVAL_MS = 100;

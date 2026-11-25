@@ -21,7 +21,6 @@ const sqs = new SQSClient({
 const getQueueNames = (queueUrls) =>
   queueUrls.map((url) => url.split("/000000000000/").at(-1));
 
-// eslint-disable-next-line complexity
 export const ensureQueues = async (queueUrls, attempt = 1) => {
   const maxRetries = 20;
   const delay = 3000;

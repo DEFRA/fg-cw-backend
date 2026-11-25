@@ -21,7 +21,6 @@ const cacheKey = (code, version) => `${code}@${version}`;
 const getCachedDefinition = (code, version) =>
   definitionCache?.get(cacheKey(code, version));
 
-// eslint-disable-next-line complexity
 const setCachedDefinition = (code, version, workflow) => {
   if (!definitionCache || !version || !workflow) {
     return;

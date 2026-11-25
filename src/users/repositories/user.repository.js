@@ -125,7 +125,6 @@ export const findAll = async (query = {}) => {
   return userDocuments.map(toUser);
 };
 
-// eslint-disable-next-line complexity
 const createFilter = (query) => {
   const today = new Date().toISOString().slice(0, 10);
   const filter = {

@@ -33,7 +33,6 @@ export const buildDynamicContent = (payload) => {
   return content;
 };
 
-// eslint-disable-next-line complexity
 const processValue = (key, value) => {
   if (value === null || value === undefined) {
     return [];
