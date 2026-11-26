@@ -23,7 +23,7 @@
     "publish:case:pmf": "node scripts/publish-create-new-case.js pigs-might-fly",
     "publish:case:status:update": "node scripts/publish-update-case-status.js",
     "postinstall": "npm run setup:husky && npm run setup:env",
-    "setup:env": "cp --update=none .env.example .env || true",
+    "setup:env": "node -e \"const fs = require('fs'); if (!fs.existsSync('.env') && fs.existsSync('.env.example')) { fs.copyFileSync('.env.example', '.env'); }\"",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
     "migration:create": "node --env-file .env node_modules/.bin/migrate-mongo create"
   },
