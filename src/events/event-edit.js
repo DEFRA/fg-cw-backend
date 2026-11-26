@@ -1,4 +1,9 @@
 import Boom from "@hapi/boom";
+import {
+  appendAction,
+  keepNewestBeforeImages,
+  payloadEditedEntry,
+} from "./event-history.js";
 import { REDRIVABLE_STATUSES } from "./event-redrive.js";
 import { payloadChanges, payloadHash } from "./payload-changes.js";
 import { isPlainObject } from "./plain-json.js";
@@ -134,24 +139,43 @@ export const editFence = (revision) => ({
 export const isStaleEdit = (row, revision) =>
   (row.payloadRevision ?? 0) !== revision;
 
+const literalsOf = (fields = {}) =>
+  Object.fromEntries(
+    Object.entries(fields).map(([key, value]) => [key, { $literal: value }]),
+  );
+
 // None of these fields is in a model, so a poller's `$set` never names them
 // and cannot erase them. The original is given on the first edit only and
 // stays for the row's lifetime; not keyed on revision 0, as a purge or a
-// redrive moves the revision on too.
+// redrive moves the revision on too. A pipeline, so the edit's history entry
+// and the trim of older before-images land in one write; every stored value
+// is a `$literal`, so a `$` string in a payload or a note is never read as a
+// field path.
 export const editUpdate = ({
   event,
   by,
   note,
   revision,
   original,
+  before,
   inboxColumns,
   at,
-}) => ({
-  $set: {
-    event,
-    payloadRevision: revision + 1,
-    lastEdit: { at: (at ?? new Date()).toISOString(), by: by ?? null, note },
-    ...(original !== undefined && { originalPayload: original }),
-    ...inboxColumns,
-  },
-});
+}) => {
+  const record = { at: (at ?? new Date()).toISOString(), by: by ?? null, note };
+
+  return [
+    {
+      $set: {
+        event: { $literal: event },
+        payloadRevision: revision + 1,
+        lastEdit: { $literal: record },
+        ...(original !== undefined && {
+          originalPayload: { $literal: original },
+        }),
+        ...literalsOf(inboxColumns),
+        history: appendAction(payloadEditedEntry({ ...record, before })),
+      },
+    },
+    keepNewestBeforeImages,
+  ];
+};

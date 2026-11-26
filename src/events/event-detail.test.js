@@ -134,8 +134,8 @@ describe("toDetailDocument attemptHistory", () => {
     ).toEqual([{ at: null, name: "Error", message: "", stack: null }]);
   });
 
-  it("serialises a Date `at` and caps a history past ten entries", () => {
-    const attemptHistory = Array.from({ length: 14 }, (_, i) => ({
+  it("serialises a Date `at` and caps a history past 25 entries", () => {
+    const attemptHistory = Array.from({ length: 30 }, (_, i) => ({
       at: new Date("2026-06-16T10:00:00.000Z"),
       name: "Error",
       message: `${i}`,
@@ -146,11 +146,11 @@ describe("toDetailDocument attemptHistory", () => {
       5,
     ).attemptHistory;
 
-    expect(history).toHaveLength(10);
+    expect(history).toHaveLength(25);
     expect(history.at(0)).toEqual({
       at: "2026-06-16T10:00:00.000Z",
       name: "Error",
-      message: "4",
+      message: "5",
       stack: null,
     });
   });
@@ -415,5 +415,100 @@ describe("toDetailDocument payload edits", () => {
     );
 
     expect(detail.payloadIsPlainJson).toBe(false);
+  });
+});
+
+describe("toDetailDocument history", () => {
+  it("reads a row written before the history existed as an empty one", () => {
+    expect(toDetailDocument(aDoc(), 5).history).toEqual([]);
+  });
+
+  // The admin derives the entries such a row never recorded from these.
+  it("still serves a legacy row's last redrive, purge and edit", () => {
+    const lastRedrive = { at: "2026-06-16T11:00:00.000Z", by: "ada" };
+    const lastPurge = {
+      at: "2026-06-16T12:00:00.000Z",
+      by: "ada",
+      reasonCode: "OTHER",
+      note: null,
+    };
+    const lastEdit = { at: "2026-06-16T13:00:00.000Z", by: "ada", note: "n" };
+    const originalPayload = { id: "evt-0" };
+
+    expect(
+      toDetailDocument(
+        aDoc({ lastRedrive, lastPurge, lastEdit, originalPayload }),
+        5,
+      ),
+    ).toMatchObject({
+      history: [],
+      lastRedrive,
+      lastPurge,
+      lastEdit,
+      originalPayload,
+    });
+  });
+
+  it("serves each kind with its own keys, oldest first", () => {
+    const history = [
+      { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z" },
+      { kind: "redriven", at: new Date("2026-06-16T11:00:00.000Z"), by: null },
+      {
+        kind: "purged",
+        at: "2026-06-16T12:00:00.000Z",
+        by: "ada",
+        reasonCode: "OTHER",
+        note: "gone",
+      },
+      {
+        kind: "payload-edited",
+        at: "2026-06-16T13:00:00.000Z",
+        by: "ada",
+        note: "fixed",
+      },
+    ];
+
+    expect(toDetailDocument(aDoc({ history }), 5).history).toEqual([
+      { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z" },
+      { kind: "redriven", at: "2026-06-16T11:00:00.000Z", by: null },
+      {
+        kind: "purged",
+        at: "2026-06-16T12:00:00.000Z",
+        by: "ada",
+        reasonCode: "OTHER",
+        note: "gone",
+      },
+      {
+        kind: "payload-edited",
+        at: "2026-06-16T13:00:00.000Z",
+        by: "ada",
+        note: "fixed",
+      },
+    ]);
+  });
+
+  it("gives a before-image's BSON numbers as JSON, and drops keys a kind does not have", () => {
+    const history = [
+      {
+        kind: "payload-edited",
+        at: "2026-06-16T13:00:00.000Z",
+        by: "ada",
+        note: null,
+        before: { amount: Long.fromNumber(12) },
+        claimedBy: "token",
+      },
+      { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z", by: "x" },
+    ];
+
+    expect(toDetailDocument(aDoc({ history }), 5).history).toEqual([
+      {
+        kind: "payload-edited",
+        at: "2026-06-16T13:00:00.000Z",
+        by: "ada",
+        note: null,
+        before: { amount: 12 },
+      },
+      { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z" },
+    ]);
   });
 });

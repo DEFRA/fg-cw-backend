@@ -47,6 +47,30 @@ const findStatusByIdFor =
     return doc ? doc.status : null;
   };
 
+// What a watcher polls after a redrive: the status and the retry budget,
+// never the payload.
+const ATTEMPT_STATUS_PROJECTION = { _id: 0, status: 1, completionAttempts: 1 };
+
+const findAttemptStatusByIdFor =
+  ({ collection, maxRetries }) =>
+  async (id) => {
+    const doc = await db.collection(collection).findOne(
+      { _id: toId(id) },
+      {
+        projection: ATTEMPT_STATUS_PROJECTION,
+        maxTimeMS: actuatorReadMaxTimeMs(),
+      },
+    );
+
+    return doc
+      ? {
+          status: doc.status,
+          completionAttempts: doc.completionAttempts ?? 0,
+          maxAttempts: maxRetries,
+        }
+      : null;
+  };
+
 // The status filter is the precondition, so a concurrent change is a 409.
 const redriveByIdFor =
   ({ collection, resubmittedStatus }) =>
@@ -102,7 +126,7 @@ const findEditableByIdFor =
 // from, so a stale editor overwrites nothing.
 const editPayloadByIdFor =
   ({ collection, editColumns = () => ({}) }) =>
-  async (id, { event, by, note, revision, original, session }) => {
+  async (id, { event, by, note, revision, original, before, session }) => {
     const { matchedCount } = await db.collection(collection).updateOne(
       { _id: toId(id), ...editFence(revision) },
       editUpdate({
@@ -111,6 +135,7 @@ const editPayloadByIdFor =
         note,
         revision,
         original,
+        before,
         inboxColumns: editColumns(event),
       }),
       { session },
@@ -123,6 +148,7 @@ const editPayloadByIdFor =
 export const actuatorBoxQueries = (boxConfig) => ({
   findDetailById: findDetailByIdFor(boxConfig),
   findStatusById: findStatusByIdFor(boxConfig),
+  findAttemptStatusById: findAttemptStatusByIdFor(boxConfig),
   redriveById: redriveByIdFor(boxConfig),
   purgeById: purgeByIdFor(boxConfig),
   findEditableById: findEditableByIdFor(boxConfig),

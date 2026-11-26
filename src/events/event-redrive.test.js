@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Inbox } from "../cases/models/inbox.js";
 import { Outbox } from "../cases/models/outbox.js";
 import {
@@ -76,12 +76,35 @@ const applyInc = (doc, increments) => {
 const EXPRESSIONS = {
   $literal: (_, value) => value,
   $eq: (doc, [a, b]) => evaluate(doc, a) === evaluate(doc, b),
+  $ne: (doc, [a, b]) => evaluate(doc, a) !== evaluate(doc, b),
+  $gt: (doc, [a, b]) => evaluate(doc, a) > evaluate(doc, b),
+  $size: (doc, value) => evaluate(doc, value).length,
+  $let: (doc, { vars, in: body }) =>
+    evaluate({ ...doc, ...evaluateFields(doc, vars) }, body),
+  $sortArray: (doc, { input, sortBy }) => {
+    const [[key]] = Object.entries(sortBy);
+
+    return evaluate(doc, input).toSorted((a, b) =>
+      a[key] < b[key] ? -1 : Number(a[key] > b[key]),
+    );
+  },
+  $and: (doc, values) => values.every((value) => evaluate(doc, value)),
+  $not: (doc, [value]) => !evaluate(doc, value),
+  $in: (doc, [value, array]) =>
+    evaluate(doc, array).includes(evaluate(doc, value)),
+  $anyElementTrue: (doc, [array]) => evaluate(doc, array).some(Boolean),
+  $map: (doc, { input, in: each }) =>
+    evaluate(doc, input).map((element) =>
+      evaluate({ ...doc, this: element }, each),
+    ),
   $cond: (doc, [test, then, otherwise]) =>
     evaluate(doc, evaluate(doc, test) ? then : otherwise),
   $ifNull: (doc, [value, fallback]) =>
     evaluate(doc, value) ?? evaluate(doc, fallback),
   $add: (doc, values) =>
     values.reduce((sum, value) => sum + evaluate(doc, value), 0),
+  $concatArrays: (doc, arrays) =>
+    arrays.flatMap((array) => evaluate(doc, array)),
 };
 
 const isFieldPath = (expression) =>
@@ -90,17 +113,48 @@ const isFieldPath = (expression) =>
 const operatorOf = (expression) =>
   Object.keys(expression ?? {}).find((key) => key in EXPRESSIONS);
 
+const isMissing = (value) => value === undefined || value === null;
+
+// A path through an array reads that field of each element, as Mongo's does.
+const valueAt = (value, [key, ...rest]) => {
+  if (key === undefined || isMissing(value)) {
+    return value;
+  }
+
+  return Array.isArray(value)
+    ? value.map((element) => valueAt(element, [key, ...rest]))
+    : valueAt(value[key], rest);
+};
+
+const isObject = (value) =>
+  value !== null && typeof value === "object" && !(value instanceof Date);
+
+const evaluateFields = (doc, expression) =>
+  Object.fromEntries(
+    Object.entries(expression)
+      .map(([key, value]) => [key, evaluate(doc, value)])
+      .filter(([, value]) => value !== undefined),
+  );
+
+const evaluateValue = (doc, expression) => {
+  if (Array.isArray(expression)) {
+    return expression.map((element) => evaluate(doc, element));
+  }
+
+  return isObject(expression) ? evaluateFields(doc, expression) : expression;
+};
+
 // The few aggregation expressions an update pipeline here uses.
 const evaluate = (doc, expression) => {
   if (isFieldPath(expression)) {
-    return doc[expression.slice(1)];
+    return valueAt(doc, expression.replace(/^\$\$?/, "").split("."));
   }
 
   const operator = operatorOf(expression);
 
   return operator
     ? EXPRESSIONS[operator](doc, expression[operator])
-    : expression;
+    : evaluateValue(doc, expression);
 };
 
 const applyStage = (doc, { $set }) => ({
@@ -114,6 +168,13 @@ const applyUpdate = (doc, update) =>
   Array.isArray(update)
     ? update.reduce(applyStage, doc)
     : applyInc({ ...doc, ...(update.$set ?? {}) }, update.$inc);
+
+const sinceTheRedrive = (doc) =>
+  doc.attemptHistory.filter(({ at }) => at > doc.lastRedrive.at);
+
+// A failure lands at least a poll tick after the redrive that let it run.
+const afterTheRedrive = (doc) =>
+  vi.setSystemTime(Date.parse(doc.lastRedrive.at) + 1000);
 
 const capture = async (method, run, resolved = null) => {
   const spy = vi.fn().mockResolvedValue(resolved);
@@ -211,6 +272,10 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
   let failedFilter;
   let failedUpdate;
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(async () => {
     [redriveFilter, redriveDoc] = await capture("updateOne", box.redrive, {
       matchedCount: 0,
@@ -289,24 +354,187 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(redriven.expireAt).toBeNull();
   });
 
-  it("clears the attempt history along with the counter", () => {
-    const redriven = applyUpdate(aDeadLetterWithHistory(), redriveDoc);
+  it("keeps the attempts it reset the counter on, and records the redrive", () => {
+    const stored = aDeadLetterWithHistory();
+    const redriven = applyUpdate(stored, redriveDoc);
 
     expect(redriven.completionAttempts).toBe(0);
-    expect(redriven.attemptHistory).toEqual([]);
+    expect(redriven.attemptHistory).toEqual(stored.attemptHistory);
+    expect(redriven.history).toEqual([
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
   });
 
-  it("starts the history again with the first failure after a redrive", () => {
+  it("appends to a history already there", () => {
+    const earlier = { kind: "dead-lettered", at: "2026-06-16T10:05:00.000Z" };
+    const redriven = applyUpdate(
+      { ...aDeadLetterWithHistory(), history: [earlier] },
+      redriveDoc,
+    );
+
+    expect(redriven.history.map(({ kind }) => kind)).toEqual([
+      "dead-lettered",
+      "redriven",
+    ]);
+  });
+
+  it("first stores what a row from before the history kept of its last redrive, purge, edit and death", () => {
+    const legacy = {
+      ...aDeadLetterWithHistory(),
+      payloadRevision: 3,
+      originalPayload: { n: 0 },
+      lastEdit: { at: "2026-06-16T10:01:00.000Z", by: "bob", note: "fix" },
+      lastPurge: {
+        at: "2026-06-16T10:02:00.000Z",
+        by: "cy",
+        reasonCode: "OTHER",
+        note: "why",
+      },
+      lastRedrive: { at: "2026-06-16T10:03:00.000Z", by: "ada" },
+      lastResubmissionDate: "2026-06-16T10:04:00.000Z",
+    };
+    const redriven = applyUpdate(legacy, redriveDoc);
+
+    expect(redriven.history).toEqual([
+      {
+        kind: "payload-edited",
+        at: "2026-06-16T10:01:00.000Z",
+        by: "bob",
+        note: "fix",
+      },
+      {
+        kind: "purged",
+        at: "2026-06-16T10:02:00.000Z",
+        by: "cy",
+        reasonCode: "OTHER",
+        note: "why",
+      },
+      { kind: "redriven", at: "2026-06-16T10:03:00.000Z", by: "ada" },
+      { kind: "dead-lettered", at: "2026-06-16T10:04:00.000Z" },
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
+  });
+
+  it("gives a derived edit the original payload when nothing else moved the revision since", () => {
+    const legacy = {
+      ...aDeadLetterWithHistory(),
+      payloadRevision: 1,
+      originalPayload: { n: 0 },
+      lastEdit: { at: "2026-06-16T10:01:00.000Z", by: "bob", note: "fix" },
+    };
+    const redriven = applyUpdate(legacy, redriveDoc);
+
+    expect(redriven.history[0]).toEqual({
+      kind: "payload-edited",
+      at: "2026-06-16T10:01:00.000Z",
+      by: "bob",
+      note: "fix",
+      before: { n: 0 },
+    });
+  });
+
+  it("stores a death since the last redrive that only lastResubmissionDate holds", () => {
+    const lastRedrive = { at: "2026-06-16T10:03:00.000Z", by: "ada" };
+    const history = [
+      { kind: "dead-lettered", at: "2026-06-16T10:00:00.000Z" },
+      { kind: "redriven", ...lastRedrive },
+    ];
+    const redriven = applyUpdate(
+      {
+        ...aDeadLetterWithHistory(),
+        lastRedrive,
+        lastResubmissionDate: "2026-06-16T10:04:00.000Z",
+        history,
+      },
+      redriveDoc,
+    );
+
+    expect(redriven.history).toEqual([
+      ...history,
+      { kind: "dead-lettered", at: "2026-06-16T10:04:00.000Z" },
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
+  });
+
+  it("derives no death when one is stored since the last redrive", () => {
+    const lastRedrive = { at: "2026-06-16T10:03:00.000Z", by: "ada" };
+    const history = [
+      { kind: "redriven", ...lastRedrive },
+      { kind: "dead-lettered", at: "2026-06-16T10:04:00.000Z" },
+    ];
+    const redriven = applyUpdate(
+      {
+        ...aDeadLetterWithHistory(),
+        lastRedrive,
+        lastResubmissionDate: "2026-06-16T10:03:59.000Z",
+        history,
+      },
+      redriveDoc,
+    );
+
+    expect(redriven.history).toEqual([
+      ...history,
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
+  });
+
+  it("merges what it derives into the stored history by time", () => {
+    const lastRedrive = { at: "2026-06-16T10:03:00.000Z", by: "ada" };
+    const later = { kind: "dead-lettered", at: "2026-06-16T10:04:00.000Z" };
+    const redriven = applyUpdate(
+      {
+        ...aDeadLetterWithHistory(),
+        lastRedrive,
+        lastResubmissionDate: later.at,
+        history: [later],
+      },
+      redriveDoc,
+    );
+
+    expect(redriven.history).toEqual([
+      { kind: "redriven", ...lastRedrive },
+      later,
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
+  });
+
+  it("derives nothing a stored history already holds", () => {
+    const lastRedrive = { at: "2026-06-16T10:03:00.000Z", by: "ada" };
+    const history = [
+      { kind: "redriven", ...lastRedrive },
+      { kind: "dead-lettered", at: "2026-06-16T10:04:00.000Z" },
+    ];
+    const redriven = applyUpdate(
+      {
+        ...aDeadLetterWithHistory(),
+        lastRedrive,
+        lastResubmissionDate: "2026-06-16T10:04:00.000Z",
+        history,
+      },
+      redriveDoc,
+    );
+
+    expect(redriven.history).toEqual([
+      ...history,
+      { kind: "redriven", at: redriven.lastRedrive.at, by: null },
+    ]);
+  });
+
+  // What GAS serves as `attemptHistory`: the attempts after `lastRedrive.at`,
+  // which is what the list meant when a redrive emptied it.
+  it("leaves the first failure after a redrive as the only attempt since it", () => {
     const redriven = applyUpdate(
       applyUpdate(aDeadLetterWithHistory(), redriveDoc),
       resubmittedUpdate,
     );
 
+    afterTheRedrive(redriven);
     const failed = box.fail(redriven);
 
     expect(failed.completionAttempts).toBe(1);
-    expect(failed.attemptHistory).toHaveLength(1);
-    expect(failed.attemptHistory[0].message).toBe("boom");
+    expect(failed.attemptHistory).toHaveLength(MAX_RETRIES + 1);
+    expect(sinceTheRedrive(failed)).toHaveLength(1);
+    expect(sinceTheRedrive(failed)[0].message).toBe("boom");
   });
 
   it("keeps lastError and lastResubmissionDate - the record of why it died", () => {
@@ -376,11 +604,12 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(doc.attemptHistory).toHaveLength(MAX_RETRIES);
   });
 
-  it("redrives a row that already has a history into one that agrees with its counter", () => {
+  it("redrives a row that already has a history into one whose attempts since agree with its counter", () => {
     let doc = applyUpdate(
       applyUpdate(aDeadLetterWithHistory(), redriveDoc),
       resubmittedUpdate,
     );
+    afterTheRedrive(doc);
     let attempts = 0;
 
     while (matchesFilter(doc, claimFilter) && attempts < 100) {
@@ -399,27 +628,11 @@ describe.each(BOXES)("redrive invariants ($name)", (box) => {
     expect(attempts).toBe(MAX_RETRIES);
     expect(doc.status).toBe("DEAD_LETTER");
     expect(doc.completionAttempts).toBe(MAX_RETRIES);
-    expect(doc.attemptHistory).toHaveLength(MAX_RETRIES);
-    expect(doc.attemptHistory.map((entry) => entry.message)).not.toContain(
+    expect(doc.attemptHistory).toHaveLength(MAX_RETRIES * 2);
+    expect(sinceTheRedrive(doc)).toHaveLength(MAX_RETRIES);
+    expect(sinceTheRedrive(doc).map((entry) => entry.message)).not.toContain(
       "before the redrive",
     );
-  });
-
-  it("would carry the old history past the counter if the redrive kept it", () => {
-    const withoutClear = Object.fromEntries(
-      Object.entries(redriveDoc[0].$set).filter(
-        ([key]) => key !== "attemptHistory",
-      ),
-    );
-    const redriven = applyUpdate(
-      applyUpdate(aDeadLetterWithHistory(), [{ $set: withoutClear }]),
-      resubmittedUpdate,
-    );
-
-    const failed = box.fail(redriven);
-
-    expect(failed.completionAttempts).toBe(1);
-    expect(failed.attemptHistory).toHaveLength(MAX_RETRIES + 1);
   });
 });
 

@@ -246,16 +246,16 @@ describe("Inbox attemptHistory", () => {
     ]);
   });
 
-  it("keeps only the ten most recent entries", () => {
+  it("keeps only the 25 most recent entries", () => {
     const event = Inbox.createMock();
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 30; i++) {
       event.markAsFailed(new Error(`attempt-${i}`));
     }
 
-    expect(event.attemptHistory).toHaveLength(10);
-    expect(event.attemptHistory.at(0).message).toBe("attempt-4");
-    expect(event.attemptHistory.at(-1).message).toBe("attempt-13");
+    expect(event.attemptHistory).toHaveLength(25);
+    expect(event.attemptHistory.at(0).message).toBe("attempt-5");
+    expect(event.attemptHistory.at(-1).message).toBe("attempt-29");
   });
 
   it("truncates an entry's message to 512 characters", () => {
@@ -434,6 +434,60 @@ describe("inbox model retryable", () => {
     expect(inbox.lastError.message).toBe("cw.json is not valid JSON");
     expect(inbox.attemptHistory).toHaveLength(1);
     expect(inbox.claimedBy).toBeNull();
+  });
+
+  it("adds a dead-lettered history entry at the time of the failure", () => {
+    const inbox = Inbox.createMock({ completionAttempts: 0 });
+
+    inbox.markAsFailed(permanent("bad"));
+
+    expect(inbox.newHistory).toEqual([
+      { kind: "dead-lettered", at: inbox.lastResubmissionDate },
+    ]);
+  });
+
+  it("dates the attempt, the error and the death from one instant", () => {
+    const RealDate = Date;
+    let tick = 0;
+    vi.stubGlobal(
+      "Date",
+      class extends RealDate {
+        constructor(...args) {
+          super(...(args.length > 0 ? args : [RealDate.now() + tick++ * 1000]));
+        }
+      },
+    );
+
+    try {
+      const inbox = Inbox.createMock({ completionAttempts: 0 });
+
+      inbox.markAsFailed(permanent("bad"));
+
+      const at = inbox.lastResubmissionDate;
+      expect(inbox.attemptHistory.at(-1).at).toBe(at);
+      expect(inbox.lastError.at).toBe(at);
+      expect(inbox.newHistory).toEqual([{ kind: "dead-lettered", at }]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("adds no history entry for a failure it will retry", () => {
+    const inbox = Inbox.createMock({ completionAttempts: 0 });
+
+    inbox.markAsFailed(new Error("mongo down"));
+
+    expect(inbox.newHistory).toEqual([]);
+  });
+
+  // The stored history is appended to, never set, so `update()`'s `$set` of
+  // this document cannot erase it.
+  it("keeps the history out of its document", () => {
+    const inbox = Inbox.createMock();
+    inbox.markAsFailed(permanent("bad"));
+
+    expect(inbox.toDocument()).not.toHaveProperty("history");
+    expect(inbox.toDocument()).not.toHaveProperty("newHistory");
   });
 
   it("round-trips through a document", () => {

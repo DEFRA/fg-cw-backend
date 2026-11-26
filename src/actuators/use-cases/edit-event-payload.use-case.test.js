@@ -70,7 +70,7 @@ describe("editEventPayloadUseCase", () => {
     expect(findEditableById).toHaveBeenCalledWith(ID, SESSION);
   });
 
-  it("writes the fenced update with the edit and the stored original", async () => {
+  it("writes the fenced update with the edit, the stored original and what it replaced", async () => {
     findEditableById.mockResolvedValue({ ...A_ROW, payloadRevision: 2 });
 
     await editEventPayloadUseCase(aCommand({ revision: 2 }));
@@ -81,11 +81,12 @@ describe("editEventPayloadUseCase", () => {
       note: NOTE,
       revision: 2,
       original: STORED,
+      before: STORED,
       session: SESSION,
     });
   });
 
-  it("keeps no original once the row has been edited", async () => {
+  it("keeps no original once the row has been edited, but still what each edit replaced", async () => {
     findEditableById.mockResolvedValue({
       ...A_ROW,
       payloadRevision: 2,
@@ -96,7 +97,7 @@ describe("editEventPayloadUseCase", () => {
 
     expect(editPayloadById).toHaveBeenCalledWith(
       ID,
-      expect.objectContaining({ original: undefined }),
+      expect.objectContaining({ original: undefined, before: STORED }),
     );
   });
 

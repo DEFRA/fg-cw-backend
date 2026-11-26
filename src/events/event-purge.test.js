@@ -13,6 +13,7 @@ import {
   REDRIVABLE_STATUSES,
   redriveConflict,
 } from "./event-redrive.js";
+import { appendAction } from "./event-history.js";
 
 const ID = "665f1c2e9a1b2c3d4e5f6a7b";
 const NOW = new Date("2026-06-16T10:00:00.000Z");
@@ -46,6 +47,10 @@ describe("purge reason codes", () => {
 });
 
 describe("purgeUpdate", () => {
+  const setOf = (purge) => purgeUpdate(purge)[0].$set;
+  const recordOf = (purge) => setOf(purge).lastPurge.$literal;
+  const expiryOf = (purge) => setOf(purge).expireAt.$literal;
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
@@ -56,11 +61,11 @@ describe("purgeUpdate", () => {
   });
 
   it("leaves the row PURGED", () => {
-    expect(purgeUpdate(aPurge()).$set.status).toBe(PURGED);
+    expect(setOf(aPurge()).status).toBe(PURGED);
   });
 
   it("records who purged it, why, and when", () => {
-    expect(purgeUpdate(aPurge()).$set.lastPurge).toEqual({
+    expect(recordOf(aPurge())).toEqual({
       at: NOW.toISOString(),
       by: "ada",
       reasonCode: "BROKEN_PAYLOAD",
@@ -69,46 +74,44 @@ describe("purgeUpdate", () => {
   });
 
   it("stores the purge time as an ISO string", () => {
-    expect(typeof purgeUpdate(aPurge()).$set.lastPurge.at).toBe("string");
+    expect(typeof recordOf(aPurge()).at).toBe("string");
   });
 
   it("stores an absent note as null, so every purged row has one shape", () => {
-    expect(purgeUpdate(aPurge({ note: undefined })).$set.lastPurge.note).toBe(
-      null,
-    );
+    expect(recordOf(aPurge({ note: undefined })).note).toBe(null);
   });
 
   it("stores an unattributed purge as a null operator", () => {
-    expect(purgeUpdate(aPurge({ by: undefined })).$set.lastPurge.by).toBeNull();
+    expect(recordOf(aPurge({ by: undefined })).by).toBeNull();
     expect(JSON.stringify(purgeUpdate(aPurge({ by: null })))).not.toContain(
       "System",
     );
   });
 
   it("gives the row a deletion date one retention period out", () => {
-    expect(purgeUpdate(aPurge()).$set.expireAt).toEqual(
+    expect(expiryOf(aPurge())).toEqual(
       new Date(NOW.getTime() + RETENTION_DAYS * DAY_MS),
     );
   });
 
   // A TTL index silently ignores anything else, so a string is never deleted.
   it("writes the deletion date as a BSON Date, not a string", () => {
-    expect(purgeUpdate(aPurge()).$set.expireAt).toBeInstanceOf(Date);
+    expect(expiryOf(aPurge())).toBeInstanceOf(Date);
   });
 
   it("dates the record and the deadline from the same instant", () => {
-    const { lastPurge, expireAt } = purgeUpdate(aPurge()).$set;
-
-    expect(expireAt.getTime() - Date.parse(lastPurge.at)).toBe(
-      RETENTION_DAYS * DAY_MS,
-    );
+    expect(
+      expiryOf(aPurge()).getTime() - Date.parse(recordOf(aPurge()).at),
+    ).toBe(RETENTION_DAYS * DAY_MS);
   });
 
   it("replaces the whole record rather than merging into it", () => {
     const update = purgeUpdate(aPurge({ note: undefined, by: undefined }));
 
-    expect(Object.keys(update)).toEqual(["$set", "$inc"]);
-    expect(Object.keys(update.$set.lastPurge).sort()).toEqual([
+    expect(update).toHaveLength(1);
+    expect(Object.keys(update[0])).toEqual(["$set"]);
+    expect(Object.keys(update[0].$set.lastPurge)).toEqual(["$literal"]);
+    expect(Object.keys(update[0].$set.lastPurge.$literal).sort()).toEqual([
       "at",
       "by",
       "note",
@@ -116,25 +119,38 @@ describe("purgeUpdate", () => {
     ]);
   });
 
+  it("appends the purge to the history, with the same record", () => {
+    expect(setOf(aPurge()).history).toEqual(
+      appendAction({ kind: "purged", ...recordOf(aPurge()) }),
+    );
+  });
+
   it("moves the payload revision on, so an editor opened before it is stale", () => {
-    expect(purgeUpdate(aPurge()).$inc).toEqual({ payloadRevision: 1 });
+    expect(setOf(aPurge()).payloadRevision).toEqual({
+      $add: [{ $ifNull: ["$payloadRevision", 0] }, 1],
+    });
   });
 
   // Purging is not redaction: the payload is what makes a redrive possible.
-  it("touches nothing but the status, the record and the deadline", () => {
-    expect(Object.keys(purgeUpdate(aPurge()).$set).sort()).toEqual([
+  it("touches nothing but the status, the record, the deadline, the revision and the history", () => {
+    expect(Object.keys(setOf(aPurge())).sort()).toEqual([
       "expireAt",
+      "history",
       "lastPurge",
+      "payloadRevision",
       "status",
     ]);
+  });
+
+  // A pipeline reads a bare `$` string as a field path.
+  it("stores a `$` string in the note as written", () => {
+    expect(recordOf(aPurge({ note: "$status" })).note).toBe("$status");
   });
 
   it("can be given the instant, so a caller can date it deterministically", () => {
     const at = new Date("2020-01-01T00:00:00.000Z");
 
-    expect(purgeUpdate(aPurge({ at })).$set.lastPurge.at).toBe(
-      at.toISOString(),
-    );
+    expect(recordOf(aPurge({ at })).at).toBe(at.toISOString());
   });
 });
 

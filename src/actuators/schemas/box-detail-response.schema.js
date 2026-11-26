@@ -15,6 +15,19 @@ const attemptEntry = Joi.object({
 
 const isoOrNull = Joi.string().isoDate().allow(null);
 
+const historyEntry = Joi.object({
+  kind: Joi.string()
+    .required()
+    .example("redriven")
+    .description("dead-lettered|redriven|purged|payload-edited"),
+  at: isoOrNull.required(),
+  by: Joi.string().allow(null),
+  reasonCode: Joi.string().allow(null),
+  note: Joi.string().allow(null),
+  // The payload this edit replaced; kept on the five newest edits only.
+  before: Joi.object().unknown(true),
+}).label("EventHistoryEntry");
+
 // `.unknown(true)` so a document written by another version still renders.
 const detailCommon = {
   _id: Joi.string().required(),
@@ -59,6 +72,9 @@ const detailCommon = {
   })
     .allow(null)
     .label("EventDetailLastEdit"),
+  // Oldest first. Attempts are in `attemptHistory`; a row written before this
+  // was recorded has none.
+  history: Joi.array().items(historyEntry).required(),
   // The payload as it was before the first edit; absent on a row never edited.
   originalPayload: Joi.object().unknown(true).allow(null),
   // False when saving through the editor would turn a stored BSON value (a

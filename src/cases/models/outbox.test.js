@@ -144,6 +144,30 @@ describe("Outbox model lastError", () => {
     });
   });
 
+  it("dates the attempt and the error from one instant", () => {
+    const FakeDate = Date;
+    let tick = 0;
+    vi.stubGlobal(
+      "Date",
+      class extends FakeDate {
+        constructor(...args) {
+          super(...(args.length > 0 ? args : [FakeDate.now() + tick++ * 1000]));
+        }
+      },
+    );
+
+    try {
+      const obj = outbox();
+
+      obj.markAsFailed(new Error("Topic does not exist"));
+
+      expect(obj.attemptHistory.at(-1).at).toBe(obj.lastResubmissionDate);
+      expect(obj.lastError.at).toBe(obj.lastResubmissionDate);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("truncates a very long failure message to 1024 characters", () => {
     const obj = outbox();
 
@@ -225,16 +249,16 @@ describe("Outbox attemptHistory", () => {
     ]);
   });
 
-  it("keeps only the ten most recent entries", () => {
+  it("keeps only the 25 most recent entries", () => {
     const event = Outbox.createMock();
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 30; i++) {
       event.markAsFailed(new Error(`attempt-${i}`));
     }
 
-    expect(event.attemptHistory).toHaveLength(10);
-    expect(event.attemptHistory.at(0).message).toBe("attempt-4");
-    expect(event.attemptHistory.at(-1).message).toBe("attempt-13");
+    expect(event.attemptHistory).toHaveLength(25);
+    expect(event.attemptHistory.at(0).message).toBe("attempt-5");
+    expect(event.attemptHistory.at(-1).message).toBe("attempt-29");
   });
 
   it("truncates an entry's message to 512 characters", () => {

@@ -1,6 +1,7 @@
 import Boom from "@hapi/boom";
 import Joi from "joi";
 import { config } from "../../common/config.js";
+import { deadLetteredEntry } from "../../events/event-history.js";
 import { expiryFrom } from "../../events/event-retention.js";
 import {
   appendAttempt,
@@ -51,7 +52,8 @@ export class Inbox {
     this.attemptHistory = normaliseAttemptHistory(props.attemptHistory);
     // ATTEMPT ARITHMETIC - counts attempts actually MADE, not granted: zero on
     // a fresh row, incremented by `markAsFailed` in the same call that pushes
-    // the attempt-history entry, so counter and history always reconcile.
+    // the attempt-history entry, so the counter always matches the attempts
+    // since the last redrive, which resets it.
     this.completionAttempts = props.completionAttempts ?? 0;
     this.status = props.status || InboxStatus.PUBLISHED;
     // Missing means retryable, so rows written before this existed are unaffected.
@@ -65,6 +67,9 @@ export class Inbox {
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
+    // History entries this model added, for `update()` to append; never in
+    // `toDocument()`, so its `$set` cannot overwrite the stored history.
+    this.newHistory = [];
     this.eventTime = props.event.time;
     this.segregationRef = props.segregationRef;
     Object.assign(this, stampsOf(props));
@@ -87,18 +92,23 @@ export class Inbox {
     this.retryable = isRetryableFailure(error);
     this.status = this.retryable ? InboxStatus.FAILED : InboxStatus.DEAD_LETTER;
     this.lastResubmissionDate = new Date().toISOString();
-    this.lastError = toLastError(error) ?? this.lastError;
+    this.lastError =
+      toLastError(error, this.lastResubmissionDate) ?? this.lastError;
     // `markAsComplete` deliberately leaves the history in place, so a row
     // that eventually succeeded still shows what it took.
     this.attemptHistory = appendAttempt(
       this.attemptHistory,
-      toAttemptEntry(error),
+      toAttemptEntry(error, this.lastResubmissionDate),
     );
     this.completionAttempts += 1;
     this.expireAt = null;
     this.claimedBy = null;
     this.claimedAt = null;
     this.claimExpiresAt = null;
+
+    if (this.isDeadLetter()) {
+      this.newHistory.push(deadLetteredEntry(this.lastResubmissionDate));
+    }
   }
 
   isDeadLetter() {
