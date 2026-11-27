@@ -60,10 +60,34 @@ describe("s3-client", () => {
         variantKey,
       ],
       [
-        "does not fall back when the configured variant is absent",
+        "falls back when the configured variant is absent",
         "next",
         [defaultKey],
+        defaultKey,
+      ],
+      [
+        "selects a variant without an unsuffixed file",
+        "next",
+        [variantKey],
+        variantKey,
+      ],
+      [
+        "returns null when neither configured variant nor default exists",
+        "next",
+        ["woodland/1.2.3/cw/cw.preview.json"],
         null,
+      ],
+      [
+        "does not select a variant when none is configured",
+        "",
+        [variantKey],
+        null,
+      ],
+      [
+        "matches a default under an aliased grant path",
+        "next",
+        ["farm-payments/1.2.3/cw/cw.json"],
+        "farm-payments/1.2.3/cw/cw.json",
       ],
       [
         "returns null when no file matches",

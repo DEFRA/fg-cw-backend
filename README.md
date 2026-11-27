@@ -191,8 +191,10 @@ the bucket attribute is dead-lettered. The event lands in the inbox as
 `config-version.updated` and the version is only recorded once its selected
 definition has been fetched and checked.
 
-In non-production environments, `CONFIGURATION_VARIANT=next` selects only
-`cw/cw.next.json`, with no fallback to `cw/cw.json`. Production always selects
+In non-production environments, `CONFIGURATION_VARIANT=next` prefers
+`cw/cw.next.json`, falling back to `cw/cw.json` when the variant is absent from
+the release manifest. A selected file that fails fetching or validation does
+not trigger fallback. Production always selects
 `cw/cw.json`. If the manifest has no selected definition, CW logs a warning and
 completes the inbox message without fetching or recording a version. Errors
 loading or validating a declared definition retain their existing handling.

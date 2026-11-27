@@ -37,10 +37,14 @@ export class S3FetchError extends Error {
   }
 }
 
-// A configured variant selects exactly one filename; never fall back to the unsuffixed file.
+// Prefer the configured variant, falling back only when it is absent from the manifest.
 export const findWorkflowKey = (manifest, variant = "") => {
   const target = variantFileName("cw.json", variant);
-  return manifest.find((path) => path.endsWith(`/cw/${target}`)) ?? null;
+  return (
+    manifest.find((path) => path.endsWith(`/cw/${target}`)) ??
+    manifest.find((path) => path.endsWith("/cw/cw.json")) ??
+    null
+  );
 };
 
 const classifyS3Error = (err, key, bucket) => {
