@@ -84,6 +84,7 @@ vi.mock(
 );
 
 const { db: serviceDb } = await import("../../../src/common/mongo-client.js");
+const { config } = await import("../../../src/common/config.js");
 const { logger } = await import("../../../src/common/logger.js");
 const { S3FetchError } = await import("../../../src/common/s3-client.js");
 const { InboxSubscriber } =
@@ -166,6 +167,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  config.set("configBroker.variant", "");
   faults.clear();
   await purgeQueue(QUEUE_URL);
   await Promise.all([
@@ -177,6 +179,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await stopWorker();
+  config.set("configBroker.variant", "");
   vi.restoreAllMocks();
 });
 
@@ -278,35 +281,57 @@ describe("config broker events through the inbox", { timeout: 60000 }, () => {
     });
   });
 
-  it("warns and completes a manifest without cw.json without recording a version", async () => {
-    const grantCode = aGrantCode("skip");
-    const warned = vi.spyOn(logger, "warn");
-    faults.inject(
-      "fetch",
-      grantCode,
-      () => new Error("must not fetch a skipped version"),
-    );
-    faults.inject(
-      "upsert",
-      grantCode,
-      () => new Error("must not record a skipped version"),
-    );
-    const received = await deliver({
-      manifest: [`${grantCode}/1.0.0/metadata.json`],
-      grant: grantCode,
-      version: "1.0.0",
-    });
+  it("records the default workflow and completes when the configured variant is absent", async () => {
+    config.set("configBroker.variant", "next");
+    const grantCode = aGrantCode("fallback");
+    const received = await publishGood(grantCode, "1.0.0");
 
     startWorker();
     const row = await settlesAs(received.MessageId, "COMPLETED");
 
     expect(row.completionAttempts).toBe(0);
     expect(row.attemptHistory).toEqual([]);
-    expect(warned).toHaveBeenCalledWith(
-      expect.stringContaining(`Skipping config version: ${grantCode}@1.0.0`),
-    );
-    await expect(versionsOf(grantCode)).resolves.toEqual([]);
+    const [version] = await versionsOf(grantCode);
+    expect(version).toMatchObject({
+      grantCode,
+      version: "1.0.0",
+      s3Key: cwKey(grantCode, "1.0.0"),
+    });
   });
+
+  it.each(["", "next"])(
+    "warns and completes a manifest without a workflow under variant '%s' without recording a version",
+    async (variant) => {
+      config.set("configBroker.variant", variant);
+      const grantCode = aGrantCode("skip");
+      const warned = vi.spyOn(logger, "warn");
+      faults.inject(
+        "fetch",
+        grantCode,
+        () => new Error("must not fetch a skipped version"),
+      );
+      faults.inject(
+        "upsert",
+        grantCode,
+        () => new Error("must not record a skipped version"),
+      );
+      const received = await deliver({
+        manifest: [`${grantCode}/1.0.0/metadata.json`],
+        grant: grantCode,
+        version: "1.0.0",
+      });
+
+      startWorker();
+      const row = await settlesAs(received.MessageId, "COMPLETED");
+
+      expect(row.completionAttempts).toBe(0);
+      expect(row.attemptHistory).toEqual([]);
+      expect(warned).toHaveBeenCalledWith(
+        expect.stringContaining(`Skipping config version: ${grantCode}@1.0.0`),
+      );
+      await expect(versionsOf(grantCode)).resolves.toEqual([]);
+    },
+  );
 
   describe("failures retrying cannot fix go to DEAD_LETTER after one attempt", () => {
     const definitionWith = (grantCode, change) => {

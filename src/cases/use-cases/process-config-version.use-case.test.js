@@ -148,9 +148,9 @@ describe("processConfigVersionUseCase", () => {
     ["GAS only", "", ["woodland/1.2.3/gas/gas.json"]],
     ["another variant only", "", ["woodland/1.2.3/cw/cw.next.json"]],
     [
-      "only an unsuffixed definition under a variant",
+      "only an unrelated variant under a configured variant",
       "next",
-      ["woodland/1.2.3/cw/cw.json"],
+      ["woodland/1.2.3/cw/cw.preview.json"],
     ],
   ])("warns and skips a manifest with %s", async (_, variant, manifest) => {
     mockConfigGet._overrides["configBroker.variant"] = variant;
@@ -330,6 +330,36 @@ describe("processConfigVersionUseCase", () => {
       );
 
       expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
+    });
+
+    it("fetches and records cw.json when the configured variant is absent", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+
+      await processConfigVersionUseCase(messageFor());
+
+      expect(fetchConfigFile).toHaveBeenCalledExactlyOnceWith(
+        BUCKET,
+        "woodland/1.2.3/cw/cw.json",
+      );
+      expect(upsert).toHaveBeenCalledTimes(1);
+      expect(upsert.mock.calls[0][0].s3Key).toBe("woodland/1.2.3/cw/cw.json");
+    });
+
+    it("rejects an invalid selected variant instead of trying cw.json", async () => {
+      mockConfigGet._overrides["configBroker.variant"] = "next";
+      fetchConfigFile.mockResolvedValueOnce({
+        ...definitionFor("woodland"),
+        phases: [],
+      });
+
+      const error = await failureOf({ manifest: variantManifest });
+
+      expect(isRetryableFailure(error)).toBe(false);
+      expect(fetchConfigFile).toHaveBeenCalledExactlyOnceWith(
+        BUCKET,
+        "woodland/1.2.3/cw/cw.next.json",
+      );
+      expect(upsert).not.toHaveBeenCalled();
     });
 
     it("keeps a declared variant failure instead of trying cw.json", async () => {
